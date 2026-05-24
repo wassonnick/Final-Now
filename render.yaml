@@ -1,0 +1,115 @@
+services:
+  # Frontend (React + Vite)
+  - type: web
+    name: societyflats-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://societyflats-api.onrender.com/api/v1
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # Backend (Laravel)
+  - type: web
+    name: societyflats-api
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: APP_NAME
+        value: SocietyFlats
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        value: https://societyflats-api.onrender.com
+      - key: FRONTEND_URL
+        value: https://societyflats.onrender.com
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: societyflats-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: societyflats-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: societyflats-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: societyflats-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: societyflats-db
+          property: password
+      - key: CACHE_DRIVER
+        value: file
+      - key: SESSION_DRIVER
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: MEILISEARCH_HOST
+        value: ""
+      - key: MEILISEARCH_KEY
+        value: ""
+
+  # Background worker (optional - for queues)
+  - type: worker
+    name: societyflats-worker
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    startCommand: php artisan queue:work
+    envVars:
+      - key: APP_NAME
+        value: SocietyFlats
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        fromService:
+          name: societyflats-api
+          type: web
+          envVarKey: APP_KEY
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: societyflats-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: societyflats-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: societyflats-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: societyflats-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: societyflats-db
+          property: password
+
+databases:
+  - name: societyflats-db
+    databaseName: societyflats
+    user: societyflats
+    plan: free
+    ipAllowList: []
