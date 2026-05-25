@@ -232,6 +232,7 @@ const sortOptions = [
 export function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const activeTab = searchParams.get('tab') || 'societies';
   const [showFilters, setShowFilters] = useState(true);
   const [filters, setFilters] = useState<SearchFilters>({
     locality: searchParams.get('locality') || '',
@@ -361,6 +362,36 @@ export function SearchPage() {
               </div>
             </div>
           </div>
+
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            {[
+              { key: 'societies', label: 'Societies First' },
+              { key: 'rent', label: 'Rent' },
+              { key: 'buy', label: 'Buy' },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => {
+                  const params = new URLSearchParams(searchParams);
+                  params.set('tab', tab.key);
+                  setSearchParams(params);
+                }}
+                className={cn(
+                  'rounded-full px-4 py-2 text-sm font-semibold border transition-all',
+                  activeTab === tab.key ? 'bg-navy-700 text-white border-navy-700' : 'bg-white text-navy-600 border-navy-200 hover:bg-navy-50'
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {activeTab !== 'societies' && (
+            <div className="mt-4 rounded-2xl border border-gold-200 bg-gold-50 p-4 text-sm text-navy-700">
+              <strong>{activeTab === 'rent' ? 'Rent mode:' : 'Buy mode:'}</strong> results are still grouped by society first, so users understand the building before contacting for a listing.
+            </div>
+          )}
 
           {/* Active Filter Chips */}
           {activeFiltersCount > 0 && (

@@ -12,6 +12,7 @@ import { AIAdvisorPage } from '@/pages/AIAdvisorPage';
 import { InsightsPage } from '@/pages/InsightsPage';
 import { OwnerDashboard } from '@/pages/OwnerDashboard';
 import { LoginPage } from '@/pages/LoginPage';
+import { SellPage } from '@/pages/SellPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,6 +39,7 @@ function App() {
               <Route path="/ai-advisor" element={<AIAdvisorPage />} />
               <Route path="/insights" element={<InsightsPage />} />
               <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+              <Route path="/sell" element={<SellPage />} />
               <Route path="/login" element={<LoginPage />} />
             </Routes>
           </main>

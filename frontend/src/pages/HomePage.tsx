@@ -1,330 +1,151 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, TrendingUp, Shield, Star, MapPin, Building2, Sparkles, BarChart3, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, BadgeIndianRupee, BarChart3, Building2, CheckCircle2, HeartHandshake, Home, KeyRound, MapPin, School, Shield, Sparkles, Star, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { HeroSearch } from '@/components/home/HeroSearch';
-import { SocietyCard } from '@/components/society/SocietyCard';
-import { useAppStore } from '@/store';
 
-// Mock featured societies data with real market data
-const featuredSocieties = [
-  {
-    id: 's1',
-    name: 'DLF The Aralias',
-    slug: 'dlf-the-aralias',
-    builder_id: 'b1',
-    locality_id: 'l2',
-    address: 'Golf Course Road, Sector 42, Gurgaon',
-    total_towers: 5,
-    total_units: 250,
-    possession_year: 2008,
-    construction_status: 'ready',
-    security_score: 95.0,
-    maintenance_score: 92.0,
-    amenities_score: 96.0,
-    connectivity_score: 94.0,
-    family_friendly_score: 90.0,
-    pet_friendly_score: 75.0,
-    construction_quality_score: 95.0,
-    rental_demand_score: 88.0,
-    overall_score: 91.6,
-    security_features: { gated: true, cctv: true, security_24_7: true, intercom: true, access_control: true, security_personnel: true },
-    amenities: { swimming_pool: true, gym: true, club_house: true, tennis_court: true, basketball_court: true, jogging_track: true, kids_play_area: true, senior_citizen_area: true, party_hall: true, library: true, spa: true },
-    nearby_facilities: { metro_station_km: 2.8, hospital_km: 1.5, school_km: 2.0, mall_km: 1.2, market_km: 0.8 },
-    cover_image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=500&fit=crop',
-    gallery_images: [],
-    is_verified: true,
-    featured: true,
-    status: 'active',
-    view_count: 15420,
-    review_count: 128,
-    avg_rating: 4.8,
-    builder: { id: 'b1', name: 'DLF Limited', slug: 'dlf-limited', logo_url: '', reputation_score: 4.5, total_projects: 30, rera_registered: true },
-    locality: { id: 'l2', name: 'Golf Course Road', slug: 'golf-course-road', city: 'Gurgaon', avg_rent_1bhk: 28000, avg_rent_2bhk: 52000, avg_rent_3bhk: 75000, avg_rent_4bhk: 120000, price_per_sqft: 25000, metro_distance_km: 2.8, connectivity_score: 9.5, safety_score: 9.3, lifestyle_score: 9.9 }
-  },
-  {
-    id: 's2',
-    name: 'DLF Park Place',
-    slug: 'dlf-park-place',
-    builder_id: 'b1',
-    locality_id: 'l2',
-    address: 'Golf Course Road, Sector 54, Gurgaon',
-    total_towers: 8,
-    total_units: 450,
-    possession_year: 2012,
-    construction_status: 'ready',
-    security_score: 93.0,
-    maintenance_score: 90.0,
-    amenities_score: 94.0,
-    connectivity_score: 95.0,
-    family_friendly_score: 92.0,
-    pet_friendly_score: 80.0,
-    construction_quality_score: 93.0,
-    rental_demand_score: 90.0,
-    overall_score: 90.9,
-    security_features: { gated: true, cctv: true, security_24_7: true, intercom: true, access_control: true },
-    amenities: { swimming_pool: true, gym: true, club_house: true, squash_court: true, badminton_court: true, jogging_track: true, kids_play_area: true, theatre: true, business_center: true },
-    nearby_facilities: { metro_station_km: 2.5, hospital_km: 1.8, school_km: 1.5, mall_km: 1.0, market_km: 0.5 },
-    cover_image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=500&fit=crop',
-    gallery_images: [],
-    is_verified: true,
-    featured: true,
-    status: 'active',
-    view_count: 12850,
-    review_count: 95,
-    avg_rating: 4.7,
-    builder: { id: 'b1', name: 'DLF Limited', slug: 'dlf-limited', logo_url: '', reputation_score: 4.5, total_projects: 30, rera_registered: true },
-    locality: { id: 'l2', name: 'Golf Course Road', slug: 'golf-course-road', city: 'Gurgaon', avg_rent_1bhk: 28000, avg_rent_2bhk: 52000, avg_rent_3bhk: 75000, avg_rent_4bhk: 120000, price_per_sqft: 25000, metro_distance_km: 2.8, connectivity_score: 9.5, safety_score: 9.3, lifestyle_score: 9.9 }
-  },
-  {
-    id: 's8',
-    name: 'SS The Hibiscus',
-    slug: 'ss-the-hibiscus',
-    builder_id: 'b8',
-    locality_id: 'l2',
-    address: 'Golf Course Road, Sector 50, Gurgaon',
-    total_towers: 6,
-    total_units: 300,
-    possession_year: 2011,
-    construction_status: 'ready',
-    security_score: 90.0,
-    maintenance_score: 88.0,
-    amenities_score: 90.0,
-    connectivity_score: 92.0,
-    family_friendly_score: 88.0,
-    pet_friendly_score: 82.0,
-    construction_quality_score: 90.0,
-    rental_demand_score: 87.0,
-    overall_score: 89.4,
-    security_features: { gated: true, cctv: true, security_24_7: true, intercom: true, access_control: true },
-    amenities: { swimming_pool: true, gym: true, club_house: true, squash_court: true, badminton_court: true, jogging_track: true, kids_play_area: true, roof_garden: true, party_lawn: true },
-    nearby_facilities: { metro_station_km: 3.0, hospital_km: 2.0, school_km: 1.5, mall_km: 1.8, market_km: 1.0 },
-    cover_image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=500&fit=crop',
-    gallery_images: [],
-    is_verified: true,
-    featured: true,
-    status: 'active',
-    view_count: 13500,
-    review_count: 89,
-    avg_rating: 4.6,
-    builder: { id: 'b8', name: 'SS Group', slug: 'ss-group', logo_url: '', reputation_score: 4.0, total_projects: 8, rera_registered: true },
-    locality: { id: 'l2', name: 'Golf Course Road', slug: 'golf-course-road', city: 'Gurgaon', avg_rent_1bhk: 28000, avg_rent_2bhk: 52000, avg_rent_3bhk: 75000, avg_rent_4bhk: 120000, price_per_sqft: 25000, metro_distance_km: 2.8, connectivity_score: 9.5, safety_score: 9.3, lifestyle_score: 9.9 }
-  },
-  {
-    id: 's12',
-    name: 'DLF The Magnolias',
-    slug: 'dlf-the-magnolias',
-    builder_id: 'b1',
-    locality_id: 'l2',
-    address: 'Golf Course Road, Sector 42, Gurgaon',
-    total_towers: 4,
-    total_units: 200,
-    possession_year: 2010,
-    construction_status: 'ready',
-    security_score: 96.0,
-    maintenance_score: 94.0,
-    amenities_score: 97.0,
-    connectivity_score: 95.0,
-    family_friendly_score: 88.0,
-    pet_friendly_score: 70.0,
-    construction_quality_score: 96.0,
-    rental_demand_score: 85.0,
-    overall_score: 92.1,
-    security_features: { gated: true, cctv: true, security_24_7: true, intercom: true, access_control: true, biometric: true },
-    amenities: { swimming_pool: true, gym: true, club_house: true, private_theatre: true, wine_cellar: true, jogging_track: true, kids_play_area: true, spa: true, salon: true, concierge: true },
-    nearby_facilities: { metro_station_km: 2.5, hospital_km: 1.5, school_km: 2.0, mall_km: 1.0, market_km: 0.5 },
-    cover_image: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800&h=500&fit=crop',
-    gallery_images: [],
-    is_verified: true,
-    featured: true,
-    status: 'active',
-    view_count: 16800,
-    review_count: 142,
-    avg_rating: 4.9,
-    builder: { id: 'b1', name: 'DLF Limited', slug: 'dlf-limited', logo_url: '', reputation_score: 4.5, total_projects: 30, rera_registered: true },
-    locality: { id: 'l2', name: 'Golf Course Road', slug: 'golf-course-road', city: 'Gurgaon', avg_rent_1bhk: 28000, avg_rent_2bhk: 52000, avg_rent_3bhk: 75000, avg_rent_4bhk: 120000, price_per_sqft: 25000, metro_distance_km: 2.8, connectivity_score: 9.5, safety_score: 9.3, lifestyle_score: 9.9 }
-  }
+const societies = [
+  { name: 'DLF The Aralias', slug: 'dlf-the-aralias', area: 'Golf Course Road', score: '9.2', rent: '₹3.5L+', buy: '₹25Cr+', image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&h=650&fit=crop', tags: ['Ultra luxury', 'Golf living'] },
+  { name: 'DLF Park Place', slug: 'dlf-park-place', area: 'Sector 54', score: '9.1', rent: '₹85K+', buy: '₹5.5Cr+', image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=900&h=650&fit=crop', tags: ['Family', 'Metro access'] },
+  { name: 'DLF The Crest', slug: 'dlf-the-crest', area: 'Sector 54', score: '9.0', rent: '₹1.2L+', buy: '₹8Cr+', image: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=900&h=650&fit=crop', tags: ['Luxury', 'High demand'] },
+  { name: 'M3M Golf Estate', slug: 'm3m-golf-estate', area: 'Sector 65', score: '8.6', rent: '₹70K+', buy: '₹4Cr+', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&h=650&fit=crop', tags: ['Golf course', 'New Gurgaon'] },
 ];
 
-const intelligenceParams = [
-  { icon: Shield, label: 'Security', desc: '24/7 guards, CCTV, access control', score: '20%' },
-  { icon: TrendingUp, label: 'Maintenance', desc: 'Upkeep quality & response time', score: '20%' },
-  { icon: Star, label: 'Amenities', desc: 'Pools, gyms, clubhouses', score: '15%' },
-  { icon: MapPin, label: 'Connectivity', desc: 'Metro, roads, airport access', score: '15%' },
-  { icon: Building2, label: 'Family Friendly', desc: 'Schools, parks, safety', score: '10%' },
-  { icon: Sparkles, label: 'Pet Friendly', desc: 'Pet policies & spaces', score: '5%' },
-  { icon: BarChart3, label: 'Construction', desc: 'Build quality & materials', score: '10%' },
-  { icon: CheckCircle2, label: 'Rental Demand', desc: 'Market popularity', score: '5%' },
+const lifestyles = [
+  { icon: Users, title: 'Family Friendly', text: 'Societies with schools, parks, security and stable resident mix.' },
+  { icon: Sparkles, title: 'Luxury Living', text: 'Premium towers, clubhouses, concierge-style amenities and elite addresses.' },
+  { icon: MapPin, title: 'Near Office Hubs', text: 'CyberHub, Golf Course Road, Horizon Center and Rapid Metro access.' },
+  { icon: HeartHandshake, title: 'Pet Friendly', text: 'Societies with better pet policies, open areas and practical daily living.' },
+];
+
+const intelligence = [
+  { icon: Shield, label: 'Security', value: '20%' },
+  { icon: CheckCircle2, label: 'Maintenance', value: '20%' },
+  { icon: Star, label: 'Amenities', value: '15%' },
+  { icon: MapPin, label: 'Connectivity', value: '15%' },
+  { icon: School, label: 'Family fit', value: '10%' },
+  { icon: TrendingUp, label: 'Demand', value: '20%' },
 ];
 
 export function HomePage() {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  useEffect(() => window.scrollTo(0, 0), []);
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
+    <div className="min-h-screen bg-ivory-100">
       <HeroSearch />
 
-      {/* How It Works */}
-      <section className="py-16 bg-white">
+      <section className="py-10 bg-white border-b border-navy-100">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <Badge className="mb-4 bg-navy-100 text-navy-700 border-navy-200">How It Works</Badge>
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-navy-900 mb-4">
-              Society Intelligence, Not Just Listings
-            </h2>
-            <p className="text-lg text-navy-500 max-w-2xl mx-auto">
-              We evaluate every society on 8 verified parameters so you can make an informed decision before you even visit.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {intelligenceParams.map((param, i) => {
-              const Icon = param.icon;
-              return (
-                <div key={i} className="group p-6 rounded-2xl bg-ivory-100 border border-navy-100 hover:border-gold-300 hover:shadow-lg transition-all duration-300">
-                  <div className="w-12 h-12 rounded-xl bg-navy-500 flex items-center justify-center mb-4 group-hover:bg-gold-500 transition-colors">
-                    <Icon className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="font-semibold text-navy-900 mb-1">{param.label}</h3>
-                  <p className="text-sm text-navy-500 mb-2">{param.desc}</p>
-                  <Badge variant="outline" className="text-xs border-gold-300 text-gold-600">
-                    Weight: {param.score}
-                  </Badge>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Societies */}
-      <section className="py-16 bg-ivory-100">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-10">
-            <div>
-              <Badge className="mb-2 bg-gold-100 text-gold-700 border-gold-200">Featured</Badge>
-              <h2 className="text-3xl font-display font-bold text-navy-900">Top Rated Societies</h2>
-            </div>
-            <Link to="/search">
-              <Button variant="outline" className="border-navy-200 text-navy-700 hover:bg-navy-50">
-                View All <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredSocieties.map((society) => (
-              <SocietyCard key={society.id} society={society} featured={society.featured} />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              ['150+', 'Verified Societies'],
+              ['5,000+', 'Homes tracked'],
+              ['Rent + Buy + Sell', 'One society profile'],
+              ['Gurgaon First', 'Bangalore next'],
+            ].map(([value, label]) => (
+              <div key={label} className="rounded-2xl bg-ivory-100 p-5 text-center border border-navy-100">
+                <p className="text-2xl font-display font-bold text-navy-900">{value}</p>
+                <p className="text-sm text-navy-500 mt-1">{label}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* AI Advisor CTA */}
-      <section className="py-16 bg-navy-500">
+      <section className="py-20 bg-ivory-100">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="w-16 h-16 bg-gold-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Sparkles className="w-8 h-8 text-navy-900" />
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
+            <div>
+              <Badge className="mb-4 bg-gold-100 text-gold-700 border-gold-200">Society-first marketplace</Badge>
+              <h2 className="text-3xl md:text-5xl font-display font-bold text-navy-900 tracking-tight">Start with the society, not the listing.</h2>
+              <p className="text-lg text-navy-500 mt-4 max-w-2xl">Each society becomes a decision page: lifestyle, rent range, resale range, demand, reviews and available inventory.</p>
             </div>
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-4">
-              Not Sure Which Society Fits You?
-            </h2>
-            <p className="text-lg text-navy-200 mb-8 max-w-2xl mx-auto">
-              Our AI Rental Advisor analyzes your budget, office location, and lifestyle preferences to recommend the perfect societies for you.
-            </p>
-            <Link to="/ai-advisor">
-              <Button size="lg" className="bg-gold-500 hover:bg-gold-600 text-navy-900 font-semibold px-8">
-                Try AI Advisor <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
+            <Link to="/search?tab=societies">
+              <Button variant="outline" className="rounded-full border-navy-200 text-navy-700 hover:bg-white">Explore Societies <ArrowRight className="w-4 h-4 ml-2" /></Button>
             </Link>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {societies.map((society) => (
+              <Link key={society.slug} to={`/society/${society.slug}`} className="group overflow-hidden rounded-[2rem] bg-white border border-navy-100 shadow-sm hover:shadow-xl transition-all duration-300">
+                <div className="relative h-64 overflow-hidden">
+                  <img src={society.image} alt={society.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-navy-950/90 via-navy-950/20 to-transparent" />
+                  <div className="absolute top-4 right-4 rounded-full bg-white/95 px-3 py-1 text-sm font-bold text-navy-900">Score {society.score}</div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <p className="text-sm text-gold-300 mb-1">{society.area}</p>
+                    <h3 className="text-2xl font-display font-bold text-white">{society.name}</h3>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="rounded-2xl bg-ivory-100 p-3"><p className="text-xs text-navy-400">Rent from</p><p className="font-bold text-navy-900">{society.rent}</p></div>
+                    <div className="rounded-2xl bg-ivory-100 p-3"><p className="text-xs text-navy-400">Buy from</p><p className="font-bold text-navy-900">{society.buy}</p></div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {society.tags.map((tag) => <span key={tag} className="text-xs rounded-full bg-navy-50 text-navy-600 px-2.5 py-1">{tag}</span>)}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Market Insights Preview */}
-      <section className="py-16 bg-white">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
             <div>
-              <Badge className="mb-4 bg-navy-100 text-navy-700 border-navy-200">Market Intelligence</Badge>
-              <h2 className="text-3xl md:text-4xl font-display font-bold text-navy-900 mb-4">
-                Rent Trends & Demand Analytics
-              </h2>
-              <p className="text-lg text-navy-500 mb-6">
-                Get real-time insights into Gurgaon's rental market. Track rent trends, demand patterns, and occupancy rates across localities.
-              </p>
-              <div className="space-y-4">
+              <Badge className="mb-4 bg-navy-100 text-navy-700 border-navy-200">Rent • Buy • Sell</Badge>
+              <h2 className="text-3xl md:text-5xl font-display font-bold text-navy-900 tracking-tight">One society profile. Three transaction flows.</h2>
+              <p className="text-lg text-navy-500 mt-4">Users can understand DLF Park Place once, then switch between rentals, resale inventory and owner listing flows without losing context.</p>
+              <div className="grid sm:grid-cols-3 gap-4 mt-8">
                 {[
-                  { label: 'Golf Course Road', trend: '+12%', rent: '₹52K avg' },
-                  { label: 'DLF Phase 1-5', trend: '+8%', rent: '₹45K avg' },
-                  { label: 'Golf Course Extension', trend: '+15%', rent: '₹35K avg' },
-                  { label: 'Sohna Road', trend: '+5%', rent: '₹26K avg' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-ivory-100 border border-navy-100">
-                    <div className="flex items-center gap-3">
-                      <MapPin className="w-5 h-5 text-navy-400" />
-                      <span className="font-medium text-navy-800">{item.label}</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Badge className="bg-green-100 text-green-700 border-green-200">
-                        <TrendingUp className="w-3 h-3 mr-1" /> {item.trend}
-                      </Badge>
-                      <span className="text-sm font-semibold text-navy-700">{item.rent}</span>
-                    </div>
-                  </div>
-                ))}
+                  { icon: KeyRound, title: 'Rent', text: 'Verified homes, move-in dates, tenant fit.' },
+                  { icon: Home, title: 'Buy', text: 'Resale price, appreciation and yield.' },
+                  { icon: BadgeIndianRupee, title: 'Sell', text: 'Owner listing, AI description and leads.' },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return <div key={item.title} className="rounded-2xl border border-navy-100 bg-ivory-100 p-5"><Icon className="w-6 h-6 text-gold-600 mb-3" /><h3 className="font-bold text-navy-900">{item.title}</h3><p className="text-sm text-navy-500 mt-1">{item.text}</p></div>;
+                })}
               </div>
-              <Link to="/insights" className="inline-flex items-center gap-2 mt-6 text-navy-600 hover:text-navy-800 font-medium">
-                View Full Analytics <ChevronRight className="w-4 h-4" />
-              </Link>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link to="/search?tab=rent"><Button className="rounded-full bg-navy-700 hover:bg-navy-800">Find Rentals</Button></Link>
+                <Link to="/search?tab=buy"><Button variant="outline" className="rounded-full">Explore Buy</Button></Link>
+                <Link to="/sell"><Button variant="outline" className="rounded-full border-gold-300 text-navy-900">List to Sell/Rent</Button></Link>
+              </div>
             </div>
-            <div className="relative">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-navy-100">
-                <img 
-                  src="https://images.unsplash.com/photo-1486406146926-c627a92e1c4c?w=800&h=600&fit=crop" 
-                  alt="Gurgaon Skyline" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-xl p-4 border border-navy-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-navy-900">Rental Yield</p>
-                    <p className="text-lg font-bold text-green-600">3.2% - 4.8%</p>
-                  </div>
-                </div>
+            <div className="rounded-[2rem] bg-navy-900 p-6 md:p-8 text-white shadow-2xl">
+              <div className="flex items-center justify-between mb-8"><div><p className="text-gold-300 text-sm">Society intelligence</p><h3 className="text-3xl font-display font-bold">DLF Park Place</h3></div><div className="text-right"><p className="text-sm text-navy-200">Overall</p><p className="text-4xl font-bold text-gold-400">9.1</p></div></div>
+              <div className="space-y-4">
+                {intelligence.map((item) => { const Icon = item.icon; return <div key={item.label} className="flex items-center gap-4 rounded-2xl bg-white/10 p-4"><Icon className="w-5 h-5 text-gold-300" /><div className="flex-1"><div className="flex justify-between text-sm mb-2"><span>{item.label}</span><span>{item.value}</span></div><div className="h-2 rounded-full bg-white/10"><div className="h-2 rounded-full bg-gold-400" style={{ width: item.label === 'Demand' ? '90%' : '84%' }} /></div></div></div>; })}
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Trust Badges */}
-      <section className="py-12 bg-ivory-100 border-y border-navy-100">
+      <section className="py-20 bg-ivory-100">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
-            {[
-              { icon: Shield, text: 'Verified Properties' },
-              { icon: CheckCircle2, text: 'Real Reviews' },
-              { icon: Star, text: 'Intelligence Scoring' },
-              { icon: TrendingUp, text: 'Market Analytics' },
-            ].map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <div key={i} className="flex items-center gap-2 text-navy-600">
-                  <Icon className="w-5 h-5 text-gold-500" />
-                  <span className="font-medium">{item.text}</span>
-                </div>
-              );
-            })}
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-white text-navy-700 border-navy-200">Explore by lifestyle</Badge>
+            <h2 className="text-3xl md:text-5xl font-display font-bold text-navy-900">People choose societies for daily life.</h2>
+          </div>
+          <div className="grid md:grid-cols-4 gap-6">
+            {lifestyles.map((item) => { const Icon = item.icon; return <Link key={item.title} to={`/search?tab=societies&q=${encodeURIComponent(item.title)}`} className="rounded-[2rem] bg-white p-6 border border-navy-100 hover:shadow-xl transition-all"><Icon className="w-8 h-8 text-gold-600 mb-5" /><h3 className="text-xl font-display font-bold text-navy-900">{item.title}</h3><p className="text-sm text-navy-500 mt-2">{item.text}</p></Link>; })}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-navy-950 text-white">
+        <div className="container mx-auto px-4 text-center max-w-4xl">
+          <BarChart3 className="w-12 h-12 text-gold-400 mx-auto mb-5" />
+          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">Market intelligence that portals usually hide.</h2>
+          <p className="text-lg text-navy-100 mt-4 mb-8">Rent trends, resale movement, demand score, rental yield and society comparison become the reason users return.</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link to="/insights"><Button className="rounded-full bg-gold-500 hover:bg-gold-600 text-navy-950 font-semibold">View Insights</Button></Link>
+            <Link to="/ai-advisor"><Button variant="outline" className="rounded-full border-white/20 text-white hover:bg-white/10">Ask AI Advisor</Button></Link>
           </div>
         </div>
       </section>
