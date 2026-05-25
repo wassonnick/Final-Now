@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -12,88 +12,47 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 216 54% 23%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 210 20% 96%;
+    --primary: 222 78% 63%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 100% 97%;
     --secondary-foreground: 222 47% 11%;
-    --muted: 210 20% 96%;
+    --muted: 216 33% 97%;
     --muted-foreground: 215 16% 47%;
-    --accent: 210 20% 96%;
+    --accent: 216 100% 97%;
     --accent-foreground: 222 47% 11%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 216 54% 23%;
-    --radius: 0.75rem;
+    --ring: 222 78% 63%;
+    --radius: 1rem;
   }
 
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
 
   body {
-    @apply bg-ivory-100 text-navy-900 font-sans antialiased;
+    @apply bg-white text-navy-900 font-sans antialiased;
+    letter-spacing: -0.011em;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-display text-navy-900;
-  }
+  h1, h2, h3, h4, h5, h6 { @apply font-display text-navy-900 tracking-tight; }
 }
 
 @layer components {
-  .society-card {
-    @apply bg-white rounded-xl border border-navy-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden;
-  }
-
-  .score-badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
-  }
-
-  .score-excellent {
-    @apply bg-green-50 text-green-700 border border-green-200;
-  }
-
-  .score-good {
-    @apply bg-lime-50 text-lime-700 border border-lime-200;
-  }
-
-  .score-average {
-    @apply bg-yellow-50 text-yellow-700 border border-yellow-200;
-  }
-
-  .score-poor {
-    @apply bg-red-50 text-red-700 border border-red-200;
-  }
-
-  .gradient-hero {
-    background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #1a365d 100%);
-  }
-
-  .glass-card {
-    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;
-  }
-
-  .intelligence-meter {
-    @apply h-2 rounded-full bg-navy-100 overflow-hidden;
-  }
-
-  .intelligence-fill {
-    @apply h-full rounded-full transition-all duration-700 ease-out;
-  }
+  .society-card { @apply bg-white rounded-[1.75rem] border border-navy-100 shadow-sm hover:shadow-soft transition-all duration-300 overflow-hidden; }
+  .glass-card { @apply bg-white/80 backdrop-blur-xl border border-white/70 shadow-apple; }
+  .apple-pill { @apply rounded-full border border-navy-100 bg-white/90 shadow-sm; }
+  .score-badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold; }
+  .score-excellent { @apply bg-green-50 text-green-700 border border-green-200; }
+  .score-good { @apply bg-lime-50 text-lime-700 border border-lime-200; }
+  .score-average { @apply bg-yellow-50 text-yellow-700 border border-yellow-200; }
+  .score-poor { @apply bg-red-50 text-red-700 border border-red-200; }
+  .intelligence-meter { @apply h-2 rounded-full bg-navy-100 overflow-hidden; }
+  .intelligence-fill { @apply h-full rounded-full transition-all duration-700 ease-out; }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+  .text-balance { text-wrap: balance; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 }
