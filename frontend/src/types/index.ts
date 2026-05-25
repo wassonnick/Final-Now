@@ -28,6 +28,7 @@ export interface Society {
   view_count: number;
   review_count: number;
   avg_rating: number;
+  status: string;
   builder?: Builder;
   locality?: Locality;
   score_breakdown?: Record<string, number>;
