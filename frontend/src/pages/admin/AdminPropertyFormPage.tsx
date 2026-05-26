@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, DragEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ImagePlus, Save, Sparkles, UploadCloud, X } from 'lucide-react';
 import { AdminLayout } from '@/layouts/AdminLayout';
@@ -30,14 +30,19 @@ export function AdminPropertyFormPage() {
   const isEdit = Boolean(id);
   const [property, setProperty] = useState<AdminProperty>(() => getInitialProperty(id));
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setProperty(getInitialProperty(id));
+    setError('');
+    setSuccess('');
   }, [id]);
 
   const updateField = <K extends keyof AdminProperty>(key: K, value: AdminProperty[K]) => {
     setProperty((current) => ({ ...current, [key]: value }));
     if (error) setError('');
+    if (success) setSuccess('');
   };
 
   const toggleAmenity = (amenity: string, checked: boolean | 'indeterminate') => {
@@ -50,9 +55,12 @@ export function AdminPropertyFormPage() {
     });
   };
 
-  const handleImages = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    if (!files.length) return;
+  const readImages = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList).filter((file) => file.type.startsWith('image/'));
+    if (!files.length) {
+      setError('Please select JPG, PNG or WebP images only.');
+      return;
+    }
 
     const readers = files.map((file) => new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -61,9 +69,24 @@ export function AdminPropertyFormPage() {
       reader.readAsDataURL(file);
     }));
 
-    const images = await Promise.all(readers);
-    setProperty((current) => ({ ...current, images: [...current.images, ...images].slice(0, 8) }));
+    try {
+      const images = await Promise.all(readers);
+      setProperty((current) => ({ ...current, images: [...current.images, ...images].slice(0, 8) }));
+      setError('');
+      setSuccess(`${images.length} image${images.length > 1 ? 's' : ''} added.`);
+    } catch {
+      setError('Could not read the selected images. Please try again.');
+    }
+  };
+
+  const handleImages = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) await readImages(event.target.files);
     event.target.value = '';
+  };
+
+  const handleDrop = async (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if (event.dataTransfer.files) await readImages(event.dataTransfer.files);
   };
 
   const removeImage = (image: string) => {
@@ -71,18 +94,30 @@ export function AdminPropertyFormPage() {
   };
 
   const handleSave = (status: AdminProperty['status']) => {
-    if (!property.title.trim()) {
+    const title = property.title.trim();
+    if (!title) {
       setError('Property title is required.');
-      return;
-    }
-    if (!property.price.trim()) {
-      setError('Price or rent is required.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    upsertAdminProperty({ ...property, status });
-    window.alert(status === 'Draft' ? 'Property draft saved.' : 'Property listing saved and published.');
-    navigate('/admin/properties');
+    const propertyToSave: AdminProperty = {
+      ...property,
+      title,
+      price: property.price.trim() || 'On Request',
+      status,
+    };
+
+    try {
+      upsertAdminProperty(propertyToSave);
+      setSuccess(status === 'Draft' ? 'Property draft saved.' : 'Property listing saved and published.');
+      window.alert(status === 'Draft' ? 'Property draft saved.' : 'Property listing saved and published.');
+      navigate('/admin/properties');
+    } catch (saveError) {
+      console.error(saveError);
+      setError('Could not save the property. Please try again.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const generateDescription = () => {
@@ -100,14 +135,20 @@ export function AdminPropertyFormPage() {
           <Link to="/admin/properties"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Properties</Link>
         </Button>
         <div className="flex gap-3">
-          <Button onClick={() => handleSave('Draft')} variant="outline" className="rounded-full border-slate-200">Save Draft</Button>
-          <Button onClick={() => handleSave('Live')} className="rounded-full bg-blue-600 px-5 hover:bg-blue-700"><Save className="mr-2 h-4 w-4" /> Publish Listing</Button>
+          <Button type="button" onClick={() => handleSave('Draft')} variant="outline" className="rounded-full border-slate-200">Save Draft</Button>
+          <Button type="button" onClick={() => handleSave('Live')} className="rounded-full bg-blue-600 px-5 hover:bg-blue-700"><Save className="mr-2 h-4 w-4" /> Publish Listing</Button>
         </div>
       </div>
 
       {error ? (
         <div className="mb-5 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
           {error}
+        </div>
+      ) : null}
+
+      {success ? (
+        <div className="mb-5 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          {success}
         </div>
       ) : null}
 
@@ -244,7 +285,7 @@ export function AdminPropertyFormPage() {
                 <h2 className="text-lg font-semibold tracking-tight text-slate-950">Description & Amenities</h2>
                 <p className="mt-1 text-sm text-slate-500">Write a clean, society-first description for buyers and tenants.</p>
               </div>
-              <Button onClick={generateDescription} variant="outline" className="rounded-full border-slate-200"><Sparkles className="mr-2 h-4 w-4" /> Generate with AI</Button>
+              <Button type="button" onClick={generateDescription} variant="outline" className="rounded-full border-slate-200"><Sparkles className="mr-2 h-4 w-4" /> Generate with AI</Button>
             </div>
 
             <label>
@@ -275,16 +316,25 @@ export function AdminPropertyFormPage() {
             <h2 className="text-lg font-semibold tracking-tight text-slate-950">Media</h2>
             <p className="mt-1 text-sm text-slate-500">Upload cover and gallery images. Phase 2 stores these locally until backend upload is connected.</p>
 
-            <div className="mt-5 flex min-h-56 flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+            <div
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={handleDrop}
+              className="mt-5 flex min-h-56 flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-6 text-center"
+            >
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                 <ImagePlus className="h-6 w-6" />
               </div>
               <p className="mt-4 font-medium text-slate-950">Drop property photos here</p>
               <p className="mt-1 text-sm text-slate-500">JPG, PNG or WebP. Use real society/property images.</p>
-              <label className="mt-4 inline-flex cursor-pointer items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="mt-4 rounded-full border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              >
                 <UploadCloud className="mr-2 h-4 w-4" /> Upload Images
-                <input type="file" accept="image/*" multiple onChange={handleImages} className="hidden" />
-              </label>
+              </Button>
+              <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImages} className="hidden" />
             </div>
 
             {property.images.length ? (
@@ -292,7 +342,7 @@ export function AdminPropertyFormPage() {
                 {property.images.map((image) => (
                   <div key={image} className="group relative overflow-hidden rounded-2xl border border-slate-200">
                     <img src={image} alt="Property preview" className="h-28 w-full object-cover" />
-                    <button type="button" onClick={() => removeImage(image)} className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-sm opacity-0 transition-opacity group-hover:opacity-100">
+                    <button type="button" aria-label="Remove image" onClick={() => removeImage(image)} className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-sm opacity-0 transition-opacity group-hover:opacity-100">
                       <X className="h-4 w-4" />
                     </button>
                   </div>
