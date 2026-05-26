@@ -1,188 +1,227 @@
-import { useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, ImagePlus, Save } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, FileText, ImagePlus, Save, UploadCloud, X } from 'lucide-react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import {
+  AdminSociety,
+  createEmptyAdminSociety,
+  getAdminSociety,
+  slugifySociety,
+  societyAmenityOptions,
+  upsertAdminSociety,
+} from '@/lib/adminSocietyStore';
 
-const existingSocieties = [
-  {
-    id: 'dlf-crest',
-    name: 'DLF Crest',
-    slug: 'dlf-crest',
-    builder: 'DLF',
-    locality: 'Sector 54',
-    sector: 'Sector 54',
-    score: '9.1',
-    status: 'Verified',
-    featured: true,
-    latitude: '28.4421',
-    longitude: '77.1057',
-    rentRange: '₹55K - ₹90K',
-    buyRange: '₹5Cr - ₹7.5Cr',
-    description: 'Premium Golf Course Road society with strong maintenance, luxury amenities and high tenant demand.',
-    amenities: 'Clubhouse, Swimming Pool, Gym, Security, Power Backup, Visitor Parking',
-  },
-  {
-    id: 'dlf-park-place',
-    name: 'DLF Park Place',
-    slug: 'dlf-park-place',
-    builder: 'DLF',
-    locality: 'Golf Course Road',
-    sector: 'Sector 54',
-    score: '8.9',
-    status: 'Verified',
-    featured: true,
-    latitude: '28.4414',
-    longitude: '77.1068',
-    rentRange: '₹60K - ₹1.2L',
-    buyRange: '₹6.5Cr - ₹9Cr',
-    description: 'Established luxury community with high livability and excellent connectivity.',
-    amenities: 'Clubhouse, Pool, Landscaped Greens, Security, Maintenance, Sports Courts',
-  },
-];
-
-const emptySociety = {
-  name: '',
-  slug: '',
-  builder: '',
-  locality: '',
-  sector: '',
-  score: '8.5',
-  status: 'Draft',
-  featured: false,
-  latitude: '',
-  longitude: '',
-  rentRange: '',
-  buyRange: '',
-  description: '',
-  amenities: '',
-};
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+function getInitialSociety(id: string | undefined): AdminSociety {
+  if (id) {
+    const existing = getAdminSociety(id);
+    if (existing) return existing;
+  }
+  return createEmptyAdminSociety();
 }
 
 export function AdminSocietyFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const mode = id ? 'edit' : 'new';
-
-  const initialData = useMemo(() => {
-    if (!id) return emptySociety;
-    return existingSocieties.find((society) => society.id === id) ?? emptySociety;
-  }, [id]);
-
-  const [form, setForm] = useState(initialData);
+  const isEdit = Boolean(id);
+  const [society, setSociety] = useState<AdminSociety>(() => getInitialSociety(id));
+  const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
 
-  const updateField = (field: keyof typeof form, value: string | boolean) => {
-    setForm((current) => ({
+  useEffect(() => {
+    setSociety(getInitialSociety(id));
+  }, [id]);
+
+  const updateField = <K extends keyof AdminSociety>(field: K, value: AdminSociety[K]) => {
+    setSociety((current) => ({
       ...current,
       [field]: value,
-      ...(field === 'name' && mode === 'new' ? { slug: slugify(String(value)) } : {}),
+      ...(field === 'name' && !isEdit ? { slug: slugifySociety(String(value)) } : {}),
     }));
+    setError('');
+    setSaved(false);
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const toggleAmenity = (amenity: string, checked: boolean | 'indeterminate') => {
+    setSociety((current) => {
+      const enabled = checked === true;
+      const amenities = enabled
+        ? Array.from(new Set([...current.amenities, amenity]))
+        : current.amenities.filter((item) => item !== amenity);
+      return { ...current, amenities };
+    });
+  };
+
+  const readImages = async (event: ChangeEvent<HTMLInputElement>, target: 'coverImage' | 'galleryImages') => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    const images = await Promise.all(files.map((file) => new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    })));
+
+    setSociety((current) => target === 'coverImage'
+      ? { ...current, coverImage: images[0] }
+      : { ...current, galleryImages: [...current.galleryImages, ...images].slice(0, 10) }
+    );
+    event.target.value = '';
+  };
+
+  const removeGalleryImage = (image: string) => {
+    setSociety((current) => ({ ...current, galleryImages: current.galleryImages.filter((item) => item !== image) }));
+  };
+
+  const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
+    if (!society.name.trim()) {
+      setError('Society name is required.');
+      return;
+    }
+    if (!society.slug.trim()) {
+      setError('SEO slug is required.');
+      return;
+    }
+    if (!society.locality.trim() && !society.sector.trim()) {
+      setError('Add at least one location field: sector or locality.');
+      return;
+    }
+
+    upsertAdminSociety(society);
     setSaved(true);
-    window.setTimeout(() => navigate('/admin/societies'), 800);
+    window.alert(isEdit ? 'Society profile updated.' : 'Society profile created.');
+    navigate('/admin/societies');
   };
 
   return (
     <AdminLayout
-      title={mode === 'edit' ? 'Edit society' : 'Add society'}
-      subtitle={mode === 'edit' ? 'Update society intelligence and public page details' : 'Create a new society intelligence profile'}
+      title={isEdit ? 'Edit society' : 'Add society'}
+      subtitle={isEdit ? 'Update society intelligence, media, SEO and public profile settings' : 'Create a complete society intelligence profile'}
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Button variant="outline" className="w-fit rounded-full" asChild>
             <Link to="/admin/societies"><ArrowLeft className="mr-2 h-4 w-4" /> Back to societies</Link>
           </Button>
-          <Button type="submit" className="rounded-full bg-blue-600 hover:bg-blue-700">
-            <Save className="mr-2 h-4 w-4" /> {mode === 'edit' ? 'Save changes' : 'Create society'}
+          <Button type="submit" className="rounded-full bg-blue-600 px-5 hover:bg-blue-700">
+            <Save className="mr-2 h-4 w-4" /> {isEdit ? 'Save changes' : 'Create society'}
           </Button>
         </div>
 
-        {saved && (
-          <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
-            <CheckCircle2 className="h-5 w-5" /> Society saved locally. API connection comes in the next backend phase.
-          </div>
-        )}
+        {error ? (
+          <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{error}</div>
+        ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        {saved ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            <CheckCircle2 className="h-5 w-5" /> Society saved locally. Backend API connection comes in the next phase.
+          </div>
+        ) : null}
+
+        <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
           <div className="space-y-6">
             <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-slate-950">Basic information</h2>
               <p className="mt-1 text-sm text-slate-500">These details appear on the public society profile.</p>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className="mt-6 grid gap-5 md:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-slate-700">Society name</span>
-                  <Input value={form.name} onChange={(event) => updateField('name', event.target.value)} placeholder="DLF Crest" className="rounded-2xl" />
+                  <Input value={society.name} onChange={(event) => updateField('name', event.target.value)} placeholder="DLF Crest" className="h-12 rounded-2xl" />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-slate-700">URL slug</span>
-                  <Input value={form.slug} onChange={(event) => updateField('slug', event.target.value)} placeholder="dlf-crest" className="rounded-2xl" />
+                  <span className="text-sm font-medium text-slate-700">SEO slug</span>
+                  <Input value={society.slug} onChange={(event) => updateField('slug', event.target.value)} placeholder="dlf-crest" className="h-12 rounded-2xl" />
                 </label>
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-slate-700">Builder</span>
-                  <Input value={form.builder} onChange={(event) => updateField('builder', event.target.value)} placeholder="DLF" className="rounded-2xl" />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-slate-700">Locality</span>
-                  <Input value={form.locality} onChange={(event) => updateField('locality', event.target.value)} placeholder="Golf Course Road" className="rounded-2xl" />
+                  <Input value={society.builder} onChange={(event) => updateField('builder', event.target.value)} placeholder="DLF" className="h-12 rounded-2xl" />
                 </label>
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-slate-700">Sector</span>
-                  <Input value={form.sector} onChange={(event) => updateField('sector', event.target.value)} placeholder="Sector 54" className="rounded-2xl" />
+                  <Input value={society.sector} onChange={(event) => updateField('sector', event.target.value)} placeholder="Sector 54" className="h-12 rounded-2xl" />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-slate-700">Society score</span>
-                  <Input value={form.score} onChange={(event) => updateField('score', event.target.value)} placeholder="9.1" className="rounded-2xl" />
+                  <span className="text-sm font-medium text-slate-700">Locality</span>
+                  <Input value={society.locality} onChange={(event) => updateField('locality', event.target.value)} placeholder="Golf Course Road" className="h-12 rounded-2xl" />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-slate-700">Year built</span>
+                  <Input value={society.yearBuilt} onChange={(event) => updateField('yearBuilt', event.target.value)} placeholder="2018" className="h-12 rounded-2xl" />
+                </label>
+                <label className="md:col-span-2 space-y-2">
+                  <span className="text-sm font-medium text-slate-700">Address</span>
+                  <Input value={society.address} onChange={(event) => updateField('address', event.target.value)} placeholder="Full society address" className="h-12 rounded-2xl" />
+                </label>
+                <label className="md:col-span-2 space-y-2">
+                  <span className="text-sm font-medium text-slate-700">Description</span>
+                  <textarea value={society.description} onChange={(event) => updateField('description', event.target.value)} placeholder="Write a concise society overview..." className="min-h-32 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100" />
                 </label>
               </div>
             </section>
 
             <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-slate-950">Market positioning</h2>
-              <p className="mt-1 text-sm text-slate-500">Rent, resale and intelligence copy for the profile page.</p>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-slate-700">Rent range</span>
-                  <Input value={form.rentRange} onChange={(event) => updateField('rentRange', event.target.value)} placeholder="₹55K - ₹90K" className="rounded-2xl" />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-slate-700">Buy range</span>
-                  <Input value={form.buyRange} onChange={(event) => updateField('buyRange', event.target.value)} placeholder="₹5Cr - ₹7.5Cr" className="rounded-2xl" />
-                </label>
+              <h2 className="text-lg font-semibold text-slate-950">Society statistics</h2>
+              <p className="mt-1 text-sm text-slate-500">Useful for public profile, market intelligence and SEO pages.</p>
+              <div className="mt-6 grid gap-5 md:grid-cols-3">
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Total towers</span><Input value={society.totalTowers} onChange={(event) => updateField('totalTowers', event.target.value)} placeholder="6" className="h-12 rounded-2xl" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Total units</span><Input value={society.totalUnits} onChange={(event) => updateField('totalUnits', event.target.value)} placeholder="765" className="h-12 rounded-2xl" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Maintenance</span><Input value={society.maintenanceCharges} onChange={(event) => updateField('maintenanceCharges', event.target.value)} placeholder="₹11-14/sqft" className="h-12 rounded-2xl" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Rent range</span><Input value={society.rentRange} onChange={(event) => updateField('rentRange', event.target.value)} placeholder="₹75K - ₹1.8L" className="h-12 rounded-2xl" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Buy range</span><Input value={society.buyRange} onChange={(event) => updateField('buyRange', event.target.value)} placeholder="₹5Cr - ₹8.5Cr" className="h-12 rounded-2xl" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Rental yield</span><Input value={society.rentalYield} onChange={(event) => updateField('rentalYield', event.target.value)} placeholder="2.4%" className="h-12 rounded-2xl" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Average rent</span><Input value={society.averageRent} onChange={(event) => updateField('averageRent', event.target.value)} placeholder="₹1.15L" className="h-12 rounded-2xl" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Average sale price</span><Input value={society.averageSalePrice} onChange={(event) => updateField('averageSalePrice', event.target.value)} placeholder="₹6.8Cr" className="h-12 rounded-2xl" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Price / sq ft</span><Input value={society.pricePerSqft} onChange={(event) => updateField('pricePerSqft', event.target.value)} placeholder="₹27,500" className="h-12 rounded-2xl" /></label>
               </div>
+            </section>
 
-              <label className="mt-4 block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Description</span>
-                <textarea
-                  value={form.description}
-                  onChange={(event) => updateField('description', event.target.value)}
-                  placeholder="Write a concise society overview..."
-                  className="min-h-32 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
+            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-950">Society score</h2>
+              <div className="mt-6 grid gap-5 md:grid-cols-3">
+                {([
+                  ['score', 'Overall'], ['securityScore', 'Security'], ['maintenanceScore', 'Maintenance'],
+                  ['connectivityScore', 'Connectivity'], ['lifestyleScore', 'Lifestyle'], ['investmentScore', 'Investment'],
+                ] as const).map(([key, label]) => (
+                  <label key={key} className="space-y-2">
+                    <span className="text-sm font-medium text-slate-700">{label} score</span>
+                    <Input value={society[key]} onChange={(event) => updateField(key, event.target.value)} placeholder="8.5" className="h-12 rounded-2xl" />
+                  </label>
+                ))}
+              </div>
+            </section>
 
-              <label className="mt-4 block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Amenities</span>
-                <textarea
-                  value={form.amenities}
-                  onChange={(event) => updateField('amenities', event.target.value)}
-                  placeholder="Clubhouse, Pool, Gym, Security..."
-                  className="min-h-24 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
+            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-950">Amenities manager</h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {societyAmenityOptions.map((item) => (
+                  <label key={item} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    <Checkbox checked={society.amenities.includes(item)} onCheckedChange={(checked) => toggleAmenity(item, checked)} /> {item}
+                  </label>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-950">Nearby intelligence</h2>
+              <div className="mt-6 grid gap-5 md:grid-cols-2">
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Nearby schools</span><textarea value={society.nearbySchools} onChange={(event) => updateField('nearbySchools', event.target.value)} className="min-h-24 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Nearby metro</span><textarea value={society.nearbyMetro} onChange={(event) => updateField('nearbyMetro', event.target.value)} className="min-h-24 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Nearby hospitals</span><textarea value={society.nearbyHospitals} onChange={(event) => updateField('nearbyHospitals', event.target.value)} className="min-h-24 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Nearby office hubs</span><textarea value={society.nearbyOfficeHubs} onChange={(event) => updateField('nearbyOfficeHubs', event.target.value)} className="min-h-24 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100" /></label>
+              </div>
+            </section>
+
+            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-950">SEO & FAQ</h2>
+              <div className="mt-6 grid gap-5">
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Meta title</span><Input value={society.metaTitle} onChange={(event) => updateField('metaTitle', event.target.value)} placeholder="DLF Crest Gurgaon - Rent, Sale Price, Reviews & Society Score" className="h-12 rounded-2xl" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Meta description</span><textarea value={society.metaDescription} onChange={(event) => updateField('metaDescription', event.target.value)} className="min-h-24 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">FAQ content</span><textarea value={society.faq} onChange={(event) => updateField('faq', event.target.value)} placeholder="One question/answer per line" className="min-h-28 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100" /></label>
+              </div>
             </section>
           </div>
 
@@ -192,53 +231,62 @@ export function AdminSocietyFormPage() {
               <div className="mt-5 space-y-4">
                 <label className="space-y-2 block">
                   <span className="text-sm font-medium text-slate-700">Status</span>
-                  <select
-                    value={form.status}
-                    onChange={(event) => updateField('status', event.target.value)}
-                    className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
-                  >
-                    <option>Draft</option>
-                    <option>Verified</option>
-                    <option>Premium</option>
+                  <select value={society.status} onChange={(event) => updateField('status', event.target.value as AdminSociety['status'])} className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
+                    <option>Draft</option><option>Verified</option><option>Premium</option><option>Archived</option>
                   </select>
                 </label>
-
-                <label className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3">
-                  <span>
-                    <span className="block text-sm font-medium text-slate-700">Featured society</span>
-                    <span className="text-xs text-slate-500">Show on homepage carousel</span>
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={form.featured}
-                    onChange={(event) => updateField('featured', event.target.checked)}
-                    className="h-5 w-5 rounded border-slate-300 text-blue-600"
-                  />
-                </label>
+                {([
+                  ['featured', 'Featured society', 'Show on homepage and society carousel'],
+                  ['showInHero', 'Promote in hero', 'Use in hero search suggestions'],
+                  ['searchBoost', 'Boost in search', 'Prioritize in internal search'],
+                ] as const).map(([key, title, text]) => (
+                  <label key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4">
+                    <Checkbox checked={society[key]} onCheckedChange={(checked) => updateField(key, checked === true)} />
+                    <span><span className="block text-sm font-medium text-slate-950">{title}</span><span className="text-sm text-slate-500">{text}</span></span>
+                  </label>
+                ))}
               </div>
             </section>
 
             <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-slate-950">Location</h2>
+              <h2 className="text-lg font-semibold text-slate-950">Location map</h2>
               <div className="mt-5 grid gap-4">
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-slate-700">Latitude</span>
-                  <Input value={form.latitude} onChange={(event) => updateField('latitude', event.target.value)} placeholder="28.4421" className="rounded-2xl" />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-slate-700">Longitude</span>
-                  <Input value={form.longitude} onChange={(event) => updateField('longitude', event.target.value)} placeholder="77.1057" className="rounded-2xl" />
-                </label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Latitude</span><Input value={society.latitude} onChange={(event) => updateField('latitude', event.target.value)} placeholder="28.4421" className="h-12 rounded-2xl" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Longitude</span><Input value={society.longitude} onChange={(event) => updateField('longitude', event.target.value)} placeholder="77.1057" className="h-12 rounded-2xl" /></label>
+                <label className="space-y-2"><span className="text-sm font-medium text-slate-700">RWA / Estate contact</span><Input value={society.rwaContact} onChange={(event) => updateField('rwaContact', event.target.value)} placeholder="Estate Office" className="h-12 rounded-2xl" /></label>
               </div>
             </section>
 
-            <section className="rounded-[32px] border border-dashed border-slate-300 bg-white p-6 text-center shadow-sm">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                <ImagePlus className="h-6 w-6" />
-              </div>
-              <h2 className="mt-4 text-lg font-semibold text-slate-950">Images</h2>
-              <p className="mt-1 text-sm text-slate-500">Cover image and gallery upload will connect to storage in the backend phase.</p>
-              <Button type="button" variant="outline" className="mt-5 rounded-full">Upload placeholder</Button>
+            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-950">Media gallery</h2>
+              <p className="mt-1 text-sm text-slate-500">Stored locally in Phase 4. Connect Cloudinary/S3 later.</p>
+              <label className="mt-5 flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-6 text-center hover:bg-slate-100">
+                {society.coverImage ? <img src={society.coverImage} className="h-32 w-full rounded-2xl object-cover" /> : <><ImagePlus className="h-7 w-7 text-blue-600" /><p className="mt-3 font-medium text-slate-950">Upload cover image</p></>}
+                <input type="file" accept="image/*" onChange={(event) => readImages(event, 'coverImage')} className="hidden" />
+              </label>
+              <label className="mt-4 inline-flex cursor-pointer items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <UploadCloud className="mr-2 h-4 w-4" /> Add gallery images
+                <input type="file" accept="image/*" multiple onChange={(event) => readImages(event, 'galleryImages')} className="hidden" />
+              </label>
+              {society.galleryImages.length ? (
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  {society.galleryImages.map((image) => (
+                    <div key={image} className="group relative overflow-hidden rounded-2xl border border-slate-200">
+                      <img src={image} className="h-24 w-full object-cover" />
+                      <button type="button" onClick={() => removeGalleryImage(image)} className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-sm opacity-0 transition group-hover:opacity-100"><X className="h-4 w-4" /></button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </section>
+
+            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-950">Brochure / master plan</h2>
+              <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-600 hover:bg-slate-100">
+                <FileText className="h-5 w-5 text-blue-600" />
+                <span>{society.brochureName || 'Upload PDF brochure or master plan'}</span>
+                <input type="file" accept="application/pdf" onChange={(event) => updateField('brochureName', event.target.files?.[0]?.name || '')} className="hidden" />
+              </label>
             </section>
           </aside>
         </div>
