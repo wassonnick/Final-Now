@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/layout/Navbar';
@@ -13,6 +13,14 @@ import { InsightsPage } from '@/pages/InsightsPage';
 import { OwnerDashboard } from '@/pages/OwnerDashboard';
 import { LoginPage } from '@/pages/LoginPage';
 import { SellPage } from '@/pages/SellPage';
+import { AdminLoginPage } from '@/pages/admin/AdminLoginPage';
+import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
+import { AdminSocietiesPage } from '@/pages/admin/AdminSocietiesPage';
+import { AdminPropertiesPage } from '@/pages/admin/AdminPropertiesPage';
+import { AdminLeadsPage } from '@/pages/admin/AdminLeadsPage';
+import { AdminReviewsPage } from '@/pages/admin/AdminReviewsPage';
+import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
+import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,28 +31,46 @@ const queryClient = new QueryClient({
   },
 });
 
+function AppShell() {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
+
+  return (
+    <div className="min-h-screen bg-ivory-100 flex flex-col">
+      {!isAdmin && <Navbar />}
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/society/:slug" element={<SocietyPage />} />
+          <Route path="/property/:slug" element={<PropertyPage />} />
+          <Route path="/compare" element={<ComparePage />} />
+          <Route path="/ai-advisor" element={<AIAdvisorPage />} />
+          <Route path="/insights" element={<InsightsPage />} />
+          <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+          <Route path="/sell" element={<SellPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/societies" element={<AdminSocietiesPage />} />
+          <Route path="/admin/properties" element={<AdminPropertiesPage />} />
+          <Route path="/admin/leads" element={<AdminLeadsPage />} />
+          <Route path="/admin/reviews" element={<AdminReviewsPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/settings" element={<AdminSettingsPage />} />
+        </Routes>
+      </main>
+      {!isAdmin && <Footer />}
+    </div>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="min-h-screen bg-ivory-100 flex flex-col">
-          <Navbar />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/search" element={<SearchPage />} />
-              <Route path="/society/:slug" element={<SocietyPage />} />
-              <Route path="/property/:slug" element={<PropertyPage />} />
-              <Route path="/compare" element={<ComparePage />} />
-              <Route path="/ai-advisor" element={<AIAdvisorPage />} />
-              <Route path="/insights" element={<InsightsPage />} />
-              <Route path="/owner/dashboard" element={<OwnerDashboard />} />
-              <Route path="/sell" element={<SellPage />} />
-              <Route path="/login" element={<LoginPage />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+        <AppShell />
       </BrowserRouter>
       <Toaster />
     </QueryClientProvider>
