@@ -10,81 +10,74 @@ export function HeroSearch() {
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
 
-  const handleSearch = (value?: string) => {
-    const searchValue = (value ?? query).trim();
+  const handleSearch = () => {
     const params = new URLSearchParams();
     params.set('tab', 'societies');
-    if (searchValue) params.set('q', searchValue);
+    if (query.trim()) params.set('q', query.trim());
+    navigate(`/search?${params.toString()}`);
+  };
+
+  const handleExample = (example: string) => {
+    setQuery(example);
+    const params = new URLSearchParams();
+    params.set('tab', 'societies');
+    params.set('q', example);
     navigate(`/search?${params.toString()}`);
   };
 
   return (
     <section className="relative overflow-hidden bg-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,#EEF4FF_0%,transparent_35%),linear-gradient(180deg,#FFFFFF_0%,#F8FBFF_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,#EEF4FF_0%,transparent_42%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]" />
 
-      <div className="relative container mx-auto px-4 pt-20 pb-16 md:pt-28 md:pb-24">
-        <div className="mx-auto max-w-6xl text-center">
-          <div className="mb-7 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">
-            <Sparkles className="h-3.5 w-3.5" /> Society-first marketplace
+      <div className="relative container mx-auto px-4 pt-16 pb-20 md:pt-24 md:pb-24">
+        <div className="mx-auto max-w-5xl text-center">
+          <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 text-blue-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] mb-7">
+            <Sparkles className="w-3.5 h-3.5" /> Society-first marketplace
           </div>
 
-          <h1 className="mx-auto max-w-5xl text-balance text-5xl font-bold leading-[0.95] tracking-[-0.045em] text-navy-900 md:text-7xl lg:text-8xl">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.06] tracking-[-0.045em] text-slate-950 text-balance">
             Discover Better Societies.
             <span className="block text-blue-600">Find Better Homes.</span>
           </h1>
 
-          <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-navy-500 md:text-xl">
+          <p className="mx-auto mt-6 max-w-2xl text-base md:text-lg leading-relaxed text-slate-600">
             Verified societies, real inventory, resident reviews and market intelligence built around how people actually choose where to live.
           </p>
 
-          <div className="mx-auto mt-12 max-w-6xl rounded-[2rem] border border-slate-200 bg-white/95 p-3 shadow-[0_28px_80px_rgba(15,23,42,0.10)] backdrop-blur md:rounded-full md:p-3">
+          <div className="mx-auto mt-10 max-w-6xl rounded-[2rem] md:rounded-full border border-slate-200 bg-white p-3 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
             <div className="flex flex-col gap-3 md:flex-row md:items-center">
               <div className="relative flex-1">
-                <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder="Search society, locality, builder or ask anything..."
-                  className="h-16 rounded-[1.35rem] border-0 bg-transparent pl-13 pr-4 text-base text-navy-900 shadow-none outline-none placeholder:text-slate-400 focus-visible:ring-0 md:h-18 md:text-lg"
+                  className="h-14 md:h-16 rounded-full border-0 bg-transparent pl-14 pr-4 text-base md:text-lg text-slate-900 placeholder:text-slate-400 shadow-none focus-visible:ring-0"
                 />
               </div>
 
               <Button
-                onClick={() => handleSearch()}
+                onClick={handleSearch}
                 size="lg"
-                className="h-16 rounded-[1.35rem] bg-blue-600 px-9 text-base font-semibold text-white shadow-sm hover:bg-blue-700 md:h-18 md:rounded-full md:px-11"
+                className="h-14 md:h-16 rounded-full bg-blue-600 hover:bg-blue-700 px-8 md:px-10 text-white text-base font-semibold shadow-sm"
               >
                 Search Societies <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-2 px-2 pb-1 pt-4 md:justify-start md:px-5">
-              <span className="mr-1 text-sm text-navy-400">Popular searches:</span>
-              {examples.map((example) => (
-                <button
-                  key={example}
-                  onClick={() => {
-                    setQuery(example);
-                    handleSearch(example);
-                  }}
-                  className="rounded-full bg-slate-100 px-4 py-2 text-sm text-navy-600 transition-colors hover:bg-blue-50 hover:text-blue-600"
-                >
-                  {example}
-                </button>
-              ))}
-            </div>
           </div>
-        </div>
 
-        <div className="mx-auto mt-14 max-w-7xl overflow-hidden rounded-[2rem] border border-white bg-white shadow-[0_30px_90px_rgba(15,23,42,0.12)] md:rounded-[2.5rem]">
-          <div className="relative h-[300px] md:h-[430px] lg:h-[520px]">
-            <img
-              src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1800&q=90"
-              alt="Premium residential society landscape"
-              className="h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-white/35 via-white/0 to-white/10" />
+          <div className="mx-auto mt-6 flex max-w-4xl flex-wrap items-center justify-center gap-2.5 text-sm text-slate-500">
+            <span className="mr-1">Popular searches:</span>
+            {examples.map((example) => (
+              <button
+                key={example}
+                onClick={() => handleExample(example)}
+                className="rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm text-blue-600 shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+              >
+                {example}
+              </button>
+            ))}
           </div>
         </div>
       </div>
