@@ -67,6 +67,9 @@ function AppShell() {
           <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
+          <Route path="/search/" element={<SearchPage />} />
+         <Route path="/admin/properties/new/" element={<AdminPropertyFormPage />} />
+         <Route path="/admin/properties/:id/edit/" element={<AdminPropertyFormPage />} />
         </Routes>
       </main>
       {!isAdmin && <Footer />}
