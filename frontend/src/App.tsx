@@ -20,6 +20,7 @@ import { AdminSocietyFormPage } from '@/pages/admin/AdminSocietyFormPage';
 import { AdminPropertiesPage } from '@/pages/admin/AdminPropertiesPage';
 import { AdminPropertyFormPage } from '@/pages/admin/AdminPropertyFormPage';
 import { AdminLeadsPage } from '@/pages/admin/AdminLeadsPage';
+import { AdminLeadDetailPage } from '@/pages/admin/AdminLeadDetailPage';
 import { AdminReviewsPage } from '@/pages/admin/AdminReviewsPage';
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
@@ -62,6 +63,7 @@ function AppShell() {
           <Route path="/admin/properties/new" element={<AdminPropertyFormPage />} />
           <Route path="/admin/properties/:id/edit" element={<AdminPropertyFormPage />} />
           <Route path="/admin/leads" element={<AdminLeadsPage />} />
+          <Route path="/admin/leads/:id" element={<AdminLeadDetailPage />} />
           <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
