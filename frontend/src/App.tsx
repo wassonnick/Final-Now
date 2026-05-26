@@ -18,6 +18,7 @@ import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminSocietiesPage } from '@/pages/admin/AdminSocietiesPage';
 import { AdminSocietyFormPage } from '@/pages/admin/AdminSocietyFormPage';
 import { AdminPropertiesPage } from '@/pages/admin/AdminPropertiesPage';
+import { AdminPropertyFormPage } from '@/pages/admin/AdminPropertyFormPage';
 import { AdminLeadsPage } from '@/pages/admin/AdminLeadsPage';
 import { AdminReviewsPage } from '@/pages/admin/AdminReviewsPage';
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
@@ -58,6 +59,8 @@ function AppShell() {
           <Route path="/admin/societies/new" element={<AdminSocietyFormPage />} />
           <Route path="/admin/societies/:id/edit" element={<AdminSocietyFormPage />} />
           <Route path="/admin/properties" element={<AdminPropertiesPage />} />
+          <Route path="/admin/properties/new" element={<AdminPropertyFormPage />} />
+          <Route path="/admin/properties/:id/edit" element={<AdminPropertyFormPage />} />
           <Route path="/admin/leads" element={<AdminLeadsPage />} />
           <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
