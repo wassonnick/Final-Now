@@ -31,15 +31,18 @@ class PropertyController extends Controller
             $query->where('furnished_status', $request->furnished);
         }
 
-        $properties = $query->paginate(20);
+        if ($request->boolean('featured')) {
+            $query->where('featured', true);
+        }
 
-        return response()->json($properties);
+        return response()->json($query->latest()->paginate((int) $request->query('per_page', 20)));
     }
 
-    public function show(string $slug): JsonResponse
+    public function show(string $slugOrId): JsonResponse
     {
         $property = Property::with(['society.builder', 'society.locality'])
-            ->where('slug', $slug)
+            ->where('slug', $slugOrId)
+            ->orWhere('id', $slugOrId)
             ->firstOrFail();
 
         $property->increment('view_count');
@@ -49,9 +52,11 @@ class PropertyController extends Controller
 
     public function bySociety(string $societyId): JsonResponse
     {
-        $properties = Property::where('society_id', $societyId)
+        $properties = Property::with(['society'])
+            ->where('society_id', $societyId)
             ->where('status', 'active')
             ->where('is_available', true)
+            ->latest()
             ->get();
 
         return response()->json($properties);
@@ -69,5 +74,15 @@ class PropertyController extends Controller
             ->get();
 
         return response()->json($similar);
+    }
+
+    public function shortlist(Request $request): JsonResponse
+    {
+        return response()->json(['message' => 'Shortlist persistence will be connected in the user module.'], 202);
+    }
+
+    public function getShortlist(Request $request): JsonResponse
+    {
+        return response()->json([]);
     }
 }
