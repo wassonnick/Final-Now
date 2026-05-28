@@ -144,7 +144,7 @@ export function AdminSocietiesPage() {
           </div>
 
           <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200">
-            <table className="w-full min-w-[1100px] text-left text-sm">
+            <table className="w-full min-w-[980px] text-left text-sm">
               <thead className="bg-slate-50 text-slate-500">
                 <tr>
                   <th className="px-5 py-4 font-medium">Society</th>
@@ -153,14 +153,13 @@ export function AdminSocietiesPage() {
                   <th className="px-5 py-4 font-medium"><span className="inline-flex items-center gap-1">Score <ArrowUpDown className="h-3.5 w-3.5" /></span></th>
                   <th className="px-5 py-4 font-medium">Market</th>
                   <th className="px-5 py-4 font-medium">Status</th>
-                  <th className="px-5 py-4 font-medium">Homepage</th>
                   <th className="px-5 py-4 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="px-5 py-12 text-center font-medium text-slate-950">
+                    <td colSpan={7} className="px-5 py-12 text-center font-medium text-slate-950">
                       Loading societies...
                     </td>
                   </tr>
@@ -171,6 +170,14 @@ export function AdminSocietiesPage() {
                     <td className="px-5 py-4">
                       <div className="font-semibold text-slate-950">{item.name}</div>
                       <div className="mt-1 text-xs text-slate-500">/{item.slug}</div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" className="h-8 rounded-full px-3" asChild>
+                          <Link to={`/society/${item.slug}`}><Eye className="mr-1.5 h-3.5 w-3.5" /> View</Link>
+                        </Button>
+                        <Button variant="outline" size="sm" className="h-8 rounded-full px-3" asChild>
+                          <Link to={`/admin/societies/${item.slug || item.id}/edit`}><Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit</Link>
+                        </Button>
+                      </div>
                     </td>
                     <td className="px-5 py-4 text-slate-600">{item.builder || '—'}</td>
                     <td className="px-5 py-4 text-slate-600">
@@ -200,9 +207,7 @@ export function AdminSocietiesPage() {
                         {item.featured ? <Star className="h-4 w-4 fill-blue-500 text-blue-500" /> : <Star className="h-4 w-4" />}
                         {item.coverImage ? <Image className="h-4 w-4 text-emerald-600" /> : <Image className="h-4 w-4" />}
                       </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex justify-end gap-2">
+                      <div className="mt-3 flex justify-end gap-2">
                         <Button variant="outline" size="sm" className="rounded-full" asChild>
                           <Link to={`/society/${item.slug}`}><Eye className="mr-1.5 h-3.5 w-3.5" /> View</Link>
                         </Button>
@@ -225,7 +230,7 @@ export function AdminSocietiesPage() {
 
                 {!loading && filteredSocieties.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-5 py-12 text-center">
+                    <td colSpan={7} className="px-5 py-12 text-center">
                       <p className="font-medium text-slate-950">No societies found</p>
                       <p className="mt-1 text-sm text-slate-500">Try changing filters or create a new society profile.</p>
                     </td>
