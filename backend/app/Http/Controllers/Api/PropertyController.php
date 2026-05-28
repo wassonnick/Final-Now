@@ -1,88 +1,16 @@
 <?php
-
 namespace App\Http\Controllers\Api;
-
 use App\Http\Controllers\Controller;
 use App\Models\Property;
-use Illuminate\Http\Request;
+use App\Models\Society;
 use Illuminate\Http\JsonResponse;
-
-class PropertyController extends Controller
-{
-    public function index(Request $request): JsonResponse
-    {
-        $query = Property::with(['society.builder', 'society.locality'])
-            ->where('status', 'active')
-            ->where('is_available', true);
-
-        if ($request->has('society_id')) {
-            $query->where('society_id', $request->society_id);
-        }
-
-        if ($request->has('bhk')) {
-            $query->where('bhk', $request->bhk);
-        }
-
-        if ($request->has('budgetMin') && $request->has('budgetMax')) {
-            $query->whereBetween('rent_amount', [$request->budgetMin, $request->budgetMax]);
-        }
-
-        if ($request->has('furnished')) {
-            $query->where('furnished_status', $request->furnished);
-        }
-
-        if ($request->boolean('featured')) {
-            $query->where('featured', true);
-        }
-
-        return response()->json($query->latest()->paginate((int) $request->query('per_page', 20)));
-    }
-
-    public function show(string $slugOrId): JsonResponse
-    {
-        $property = Property::with(['society.builder', 'society.locality'])
-            ->where('slug', $slugOrId)
-            ->orWhere('id', $slugOrId)
-            ->firstOrFail();
-
-        $property->increment('view_count');
-
-        return response()->json($property);
-    }
-
-    public function bySociety(string $societyId): JsonResponse
-    {
-        $properties = Property::with(['society'])
-            ->where('society_id', $societyId)
-            ->where('status', 'active')
-            ->where('is_available', true)
-            ->latest()
-            ->get();
-
-        return response()->json($properties);
-    }
-
-    public function similar(string $id): JsonResponse
-    {
-        $property = Property::findOrFail($id);
-
-        $similar = Property::with(['society'])
-            ->where('id', '!=', $id)
-            ->where('bhk', $property->bhk)
-            ->whereBetween('rent_amount', [$property->rent_amount * 0.8, $property->rent_amount * 1.2])
-            ->limit(4)
-            ->get();
-
-        return response()->json($similar);
-    }
-
-    public function shortlist(Request $request): JsonResponse
-    {
-        return response()->json(['message' => 'Shortlist persistence will be connected in the user module.'], 202);
-    }
-
-    public function getShortlist(Request $request): JsonResponse
-    {
-        return response()->json([]);
-    }
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+class PropertyController extends Controller {
+  public function index(Request $request): JsonResponse { $q=Property::query()->with('society'); if($request->filled('q')){ $term=$request->string('q'); $q->where(fn($b)=>$b->where('title','ilike',"%{$term}%")->orWhere('society','ilike',"%{$term}%")->orWhere('locality','ilike',"%{$term}%")->orWhere('listing_type','ilike',"%{$term}%")); } if($request->filled('listing_type')) $q->where('listing_type',$request->string('listing_type')); if($request->boolean('featured')) $q->where('featured',true); return response()->json(['status'=>'ok','data'=>$q->latest()->paginate($request->integer('per_page',24))]); }
+  public function show(string $idOrSlug): JsonResponse { return response()->json(['status'=>'ok','data'=>Property::where('id',$idOrSlug)->orWhere('slug',$idOrSlug)->with('society')->firstOrFail()]); }
+  public function store(Request $request): JsonResponse { $p=$this->payload($request); $p['slug']=$p['slug']??Str::slug($p['title']).'-'.Str::random(5); if(!empty($p['society'])&&empty($p['society_id'])) $p['society_id']=Society::where('name',$p['society'])->value('id'); $property=Property::create($p); return response()->json(['status'=>'ok','message'=>'Property created successfully.','data'=>$property],201); }
+  public function update(Request $request, Property $property): JsonResponse { $p=$this->payload($request,true); if(!empty($p['society'])&&empty($p['society_id'])) $p['society_id']=Society::where('name',$p['society'])->value('id'); $property->update($p); return response()->json(['status'=>'ok','message'=>'Property updated successfully.','data'=>$property]); }
+  public function destroy(Property $property): JsonResponse { $property->delete(); return response()->json(['status'=>'ok','message'=>'Property deleted successfully.']); }
+  private function payload(Request $r,bool $partial=false):array { $req=$partial?'sometimes':'required'; return $r->validate(['society_id'=>'nullable|exists:societies,id','title'=>"{$req}|string|max:255",'slug'=>'nullable|string|max:255','listing_type'=>'nullable|string|max:100','status'=>'nullable|string|max:100','society'=>'nullable|string|max:255','locality'=>'nullable|string|max:255','price'=>'nullable|string|max:100','security_deposit'=>'nullable|string|max:100','maintenance'=>'nullable|string|max:100','bedrooms'=>'nullable|string|max:50','bathrooms'=>'nullable|string|max:50','area_sqft'=>'nullable|string|max:100','floor'=>'nullable|string|max:100','facing'=>'nullable|string|max:100','furnished_status'=>'nullable|string|max:100','description'=>'nullable|string','amenities'=>'nullable|array','images'=>'nullable|array','featured'=>'nullable|boolean','verified'=>'nullable|boolean']); }
 }

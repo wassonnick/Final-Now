@@ -1,105 +1,20 @@
 <?php
-
 namespace App\Http\Controllers\Api;
-
 use App\Http\Controllers\Controller;
 use App\Models\Society;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-
-class SocietyController extends Controller
-{
-    public function index(Request $request): JsonResponse
-    {
-        $query = Society::with(['builder', 'locality'])
-            ->where('status', 'active');
-
-        // Apply filters
-        if ($request->has('locality')) {
-            $query->whereHas('locality', function ($q) use ($request) {
-                $q->where('slug', $request->locality);
-            });
-        }
-
-        if ($request->has('minScore')) {
-            $query->where('overall_score', '>=', $request->minScore);
-        }
-
-        if ($request->has('featured')) {
-            $query->where('featured', true);
-        }
-
-        // Sorting
-        $sortBy = $request->get('sortBy', 'recommended');
-        switch ($sortBy) {
-            case 'score_desc':
-                $query->orderBy('overall_score', 'desc');
-                break;
-            case 'reviews_desc':
-                $query->orderBy('review_count', 'desc');
-                break;
-            default:
-                $query->orderBy('featured', 'desc')
-                      ->orderBy('overall_score', 'desc');
-        }
-
-        $societies = $query->paginate(20);
-
-        return response()->json([
-            'data' => $societies->items(),
-            'meta' => [
-                'current_page' => $societies->currentPage(),
-                'last_page' => $societies->lastPage(),
-                'per_page' => $societies->perPage(),
-                'total' => $societies->total(),
-            ]
-        ]);
-    }
-
-    public function featured(): JsonResponse
-    {
-        $societies = Society::with(['builder', 'locality'])
-            ->where('status', 'active')
-            ->where('featured', true)
-            ->orderBy('overall_score', 'desc')
-            ->limit(8)
-            ->get();
-
-        return response()->json($societies);
-    }
-
-    public function show(string $slug): JsonResponse
-    {
-        $society = Society::with(['builder', 'locality', 'properties' => function ($q) {
-            $q->where('status', 'active')->where('is_available', true);
-        }])
-        ->where('slug', $slug)
-        ->firstOrFail();
-
-        // Increment view count
-        $society->increment('view_count');
-
-        return response()->json($society);
-    }
-
-    public function intelligence(string $id): JsonResponse
-    {
-        $society = Society::findOrFail($id);
-
-        return response()->json([
-            'score_breakdown' => $society->score_breakdown,
-            'intelligence_summary' => $society->intelligence_summary,
-        ]);
-    }
-
-    public function byLocality(string $id): JsonResponse
-    {
-        $societies = Society::with(['builder', 'locality'])
-            ->where('locality_id', $id)
-            ->where('status', 'active')
-            ->orderBy('overall_score', 'desc')
-            ->get();
-
-        return response()->json($societies);
-    }
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+class SocietyController extends Controller {
+  public function index(Request $request): JsonResponse {
+    $query=Society::query();
+    if($request->filled('q')){ $q=$request->string('q'); $query->where(fn($b)=>$b->where('name','ilike',"%{$q}%")->orWhere('locality','ilike',"%{$q}%")->orWhere('sector','ilike',"%{$q}%")->orWhere('builder','ilike',"%{$q}%")); }
+    if($request->boolean('featured')) $query->where('featured',true);
+    return response()->json(['status'=>'ok','data'=>$query->withCount('properties')->orderByDesc('featured')->orderByDesc('search_boost')->orderBy('name')->paginate($request->integer('per_page',24))]);
+  }
+  public function show(string $slug): JsonResponse { return response()->json(['status'=>'ok','data'=>Society::where('slug',$slug)->orWhere('id',$slug)->with('properties')->firstOrFail()]); }
+  public function store(Request $request): JsonResponse { $p=$this->payload($request); $p['slug']=$p['slug']??Str::slug($p['name']); $s=Society::create($p); return response()->json(['status'=>'ok','message'=>'Society created successfully.','data'=>$s],201); }
+  public function update(Request $request, Society $society): JsonResponse { $p=$this->payload($request,true); if(isset($p['name'])&&empty($p['slug'])) $p['slug']=Str::slug($p['name']); $society->update($p); return response()->json(['status'=>'ok','message'=>'Society updated successfully.','data'=>$society]); }
+  public function destroy(Society $society): JsonResponse { $society->delete(); return response()->json(['status'=>'ok','message'=>'Society deleted successfully.']); }
+  private function payload(Request $r,bool $partial=false): array { $req=$partial?'sometimes':'required'; return $r->validate(['name'=>"{$req}|string|max:255",'slug'=>'nullable|string|max:255','builder'=>'nullable|string|max:255','sector'=>'nullable|string|max:255','locality'=>'nullable|string|max:255','address'=>'nullable|string|max:500','description'=>'nullable|string','year_built'=>'nullable|string|max:50','total_towers'=>'nullable|string|max:50','total_units'=>'nullable|string|max:50','maintenance_charges'=>'nullable|string|max:100','rent_range'=>'nullable|string|max:100','buy_range'=>'nullable|string|max:100','rental_yield'=>'nullable|string|max:100','average_rent'=>'nullable|string|max:100','average_sale_price'=>'nullable|string|max:100','price_per_sqft'=>'nullable|string|max:100','score'=>'nullable|numeric|min:0|max:10','security_score'=>'nullable|numeric|min:0|max:10','maintenance_score'=>'nullable|numeric|min:0|max:10','connectivity_score'=>'nullable|numeric|min:0|max:10','lifestyle_score'=>'nullable|numeric|min:0|max:10','investment_score'=>'nullable|numeric|min:0|max:10','amenities'=>'nullable|array','nearby_schools'=>'nullable|string','nearby_metro'=>'nullable|string','nearby_hospitals'=>'nullable|string','nearby_office_hubs'=>'nullable|string','meta_title'=>'nullable|string|max:255','meta_description'=>'nullable|string','faq'=>'nullable|string','status'=>'nullable|string|max:100','featured'=>'nullable|boolean','show_in_hero'=>'nullable|boolean','search_boost'=>'nullable|boolean','latitude'=>'nullable|string|max:100','longitude'=>'nullable|string|max:100','rwa_contact'=>'nullable|string|max:255','cover_image'=>'nullable|string','gallery_images'=>'nullable|array','brochure_name'=>'nullable|string|max:255']); }
 }
