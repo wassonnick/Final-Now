@@ -9,20 +9,30 @@ use App\Models\Review;
 use App\Models\Society;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Schema;
 
 class AdminStatsController extends Controller
 {
     public function __invoke(): JsonResponse
     {
         return response()->json([
-            'societies' => Society::count(),
-            'featured_societies' => Society::where('featured', true)->count(),
-            'properties' => Property::count(),
-            'live_properties' => Property::where('status', 'Live')->count(),
-            'leads' => Lead::count(),
-            'new_leads' => Lead::whereIn('status', ['New', 'new'])->count(),
-            'pending_reviews' => Review::whereIn('status', ['Pending', 'pending'])->count(),
-            'users' => User::count(),
+            'societies' => $this->countIfTableExists('societies', fn () => Society::count()),
+            'featured_societies' => $this->countIfTableExists('societies', fn () => Society::where('featured', true)->count()),
+            'properties' => $this->countIfTableExists('properties', fn () => Property::count()),
+            'live_properties' => $this->countIfTableExists('properties', fn () => Property::where('status', 'Live')->count()),
+            'leads' => $this->countIfTableExists('leads', fn () => Lead::count()),
+            'new_leads' => $this->countIfTableExists('leads', fn () => Lead::whereIn('status', ['New', 'new'])->count()),
+            'pending_reviews' => $this->countIfTableExists('reviews', fn () => Review::whereIn('status', ['Pending', 'pending'])->count()),
+            'users' => $this->countIfTableExists('users', fn () => User::count()),
         ]);
+    }
+
+    private function countIfTableExists(string $table, callable $count): int
+    {
+        if (!Schema::hasTable($table)) {
+            return 0;
+        }
+
+        return (int) $count();
     }
 }

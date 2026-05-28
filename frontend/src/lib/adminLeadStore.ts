@@ -26,78 +26,9 @@ export interface AdminLead {
   notes: LeadNote[];
 }
 
-const STORAGE_KEY = 'societyflats_admin_leads_v1';
+const STORAGE_KEY = 'societyflats_admin_leads_v2';
 
-const seedLeads: AdminLead[] = [
-  {
-    id: 101,
-    name: 'Rahul Sharma',
-    phone: '+91 98111 22334',
-    email: 'rahul.sharma@example.com',
-    society: 'DLF Crest',
-    property: '3 BHK Park View • DLF Crest',
-    budget: '₹85,000/mo',
-    requirement: 'Family rental, move-in within 30 days, prefers Golf Course Road.',
-    source: 'Website',
-    status: 'New',
-    priority: 'Hot',
-    assignedTo: 'Nitin',
-    createdAt: new Date().toISOString(),
-    followUpAt: 'Today 6:00 PM',
-    notes: [{ id: 1, text: 'Lead came from property detail enquiry.', createdAt: 'Today' }],
-  },
-  {
-    id: 102,
-    name: 'Ananya Gupta',
-    phone: '+91 99991 88774',
-    email: 'ananya.gupta@example.com',
-    society: 'DLF Park Place',
-    property: '4 BHK Resale • Park Place',
-    budget: '₹5.5 Cr',
-    requirement: 'Buyer wants low floor, verified resale, society comparison needed.',
-    source: 'WhatsApp',
-    status: 'Contacted',
-    priority: 'Warm',
-    assignedTo: 'Amit',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    followUpAt: 'Tomorrow 11:00 AM',
-    notes: [{ id: 1, text: 'Shared two Park Place options on WhatsApp.', createdAt: 'Yesterday' }],
-  },
-  {
-    id: 103,
-    name: 'Karan Mehta',
-    phone: '+91 88770 11221',
-    email: 'karan.mehta@example.com',
-    society: 'Aralias',
-    property: 'Owner Listing • Aralias',
-    budget: 'Seller lead',
-    requirement: 'Owner wants valuation and discreet resale listing.',
-    source: 'Call',
-    status: 'Site Visit',
-    priority: 'Hot',
-    assignedTo: 'Nitin',
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    followUpAt: 'Friday 4:30 PM',
-    notes: [{ id: 1, text: 'Schedule property verification visit.', createdAt: '2 days ago' }],
-  },
-  {
-    id: 104,
-    name: 'Meera Sethi',
-    phone: '+91 98100 77889',
-    email: 'meera.sethi@example.com',
-    society: 'M3M Golf Estate',
-    property: '2 BHK Rental • M3M Golf Estate',
-    budget: '₹70,000/mo',
-    requirement: 'Pet friendly rental, prefers furnished apartment.',
-    source: 'Website',
-    status: 'Negotiation',
-    priority: 'Warm',
-    assignedTo: 'Rohit',
-    createdAt: new Date(Date.now() - 259200000).toISOString(),
-    followUpAt: 'Monday 12:00 PM',
-    notes: [{ id: 1, text: 'Negotiating rent with owner.', createdAt: '3 days ago' }],
-  },
-];
+const seedLeads: AdminLead[] = [];
 
 function readLeads(): AdminLead[] {
   if (typeof window === 'undefined') return seedLeads;
