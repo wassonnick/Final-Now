@@ -12,7 +12,9 @@ import {
   societyImage,
 } from '@/lib/publicData';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  'https://final-now.onrender.com/api';
 
 type ApiResponse<T> = {
   status?: string;
@@ -80,7 +82,12 @@ function safePropertyUrl(property: any) {
   try {
     return propertyUrl(property);
   } catch {
-    return `/property/${property?.slug || property?.id || 1}`;
+    const slug = String(property?.slug || '')
+  .replace(/^\/+/, '')
+  .replace(/^property\//, '')
+  .replace(/^property\//, '');
+
+return `/property/${slug || property?.id || 1}`;
   }
 }
 
