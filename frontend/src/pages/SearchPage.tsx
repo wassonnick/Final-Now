@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Building2, CheckCircle2, Grid3X3, Home, List, MapPin, Search, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { fetchPublicSocieties, getPublicProperties, propertyImage, propertyUrl, searchableText, societyImage, formatPublicLocation } from '@/lib/publicData';
+import { fetchPublicProperties, fetchPublicSocieties, propertyImage, propertyUrl, searchableText, societyImage, formatPublicLocation } from '@/lib/publicData';
 import { cn } from '@/lib/utils';
 
 const tabs = [
@@ -21,12 +21,15 @@ export function SearchPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const [societies, setSocieties] = useState<any[]>([]);
-  const properties = useMemo(() => getPublicProperties(), []);
+  const [properties, setProperties] = useState<any[]>([]);
 
   useEffect(() => {
     fetchPublicSocieties()
       .then(setSocieties)
       .catch((error) => console.error('Societies fetch failed:', error));
+    fetchPublicProperties()
+      .then(setProperties)
+      .catch((error) => console.error('Properties fetch failed:', error));
   }, []);
 
   const filteredSocieties = useMemo(() => {
@@ -40,7 +43,7 @@ export function SearchPage() {
       const typeMatch = activeTab === 'rent'
         ? property.listingType === 'Rent'
         : activeTab === 'buy'
-          ? property.listingType === 'Buy / Resale' || property.listingType === 'Sell Listing' || property.listingType === 'Builder Floor'
+          ? property.listingType === 'Sale' || property.listingType === 'Buy / Resale' || property.listingType === 'Sell Listing' || property.listingType === 'Builder Floor'
           : true;
       const queryMatch = !q || searchableText(property.title, property.society, property.locality, property.price, property.listingType, property.amenities.join(' ')).includes(q);
       return typeMatch && queryMatch;
@@ -68,7 +71,7 @@ export function SearchPage() {
         <div className="container mx-auto px-4 py-10">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-navy-600">Admin powered search</p>
           <h1 className="mt-3 text-4xl md:text-6xl font-extrabold text-navy-900 tracking-tight">Search societies and live inventory.</h1>
-          <p className="mt-4 max-w-2xl text-lg text-navy-500">Societies and properties published in admin now appear here automatically through local admin data.</p>
+          <p className="mt-4 max-w-2xl text-lg text-navy-500">Societies and live properties published in admin appear here automatically from the backend.</p>
 
           <div className="mt-8 rounded-[2rem] bg-white border border-navy-100 shadow-soft p-4">
             <div className="flex flex-col lg:flex-row gap-3">

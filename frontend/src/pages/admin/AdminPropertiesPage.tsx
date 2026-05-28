@@ -14,6 +14,7 @@ import {
 
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
+import { adminFetch, adminHeaders } from '@/lib/adminApi';
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
@@ -107,7 +108,7 @@ export function AdminPropertiesPage() {
   useEffect(() => {
     async function loadProperties() {
       try {
-        const res = await fetch(`${API_BASE}/admin/properties`);
+        const res = await adminFetch('/admin/properties');
         const json = await res.json().catch(() => ({}));
 
         if (!res.ok) {
@@ -195,11 +196,11 @@ export function AdminPropertiesPage() {
       setActionMessage('');
       setErrorMessage('');
 
-      const response = await fetch(`${API_BASE}/admin/properties`, {
+      const response = await adminFetch('/admin/properties', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'application/json',
+          ...adminHeaders(),
         },
         body: JSON.stringify(payload),
       });
@@ -235,10 +236,10 @@ export function AdminPropertiesPage() {
       setActionMessage('');
       setErrorMessage('');
 
-      const response = await fetch(`${API_BASE}/admin/properties/${item.id}`, {
+      const response = await adminFetch(`/admin/properties/${item.id}`, {
         method: 'DELETE',
         headers: {
-          Accept: 'application/json',
+          ...adminHeaders(),
         },
       });
 

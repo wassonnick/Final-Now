@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, BadgeIndianRupee, Building2, CheckCircle2, HeartHandshake, Home, KeyRound, MapPin, Shield, Sparkles, Star, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HeroSearch } from '@/components/home/HeroSearch';
-import { fetchPublicSocieties, getPublicProperties, propertyImage, propertyUrl, societyImage, formatPublicLocation } from '@/lib/publicData';
+import { fetchPublicProperties, fetchPublicSocieties, propertyImage, propertyUrl, societyImage, formatPublicLocation } from '@/lib/publicData';
 
 const lifestyles = [
   { icon: Users, title: 'Family Friendly', text: 'Schools, parks, security and stable resident mix.' },
@@ -14,13 +14,16 @@ const lifestyles = [
 
 export function HomePage() {
   const [societies, setSocieties] = useState<any[]>([]);
-  const properties = useMemo(() => getPublicProperties().slice(0, 6), []);
+  const [properties, setProperties] = useState<any[]>([]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchPublicSocieties()
       .then((items) => setSocieties(items.slice(0, 4)))
       .catch((error) => console.error('Societies fetch failed:', error));
+    fetchPublicProperties()
+      .then((items) => setProperties(items.slice(0, 6)))
+      .catch((error) => console.error('Properties fetch failed:', error));
   }, []);
 
   return (

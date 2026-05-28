@@ -13,12 +13,20 @@ export function AdminLoginPage() {
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'admin@societyflats.com';
+    const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'Admin@123';
+
     if (!email || password.length < 6) {
       setError('Enter admin email and password.');
       return;
     }
 
-    setAdminSession(email);
+    if (email !== adminEmail || password !== adminPassword) {
+      setError('Invalid admin credentials.');
+      return;
+    }
+
+    setAdminSession(email, import.meta.env.VITE_ADMIN_API_TOKEN || password);
     navigate('/admin/dashboard');
   };
 
@@ -63,7 +71,7 @@ export function AdminLoginPage() {
               {error ? <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p> : null}
 
               <Button type="submit" className="h-12 w-full rounded-2xl bg-blue-600 text-white hover:bg-blue-700">Enter Admin Dashboard</Button>
-              <p className="text-center text-xs text-slate-400">Temporary local login for Phase 1. Connect to Sanctum API in Phase 2.</p>
+              <p className="text-center text-xs text-slate-400">Protected admin access. Configure backend token in Render.</p>
             </form>
           </div>
         </div>

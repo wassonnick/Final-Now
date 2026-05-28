@@ -10,7 +10,7 @@ import {
   Star,
 } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
 
 type Property = {
   id: number;
