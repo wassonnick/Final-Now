@@ -12,10 +12,10 @@ class SocietyController extends Controller {
     if($request->boolean('featured')) $query->where('featured',true);
     return response()->json(['status'=>'ok','data'=>$query->withCount('properties')->orderByDesc('featured')->orderByDesc('search_boost')->orderBy('name')->paginate($request->integer('per_page',24))]);
   }
-  public function show(string $slug): JsonResponse
+  public function show(string $idOrSlug): JsonResponse
 {
     $society = Society::with('properties')
-        ->where('slug', $slug)
+        ->when(is_numeric($idOrSlug), fn ($query) => $query->where('id', $idOrSlug), fn ($query) => $query->where('slug', $idOrSlug))
         ->first();
 
     if (!$society) {

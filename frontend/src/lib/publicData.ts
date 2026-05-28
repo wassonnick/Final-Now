@@ -1,10 +1,18 @@
 import { getAdminProperties, type AdminProperty } from '@/lib/adminPropertyStore';
-import { getAdminSocieties, type AdminSociety } from '@/lib/adminSocietyStore';
+import { fetchAdminSocieties, getAdminSocieties, type AdminSociety } from '@/lib/adminSocietyStore';
 
 const fallbackImage = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=85';
 
 export function getPublicSocieties() {
   return getAdminSocieties()
+    .filter((society) => society.status !== 'Archived')
+    .sort((a, b) => Number(b.featured || b.showInHero || b.searchBoost) - Number(a.featured || a.showInHero || a.searchBoost));
+}
+
+export async function fetchPublicSocieties() {
+  const societies = await fetchAdminSocieties();
+
+  return societies
     .filter((society) => society.status !== 'Archived')
     .sort((a, b) => Number(b.featured || b.showInHero || b.searchBoost) - Number(a.featured || a.showInHero || a.searchBoost));
 }

@@ -1,17 +1,37 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpDown, BarChart3, Eye, Image, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
-import { deleteAdminSociety, getAdminSocieties } from '@/lib/adminSocietyStore';
+import { AdminSociety, deleteAdminSociety, fetchAdminSocieties } from '@/lib/adminSocietyStore';
 
 const filters = ['All', 'Verified', 'Premium', 'Draft', 'Archived'];
 
 export function AdminSocietiesPage() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('All');
-  const [version, setVersion] = useState(0);
-  const societies = useMemo(() => getAdminSocieties(), [version]);
+  const [societies, setSocieties] = useState<AdminSociety[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function loadSocieties() {
+      try {
+        setLoading(true);
+        setError('');
+        setSocieties(await fetchAdminSocieties());
+      } catch (err) {
+        console.error(err);
+        setError('Unable to load societies from the live backend.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadSocieties();
+  }, []);
 
   const filteredSocieties = useMemo(() => {
     return societies.filter((society) => {
@@ -29,10 +49,23 @@ export function AdminSocietiesPage() {
     ? (societies.reduce((sum, item) => sum + Number(item.score || 0), 0) / societies.length).toFixed(1)
     : '0.0';
 
-  const handleDelete = (id: number) => {
-    if (!window.confirm('Delete this society from local admin data?')) return;
-    deleteAdminSociety(id);
-    setVersion((current) => current + 1);
+  const handleDelete = async (society: AdminSociety) => {
+    if (deletingId) return;
+    if (!window.confirm(`Delete "${society.name}" from the live backend?`)) return;
+
+    try {
+      setDeletingId(society.id);
+      setError('');
+      setMessage('');
+      await deleteAdminSociety(society.id);
+      setSocieties((current) => current.filter((item) => item.id !== society.id));
+      setMessage(`Deleted "${society.name}".`);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to delete society. Please refresh and try again.');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -58,6 +91,18 @@ export function AdminSocietiesPage() {
         </div>
 
         <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          {message ? (
+            <div className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+              {message}
+            </div>
+          ) : null}
+
+          {error ? (
+            <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+              {error}
+            </div>
+          ) : null}
+
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-xl font-semibold text-slate-950">Society directory</h2>
@@ -113,7 +158,15 @@ export function AdminSocietiesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredSocieties.map((item) => (
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} className="px-5 py-12 text-center font-medium text-slate-950">
+                      Loading societies...
+                    </td>
+                  </tr>
+                ) : null}
+
+                {!loading && filteredSocieties.map((item) => (
                   <tr key={item.id} className="bg-white hover:bg-slate-50/70">
                     <td className="px-5 py-4">
                       <div className="font-semibold text-slate-950">{item.name}</div>
@@ -154,15 +207,30 @@ export function AdminSocietiesPage() {
                           <Link to={`/society/${item.slug}`}><Eye className="mr-1.5 h-3.5 w-3.5" /> View</Link>
                         </Button>
                         <Button variant="outline" size="sm" className="rounded-full" asChild>
-                          <Link to={`/admin/societies/${item.id}/edit`}><Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit</Link>
+                          <Link to={`/admin/societies/${item.slug || item.id}/edit`}><Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit</Link>
                         </Button>
-                        <Button onClick={() => handleDelete(item.id)} variant="ghost" size="sm" className="rounded-full text-red-600 hover:bg-red-50 hover:text-red-700">
+                        <Button
+                          onClick={() => handleDelete(item)}
+                          disabled={deletingId === item.id}
+                          variant="ghost"
+                          size="sm"
+                          className="rounded-full text-red-600 hover:bg-red-50 hover:text-red-700"
+                        >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </td>
                   </tr>
                 ))}
+
+                {!loading && filteredSocieties.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-5 py-12 text-center">
+                      <p className="font-medium text-slate-950">No societies found</p>
+                      <p className="mt-1 text-sm text-slate-500">Try changing filters or create a new society profile.</p>
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>

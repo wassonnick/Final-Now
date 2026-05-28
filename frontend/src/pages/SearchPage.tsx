@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Building2, CheckCircle2, Grid3X3, Home, List, MapPin, Search, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getPublicProperties, getPublicSocieties, propertyImage, propertyUrl, searchableText, societyImage, formatPublicLocation } from '@/lib/publicData';
+import { fetchPublicSocieties, getPublicProperties, propertyImage, propertyUrl, searchableText, societyImage, formatPublicLocation } from '@/lib/publicData';
 import { cn } from '@/lib/utils';
 
 const tabs = [
@@ -20,8 +20,14 @@ export function SearchPage() {
   const [query, setQuery] = useState(initialQuery);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const societies = useMemo(() => getPublicSocieties(), []);
+  const [societies, setSocieties] = useState<any[]>([]);
   const properties = useMemo(() => getPublicProperties(), []);
+
+  useEffect(() => {
+    fetchPublicSocieties()
+      .then(setSocieties)
+      .catch((error) => console.error('Societies fetch failed:', error));
+  }, []);
 
   const filteredSocieties = useMemo(() => {
     const q = query.toLowerCase().trim();
