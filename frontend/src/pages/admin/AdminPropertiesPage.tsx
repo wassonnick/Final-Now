@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Copy, Edit3, Eye, Filter, MoreHorizontal, Plus, Search, Trash2 } from 'lucide-react';
+import {
+  Copy,
+  Edit3,
+  Eye,
+  Filter,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Trash2,
+} from 'lucide-react';
 
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-
-import {
-  AdminProperty,
-  deleteAdminProperty,
-  duplicateAdminProperty,
-} from '@/lib/adminPropertyStore';
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
@@ -32,6 +35,7 @@ function getPropertyImage(item: any) {
   if (typeof item.images === 'string') {
     try {
       const parsed = JSON.parse(item.images);
+
       if (Array.isArray(parsed) && parsed[0]) {
         return parsed[0];
       }
@@ -43,8 +47,20 @@ function getPropertyImage(item: any) {
   return 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&q=80';
 }
 
+function getSocietyName(item: any) {
+  if (typeof item?.society === 'string') {
+    return item.society;
+  }
+
+  if (typeof item?.society === 'object' && item?.society?.name) {
+    return item.society.name;
+  }
+
+  return item?.society_name || '-';
+}
+
 export function AdminPropertiesPage() {
-  const [properties, setProperties] = useState<AdminProperty[]>([]);
+  const [properties, setProperties] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('All');
   const [type, setType] = useState('All');
@@ -75,23 +91,23 @@ export function AdminPropertiesPage() {
     const term = query.trim().toLowerCase();
 
     return properties.filter((item: any) => {
+      const searchable = [
+        item?.title || '',
+        getSocietyName(item),
+        item?.locality || '',
+        item?.price || '',
+      ]
+        .join(' ')
+        .toLowerCase();
+
       const matchesQuery =
-        !term ||
-        [
-          item.title,
-          item.society,
-          item.locality,
-          item.price,
-        ]
-          .join(' ')
-          .toLowerCase()
-          .includes(term);
+        !term || searchable.includes(term);
 
       const matchesStatus =
-        status === 'All' || item.status === status;
+        status === 'All' || item?.status === status;
 
       const listingType =
-        item.listingType || item.listing_type;
+        item?.listingType || item?.listing_type || '';
 
       const matchesType =
         type === 'All' || listingType === type;
@@ -103,25 +119,11 @@ export function AdminPropertiesPage() {
   const stats = useMemo(() => {
     return {
       total: properties.length,
-      live: properties.filter((item: any) => item.status === 'Live').length,
-      verification: properties.filter((item: any) => item.status === 'Verification').length,
-      featured: properties.filter((item: any) => item.featured).length,
+      live: properties.filter((item: any) => item?.status === 'Live').length,
+      verification: properties.filter((item: any) => item?.status === 'Verification').length,
+      featured: properties.filter((item: any) => item?.featured).length,
     };
   }, [properties]);
-
-  const handleDelete = (item: any) => {
-    const confirmed = window.confirm(
-      `Delete "${item.title}"?`
-    );
-
-    if (!confirmed) return;
-
-    setProperties(deleteAdminProperty(item.id));
-  };
-
-  const handleDuplicate = (item: any) => {
-    setProperties(duplicateAdminProperty(item.id));
-  };
 
   return (
     <AdminLayout
@@ -142,6 +144,7 @@ export function AdminPropertiesPage() {
               className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm"
             >
               <p className="text-sm text-slate-500">{label}</p>
+
               <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
                 {value}
               </p>
@@ -179,7 +182,7 @@ export function AdminPropertiesPage() {
               <select
                 value={status}
                 onChange={(event) => setStatus(event.target.value)}
-                className="h-11 rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                className="h-11 rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none"
               >
                 {['All', 'Live', 'Verification', 'Draft', 'Archived'].map((item) => (
                   <option key={item}>{item}</option>
@@ -189,7 +192,7 @@ export function AdminPropertiesPage() {
               <select
                 value={type}
                 onChange={(event) => setType(event.target.value)}
-                className="h-11 rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                className="h-11 rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none"
               >
                 {['All', 'Rent', 'Buy / Resale', 'Sell Listing', 'Builder Floor'].map((item) => (
                   <option key={item}>{item}</option>
@@ -252,35 +255,35 @@ export function AdminPropertiesPage() {
                       <div className="flex flex-wrap items-center gap-2">
 
                         <p className="font-semibold text-slate-950">
-                          {item.title || 'Untitled property'}
+                          {item?.title || 'Untitled property'}
                         </p>
 
-                        {item.featured ? (
-                          <Badge className="rounded-full bg-blue-50 text-blue-700 hover:bg-blue-50">
+                        {item?.featured ? (
+                          <Badge className="rounded-full bg-blue-50 text-blue-700">
                             Featured
                           </Badge>
                         ) : null}
 
-                        {item.verified ? (
-                          <Badge className="rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-50">
+                        {item?.verified ? (
+                          <Badge className="rounded-full bg-emerald-50 text-emerald-700">
                             Verified
                           </Badge>
                         ) : null}
                       </div>
 
                       <p className="mt-1 text-sm text-slate-500">
-                        {item.price || 'Price pending'}
+                        {item?.price || 'Price pending'}
                       </p>
                     </div>
                   </div>
 
                   <div>
                     <p className="text-sm font-medium text-slate-950">
-                      {item.society}
+                      {getSocietyName(item)}
                     </p>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      {item.locality}
+                      {item?.locality || '-'}
                     </p>
                   </div>
 
@@ -289,17 +292,17 @@ export function AdminPropertiesPage() {
                       variant="outline"
                       className="rounded-full border-slate-200 bg-white text-slate-700"
                     >
-                      {item.listingType || item.listing_type}
+                      {item?.listingType || item?.listing_type || '-'}
                     </Badge>
                   </div>
 
                   <div>
                     <span
                       className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
-                        statusTone[item.status || 'Live']
+                        statusTone[item?.status || 'Live']
                       }`}
                     >
-                      {item.status || 'Live'}
+                      {item?.status || 'Live'}
                     </span>
                   </div>
 
@@ -309,7 +312,6 @@ export function AdminPropertiesPage() {
                       variant="ghost"
                       size="icon"
                       className="rounded-full"
-                      title="Preview"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -319,7 +321,6 @@ export function AdminPropertiesPage() {
                       variant="ghost"
                       size="icon"
                       className="rounded-full"
-                      title="Edit"
                     >
                       <Link to={`/admin/properties/${item.id}/edit`}>
                         <Edit3 className="h-4 w-4" />
@@ -327,21 +328,17 @@ export function AdminPropertiesPage() {
                     </Button>
 
                     <Button
-                      onClick={() => handleDuplicate(item)}
                       variant="ghost"
                       size="icon"
                       className="rounded-full"
-                      title="Duplicate"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
 
                     <Button
-                      onClick={() => handleDelete(item)}
                       variant="ghost"
                       size="icon"
-                      className="rounded-full text-rose-600 hover:text-rose-700"
-                      title="Delete"
+                      className="rounded-full text-rose-600"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
