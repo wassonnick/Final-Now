@@ -41,10 +41,13 @@ class PropertyController extends Controller
 
     public function show(string $idOrSlug): JsonResponse
 {
-    $property = Property::with('society')
-        ->where('slug', $idOrSlug)
-        ->orWhere('id', $idOrSlug)
-        ->first();
+    $query = Property::with('society');
+
+    if (is_numeric($idOrSlug)) {
+        $property = $query->where('id', $idOrSlug)->first();
+    } else {
+        $property = $query->where('slug', $idOrSlug)->first();
+    }
 
     if (!$property) {
         return response()->json([
