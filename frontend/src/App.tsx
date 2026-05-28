@@ -25,7 +25,7 @@ import { AdminReviewsPage } from '@/pages/admin/AdminReviewsPage';
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { SocietiesPage } from '@/pages/SocietiesPage';
-
+import { PropertiesPage } from '@/pages/PropertiesPage';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -73,6 +73,7 @@ function AppShell() {
          <Route path="/admin/properties/:id/edit/" element={<AdminPropertyFormPage />} />
          <Route path="/societies" element={<SocietiesPage />} />
          <Route path="/societies/" element={<SocietiesPage />} />
+        <Route path="/properties" element={<PropertiesPage />} />
         </Routes>
       </main>
       {!isAdmin && <Footer />}
