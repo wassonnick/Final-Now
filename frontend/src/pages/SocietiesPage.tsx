@@ -4,7 +4,7 @@ import { Building2, Loader2, MapPin, Search, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
 
 type Society = {
   id: number;

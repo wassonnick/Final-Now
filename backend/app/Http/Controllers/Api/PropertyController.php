@@ -15,6 +15,10 @@ class PropertyController extends Controller
     {
         $q = Property::query()->with('society');
 
+        if (!$this->isAdminRequest($request)) {
+            $q->where('status', 'Live');
+        }
+
         if ($request->filled('q')) {
             $term = $request->string('q');
             $q->where(fn ($b) => $b
@@ -39,9 +43,13 @@ class PropertyController extends Controller
         ]);
     }
 
-    public function show(string $idOrSlug): JsonResponse
-{
-    $query = Property::with('society');
+    public function show(Request $request, string $idOrSlug): JsonResponse
+    {
+        $query = Property::with('society');
+
+        if (!$this->isAdminRequest($request)) {
+            $query->where('status', 'Live');
+        }
 
     if (is_numeric($idOrSlug)) {
         $property = $query->where('id', $idOrSlug)->first();
@@ -66,11 +74,11 @@ class PropertyController extends Controller
         ? json_decode($property->images, true) ?? []
         : ($property->images ?? []);
 
-    return response()->json([
-        'status' => 'ok',
-        'data' => $data,
-    ]);
-}
+        return response()->json([
+            'status' => 'ok',
+            'data' => $data,
+        ]);
+    }
 
     public function store(Request $request): JsonResponse
     {
@@ -121,28 +129,37 @@ class PropertyController extends Controller
     {
         $req = $partial ? 'sometimes' : 'required';
 
+        $propertyId = $partial && $r->route('property') ? $r->route('property')->id : null;
+
         return $r->validate([
             'society_id' => 'nullable|exists:societies,id',
             'title' => "{$req}|string|max:255",
-            'slug' => 'nullable|string|max:255',
-            'listing_type' => 'nullable|string|max:100',
-            'status' => 'nullable|string|max:100',
+            'slug' => 'nullable|string|max:255|unique:properties,slug' . ($propertyId ? ',' . $propertyId : ''),
+            'listing_type' => 'nullable|in:Rent,Sale,Buy / Resale,Sell Listing,Builder Floor',
+            'status' => 'nullable|in:Live,Verification,Draft,Archived',
             'society' => 'nullable|string|max:255',
             'locality' => 'nullable|string|max:255',
-            'price' => 'nullable|string|max:100',
+            'price' => "{$req}|string|max:100",
             'security_deposit' => 'nullable|string|max:100',
             'maintenance' => 'nullable|string|max:100',
-            'bedrooms' => 'nullable|string|max:50',
-            'bathrooms' => 'nullable|string|max:50',
-            'area_sqft' => 'nullable|string|max:100',
+            'bedrooms' => 'nullable|integer|min:0|max:10',
+            'bathrooms' => 'nullable|integer|min:0|max:10',
+            'area_sqft' => 'nullable|integer|min:100|max:20000',
             'floor' => 'nullable|string|max:100',
             'facing' => 'nullable|string|max:100',
-            'furnished_status' => 'nullable|string|max:100',
-            'description' => 'nullable|string',
+            'furnished_status' => 'nullable|in:Semi Furnished,Fully Furnished,Unfurnished',
+            'description' => 'nullable|string|max:5000',
             'amenities' => 'nullable|array',
+            'amenities.*' => 'string|max:100',
             'images' => 'nullable|array',
+            'images.*' => 'string|max:2000',
             'featured' => 'nullable|boolean',
             'verified' => 'nullable|boolean',
         ]);
+    }
+
+    private function isAdminRequest(Request $request): bool
+    {
+        return $request->is('api/admin/*') || $request->is('admin/*');
     }
 }

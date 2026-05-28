@@ -1,3 +1,5 @@
+import { adminHeaders } from '@/lib/adminApi';
+
 export type SocietyStatus = 'Draft' | 'Verified' | 'Premium' | 'Archived';
 
 export interface AdminSociety {
@@ -232,7 +234,7 @@ async function request(path: string, options?: RequestInit) {
   const response = await fetch(`${API_BASE}${path}`, {
     headers: {
       'Content-Type': 'application/json',
-      Accept: 'application/json',
+      ...adminHeaders(),
       ...(options?.headers || {}),
     },
     ...options,

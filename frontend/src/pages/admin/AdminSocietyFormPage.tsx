@@ -5,6 +5,7 @@ import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { uploadAdminImage } from '@/lib/adminApi';
 import {
   AdminSociety,
   createEmptyAdminSociety,
@@ -71,12 +72,7 @@ export function AdminSocietyFormPage() {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
 
-    const images = await Promise.all(files.map((file) => new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    })));
+    const images = await Promise.all(files.map((file) => uploadAdminImage(file, 'societies')));
 
     setSociety((current) => target === 'coverImage'
       ? { ...current, coverImage: images[0] }

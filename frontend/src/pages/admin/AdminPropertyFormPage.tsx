@@ -6,6 +6,7 @@ import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { adminFetch, adminHeaders, uploadAdminImage } from '@/lib/adminApi';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -120,7 +121,7 @@ export function AdminPropertyFormPage() {
         setLoading(true);
         setError('');
 
-        const response = await fetch(`${API_BASE_URL}/admin/properties/${id}`);
+        const response = await adminFetch(`/admin/properties/${id}`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch property');
@@ -189,18 +190,8 @@ export function AdminPropertyFormPage() {
       return;
     }
 
-    const readers = files.map(
-      (file) =>
-        new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(String(reader.result));
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        })
-    );
-
     try {
-      const images = await Promise.all(readers);
+      const images = await Promise.all(files.map((file) => uploadAdminImage(file, 'properties')));
 
       setProperty((current: any) => ({
         ...current,
@@ -271,11 +262,11 @@ export function AdminPropertyFormPage() {
         ? `${API_BASE_URL}/admin/properties/${id}`
         : `${API_BASE_URL}/admin/properties`;
 
-      const response = await fetch(url, {
+      const response = await adminFetch(isEdit ? `/admin/properties/${id}` : '/admin/properties', {
         method: isEdit ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'application/json',
+          ...adminHeaders(),
         },
         body: JSON.stringify(payload),
       });
