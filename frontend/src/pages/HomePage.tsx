@@ -34,10 +34,10 @@ export function HomePage() {
         <div className="container mx-auto px-4">
           <div className="rounded-[2rem] bg-white border border-navy-100 shadow-soft p-6 md:p-8 grid grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              [`${societies.length}+`, 'Live Societies', Building2],
-              [`${properties.length}+`, 'Live Homes', Home],
-              ['Admin', 'Managed Inventory', Users],
-              ['100%', 'Society-first data', Shield],
+              [String(societies.length), 'Live Societies', Building2],
+              [String(properties.length), 'Live Homes', Home],
+              [String(properties.filter((p) => p.verified).length), 'Verified Homes', Shield],
+              [String(societies.filter((s) => s.featured).length), 'Featured Societies', Star],
             ].map(([value, label, Icon]) => {
               const LucideIcon = Icon as typeof Building2;
               return (
