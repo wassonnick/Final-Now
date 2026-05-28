@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Building2, Home, MessageSquareText, Star, Users, TrendingUp } from 'lucide-react';
+import { Building2, Home, TrendingUp } from 'lucide-react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { StatCard } from '@/components/admin/StatCard';
 import { adminFetch } from '@/lib/adminApi';
@@ -64,12 +64,9 @@ export function AdminDashboardPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-5 md:grid-cols-2">
           <StatCard title="Societies" value={loading ? '-' : String(stats.societies)} change={`${stats.featured_societies} featured`} icon={Building2} />
           <StatCard title="Properties" value={loading ? '-' : String(stats.properties)} change={`${stats.live_properties} live`} icon={Home} />
-          <StatCard title="Leads" value={loading ? '-' : String(stats.leads)} change={`${stats.new_leads} new`} icon={MessageSquareText} />
-          <StatCard title="Pending Reviews" value={loading ? '-' : String(stats.pending_reviews)} change="Moderation queue" icon={Star} />
-          <StatCard title="Users" value={loading ? '-' : String(stats.users)} change="Registered accounts" icon={Users} />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
@@ -97,9 +94,9 @@ export function AdminDashboardPage() {
           </section>
 
           <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold tracking-tight text-slate-950">Recent activity</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-slate-950">Modules pending connection</h2>
             <div className="mt-5 rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
-              Activity feed is not connected yet. It will show real lead, review and listing changes after event logging is added.
+              Leads, reviews and users are hidden from dashboard totals until those modules are connected to real backend data.
             </div>
           </section>
         </div>
