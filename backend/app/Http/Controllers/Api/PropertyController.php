@@ -40,24 +40,34 @@ class PropertyController extends Controller
     }
 
     public function show(string $idOrSlug): JsonResponse
-    {
-        $property = Property::with('society')
-            ->where('slug', $idOrSlug)
-            ->orWhere('id', $idOrSlug)
-            ->first();
+{
+    $property = Property::with('society')
+        ->where('slug', $idOrSlug)
+        ->orWhere('id', $idOrSlug)
+        ->first();
 
-        if (!$property) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Property not found',
-            ], 404);
-        }
-
+    if (!$property) {
         return response()->json([
-            'status' => 'ok',
-            'data' => $property,
-        ]);
+            'status' => 'error',
+            'message' => 'Property not found',
+        ], 404);
     }
+
+    $data = $property->toArray();
+
+    $data['amenities'] = is_string($property->amenities)
+        ? json_decode($property->amenities, true) ?? []
+        : ($property->amenities ?? []);
+
+    $data['images'] = is_string($property->images)
+        ? json_decode($property->images, true) ?? []
+        : ($property->images ?? []);
+
+    return response()->json([
+        'status' => 'ok',
+        'data' => $data,
+    ]);
+}
 
     public function store(Request $request): JsonResponse
     {
