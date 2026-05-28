@@ -9,10 +9,6 @@ type AdminStats = {
   featured_societies: number;
   properties: number;
   live_properties: number;
-  leads: number;
-  new_leads: number;
-  pending_reviews: number;
-  users: number;
 };
 
 const emptyStats: AdminStats = {
@@ -20,10 +16,6 @@ const emptyStats: AdminStats = {
   featured_societies: 0,
   properties: 0,
   live_properties: 0,
-  leads: 0,
-  new_leads: 0,
-  pending_reviews: 0,
-  users: 0,
 };
 
 export function AdminDashboardPage() {
@@ -59,8 +51,8 @@ export function AdminDashboardPage() {
     <AdminLayout title="Dashboard" subtitle="SocietyFlats command center">
       <div className="mx-auto max-w-7xl space-y-6">
         {error ? (
-          <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
-            {error}
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-600 shadow-sm">
+            Live dashboard stats are temporarily unavailable. Inventory counts will refresh after the backend stats service is deployed.
           </div>
         ) : null}
 
