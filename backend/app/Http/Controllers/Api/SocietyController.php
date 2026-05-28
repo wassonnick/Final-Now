@@ -12,7 +12,24 @@ class SocietyController extends Controller {
     if($request->boolean('featured')) $query->where('featured',true);
     return response()->json(['status'=>'ok','data'=>$query->withCount('properties')->orderByDesc('featured')->orderByDesc('search_boost')->orderBy('name')->paginate($request->integer('per_page',24))]);
   }
-  public function show(string $slug): JsonResponse { return response()->json(['status'=>'ok','data'=>Society::where('slug',$slug)->orWhere('id',$slug)->with('properties')->firstOrFail()]); }
+  public function show(string $slug): JsonResponse
+{
+    $society = Society::with('properties')
+        ->where('slug', $slug)
+        ->first();
+
+    if (!$society) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Society not found',
+        ], 404);
+    }
+
+    return response()->json([
+        'status' => 'ok',
+        'data' => $society,
+    ]);
+}
   public function store(Request $request): JsonResponse { $p=$this->payload($request); $p['slug']=$p['slug']??Str::slug($p['name']); $s=Society::create($p); return response()->json(['status'=>'ok','message'=>'Society created successfully.','data'=>$s],201); }
   public function update(Request $request, Society $society): JsonResponse { $p=$this->payload($request,true); if(isset($p['name'])&&empty($p['slug'])) $p['slug']=Str::slug($p['name']); $society->update($p); return response()->json(['status'=>'ok','message'=>'Society updated successfully.','data'=>$society]); }
   public function destroy(Society $society): JsonResponse { $society->delete(); return response()->json(['status'=>'ok','message'=>'Society deleted successfully.']); }
