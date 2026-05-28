@@ -3,6 +3,16 @@ import { useNavigate } from "react-router-dom";
 
 const API_BASE = "https://final-now.onrender.com/api";
 
+function makeSlug(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/^\/+/, "")
+    .replace(/^property\//, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 export default function AdminPropertyCreatePage() {
   const navigate = useNavigate();
 
@@ -36,11 +46,14 @@ export default function AdminPropertyCreatePage() {
     try {
       setLoading(true);
 
+      const cleanSlug = makeSlug(form.title);
+
       const payload = {
         ...form,
+        slug: cleanSlug,
         images: form.image ? [form.image] : [],
         amenities: form.amenities
-          ? form.amenities.split(",").map((a) => a.trim())
+          ? form.amenities.split(",").map((a) => a.trim()).filter(Boolean)
           : [],
         verified: true,
         featured: true,
@@ -50,6 +63,7 @@ export default function AdminPropertyCreatePage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify(payload),
       });
@@ -57,10 +71,12 @@ export default function AdminPropertyCreatePage() {
       const data = await res.json();
 
       if (data?.data?.slug) {
+        const returnedSlug = makeSlug(data.data.slug);
         alert("Property created successfully");
-        navigate(`/property/${data.data.slug}`);
+        navigate(`/property/${returnedSlug}`);
       } else {
-        alert("Failed to create property");
+        console.error(data);
+        alert(data?.message || "Failed to create property");
       }
     } catch (err) {
       console.error(err);
@@ -78,8 +94,8 @@ export default function AdminPropertyCreatePage() {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-
           <input
+            required
             className="w-full border rounded-2xl p-4"
             placeholder="Title"
             value={form.title}
@@ -103,12 +119,11 @@ export default function AdminPropertyCreatePage() {
           <select
             className="w-full border rounded-2xl p-4"
             value={form.listing_type}
-            onChange={(e) =>
-              updateField("listing_type", e.target.value)
-            }
+            onChange={(e) => updateField("listing_type", e.target.value)}
           >
-            <option>Rent</option>
-            <option>Sale</option>
+            <option value="Rent">Rent</option>
+            <option value="Sale">Sale</option>
+            <option value="Sell Listing">Sell Listing</option>
           </select>
 
           <input
@@ -123,27 +138,21 @@ export default function AdminPropertyCreatePage() {
               className="border rounded-2xl p-4"
               placeholder="Bedrooms"
               value={form.bedrooms}
-              onChange={(e) =>
-                updateField("bedrooms", e.target.value)
-              }
+              onChange={(e) => updateField("bedrooms", e.target.value)}
             />
 
             <input
               className="border rounded-2xl p-4"
               placeholder="Bathrooms"
               value={form.bathrooms}
-              onChange={(e) =>
-                updateField("bathrooms", e.target.value)
-              }
+              onChange={(e) => updateField("bathrooms", e.target.value)}
             />
 
             <input
               className="border rounded-2xl p-4"
               placeholder="Area sqft"
               value={form.area_sqft}
-              onChange={(e) =>
-                updateField("area_sqft", e.target.value)
-              }
+              onChange={(e) => updateField("area_sqft", e.target.value)}
             />
           </div>
 
@@ -151,9 +160,7 @@ export default function AdminPropertyCreatePage() {
             className="w-full border rounded-2xl p-4"
             placeholder="Furnished Status"
             value={form.furnished_status}
-            onChange={(e) =>
-              updateField("furnished_status", e.target.value)
-            }
+            onChange={(e) => updateField("furnished_status", e.target.value)}
           />
 
           <input
@@ -167,23 +174,19 @@ export default function AdminPropertyCreatePage() {
             className="w-full border rounded-2xl p-4"
             placeholder="Amenities comma separated"
             value={form.amenities}
-            onChange={(e) =>
-              updateField("amenities", e.target.value)
-            }
+            onChange={(e) => updateField("amenities", e.target.value)}
           />
 
           <textarea
             className="w-full border rounded-2xl p-4 min-h-[140px]"
             placeholder="Description"
             value={form.description}
-            onChange={(e) =>
-              updateField("description", e.target.value)
-            }
+            onChange={(e) => updateField("description", e.target.value)}
           />
 
           <button
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-4 font-semibold"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-4 font-semibold disabled:opacity-60"
           >
             {loading ? "Creating..." : "Create Property"}
           </button>
