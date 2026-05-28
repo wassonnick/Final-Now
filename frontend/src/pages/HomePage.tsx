@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BadgeIndianRupee, Building2, CheckCircle2, HeartHandshake, Home, KeyRound, MapPin, Shield, Sparkles, Star, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HeroSearch } from '@/components/home/HeroSearch';
-import { getPublicProperties, getPublicSocieties, propertyImage, propertyUrl, societyImage, formatPublicLocation } from '@/lib/publicData';
+import { fetchPublicSocieties, getPublicProperties, propertyImage, propertyUrl, societyImage, formatPublicLocation } from '@/lib/publicData';
 
 const lifestyles = [
   { icon: Users, title: 'Family Friendly', text: 'Schools, parks, security and stable resident mix.' },
@@ -13,9 +13,15 @@ const lifestyles = [
 ];
 
 export function HomePage() {
-  useEffect(() => window.scrollTo(0, 0), []);
-  const societies = useMemo(() => getPublicSocieties().slice(0, 4), []);
+  const [societies, setSocieties] = useState<any[]>([]);
   const properties = useMemo(() => getPublicProperties().slice(0, 6), []);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    fetchPublicSocieties()
+      .then((items) => setSocieties(items.slice(0, 4)))
+      .catch((error) => console.error('Societies fetch failed:', error));
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">

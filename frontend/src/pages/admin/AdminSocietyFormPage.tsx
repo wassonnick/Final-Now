@@ -8,30 +8,43 @@ import { Input } from '@/components/ui/input';
 import {
   AdminSociety,
   createEmptyAdminSociety,
-  getAdminSociety,
+  fetchAdminSociety,
+  saveAdminSociety,
   slugifySociety,
   societyAmenityOptions,
-  upsertAdminSociety,
 } from '@/lib/adminSocietyStore';
-
-function getInitialSociety(id: string | undefined): AdminSociety {
-  if (id) {
-    const existing = getAdminSociety(id);
-    if (existing) return existing;
-  }
-  return createEmptyAdminSociety();
-}
 
 export function AdminSocietyFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = Boolean(id);
-  const [society, setSociety] = useState<AdminSociety>(() => getInitialSociety(id));
+  const [society, setSociety] = useState<AdminSociety>(() => createEmptyAdminSociety());
+  const [loading, setLoading] = useState(isEdit);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    setSociety(getInitialSociety(id));
+    async function loadSociety() {
+      if (!id) {
+        setSociety(createEmptyAdminSociety());
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError('');
+        setSociety(await fetchAdminSociety(id));
+      } catch (err) {
+        console.error(err);
+        setError('Unable to load society from the live backend.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadSociety();
   }, [id]);
 
   const updateField = <K extends keyof AdminSociety>(field: K, value: AdminSociety[K]) => {
@@ -76,7 +89,7 @@ export function AdminSocietyFormPage() {
     setSociety((current) => ({ ...current, galleryImages: current.galleryImages.filter((item) => item !== image) }));
   };
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!society.name.trim()) {
       setError('Society name is required.');
@@ -91,11 +104,30 @@ export function AdminSocietyFormPage() {
       return;
     }
 
-    upsertAdminSociety(society);
-    setSaved(true);
-    window.alert(isEdit ? 'Society profile updated.' : 'Society profile created.');
-    navigate('/admin/societies');
+    try {
+      setSaving(true);
+      setError('');
+      await saveAdminSociety(society, isEdit);
+      setSaved(true);
+      window.alert(isEdit ? 'Society profile updated.' : 'Society profile created.');
+      navigate('/admin/societies');
+    } catch (err) {
+      console.error(err);
+      setError('Unable to save society to the live backend.');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <AdminLayout title="Loading society" subtitle="Fetching live backend profile">
+        <div className="rounded-[32px] border border-slate-200 bg-white p-10 text-lg text-slate-700 shadow-sm">
+          Loading society...
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout
@@ -107,8 +139,8 @@ export function AdminSocietyFormPage() {
           <Button variant="outline" className="w-fit rounded-full" asChild>
             <Link to="/admin/societies"><ArrowLeft className="mr-2 h-4 w-4" /> Back to societies</Link>
           </Button>
-          <Button type="submit" className="rounded-full bg-blue-600 px-5 hover:bg-blue-700">
-            <Save className="mr-2 h-4 w-4" /> {isEdit ? 'Save changes' : 'Create society'}
+          <Button type="submit" disabled={saving} className="rounded-full bg-blue-600 px-5 hover:bg-blue-700">
+            <Save className="mr-2 h-4 w-4" /> {saving ? 'Saving...' : isEdit ? 'Save changes' : 'Create society'}
           </Button>
         </div>
 
@@ -118,7 +150,7 @@ export function AdminSocietyFormPage() {
 
         {saved ? (
           <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
-            <CheckCircle2 className="h-5 w-5" /> Society saved locally. Backend API connection comes in the next phase.
+            <CheckCircle2 className="h-5 w-5" /> Society saved to the live backend.
           </div>
         ) : null}
 
@@ -259,7 +291,7 @@ export function AdminSocietyFormPage() {
 
             <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-slate-950">Media gallery</h2>
-              <p className="mt-1 text-sm text-slate-500">Stored locally in Phase 4. Connect Cloudinary/S3 later.</p>
+              <p className="mt-1 text-sm text-slate-500">Saved with the society profile until Cloudinary/S3 upload is connected.</p>
               <label className="mt-5 flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-6 text-center hover:bg-slate-100">
                 {society.coverImage ? <img src={society.coverImage} className="h-32 w-full rounded-2xl object-cover" /> : <><ImagePlus className="h-7 w-7 text-blue-600" /><p className="mt-3 font-medium text-slate-950">Upload cover image</p></>}
                 <input type="file" accept="image/*" onChange={(event) => readImages(event, 'coverImage')} className="hidden" />
