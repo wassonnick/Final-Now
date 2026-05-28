@@ -19,8 +19,6 @@ import { SellPage } from '@/pages/SellPage';
 import { SocietiesPage } from '@/pages/SocietiesPage';
 import { PropertiesPage } from '@/pages/PropertiesPage';
 
-import AdminPropertyCreatePage from '@/pages/admin/AdminPropertyCreatePage';
-
 import { AdminLoginPage } from '@/pages/admin/AdminLoginPage';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminSocietiesPage } from '@/pages/admin/AdminSocietiesPage';
@@ -90,15 +88,14 @@ function AppShell() {
 
           <Route path="/admin/properties" element={<AdminPropertiesPage />} />
 
-          {/* NEW PROPERTY CREATE PAGE */}
           <Route
             path="/admin/properties/new"
-            element={<AdminPropertyCreatePage />}
+            element={<AdminPropertyFormPage />}
           />
 
           <Route
             path="/admin/properties/new/"
-            element={<AdminPropertyCreatePage />}
+            element={<AdminPropertyFormPage />}
           />
 
           <Route

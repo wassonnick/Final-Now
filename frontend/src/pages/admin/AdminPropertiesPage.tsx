@@ -5,7 +5,6 @@ import {
   Edit3,
   Eye,
   Filter,
-  MoreHorizontal,
   Plus,
   Search,
   Trash2,
@@ -59,26 +58,64 @@ function getSocietyName(item: any) {
   return item?.society_name || '-';
 }
 
+function parseArray(value: any): string[] {
+  if (Array.isArray(value)) return value.filter(Boolean);
+
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean);
+    } catch {
+      return value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+
+  return [];
+}
+
+function makeSlug(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/^\/+/, '')
+    .replace(/^property\//, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
 export function AdminPropertiesPage() {
   const [properties, setProperties] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('All');
   const [type, setType] = useState('All');
   const [loading, setLoading] = useState(true);
+  const [actionMessage, setActionMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [duplicatingId, setDuplicatingId] = useState<number | string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | string | null>(null);
 
   useEffect(() => {
     async function loadProperties() {
       try {
         const res = await fetch(`${API_BASE}/admin/properties`);
-        const json = await res.json();
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          throw new Error(json?.message || 'Failed to load properties');
+        }
 
         const items = Array.isArray(json?.data)
           ? json.data
           : json?.data?.data || [];
 
         setProperties(items);
+        setErrorMessage('');
       } catch (err) {
         console.error(err);
+        setErrorMessage('Unable to load properties from the live backend.');
       } finally {
         setLoading(false);
       }
@@ -125,6 +162,103 @@ export function AdminPropertiesPage() {
     };
   }, [properties]);
 
+  const duplicateProperty = async (item: any) => {
+    if (duplicatingId) return;
+
+    const title = `${item?.title || 'Untitled property'} Copy`;
+    const baseSlug = makeSlug(item?.slug || item?.title || 'property');
+
+    const payload = {
+      title,
+      slug: `${baseSlug}-copy-${Date.now().toString(36)}`,
+      listing_type: item?.listing_type || item?.listingType || 'Rent',
+      status: 'Draft',
+      society: getSocietyName(item) === '-' ? '' : getSocietyName(item),
+      locality: item?.locality || '',
+      price: item?.price || '',
+      security_deposit: item?.security_deposit || item?.securityDeposit || '',
+      maintenance: item?.maintenance || '',
+      bedrooms: item?.bedrooms || '',
+      bathrooms: item?.bathrooms || '',
+      area_sqft: item?.area_sqft || item?.areaSqft || '',
+      floor: item?.floor || '',
+      facing: item?.facing || '',
+      furnished_status: item?.furnished_status || item?.furnishedStatus || '',
+      description: item?.description || '',
+      amenities: parseArray(item?.amenities),
+      images: parseArray(item?.images),
+      featured: false,
+      verified: false,
+    };
+
+    try {
+      setDuplicatingId(item.id);
+      setActionMessage('');
+      setErrorMessage('');
+
+      const response = await fetch(`${API_BASE}/admin/properties`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(json?.message || 'Duplicate failed');
+      }
+
+      if (json?.data) {
+        setProperties((current) => [json.data, ...current]);
+      }
+
+      setActionMessage(`Duplicated "${item?.title || 'property'}" as a draft.`);
+    } catch (err) {
+      console.error(err);
+      setErrorMessage('Failed to duplicate property. Please try again.');
+    } finally {
+      setDuplicatingId(null);
+    }
+  };
+
+  const deleteProperty = async (item: any) => {
+    if (deletingId) return;
+
+    const confirmed = window.confirm(`Delete "${item?.title || 'this property'}" ?`);
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(item.id);
+      setActionMessage('');
+      setErrorMessage('');
+
+      const response = await fetch(`${API_BASE}/admin/properties/${item.id}`, {
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      const json = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(json?.message || 'Delete failed');
+      }
+
+      setProperties((prev) => prev.filter((property) => property.id !== item.id));
+      setActionMessage(`Deleted "${item?.title || 'property'}".`);
+    } catch (err) {
+      console.error(err);
+      setErrorMessage('Failed to delete property. Please refresh and try again.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <AdminLayout
       title="Properties"
@@ -153,6 +287,17 @@ export function AdminPropertiesPage() {
         </div>
 
         <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+          {actionMessage ? (
+            <div className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+              {actionMessage}
+            </div>
+          ) : null}
+
+          {errorMessage ? (
+            <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+              {errorMessage}
+            </div>
+          ) : null}
 
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
@@ -309,11 +454,14 @@ export function AdminPropertiesPage() {
                   <div className="flex items-center justify-start gap-2 lg:justify-end">
 
                     <Button
+                      asChild
                       variant="ghost"
                       size="icon"
                       className="rounded-full"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Link to={`/property/${item?.slug || item?.id}`}>
+                        <Eye className="h-4 w-4" />
+                      </Link>
                     </Button>
 
                     <Button
@@ -331,48 +479,20 @@ export function AdminPropertiesPage() {
                       variant="ghost"
                       size="icon"
                       className="rounded-full"
+                      disabled={duplicatingId === item.id || deletingId === item.id}
+                      onClick={() => duplicateProperty(item)}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
 
-                   <Button
-  variant="ghost"
-  size="icon"
-  className="rounded-full text-rose-600 hover:text-rose-700"
-  onClick={async () => {
-    const confirmed = window.confirm(
-      `Delete "${item.title}" ?`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      await fetch(
-        `${API_BASE}/admin/properties/${item.id}`,
-        {
-          method: 'DELETE',
-        }
-      );
-
-      setProperties((prev) =>
-        prev.filter((p) => p.id !== item.id)
-      );
-
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete property');
-    }
-  }}
->
-  <Trash2 className="h-4 w-4" />
-</Button>
-
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-full"
+                      className="rounded-full text-rose-600 hover:text-rose-700"
+                      disabled={deletingId === item.id || duplicatingId === item.id}
+                      onClick={() => deleteProperty(item)}
                     >
-                      <MoreHorizontal className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
 
                   </div>

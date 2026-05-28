@@ -45,9 +45,28 @@ interface Property {
   featured?: boolean;
   verified?: boolean;
   amenities?: string[];
+  images?: string[] | string;
   cover_image?: string;
   gallery_images?: string[];
   society?: string | { name?: string; slug?: string; locality?: string; sector?: string };
+}
+
+function parseImages(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter(Boolean) as string[];
+
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean);
+    } catch {
+      return value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+
+  return [];
 }
 
 export function PropertyPage() {
@@ -181,12 +200,16 @@ export function PropertyPage() {
     );
   }
 
-  const photos =
-    property.gallery_images?.length
-      ? property.gallery_images
-      : property.cover_image
-      ? [property.cover_image]
-      : ['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1400&q=80'];
+  const savedImages = parseImages(property.images);
+  const galleryImages = parseImages(property.gallery_images);
+
+  const photos = savedImages.length
+    ? savedImages
+    : galleryImages.length
+    ? galleryImages
+    : property.cover_image
+    ? [property.cover_image]
+    : ['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1400&q=80'];
 
   const whatsappMessage = encodeURIComponent(
     `Hi, I am interested in ${property.title}. Please share details.`
