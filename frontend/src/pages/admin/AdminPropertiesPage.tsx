@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  BedDouble,
   Copy,
   Edit3,
   Eye,
-  Filter,
+  Home,
+  MapPin,
   Plus,
   Search,
   Trash2,
@@ -12,8 +14,6 @@ import {
 
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
@@ -25,6 +25,9 @@ const statusTone: Record<string, string> = {
   Draft: 'bg-slate-100 text-slate-600 border-slate-200',
   Archived: 'bg-rose-50 text-rose-700 border-rose-100',
 };
+
+const statuses = ['All', 'Live', 'Verification', 'Draft', 'Archived'];
+const listingTypes = ['All', 'Rent', 'Sale', 'Buy / Resale', 'Sell Listing', 'Builder Floor'];
 
 function getPropertyImage(item: any) {
   if (Array.isArray(item.images) && item.images[0]) {
@@ -86,6 +89,10 @@ function makeSlug(value: string) {
     .replace(/(^-|-$)/g, '');
 }
 
+function getListingType(item: any) {
+  return item?.listingType || item?.listing_type || '-';
+}
+
 export function AdminPropertiesPage() {
   const [properties, setProperties] = useState<any[]>([]);
   const [query, setQuery] = useState('');
@@ -137,17 +144,9 @@ export function AdminPropertiesPage() {
         .join(' ')
         .toLowerCase();
 
-      const matchesQuery =
-        !term || searchable.includes(term);
-
-      const matchesStatus =
-        status === 'All' || item?.status === status;
-
-      const listingType =
-        item?.listingType || item?.listing_type || '';
-
-      const matchesType =
-        type === 'All' || listingType === type;
+      const matchesQuery = !term || searchable.includes(term);
+      const matchesStatus = status === 'All' || item?.status === status;
+      const matchesType = type === 'All' || getListingType(item) === type;
 
       return matchesQuery && matchesStatus && matchesType;
     });
@@ -171,7 +170,7 @@ export function AdminPropertiesPage() {
     const payload = {
       title,
       slug: `${baseSlug}-copy-${Date.now().toString(36)}`,
-      listing_type: item?.listing_type || item?.listingType || 'Rent',
+      listing_type: getListingType(item) === '-' ? 'Rent' : getListingType(item),
       status: 'Draft',
       society: getSocietyName(item) === '-' ? '' : getSocietyName(item),
       locality: item?.locality || '',
@@ -264,98 +263,76 @@ export function AdminPropertiesPage() {
       title="Properties"
       subtitle="Manage rent, buy and seller inventory"
     >
-      <div className="space-y-6">
-
-        <div className="grid gap-4 md:grid-cols-4">
+      <div className="mx-auto max-w-7xl space-y-5">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {[
-            ['Total Properties', String(stats.total)],
-            ['Live Listings', String(stats.live)],
-            ['Under Verification', String(stats.verification)],
-            ['Featured', String(stats.featured)],
+            ['Total properties', stats.total],
+            ['Live listings', stats.live],
+            ['Under verification', stats.verification],
+            ['Featured', stats.featured],
           ].map(([label, value]) => (
-            <div
-              key={label}
-              className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm"
-            >
-              <p className="text-sm text-slate-500">{label}</p>
-
-              <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-                {value}
-              </p>
+            <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">{label}</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-950">{value}</p>
             </div>
           ))}
         </div>
 
-        <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <section className="space-y-4">
           {actionMessage ? (
-            <div className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
               {actionMessage}
             </div>
           ) : null}
 
           {errorMessage ? (
-            <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+            <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
               {errorMessage}
             </div>
           ) : null}
 
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
+          <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <h2 className="text-lg font-semibold tracking-tight text-slate-950">
-                Property Inventory
-              </h2>
-
+              <h2 className="text-lg font-semibold tracking-tight text-slate-950">Property inventory</h2>
               <p className="mt-1 text-sm text-slate-500">
-                Search, verify and update listings across Gurgaon societies.
+                Search, publish and update Gurgaon listings.
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-
-              <div className="relative sm:w-80">
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                <Input
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+              <div className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 xl:w-[360px]">
+                <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  className="h-11 rounded-full border-slate-200 pl-10"
+                  className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
                   placeholder="Search title, society or locality"
                 />
               </div>
 
-              <select
-                value={status}
-                onChange={(event) => setStatus(event.target.value)}
-                className="h-11 rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none"
-              >
-                {['All', 'Live', 'Verification', 'Draft', 'Archived'].map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
+              <div className="grid gap-3 sm:grid-cols-2 xl:flex">
+                <select
+                  value={status}
+                  onChange={(event) => setStatus(event.target.value)}
+                  className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none"
+                >
+                  {statuses.map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
 
-              <select
-                value={type}
-                onChange={(event) => setType(event.target.value)}
-                className="h-11 rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none"
-              >
-                {['All', 'Rent', 'Buy / Resale', 'Sell Listing', 'Builder Floor'].map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
+                <select
+                  value={type}
+                  onChange={(event) => setType(event.target.value)}
+                  className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none"
+                >
+                  {listingTypes.map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
+              </div>
 
-              <Button
-                variant="outline"
-                className="h-11 rounded-full border-slate-200"
-              >
-                <Filter className="mr-2 h-4 w-4" />
-                Filters
-              </Button>
-
-              <Button
-                asChild
-                className="h-11 rounded-full bg-blue-600 px-5 hover:bg-blue-700"
-              >
+              <Button asChild className="rounded-xl bg-blue-600 hover:bg-blue-700">
                 <Link to="/admin/properties/new">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Property
@@ -364,156 +341,137 @@ export function AdminPropertiesPage() {
             </div>
           </div>
 
-          <div className="mt-6 overflow-hidden rounded-[28px] border border-slate-200">
-
-            <div className="hidden grid-cols-[1.6fr_1fr_0.75fr_0.75fr_0.7fr] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 lg:grid">
-              <div>Property</div>
-              <div>Society</div>
-              <div>Type</div>
-              <div>Status</div>
-              <div className="text-right">Actions</div>
+          {loading ? (
+            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center font-medium text-slate-950 shadow-sm">
+              Loading properties...
             </div>
+          ) : null}
 
-            <div className="divide-y divide-slate-200">
+          {!loading && filtered.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center shadow-sm">
+              <p className="font-medium text-slate-950">No properties found</p>
+              <p className="mt-1 text-sm text-slate-500">Try changing filters or create a new property listing.</p>
+            </div>
+          ) : null}
 
-              {loading ? (
-                <div className="px-5 py-14 text-center">
-                  <p className="font-medium text-slate-950">
-                    Loading properties...
-                  </p>
-                </div>
-              ) : null}
+          {!loading && filtered.map((item: any) => {
+            const itemStatus = item?.status || 'Live';
+            const listingType = getListingType(item);
 
-              {!loading && filtered.map((item: any) => (
-                <div
-                  key={item.id}
-                  className="grid gap-4 px-5 py-5 lg:grid-cols-[1.6fr_1fr_0.75fr_0.75fr_0.7fr] lg:items-center"
-                >
-                  <div className="flex gap-4">
-                    <img
-                      src={getPropertyImage(item)}
-                      alt=""
-                      className="h-20 w-24 rounded-2xl object-cover"
-                    />
+            return (
+              <article
+                key={item.id}
+                className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 xl:grid-cols-[1.45fr_1fr_0.8fr_210px] xl:items-center"
+              >
+                <div className="flex min-w-0 gap-4">
+                  <img
+                    src={getPropertyImage(item)}
+                    alt=""
+                    className="h-24 w-28 shrink-0 rounded-xl object-cover"
+                  />
 
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="max-w-xl text-base font-semibold text-slate-950">
+                        {item?.title || 'Untitled property'}
+                      </h3>
 
-                        <p className="font-semibold text-slate-950">
-                          {item?.title || 'Untitled property'}
-                        </p>
+                      {item?.featured ? (
+                        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                          Featured
+                        </span>
+                      ) : null}
 
-                        {item?.featured ? (
-                          <Badge className="rounded-full bg-blue-50 text-blue-700">
-                            Featured
-                          </Badge>
-                        ) : null}
+                      {item?.verified ? (
+                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                          Verified
+                        </span>
+                      ) : null}
+                    </div>
 
-                        {item?.verified ? (
-                          <Badge className="rounded-full bg-emerald-50 text-emerald-700">
-                            Verified
-                          </Badge>
-                        ) : null}
-                      </div>
+                    <p className="mt-1 text-sm font-medium text-slate-700">{item?.price || 'Price pending'}</p>
 
-                      <p className="mt-1 text-sm text-slate-500">
-                        {item?.price || 'Price pending'}
-                      </p>
+                    <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-600">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Home className="h-4 w-4 text-slate-400" />
+                        {getSocietyName(item)}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin className="h-4 w-4 text-slate-400" />
+                        {item?.locality || 'Gurgaon'}
+                      </span>
                     </div>
                   </div>
+                </div>
 
+                <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4 xl:grid-cols-2">
                   <div>
-                    <p className="text-sm font-medium text-slate-950">
-                      {getSocietyName(item)}
-                    </p>
-
-                    <p className="mt-1 text-sm text-slate-500">
-                      {item?.locality || '-'}
-                    </p>
+                    <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">Type</p>
+                    <p className="mt-1 font-semibold text-slate-950">{listingType}</p>
                   </div>
-
                   <div>
-                    <Badge
-                      variant="outline"
-                      className="rounded-full border-slate-200 bg-white text-slate-700"
-                    >
-                      {item?.listingType || item?.listing_type || '-'}
-                    </Badge>
+                    <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">BHK</p>
+                    <p className="mt-1 font-semibold text-slate-950">{item?.bedrooms || '-'}</p>
                   </div>
-
                   <div>
-                    <span
-                      className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
-                        statusTone[item?.status || 'Live']
-                      }`}
-                    >
-                      {item?.status || 'Live'}
-                    </span>
+                    <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">Area</p>
+                    <p className="mt-1 font-semibold text-slate-950">{item?.area_sqft || item?.areaSqft || '-'}</p>
                   </div>
-
-                  <div className="flex items-center justify-start gap-2 lg:justify-end">
-
-                    <Button
-                      asChild
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full"
-                    >
-                      <Link to={`/property/${item?.slug || item?.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    </Button>
-
-                    <Button
-                      asChild
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full"
-                    >
-                      <Link to={`/admin/properties/${item.id}/edit`}>
-                        <Edit3 className="h-4 w-4" />
-                      </Link>
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full"
-                      disabled={duplicatingId === item.id || deletingId === item.id}
-                      onClick={() => duplicateProperty(item)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full text-rose-600 hover:text-rose-700"
-                      disabled={deletingId === item.id || duplicatingId === item.id}
-                      onClick={() => deleteProperty(item)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <BedDouble className="h-4 w-4 text-slate-400" />
+                    {item?.furnished_status || item?.furnishedStatus || 'Furnishing n/a'}
                   </div>
                 </div>
-              ))}
 
-              {!loading && filtered.length === 0 ? (
-                <div className="px-5 py-14 text-center">
-                  <p className="font-medium text-slate-950">
-                    No properties found
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    Try changing filters or create a new property listing.
-                  </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusTone[itemStatus] || statusTone.Live}`}>
+                    {itemStatus}
+                  </span>
+                  <span className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                    {item?.floor || 'Floor n/a'}
+                  </span>
                 </div>
-              ) : null}
 
-            </div>
-          </div>
-        </div>
+                <div className="flex flex-wrap gap-2 xl:justify-end">
+                  <Button variant="outline" size="sm" className="rounded-xl" asChild>
+                    <Link to={`/property/${item?.slug || item?.id}`}>
+                      <Eye className="mr-1.5 h-3.5 w-3.5" />
+                      View
+                    </Link>
+                  </Button>
+
+                  <Button variant="outline" size="sm" className="rounded-xl" asChild>
+                    <Link to={`/admin/properties/${item.id}/edit`}>
+                      <Edit3 className="mr-1.5 h-3.5 w-3.5" />
+                      Edit
+                    </Link>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl"
+                    disabled={duplicatingId === item.id || deletingId === item.id}
+                    onClick={() => duplicateProperty(item)}
+                  >
+                    <Copy className="mr-1.5 h-3.5 w-3.5" />
+                    Copy
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-xl text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                    disabled={deletingId === item.id || duplicatingId === item.id}
+                    onClick={() => deleteProperty(item)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </article>
+            );
+          })}
+        </section>
       </div>
     </AdminLayout>
   );
