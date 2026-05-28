@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpDown, BarChart3, Eye, Image, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react';
+import { BarChart3, Building2, Eye, Image, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { AdminSociety, deleteAdminSociety, fetchAdminSocieties } from '@/lib/adminSocietyStore';
@@ -70,27 +70,22 @@ export function AdminSocietiesPage() {
 
   return (
     <AdminLayout title="Societies" subtitle="Manage society intelligence, scoring, SEO and media profiles">
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Total societies</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-950">{societies.length}</p>
-          </div>
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Verified / Premium</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-950">{verifiedCount}</p>
-          </div>
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Featured</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-950">{featuredCount}</p>
-          </div>
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Avg. score</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-950">{avgScore}</p>
-          </div>
+      <div className="mx-auto max-w-7xl space-y-5">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            ['Total societies', societies.length],
+            ['Verified / Premium', verifiedCount],
+            ['Featured', featuredCount],
+            ['Avg. score', avgScore],
+          ].map(([label, value]) => (
+            <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">{label}</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-950">{value}</p>
+            </div>
+          ))}
         </div>
 
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="space-y-4">
           {message ? (
             <div className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
               {message}
@@ -103,143 +98,130 @@ export function AdminSocietiesPage() {
             </div>
           ) : null}
 
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Society directory</h2>
-              <p className="mt-1 text-sm text-slate-500">Create, enrich and publish Gurgaon society pages.</p>
+              <h2 className="text-lg font-semibold text-slate-950">Society directory</h2>
+              <p className="mt-1 text-sm text-slate-500">Search, edit and publish Gurgaon society profiles.</p>
             </div>
-            <Button asChild className="rounded-full bg-blue-600 hover:bg-blue-700">
-              <Link to="/admin/societies/new">
-                <Plus className="mr-2 h-4 w-4" /> Add Society
-              </Link>
-            </Button>
+
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <div className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 lg:w-[380px]">
+                <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search society, builder or sector"
+                  className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                />
+              </div>
+
+              <Button asChild className="rounded-xl bg-blue-600 hover:bg-blue-700">
+                <Link to="/admin/societies/new">
+                  <Plus className="mr-2 h-4 w-4" /> Add Society
+                </Link>
+              </Button>
+            </div>
           </div>
 
-          <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-3 lg:w-[460px]">
-              <Search className="h-4 w-4 text-slate-400" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search society, builder, sector or locality"
-                className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-              />
-            </div>
+          <div className="flex flex-wrap gap-2">
+            {filters.map((item) => (
+              <button
+                key={item}
+                onClick={() => setFilter(item)}
+                className={`rounded-xl px-3 py-2 text-sm font-medium transition ${
+                  filter === item
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
 
-            <div className="flex flex-wrap gap-2">
-              {filters.map((item) => (
-                <button
-                  key={item}
-                  onClick={() => setFilter(item)}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                    filter === item
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                  }`}
+          {loading ? (
+            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center font-medium text-slate-950 shadow-sm">
+              Loading societies...
+            </div>
+          ) : null}
+
+          {!loading && filteredSocieties.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center shadow-sm">
+              <p className="font-medium text-slate-950">No societies found</p>
+              <p className="mt-1 text-sm text-slate-500">Try changing filters or create a new society profile.</p>
+            </div>
+          ) : null}
+
+          {!loading && filteredSocieties.map((item) => (
+            <article key={item.id} className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 lg:grid-cols-[1.4fr_1fr_0.75fr_190px] lg:items-center">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base font-semibold text-slate-950">{item.name}</h3>
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    item.status === 'Draft'
+                      ? 'bg-amber-50 text-amber-700'
+                      : item.status === 'Premium'
+                      ? 'bg-violet-50 text-violet-700'
+                      : item.status === 'Archived'
+                      ? 'bg-slate-100 text-slate-500'
+                      : 'bg-blue-50 text-blue-700'
+                  }`}>
+                    {item.status}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-slate-500">/{item.slug}</p>
+                <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-600">
+                  <span>{item.builder || 'Builder n/a'}</span>
+                  <span className="text-slate-300">|</span>
+                  <span>{[item.sector, item.locality].filter(Boolean).join(', ') || 'Gurgaon'}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 lg:grid-cols-2">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">Score</p>
+                  <p className="mt-1 font-semibold text-slate-950">{item.score}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">Rent</p>
+                  <p className="mt-1 font-semibold text-slate-950">{item.rentRange || 'n/a'}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">Sale</p>
+                  <p className="mt-1 font-semibold text-slate-950">{item.buyRange || 'n/a'}</p>
+                </div>
+                <div className="flex items-center gap-2 text-slate-500">
+                  <BarChart3 className="h-4 w-4 text-blue-500" />
+                  {item.featured ? <Star className="h-4 w-4 fill-blue-500 text-blue-500" /> : <Star className="h-4 w-4" />}
+                  {item.coverImage ? <Image className="h-4 w-4 text-emerald-600" /> : <Image className="h-4 w-4" />}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                <Building2 className="h-4 w-4 text-slate-400" />
+                {item.propertiesCount || 0} linked listings
+              </div>
+
+              <div className="flex flex-wrap gap-2 lg:justify-end">
+                <Button variant="outline" size="sm" className="rounded-xl" asChild>
+                  <Link to={`/society/${item.slug}`}><Eye className="mr-1.5 h-3.5 w-3.5" /> View</Link>
+                </Button>
+                <Button variant="outline" size="sm" className="rounded-xl" asChild>
+                  <Link to={`/admin/societies/${item.slug || item.id}/edit`}><Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit</Link>
+                </Button>
+                <Button
+                  onClick={() => handleDelete(item)}
+                  disabled={deletingId === item.id}
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200">
-            <table className="w-full min-w-[980px] text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500">
-                <tr>
-                  <th className="px-5 py-4 font-medium">Society</th>
-                  <th className="px-5 py-4 font-medium">Builder</th>
-                  <th className="px-5 py-4 font-medium">Location</th>
-                  <th className="px-5 py-4 font-medium"><span className="inline-flex items-center gap-1">Score <ArrowUpDown className="h-3.5 w-3.5" /></span></th>
-                  <th className="px-5 py-4 font-medium">Market</th>
-                  <th className="px-5 py-4 font-medium">Status</th>
-                  <th className="px-5 py-4 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-12 text-center font-medium text-slate-950">
-                      Loading societies...
-                    </td>
-                  </tr>
-                ) : null}
-
-                {!loading && filteredSocieties.map((item) => (
-                  <tr key={item.id} className="bg-white hover:bg-slate-50/70">
-                    <td className="px-5 py-4">
-                      <div className="font-semibold text-slate-950">{item.name}</div>
-                      <div className="mt-1 text-xs text-slate-500">/{item.slug}</div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm" className="h-8 rounded-full px-3" asChild>
-                          <Link to={`/society/${item.slug}`}><Eye className="mr-1.5 h-3.5 w-3.5" /> View</Link>
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-8 rounded-full px-3" asChild>
-                          <Link to={`/admin/societies/${item.slug || item.id}/edit`}><Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit</Link>
-                        </Button>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-slate-600">{item.builder || '—'}</td>
-                    <td className="px-5 py-4 text-slate-600">
-                      <div>{item.sector || '—'}</div>
-                      <div className="text-xs text-slate-400">{item.locality || '—'}</div>
-                    </td>
-                    <td className="px-5 py-4 font-semibold text-slate-950">{item.score}</td>
-                    <td className="px-5 py-4 text-slate-600">
-                      <div className="flex items-center gap-1"><BarChart3 className="h-3.5 w-3.5 text-blue-500" /> {item.rentRange || 'Rent n/a'}</div>
-                      <div className="mt-1 text-xs text-slate-400">{item.buyRange || 'Sale n/a'}</div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        item.status === 'Draft'
-                          ? 'bg-amber-50 text-amber-700'
-                          : item.status === 'Premium'
-                          ? 'bg-violet-50 text-violet-700'
-                          : item.status === 'Archived'
-                          ? 'bg-slate-100 text-slate-500'
-                          : 'bg-blue-50 text-blue-700'
-                      }`}>
-                        {item.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2 text-slate-500">
-                        {item.featured ? <Star className="h-4 w-4 fill-blue-500 text-blue-500" /> : <Star className="h-4 w-4" />}
-                        {item.coverImage ? <Image className="h-4 w-4 text-emerald-600" /> : <Image className="h-4 w-4" />}
-                      </div>
-                      <div className="mt-3 flex justify-end gap-2">
-                        <Button variant="outline" size="sm" className="rounded-full" asChild>
-                          <Link to={`/society/${item.slug}`}><Eye className="mr-1.5 h-3.5 w-3.5" /> View</Link>
-                        </Button>
-                        <Button variant="outline" size="sm" className="rounded-full" asChild>
-                          <Link to={`/admin/societies/${item.slug || item.id}/edit`}><Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit</Link>
-                        </Button>
-                        <Button
-                          onClick={() => handleDelete(item)}
-                          disabled={deletingId === item.id}
-                          variant="ghost"
-                          size="sm"
-                          className="rounded-full text-red-600 hover:bg-red-50 hover:text-red-700"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-
-                {!loading && filteredSocieties.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-12 text-center">
-                      <p className="font-medium text-slate-950">No societies found</p>
-                      <p className="mt-1 text-sm text-slate-500">Try changing filters or create a new society profile.</p>
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </article>
+          ))}
+        </section>
       </div>
     </AdminLayout>
   );

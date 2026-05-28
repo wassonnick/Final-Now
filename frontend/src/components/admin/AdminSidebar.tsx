@@ -18,27 +18,27 @@ export function AdminSidebar() {
   const location = useLocation();
 
   return (
-    <aside className="hidden min-h-screen w-72 shrink-0 border-r border-slate-200 bg-white px-5 py-6 lg:block">
+    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white px-4 py-5 lg:flex">
       <Link to="/admin/dashboard" className="flex items-center gap-3 px-2">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm shadow-blue-600/20">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-600/20">
           <Building2 className="h-5 w-5" />
         </div>
         <div className="leading-tight">
-          <p className="text-xl font-semibold tracking-tight text-slate-950">SocietyFlats</p>
+          <p className="text-lg font-semibold tracking-tight text-slate-950">SocietyFlats</p>
           <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Admin</p>
         </div>
       </Link>
 
-      <nav className="mt-10 space-y-1.5">
+      <nav className="mt-8 space-y-1">
         {links.map((item) => {
           const Icon = item.icon;
-          const active = location.pathname === item.href;
+          const active = location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}
               to={item.href}
               className={cn(
-                'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
                 active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
               )}
             >
@@ -49,10 +49,10 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      <div className="absolute bottom-6 w-[248px]">
+      <div className="mt-auto">
         <Button
           variant="ghost"
-          className="w-full justify-start rounded-2xl text-slate-600 hover:bg-slate-50"
+          className="w-full justify-start rounded-xl text-slate-600 hover:bg-slate-50"
           onClick={() => {
             clearAdminSession();
             window.location.href = '/admin/login';

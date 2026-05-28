@@ -26,8 +26,8 @@ export function AdminLayout({ title, subtitle, children }: AdminLayoutProps) {
       <div className="flex min-h-screen">
         <AdminSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur-2xl">
-            <div className="flex h-20 items-center justify-between gap-4 px-4 md:px-8">
+          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
+            <div className="flex min-h-16 items-center justify-between gap-4 px-4 py-3 md:px-6">
               <div className="flex items-center gap-3">
                 <Button variant="ghost" size="icon" className="rounded-full lg:hidden">
                   <Menu className="h-5 w-5" />
@@ -54,7 +54,7 @@ export function AdminLayout({ title, subtitle, children }: AdminLayoutProps) {
               </div>
             </div>
           </header>
-          <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+          <main className="flex-1 px-4 py-5 md:px-6 md:py-6">{children}</main>
         </div>
       </div>
     </div>
