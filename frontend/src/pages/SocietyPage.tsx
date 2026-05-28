@@ -8,7 +8,6 @@ import {
   formatPublicLocation,
   getSocietyProperties,
   propertyImage,
-  propertyUrl,
   societyImage,
 } from '@/lib/publicData';
 
@@ -79,16 +78,18 @@ function safePropertyImage(property: any) {
 }
 
 function safePropertyUrl(property: any) {
-  try {
-    return propertyUrl(property);
-  } catch {
-    const slug = String(property?.slug || '')
-  .replace(/^\/+/, '')
-  .replace(/^property\//, '')
-  .replace(/^property\//, '');
+  const rawSlug = String(property?.slug || '');
 
-return `/property/${slug || property?.id || 1}`;
+  const slug = rawSlug
+    .replace(/^\/+/, '')
+    .replace(/^property\//, '')
+    .replace(/^property\//, '');
+
+  if (slug) {
+    return `/property/${slug}`;
   }
+
+  return `/property/${property?.id || 1}`;
 }
 
 function safeLocation(society: any) {
@@ -200,6 +201,7 @@ export function SocietyPage() {
     ...listField(society, 'galleryImages', 'gallery_images'),
   ]
     .filter(Boolean)
+    .filter((value, index, self) => self.indexOf(value) === index)
     .slice(0, 4);
 
   const amenities = listField(society, 'amenities', 'amenities');
@@ -290,7 +292,11 @@ export function SocietyPage() {
               <div className="mt-6 grid gap-5 md:grid-cols-2">
                 {properties.length ? (
                   properties.map((property) => (
-                    <Link key={property.id || property.slug} to={safePropertyUrl(property)} className="overflow-hidden rounded-[1.5rem] border border-navy-100 transition-all hover:shadow-soft">
+                    <Link
+                      key={property.id || property.slug}
+                      to={safePropertyUrl(property)}
+                      className="overflow-hidden rounded-[1.5rem] border border-navy-100 transition-all hover:shadow-soft"
+                    >
                       <div className="h-44 bg-navy-50">
                         <img src={safePropertyImage(property)} alt={property.title} className="h-full w-full object-cover" />
                       </div>
