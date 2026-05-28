@@ -18,10 +18,10 @@ class AdminStatsController extends Controller
             'societies' => Society::count(),
             'featured_societies' => Society::where('featured', true)->count(),
             'properties' => Property::count(),
-            'live_properties' => Property::where('status', 'active')->count(),
+            'live_properties' => Property::where('status', 'Live')->count(),
             'leads' => Lead::count(),
-            'new_leads' => Lead::where('status', 'new')->count(),
-            'pending_reviews' => Review::where('status', 'pending')->count(),
+            'new_leads' => Lead::whereIn('status', ['New', 'new'])->count(),
+            'pending_reviews' => Review::whereIn('status', ['Pending', 'pending'])->count(),
             'users' => User::count(),
         ]);
     }
