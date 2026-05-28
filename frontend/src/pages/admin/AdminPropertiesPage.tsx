@@ -335,13 +335,37 @@ export function AdminPropertiesPage() {
                       <Copy className="h-4 w-4" />
                     </Button>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full text-rose-600"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                   <Button
+  variant="ghost"
+  size="icon"
+  className="rounded-full text-rose-600 hover:text-rose-700"
+  onClick={async () => {
+    const confirmed = window.confirm(
+      `Delete "${item.title}" ?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await fetch(
+        `${API_BASE}/admin/properties/${item.id}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      setProperties((prev) =>
+        prev.filter((p) => p.id !== item.id)
+      );
+
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete property');
+    }
+  }}
+>
+  <Trash2 className="h-4 w-4" />
+</Button>
 
                     <Button
                       variant="ghost"
