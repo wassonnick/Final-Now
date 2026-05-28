@@ -25,7 +25,14 @@ type Property = {
   featured?: boolean;
   verified?: boolean;
   locality?: string;
-  society?: string;
+  society?:
+  | string
+  | {
+      name?: string;
+      slug?: string;
+      locality?: string;
+      sector?: string;
+    };
   images?: string[] | null;
 };
 
@@ -201,7 +208,9 @@ export function PropertiesPage() {
 
                       <p className="mt-2 flex items-center gap-2 text-sm text-navy-500">
                         <MapPin className="h-4 w-4" />
-                        {property.society || property.locality || 'Gurgaon'}
+                        {typeof property.society === 'object'
+  ? property.society?.name
+  : property.society || property.locality || 'Gurgaon'}
                       </p>
                     </div>
 
