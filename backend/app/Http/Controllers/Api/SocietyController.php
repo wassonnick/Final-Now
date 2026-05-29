@@ -157,7 +157,7 @@ class SocietyController extends Controller {
   }
 
   private function coordinatesForSociety(Society $society, array $updates, array &$diagnostics): ?array {
-    if ($society->latitude && $society->longitude) {
+    if ($society->latitude && $society->longitude && !$this->looksLikeGenericGurgaonCoordinate((float) $society->latitude, (float) $society->longitude)) {
       $diagnostics['geocode'] = 'Existing coordinates reused.';
       return ['lat' => (string) $society->latitude, 'lon' => (string) $society->longitude];
     }
@@ -170,7 +170,6 @@ class SocietyController extends Controller {
       implode(', ', array_filter([$sector, $locality, 'Gurugram Haryana India'])),
       implode(', ', array_filter([$sector, 'Gurugram Haryana India'])),
       implode(', ', array_filter([$locality, 'Gurugram Haryana India'])),
-      'Gurugram Haryana India',
     ])));
 
     foreach ($queries as $query) {
@@ -196,7 +195,7 @@ class SocietyController extends Controller {
       $items = $response->json();
       $item = is_array($items) ? ($items[0] ?? null) : null;
 
-      if (is_array($item) && !empty($item['lat']) && !empty($item['lon'])) {
+      if (is_array($item) && !empty($item['lat']) && !empty($item['lon']) && $this->isSpecificGurgaonResult($item, $query, $sector, $locality)) {
         $diagnostics['geocode'] = "Coordinates found using query: {$query}";
         return ['lat' => (string) $item['lat'], 'lon' => (string) $item['lon']];
       }
@@ -204,6 +203,33 @@ class SocietyController extends Controller {
 
     $diagnostics['geocode'] = 'No OpenStreetMap coordinates found.';
     return null;
+  }
+
+  private function isSpecificGurgaonResult(array $item, string $query, ?string $sector, ?string $locality): bool {
+    $lat = (float) ($item['lat'] ?? 0);
+    $lon = (float) ($item['lon'] ?? 0);
+    $display = Str::lower((string) ($item['display_name'] ?? ''));
+    $class = (string) ($item['class'] ?? '');
+    $type = (string) ($item['type'] ?? '');
+
+    if ($this->looksLikeGenericGurgaonCoordinate($lat, $lon)) {
+      return false;
+    }
+
+    if (in_array($type, ['city', 'county', 'administrative'], true) || $class === 'boundary') {
+      return false;
+    }
+
+    $sectorNeedle = $sector ? Str::lower($sector) : '';
+    $localityNeedle = $locality ? Str::lower($locality) : '';
+
+    return ($sectorNeedle && str_contains($display, $sectorNeedle))
+      || ($localityNeedle && $localityNeedle !== 'gurugram' && str_contains($display, $localityNeedle))
+      || str_contains($display, Str::lower($query));
+  }
+
+  private function looksLikeGenericGurgaonCoordinate(float $lat, float $lon): bool {
+    return abs($lat - 28.4646) < 0.04 && abs($lon - 77.0299) < 0.04;
   }
 
   private function nearbyIntelligence(Society $society, array $updates, array $coordinates, array &$diagnostics): array {

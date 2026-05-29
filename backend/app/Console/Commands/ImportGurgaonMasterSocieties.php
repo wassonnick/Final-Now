@@ -97,6 +97,7 @@ class ImportGurgaonMasterSocieties extends Command
         $confidence = $row['source_confidence_score'] ?? null;
         $verificationStatus = trim((string) ($row['verification_status'] ?? 'needs_verification'));
         $imageStatusText = trim((string) ($row['image_status'] ?? 'pending'));
+        $scores = $this->scoresFromRow($row, $sector, $locality);
 
         return [
             'name' => $name,
@@ -105,19 +106,19 @@ class ImportGurgaonMasterSocieties extends Command
             'sector' => $sector,
             'locality' => $locality,
             'address' => trim((string) ($row['approx_area_sector'] ?? '')) ?: null,
-            'description' => "Imported from the SocietyFlats Gurgaon master list for {$name}. Verify RERA, map pin, official project details, amenities and images before publishing.",
+            'description' => $this->descriptionFromRow($row, $name, $sector, $locality),
             'meta_title' => "{$name} Gurgaon - Society Profile",
-            'meta_description' => "Draft SocietyFlats profile for {$name} in Gurugram. Imported from the curated Gurgaon master list and pending verification.",
+            'meta_description' => $this->metaDescriptionFromRow($row, $name, $sector, $locality),
             'status' => 'Draft',
             'featured' => false,
             'show_in_hero' => false,
             'search_boost' => false,
-            'score' => 8.0,
-            'security_score' => 8.0,
-            'maintenance_score' => 8.0,
-            'connectivity_score' => 8.0,
-            'lifestyle_score' => 8.0,
-            'investment_score' => 8.0,
+            'score' => $scores['overall'],
+            'security_score' => $scores['security'],
+            'maintenance_score' => $scores['maintenance'],
+            'connectivity_score' => $scores['connectivity'],
+            'lifestyle_score' => $scores['lifestyle'],
+            'investment_score' => $scores['investment'],
             'latitude' => $row['latitude'] ? (string) $row['latitude'] : null,
             'longitude' => $row['longitude'] ? (string) $row['longitude'] : null,
             'cover_image' => $safeImage ? $imageUrl : null,
@@ -128,6 +129,71 @@ class ImportGurgaonMasterSocieties extends Command
             'data_quality' => Str::limit("Workbook import | {$verificationStatus} | confidence {$confidence} | image {$imageStatusText} | {$notes}", 255, ''),
             'imported_at' => now(),
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function descriptionFromRow(array $row, string $name, ?string $sector, string $locality): string
+    {
+        $builder = trim((string) ($row['developer_builder'] ?? ''));
+        $type = trim((string) ($row['society_type'] ?? 'residential society'));
+        $area = trim((string) ($row['approx_area_sector'] ?? 'Gurugram'));
+        $priority = trim((string) ($row['priority'] ?? 'Medium'));
+
+        $parts = [];
+        $parts[] = "{$name} is a {$type} in {$area}.";
+        if ($builder) {
+            $parts[] = "The project is associated with {$builder}.";
+        }
+        $parts[] = "SocietyFlats has imported this as a draft profile for {$locality} so RERA status, map pin, tower and unit details, amenities, pricing and images can be verified before publishing.";
+        $parts[] = "Priority: {$priority}.";
+
+        return implode(' ', $parts);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function metaDescriptionFromRow(array $row, string $name, ?string $sector, string $locality): string
+    {
+        $builder = trim((string) ($row['developer_builder'] ?? ''));
+        $location = trim(implode(', ', array_filter([$sector, $locality, 'Gurugram'])));
+        $builderText = $builder ? " by {$builder}" : '';
+
+        return Str::limit("Draft SocietyFlats profile for {$name}{$builderText} in {$location}. Verify RERA, location, amenities, images and market data before publishing.", 160, '');
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, float>
+     */
+    private function scoresFromRow(array $row, ?string $sector, string $locality): array
+    {
+        $builder = Str::lower((string) ($row['developer_builder'] ?? ''));
+        $market = Str::lower($locality.' '.($row['approx_area_sector'] ?? ''));
+        $priority = Str::lower((string) ($row['priority'] ?? 'medium'));
+        $type = Str::lower((string) ($row['society_type'] ?? ''));
+
+        $builderBonus = str_contains($builder, 'dlf') || str_contains($builder, 'emaar') || str_contains($builder, 'm3m') || str_contains($builder, 'tata') || str_contains($builder, 'godrej') || str_contains($builder, 'sobha') ? 0.35 : 0.1;
+        $premiumMarket = str_contains($market, 'golf course road') || str_contains($market, 'golf course extension') || str_contains($market, 'sector 42') || str_contains($market, 'sector 54') || str_contains($market, 'sector 65');
+        $connectivityMarket = str_contains($market, 'dwarka expressway') || str_contains($market, 'nh') || str_contains($market, 'sohna road') || str_contains($market, 'new gurgaon');
+        $priorityBonus = $priority === 'high' ? 0.25 : ($priority === 'low' ? -0.1 : 0.05);
+        $groupHousingBonus = str_contains($type, 'group housing') || str_contains($type, 'apartment') ? 0.15 : 0.0;
+
+        $security = $this->boundedScore(7.4 + $builderBonus + $groupHousingBonus);
+        $maintenance = $this->boundedScore(7.2 + $builderBonus + $groupHousingBonus + ($premiumMarket ? 0.25 : 0));
+        $connectivity = $this->boundedScore(7.1 + ($premiumMarket ? 0.55 : 0) + ($connectivityMarket ? 0.45 : 0) + ($sector ? 0.15 : 0));
+        $lifestyle = $this->boundedScore(7.1 + ($premiumMarket ? 0.65 : 0) + $builderBonus + $priorityBonus);
+        $investment = $this->boundedScore(7.0 + ($premiumMarket ? 0.45 : 0) + ($connectivityMarket ? 0.35 : 0) + $builderBonus + $priorityBonus);
+        $overall = round(($security + $maintenance + $connectivity + $lifestyle + $investment) / 5, 1);
+
+        return compact('overall', 'security', 'maintenance', 'connectivity', 'lifestyle', 'investment');
+    }
+
+    private function boundedScore(float $score): float
+    {
+        return round(max(6.8, min(9.4, $score)), 1);
     }
 
     private function sectorFromText(string $text): ?string
