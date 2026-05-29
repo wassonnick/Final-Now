@@ -296,7 +296,11 @@ export async function deleteAdminSociety(id: number | string) {
   await request(`/admin/societies/${id}`, { method: 'DELETE' });
 }
 
-export async function enrichAdminSociety(id: number | string): Promise<AdminSociety> {
+export async function enrichAdminSociety(id: number | string): Promise<{ society: AdminSociety; updatedFields: string[]; diagnostics: Record<string, string> }> {
   const json = await request(`/admin/societies/${id}/enrich`, { method: 'POST' });
-  return mapApiSociety(json?.data || {});
+  return {
+    society: mapApiSociety(json?.data || {}),
+    updatedFields: Array.isArray(json?.enrichment?.updated_fields) ? json.enrichment.updated_fields : [],
+    diagnostics: json?.enrichment?.diagnostics || {},
+  };
 }

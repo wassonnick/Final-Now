@@ -80,9 +80,11 @@ export function AdminSocietiesPage() {
       setEnrichingId(society.id);
       setError('');
       setMessage('');
-      const enriched = await enrichAdminSociety(society.id);
-      setSocieties((current) => current.map((item) => (item.id === enriched.id ? enriched : item)));
-      setMessage(`Enriched "${enriched.name}". Review the draft before publishing.`);
+      const result = await enrichAdminSociety(society.id);
+      setSocieties((current) => current.map((item) => (item.id === result.society.id ? result.society : item)));
+      const fieldText = result.updatedFields.length ? ` Updated: ${result.updatedFields.join(', ')}.` : ' No new fields changed.';
+      const diagnosticText = [result.diagnostics.geocode, result.diagnostics.nearby].filter(Boolean).join(' ');
+      setMessage(`Enriched "${result.society.name}".${fieldText} ${diagnosticText}`.trim());
     } catch (err) {
       console.error(err);
       setError('Failed to enrich society. Check the source URL and try again.');
