@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         \App\Console\Commands\ImportGurgaonReraSocieties::class,
         \App\Console\Commands\ImportGurgaonMasterSocieties::class,
+        \App\Console\Commands\EnrichOfficialSocietySources::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([

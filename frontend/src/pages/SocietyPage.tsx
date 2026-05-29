@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Building2, MapPin, School, Shield, Train } from 'lucide-react';
+import { ArrowLeft, Building2, ExternalLink, FileText, MapPin, School, Shield, Train } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -56,8 +56,12 @@ function listField(item: any, camel: string, snake: string): string[] {
 }
 
 function safeSocietyImage(society: any) {
-  const cover = field<string | null>(society, 'coverImage', 'cover_image', null);
-  if (cover) return cover;
+  const imageStatus = field<string>(society, 'imageStatus', 'image_status', 'placeholder');
+  const approved = ['licensed_uploaded', 'self_shot_uploaded', 'developer_permission_received'].includes(imageStatus);
+  const approvedImage = field<string | null>(society, 'imageUrl', 'image_url', null)
+    || field<string | null>(society, 'coverImage', 'cover_image', null);
+
+  if (approved && approvedImage) return approvedImage;
 
   try {
     return societyImage(society);
@@ -196,9 +200,11 @@ export function SocietyPage() {
     );
   }
 
+  const imageStatus = field<string>(society, 'imageStatus', 'image_status', 'placeholder');
+  const imageApproved = ['licensed_uploaded', 'self_shot_uploaded', 'developer_permission_received'].includes(imageStatus);
   const gallery = [
     safeSocietyImage(society),
-    ...listField(society, 'galleryImages', 'gallery_images'),
+    ...(imageApproved ? listField(society, 'galleryImages', 'gallery_images') : []),
   ]
     .filter(Boolean)
     .filter((value, index, self) => self.indexOf(value) === index)
@@ -212,6 +218,17 @@ export function SocietyPage() {
     { title: 'Hospitals', value: field(society, 'nearbyHospitals', 'nearby_hospitals', ''), icon: Shield },
     { title: 'Office hubs', value: field(society, 'nearbyOfficeHubs', 'nearby_office_hubs', ''), icon: Building2 },
   ];
+  const sourceUrl = field<string>(society, 'sourceUrl', 'source_url', '');
+  const reraUrl = field<string>(society, 'reraSearchUrl', 'rera_search_url', '') || (sourceUrl.toLowerCase().includes('rera') ? sourceUrl : '');
+  const officialLinks = [
+    ['Official Project Page', field(society, 'officialProjectUrl', 'official_project_url', '')],
+    ['Developer Website', field(society, 'officialDeveloperUrl', 'official_developer_url', '')],
+    ['Brochure', field(society, 'officialBrochureUrl', 'official_brochure_url', '')],
+    ['Floor Plan', field(society, 'officialFloorPlanUrl', 'official_floor_plan_url', '')],
+    ['Gallery Reference', field(society, 'officialGalleryUrl', 'official_gallery_url', '')],
+    ['Google Maps', field(society, 'googleMapsUrl', 'google_maps_url', '')],
+    ['RERA Search', reraUrl],
+  ].filter(([, href]) => Boolean(href));
 
   return (
     <div className="min-h-screen bg-ivory-100">
@@ -352,6 +369,29 @@ export function SocietyPage() {
               <div className="rounded-[2rem] border border-navy-100 bg-white p-7 shadow-sm">
                 <h2 className="text-2xl font-bold text-navy-900">FAQ</h2>
                 <div className="mt-4 whitespace-pre-line leading-relaxed text-navy-600">{field(society, 'faq', 'faq', '')}</div>
+              </div>
+            ) : null}
+
+            {officialLinks.length ? (
+              <div className="rounded-[2rem] border border-navy-100 bg-white p-7 shadow-sm">
+                <h2 className="text-2xl font-bold text-navy-900">Official references</h2>
+                <p className="mt-2 text-sm leading-relaxed text-navy-500">
+                  Project information is sourced from official/developer/RERA references where available and manually verified before being marked verified.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {officialLinks.map(([label, href]) => (
+                    <a
+                      key={label}
+                      href={String(href)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full border border-navy-100 bg-ivory-100 px-4 py-2 text-sm font-medium text-navy-700 hover:bg-ivory-200"
+                    >
+                      {label === 'Brochure' || label === 'Floor Plan' ? <FileText className="h-4 w-4" /> : <ExternalLink className="h-4 w-4" />}
+                      {label}
+                    </a>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>
