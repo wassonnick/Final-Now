@@ -111,12 +111,12 @@ export function createEmptyAdminSociety(): AdminSociety {
     featured: false,
     showInHero: false,
     searchBoost: false,
-    score: '8.5',
-    securityScore: '8.5',
-    maintenanceScore: '8.5',
-    connectivityScore: '8.5',
-    lifestyleScore: '8.5',
-    investmentScore: '8.5',
+    score: '',
+    securityScore: '',
+    maintenanceScore: '',
+    connectivityScore: '',
+    lifestyleScore: '',
+    investmentScore: '',
     rentRange: '',
     buyRange: '',
     averageRent: '',
@@ -142,6 +142,10 @@ export function createEmptyAdminSociety(): AdminSociety {
   };
 }
 
+function scoreValue(value: unknown): string {
+  return value === null || value === undefined || value === '' ? '' : String(value);
+}
+
 export function mapApiSociety(data: any): AdminSociety {
   return {
     ...createEmptyAdminSociety(),
@@ -164,12 +168,12 @@ export function mapApiSociety(data: any): AdminSociety {
     featured: Boolean(data?.featured),
     showInHero: Boolean(data?.show_in_hero),
     searchBoost: Boolean(data?.search_boost),
-    score: String(data?.score ?? '8.5'),
-    securityScore: String(data?.security_score ?? '8.5'),
-    maintenanceScore: String(data?.maintenance_score ?? '8.5'),
-    connectivityScore: String(data?.connectivity_score ?? '8.5'),
-    lifestyleScore: String(data?.lifestyle_score ?? '8.5'),
-    investmentScore: String(data?.investment_score ?? '8.5'),
+    score: scoreValue(data?.score),
+    securityScore: scoreValue(data?.security_score),
+    maintenanceScore: scoreValue(data?.maintenance_score),
+    connectivityScore: scoreValue(data?.connectivity_score),
+    lifestyleScore: scoreValue(data?.lifestyle_score),
+    investmentScore: scoreValue(data?.investment_score),
     rentRange: data?.rent_range || '',
     buyRange: data?.buy_range || '',
     averageRent: data?.average_rent || '',
@@ -215,12 +219,12 @@ export function toApiSocietyPayload(society: AdminSociety) {
     average_rent: society.averageRent,
     average_sale_price: society.averageSalePrice,
     price_per_sqft: society.pricePerSqft,
-    score: society.score,
-    security_score: society.securityScore,
-    maintenance_score: society.maintenanceScore,
-    connectivity_score: society.connectivityScore,
-    lifestyle_score: society.lifestyleScore,
-    investment_score: society.investmentScore,
+    score: society.score || null,
+    security_score: society.securityScore || null,
+    maintenance_score: society.maintenanceScore || null,
+    connectivity_score: society.connectivityScore || null,
+    lifestyle_score: society.lifestyleScore || null,
+    investment_score: society.investmentScore || null,
     amenities: society.amenities,
     nearby_schools: society.nearbySchools,
     nearby_metro: society.nearbyMetro,
@@ -266,10 +270,19 @@ async function request(path: string, options?: RequestInit) {
 }
 
 export async function fetchAdminSocieties(): Promise<AdminSociety[]> {
-  const json = await request('/admin/societies?per_page=100');
-  const items = Array.isArray(json?.data)
-    ? json.data
-    : json?.data?.data || [];
+  const items: any[] = [];
+  let page = 1;
+  let lastPage = 1;
+
+  do {
+    const json = await request(`/admin/societies?per_page=100&page=${page}`);
+    const pageData = Array.isArray(json?.data)
+      ? json.data
+      : json?.data?.data || [];
+    items.push(...pageData);
+    lastPage = Number(json?.data?.last_page || json?.last_page || page);
+    page += 1;
+  } while (page <= lastPage);
 
   return items.map(mapApiSociety);
 }
@@ -287,6 +300,15 @@ export async function saveAdminSociety(society: AdminSociety, isEdit: boolean): 
   const json = await request(isEdit ? `/admin/societies/${society.id}` : '/admin/societies', {
     method: isEdit ? 'PUT' : 'POST',
     body: JSON.stringify(toApiSocietyPayload(society)),
+  });
+
+  return mapApiSociety(json?.data || {});
+}
+
+export async function updateAdminSocietyStatus(id: number | string, status: SocietyStatus): Promise<AdminSociety> {
+  const json = await request(`/admin/societies/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
   });
 
   return mapApiSociety(json?.data || {});

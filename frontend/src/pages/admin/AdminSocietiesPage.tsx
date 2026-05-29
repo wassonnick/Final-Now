@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart3, Building2, Eye, Image, Pencil, Plus, Search, Sparkles, Star, Trash2 } from 'lucide-react';
+import { BarChart3, Building2, Eye, Image, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
-import { AdminSociety, deleteAdminSociety, enrichAdminSociety, fetchAdminSocieties } from '@/lib/adminSocietyStore';
+import { deleteAdminSociety, fetchAdminSocieties, updateAdminSocietyStatus } from '@/lib/adminSocietyStore';
+import type { AdminSociety, SocietyStatus } from '@/lib/adminSocietyStore';
 
 const filters = ['All', 'Verified', 'Premium', 'Draft', 'Archived'];
 
@@ -15,7 +16,9 @@ export function AdminSocietiesPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [enrichingId, setEnrichingId] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<SocietyStatus>('Draft');
+  const [bulkWorking, setBulkWorking] = useState(false);
 
   useEffect(() => {
     async function loadSocieties() {
@@ -49,6 +52,7 @@ export function AdminSocietiesPage() {
   const avgScore = societies.length
     ? (societies.reduce((sum, item) => sum + Number(item.score || 0), 0) / societies.length).toFixed(1)
     : '0.0';
+  const selectedSocieties = societies.filter((item) => selectedIds.includes(item.id));
 
   const handleDelete = async (society: AdminSociety) => {
     if (deletingId) return;
@@ -69,27 +73,33 @@ export function AdminSocietiesPage() {
     }
   };
 
-  const handleEnrich = async (society: AdminSociety) => {
-    if (enrichingId) return;
-    if (!society.sourceUrl) {
-      setError('This society has no import source URL to enrich from.');
-      return;
-    }
+  const toggleSelected = (id: number, checked: boolean) => {
+    setSelectedIds((current) => checked
+      ? Array.from(new Set([...current, id]))
+      : current.filter((item) => item !== id)
+    );
+  };
+
+  const selectFiltered = () => {
+    setSelectedIds(filteredSocieties.map((item) => item.id));
+  };
+
+  const applyBulkStatus = async () => {
+    if (!selectedSocieties.length || bulkWorking) return;
+    if (!window.confirm(`Set ${selectedSocieties.length} selected societies to ${bulkStatus}?`)) return;
 
     try {
-      setEnrichingId(society.id);
+      setBulkWorking(true);
       setError('');
       setMessage('');
-      const result = await enrichAdminSociety(society.id);
-      setSocieties((current) => current.map((item) => (item.id === result.society.id ? result.society : item)));
-      const fieldText = result.updatedFields.length ? ` Updated: ${result.updatedFields.join(', ')}.` : ' No new fields changed.';
-      const diagnosticText = [result.diagnostics.geocode, result.diagnostics.nearby].filter(Boolean).join(' ');
-      setMessage(`Enriched "${result.society.name}".${fieldText} ${diagnosticText}`.trim());
+      const updated = await Promise.all(selectedSocieties.map((item) => updateAdminSocietyStatus(item.id, bulkStatus)));
+      setSocieties((current) => current.map((item) => updated.find((next) => next.id === item.id) || item));
+      setMessage(`Updated ${updated.length} societies to ${bulkStatus}.`);
     } catch (err) {
       console.error(err);
-      setError('Failed to enrich society. Check the source URL and try again.');
+      setError('Bulk update failed. Refresh and try again.');
     } finally {
-      setEnrichingId(null);
+      setBulkWorking(false);
     }
   };
 
@@ -164,6 +174,31 @@ export function AdminSocietiesPage() {
             ))}
           </div>
 
+          <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+            <div className="text-sm text-slate-600">
+              <span className="font-semibold text-slate-950">{filteredSocieties.length}</span> matching societies.
+              <span className="ml-2 font-semibold text-slate-950">{selectedSocieties.length}</span> selected.
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" className="rounded-xl" onClick={selectFiltered} disabled={!filteredSocieties.length}>
+                Select all matching
+              </Button>
+              <Button type="button" variant="outline" size="sm" className="rounded-xl" onClick={() => setSelectedIds([])} disabled={!selectedIds.length}>
+                Clear
+              </Button>
+              <select
+                value={bulkStatus}
+                onChange={(event) => setBulkStatus(event.target.value as SocietyStatus)}
+                className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              >
+                <option>Draft</option><option>Verified</option><option>Premium</option><option>Archived</option>
+              </select>
+              <Button type="button" size="sm" className="rounded-xl bg-blue-600 hover:bg-blue-700" onClick={applyBulkStatus} disabled={!selectedSocieties.length || bulkWorking}>
+                {bulkWorking ? 'Applying...' : 'Apply status'}
+              </Button>
+            </div>
+          </div>
+
           {loading ? (
             <div className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center font-medium text-slate-950 shadow-sm">
               Loading societies...
@@ -178,7 +213,14 @@ export function AdminSocietiesPage() {
           ) : null}
 
           {!loading && filteredSocieties.map((item) => (
-            <article key={item.id} className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 lg:grid-cols-[1.4fr_1fr_0.75fr_260px] lg:items-center">
+            <article key={item.id} className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 lg:grid-cols-[28px_1.4fr_1fr_0.75fr_190px] lg:items-center">
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(item.id)}
+                onChange={(event) => toggleSelected(item.id, event.target.checked)}
+                aria-label={`Select ${item.name}`}
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 lg:mt-0"
+              />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-base font-semibold text-slate-950">{item.name}</h3>
@@ -228,15 +270,6 @@ export function AdminSocietiesPage() {
               </div>
 
               <div className="flex flex-wrap gap-2 lg:justify-end">
-                <Button
-                  onClick={() => handleEnrich(item)}
-                  disabled={enrichingId === item.id || !item.sourceUrl}
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl border-blue-100 text-blue-700 hover:bg-blue-50"
-                >
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5" /> {enrichingId === item.id ? 'Enriching' : 'Enrich'}
-                </Button>
                 <Button variant="outline" size="sm" className="rounded-xl" asChild>
                   <Link to={`/society/${item.slug}`}><Eye className="mr-1.5 h-3.5 w-3.5" /> View</Link>
                 </Button>
