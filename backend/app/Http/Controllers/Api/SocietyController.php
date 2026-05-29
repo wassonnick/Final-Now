@@ -52,6 +52,20 @@ class SocietyController extends Controller {
     $meta = $this->extractMeta($response->body());
     $text = trim(($meta['description'] ?? '').' '.($meta['keywords'] ?? '').' '.strip_tags($response->body()));
     $updates = $this->enrichmentPayload($society, $meta, $text);
+    $coordinates = $this->coordinatesForSociety($society, $updates);
+
+    if ($coordinates) {
+      if (!$society->latitude) {
+        $updates['latitude'] = $coordinates['lat'];
+      }
+      if (!$society->longitude) {
+        $updates['longitude'] = $coordinates['lon'];
+      }
+
+      $updates += $this->nearbyIntelligence($society, $updates, $coordinates);
+    }
+
+    $updates += $this->scorePayload($society, $updates);
 
     if (!$updates) {
       return response()->json(['status'=>'ok','message'=>'No new enrichment fields found.','data'=>$society]);
@@ -114,8 +128,20 @@ class SocietyController extends Controller {
       $updates['total_units'] = str_replace(',', '', $matches[1]);
     }
 
+    if (!$society->year_built && preg_match('/(?:completion|completed|possession|ready)[^0-9]{0,20}(20[0-9]{2})/i', $text, $matches)) {
+      $updates['year_built'] = $matches[1];
+    }
+
+    if (!$society->total_towers && preg_match('/([0-9]+)\s+(?:residential\s+)?blocks?/i', $text, $matches)) {
+      $updates['total_towers'] = $matches[1];
+    }
+
     if (!$society->buy_range && preg_match('/(?:from|starting(?:\s+at)?)\s+(?:Rs\.?|₹)\s*([0-9.]+\s*(?:Cr|Lakh|L))/i', $text, $matches)) {
       $updates['buy_range'] = 'From ₹'.trim($matches[1]);
+    }
+
+    if (!$society->average_sale_price && preg_match('/(?:Rs\.?|₹)\s*([0-9.]+\s*(?:Cr|Lakh|L))/i', $text, $matches)) {
+      $updates['average_sale_price'] = '₹'.trim($matches[1]);
     }
 
     $amenities = array_values(array_unique(array_merge($society->amenities ?: [], $this->amenitiesFromText($text))));
@@ -126,6 +152,141 @@ class SocietyController extends Controller {
     $updates['data_quality'] = trim(($society->data_quality ?: 'Imported draft').' | Enriched from public source - verify before publishing');
 
     return $updates;
+  }
+
+  private function coordinatesForSociety(Society $society, array $updates): ?array {
+    if ($society->latitude && $society->longitude) {
+      return ['lat' => (string) $society->latitude, 'lon' => (string) $society->longitude];
+    }
+
+    $parts = array_filter([
+      $society->name,
+      $updates['sector'] ?? $society->sector,
+      $updates['locality'] ?? $society->locality,
+      'Gurugram Haryana India',
+    ]);
+
+    $response = Http::timeout(20)
+      ->withHeaders([
+        'User-Agent' => 'SocietyFlats draft enricher (+https://societyflats.com)',
+        'Accept' => 'application/json',
+      ])
+      ->get('https://nominatim.openstreetmap.org/search', [
+        'format' => 'jsonv2',
+        'limit' => 1,
+        'countrycodes' => 'in',
+        'q' => implode(', ', $parts),
+      ]);
+
+    if (!$response->successful()) {
+      return null;
+    }
+
+    $items = $response->json();
+    $item = is_array($items) ? ($items[0] ?? null) : null;
+
+    if (!is_array($item) || empty($item['lat']) || empty($item['lon'])) {
+      return null;
+    }
+
+    return ['lat' => (string) $item['lat'], 'lon' => (string) $item['lon']];
+  }
+
+  private function nearbyIntelligence(Society $society, array $updates, array $coordinates): array {
+    $lat = (float) $coordinates['lat'];
+    $lon = (float) $coordinates['lon'];
+    $query = <<<QUERY
+[out:json][timeout:12];
+(
+  node(around:3000,{$lat},{$lon})["amenity"~"school|hospital|clinic"];
+  node(around:3000,{$lat},{$lon})["railway"~"station|subway_entrance"];
+  node(around:3000,{$lat},{$lon})["office"];
+  way(around:3000,{$lat},{$lon})["amenity"~"school|hospital|clinic"];
+  way(around:3000,{$lat},{$lon})["railway"~"station|subway_entrance"];
+  way(around:3000,{$lat},{$lon})["office"];
+);
+out tags center 40;
+QUERY;
+
+    $response = Http::timeout(20)
+      ->asForm()
+      ->withHeaders(['User-Agent' => 'SocietyFlats draft enricher (+https://societyflats.com)'])
+      ->post('https://overpass-api.de/api/interpreter', ['data' => $query]);
+
+    if (!$response->successful()) {
+      return [];
+    }
+
+    $elements = $response->json('elements') ?: [];
+    $groups = ['schools' => [], 'hospitals' => [], 'metro' => [], 'offices' => []];
+
+    foreach ($elements as $element) {
+      $tags = $element['tags'] ?? [];
+      $name = trim((string) ($tags['name'] ?? ''));
+      if (!$name) {
+        continue;
+      }
+
+      $amenity = $tags['amenity'] ?? '';
+      $railway = $tags['railway'] ?? '';
+      $office = $tags['office'] ?? '';
+
+      if ($amenity === 'school') {
+        $groups['schools'][] = $name;
+      } elseif (in_array($amenity, ['hospital', 'clinic'], true)) {
+        $groups['hospitals'][] = $name;
+      } elseif (in_array($railway, ['station', 'subway_entrance'], true)) {
+        $groups['metro'][] = $name;
+      } elseif ($office) {
+        $groups['offices'][] = $name;
+      }
+    }
+
+    $payload = [];
+    if (!$society->nearby_schools && empty($updates['nearby_schools']) && $groups['schools']) {
+      $payload['nearby_schools'] = implode(', ', array_slice(array_values(array_unique($groups['schools'])), 0, 6));
+    }
+    if (!$society->nearby_hospitals && empty($updates['nearby_hospitals']) && $groups['hospitals']) {
+      $payload['nearby_hospitals'] = implode(', ', array_slice(array_values(array_unique($groups['hospitals'])), 0, 6));
+    }
+    if (!$society->nearby_metro && empty($updates['nearby_metro']) && $groups['metro']) {
+      $payload['nearby_metro'] = implode(', ', array_slice(array_values(array_unique($groups['metro'])), 0, 5));
+    }
+    if (!$society->nearby_office_hubs && empty($updates['nearby_office_hubs']) && $groups['offices']) {
+      $payload['nearby_office_hubs'] = implode(', ', array_slice(array_values(array_unique($groups['offices'])), 0, 6));
+    }
+
+    return $payload;
+  }
+
+  private function scorePayload(Society $society, array $updates): array {
+    $amenities = $updates['amenities'] ?? ($society->amenities ?: []);
+    $amenityCount = count($amenities);
+    $nearbySchools = $updates['nearby_schools'] ?? $society->nearby_schools;
+    $nearbyHospitals = $updates['nearby_hospitals'] ?? $society->nearby_hospitals;
+    $nearbyMetro = $updates['nearby_metro'] ?? $society->nearby_metro;
+    $nearbyOffices = $updates['nearby_office_hubs'] ?? $society->nearby_office_hubs;
+    $locality = Str::lower(($updates['locality'] ?? $society->locality).' '.($updates['sector'] ?? $society->sector));
+
+    $security = $this->boundedScore(7.2 + (in_array('24x7 Security', $amenities, true) ? 1.1 : 0) + (in_array('CCTV', $amenities, true) ? 0.5 : 0));
+    $maintenance = $this->boundedScore(7.1 + min($amenityCount, 8) * 0.12 + (($updates['total_towers'] ?? $society->total_towers) ? 0.3 : 0));
+    $connectivity = $this->boundedScore(7.0 + ($nearbyMetro ? 0.8 : 0) + ($nearbyOffices ? 0.5 : 0) + (str_contains($locality, 'golf course') || str_contains($locality, 'dwarka') || str_contains($locality, 'nh') ? 0.5 : 0));
+    $lifestyle = $this->boundedScore(7.0 + min($amenityCount, 10) * 0.16 + ($nearbySchools ? 0.3 : 0) + ($nearbyHospitals ? 0.2 : 0));
+    $investment = $this->boundedScore(7.0 + (($updates['buy_range'] ?? $society->buy_range) || ($updates['average_sale_price'] ?? $society->average_sale_price) ? 0.5 : 0) + ($nearbyMetro ? 0.4 : 0) + ($nearbyOffices ? 0.3 : 0));
+    $overall = round(($security + $maintenance + $connectivity + $lifestyle + $investment) / 5, 1);
+
+    return [
+      'score' => $overall,
+      'security_score' => $security,
+      'maintenance_score' => $maintenance,
+      'connectivity_score' => $connectivity,
+      'lifestyle_score' => $lifestyle,
+      'investment_score' => $investment,
+    ];
+  }
+
+  private function boundedScore(float $score): float {
+    return round(max(6.5, min(9.6, $score)), 1);
   }
 
   private function setIfBlank(array &$updates, Society $society, string $field, ?string $value): void {
