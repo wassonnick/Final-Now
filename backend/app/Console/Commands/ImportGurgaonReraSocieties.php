@@ -238,7 +238,7 @@ class ImportGurgaonReraSocieties extends Command
             'warehouse',
             'it park',
         ] as $keyword) {
-            if (str_contains($haystack, $keyword)) {
+            if (preg_match('/\b'.preg_quote($keyword, '/').'\b/i', $haystack)) {
                 return true;
             }
         }
