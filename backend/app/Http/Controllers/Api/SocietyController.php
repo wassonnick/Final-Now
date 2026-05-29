@@ -52,7 +52,8 @@ class SocietyController extends Controller {
     $meta = $this->extractMeta($response->body());
     $text = trim(($meta['description'] ?? '').' '.($meta['keywords'] ?? '').' '.strip_tags($response->body()));
     $updates = $this->enrichmentPayload($society, $meta, $text);
-    $coordinates = $this->coordinatesForSociety($society, $updates);
+    $diagnostics = [];
+    $coordinates = $this->coordinatesForSociety($society, $updates, $diagnostics);
 
     if ($coordinates) {
       if (!$society->latitude) {
@@ -62,18 +63,19 @@ class SocietyController extends Controller {
         $updates['longitude'] = $coordinates['lon'];
       }
 
-      $updates += $this->nearbyIntelligence($society, $updates, $coordinates);
+      $updates += $this->nearbyIntelligence($society, $updates, $coordinates, $diagnostics);
     }
 
     $updates += $this->scorePayload($society, $updates);
+    $updatedFields = array_keys($updates);
 
     if (!$updates) {
-      return response()->json(['status'=>'ok','message'=>'No new enrichment fields found.','data'=>$society]);
+      return response()->json(['status'=>'ok','message'=>'No new enrichment fields found.','data'=>$society,'enrichment'=>['updated_fields'=>[],'diagnostics'=>$diagnostics]]);
     }
 
     $society->update($updates);
 
-    return response()->json(['status'=>'ok','message'=>'Draft society enriched from public source. Review before publishing.','data'=>$society->fresh()]);
+    return response()->json(['status'=>'ok','message'=>'Draft society enriched from public source. Review before publishing.','data'=>$society->fresh(),'enrichment'=>['updated_fields'=>$updatedFields,'diagnostics'=>$diagnostics]]);
   }
   public function destroy(Society $society): JsonResponse { $society->delete(); return response()->json(['status'=>'ok','message'=>'Society deleted successfully.']); }
   private function payload(Request $r,bool $partial=false): array { $req=$partial?'sometimes':'required'; return $r->validate(['name'=>"{$req}|string|max:255",'slug'=>'nullable|string|max:255','builder'=>'nullable|string|max:255','sector'=>'nullable|string|max:255','locality'=>'nullable|string|max:255','address'=>'nullable|string|max:500','description'=>'nullable|string','year_built'=>'nullable|string|max:50','total_towers'=>'nullable|string|max:50','total_units'=>'nullable|string|max:50','maintenance_charges'=>'nullable|string|max:100','rent_range'=>'nullable|string|max:100','buy_range'=>'nullable|string|max:100','rental_yield'=>'nullable|string|max:100','average_rent'=>'nullable|string|max:100','average_sale_price'=>'nullable|string|max:100','price_per_sqft'=>'nullable|string|max:100','score'=>'nullable|numeric|min:0|max:10','security_score'=>'nullable|numeric|min:0|max:10','maintenance_score'=>'nullable|numeric|min:0|max:10','connectivity_score'=>'nullable|numeric|min:0|max:10','lifestyle_score'=>'nullable|numeric|min:0|max:10','investment_score'=>'nullable|numeric|min:0|max:10','amenities'=>'nullable|array','nearby_schools'=>'nullable|string','nearby_metro'=>'nullable|string','nearby_hospitals'=>'nullable|string','nearby_office_hubs'=>'nullable|string','meta_title'=>'nullable|string|max:255','meta_description'=>'nullable|string','faq'=>'nullable|string','status'=>'nullable|string|max:100','featured'=>'nullable|boolean','show_in_hero'=>'nullable|boolean','search_boost'=>'nullable|boolean','latitude'=>'nullable|string|max:100','longitude'=>'nullable|string|max:100','rwa_contact'=>'nullable|string|max:255','cover_image'=>'nullable|string','gallery_images'=>'nullable|array','brochure_name'=>'nullable|string|max:255','rera_number'=>'nullable|string|max:100','source_name'=>'nullable|string|max:255','source_url'=>'nullable|string','data_quality'=>'nullable|string|max:255']); }
@@ -104,9 +106,9 @@ class SocietyController extends Controller {
     $updates = [];
     $description = $meta['description'] ?? $meta['og:description'] ?? null;
 
-    $this->setIfBlank($updates, $society, 'description', $description);
-    $this->setIfBlank($updates, $society, 'meta_title', $meta['title'] ?? "{$society->name} Gurgaon - Society Profile");
-    $this->setIfBlank($updates, $society, 'meta_description', $description);
+    $this->setIfBlankOrImported($updates, $society, 'description', $description);
+    $this->setIfBlankOrImported($updates, $society, 'meta_title', $meta['title'] ?? "{$society->name} Gurgaon - Society Profile");
+    $this->setIfBlankOrImported($updates, $society, 'meta_description', $description);
 
     if (!$society->rera_number && preg_match('/RERA[\s-]*(?:GRG|GGM|PROJ)?[\s-]*[A-Z0-9-]+/i', $text, $matches)) {
       $updates['rera_number'] = trim($matches[0]);
@@ -149,63 +151,77 @@ class SocietyController extends Controller {
       $updates['amenities'] = $amenities;
     }
 
-    $updates['data_quality'] = trim(($society->data_quality ?: 'Imported draft').' | Enriched from public source - verify before publishing');
+    $updates['data_quality'] = Str::limit(trim(($society->data_quality ?: 'Imported draft').' | Enriched from public source - verify before publishing'), 240, '');
 
     return $updates;
   }
 
-  private function coordinatesForSociety(Society $society, array $updates): ?array {
+  private function coordinatesForSociety(Society $society, array $updates, array &$diagnostics): ?array {
     if ($society->latitude && $society->longitude) {
+      $diagnostics['geocode'] = 'Existing coordinates reused.';
       return ['lat' => (string) $society->latitude, 'lon' => (string) $society->longitude];
     }
 
-    $parts = array_filter([
-      $society->name,
-      $updates['sector'] ?? $society->sector,
-      $updates['locality'] ?? $society->locality,
+    $sector = $updates['sector'] ?? $society->sector;
+    $locality = $updates['locality'] ?? $society->locality;
+    $queries = array_values(array_unique(array_filter([
+      implode(', ', array_filter([$society->name, $sector, $locality, 'Gurugram Haryana India'])),
+      implode(', ', array_filter([$society->name, 'Gurugram Haryana India'])),
+      implode(', ', array_filter([$sector, $locality, 'Gurugram Haryana India'])),
+      implode(', ', array_filter([$sector, 'Gurugram Haryana India'])),
+      implode(', ', array_filter([$locality, 'Gurugram Haryana India'])),
       'Gurugram Haryana India',
-    ]);
+    ])));
 
-    $response = Http::timeout(20)
-      ->withHeaders([
-        'User-Agent' => 'SocietyFlats draft enricher (+https://societyflats.com)',
-        'Accept' => 'application/json',
-      ])
-      ->get('https://nominatim.openstreetmap.org/search', [
-        'format' => 'jsonv2',
-        'limit' => 1,
-        'countrycodes' => 'in',
-        'q' => implode(', ', $parts),
-      ]);
+    foreach ($queries as $query) {
+      $response = Http::timeout(20)
+        ->withHeaders([
+          'User-Agent' => 'SocietyFlats draft enricher (+https://societyflats.com)',
+          'Accept' => 'application/json',
+          'Accept-Language' => 'en-IN,en;q=0.9',
+        ])
+        ->get('https://nominatim.openstreetmap.org/search', [
+          'format' => 'jsonv2',
+          'limit' => 1,
+          'countrycodes' => 'in',
+          'addressdetails' => 1,
+          'q' => $query,
+        ]);
 
-    if (!$response->successful()) {
-      return null;
+      if (!$response->successful()) {
+        $diagnostics['geocode'] = "Nominatim returned HTTP {$response->status()}.";
+        continue;
+      }
+
+      $items = $response->json();
+      $item = is_array($items) ? ($items[0] ?? null) : null;
+
+      if (is_array($item) && !empty($item['lat']) && !empty($item['lon'])) {
+        $diagnostics['geocode'] = "Coordinates found using query: {$query}";
+        return ['lat' => (string) $item['lat'], 'lon' => (string) $item['lon']];
+      }
     }
 
-    $items = $response->json();
-    $item = is_array($items) ? ($items[0] ?? null) : null;
-
-    if (!is_array($item) || empty($item['lat']) || empty($item['lon'])) {
-      return null;
-    }
-
-    return ['lat' => (string) $item['lat'], 'lon' => (string) $item['lon']];
+    $diagnostics['geocode'] = 'No OpenStreetMap coordinates found.';
+    return null;
   }
 
-  private function nearbyIntelligence(Society $society, array $updates, array $coordinates): array {
+  private function nearbyIntelligence(Society $society, array $updates, array $coordinates, array &$diagnostics): array {
     $lat = (float) $coordinates['lat'];
     $lon = (float) $coordinates['lon'];
     $query = <<<QUERY
 [out:json][timeout:12];
 (
-  node(around:3000,{$lat},{$lon})["amenity"~"school|hospital|clinic"];
-  node(around:3000,{$lat},{$lon})["railway"~"station|subway_entrance"];
-  node(around:3000,{$lat},{$lon})["office"];
-  way(around:3000,{$lat},{$lon})["amenity"~"school|hospital|clinic"];
-  way(around:3000,{$lat},{$lon})["railway"~"station|subway_entrance"];
-  way(around:3000,{$lat},{$lon})["office"];
+  node(around:5000,{$lat},{$lon})["amenity"~"school|college|university|hospital|clinic"];
+  node(around:5000,{$lat},{$lon})["railway"~"station|subway_entrance"];
+  node(around:5000,{$lat},{$lon})["public_transport"="station"];
+  node(around:5000,{$lat},{$lon})["office"];
+  way(around:5000,{$lat},{$lon})["amenity"~"school|college|university|hospital|clinic"];
+  way(around:5000,{$lat},{$lon})["railway"~"station|subway_entrance"];
+  way(around:5000,{$lat},{$lon})["public_transport"="station"];
+  way(around:5000,{$lat},{$lon})["office"];
 );
-out tags center 40;
+out tags center 80;
 QUERY;
 
     $response = Http::timeout(20)
@@ -214,6 +230,7 @@ QUERY;
       ->post('https://overpass-api.de/api/interpreter', ['data' => $query]);
 
     if (!$response->successful()) {
+      $diagnostics['nearby'] = "Overpass returned HTTP {$response->status()}.";
       return [];
     }
 
@@ -231,11 +248,11 @@ QUERY;
       $railway = $tags['railway'] ?? '';
       $office = $tags['office'] ?? '';
 
-      if ($amenity === 'school') {
+      if (in_array($amenity, ['school', 'college', 'university'], true)) {
         $groups['schools'][] = $name;
       } elseif (in_array($amenity, ['hospital', 'clinic'], true)) {
         $groups['hospitals'][] = $name;
-      } elseif (in_array($railway, ['station', 'subway_entrance'], true)) {
+      } elseif (in_array($railway, ['station', 'subway_entrance'], true) || ($tags['public_transport'] ?? '') === 'station') {
         $groups['metro'][] = $name;
       } elseif ($office) {
         $groups['offices'][] = $name;
@@ -255,6 +272,8 @@ QUERY;
     if (!$society->nearby_office_hubs && empty($updates['nearby_office_hubs']) && $groups['offices']) {
       $payload['nearby_office_hubs'] = implode(', ', array_slice(array_values(array_unique($groups['offices'])), 0, 6));
     }
+
+    $diagnostics['nearby'] = 'Found '.count(array_unique($groups['schools'])).' education, '.count(array_unique($groups['hospitals'])).' healthcare, '.count(array_unique($groups['metro'])).' transit and '.count(array_unique($groups['offices'])).' office places.';
 
     return $payload;
   }
@@ -291,6 +310,14 @@ QUERY;
 
   private function setIfBlank(array &$updates, Society $society, string $field, ?string $value): void {
     if (!$society->{$field} && $value) {
+      $updates[$field] = trim($value);
+    }
+  }
+
+  private function setIfBlankOrImported(array &$updates, Society $society, string $field, ?string $value): void {
+    $current = (string) $society->{$field};
+    $looksImported = str_contains($current, 'Imported public RERA draft') || str_contains($current, 'Draft SocietyFlats profile');
+    if ((!$current || $looksImported) && $value) {
       $updates[$field] = trim($value);
     }
   }
