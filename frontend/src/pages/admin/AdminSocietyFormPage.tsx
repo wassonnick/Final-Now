@@ -1,19 +1,20 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, FileText, ImagePlus, Save, UploadCloud, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, FileText, ImagePlus, Save, Sparkles, UploadCloud, X } from 'lucide-react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { uploadAdminImage } from '@/lib/adminApi';
 import {
-  AdminSociety,
   createEmptyAdminSociety,
+  enrichAdminSociety,
   fetchAdminSociety,
   saveAdminSociety,
   slugifySociety,
   societyAmenityOptions,
 } from '@/lib/adminSocietyStore';
+import type { AdminSociety } from '@/lib/adminSocietyStore';
 
 export function AdminSocietyFormPage() {
   const navigate = useNavigate();
@@ -22,7 +23,9 @@ export function AdminSocietyFormPage() {
   const [society, setSociety] = useState<AdminSociety>(() => createEmptyAdminSociety());
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
+  const [enriching, setEnriching] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -55,6 +58,7 @@ export function AdminSocietyFormPage() {
       ...(field === 'name' && !isEdit ? { slug: slugifySociety(String(value)) } : {}),
     }));
     setError('');
+    setMessage('');
     setSaved(false);
   };
 
@@ -115,6 +119,35 @@ export function AdminSocietyFormPage() {
     }
   };
 
+  const hasBeenEnriched = society.dataQuality.toLowerCase().includes('enriched from public source');
+
+  const handleEnrich = async () => {
+    if (!isEdit || enriching || hasBeenEnriched) return;
+    if (!society.sourceUrl.trim()) {
+      setError('Add an official project/RERA source URL before enriching this society.');
+      return;
+    }
+
+    try {
+      setEnriching(true);
+      setError('');
+      setMessage('');
+      const result = await enrichAdminSociety(society.id);
+      setSociety(result.society);
+      const fieldText = result.updatedFields.length
+        ? `Updated: ${result.updatedFields.join(', ')}.`
+        : 'No new fields changed.';
+      const diagnosticText = [result.diagnostics.geocode, result.diagnostics.nearby].filter(Boolean).join(' ');
+      setMessage(`${fieldText} ${diagnosticText}`.trim());
+      setSaved(false);
+    } catch (err) {
+      console.error(err);
+      setError('Unable to enrich from this source. Check that the URL is public and try again.');
+    } finally {
+      setEnriching(false);
+    }
+  };
+
   if (loading) {
     return (
       <AdminLayout title="Loading society" subtitle="Fetching live backend profile">
@@ -135,9 +168,23 @@ export function AdminSocietyFormPage() {
           <Button variant="outline" className="w-fit rounded-full" asChild>
             <Link to="/admin/societies"><ArrowLeft className="mr-2 h-4 w-4" /> Back to societies</Link>
           </Button>
-          <Button type="submit" disabled={saving} className="rounded-full bg-blue-600 px-5 hover:bg-blue-700">
-            <Save className="mr-2 h-4 w-4" /> {saving ? 'Saving...' : isEdit ? 'Save changes' : 'Create society'}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {isEdit ? (
+              <Button
+                type="button"
+                onClick={handleEnrich}
+                disabled={enriching || hasBeenEnriched || !society.sourceUrl}
+                variant="outline"
+                className="rounded-full border-blue-100 text-blue-700 hover:bg-blue-50"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                {hasBeenEnriched ? 'Already enriched' : enriching ? 'Enriching...' : 'Enrich profile'}
+              </Button>
+            ) : null}
+            <Button type="submit" disabled={saving} className="rounded-full bg-blue-600 px-5 hover:bg-blue-700">
+              <Save className="mr-2 h-4 w-4" /> {saving ? 'Saving...' : isEdit ? 'Save changes' : 'Create society'}
+            </Button>
+          </div>
         </div>
 
         {error ? (
@@ -147,6 +194,12 @@ export function AdminSocietyFormPage() {
         {saved ? (
           <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
             <CheckCircle2 className="h-5 w-5" /> Society saved to the live backend.
+          </div>
+        ) : null}
+
+        {message ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
+            <Sparkles className="h-5 w-5" /> {message}
           </div>
         ) : null}
 
@@ -288,8 +341,8 @@ export function AdminSocietyFormPage() {
                   <Input value={society.sourceName} onChange={(event) => updateField('sourceName', event.target.value)} placeholder="Haryana RERA / Site Setu" className="h-12 rounded-2xl" />
                 </label>
                 <label className="space-y-2 block">
-                  <span className="text-sm font-medium text-slate-700">Source URL</span>
-                  <Input value={society.sourceUrl} onChange={(event) => updateField('sourceUrl', event.target.value)} placeholder="https://..." className="h-12 rounded-2xl" />
+                  <span className="text-sm font-medium text-slate-700">Official / RERA source URL</span>
+                  <Input value={society.sourceUrl} onChange={(event) => updateField('sourceUrl', event.target.value)} placeholder="Prefer official builder project page for images and details" className="h-12 rounded-2xl" />
                 </label>
                 <label className="space-y-2 block">
                   <span className="text-sm font-medium text-slate-700">Data quality note</span>

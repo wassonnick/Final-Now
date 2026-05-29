@@ -86,15 +86,24 @@ class SocietyController extends Controller {
       $meta['title'] = html_entity_decode(trim(strip_tags($matches[1])), ENT_QUOTES | ENT_HTML5);
     }
 
-    if (preg_match_all('/<meta\s+[^>]*>/i', $html, $matches)) {
-      foreach ($matches[0] as $tag) {
-        if (!preg_match('/(?:name|property)=["\']([^"\']+)["\']/i', $tag, $keyMatch) || !preg_match('/content=["\']([^"\']*)["\']/i', $tag, $contentMatch)) {
+    if (preg_match_all('/<meta\s+([^>]+)>/i', $html, $matches)) {
+      foreach ($matches[1] as $attributes) {
+        $key = $this->htmlAttribute($attributes, 'name') ?: $this->htmlAttribute($attributes, 'property');
+        $content = $this->htmlAttribute($attributes, 'content');
+
+        if (!$key || !$content) {
           continue;
         }
 
-        $key = strtolower($keyMatch[1]);
-        if (in_array($key, ['description', 'keywords', 'og:description', 'twitter:description'], true)) {
-          $meta[str_replace(['og:', 'twitter:'], '', $key)] = html_entity_decode(trim($contentMatch[1]), ENT_QUOTES | ENT_HTML5);
+        $key = strtolower($key);
+        $value = html_entity_decode(trim($content), ENT_QUOTES | ENT_HTML5);
+
+        if (in_array($key, ['description', 'og:description', 'twitter:description'], true)) {
+          $meta['description'] = $value;
+        } elseif ($key === 'keywords') {
+          $meta['keywords'] = $value;
+        } elseif (in_array($key, ['og:image', 'twitter:image', 'twitter:image:src'], true)) {
+          $meta['image'] = $value;
         }
       }
     }
@@ -102,13 +111,68 @@ class SocietyController extends Controller {
     return $meta;
   }
 
+  private function htmlAttribute(string $attributes, string $name): ?string {
+    if (preg_match('/\b'.preg_quote($name, '/').'\s*=\s*(["\'])(.*?)\1/is', $attributes, $matches)) {
+      return $matches[2];
+    }
+
+    return null;
+  }
+
+  private function imageSourceAllowed(?string $url): bool {
+    $host = Str::lower((string) parse_url((string) $url, PHP_URL_HOST));
+
+    if (!$host) {
+      return false;
+    }
+
+    foreach (['99acres', 'magicbricks', 'housing.com', 'google.', 'haryanarera', 'rera.', 'sitesetu.app', 'facebook.', 'instagram.', 'youtube.'] as $blocked) {
+      if (str_contains($host, $blocked)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private function absoluteUrl(?string $url, ?string $baseUrl): ?string {
+    if (!$url) {
+      return null;
+    }
+
+    if (Str::startsWith($url, ['http://', 'https://'])) {
+      return $url;
+    }
+
+    $scheme = parse_url((string) $baseUrl, PHP_URL_SCHEME) ?: 'https';
+    $host = parse_url((string) $baseUrl, PHP_URL_HOST);
+
+    if (!$host) {
+      return null;
+    }
+
+    if (Str::startsWith($url, '//')) {
+      return "{$scheme}:{$url}";
+    }
+
+    return $scheme.'://'.$host.'/'.ltrim($url, '/');
+  }
+
   private function enrichmentPayload(Society $society, array $meta, string $text): array {
     $updates = [];
-    $description = $meta['description'] ?? $meta['og:description'] ?? null;
+    $description = $meta['description'] ?? null;
+    $sourceImage = $this->imageSourceAllowed($society->source_url)
+      ? $this->absoluteUrl($meta['image'] ?? null, $society->source_url)
+      : null;
 
     $this->setIfBlankOrImported($updates, $society, 'description', $description);
     $this->setIfBlankOrImported($updates, $society, 'meta_title', $meta['title'] ?? "{$society->name} Gurgaon - Society Profile");
     $this->setIfBlankOrImported($updates, $society, 'meta_description', $description);
+    $this->setIfBlank($updates, $society, 'cover_image', $sourceImage);
+
+    if ($sourceImage && empty($society->gallery_images)) {
+      $updates['gallery_images'] = [$sourceImage];
+    }
 
     if (!$society->rera_number && preg_match('/RERA[\s-]*(?:GRG|GGM|PROJ)?[\s-]*[A-Z0-9-]+/i', $text, $matches)) {
       $updates['rera_number'] = trim($matches[0]);
@@ -167,9 +231,6 @@ class SocietyController extends Controller {
     $queries = array_values(array_unique(array_filter([
       implode(', ', array_filter([$society->name, $sector, $locality, 'Gurugram Haryana India'])),
       implode(', ', array_filter([$society->name, 'Gurugram Haryana India'])),
-      implode(', ', array_filter([$sector, $locality, 'Gurugram Haryana India'])),
-      implode(', ', array_filter([$sector, 'Gurugram Haryana India'])),
-      implode(', ', array_filter([$locality, 'Gurugram Haryana India'])),
     ])));
 
     foreach ($queries as $query) {
@@ -195,7 +256,7 @@ class SocietyController extends Controller {
       $items = $response->json();
       $item = is_array($items) ? ($items[0] ?? null) : null;
 
-      if (is_array($item) && !empty($item['lat']) && !empty($item['lon']) && $this->isSpecificGurgaonResult($item, $query, $sector, $locality)) {
+      if (is_array($item) && !empty($item['lat']) && !empty($item['lon']) && $this->isSpecificGurgaonResult($item, $society->name, $sector, $locality)) {
         $diagnostics['geocode'] = "Coordinates found using query: {$query}";
         return ['lat' => (string) $item['lat'], 'lon' => (string) $item['lon']];
       }
@@ -205,7 +266,7 @@ class SocietyController extends Controller {
     return null;
   }
 
-  private function isSpecificGurgaonResult(array $item, string $query, ?string $sector, ?string $locality): bool {
+  private function isSpecificGurgaonResult(array $item, string $societyName, ?string $sector, ?string $locality): bool {
     $lat = (float) ($item['lat'] ?? 0);
     $lon = (float) ($item['lon'] ?? 0);
     $display = Str::lower((string) ($item['display_name'] ?? ''));
@@ -220,12 +281,31 @@ class SocietyController extends Controller {
       return false;
     }
 
+    $nameWords = collect(preg_split('/\s+/', Str::lower($societyName)) ?: [])
+      ->map(fn ($word) => trim($word, '.,()[]{}'))
+      ->filter(fn ($word) => strlen($word) > 2 && !in_array($word, ['the', 'and', 'gurgaon', 'gurugram'], true))
+      ->unique()
+      ->values();
+    $matchedNameWords = $nameWords->filter(fn ($word) => str_contains($display, $word))->count();
+    $hasNameMatch = $nameWords->isNotEmpty() && $matchedNameWords >= min(2, $nameWords->count());
+
+    if (!$hasNameMatch) {
+      return false;
+    }
+
     $sectorNeedle = $sector ? Str::lower($sector) : '';
     $localityNeedle = $locality ? Str::lower($locality) : '';
+    $hasLocationMatch = false;
 
-    return ($sectorNeedle && str_contains($display, $sectorNeedle))
-      || ($localityNeedle && $localityNeedle !== 'gurugram' && str_contains($display, $localityNeedle))
-      || str_contains($display, Str::lower($query));
+    if ($sectorNeedle && str_contains($display, $sectorNeedle)) {
+      $hasLocationMatch = true;
+    }
+
+    if ($localityNeedle && $localityNeedle !== 'gurugram' && str_contains($display, $localityNeedle)) {
+      $hasLocationMatch = true;
+    }
+
+    return (!$sectorNeedle && !$localityNeedle) || $hasLocationMatch;
   }
 
   private function looksLikeGenericGurgaonCoordinate(float $lat, float $lon): bool {
