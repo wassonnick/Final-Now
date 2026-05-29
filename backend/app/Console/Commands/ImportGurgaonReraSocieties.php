@@ -12,6 +12,7 @@ class ImportGurgaonReraSocieties extends Command
     protected $signature = 'societies:import-gurgaon-rera
         {--source=https://sitesetu.app/rera/haryana/gurgaon : Public directory URL to import from}
         {--limit=0 : Maximum records to import, 0 imports all found records}
+        {--include-commercial : Also import commercial, retail, office and serviced-apartment projects}
         {--dry-run : Preview records without writing to the database}';
 
     protected $description = 'Import public Gurgaon RERA project entries as draft society profiles.';
@@ -20,6 +21,7 @@ class ImportGurgaonReraSocieties extends Command
     {
         $source = (string) $this->option('source');
         $limit = max(0, (int) $this->option('limit'));
+        $includeCommercial = (bool) $this->option('include-commercial');
         $dryRun = (bool) $this->option('dry-run');
 
         $this->info("Fetching {$source}");
@@ -33,7 +35,7 @@ class ImportGurgaonReraSocieties extends Command
             return self::FAILURE;
         }
 
-        $records = $this->parseDirectory($response->body(), $source);
+        $records = $this->parseDirectory($response->body(), $source, $includeCommercial);
 
         if ($limit > 0) {
             $records = array_slice($records, 0, $limit);
@@ -85,7 +87,7 @@ class ImportGurgaonReraSocieties extends Command
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function parseDirectory(string $html, string $source): array
+    private function parseDirectory(string $html, string $source, bool $includeCommercial): array
     {
         $previous = libxml_use_internal_errors(true);
         $dom = new \DOMDocument();
@@ -105,12 +107,16 @@ class ImportGurgaonReraSocieties extends Command
                 continue;
             }
 
-            $url = str_starts_with($href, 'http') ? $href : rtrim($source, '/').'/'.basename($href);
-            $name = $this->projectNameFromText($text);
-            $builder = $this->builderFromText($text);
+            $slug = Str::slug(basename($href));
+            $url = str_starts_with($href, 'http') ? $href : rtrim($source, '/').'/'.$slug;
+            $name = $this->projectNameFromSlug($slug);
+            $builder = $this->builderFromText($text, $name);
             $location = $this->locationFromText($text);
             $reraNumber = $this->reraNumberFromText($text);
-            $slug = Str::slug($name);
+
+            if (!$includeCommercial && $this->looksCommercial($name, $text)) {
+                continue;
+            }
 
             if (!$name || isset($records[$slug])) {
                 continue;
@@ -140,18 +146,24 @@ class ImportGurgaonReraSocieties extends Command
         return trim(preg_replace('/\s+/u', ' ', html_entity_decode($text, ENT_QUOTES | ENT_HTML5)) ?: '');
     }
 
-    private function projectNameFromText(string $text): string
+    private function projectNameFromSlug(string $slug): string
     {
-        if (preg_match('/^(.*?)\s*by\s+/i', $text, $matches)) {
+        return Str::of($slug)
+            ->replace('-', ' ')
+            ->title()
+            ->replaceMatches('/\b(Gh|Nh|Mvn|M3M|Aipl|Dlf|Ireo|Ddjay)\b/i', fn ($match) => strtoupper($match[0]))
+            ->toString();
+    }
+
+    private function builderFromText(string $text, string $name): ?string
+    {
+        if (preg_match('/\s*by\s+(.+?)(?:\s*(?:Sector|Village|GH|Khasra|Real Estate|Approved|Continuing|Return|RERA No\.|Premium Segment|On request|On Request)|$)/i', $text, $matches)) {
             return trim($matches[1]);
         }
 
-        return trim(preg_replace('/\s+(Private Limited|Pvt\.?\s*Ltd\.?|Limited|LLP|Group|Developers?|Builders?).*$/i', '', $text) ?: $text);
-    }
+        $candidate = $this->removeProjectNamePrefix($text, $name);
 
-    private function builderFromText(string $text): ?string
-    {
-        if (preg_match('/\s*by\s+(.+?)(?:\s*(?:Sector|Village|GH|Khasra|Real Estate|Approved|Continuing|Return|RERA No\.|Premium Segment|On request|On Request)|$)/i', $text, $matches)) {
+        if ($candidate && preg_match('/^(.+?(?:Private Limited|Pvt\.?\s*Ltd\.?|Limited|LLP|Ltd\.?|Developers?|Builders?|Realty|Infrastructure|Projects?))(?:\s|$)/i', $candidate, $matches)) {
             return trim($matches[1]);
         }
 
@@ -160,6 +172,20 @@ class ImportGurgaonReraSocieties extends Command
         }
 
         return null;
+    }
+
+    private function removeProjectNamePrefix(string $text, string $name): string
+    {
+        $normalizedText = preg_replace('/[^a-z0-9]+/i', '', $text) ?: '';
+        $normalizedName = preg_replace('/[^a-z0-9]+/i', '', $name) ?: '';
+
+        if ($normalizedName && stripos($normalizedText, $normalizedName) === 0) {
+            $remaining = substr($normalizedText, strlen($normalizedName));
+
+            return trim(preg_replace('/([a-z])([A-Z])/', '$1 $2', $remaining) ?: $remaining);
+        }
+
+        return trim($text);
     }
 
     private function locationFromText(string $text): ?string
@@ -187,5 +213,36 @@ class ImportGurgaonReraSocieties extends Command
         }
 
         return null;
+    }
+
+    private function looksCommercial(string $name, string $text): bool
+    {
+        $haystack = Str::lower($name.' '.$text);
+
+        foreach ([
+            'commercial',
+            'retail',
+            'office',
+            'shop',
+            'shops',
+            'sco',
+            'mall',
+            'plaza',
+            'market',
+            'business park',
+            'serviced apartment',
+            'managed serviced apartment',
+            'food court',
+            'multiplex',
+            'industrial',
+            'warehouse',
+            'it park',
+        ] as $keyword) {
+            if (str_contains($haystack, $keyword)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
