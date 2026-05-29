@@ -42,7 +42,7 @@ export function AdminSocietyFormPage() {
         setError('');
         const loadedSociety = await fetchAdminSociety(id);
         setSociety(loadedSociety);
-        setLoadedSourceUrl(loadedSociety.sourceUrl);
+        setLoadedSourceUrl(loadedSociety.officialProjectUrl || loadedSociety.sourceUrl);
       } catch (err) {
         console.error(err);
         setError('Unable to load society from the live backend.');
@@ -82,7 +82,7 @@ export function AdminSocietyFormPage() {
     const images = await Promise.all(files.map((file) => uploadAdminImage(file, 'societies')));
 
     setSociety((current) => target === 'coverImage'
-      ? { ...current, coverImage: images[0] }
+      ? { ...current, coverImage: images[0], imageUrl: images[0], imageStatus: current.imageStatus === 'placeholder' ? 'needs_review' : current.imageStatus }
       : { ...current, galleryImages: [...current.galleryImages, ...images].slice(0, 10) }
     );
     event.target.value = '';
@@ -122,14 +122,15 @@ export function AdminSocietyFormPage() {
     }
   };
 
-  const sourceChanged = society.sourceUrl !== loadedSourceUrl;
+  const activeSourceUrl = society.officialProjectUrl || society.sourceUrl;
+  const sourceChanged = activeSourceUrl !== loadedSourceUrl;
   const hasBeenEnriched = society.dataQuality.toLowerCase().includes('auto-enriched')
     || society.dataQuality.toLowerCase().includes('enriched from public');
-  const enrichDisabled = enriching || !society.sourceUrl || (hasBeenEnriched && !sourceChanged);
+  const enrichDisabled = enriching || !activeSourceUrl || (hasBeenEnriched && !sourceChanged);
 
   const handleEnrich = async () => {
     if (!isEdit || enrichDisabled) return;
-    if (!society.sourceUrl.trim()) {
+    if (!activeSourceUrl.trim()) {
       setError('Add an official project/RERA source URL before enriching this society.');
       return;
     }
@@ -140,7 +141,7 @@ export function AdminSocietyFormPage() {
       setMessage('');
       const result = await enrichAdminSociety(society.id);
       setSociety(result.society);
-      setLoadedSourceUrl(result.society.sourceUrl);
+      setLoadedSourceUrl(result.society.officialProjectUrl || result.society.sourceUrl);
       const fieldText = result.updatedFields.length
         ? `Updated: ${result.updatedFields.join(', ')}.`
         : 'No new fields changed.';
@@ -340,6 +341,26 @@ export function AdminSocietyFormPage() {
               <h2 className="text-lg font-semibold text-slate-950">Import source</h2>
               <div className="mt-5 space-y-4">
                 <label className="space-y-2 block">
+                  <span className="text-sm font-medium text-slate-700">Official project URL</span>
+                  <Input value={society.officialProjectUrl} onChange={(event) => updateField('officialProjectUrl', event.target.value)} placeholder="Official developer project page" className="h-12 rounded-2xl" />
+                </label>
+                <label className="space-y-2 block">
+                  <span className="text-sm font-medium text-slate-700">Official developer URL</span>
+                  <Input value={society.officialDeveloperUrl} onChange={(event) => updateField('officialDeveloperUrl', event.target.value)} placeholder="Official developer website" className="h-12 rounded-2xl" />
+                </label>
+                <label className="space-y-2 block">
+                  <span className="text-sm font-medium text-slate-700">Official gallery URL</span>
+                  <Input value={society.officialGalleryUrl} onChange={(event) => updateField('officialGalleryUrl', event.target.value)} placeholder="Official gallery page, not copied images" className="h-12 rounded-2xl" />
+                </label>
+                <label className="space-y-2 block">
+                  <span className="text-sm font-medium text-slate-700">Official brochure URL</span>
+                  <Input value={society.officialBrochureUrl} onChange={(event) => updateField('officialBrochureUrl', event.target.value)} placeholder="Official brochure PDF/page" className="h-12 rounded-2xl" />
+                </label>
+                <label className="space-y-2 block">
+                  <span className="text-sm font-medium text-slate-700">Official floor plan URL</span>
+                  <Input value={society.officialFloorPlanUrl} onChange={(event) => updateField('officialFloorPlanUrl', event.target.value)} placeholder="Official floor plan page/PDF" className="h-12 rounded-2xl" />
+                </label>
+                <label className="space-y-2 block">
                   <span className="text-sm font-medium text-slate-700">RERA number</span>
                   <Input value={society.reraNumber} onChange={(event) => updateField('reraNumber', event.target.value)} placeholder="RERA-GRG-0000-2026" className="h-12 rounded-2xl" />
                 </label>
@@ -350,6 +371,30 @@ export function AdminSocietyFormPage() {
                 <label className="space-y-2 block">
                   <span className="text-sm font-medium text-slate-700">Official / RERA source URL</span>
                   <Input value={society.sourceUrl} onChange={(event) => updateField('sourceUrl', event.target.value)} placeholder="Prefer official builder project page for images and details" className="h-12 rounded-2xl" />
+                </label>
+                <label className="space-y-2 block">
+                  <span className="text-sm font-medium text-slate-700">RERA search URL</span>
+                  <Input value={society.reraSearchUrl} onChange={(event) => updateField('reraSearchUrl', event.target.value)} placeholder="Official RERA search/certificate URL" className="h-12 rounded-2xl" />
+                </label>
+                <label className="space-y-2 block">
+                  <span className="text-sm font-medium text-slate-700">Google Maps URL</span>
+                  <Input value={society.googleMapsUrl} onChange={(event) => updateField('googleMapsUrl', event.target.value)} placeholder="Google Maps reference URL" className="h-12 rounded-2xl" />
+                </label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="space-y-2 block">
+                    <span className="text-sm font-medium text-slate-700">Official source status</span>
+                    <select value={society.officialSourceStatus} onChange={(event) => updateField('officialSourceStatus', event.target.value)} className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
+                      <option>pending</option><option>found</option><option>enriched</option><option>failed</option><option>needs_manual_review</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 block">
+                    <span className="text-sm font-medium text-slate-700">Source confidence score</span>
+                    <Input value={society.sourceConfidenceScore} onChange={(event) => updateField('sourceConfidenceScore', event.target.value)} placeholder="0-100" className="h-12 rounded-2xl" />
+                  </label>
+                </div>
+                <label className="space-y-2 block">
+                  <span className="text-sm font-medium text-slate-700">Official source notes</span>
+                  <textarea value={society.officialSourceNotes} onChange={(event) => updateField('officialSourceNotes', event.target.value)} placeholder="Manual verification notes for official sources" className="min-h-24 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100" />
                 </label>
                 <label className="space-y-2 block">
                   <span className="text-sm font-medium text-slate-700">Data quality note</span>
@@ -371,8 +416,30 @@ export function AdminSocietyFormPage() {
               <h2 className="text-lg font-semibold text-slate-950">Media gallery</h2>
               <p className="mt-1 text-sm text-slate-500">Use self-shot, licensed, or developer-approved images only.</p>
               <label className="mt-5 block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Approved cover image URL</span>
-                <Input value={society.coverImage} onChange={(event) => updateField('coverImage', event.target.value)} placeholder="Paste only licensed or developer-approved image URL" className="h-12 rounded-2xl" />
+                <span className="text-sm font-medium text-slate-700">Image reference URL</span>
+                <Input value={society.imageReferenceUrl} onChange={(event) => updateField('imageReferenceUrl', event.target.value)} placeholder="Admin reference only, not public unless approved" className="h-12 rounded-2xl" />
+              </label>
+              <label className="mt-4 block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Approved image URL</span>
+                <Input value={society.imageUrl} onChange={(event) => updateField('imageUrl', event.target.value)} placeholder="Only licensed, self-shot, or developer-approved image URL" className="h-12 rounded-2xl" />
+              </label>
+              <label className="mt-4 block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Image status</span>
+                <select value={society.imageStatus} onChange={(event) => updateField('imageStatus', event.target.value as AdminSociety['imageStatus'])} className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
+                  <option>placeholder</option><option>official_reference_found</option><option>licensed_uploaded</option><option>self_shot_uploaded</option><option>developer_permission_received</option><option>needs_review</option>
+                </select>
+              </label>
+              <label className="mt-4 block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Image alt text</span>
+                <Input value={society.imageAltText} onChange={(event) => updateField('imageAltText', event.target.value)} placeholder="Accessible image description" className="h-12 rounded-2xl" />
+              </label>
+              <label className="mt-4 block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Image credit</span>
+                <Input value={society.imageCredit} onChange={(event) => updateField('imageCredit', event.target.value)} placeholder="Photographer/developer/license credit" className="h-12 rounded-2xl" />
+              </label>
+              <label className="mt-4 block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Image license notes</span>
+                <textarea value={society.imageLicenseNotes} onChange={(event) => updateField('imageLicenseNotes', event.target.value)} placeholder="Permission/license details" className="min-h-24 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100" />
               </label>
               <label className="mt-4 block space-y-2">
                 <span className="text-sm font-medium text-slate-700">Approved gallery image URLs</span>
@@ -384,7 +451,7 @@ export function AdminSocietyFormPage() {
                 />
               </label>
               <label className="mt-5 flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-6 text-center hover:bg-slate-100">
-                {society.coverImage ? <img src={society.coverImage} className="h-32 w-full rounded-2xl object-cover" /> : <><ImagePlus className="h-7 w-7 text-blue-600" /><p className="mt-3 font-medium text-slate-950">Upload cover image</p></>}
+                {society.imageUrl || society.coverImage ? <img src={society.imageUrl || society.coverImage} className="h-32 w-full rounded-2xl object-cover" /> : <><ImagePlus className="h-7 w-7 text-blue-600" /><p className="mt-3 font-medium text-slate-950">Upload cover image</p></>}
                 <input type="file" accept="image/*" onChange={(event) => readImages(event, 'coverImage')} className="hidden" />
               </label>
               <label className="mt-4 inline-flex cursor-pointer items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">

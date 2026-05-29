@@ -23,6 +23,8 @@ export interface Society {
   nearby_facilities: Record<string, number>;
   cover_image: string;
   gallery_images: string[];
+  image_url?: string;
+  image_status?: string;
   is_verified: boolean;
   featured: boolean;
   view_count: number;

@@ -37,13 +37,15 @@ class SocietyController extends Controller {
   public function store(Request $request): JsonResponse { $p=$this->payload($request); $p['slug']=$p['slug']??Str::slug($p['name']); $s=Society::create($p); return response()->json(['status'=>'ok','message'=>'Society created successfully.','data'=>$s],201); }
   public function update(Request $request, Society $society): JsonResponse { $p=$this->payload($request,true); if(isset($p['name'])&&empty($p['slug'])) $p['slug']=Str::slug($p['name']); $society->update($p); return response()->json(['status'=>'ok','message'=>'Society updated successfully.','data'=>$society]); }
   public function enrich(Society $society): JsonResponse {
-    if (!$society->source_url) {
+    $sourceUrl = $society->official_project_url ?: $society->source_url;
+
+    if (!$sourceUrl) {
       return response()->json(['status'=>'error','message'=>'No source URL saved for this society.'],422);
     }
 
     $response = Http::timeout(30)
       ->withHeaders(['User-Agent'=>'SocietyFlats draft enricher (+https://societyflats.com)'])
-      ->get($society->source_url);
+      ->get($sourceUrl);
 
     if (!$response->successful()) {
       return response()->json(['status'=>'error','message'=>"Source returned HTTP {$response->status()}."],422);
@@ -52,7 +54,7 @@ class SocietyController extends Controller {
     $meta = $this->extractMeta($response->body());
     $text = trim(($meta['description'] ?? '').' '.($meta['keywords'] ?? '').' '.strip_tags($response->body()));
     $diagnostics = [];
-    $updates = $this->enrichmentPayload($society, $meta, $text, $diagnostics);
+    $updates = $this->enrichmentPayload($society, $meta, $text, $sourceUrl, $diagnostics);
     $coordinates = $this->coordinatesForSociety($society, $updates, $diagnostics);
 
     if ($coordinates) {
@@ -78,7 +80,7 @@ class SocietyController extends Controller {
     return response()->json(['status'=>'ok','message'=>'Draft society enriched from public source. Review before publishing.','data'=>$society->fresh(),'enrichment'=>['updated_fields'=>$updatedFields,'diagnostics'=>$diagnostics]]);
   }
   public function destroy(Society $society): JsonResponse { $society->delete(); return response()->json(['status'=>'ok','message'=>'Society deleted successfully.']); }
-  private function payload(Request $r,bool $partial=false): array { $req=$partial?'sometimes':'required'; return $r->validate(['name'=>"{$req}|string|max:255",'slug'=>'nullable|string|max:255','builder'=>'nullable|string|max:255','sector'=>'nullable|string|max:255','locality'=>'nullable|string|max:255','address'=>'nullable|string|max:500','description'=>'nullable|string','year_built'=>'nullable|string|max:50','total_towers'=>'nullable|string|max:50','total_units'=>'nullable|string|max:50','maintenance_charges'=>'nullable|string|max:100','rent_range'=>'nullable|string|max:100','buy_range'=>'nullable|string|max:100','rental_yield'=>'nullable|string|max:100','average_rent'=>'nullable|string|max:100','average_sale_price'=>'nullable|string|max:100','price_per_sqft'=>'nullable|string|max:100','score'=>'nullable|numeric|min:0|max:10','security_score'=>'nullable|numeric|min:0|max:10','maintenance_score'=>'nullable|numeric|min:0|max:10','connectivity_score'=>'nullable|numeric|min:0|max:10','lifestyle_score'=>'nullable|numeric|min:0|max:10','investment_score'=>'nullable|numeric|min:0|max:10','amenities'=>'nullable|array','nearby_schools'=>'nullable|string','nearby_metro'=>'nullable|string','nearby_hospitals'=>'nullable|string','nearby_office_hubs'=>'nullable|string','meta_title'=>'nullable|string|max:255','meta_description'=>'nullable|string','faq'=>'nullable|string','status'=>'nullable|string|max:100','featured'=>'nullable|boolean','show_in_hero'=>'nullable|boolean','search_boost'=>'nullable|boolean','latitude'=>'nullable|string|max:100','longitude'=>'nullable|string|max:100','rwa_contact'=>'nullable|string|max:255','cover_image'=>'nullable|string','gallery_images'=>'nullable|array','brochure_name'=>'nullable|string|max:255','rera_number'=>'nullable|string|max:100','source_name'=>'nullable|string|max:255','source_url'=>'nullable|string','data_quality'=>'nullable|string|max:255']); }
+  private function payload(Request $r,bool $partial=false): array { $req=$partial?'sometimes':'required'; return $r->validate(['name'=>"{$req}|string|max:255",'slug'=>'nullable|string|max:255','builder'=>'nullable|string|max:255','sector'=>'nullable|string|max:255','locality'=>'nullable|string|max:255','address'=>'nullable|string|max:500','description'=>'nullable|string','year_built'=>'nullable|string|max:50','total_towers'=>'nullable|string|max:50','total_units'=>'nullable|string|max:50','maintenance_charges'=>'nullable|string|max:100','rent_range'=>'nullable|string|max:100','buy_range'=>'nullable|string|max:100','rental_yield'=>'nullable|string|max:100','average_rent'=>'nullable|string|max:100','average_sale_price'=>'nullable|string|max:100','price_per_sqft'=>'nullable|string|max:100','score'=>'nullable|numeric|min:0|max:10','security_score'=>'nullable|numeric|min:0|max:10','maintenance_score'=>'nullable|numeric|min:0|max:10','connectivity_score'=>'nullable|numeric|min:0|max:10','lifestyle_score'=>'nullable|numeric|min:0|max:10','investment_score'=>'nullable|numeric|min:0|max:10','amenities'=>'nullable|array','nearby_schools'=>'nullable|string','nearby_metro'=>'nullable|string','nearby_hospitals'=>'nullable|string','nearby_office_hubs'=>'nullable|string','meta_title'=>'nullable|string|max:255','meta_description'=>'nullable|string','faq'=>'nullable|string','status'=>'nullable|string|max:100','featured'=>'nullable|boolean','show_in_hero'=>'nullable|boolean','search_boost'=>'nullable|boolean','latitude'=>'nullable|string|max:100','longitude'=>'nullable|string|max:100','rwa_contact'=>'nullable|string|max:255','cover_image'=>'nullable|string','gallery_images'=>'nullable|array','image_reference_url'=>'nullable|string','image_url'=>'nullable|string','image_status'=>'nullable|string|max:100','image_alt_text'=>'nullable|string|max:255','image_credit'=>'nullable|string|max:255','image_license_notes'=>'nullable|string','brochure_name'=>'nullable|string|max:255','rera_number'=>'nullable|string|max:100','source_name'=>'nullable|string|max:255','source_url'=>'nullable|string','official_project_url'=>'nullable|string','official_developer_url'=>'nullable|string','official_brochure_url'=>'nullable|string','official_floor_plan_url'=>'nullable|string','official_gallery_url'=>'nullable|string','official_source_status'=>'nullable|string|max:100','official_source_notes'=>'nullable|string','rera_search_url'=>'nullable|string','google_maps_url'=>'nullable|string','source_confidence_score'=>'nullable|integer|min:0|max:100','data_quality'=>'nullable|string|max:255']); }
 
   private function extractMeta(string $html): array {
     $meta = [];
@@ -158,12 +160,12 @@ class SocietyController extends Controller {
     return $scheme.'://'.$host.'/'.ltrim($url, '/');
   }
 
-  private function enrichmentPayload(Society $society, array $meta, string $text, array &$diagnostics): array {
+  private function enrichmentPayload(Society $society, array $meta, string $text, string $sourceUrl, array &$diagnostics): array {
     $updates = [];
     $description = $meta['description'] ?? null;
-    $imageSourceAllowed = $this->imageSourceAllowed($society->source_url);
+    $imageSourceAllowed = $this->imageSourceAllowed($sourceUrl);
     $sourceImage = $imageSourceAllowed
-      ? $this->absoluteUrl($meta['image'] ?? null, $society->source_url)
+      ? $this->absoluteUrl($meta['image'] ?? null, $sourceUrl)
       : null;
 
     if (!$imageSourceAllowed) {
@@ -175,10 +177,12 @@ class SocietyController extends Controller {
     $this->setIfBlankOrImported($updates, $society, 'description', $description);
     $this->setIfBlankOrImported($updates, $society, 'meta_title', $meta['title'] ?? "{$society->name} Gurgaon - Society Profile");
     $this->setIfBlankOrImported($updates, $society, 'meta_description', $description);
-    $this->setIfBlank($updates, $society, 'cover_image', $sourceImage);
 
-    if ($sourceImage && empty($society->gallery_images)) {
-      $updates['gallery_images'] = [$sourceImage];
+    if ($sourceImage && !$society->image_reference_url) {
+      $updates['image_reference_url'] = $sourceImage;
+      if (in_array($society->image_status, [null, '', 'placeholder', 'needs_review'], true)) {
+        $updates['image_status'] = 'official_reference_found';
+      }
     }
 
     if (!$society->rera_number && preg_match('/RERA[\s-]*(?:GRG|GGM|PROJ)?[\s-]*[A-Z0-9-]+/i', $text, $matches)) {
@@ -224,6 +228,8 @@ class SocietyController extends Controller {
 
     $quality = preg_replace('/\s*\|?\s*Auto-enriched\b[^|]*/i', '', (string) $society->data_quality);
     $updates['data_quality'] = Str::limit(trim('Auto-enriched | '.($quality ?: 'Imported draft').' | verify before publishing'), 255, '');
+    $updates['official_source_last_checked_at'] = now();
+    $updates['official_source_status'] = $society->official_project_url ? 'enriched' : 'needs_manual_review';
 
     return $updates;
   }

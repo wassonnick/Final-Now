@@ -1,6 +1,13 @@
 import { adminHeaders } from '@/lib/adminApi';
 
 export type SocietyStatus = 'Draft' | 'Verified' | 'Premium' | 'Archived';
+export type SocietyImageStatus =
+  | 'placeholder'
+  | 'official_reference_found'
+  | 'licensed_uploaded'
+  | 'self_shot_uploaded'
+  | 'developer_permission_received'
+  | 'needs_review';
 
 export interface AdminSociety {
   id: number;
@@ -44,10 +51,26 @@ export interface AdminSociety {
   faq: string;
   coverImage: string;
   galleryImages: string[];
+  imageReferenceUrl: string;
+  imageUrl: string;
+  imageStatus: SocietyImageStatus;
+  imageAltText: string;
+  imageCredit: string;
+  imageLicenseNotes: string;
   brochureName: string;
   reraNumber: string;
   sourceName: string;
   sourceUrl: string;
+  officialProjectUrl: string;
+  officialDeveloperUrl: string;
+  officialBrochureUrl: string;
+  officialFloorPlanUrl: string;
+  officialGalleryUrl: string;
+  officialSourceStatus: string;
+  officialSourceNotes: string;
+  reraSearchUrl: string;
+  googleMapsUrl: string;
+  sourceConfidenceScore: string;
   dataQuality: string;
   updatedAt: string;
   propertiesCount?: number;
@@ -88,6 +111,20 @@ function parseArray(value: unknown): string[] {
 function normalizeStatus(value: unknown): SocietyStatus {
   if (value === 'Verified' || value === 'Premium' || value === 'Archived') return value;
   return 'Draft';
+}
+
+function normalizeImageStatus(value: unknown): SocietyImageStatus {
+  if (
+    value === 'official_reference_found' ||
+    value === 'licensed_uploaded' ||
+    value === 'self_shot_uploaded' ||
+    value === 'developer_permission_received' ||
+    value === 'needs_review'
+  ) {
+    return value;
+  }
+
+  return 'placeholder';
 }
 
 export function createEmptyAdminSociety(): AdminSociety {
@@ -133,10 +170,26 @@ export function createEmptyAdminSociety(): AdminSociety {
     faq: '',
     coverImage: '',
     galleryImages: [],
+    imageReferenceUrl: '',
+    imageUrl: '',
+    imageStatus: 'placeholder',
+    imageAltText: '',
+    imageCredit: '',
+    imageLicenseNotes: '',
     brochureName: '',
     reraNumber: '',
     sourceName: '',
     sourceUrl: '',
+    officialProjectUrl: '',
+    officialDeveloperUrl: '',
+    officialBrochureUrl: '',
+    officialFloorPlanUrl: '',
+    officialGalleryUrl: '',
+    officialSourceStatus: 'pending',
+    officialSourceNotes: '',
+    reraSearchUrl: '',
+    googleMapsUrl: '',
+    sourceConfidenceScore: '',
     dataQuality: '',
     updatedAt: 'Just now',
   };
@@ -190,10 +243,26 @@ export function mapApiSociety(data: any): AdminSociety {
     faq: data?.faq || '',
     coverImage: data?.cover_image || '',
     galleryImages: parseArray(data?.gallery_images),
+    imageReferenceUrl: data?.image_reference_url || '',
+    imageUrl: data?.image_url || '',
+    imageStatus: normalizeImageStatus(data?.image_status),
+    imageAltText: data?.image_alt_text || '',
+    imageCredit: data?.image_credit || '',
+    imageLicenseNotes: data?.image_license_notes || '',
     brochureName: data?.brochure_name || '',
     reraNumber: data?.rera_number || '',
     sourceName: data?.source_name || '',
     sourceUrl: data?.source_url || '',
+    officialProjectUrl: data?.official_project_url || '',
+    officialDeveloperUrl: data?.official_developer_url || '',
+    officialBrochureUrl: data?.official_brochure_url || '',
+    officialFloorPlanUrl: data?.official_floor_plan_url || '',
+    officialGalleryUrl: data?.official_gallery_url || '',
+    officialSourceStatus: data?.official_source_status || 'pending',
+    officialSourceNotes: data?.official_source_notes || '',
+    reraSearchUrl: data?.rera_search_url || '',
+    googleMapsUrl: data?.google_maps_url || '',
+    sourceConfidenceScore: scoreValue(data?.source_confidence_score),
     dataQuality: data?.data_quality || '',
     updatedAt: data?.updated_at ? new Date(data.updated_at).toLocaleDateString() : 'Just now',
     propertiesCount: Number(data?.properties_count || data?.properties?.length || 0),
@@ -242,10 +311,26 @@ export function toApiSocietyPayload(society: AdminSociety) {
     rwa_contact: society.rwaContact,
     cover_image: society.coverImage,
     gallery_images: society.galleryImages,
+    image_reference_url: society.imageReferenceUrl,
+    image_url: society.imageUrl,
+    image_status: society.imageStatus,
+    image_alt_text: society.imageAltText,
+    image_credit: society.imageCredit,
+    image_license_notes: society.imageLicenseNotes,
     brochure_name: society.brochureName,
     rera_number: society.reraNumber,
     source_name: society.sourceName,
     source_url: society.sourceUrl,
+    official_project_url: society.officialProjectUrl,
+    official_developer_url: society.officialDeveloperUrl,
+    official_brochure_url: society.officialBrochureUrl,
+    official_floor_plan_url: society.officialFloorPlanUrl,
+    official_gallery_url: society.officialGalleryUrl,
+    official_source_status: society.officialSourceStatus,
+    official_source_notes: society.officialSourceNotes,
+    rera_search_url: society.reraSearchUrl,
+    google_maps_url: society.googleMapsUrl,
+    source_confidence_score: society.sourceConfidenceScore || null,
     data_quality: society.dataQuality,
   };
 }

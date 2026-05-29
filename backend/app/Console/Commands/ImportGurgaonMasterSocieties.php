@@ -16,7 +16,7 @@ class ImportGurgaonMasterSocieties extends Command
 
     protected $description = 'Import the curated SocietyFlats Gurgaon master society list as draft profiles.';
 
-    private const SAFE_IMAGE_STATUSES = ['approved', 'licensed', 'self_shot', 'developer_approved'];
+    private const SAFE_IMAGE_STATUSES = ['approved', 'licensed', 'licensed_uploaded', 'self_shot', 'self_shot_uploaded', 'developer_approved', 'developer_permission_received'];
 
     public function handle(): int
     {
@@ -102,8 +102,17 @@ class ImportGurgaonMasterSocieties extends Command
         $notes = trim((string) ($row['notes_fields_to_verify'] ?? ''));
         $confidence = $row['source_confidence_score'] ?? null;
         $verificationStatus = trim((string) ($row['verification_status'] ?? 'needs_verification'));
-        $imageStatusText = trim((string) ($row['image_status'] ?? 'pending'));
+        $imageStatusText = trim((string) ($row['image_status'] ?? 'placeholder')) ?: 'placeholder';
         $scores = $this->scoresFromRow($row, $sector, $locality);
+        $officialProjectUrl = trim((string) ($row['official_project_url'] ?? '')) ?: null;
+        $officialDeveloperUrl = trim((string) ($row['official_developer_url'] ?? '')) ?: null;
+        $officialBrochureUrl = trim((string) ($row['official_brochure_url'] ?? '')) ?: null;
+        $officialFloorPlanUrl = trim((string) ($row['official_floor_plan_url'] ?? '')) ?: null;
+        $officialGalleryUrl = trim((string) ($row['official_gallery_url'] ?? '')) ?: null;
+        $reraSearchUrl = trim((string) ($row['rera_search_url'] ?? '')) ?: null;
+        $googleMapsUrl = trim((string) ($row['google_maps_search_url'] ?? $row['google_maps_url'] ?? '')) ?: null;
+        $officialSourceStatus = trim((string) ($row['official_source_status'] ?? 'pending')) ?: 'pending';
+        $officialSourceNotes = trim((string) ($row['official_source_notes'] ?? '')) ?: 'Needs manual verification.';
 
         $payload = [
             'name' => $name,
@@ -129,9 +138,25 @@ class ImportGurgaonMasterSocieties extends Command
             'longitude' => $row['longitude'] ? (string) $row['longitude'] : null,
             'cover_image' => $safeImage ? $imageUrl : null,
             'gallery_images' => $safeImage ? [$imageUrl] : [],
+            'image_reference_url' => trim((string) ($row['image_reference_url'] ?? $row['image_search_url'] ?? '')) ?: null,
+            'image_url' => $safeImage ? $imageUrl : null,
+            'image_status' => $safeImage ? $imageStatusText : 'placeholder',
+            'image_alt_text' => trim((string) ($row['image_alt_text'] ?? '')) ?: "{$name} residential society in Gurugram",
+            'image_credit' => trim((string) ($row['image_credit'] ?? '')) ?: null,
+            'image_license_notes' => trim((string) ($row['image_license_notes'] ?? '')) ?: 'Placeholder only. Do not publish third-party images until licensed, self-shot, or developer-approved.',
             'rera_number' => trim((string) ($row['rera_id'] ?? '')) ?: null,
             'source_name' => 'SocietyFlats Gurgaon master workbook',
-            'source_url' => trim((string) ($row['rera_search_url'] ?: $row['google_maps_search_url'] ?: '')) ?: null,
+            'source_url' => $officialProjectUrl ?: $reraSearchUrl ?: $googleMapsUrl,
+            'official_project_url' => $officialProjectUrl,
+            'official_developer_url' => $officialDeveloperUrl,
+            'official_brochure_url' => $officialBrochureUrl,
+            'official_floor_plan_url' => $officialFloorPlanUrl,
+            'official_gallery_url' => $officialGalleryUrl,
+            'official_source_status' => $officialSourceStatus,
+            'official_source_notes' => $officialSourceNotes,
+            'rera_search_url' => $reraSearchUrl,
+            'google_maps_url' => $googleMapsUrl,
+            'source_confidence_score' => max(0, min(100, (int) ($row['source_confidence_score'] ?? 0))),
             'data_quality' => Str::limit("Workbook import | {$verificationStatus} | confidence {$confidence} | image {$imageStatusText} | {$notes}", 255, ''),
             'imported_at' => now(),
         ];
