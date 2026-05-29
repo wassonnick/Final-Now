@@ -51,8 +51,8 @@ class SocietyController extends Controller {
 
     $meta = $this->extractMeta($response->body());
     $text = trim(($meta['description'] ?? '').' '.($meta['keywords'] ?? '').' '.strip_tags($response->body()));
-    $updates = $this->enrichmentPayload($society, $meta, $text);
     $diagnostics = [];
+    $updates = $this->enrichmentPayload($society, $meta, $text, $diagnostics);
     $coordinates = $this->coordinatesForSociety($society, $updates, $diagnostics);
 
     if ($coordinates) {
@@ -158,12 +158,19 @@ class SocietyController extends Controller {
     return $scheme.'://'.$host.'/'.ltrim($url, '/');
   }
 
-  private function enrichmentPayload(Society $society, array $meta, string $text): array {
+  private function enrichmentPayload(Society $society, array $meta, string $text, array &$diagnostics): array {
     $updates = [];
     $description = $meta['description'] ?? null;
-    $sourceImage = $this->imageSourceAllowed($society->source_url)
+    $imageSourceAllowed = $this->imageSourceAllowed($society->source_url);
+    $sourceImage = $imageSourceAllowed
       ? $this->absoluteUrl($meta['image'] ?? null, $society->source_url)
       : null;
+
+    if (!$imageSourceAllowed) {
+      $diagnostics['source'] = 'RERA/search/property-portal sources cannot supply reusable images. Use the official builder project URL for images and richer details.';
+    } elseif (!$sourceImage) {
+      $diagnostics['source'] = 'No approved page image found on this source URL.';
+    }
 
     $this->setIfBlankOrImported($updates, $society, 'description', $description);
     $this->setIfBlankOrImported($updates, $society, 'meta_title', $meta['title'] ?? "{$society->name} Gurgaon - Society Profile");
@@ -215,7 +222,8 @@ class SocietyController extends Controller {
       $updates['amenities'] = $amenities;
     }
 
-    $updates['data_quality'] = Str::limit(trim(($society->data_quality ?: 'Imported draft').' | Enriched from public source - verify before publishing'), 240, '');
+    $quality = preg_replace('/\s*\|?\s*Auto-enriched\b[^|]*/i', '', (string) $society->data_quality);
+    $updates['data_quality'] = Str::limit(trim('Auto-enriched | '.($quality ?: 'Imported draft').' | verify before publishing'), 255, '');
 
     return $updates;
   }

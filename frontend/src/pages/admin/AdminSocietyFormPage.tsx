@@ -24,6 +24,7 @@ export function AdminSocietyFormPage() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [enriching, setEnriching] = useState(false);
+  const [loadedSourceUrl, setLoadedSourceUrl] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [saved, setSaved] = useState(false);
@@ -39,7 +40,9 @@ export function AdminSocietyFormPage() {
       try {
         setLoading(true);
         setError('');
-        setSociety(await fetchAdminSociety(id));
+        const loadedSociety = await fetchAdminSociety(id);
+        setSociety(loadedSociety);
+        setLoadedSourceUrl(loadedSociety.sourceUrl);
       } catch (err) {
         console.error(err);
         setError('Unable to load society from the live backend.');
@@ -119,10 +122,13 @@ export function AdminSocietyFormPage() {
     }
   };
 
-  const hasBeenEnriched = society.dataQuality.toLowerCase().includes('enriched from public source');
+  const sourceChanged = society.sourceUrl !== loadedSourceUrl;
+  const hasBeenEnriched = society.dataQuality.toLowerCase().includes('auto-enriched')
+    || society.dataQuality.toLowerCase().includes('enriched from public');
+  const enrichDisabled = enriching || !society.sourceUrl || (hasBeenEnriched && !sourceChanged);
 
   const handleEnrich = async () => {
-    if (!isEdit || enriching || hasBeenEnriched) return;
+    if (!isEdit || enrichDisabled) return;
     if (!society.sourceUrl.trim()) {
       setError('Add an official project/RERA source URL before enriching this society.');
       return;
@@ -134,10 +140,11 @@ export function AdminSocietyFormPage() {
       setMessage('');
       const result = await enrichAdminSociety(society.id);
       setSociety(result.society);
+      setLoadedSourceUrl(result.society.sourceUrl);
       const fieldText = result.updatedFields.length
         ? `Updated: ${result.updatedFields.join(', ')}.`
         : 'No new fields changed.';
-      const diagnosticText = [result.diagnostics.geocode, result.diagnostics.nearby].filter(Boolean).join(' ');
+      const diagnosticText = [result.diagnostics.source, result.diagnostics.geocode, result.diagnostics.nearby].filter(Boolean).join(' ');
       setMessage(`${fieldText} ${diagnosticText}`.trim());
       setSaved(false);
     } catch (err) {
@@ -173,12 +180,12 @@ export function AdminSocietyFormPage() {
               <Button
                 type="button"
                 onClick={handleEnrich}
-                disabled={enriching || hasBeenEnriched || !society.sourceUrl}
+                disabled={enrichDisabled}
                 variant="outline"
                 className="rounded-full border-blue-100 text-blue-700 hover:bg-blue-50"
               >
                 <Sparkles className="mr-2 h-4 w-4" />
-                {hasBeenEnriched ? 'Already enriched' : enriching ? 'Enriching...' : 'Enrich profile'}
+                {hasBeenEnriched && !sourceChanged ? 'Already enriched' : enriching ? 'Enriching...' : 'Enrich profile'}
               </Button>
             ) : null}
             <Button type="submit" disabled={saving} className="rounded-full bg-blue-600 px-5 hover:bg-blue-700">
