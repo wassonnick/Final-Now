@@ -23,7 +23,7 @@ export async function fetchPublicSocieties() {
   const societies = extractItems(json).map(mapApiSociety);
 
   return societies
-    .filter((society) => society.status !== 'Archived')
+    .filter((society) => society.status === 'Verified' || society.status === 'Premium')
     .sort((a, b) => Number(b.featured || b.showInHero || b.searchBoost) - Number(a.featured || a.showInHero || a.searchBoost));
 }
 

@@ -45,6 +45,10 @@ export interface AdminSociety {
   coverImage: string;
   galleryImages: string[];
   brochureName: string;
+  reraNumber: string;
+  sourceName: string;
+  sourceUrl: string;
+  dataQuality: string;
   updatedAt: string;
   propertiesCount?: number;
 }
@@ -130,6 +134,10 @@ export function createEmptyAdminSociety(): AdminSociety {
     coverImage: '',
     galleryImages: [],
     brochureName: '',
+    reraNumber: '',
+    sourceName: '',
+    sourceUrl: '',
+    dataQuality: '',
     updatedAt: 'Just now',
   };
 }
@@ -179,6 +187,10 @@ export function mapApiSociety(data: any): AdminSociety {
     coverImage: data?.cover_image || '',
     galleryImages: parseArray(data?.gallery_images),
     brochureName: data?.brochure_name || '',
+    reraNumber: data?.rera_number || '',
+    sourceName: data?.source_name || '',
+    sourceUrl: data?.source_url || '',
+    dataQuality: data?.data_quality || '',
     updatedAt: data?.updated_at ? new Date(data.updated_at).toLocaleDateString() : 'Just now',
     propertiesCount: Number(data?.properties_count || data?.properties?.length || 0),
   };
@@ -227,6 +239,10 @@ export function toApiSocietyPayload(society: AdminSociety) {
     cover_image: society.coverImage,
     gallery_images: society.galleryImages,
     brochure_name: society.brochureName,
+    rera_number: society.reraNumber,
+    source_name: society.sourceName,
+    source_url: society.sourceUrl,
+    data_quality: society.dataQuality,
   };
 }
 

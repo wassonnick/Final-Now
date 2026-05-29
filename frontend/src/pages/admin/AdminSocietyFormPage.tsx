@@ -277,6 +277,28 @@ export function AdminSocietyFormPage() {
             </section>
 
             <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-950">Import source</h2>
+              <div className="mt-5 space-y-4">
+                <label className="space-y-2 block">
+                  <span className="text-sm font-medium text-slate-700">RERA number</span>
+                  <Input value={society.reraNumber} onChange={(event) => updateField('reraNumber', event.target.value)} placeholder="RERA-GRG-0000-2026" className="h-12 rounded-2xl" />
+                </label>
+                <label className="space-y-2 block">
+                  <span className="text-sm font-medium text-slate-700">Source name</span>
+                  <Input value={society.sourceName} onChange={(event) => updateField('sourceName', event.target.value)} placeholder="Haryana RERA / Site Setu" className="h-12 rounded-2xl" />
+                </label>
+                <label className="space-y-2 block">
+                  <span className="text-sm font-medium text-slate-700">Source URL</span>
+                  <Input value={society.sourceUrl} onChange={(event) => updateField('sourceUrl', event.target.value)} placeholder="https://..." className="h-12 rounded-2xl" />
+                </label>
+                <label className="space-y-2 block">
+                  <span className="text-sm font-medium text-slate-700">Data quality note</span>
+                  <textarea value={society.dataQuality} onChange={(event) => updateField('dataQuality', event.target.value)} placeholder="Imported draft - verify before publishing" className="min-h-24 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100" />
+                </label>
+              </div>
+            </section>
+
+            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-slate-950">Location map</h2>
               <div className="mt-5 grid gap-4">
                 <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Latitude</span><Input value={society.latitude} onChange={(event) => updateField('latitude', event.target.value)} placeholder="28.4421" className="h-12 rounded-2xl" /></label>
