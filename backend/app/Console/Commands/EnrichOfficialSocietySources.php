@@ -13,6 +13,7 @@ class EnrichOfficialSocietySources extends Command
         {--limit=0 : Maximum societies to process, 0 processes all}
         {--overwrite : Overwrite existing factual fields}
         {--discover : Try to discover project pages from official developer homepages}
+        {--clean-assets : Clear official project URLs that point to images, PDFs, or other assets}
         {--delay=2 : Delay between requests in seconds}';
 
     protected $description = 'Safely enrich blank society fields from saved official project URLs without copying images.';
@@ -22,7 +23,12 @@ class EnrichOfficialSocietySources extends Command
         $limit = max(0, (int) $this->option('limit'));
         $overwrite = (bool) $this->option('overwrite');
         $discover = (bool) $this->option('discover');
+        $cleanAssets = (bool) $this->option('clean-assets');
         $delay = max(0, (int) $this->option('delay'));
+
+        if ($cleanAssets) {
+            return $this->cleanAssetProjectUrls();
+        }
 
         $query = Society::query()->orderBy('name');
 
@@ -162,12 +168,18 @@ class EnrichOfficialSocietySources extends Command
                 continue;
             }
 
+            if ($this->looksLikeAssetUrl($href)) {
+                continue;
+            }
+
             $haystack = Str::lower(str_replace(['-', '_', '%20'], ' ', $href.' '.$label));
             $score = 0;
+            $matchedWords = 0;
 
             foreach ($societyWords as $word) {
                 if (str_contains($haystack, $word)) {
                     $score += 2;
+                    $matchedWords++;
                 }
             }
 
@@ -177,13 +189,43 @@ class EnrichOfficialSocietySources extends Command
                 }
             }
 
-            if ($score > $bestScore && $score >= max(2, min(4, count($societyWords) * 2))) {
+            $requiredWords = count($societyWords) <= 1 ? 1 : 2;
+
+            if ($matchedWords >= $requiredWords && $score > $bestScore && $score >= max(4, min(6, count($societyWords) * 2))) {
                 $bestScore = $score;
                 $bestUrl = $href;
             }
         }
 
         return $bestUrl;
+    }
+
+    private function cleanAssetProjectUrls(): int
+    {
+        $cleared = 0;
+
+        Society::query()
+            ->whereNotNull('official_project_url')
+            ->where('official_project_url', '!=', '')
+            ->orderBy('name')
+            ->each(function (Society $society) use (&$cleared): void {
+                if (!$this->looksLikeAssetUrl((string) $society->official_project_url)) {
+                    return;
+                }
+
+                $this->warn("Clearing asset URL for {$society->name}: {$society->official_project_url}");
+                $society->update([
+                    'official_project_url' => null,
+                    'official_source_status' => 'needs_manual_review',
+                    'official_source_notes' => 'Cleared asset URL from official_project_url. Needs manual project page verification.',
+                    'official_source_last_checked_at' => now(),
+                ]);
+                $cleared++;
+            });
+
+        $this->info("Cleared {$cleared} asset URLs from official_project_url.");
+
+        return self::SUCCESS;
     }
 
     /**
@@ -202,6 +244,13 @@ class EnrichOfficialSocietySources extends Command
     private function normalizedHost(string $url): string
     {
         return preg_replace('/^www\./', '', Str::lower((string) parse_url($url, PHP_URL_HOST)));
+    }
+
+    private function looksLikeAssetUrl(string $url): bool
+    {
+        $path = Str::lower((string) parse_url($url, PHP_URL_PATH));
+
+        return (bool) preg_match('/\.(?:png|jpe?g|webp|gif|svg|pdf|zip|docx?|xlsx?|mp4|mov|avi)(?:$|\?)/i', $path);
     }
 
     private function robotsAllows(string $url): bool
