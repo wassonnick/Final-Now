@@ -11,6 +11,7 @@ class ImportGurgaonMasterSocieties extends Command
     protected $signature = 'societies:import-gurgaon-master
         {--file=database/imports/gurgaon_societies_150.json : JSON export from the SocietyFlats Gurgaon master workbook}
         {--limit=0 : Maximum records to import, 0 imports all records}
+        {--reset-unverified : Clear unverified stats, amenities, nearby data, coordinates and unsafe media while importing}
         {--dry-run : Preview records without writing to the database}';
 
     protected $description = 'Import the curated SocietyFlats Gurgaon master society list as draft profiles.';
@@ -21,6 +22,7 @@ class ImportGurgaonMasterSocieties extends Command
     {
         $file = base_path((string) $this->option('file'));
         $limit = max(0, (int) $this->option('limit'));
+        $resetUnverified = (bool) $this->option('reset-unverified');
         $dryRun = (bool) $this->option('dry-run');
 
         if (!is_file($file)) {
@@ -35,6 +37,10 @@ class ImportGurgaonMasterSocieties extends Command
             return self::FAILURE;
         }
 
+        if ($resetUnverified) {
+            $this->warn('Reset mode enabled: unverified stats, amenities, nearby data, coordinates and unsafe media will be cleared/rewritten.');
+        }
+
         if ($limit > 0) {
             $rows = array_slice($rows, 0, $limit);
         }
@@ -44,7 +50,7 @@ class ImportGurgaonMasterSocieties extends Command
         $skipped = 0;
 
         foreach ($rows as $row) {
-            $payload = $this->payloadFromRow($row);
+            $payload = $this->payloadFromRow($row, $resetUnverified);
 
             if (!$payload) {
                 $skipped++;
@@ -78,7 +84,7 @@ class ImportGurgaonMasterSocieties extends Command
      * @param array<string, mixed> $row
      * @return array<string, mixed>|null
      */
-    private function payloadFromRow(array $row): ?array
+    private function payloadFromRow(array $row, bool $resetUnverified): ?array
     {
         $name = trim((string) ($row['official_name'] ?: $row['society_name'] ?: ''));
         $slug = trim((string) ($row['slug'] ?: Str::slug($name)));
@@ -99,7 +105,7 @@ class ImportGurgaonMasterSocieties extends Command
         $imageStatusText = trim((string) ($row['image_status'] ?? 'pending'));
         $scores = $this->scoresFromRow($row, $sector, $locality);
 
-        return [
+        $payload = [
             'name' => $name,
             'slug' => $slug,
             'builder' => trim((string) ($row['developer_builder'] ?? '')) ?: null,
@@ -129,6 +135,33 @@ class ImportGurgaonMasterSocieties extends Command
             'data_quality' => Str::limit("Workbook import | {$verificationStatus} | confidence {$confidence} | image {$imageStatusText} | {$notes}", 255, ''),
             'imported_at' => now(),
         ];
+
+        if ($resetUnverified) {
+            $payload += [
+                'year_built' => null,
+                'total_towers' => null,
+                'total_units' => null,
+                'maintenance_charges' => null,
+                'rent_range' => null,
+                'buy_range' => null,
+                'rental_yield' => null,
+                'average_rent' => null,
+                'average_sale_price' => null,
+                'price_per_sqft' => null,
+                'amenities' => [],
+                'nearby_schools' => null,
+                'nearby_metro' => null,
+                'nearby_hospitals' => null,
+                'nearby_office_hubs' => null,
+            ];
+
+            if (!$row['latitude'] || !$row['longitude']) {
+                $payload['latitude'] = null;
+                $payload['longitude'] = null;
+            }
+        }
+
+        return $payload;
     }
 
     /**
