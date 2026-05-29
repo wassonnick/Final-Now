@@ -295,3 +295,8 @@ export async function saveAdminSociety(society: AdminSociety, isEdit: boolean): 
 export async function deleteAdminSociety(id: number | string) {
   await request(`/admin/societies/${id}`, { method: 'DELETE' });
 }
+
+export async function enrichAdminSociety(id: number | string): Promise<AdminSociety> {
+  const json = await request(`/admin/societies/${id}/enrich`, { method: 'POST' });
+  return mapApiSociety(json?.data || {});
+}
