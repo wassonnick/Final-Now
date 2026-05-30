@@ -492,6 +492,85 @@ export async function fetchSocietyDraftFromUrl(officialProjectUrl: string): Prom
   };
 }
 
+export async function fetchSocietyDraftFromBrochure(file: File, context?: AdminSociety): Promise<{ society: AdminSociety; warnings: string[]; fieldsToVerify: string[]; diagnostics: Record<string, unknown> }> {
+  const formData = new FormData();
+  formData.append('brochure', file);
+
+  if (context) {
+    formData.append('context', JSON.stringify(toApiSocietyPayload(context)));
+  }
+
+  const response = await fetch(`${API_BASE}/admin/societies/fetch-from-brochure`, {
+    method: 'POST',
+    headers: adminHeaders(),
+    body: formData,
+  });
+
+  const json = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(json?.message || `Brochure extraction failed: ${response.status}`);
+  }
+
+  return {
+    society: mapApiSociety(json?.data || {}),
+    warnings: Array.isArray(json?.warnings) ? json.warnings : [],
+    fieldsToVerify: Array.isArray(json?.fields_to_verify) ? json.fields_to_verify : [],
+    diagnostics: json?.diagnostics || {},
+  };
+}
+
+export function mergeFetchedSocietyDraft(current: AdminSociety, patch: AdminSociety): AdminSociety {
+  const preferCurrent = <K extends keyof AdminSociety>(field: K): AdminSociety[K] => (
+    current[field] === '' || current[field] === null || current[field] === undefined ? patch[field] : current[field]
+  );
+  const mergedAmenities = Array.from(new Set([...current.amenities, ...patch.amenities]));
+  const currentConfidence = Number(current.sourceConfidenceScore || 0);
+  const patchConfidence = Number(patch.sourceConfidenceScore || 0);
+  const sourceNotes = [current.officialSourceNotes, patch.officialSourceNotes]
+    .filter(Boolean)
+    .filter((value, index, list) => list.indexOf(value) === index)
+    .join(' | ');
+
+  return {
+    ...current,
+    name: preferCurrent('name'),
+    slug: current.slug || patch.slug || slugifySociety(patch.name || current.name),
+    builder: preferCurrent('builder'),
+    sector: preferCurrent('sector'),
+    locality: preferCurrent('locality'),
+    city: preferCurrent('city'),
+    state: preferCurrent('state'),
+    societyType: preferCurrent('societyType'),
+    address: preferCurrent('address'),
+    description: preferCurrent('description'),
+    projectStatus: preferCurrent('projectStatus'),
+    configuration: preferCurrent('configuration'),
+    projectArea: preferCurrent('projectArea'),
+    unitSizeRange: preferCurrent('unitSizeRange'),
+    totalTowers: preferCurrent('totalTowers'),
+    totalUnits: preferCurrent('totalUnits'),
+    score: preferCurrent('score'),
+    securityScore: preferCurrent('securityScore'),
+    maintenanceScore: preferCurrent('maintenanceScore'),
+    connectivityScore: preferCurrent('connectivityScore'),
+    lifestyleScore: preferCurrent('lifestyleScore'),
+    investmentScore: preferCurrent('investmentScore'),
+    amenities: mergedAmenities,
+    metaTitle: preferCurrent('metaTitle'),
+    metaDescription: preferCurrent('metaDescription'),
+    brochureName: patch.brochureName || current.brochureName,
+    reraNumber: preferCurrent('reraNumber'),
+    reraStatus: current.reraStatus || patch.reraStatus,
+    sourceName: patch.sourceName || current.sourceName,
+    officialSourceStatus: patch.officialSourceStatus || current.officialSourceStatus,
+    officialSourceNotes: sourceNotes,
+    fieldsToVerify: patch.fieldsToVerify || current.fieldsToVerify,
+    sourceConfidenceScore: String(Math.max(currentConfidence, patchConfidence) || ''),
+    dataQuality: patch.dataQuality || current.dataQuality,
+  };
+}
+
 export async function createSocietyFromFetchedData(society: AdminSociety, publish = false): Promise<AdminSociety> {
   const json = await request('/admin/societies/create-from-fetched-data', {
     method: 'POST',

@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use App\Services\SocietyEnrichment\SocietyBrochureExtractionService;
 use App\Services\SocietyEnrichment\SocietyUrlEnrichmentService;
 class SocietyController extends Controller {
   public function index(Request $request): JsonResponse {
@@ -53,6 +54,41 @@ class SocietyController extends Controller {
     return response()->json([
       'success' => true,
       'status' => 'draft_ready',
+      'data' => $result['data'],
+      'warnings' => $result['warnings'],
+      'fields_to_verify' => $result['fields_to_verify'],
+      'diagnostics' => $result['diagnostics'],
+    ]);
+  }
+
+  public function fetchFromBrochure(Request $request, SocietyBrochureExtractionService $extraction): JsonResponse {
+    $validated = $request->validate([
+      'brochure' => 'required|file|mimes:pdf|max:20480',
+      'context' => 'nullable|string',
+    ]);
+
+    $context = [];
+    if (!empty($validated['context'])) {
+      $decoded = json_decode((string) $validated['context'], true);
+      if (is_array($decoded)) {
+        $context = $decoded;
+      }
+    }
+
+    try {
+      $result = $extraction->fetchDraft($validated['brochure'], $context);
+    } catch (\Throwable $exception) {
+      return response()->json([
+        'success' => false,
+        'status' => 'brochure_parse_failed',
+        'message' => 'Unable to extract details from this brochure PDF.',
+        'detail' => $exception->getMessage(),
+      ], 422);
+    }
+
+    return response()->json([
+      'success' => true,
+      'status' => 'brochure_draft_ready',
       'data' => $result['data'],
       'warnings' => $result['warnings'],
       'fields_to_verify' => $result['fields_to_verify'],
