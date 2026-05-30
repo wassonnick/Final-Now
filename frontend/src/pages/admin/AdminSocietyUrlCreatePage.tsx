@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, ExternalLink, Save, Send, Sparkles, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ExternalLink, Save, Send, ShieldCheck, Sparkles, XCircle } from 'lucide-react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -107,6 +107,34 @@ export function AdminSocietyUrlCreatePage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const approveReferenceImage = () => {
+    if (!society?.imageReferenceUrl.trim()) {
+      setError('No image reference URL is available to approve.');
+      return;
+    }
+
+    setSociety((current) => current ? {
+      ...current,
+      imageUrl: current.imageReferenceUrl,
+      coverImage: current.imageReferenceUrl,
+      imageStatus: 'approved_for_live',
+      imageApprovedByAdmin: true,
+      imageLicenseNotes: current.imageLicenseNotes || 'Approved by admin for live use after rights/permission review.',
+    } : current);
+    setMessage('Image approved for public display. Save the draft to persist this approval.');
+  };
+
+  const keepImageAsReferenceOnly = () => {
+    setSociety((current) => current ? {
+      ...current,
+      imageUrl: '',
+      coverImage: '',
+      imageStatus: current.imageReferenceUrl ? 'official_reference_found' : 'placeholder',
+      imageApprovedByAdmin: false,
+    } : current);
+    setMessage('Image kept as admin reference only. Public site will use the placeholder.');
   };
 
   return (
@@ -278,7 +306,49 @@ export function AdminSocietyUrlCreatePage() {
                       <label className="space-y-2 block"><span className="text-sm font-medium text-slate-700">Longitude</span><Input value={society.longitude} onChange={(event) => updateField('longitude', event.target.value)} className="h-12 rounded-2xl" /></label>
                     </div>
                     <label className="space-y-2 block"><span className="text-sm font-medium text-slate-700">Image reference URL</span><Input value={society.imageReferenceUrl} onChange={(event) => updateField('imageReferenceUrl', event.target.value)} className="h-12 rounded-2xl" /></label>
-                    <label className="space-y-2 block"><span className="text-sm font-medium text-slate-700">Image status</span><Input value={society.imageStatus} onChange={(event) => updateField('imageStatus', event.target.value as AdminSociety['imageStatus'])} className="h-12 rounded-2xl" /></label>
+                    {society.imageReferenceUrl || society.imageUrl ? (
+                      <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+                        <img
+                          src={society.imageReferenceUrl || society.imageUrl}
+                          alt={society.imageAltText || `${society.name} image preview`}
+                          className="h-44 w-full object-cover"
+                        />
+                        <div className="space-y-3 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-950">Admin image preview</p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {society.imageApprovedByAdmin ? 'Approved for public display after save.' : 'Reference only. Public site still shows placeholder.'}
+                              </p>
+                            </div>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${society.imageApprovedByAdmin ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                              {society.imageApprovedByAdmin ? 'Approved' : 'Reference'}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Button type="button" size="sm" className="rounded-full bg-emerald-600 hover:bg-emerald-700" onClick={approveReferenceImage}>
+                              <ShieldCheck className="mr-2 h-4 w-4" /> Approve for live
+                            </Button>
+                            <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={keepImageAsReferenceOnly}>
+                              Keep as reference
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                    <label className="space-y-2 block"><span className="text-sm font-medium text-slate-700">Approved image URL</span><Input value={society.imageUrl} onChange={(event) => updateField('imageUrl', event.target.value)} className="h-12 rounded-2xl" /></label>
+                    <label className="space-y-2 block"><span className="text-sm font-medium text-slate-700">Image status</span>
+                      <select value={society.imageStatus} onChange={(event) => updateField('imageStatus', event.target.value as AdminSociety['imageStatus'])} className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
+                        <option>placeholder</option><option>official_reference_found</option><option>licensed_uploaded</option><option>self_shot_uploaded</option><option>developer_permission_received</option><option>approved_for_live</option><option>needs_review</option>
+                      </select>
+                    </label>
+                    <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <Checkbox checked={society.imageApprovedByAdmin} onCheckedChange={(checked) => updateField('imageApprovedByAdmin', checked === true)} />
+                      <span>
+                        <span className="block text-sm font-medium text-slate-950">Image approved by admin</span>
+                        <span className="text-sm text-slate-500">Only enable this after rights, license, self-shot, or developer permission is confirmed.</span>
+                      </span>
+                    </label>
                     <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800">
                       Approve this image only if SocietyFlats owns it, has developer permission, has a valid license, or it was self-shot.
                     </div>
