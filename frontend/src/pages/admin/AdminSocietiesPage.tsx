@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart3, Building2, Eye, Image, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react';
+import { BarChart3, Building2, Eye, Image, Link as LinkIcon, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { deleteAdminSociety, fetchAdminSocieties, updateAdminSocietyStatus } from '@/lib/adminSocietyStore';
@@ -149,6 +149,12 @@ export function AdminSocietiesPage() {
                   className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
                 />
               </div>
+
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link to="/admin/societies/new-from-url">
+                  <LinkIcon className="mr-2 h-4 w-4" /> Add Society from URL
+                </Link>
+              </Button>
 
               <Button asChild className="rounded-xl bg-blue-600 hover:bg-blue-700">
                 <Link to="/admin/societies/new">

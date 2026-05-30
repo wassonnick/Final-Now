@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use App\Services\SocietyEnrichment\SocietyUrlEnrichmentService;
 class SocietyController extends Controller {
   public function index(Request $request): JsonResponse {
     $query=Society::query();
@@ -36,6 +37,68 @@ class SocietyController extends Controller {
 }
   public function store(Request $request): JsonResponse { $p=$this->payload($request); $p['slug']=$p['slug']??Str::slug($p['name']); $s=Society::create($p); return response()->json(['status'=>'ok','message'=>'Society created successfully.','data'=>$s],201); }
   public function update(Request $request, Society $society): JsonResponse { $p=$this->payload($request,true); if(isset($p['name'])&&empty($p['slug'])) $p['slug']=Str::slug($p['name']); $society->update($p); return response()->json(['status'=>'ok','message'=>'Society updated successfully.','data'=>$society]); }
+  public function fetchFromUrl(Request $request, SocietyUrlEnrichmentService $enrichment): JsonResponse {
+    $validated = $request->validate([
+      'official_project_url' => 'required|url|max:2000',
+    ]);
+
+    try {
+      $result = $enrichment->fetchDraft($validated['official_project_url']);
+    } catch (\InvalidArgumentException $exception) {
+      return response()->json(['success'=>false,'status'=>'invalid_source','message'=>$exception->getMessage()],422);
+    } catch (\Throwable $exception) {
+      return response()->json(['success'=>false,'status'=>'fetch_failed','message'=>'Unable to fetch details from this URL.','detail'=>$exception->getMessage()],422);
+    }
+
+    return response()->json([
+      'success' => true,
+      'status' => 'draft_ready',
+      'data' => $result['data'],
+      'warnings' => $result['warnings'],
+      'fields_to_verify' => $result['fields_to_verify'],
+      'diagnostics' => $result['diagnostics'],
+    ]);
+  }
+
+  public function createFromFetchedData(Request $request): JsonResponse {
+    $payload = $this->payload($request);
+    $payload['slug'] = $payload['slug'] ?: Str::slug($payload['name']);
+    $publish = $request->boolean('publish');
+
+    if ($publish) {
+      $payload['status'] = $payload['status'] === 'Premium' ? 'Premium' : 'Verified';
+      $payload['is_published'] = true;
+      $payload['published_at'] = now();
+    } else {
+      $payload['status'] = $payload['status'] ?: 'Draft';
+      $payload['is_published'] = false;
+      $payload['published_at'] = null;
+    }
+
+    $match = Society::query()
+      ->when($payload['official_project_url'] ?? null, fn ($query, $url) => $query->orWhere('official_project_url', $url))
+      ->orWhere('slug', $payload['slug'])
+      ->orWhere(function ($query) use ($payload) {
+        $query->where('name', $payload['name']);
+        if (!empty($payload['sector'])) {
+          $query->where('sector', $payload['sector']);
+        }
+        if (!empty($payload['builder'])) {
+          $query->where('builder', $payload['builder']);
+        }
+      })
+      ->first();
+
+    if ($match) {
+      $match->update($payload);
+      return response()->json(['status'=>'ok','message'=>'Existing society updated from fetched draft.','data'=>$match->fresh()]);
+    }
+
+    $society = Society::create($payload);
+
+    return response()->json(['status'=>'ok','message'=>'Society created from fetched draft.','data'=>$society],201);
+  }
+
   public function enrich(Society $society): JsonResponse {
     $sourceUrl = $society->official_project_url ?: $society->source_url;
 
@@ -80,7 +143,7 @@ class SocietyController extends Controller {
     return response()->json(['status'=>'ok','message'=>'Draft society enriched from public source. Review before publishing.','data'=>$society->fresh(),'enrichment'=>['updated_fields'=>$updatedFields,'diagnostics'=>$diagnostics]]);
   }
   public function destroy(Society $society): JsonResponse { $society->delete(); return response()->json(['status'=>'ok','message'=>'Society deleted successfully.']); }
-  private function payload(Request $r,bool $partial=false): array { $req=$partial?'sometimes':'required'; return $r->validate(['name'=>"{$req}|string|max:255",'slug'=>'nullable|string|max:255','builder'=>'nullable|string|max:255','sector'=>'nullable|string|max:255','locality'=>'nullable|string|max:255','address'=>'nullable|string|max:500','description'=>'nullable|string','year_built'=>'nullable|string|max:50','total_towers'=>'nullable|string|max:50','total_units'=>'nullable|string|max:50','maintenance_charges'=>'nullable|string|max:100','rent_range'=>'nullable|string|max:100','buy_range'=>'nullable|string|max:100','rental_yield'=>'nullable|string|max:100','average_rent'=>'nullable|string|max:100','average_sale_price'=>'nullable|string|max:100','price_per_sqft'=>'nullable|string|max:100','score'=>'nullable|numeric|min:0|max:10','security_score'=>'nullable|numeric|min:0|max:10','maintenance_score'=>'nullable|numeric|min:0|max:10','connectivity_score'=>'nullable|numeric|min:0|max:10','lifestyle_score'=>'nullable|numeric|min:0|max:10','investment_score'=>'nullable|numeric|min:0|max:10','amenities'=>'nullable|array','nearby_schools'=>'nullable|string','nearby_metro'=>'nullable|string','nearby_hospitals'=>'nullable|string','nearby_office_hubs'=>'nullable|string','meta_title'=>'nullable|string|max:255','meta_description'=>'nullable|string','faq'=>'nullable|string','status'=>'nullable|string|max:100','featured'=>'nullable|boolean','show_in_hero'=>'nullable|boolean','search_boost'=>'nullable|boolean','latitude'=>'nullable|string|max:100','longitude'=>'nullable|string|max:100','rwa_contact'=>'nullable|string|max:255','cover_image'=>'nullable|string','gallery_images'=>'nullable|array','image_reference_url'=>'nullable|string','image_url'=>'nullable|string','image_status'=>'nullable|string|max:100','image_alt_text'=>'nullable|string|max:255','image_credit'=>'nullable|string|max:255','image_license_notes'=>'nullable|string','brochure_name'=>'nullable|string|max:255','rera_number'=>'nullable|string|max:100','source_name'=>'nullable|string|max:255','source_url'=>'nullable|string','official_project_url'=>'nullable|string','official_developer_url'=>'nullable|string','official_brochure_url'=>'nullable|string','official_floor_plan_url'=>'nullable|string','official_gallery_url'=>'nullable|string','official_source_status'=>'nullable|string|max:100','official_source_notes'=>'nullable|string','rera_search_url'=>'nullable|string','google_maps_url'=>'nullable|string','source_confidence_score'=>'nullable|integer|min:0|max:100','data_quality'=>'nullable|string|max:255']); }
+  private function payload(Request $r,bool $partial=false): array { $req=$partial?'sometimes':'required'; return $r->validate(['name'=>"{$req}|string|max:255",'slug'=>'nullable|string|max:255','builder'=>'nullable|string|max:255','sector'=>'nullable|string|max:255','locality'=>'nullable|string|max:255','city'=>'nullable|string|max:100','state'=>'nullable|string|max:100','society_type'=>'nullable|string|max:100','address'=>'nullable|string|max:500','description'=>'nullable|string','project_status'=>'nullable|string|max:100','configuration'=>'nullable|string|max:255','project_area'=>'nullable|string|max:100','unit_size_range'=>'nullable|string|max:100','year_built'=>'nullable|string|max:50','total_towers'=>'nullable|string|max:50','total_units'=>'nullable|string|max:50','maintenance_charges'=>'nullable|string|max:100','rent_range'=>'nullable|string|max:100','buy_range'=>'nullable|string|max:100','rental_yield'=>'nullable|string|max:100','average_rent'=>'nullable|string|max:100','average_sale_price'=>'nullable|string|max:100','price_per_sqft'=>'nullable|string|max:100','score'=>'nullable|numeric|min:0|max:10','security_score'=>'nullable|numeric|min:0|max:10','maintenance_score'=>'nullable|numeric|min:0|max:10','connectivity_score'=>'nullable|numeric|min:0|max:10','lifestyle_score'=>'nullable|numeric|min:0|max:10','investment_score'=>'nullable|numeric|min:0|max:10','amenities'=>'nullable|array','nearby_schools'=>'nullable|string','nearby_metro'=>'nullable|string','nearby_hospitals'=>'nullable|string','nearby_office_hubs'=>'nullable|string','meta_title'=>'nullable|string|max:255','meta_description'=>'nullable|string','faq'=>'nullable|string','status'=>'nullable|string|max:100','verification_status'=>'nullable|string|max:100','is_published'=>'nullable|boolean','published_at'=>'nullable|date','featured'=>'nullable|boolean','show_in_hero'=>'nullable|boolean','search_boost'=>'nullable|boolean','latitude'=>'nullable|string|max:100','longitude'=>'nullable|string|max:100','place_id'=>'nullable|string|max:255','rwa_contact'=>'nullable|string|max:255','cover_image'=>'nullable|string','gallery_images'=>'nullable|array','approved_gallery_image_urls'=>'nullable|array','image_reference_url'=>'nullable|string','image_url'=>'nullable|string','image_status'=>'nullable|string|max:100','image_approved_by_admin'=>'nullable|boolean','image_alt_text'=>'nullable|string|max:255','image_credit'=>'nullable|string|max:255','image_license_notes'=>'nullable|string','brochure_name'=>'nullable|string|max:255','rera_number'=>'nullable|string|max:100','rera_status'=>'nullable|string|max:100','source_name'=>'nullable|string|max:255','source_url'=>'nullable|string','official_source_url'=>'nullable|string','official_project_url'=>'nullable|string','official_developer_url'=>'nullable|string','official_brochure_url'=>'nullable|string','official_floor_plan_url'=>'nullable|string','official_gallery_url'=>'nullable|string','official_source_status'=>'nullable|string|max:100','official_source_notes'=>'nullable|string','fields_to_verify'=>'nullable|string','rera_search_url'=>'nullable|string','official_rera_source_url'=>'nullable|string','google_maps_url'=>'nullable|string','source_confidence_score'=>'nullable|integer|min:0|max:100','data_quality'=>'nullable|string|max:255']); }
 
   private function extractMeta(string $html): array {
     $meta = [];

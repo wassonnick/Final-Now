@@ -13,7 +13,8 @@ interface SocietyCardProps {
 
 export function SocietyCard({ society, featured = false }: SocietyCardProps) {
   const avgRent = society.locality?.avg_rent_2bhk || 35000;
-  const approvedImage = ['licensed_uploaded', 'self_shot_uploaded', 'developer_permission_received'].includes(String(society.image_status || ''));
+  const approvedImage = Boolean(society.image_approved_by_admin)
+    && ['licensed_uploaded', 'self_shot_uploaded', 'developer_permission_received', 'approved_for_live'].includes(String(society.image_status || ''));
   const imageSrc = approvedImage
     ? society.image_url || society.cover_image || `https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=500&fit=crop`
     : `https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=500&fit=crop`;

@@ -23,6 +23,7 @@ import { AdminLoginPage } from '@/pages/admin/AdminLoginPage';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminSocietiesPage } from '@/pages/admin/AdminSocietiesPage';
 import { AdminSocietyFormPage } from '@/pages/admin/AdminSocietyFormPage';
+import { AdminSocietyUrlCreatePage } from '@/pages/admin/AdminSocietyUrlCreatePage';
 import { AdminPropertiesPage } from '@/pages/admin/AdminPropertiesPage';
 import { AdminPropertyFormPage } from '@/pages/admin/AdminPropertyFormPage';
 import { AdminLeadsPage } from '@/pages/admin/AdminLeadsPage';
@@ -83,6 +84,7 @@ function AppShell() {
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
 
           <Route path="/admin/societies" element={<AdminSocietiesPage />} />
+          <Route path="/admin/societies/new-from-url" element={<AdminSocietyUrlCreatePage />} />
           <Route path="/admin/societies/new" element={<AdminSocietyFormPage />} />
           <Route path="/admin/societies/:id/edit" element={<AdminSocietyFormPage />} />
 

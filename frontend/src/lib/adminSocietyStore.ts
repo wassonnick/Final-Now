@@ -7,6 +7,7 @@ export type SocietyImageStatus =
   | 'licensed_uploaded'
   | 'self_shot_uploaded'
   | 'developer_permission_received'
+  | 'approved_for_live'
   | 'needs_review';
 
 export interface AdminSociety {
@@ -16,8 +17,15 @@ export interface AdminSociety {
   builder: string;
   sector: string;
   locality: string;
+  city: string;
+  state: string;
+  societyType: string;
   address: string;
   description: string;
+  projectStatus: string;
+  configuration: string;
+  projectArea: string;
+  unitSizeRange: string;
   yearBuilt: string;
   totalTowers: string;
   totalUnits: string;
@@ -25,7 +33,10 @@ export interface AdminSociety {
   rwaContact: string;
   latitude: string;
   longitude: string;
+  placeId: string;
   status: SocietyStatus;
+  verificationStatus: string;
+  isPublished: boolean;
   featured: boolean;
   showInHero: boolean;
   searchBoost: boolean;
@@ -51,16 +62,20 @@ export interface AdminSociety {
   faq: string;
   coverImage: string;
   galleryImages: string[];
+  approvedGalleryImageUrls: string[];
   imageReferenceUrl: string;
   imageUrl: string;
   imageStatus: SocietyImageStatus;
+  imageApprovedByAdmin: boolean;
   imageAltText: string;
   imageCredit: string;
   imageLicenseNotes: string;
   brochureName: string;
   reraNumber: string;
+  reraStatus: string;
   sourceName: string;
   sourceUrl: string;
+  officialSourceUrl: string;
   officialProjectUrl: string;
   officialDeveloperUrl: string;
   officialBrochureUrl: string;
@@ -68,7 +83,9 @@ export interface AdminSociety {
   officialGalleryUrl: string;
   officialSourceStatus: string;
   officialSourceNotes: string;
+  fieldsToVerify: string;
   reraSearchUrl: string;
+  officialReraSourceUrl: string;
   googleMapsUrl: string;
   sourceConfidenceScore: string;
   dataQuality: string;
@@ -119,6 +136,7 @@ function normalizeImageStatus(value: unknown): SocietyImageStatus {
     value === 'licensed_uploaded' ||
     value === 'self_shot_uploaded' ||
     value === 'developer_permission_received' ||
+    value === 'approved_for_live' ||
     value === 'needs_review'
   ) {
     return value;
@@ -135,8 +153,15 @@ export function createEmptyAdminSociety(): AdminSociety {
     builder: '',
     sector: '',
     locality: '',
+    city: 'Gurugram',
+    state: 'Haryana',
+    societyType: '',
     address: '',
     description: '',
+    projectStatus: '',
+    configuration: '',
+    projectArea: '',
+    unitSizeRange: '',
     yearBuilt: '',
     totalTowers: '',
     totalUnits: '',
@@ -144,7 +169,10 @@ export function createEmptyAdminSociety(): AdminSociety {
     rwaContact: '',
     latitude: '',
     longitude: '',
+    placeId: '',
     status: 'Draft',
+    verificationStatus: 'needs_verification',
+    isPublished: false,
     featured: false,
     showInHero: false,
     searchBoost: false,
@@ -170,16 +198,20 @@ export function createEmptyAdminSociety(): AdminSociety {
     faq: '',
     coverImage: '',
     galleryImages: [],
+    approvedGalleryImageUrls: [],
     imageReferenceUrl: '',
     imageUrl: '',
     imageStatus: 'placeholder',
+    imageApprovedByAdmin: false,
     imageAltText: '',
     imageCredit: '',
     imageLicenseNotes: '',
     brochureName: '',
     reraNumber: '',
+    reraStatus: '',
     sourceName: '',
     sourceUrl: '',
+    officialSourceUrl: '',
     officialProjectUrl: '',
     officialDeveloperUrl: '',
     officialBrochureUrl: '',
@@ -187,7 +219,9 @@ export function createEmptyAdminSociety(): AdminSociety {
     officialGalleryUrl: '',
     officialSourceStatus: 'pending',
     officialSourceNotes: '',
+    fieldsToVerify: '',
     reraSearchUrl: '',
+    officialReraSourceUrl: '',
     googleMapsUrl: '',
     sourceConfidenceScore: '',
     dataQuality: '',
@@ -208,8 +242,15 @@ export function mapApiSociety(data: any): AdminSociety {
     builder: data?.builder || '',
     sector: data?.sector || '',
     locality: data?.locality || '',
+    city: data?.city || 'Gurugram',
+    state: data?.state || 'Haryana',
+    societyType: data?.society_type || '',
     address: data?.address || '',
     description: data?.description || '',
+    projectStatus: data?.project_status || '',
+    configuration: data?.configuration || '',
+    projectArea: data?.project_area || '',
+    unitSizeRange: data?.unit_size_range || '',
     yearBuilt: data?.year_built || '',
     totalTowers: data?.total_towers || '',
     totalUnits: data?.total_units || '',
@@ -217,7 +258,10 @@ export function mapApiSociety(data: any): AdminSociety {
     rwaContact: data?.rwa_contact || '',
     latitude: data?.latitude || '',
     longitude: data?.longitude || '',
+    placeId: data?.place_id || '',
     status: normalizeStatus(data?.status),
+    verificationStatus: data?.verification_status || 'needs_verification',
+    isPublished: Boolean(data?.is_published),
     featured: Boolean(data?.featured),
     showInHero: Boolean(data?.show_in_hero),
     searchBoost: Boolean(data?.search_boost),
@@ -243,16 +287,20 @@ export function mapApiSociety(data: any): AdminSociety {
     faq: data?.faq || '',
     coverImage: data?.cover_image || '',
     galleryImages: parseArray(data?.gallery_images),
+    approvedGalleryImageUrls: parseArray(data?.approved_gallery_image_urls),
     imageReferenceUrl: data?.image_reference_url || '',
     imageUrl: data?.image_url || '',
     imageStatus: normalizeImageStatus(data?.image_status),
+    imageApprovedByAdmin: Boolean(data?.image_approved_by_admin),
     imageAltText: data?.image_alt_text || '',
     imageCredit: data?.image_credit || '',
     imageLicenseNotes: data?.image_license_notes || '',
     brochureName: data?.brochure_name || '',
     reraNumber: data?.rera_number || '',
+    reraStatus: data?.rera_status || '',
     sourceName: data?.source_name || '',
     sourceUrl: data?.source_url || '',
+    officialSourceUrl: data?.official_source_url || '',
     officialProjectUrl: data?.official_project_url || '',
     officialDeveloperUrl: data?.official_developer_url || '',
     officialBrochureUrl: data?.official_brochure_url || '',
@@ -260,7 +308,9 @@ export function mapApiSociety(data: any): AdminSociety {
     officialGalleryUrl: data?.official_gallery_url || '',
     officialSourceStatus: data?.official_source_status || 'pending',
     officialSourceNotes: data?.official_source_notes || '',
+    fieldsToVerify: data?.fields_to_verify || '',
     reraSearchUrl: data?.rera_search_url || '',
+    officialReraSourceUrl: data?.official_rera_source_url || '',
     googleMapsUrl: data?.google_maps_url || '',
     sourceConfidenceScore: scoreValue(data?.source_confidence_score),
     dataQuality: data?.data_quality || '',
@@ -276,8 +326,15 @@ export function toApiSocietyPayload(society: AdminSociety) {
     builder: society.builder,
     sector: society.sector,
     locality: society.locality,
+    city: society.city,
+    state: society.state,
+    society_type: society.societyType,
     address: society.address,
     description: society.description,
+    project_status: society.projectStatus,
+    configuration: society.configuration,
+    project_area: society.projectArea,
+    unit_size_range: society.unitSizeRange,
     year_built: society.yearBuilt,
     total_towers: society.totalTowers,
     total_units: society.totalUnits,
@@ -303,24 +360,31 @@ export function toApiSocietyPayload(society: AdminSociety) {
     meta_description: society.metaDescription,
     faq: society.faq,
     status: society.status,
+    verification_status: society.verificationStatus,
+    is_published: society.isPublished,
     featured: society.featured,
     show_in_hero: society.showInHero,
     search_boost: society.searchBoost,
     latitude: society.latitude,
     longitude: society.longitude,
+    place_id: society.placeId,
     rwa_contact: society.rwaContact,
     cover_image: society.coverImage,
     gallery_images: society.galleryImages,
+    approved_gallery_image_urls: society.approvedGalleryImageUrls,
     image_reference_url: society.imageReferenceUrl,
     image_url: society.imageUrl,
     image_status: society.imageStatus,
+    image_approved_by_admin: society.imageApprovedByAdmin,
     image_alt_text: society.imageAltText,
     image_credit: society.imageCredit,
     image_license_notes: society.imageLicenseNotes,
     brochure_name: society.brochureName,
     rera_number: society.reraNumber,
+    rera_status: society.reraStatus,
     source_name: society.sourceName,
     source_url: society.sourceUrl,
+    official_source_url: society.officialSourceUrl,
     official_project_url: society.officialProjectUrl,
     official_developer_url: society.officialDeveloperUrl,
     official_brochure_url: society.officialBrochureUrl,
@@ -328,7 +392,9 @@ export function toApiSocietyPayload(society: AdminSociety) {
     official_gallery_url: society.officialGalleryUrl,
     official_source_status: society.officialSourceStatus,
     official_source_notes: society.officialSourceNotes,
+    fields_to_verify: society.fieldsToVerify,
     rera_search_url: society.reraSearchUrl,
+    official_rera_source_url: society.officialReraSourceUrl,
     google_maps_url: society.googleMapsUrl,
     source_confidence_score: society.sourceConfidenceScore || null,
     data_quality: society.dataQuality,
@@ -410,4 +476,27 @@ export async function enrichAdminSociety(id: number | string): Promise<{ society
     updatedFields: Array.isArray(json?.enrichment?.updated_fields) ? json.enrichment.updated_fields : [],
     diagnostics: json?.enrichment?.diagnostics || {},
   };
+}
+
+export async function fetchSocietyDraftFromUrl(officialProjectUrl: string): Promise<{ society: AdminSociety; warnings: string[]; fieldsToVerify: string[]; diagnostics: Record<string, unknown> }> {
+  const json = await request('/admin/societies/fetch-from-url', {
+    method: 'POST',
+    body: JSON.stringify({ official_project_url: officialProjectUrl }),
+  });
+
+  return {
+    society: mapApiSociety(json?.data || {}),
+    warnings: Array.isArray(json?.warnings) ? json.warnings : [],
+    fieldsToVerify: Array.isArray(json?.fields_to_verify) ? json.fields_to_verify : [],
+    diagnostics: json?.diagnostics || {},
+  };
+}
+
+export async function createSocietyFromFetchedData(society: AdminSociety, publish = false): Promise<AdminSociety> {
+  const json = await request('/admin/societies/create-from-fetched-data', {
+    method: 'POST',
+    body: JSON.stringify({ ...toApiSocietyPayload(society), publish }),
+  });
+
+  return mapApiSociety(json?.data || {});
 }
