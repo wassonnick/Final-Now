@@ -23,6 +23,7 @@ type Society = {
   gallery_images?: string[] | null;
   image_url?: string | null;
   image_status?: string | null;
+  image_approved_by_admin?: boolean | null;
   properties_count?: number;
 };
 
@@ -43,7 +44,8 @@ function extractSocieties(payload: ApiResponse): Society[] {
 }
 
 function societyImage(society: Society) {
-  const approved = ['licensed_uploaded', 'self_shot_uploaded', 'developer_permission_received'].includes(String(society.image_status || ''));
+  const approved = Boolean(society.image_approved_by_admin)
+    && ['licensed_uploaded', 'self_shot_uploaded', 'developer_permission_received', 'approved_for_live'].includes(String(society.image_status || ''));
   if (approved && society.image_url) return society.image_url;
   if (approved && society.cover_image) return society.cover_image;
   if (approved && Array.isArray(society.gallery_images) && society.gallery_images[0]) return society.gallery_images[0];

@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         \App\Console\Commands\ImportGurgaonReraSocieties::class,
         \App\Console\Commands\ImportGurgaonMasterSocieties::class,
         \App\Console\Commands\EnrichOfficialSocietySources::class,
+        \App\Console\Commands\FetchSocietyFromUrl::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([

@@ -3,7 +3,7 @@ import { mapApiSociety, type AdminSociety } from '@/lib/adminSocietyStore';
 
 const fallbackImage = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=85';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
-const approvedImageStatuses = ['licensed_uploaded', 'self_shot_uploaded', 'developer_permission_received'];
+const approvedImageStatuses = ['licensed_uploaded', 'self_shot_uploaded', 'developer_permission_received', 'approved_for_live'];
 
 function extractItems(payload: any) {
   if (Array.isArray(payload?.data)) return payload.data;
@@ -101,7 +101,7 @@ export function propertyUrl(property: AdminProperty) {
 }
 
 export function societyImage(society: AdminSociety) {
-  if (approvedImageStatuses.includes(society.imageStatus)) {
+  if (society.imageApprovedByAdmin && approvedImageStatuses.includes(society.imageStatus)) {
     return society.imageUrl || society.coverImage || society.galleryImages?.[0] || fallbackImage;
   }
 

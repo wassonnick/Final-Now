@@ -25,6 +25,7 @@ export interface Society {
   gallery_images: string[];
   image_url?: string;
   image_status?: string;
+  image_approved_by_admin?: boolean;
   is_verified: boolean;
   featured: boolean;
   view_count: number;

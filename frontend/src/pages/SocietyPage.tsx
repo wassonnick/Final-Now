@@ -57,7 +57,9 @@ function listField(item: any, camel: string, snake: string): string[] {
 
 function safeSocietyImage(society: any) {
   const imageStatus = field<string>(society, 'imageStatus', 'image_status', 'placeholder');
-  const approved = ['licensed_uploaded', 'self_shot_uploaded', 'developer_permission_received'].includes(imageStatus);
+  const imageApprovedByAdmin = Boolean(field<boolean>(society, 'imageApprovedByAdmin', 'image_approved_by_admin', false));
+  const approved = imageApprovedByAdmin
+    && ['licensed_uploaded', 'self_shot_uploaded', 'developer_permission_received', 'approved_for_live'].includes(imageStatus);
   const approvedImage = field<string | null>(society, 'imageUrl', 'image_url', null)
     || field<string | null>(society, 'coverImage', 'cover_image', null);
 
