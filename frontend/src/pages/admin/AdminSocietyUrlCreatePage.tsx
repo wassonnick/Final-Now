@@ -1,6 +1,6 @@
-import { FormEvent, useState } from 'react';
+import { ChangeEvent, FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, ExternalLink, Save, Send, ShieldCheck, Sparkles, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ExternalLink, FileText, Save, Send, ShieldCheck, Sparkles, XCircle } from 'lucide-react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -8,7 +8,9 @@ import { Input } from '@/components/ui/input';
 import {
   createEmptyAdminSociety,
   createSocietyFromFetchedData,
+  fetchSocietyDraftFromBrochure,
   fetchSocietyDraftFromUrl,
+  mergeFetchedSocietyDraft,
   slugifySociety,
   societyAmenityOptions,
 } from '@/lib/adminSocietyStore';
@@ -28,6 +30,7 @@ export function AdminSocietyUrlCreatePage() {
   const [fieldsToVerify, setFieldsToVerify] = useState<string[]>([]);
   const [diagnostics, setDiagnostics] = useState<DiagnosticMap>({});
   const [fetching, setFetching] = useState(false);
+  const [fetchingBrochure, setFetchingBrochure] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -106,6 +109,42 @@ export function AdminSocietyUrlCreatePage() {
       setError('Unable to save fetched society. Check required fields and try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleBrochureUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    if (file.type && file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setError('Upload a PDF brochure only.');
+      return;
+    }
+
+    try {
+      setFetchingBrochure(true);
+      setError('');
+      setMessage('');
+      const base = society || createEmptyAdminSociety();
+      const result = await fetchSocietyDraftFromBrochure(file, base);
+      setSociety(mergeFetchedSocietyDraft(base, result.society));
+      setWarnings(Array.from(new Set([...warnings, ...result.warnings])));
+      setFieldsToVerify(result.fieldsToVerify.length ? result.fieldsToVerify : fieldsToVerify);
+      setDiagnostics((current) => ({
+        ...current,
+        ...result.diagnostics,
+        brochure_found: true,
+      }));
+      setMessage('Brochure parsed. Draft fields were filled where the form was blank. Review before saving.');
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Unable to extract details from this brochure.');
+    } finally {
+      setFetchingBrochure(false);
     }
   };
 
@@ -235,6 +274,23 @@ export function AdminSocietyUrlCreatePage() {
                     <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Total towers</span><Input value={society.totalTowers} onChange={(event) => updateField('totalTowers', event.target.value)} className="h-12 rounded-2xl" /></label>
                     <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Total units</span><Input value={society.totalUnits} onChange={(event) => updateField('totalUnits', event.target.value)} className="h-12 rounded-2xl" /></label>
                   </div>
+                </section>
+
+                <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-slate-950">Brochure PDF</h2>
+                      <p className="mt-1 text-sm text-slate-500">Upload a text-based official brochure to fill missing facts.</p>
+                    </div>
+                    <label className="inline-flex h-11 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                      <FileText className="mr-2 h-4 w-4 text-blue-600" />
+                      {fetchingBrochure ? 'Reading brochure...' : 'Upload & Fetch'}
+                      <input type="file" accept="application/pdf" onChange={handleBrochureUpload} className="hidden" disabled={fetchingBrochure} />
+                    </label>
+                  </div>
+                  {society.brochureName ? (
+                    <p className="mt-3 text-sm text-slate-600">Last uploaded: <span className="font-medium text-slate-950">{society.brochureName}</span></p>
+                  ) : null}
                 </section>
 
                 <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">

@@ -10,6 +10,8 @@ import {
   createEmptyAdminSociety,
   enrichAdminSociety,
   fetchAdminSociety,
+  fetchSocietyDraftFromBrochure,
+  mergeFetchedSocietyDraft,
   saveAdminSociety,
   slugifySociety,
   societyAmenityOptions,
@@ -24,6 +26,7 @@ export function AdminSocietyFormPage() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [enriching, setEnriching] = useState(false);
+  const [brochureExtracting, setBrochureExtracting] = useState(false);
   const [loadedSourceUrl, setLoadedSourceUrl] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -90,6 +93,35 @@ export function AdminSocietyFormPage() {
 
   const removeGalleryImage = (image: string) => {
     setSociety((current) => ({ ...current, galleryImages: current.galleryImages.filter((item) => item !== image) }));
+  };
+
+  const extractBrochure = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    if (file.type && file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setError('Upload a PDF brochure only.');
+      return;
+    }
+
+    try {
+      setBrochureExtracting(true);
+      setError('');
+      setMessage('');
+      const result = await fetchSocietyDraftFromBrochure(file, society);
+      setSociety((current) => mergeFetchedSocietyDraft(current, result.society));
+      setMessage('Brochure parsed. Missing draft fields were filled where possible. Review and save changes.');
+      setSaved(false);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Unable to extract details from this brochure.');
+    } finally {
+      setBrochureExtracting(false);
+    }
   };
 
   const approveReferenceImage = () => {
@@ -539,11 +571,13 @@ export function AdminSocietyFormPage() {
 
             <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-slate-950">Brochure / master plan</h2>
+              <p className="mt-1 text-sm text-slate-500">Upload a text-based PDF brochure to populate missing project facts, RERA and amenities.</p>
               <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-600 hover:bg-slate-100">
                 <FileText className="h-5 w-5 text-blue-600" />
-                <span>{society.brochureName || 'Upload PDF brochure or master plan'}</span>
-                <input type="file" accept="application/pdf" onChange={(event) => updateField('brochureName', event.target.files?.[0]?.name || '')} className="hidden" />
+                <span>{brochureExtracting ? 'Reading brochure...' : society.brochureName || 'Upload PDF brochure and fetch data'}</span>
+                <input type="file" accept="application/pdf" onChange={extractBrochure} className="hidden" disabled={brochureExtracting} />
               </label>
+              <p className="mt-3 text-xs text-slate-500">Scanned/image PDFs may need manual entry because they do not contain readable text.</p>
             </section>
           </aside>
         </div>
