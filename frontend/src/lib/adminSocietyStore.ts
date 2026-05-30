@@ -97,6 +97,21 @@ const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
   'https://final-now.onrender.com/api';
 
+const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+async function fetchWithRetry(input: RequestInfo | URL, init?: RequestInit, retries = 2): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch (error) {
+    if (retries <= 0) {
+      throw error;
+    }
+
+    await wait(1200);
+    return fetchWithRetry(input, init, retries - 1);
+  }
+}
+
 export const societyAmenityOptions = [
   'Clubhouse', 'Swimming Pool', 'Gym', 'Kids Play Area', 'Tennis Court', 'Badminton Court',
   'Basketball Court', 'Jogging Track', 'Power Backup', 'Visitor Parking', 'Pet Friendly',
@@ -402,7 +417,7 @@ export function toApiSocietyPayload(society: AdminSociety) {
 }
 
 async function request(path: string, options?: RequestInit) {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetchWithRetry(`${API_BASE}${path}`, {
     headers: {
       'Content-Type': 'application/json',
       ...adminHeaders(),
@@ -500,7 +515,7 @@ export async function fetchSocietyDraftFromBrochure(file: File, context?: AdminS
     formData.append('context', JSON.stringify(toApiSocietyPayload(context)));
   }
 
-  const response = await fetch(`${API_BASE}/admin/societies/fetch-from-brochure`, {
+  const response = await fetchWithRetry(`${API_BASE}/admin/societies/fetch-from-brochure`, {
     method: 'POST',
     headers: adminHeaders(),
     body: formData,
