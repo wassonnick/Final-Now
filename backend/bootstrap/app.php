@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         \App\Console\Commands\FetchSocietyFromUrl::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(\App\Http\Middleware\ApiCors::class);
         $middleware->alias([
             'admin.api' => \App\Http\Middleware\EnsureAdminApiToken::class,
         ]);
