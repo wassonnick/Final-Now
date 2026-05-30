@@ -43,11 +43,12 @@ class SocietyUrlEnrichmentService
 
         $html = $response->body();
         $meta = $this->extractMeta($html);
+        $structured = $this->structuredData($html);
         $links = $this->linksFromHtml($html, $url);
         $text = $this->pageText($html);
         $host = (string) parse_url($url, PHP_URL_HOST);
 
-        $name = $this->projectName($meta, $text, $url);
+        $name = $this->projectName($meta, $structured, $text, $url);
         $builder = $this->developerName($meta, $text, $host);
         $sector = $this->firstMatch('/Sector[\s\/-]*[0-9A-Za-z]+/i', $text);
         $locality = $this->microMarket($text, $url);
@@ -55,7 +56,7 @@ class SocietyUrlEnrichmentService
         $brochureUrl = $this->bestLink($links, ['brochure', 'download brochure', '.pdf', 'e-brochure']);
         $floorPlanUrl = $this->bestLink($links, ['floor plan', 'floor-plan', 'plans', 'layout']);
         $galleryUrl = $this->bestLink($links, ['gallery', 'photos', 'media']);
-        $imageReference = $this->imageReference($meta, $html, $url);
+        $imageReference = $this->imageReference($meta, $structured, $html, $url, $name);
         $amenities = $this->amenitiesFromText($text);
         $reraNumber = $this->firstMatch('/(?:RERA|HRERA)[\s:\/-]*(?:No\.?|Number)?[\s:\/-]*([A-Z0-9\/-]{6,})/i', $text, 1);
 
@@ -286,9 +287,53 @@ class SocietyUrlEnrichmentService
         return $scheme.'://'.$host.'/'.ltrim($url, '/');
     }
 
-    private function projectName(array $meta, string $text, string $url): string
+    private function structuredData(string $html): array
     {
-        $title = $meta['og_title'] ?? $meta['title'] ?? '';
+        $data = [];
+
+        if (!preg_match_all('/<script[^>]+type\s*=\s*(["\'])application\/ld\+json\1[^>]*>(.*?)<\/script>/is', $html, $matches)) {
+            return $data;
+        }
+
+        foreach ($matches[2] as $json) {
+            $decoded = json_decode(html_entity_decode(trim($json), ENT_QUOTES | ENT_HTML5), true);
+
+            if (!is_array($decoded)) {
+                continue;
+            }
+
+            $items = isset($decoded['@graph']) && is_array($decoded['@graph'])
+                ? $decoded['@graph']
+                : [$decoded];
+
+            foreach ($items as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                if (empty($data['name']) && !empty($item['name']) && is_string($item['name'])) {
+                    $data['name'] = $item['name'];
+                }
+
+                if (empty($data['description']) && !empty($item['description']) && is_string($item['description'])) {
+                    $data['description'] = $item['description'];
+                }
+
+                if (empty($data['image']) && !empty($item['image'])) {
+                    $image = is_array($item['image']) ? ($item['image'][0] ?? null) : $item['image'];
+                    if (is_string($image)) {
+                        $data['image'] = $image;
+                    }
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    private function projectName(array $meta, array $structured, string $text, string $url): string
+    {
+        $title = $structured['name'] ?? $meta['og_title'] ?? $meta['title'] ?? '';
         $title = preg_replace('/\s+[-|]\s+.*$/', '', $title) ?: $title;
         $title = preg_replace('/\b(Residential|Commercial)\s+Projects?\b/i', '', $title) ?: $title;
         $title = trim($title);
@@ -308,7 +353,7 @@ class SocietyUrlEnrichmentService
         $name = preg_replace('/\b(Gurgaon|Gurugram|Sector\s*[0-9A-Za-z]+)\b/i', '', $name) ?: $name;
         $name = preg_replace('/\s+/', ' ', $name) ?: $name;
 
-        return trim($name, " \t\n\r\0\x0B-|");
+        return trim($name, " \t\n\r\0\x0B-|,.;:");
     }
 
     private function developerName(array $meta, string $text, string $host): ?string
@@ -394,6 +439,11 @@ class SocietyUrlEnrichmentService
     {
         foreach ($links as $url => $label) {
             $haystack = Str::lower($url.' '.$label);
+
+            if ($this->looksLikeTrackingOrGenericLink($url)) {
+                continue;
+            }
+
             foreach ($needles as $needle) {
                 if (str_contains($haystack, Str::lower($needle))) {
                     return $url;
@@ -404,19 +454,85 @@ class SocietyUrlEnrichmentService
         return null;
     }
 
-    private function imageReference(array $meta, string $html, string $baseUrl): ?string
+    private function imageReference(array $meta, array $structured, string $html, string $baseUrl, string $projectName): ?string
     {
-        $image = $this->absoluteUrl($meta['image'] ?? null, $baseUrl);
+        $image = $this->absoluteUrl($structured['image'] ?? ($meta['image'] ?? null), $baseUrl);
 
-        if ($image) {
+        if ($this->isUsefulImageReference($image, $projectName)) {
             return $image;
         }
 
-        if (preg_match('/<img\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1/i', $html, $matches)) {
-            return $this->absoluteUrl($matches[2], $baseUrl);
+        if (preg_match_all('/<img\b([^>]*)>/i', $html, $matches)) {
+            foreach ($matches[1] as $attributes) {
+                $src = $this->htmlAttribute($attributes, 'src')
+                    ?: $this->htmlAttribute($attributes, 'data-src')
+                    ?: $this->htmlAttribute($attributes, 'data-lazy-src');
+                $candidate = $this->absoluteUrl($src, $baseUrl);
+
+                if ($this->isUsefulImageReference($candidate, $projectName)) {
+                    return $candidate;
+                }
+            }
         }
 
         return null;
+    }
+
+    private function isUsefulImageReference(?string $url, string $projectName): bool
+    {
+        if (!$url) {
+            return false;
+        }
+
+        $host = Str::lower((string) parse_url($url, PHP_URL_HOST));
+        $path = Str::lower((string) parse_url($url, PHP_URL_PATH));
+        $query = Str::lower((string) parse_url($url, PHP_URL_QUERY));
+        $haystack = Str::lower($url.' '.$projectName);
+
+        foreach (['facebook.', 'instagram.', 'google-analytics', 'googletagmanager', 'doubleclick', 'pixel', 'analytics'] as $blocked) {
+            if (str_contains($host.' '.$path.' '.$query, $blocked)) {
+                return false;
+            }
+        }
+
+        if (str_contains($path, '/tr') || str_contains($path, '/collect') || str_contains($query, 'pageview')) {
+            return false;
+        }
+
+        if (!preg_match('/\.(?:jpg|jpeg|png|webp)(?:$|\?)/i', $url)) {
+            return false;
+        }
+
+        $projectWords = collect(preg_split('/\s+/', Str::lower($projectName)) ?: [])
+            ->map(fn ($word) => trim($word, '.,()[]{}'))
+            ->filter(fn ($word) => strlen($word) > 3 && !in_array($word, ['the', 'and', 'gurgaon', 'gurugram', 'sector'], true));
+
+        return $projectWords->contains(fn ($word) => str_contains($haystack, $word))
+            || str_contains($haystack, 'project')
+            || str_contains($haystack, 'residential')
+            || str_contains($haystack, 'image')
+            || str_contains($haystack, 'banner')
+            || str_contains($haystack, 'gallery');
+    }
+
+    private function looksLikeTrackingOrGenericLink(string $url): bool
+    {
+        $path = Str::lower((string) parse_url($url, PHP_URL_PATH));
+        $host = Str::lower((string) parse_url($url, PHP_URL_HOST));
+
+        foreach (['facebook.', 'instagram.', 'youtube.', 'pinterest.', 'google.', 'doubleclick'] as $blocked) {
+            if (str_contains($host, $blocked)) {
+                return true;
+            }
+        }
+
+        foreach (['/media/news', '/media/gallery', '/news', '/blog', '/press', '/career', '/contact'] as $genericPath) {
+            if (str_contains($path, $genericPath)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function projectStatus(string $text): ?string
