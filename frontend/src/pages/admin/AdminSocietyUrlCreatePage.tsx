@@ -22,6 +22,14 @@ function yesNo(value: unknown) {
   return value ? 'Found' : 'Needs check';
 }
 
+function friendlyFetchError(err: unknown, fallback: string) {
+  if (err instanceof Error && err.message === 'Failed to fetch') {
+    return 'Could not reach the backend API. Wait for the Render backend redeploy to finish, then try again.';
+  }
+
+  return err instanceof Error ? err.message : fallback;
+}
+
 export function AdminSocietyUrlCreatePage() {
   const navigate = useNavigate();
   const [officialProjectUrl, setOfficialProjectUrl] = useState('');
@@ -80,7 +88,7 @@ export function AdminSocietyUrlCreatePage() {
       setMessage('Draft profile fetched. Review every field before saving or publishing.');
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : 'Unable to fetch this official project URL.');
+      setError(friendlyFetchError(err, 'Unable to fetch this official project URL.'));
     } finally {
       setFetching(false);
     }
@@ -142,7 +150,7 @@ export function AdminSocietyUrlCreatePage() {
       setMessage('Brochure parsed. Draft fields were filled where the form was blank. Review before saving.');
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : 'Unable to extract details from this brochure.');
+      setError(friendlyFetchError(err, 'Unable to extract details from this brochure.'));
     } finally {
       setFetchingBrochure(false);
     }

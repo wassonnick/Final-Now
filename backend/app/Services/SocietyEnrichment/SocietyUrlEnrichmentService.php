@@ -58,7 +58,7 @@ class SocietyUrlEnrichmentService
         $galleryUrl = $this->bestLink($links, ['gallery', 'photos', 'media']);
         $imageReference = $this->imageReference($meta, $structured, $html, $url, $name);
         $amenities = $this->amenitiesFromText($text);
-        $reraNumber = $this->firstMatch('/(?:RERA|HRERA)[\s:\/-]*(?:No\.?|Number)?[\s:\/-]*([A-Z0-9\/-]{6,})/i', $text, 1);
+        $reraNumber = $this->reraNumber($text);
 
         $warnings = [
             'Fetched data is a draft. Verify RERA, map pin, rental data and image rights before publishing.',
@@ -367,6 +367,9 @@ class SocietyUrlEnrichmentService
             'm3m' => 'M3M',
             'sobha' => 'Sobha',
             'godrejproperties' => 'Godrej Properties',
+            'tulipcrimson' => 'Tulip Infratech',
+            'tulipgroup' => 'Tulip Infratech',
+            'tulip' => 'Tulip Infratech',
             'tatahousing' => 'Tata Housing',
             'atsgreens' => 'ATS Greens',
             'bestechgroup' => 'Bestech Group',
@@ -381,10 +384,18 @@ class SocietyUrlEnrichmentService
         }
 
         if (preg_match('/(?:by|developer|promoter)\s+([A-Z][A-Za-z0-9&.\s]{2,40})/i', $text, $matches)) {
-            return trim($matches[1]);
+            return $this->cleanDeveloperName($matches[1]);
         }
 
         return null;
+    }
+
+    private function cleanDeveloperName(string $name): string
+    {
+        $name = preg_replace('/\b(All Rights Reserved?|Copyright|Privacy Policy|Disclaimer)\b.*$/i', '', $name) ?: $name;
+        $name = preg_replace('/\s+/', ' ', $name) ?: $name;
+
+        return trim($name, " \t\n\r\0\x0B-|,.;:");
     }
 
     private function firstMatch(string $pattern, string $text, int $group = 0): ?string
@@ -499,6 +510,14 @@ class SocietyUrlEnrichmentService
             return false;
         }
 
+        if (preg_match('/[?\/](?:w|width)_([0-9]{1,3})/i', $url, $width) && (int) $width[1] < 180) {
+            return false;
+        }
+
+        if (preg_match('/[?\/](?:h|height)_([0-9]{1,3})/i', $url, $height) && (int) $height[1] < 140) {
+            return false;
+        }
+
         if (!preg_match('/\.(?:jpg|jpeg|png|webp)(?:$|\?)/i', $url)) {
             return false;
         }
@@ -546,6 +565,17 @@ class SocietyUrlEnrichmentService
         }
 
         return null;
+    }
+
+    private function reraNumber(string $text): ?string
+    {
+        $match = $this->firstMatch('/(?:RERA|HRERA)[\s:\/-]*(?:registration|regn\.?|no\.?|number)?[\s:\/-]*([A-Z0-9\/-]{6,})/i', $text, 1);
+
+        if (!$match || !preg_match('/[0-9]/', $match)) {
+            return null;
+        }
+
+        return $match;
     }
 
     private function configuration(string $text): ?string

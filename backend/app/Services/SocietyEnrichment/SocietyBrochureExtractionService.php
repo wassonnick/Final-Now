@@ -260,7 +260,13 @@ class SocietyBrochureExtractionService
 
     private function reraNumber(string $text): string
     {
-        return $this->firstMatch('/(?:RERA|HRERA)[\s:\/-]*(?:registration|regn\.?|no\.?|number)?[\s:\/-]*([A-Z0-9\/-]{6,})/i', $text, 1) ?: '';
+        $match = $this->firstMatch('/(?:RERA|HRERA)[\s:\/-]*(?:registration|regn\.?|no\.?|number)?[\s:\/-]*([A-Z0-9\/-]{6,})/i', $text, 1);
+
+        if (!$match || !preg_match('/[0-9]/', $match)) {
+            return '';
+        }
+
+        return $match;
     }
 
     private function projectStatus(string $text): string
