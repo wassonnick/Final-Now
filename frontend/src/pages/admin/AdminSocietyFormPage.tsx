@@ -18,6 +18,14 @@ import {
 } from '@/lib/adminSocietyStore';
 import type { AdminSociety } from '@/lib/adminSocietyStore';
 
+function friendlyFetchError(err: unknown, fallback: string) {
+  if (err instanceof Error && err.message === 'Failed to fetch') {
+    return 'Could not reach the backend API. Wait for the Render backend redeploy to finish, then try again.';
+  }
+
+  return err instanceof Error ? err.message : fallback;
+}
+
 export function AdminSocietyFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -118,7 +126,7 @@ export function AdminSocietyFormPage() {
       setSaved(false);
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : 'Unable to extract details from this brochure.');
+      setError(friendlyFetchError(err, 'Unable to extract details from this brochure.'));
     } finally {
       setBrochureExtracting(false);
     }
