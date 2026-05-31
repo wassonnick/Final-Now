@@ -97,6 +97,8 @@ const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
   'https://final-now.onrender.com/api';
 
+export const MAX_BROCHURE_UPLOAD_BYTES = 20 * 1024 * 1024;
+
 const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 async function fetchWithRetry(input: RequestInfo | URL, init?: RequestInit, retries = 2): Promise<Response> {
@@ -521,10 +523,19 @@ export async function fetchSocietyDraftFromBrochure(file: File, context?: AdminS
     body: formData,
   });
 
-  const json = await response.json().catch(() => ({}));
+  const contentType = response.headers.get('content-type') || '';
+  const json = contentType.includes('application/json') ? await response.json().catch(() => null) : null;
+
+  if (!json) {
+    throw new Error('Brochure upload was rejected before the API could read it. Use a text-based PDF under 20 MB, or compress the brochure and try again.');
+  }
 
   if (!response.ok) {
     throw new Error(json?.message || `Brochure extraction failed: ${response.status}`);
+  }
+
+  if (!json?.success) {
+    throw new Error(json?.message || 'Unable to extract details from this brochure.');
   }
 
   return {
