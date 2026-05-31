@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BadgeIndianRupee, Building2, CheckCircle2, HeartHandshake, Home, KeyRound, MapPin, Shield, Sparkles, Star, TrendingUp, Users } from 'lucide-react';
+import { ArrowRight, BadgeIndianRupee, BarChart3, Building2, CheckCircle2, HeartHandshake, Home, KeyRound, MapPin, Shield, Sparkles, Star, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HeroSearch } from '@/components/home/HeroSearch';
 import { fetchPublicProperties, fetchPublicSocieties, propertyImage, propertyUrl, societyImage, formatPublicLocation } from '@/lib/publicData';
@@ -10,6 +10,16 @@ const lifestyles = [
   { icon: Sparkles, title: 'Luxury Living', text: 'Premium towers, clubhouses and elite addresses.' },
   { icon: MapPin, title: 'Near Cyber Hub', text: 'Shorter office commute and stronger rental demand.' },
   { icon: HeartHandshake, title: 'Pet Friendly', text: 'Open areas, practical daily living and friendlier policies.' },
+];
+
+const platformTools = [
+  { icon: Sparkles, title: 'AI Advisor', text: 'Describe your needs and start with a guided shortlist.', href: '/ai-advisor' },
+  { icon: MapPin, title: 'Maps Intelligence', text: 'Check locality context, nearby anchors and map readiness.', href: '/maps' },
+  { icon: HeartHandshake, title: 'Broker CRM', text: 'Owner and buyer leads move into a managed follow-up flow.', href: '/broker-crm' },
+  { icon: Users, title: 'Chat & Callback', text: 'Route questions into callback and WhatsApp-ready lead flows.', href: '/chat' },
+  { icon: BarChart3, title: 'Analytics', text: 'Read inventory and market intelligence from verified data.', href: '/insights' },
+  { icon: Home, title: 'Advanced Search', text: 'Filter societies and listings by location, intent and budget.', href: '/search' },
+  { icon: TrendingUp, title: 'Recommendations', text: 'Match users to societies by fit, confidence and availability.', href: '/recommendations' },
 ];
 
 export function HomePage() {
@@ -45,6 +55,41 @@ export function HomePage() {
                   <div className="w-14 h-14 rounded-2xl bg-navy-100 flex items-center justify-center shrink-0"><LucideIcon className="w-6 h-6 text-navy-600" /></div>
                   <div><p className="text-3xl font-bold text-navy-900">{String(value)}</p><p className="text-sm text-navy-500">{String(label)}</p></div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-ivory-100 py-14 md:py-20">
+        <div className="container mx-auto px-4">
+          <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-navy-600">SocietyFlats tools</p>
+              <h2 className="max-w-4xl text-4xl font-extrabold tracking-tight text-navy-900 md:text-5xl">Use the platform, not just listings.</h2>
+              <p className="mt-4 max-w-2xl text-lg text-navy-500">These features connect search, society intelligence, owner leads and admin verification into one workflow.</p>
+            </div>
+            <Link to="/recommendations">
+              <Button className="rounded-full bg-navy-600 hover:bg-navy-700">
+                Start with recommendations <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {platformTools.map((tool) => {
+              const Icon = tool.icon;
+              return (
+                <Link key={tool.href} to={tool.href} className="group rounded-[2rem] border border-navy-100 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-apple">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-navy-100 text-navy-700">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-5 text-xl font-bold text-navy-900">{tool.title}</h3>
+                  <p className="mt-2 min-h-[56px] text-sm leading-6 text-navy-500">{tool.text}</p>
+                  <div className="mt-5 flex items-center text-sm font-semibold text-navy-700">
+                    Open tool <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </Link>
               );
             })}
           </div>

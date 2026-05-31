@@ -2,6 +2,17 @@ import { Link } from 'react-router-dom';
 import { Building2, Mail, Phone, MapPin, Instagram, Youtube, Linkedin, Twitter } from 'lucide-react';
 
 export function Footer() {
+  const quickLinks = [
+    { label: 'Search Societies', href: '/search?tab=societies' },
+    { label: 'Advanced Search', href: '/search' },
+    { label: 'AI Advisor', href: '/ai-advisor' },
+    { label: 'Recommendations', href: '/recommendations' },
+    { label: 'Maps Intelligence', href: '/maps' },
+    { label: 'Analytics', href: '/insights' },
+    { label: 'Chat & Callback', href: '/chat' },
+    { label: 'Broker CRM', href: '/broker-crm' },
+  ];
+
   return (
     <footer className="bg-navy-900 text-navy-100">
       <div className="container mx-auto px-4 py-12">
@@ -37,10 +48,10 @@ export function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
-              {['Search Societies', 'AI Advisor', 'Compare', 'Insights', 'Owner Dashboard', 'Broker CRM'].map((item) => (
-                <li key={item}>
-                  <Link to="/" className="text-sm text-navy-300 hover:text-gold-400 transition-colors">
-                    {item}
+              {quickLinks.map((item) => (
+                <li key={item.href}>
+                  <Link to={item.href} className="text-sm text-navy-300 hover:text-gold-400 transition-colors">
+                    {item.label}
                   </Link>
                 </li>
               ))}

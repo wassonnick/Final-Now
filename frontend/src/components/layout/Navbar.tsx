@@ -27,6 +27,7 @@ export function Navbar() {
     { label: 'Rent', href: '/search?tab=rent', icon: KeyRound },
     { label: 'Buy', href: '/search?tab=buy', icon: Home },
     { label: 'Sell', href: '/sell', icon: BadgeIndianRupee },
+    { label: 'Maps', href: '/maps', icon: MapPin },
     { label: 'Insights', href: '/insights', icon: BarChart3 },
     { label: 'AI Advisor', href: '/ai-advisor', icon: Sparkles },
     { label: 'Compare', href: '/compare', icon: Scale, badge: compareList.length },
@@ -47,7 +48,7 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden xl:flex items-center gap-1.5 rounded-full bg-ivory-200/70 border border-navy-100 px-2 py-1.5">
-          {navLinks.slice(0, 6).map((link) => (
+          {navLinks.slice(0, 7).map((link) => (
             <Link key={link.href} to={link.href} className="relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold text-navy-600 hover:text-navy-900 hover:bg-white transition-colors">
               <link.icon className="w-4 h-4" />
               <span>{link.label}</span>

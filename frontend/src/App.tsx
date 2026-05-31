@@ -12,6 +12,7 @@ import { PropertyPage } from '@/pages/PropertyPage';
 import { ComparePage } from '@/pages/ComparePage';
 import { AIAdvisorPage } from '@/pages/AIAdvisorPage';
 import { InsightsPage } from '@/pages/InsightsPage';
+import { FeatureExperiencePage } from '@/pages/FeatureExperiencePage';
 import { OwnerDashboard } from '@/pages/OwnerDashboard';
 import { LoginPage } from '@/pages/LoginPage';
 import { SellPage } from '@/pages/SellPage';
@@ -70,6 +71,10 @@ function AppShell() {
           <Route path="/compare" element={<ComparePage />} />
           <Route path="/ai-advisor" element={<AIAdvisorPage />} />
           <Route path="/insights" element={<InsightsPage />} />
+          <Route path="/maps" element={<FeatureExperiencePage feature="maps" />} />
+          <Route path="/broker-crm" element={<FeatureExperiencePage feature="broker-crm" />} />
+          <Route path="/chat" element={<FeatureExperiencePage feature="chat" />} />
+          <Route path="/recommendations" element={<FeatureExperiencePage feature="recommendations" />} />
 
           <Route path="/owner/dashboard" element={<OwnerDashboard />} />
           <Route path="/sell" element={<SellPage />} />
