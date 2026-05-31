@@ -11,6 +11,7 @@ import {
   enrichAdminSociety,
   fetchAdminSociety,
   fetchSocietyDraftFromBrochure,
+  MAX_BROCHURE_UPLOAD_BYTES,
   mergeFetchedSocietyDraft,
   saveAdminSociety,
   slugifySociety,
@@ -113,6 +114,11 @@ export function AdminSocietyFormPage() {
 
     if (file.type && file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
       setError('Upload a PDF brochure only.');
+      return;
+    }
+
+    if (file.size > MAX_BROCHURE_UPLOAD_BYTES) {
+      setError('This brochure is too large for live upload. Compress it below 20 MB, then upload again.');
       return;
     }
 
