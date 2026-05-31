@@ -31,6 +31,7 @@ import { AdminLeadDetailPage } from '@/pages/admin/AdminLeadDetailPage';
 import { AdminReviewsPage } from '@/pages/admin/AdminReviewsPage';
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
+import { AdminFeatureHubPage } from '@/pages/admin/AdminFeatureHubPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -115,6 +116,13 @@ function AppShell() {
 
           <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/ai" element={<AdminFeatureHubPage feature="ai" />} />
+          <Route path="/admin/maps" element={<AdminFeatureHubPage feature="maps" />} />
+          <Route path="/admin/broker-crm" element={<AdminFeatureHubPage feature="broker-crm" />} />
+          <Route path="/admin/chat" element={<AdminFeatureHubPage feature="chat" />} />
+          <Route path="/admin/analytics" element={<AdminFeatureHubPage feature="analytics" />} />
+          <Route path="/admin/advanced-search" element={<AdminFeatureHubPage feature="advanced-search" />} />
+          <Route path="/admin/recommendations" element={<AdminFeatureHubPage feature="recommendations" />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
 
         </Routes>
