@@ -597,6 +597,63 @@ export function mergeFetchedSocietyDraft(current: AdminSociety, patch: AdminSoci
   };
 }
 
+export function describeBrochureUpdate(
+  before: AdminSociety,
+  patch: AdminSociety,
+  after: AdminSociety,
+  diagnostics: Record<string, unknown> = {},
+) {
+  const labels: Partial<Record<keyof AdminSociety, string>> = {
+    name: 'society name',
+    builder: 'developer',
+    sector: 'sector',
+    locality: 'micro-market',
+    city: 'city',
+    state: 'state',
+    address: 'address',
+    description: 'description',
+    projectStatus: 'project status',
+    configuration: 'configuration',
+    projectArea: 'project area',
+    unitSizeRange: 'unit size range',
+    totalTowers: 'total towers',
+    totalUnits: 'total units',
+    reraNumber: 'RERA number',
+    reraStatus: 'RERA status',
+    metaTitle: 'meta title',
+    metaDescription: 'meta description',
+  };
+
+  const updated = Object.entries(labels)
+    .filter(([field]) => {
+      const key = field as keyof AdminSociety;
+      return before[key] !== after[key] && Boolean(after[key]);
+    })
+    .map(([, label]) => label as string);
+
+  const addedAmenities = patch.amenities.filter((amenity) => !before.amenities.includes(amenity));
+  if (addedAmenities.length) {
+    updated.push(`amenities (${addedAmenities.join(', ')})`);
+  }
+
+  const parts = [`Brochure uploaded successfully (${patch.brochureName || 'PDF'}).`];
+
+  if (updated.length) {
+    parts.push(`Updated: ${updated.slice(0, 8).join(', ')}${updated.length > 8 ? ` and ${updated.length - 8} more` : ''}.`);
+  } else {
+    parts.push('No visible form fields changed because the brochure did not contain new readable data, or the existing form values were kept.');
+  }
+
+  const extractedCharacters = Number(diagnostics.characters_extracted || 0);
+  if (extractedCharacters > 0) {
+    parts.push(`Extracted about ${extractedCharacters.toLocaleString()} characters of brochure text.`);
+  } else if (diagnostics.brochure_text_found === false) {
+    parts.push('This looks like a scanned/image PDF, so only limited text could be read.');
+  }
+
+  return parts.join(' ');
+}
+
 export async function createSocietyFromFetchedData(society: AdminSociety, publish = false): Promise<AdminSociety> {
   const json = await request('/admin/societies/create-from-fetched-data', {
     method: 'POST',

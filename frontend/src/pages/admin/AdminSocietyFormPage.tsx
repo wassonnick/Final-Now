@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { uploadAdminImage } from '@/lib/adminApi';
 import {
   createEmptyAdminSociety,
+  describeBrochureUpdate,
   enrichAdminSociety,
   fetchAdminSociety,
   fetchSocietyDraftFromBrochure,
@@ -127,8 +128,9 @@ export function AdminSocietyFormPage() {
       setError('');
       setMessage('');
       const result = await fetchSocietyDraftFromBrochure(file, society);
-      setSociety((current) => mergeFetchedSocietyDraft(current, result.society));
-      setMessage('Brochure parsed. Missing draft fields were filled where possible. Review and save changes.');
+      const merged = mergeFetchedSocietyDraft(society, result.society);
+      setSociety(merged);
+      setMessage(describeBrochureUpdate(society, result.society, merged, result.diagnostics));
       setSaved(false);
     } catch (err) {
       console.error(err);
