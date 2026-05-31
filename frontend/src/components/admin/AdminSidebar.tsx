@@ -1,5 +1,20 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Building2, Home, MessageSquareText, Star, Users, Settings, LogOut } from 'lucide-react';
+import {
+  BarChart3,
+  Bot,
+  BriefcaseBusiness,
+  Building2,
+  Home,
+  LineChart,
+  LogOut,
+  MapPinned,
+  MessageSquareText,
+  Search,
+  Settings,
+  Star,
+  Target,
+  Users,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { clearAdminSession } from '@/hooks/useAdminAuth';
@@ -9,6 +24,13 @@ const links = [
   { label: 'Societies', href: '/admin/societies', icon: Building2 },
   { label: 'Properties', href: '/admin/properties', icon: Home },
   { label: 'Leads', href: '/admin/leads', icon: MessageSquareText },
+  { label: 'AI Features', href: '/admin/ai', icon: Bot },
+  { label: 'Maps', href: '/admin/maps', icon: MapPinned },
+  { label: 'Broker CRM', href: '/admin/broker-crm', icon: BriefcaseBusiness },
+  { label: 'Chat', href: '/admin/chat', icon: MessageSquareText },
+  { label: 'Analytics', href: '/admin/analytics', icon: LineChart },
+  { label: 'Advanced Search', href: '/admin/advanced-search', icon: Search },
+  { label: 'Recommendations', href: '/admin/recommendations', icon: Target },
   { label: 'Reviews', href: '/admin/reviews', icon: Star },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
@@ -29,7 +51,7 @@ export function AdminSidebar() {
         </div>
       </Link>
 
-      <nav className="mt-8 space-y-1">
+      <nav className="mt-8 min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
         {links.map((item) => {
           const Icon = item.icon;
           const active = location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
@@ -49,7 +71,7 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      <div className="mt-auto">
+      <div className="mt-4">
         <Button
           variant="ghost"
           className="w-full justify-start rounded-xl text-slate-600 hover:bg-slate-50"
