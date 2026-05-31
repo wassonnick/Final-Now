@@ -21,6 +21,7 @@ export function getAdminSession(): AdminSession | null {
 }
 
 export function setAdminSession(email: string, token?: string) {
+  const cleanToken = sanitizeAdminToken(token || import.meta.env.VITE_ADMIN_API_TOKEN || '');
   const session: AdminSession = {
     email,
     name: email.split('@')[0] || 'Admin',
@@ -28,7 +29,7 @@ export function setAdminSession(email: string, token?: string) {
     loggedInAt: new Date().toISOString(),
   };
   localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
-  localStorage.setItem(ADMIN_TOKEN_KEY, token || import.meta.env.VITE_ADMIN_API_TOKEN || '');
+  localStorage.setItem(ADMIN_TOKEN_KEY, cleanToken);
   return session;
 }
 
@@ -38,7 +39,18 @@ export function clearAdminSession() {
 }
 
 export function getAdminToken() {
-  return localStorage.getItem(ADMIN_TOKEN_KEY) || import.meta.env.VITE_ADMIN_API_TOKEN || '';
+  const token = localStorage.getItem(ADMIN_TOKEN_KEY) || import.meta.env.VITE_ADMIN_API_TOKEN || '';
+  const cleanToken = sanitizeAdminToken(token);
+
+  if (cleanToken !== token) {
+    localStorage.setItem(ADMIN_TOKEN_KEY, cleanToken);
+  }
+
+  return cleanToken;
+}
+
+function sanitizeAdminToken(token: string) {
+  return token.trim().replace(/[\r\n]+/g, '');
 }
 
 export function useAdminAuth() {

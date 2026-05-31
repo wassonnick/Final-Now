@@ -24,7 +24,7 @@ function yesNo(value: unknown) {
 
 function friendlyFetchError(err: unknown, fallback: string) {
   if (err instanceof Error && err.message === 'Failed to fetch') {
-    return 'Could not reach the backend API. Wait for the Render backend redeploy to finish, then try again.';
+    return 'Could not complete the backend request. The API health check may still work, so refresh once and try again. If it keeps failing, log out and log back in to refresh the admin token.';
   }
 
   return err instanceof Error ? err.message : fallback;
