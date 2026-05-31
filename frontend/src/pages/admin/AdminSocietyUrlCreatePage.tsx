@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import {
   createEmptyAdminSociety,
   createSocietyFromFetchedData,
+  describeBrochureUpdate,
   fetchSocietyDraftFromBrochure,
   fetchSocietyDraftFromUrl,
   MAX_BROCHURE_UPLOAD_BYTES,
@@ -145,7 +146,8 @@ export function AdminSocietyUrlCreatePage() {
       setMessage('');
       const base = society || createEmptyAdminSociety();
       const result = await fetchSocietyDraftFromBrochure(file, base);
-      setSociety(mergeFetchedSocietyDraft(base, result.society));
+      const merged = mergeFetchedSocietyDraft(base, result.society);
+      setSociety(merged);
       setWarnings(Array.from(new Set([...warnings, ...result.warnings])));
       setFieldsToVerify(result.fieldsToVerify.length ? result.fieldsToVerify : fieldsToVerify);
       setDiagnostics((current) => ({
@@ -153,7 +155,7 @@ export function AdminSocietyUrlCreatePage() {
         ...result.diagnostics,
         brochure_found: true,
       }));
-      setMessage('Brochure parsed. Draft fields were filled where the form was blank. Review before saving.');
+      setMessage(describeBrochureUpdate(base, result.society, merged, result.diagnostics));
     } catch (err) {
       console.error(err);
       setError(friendlyFetchError(err, 'Unable to extract details from this brochure.'));
