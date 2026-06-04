@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
+  ArrowRight,
   Bath,
   Bed,
+  CalendarCheck,
   CheckCircle2,
   Heart,
   Home,
@@ -119,6 +121,10 @@ export function PropertyPage() {
     typeof property?.society === 'object'
       ? property.society?.slug
       : '';
+  const societyLocality =
+    typeof property?.society === 'object'
+      ? [property.society?.sector, property.society?.locality].filter(Boolean).join(', ')
+      : property.locality;
 
   const openLead = (type: 'callback' | 'enquiry') => {
     setLeadType(type);
@@ -346,6 +352,25 @@ export function PropertyPage() {
             </div>
 
             <div className="rounded-[2rem] border border-navy-100 bg-white p-7 shadow-sm">
+              <div className="grid gap-4 md:grid-cols-3">
+                {[
+                  { label: 'Verified society', value: societyName || 'Gurgaon inventory', icon: Shield },
+                  { label: 'Location context', value: societyLocality || property.locality || 'Gurgaon', icon: MapPin },
+                  { label: 'Next action', value: 'Callback, visit or WhatsApp', icon: CalendarCheck },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className="rounded-[1.25rem] bg-[#F8FAFC] p-4">
+                      <Icon className="h-5 w-5 text-blue-600" />
+                      <p className="mt-3 text-sm text-navy-400">{item.label}</p>
+                      <p className="mt-1 font-semibold text-navy-900">{item.value}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-navy-100 bg-white p-7 shadow-sm">
               <h3 className="text-2xl font-bold text-navy-900 mb-4">Description</h3>
               <p className="text-navy-600 leading-relaxed whitespace-pre-line">
                 {property.description || 'No description available.'}
@@ -369,10 +394,19 @@ export function PropertyPage() {
 
             {societyName && (
               <div className="rounded-[2rem] border border-navy-100 bg-white p-7 shadow-sm">
-                <h3 className="text-2xl font-bold text-navy-900">About {societyName}</h3>
-                <Button asChild variant="outline" className="mt-5 rounded-full">
-                  <Link to={`/society/${societySlug || ''}`}>View society profile</Link>
-                </Button>
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">Society context</p>
+                <h3 className="mt-2 text-2xl font-bold text-navy-900">About {societyName}</h3>
+                <p className="mt-3 text-navy-500">
+                  Review the society profile before requesting a visit so the property decision includes location, amenities and inventory context.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Button asChild variant="outline" className="rounded-full">
+                    <Link to={`/society/${societySlug || ''}`}>View society profile</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="rounded-full">
+                    <Link to={`/compare?society=${encodeURIComponent(societyName)}`}>Compare area</Link>
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -395,6 +429,11 @@ export function PropertyPage() {
                   Send Enquiry
                 </Button>
 
+                <Button onClick={() => openLead('callback')} variant="outline" className="w-full rounded-full">
+                  <CalendarCheck className="w-4 h-4 mr-2" />
+                  Schedule visit
+                </Button>
+
                 <a
                   href={`https://wa.me/919999988888?text=${whatsappMessage}`}
                   target="_blank"
@@ -404,6 +443,13 @@ export function PropertyPage() {
                   WhatsApp enquiry
                 </a>
               </div>
+              {societyName ? (
+                <Button asChild variant="ghost" className="mt-4 w-full rounded-full text-blue-700">
+                  <Link to={`/society/${societySlug || ''}`}>
+                    View society first <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : null}
             </div>
           </aside>
         </div>

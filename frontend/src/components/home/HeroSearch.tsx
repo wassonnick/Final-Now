@@ -1,129 +1,115 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Home, KeyRound, PlusCircle, Search, Sparkles } from 'lucide-react';
+import { ArrowRight, MapPin, Search, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AIAdvisorChatBox } from '@/components/AIAdvisorChatBox';
 
-const examples = ['DLF Crest', 'DLF Park Place', 'Golf Course Road', 'Family Friendly', 'Near Cyber Hub'];
-
-const actionCards = [
-  {
-    label: 'Rent',
-    title: 'Rent a home',
-    description: 'Verified rentals in Gurgaon societies',
-    icon: KeyRound,
-    path: '/search?tab=rent',
-  },
-  {
-    label: 'Buy',
-    title: 'Buy a home',
-    description: 'Compare societies before buying',
-    icon: Home,
-    path: '/search?tab=buy',
-  },
-  {
-    label: 'Sell',
-    title: 'Sell / List',
-    description: 'List your property for verified leads',
-    icon: PlusCircle,
-    path: '/sell',
-  },
-];
+const popularSearches = ['DLF Crest', 'Golf Course Road', 'DLF Park Place', 'Pet friendly', 'Near Cyber Hub'];
+const searchModes = ['Rent', 'Buy', 'Resale', 'Ask AI'];
 
 export function HeroSearch() {
   const [query, setQuery] = useState('');
+  const [mode, setMode] = useState('Rent');
   const navigate = useNavigate();
 
   const handleSearch = () => {
+    const trimmed = query.trim();
+    if (mode === 'Ask AI') {
+      navigate(`/ai-advisor${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ''}`);
+      return;
+    }
+
     const params = new URLSearchParams();
-    params.set('tab', 'societies');
-    if (query.trim()) params.set('q', query.trim());
+    params.set('tab', mode.toLowerCase());
+    if (trimmed) params.set('q', trimmed);
     navigate(`/search?${params.toString()}`);
   };
 
-  const handleExampleClick = (example: string) => {
-    setQuery(example);
-    navigate(`/search?tab=societies&q=${encodeURIComponent(example)}`);
+  const handlePopularSearch = (item: string) => {
+    setQuery(item);
+    navigate(`/search?tab=societies&q=${encodeURIComponent(item)}`);
   };
 
   return (
-    <section className="relative overflow-hidden bg-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,#EEF4FF_0%,transparent_42%),linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)]" />
+    <section className="relative overflow-hidden bg-gradient-to-b from-ivory-100 via-white to-blue-50">
+      <div className="absolute right-[-12rem] top-[-14rem] h-[32rem] w-[32rem] rounded-full bg-blue-100/55 blur-3xl" />
+      <div className="absolute bottom-[-16rem] left-[-12rem] h-[28rem] w-[28rem] rounded-full bg-ivory-200/70 blur-3xl" />
 
-      <div className="relative container mx-auto px-4 pt-14 pb-14 md:pt-20 md:pb-20">
-        <div className="mx-auto max-w-6xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 shadow-sm ring-1 ring-blue-100">
-            <Sparkles className="h-3.5 w-3.5" />
-            Society-first marketplace
+      <div className="container relative mx-auto grid gap-4 px-4 py-4 sm:py-5 lg:min-h-[calc(100svh-5rem)] lg:grid-cols-[minmax(0,1.42fr)_minmax(315px,0.72fr)] lg:items-start lg:gap-6 lg:py-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(330px,0.7fr)] xl:gap-8 xl:py-7 2xl:py-8">
+        <div className="w-full min-w-0">
+          <div className="mb-2 inline-flex items-center gap-3 rounded-full border border-blue-100 bg-white/85 px-3.5 py-1.5 shadow-sm backdrop-blur lg:mb-2.5">
+            <span className="h-2 w-2 rounded-full bg-gold-500" />
+            <span className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Gurgaon Society Intelligence</span>
           </div>
 
-          <h1 className="mx-auto mt-7 max-w-5xl text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-slate-950 sm:text-5xl md:text-6xl lg:text-[64px]">
-            Discover Better Societies.
-            <span className="block text-blue-600">Find Better Homes.</span>
+          <h1 className="max-w-[39rem] font-display text-[2.55rem] font-semibold leading-[0.96] tracking-[-0.025em] text-navy-950 sm:text-6xl lg:text-[2.65rem] xl:text-[3rem] 2xl:text-[3.2rem]">
+            Find a society
+            <span className="block">you will actually</span>
+            <em className="block text-blue-700">love living in.</em>
           </h1>
 
-          <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">
-            Verified societies, real inventory, resident reviews and market intelligence built around how people actually choose where to live.
+          <p className="mt-2.5 max-w-[41rem] text-base leading-7 text-navy-500 sm:text-lg lg:max-w-[35rem] lg:text-[0.95rem] lg:leading-6 xl:text-base xl:leading-7">
+            Verified scores on security, maintenance, amenities and connectivity, before you sign a lease or buy a home.
           </p>
 
-          <div className="mx-auto mt-10 max-w-5xl rounded-[2rem] border border-slate-200 bg-white p-3 shadow-[0_24px_80px_rgba(15,23,42,0.10)] md:rounded-full md:p-3">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center">
-              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-full bg-white px-3 py-2 md:px-5">
-                <Search className="h-5 w-5 shrink-0 text-slate-400" />
+          <div className="mt-3.5 w-full rounded-[1.35rem] border border-blue-100 bg-white/92 p-2 shadow-premium backdrop-blur lg:max-w-[60rem]">
+            <div className="mb-1.5 flex gap-1 px-1 pt-1">
+              {searchModes.map((item) => (
+                <button
+                  key={item}
+                  onClick={() => setMode(item)}
+                  className={`rounded-2xl px-3.5 py-1.5 text-sm font-black transition ${
+                    mode === item ? 'bg-blue-700 text-white shadow-sm' : 'text-navy-400 hover:bg-blue-50 hover:text-blue-700'
+                  }`}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
 
+            <div className="flex flex-col gap-3 rounded-[1.15rem] bg-white px-3 py-2 lg:flex-row lg:items-center">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <Search className="h-5 w-5 shrink-0 text-blue-500" />
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={(event) => event.key === 'Enter' && handleSearch()}
-                  placeholder="Search society, locality, builder or ask anything..."
-                  className="h-12 min-w-0 flex-1 border-0 bg-transparent text-base text-slate-900 outline-none placeholder:text-slate-400 md:text-lg"
+                  placeholder="Search society, locality, builder or landmark in Gurgaon..."
+                  className="h-11 min-w-0 flex-1 border-0 bg-transparent text-base font-semibold text-navy-950 outline-none placeholder:text-navy-300"
                 />
               </div>
 
               <Button
                 onClick={handleSearch}
-                size="lg"
-                className="h-14 rounded-full bg-blue-600 px-8 text-base font-semibold text-white shadow-sm hover:bg-blue-700 md:h-16 md:px-10"
+                className="h-11 w-full rounded-full bg-blue-700 px-6 text-base font-black text-white shadow-lg shadow-blue-700/20 hover:bg-blue-800 lg:w-auto lg:min-w-[10.5rem]"
               >
-                Search
+                Search Societies
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
+
+            <p className="px-4 pb-1 pt-0 text-xs font-semibold text-navy-400 xl:text-sm">
+              Search by society name, sector, road, builder or nearby landmark.
+            </p>
           </div>
 
-          <div className="mx-auto mt-6 grid max-w-5xl gap-3 md:grid-cols-3">
-            {actionCards.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.label}
-                  onClick={() => navigate(item.path)}
-                  className="group flex items-center gap-4 rounded-3xl border border-slate-200 bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-white hover:shadow-[0_18px_50px_rgba(15,23,42,0.10)]"
-                >
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 transition group-hover:bg-blue-600 group-hover:text-white">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <span>
-                    <span className="block text-sm font-semibold uppercase tracking-[0.14em] text-blue-600">{item.label}</span>
-                    <span className="mt-0.5 block text-base font-semibold text-slate-950">{item.title}</span>
-                    <span className="mt-1 block text-sm text-slate-500">{item.description}</span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 md:gap-3">
-            <span className="mr-1 text-sm text-slate-500">Popular searches:</span>
-            {examples.map((example) => (
+          <div className="mt-2.5 flex flex-wrap items-center gap-2 lg:flex-nowrap lg:overflow-hidden">
+            <span className="mr-1 shrink-0 text-sm font-semibold text-navy-400">Popular searches:</span>
+            {popularSearches.map((item, index) => (
               <button
-                key={example}
-                onClick={() => handleExampleClick(example)}
-                className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-sm font-medium text-blue-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                key={item}
+                onClick={() => handlePopularSearch(item)}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-blue-100 bg-white/75 px-3 py-1.5 text-xs font-bold text-navy-500 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-50 hover:text-blue-700 xl:text-sm"
               >
-                {example}
+                {index === 3 ? <Sparkles className="h-3.5 w-3.5 text-blue-500" /> : <MapPin className="h-3.5 w-3.5 text-blue-500" />}
+                {item}
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="hidden min-w-0 justify-self-end lg:block lg:pt-1">
+          <AIAdvisorChatBox />
         </div>
       </div>
     </section>

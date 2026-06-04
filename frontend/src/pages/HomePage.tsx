@@ -1,149 +1,612 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BadgeIndianRupee, BarChart3, Building2, CheckCircle2, HeartHandshake, Home, KeyRound, MapPin, Shield, Sparkles, Star, TrendingUp, Users } from 'lucide-react';
+import {
+  ArrowRight,
+  BadgeIndianRupee,
+  BarChart3,
+  Building2,
+  CalendarCheck,
+  CheckCircle2,
+  Home,
+  KeyRound,
+  MapPin,
+  MessageCircle,
+  Route,
+  Scale,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  TrendingUp,
+  Users,
+  X,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { HeroSearch } from '@/components/home/HeroSearch';
+import SocietyFlatsHero from '@/components/home/SocietyFlatsHero';
 import { fetchPublicProperties, fetchPublicSocieties, propertyImage, propertyUrl, societyImage, formatPublicLocation } from '@/lib/publicData';
 
-const lifestyles = [
-  { icon: Users, title: 'Family Friendly', text: 'Schools, parks, security and stable resident mix.' },
-  { icon: Sparkles, title: 'Luxury Living', text: 'Premium towers, clubhouses and elite addresses.' },
-  { icon: MapPin, title: 'Near Cyber Hub', text: 'Shorter office commute and stronger rental demand.' },
-  { icon: HeartHandshake, title: 'Pet Friendly', text: 'Open areas, practical daily living and friendlier policies.' },
+const whySocietyFlats = [
+  {
+    icon: Scale,
+    title: 'Compare Societies',
+    text: 'Compare societies by location, rent range, resale value, amenities, connectivity and lifestyle fit.',
+  },
+  {
+    icon: Users,
+    title: 'Resident Fit',
+    text: 'Understand whether a society is better suited for families, professionals, pet owners, NRIs or luxury buyers.',
+  },
+  {
+    icon: Route,
+    title: 'Commute Intelligence',
+    text: 'Check access to Cyber Hub, Golf Course Road, metro stations, schools, hospitals and office hubs.',
+  },
+  {
+    icon: BadgeIndianRupee,
+    title: 'Pricing Trends',
+    text: 'View indicative rent and resale ranges so you can shortlist with better confidence.',
+  },
+  {
+    icon: CalendarCheck,
+    title: 'Book Visits',
+    text: 'Request a callback or visit for homes that match your budget, move-in timeline and society preference.',
+  },
+  {
+    icon: Star,
+    title: 'Reviews & Ratings',
+    text: 'Use society-level insights to understand maintenance, security, amenities and daily living quality.',
+  },
 ];
 
-const platformTools = [
-  { icon: Sparkles, title: 'AI Advisor', text: 'Describe your needs and start with a guided shortlist.', href: '/ai-advisor' },
-  { icon: MapPin, title: 'Maps Intelligence', text: 'Check locality context, nearby anchors and map readiness.', href: '/maps' },
-  { icon: HeartHandshake, title: 'Broker CRM', text: 'Owner and buyer leads move into a managed follow-up flow.', href: '/broker-crm' },
-  { icon: Users, title: 'Chat & Callback', text: 'Route questions into callback and WhatsApp-ready lead flows.', href: '/chat' },
-  { icon: BarChart3, title: 'Analytics', text: 'Read inventory and market intelligence from verified data.', href: '/insights' },
-  { icon: Home, title: 'Advanced Search', text: 'Filter societies and listings by location, intent and budget.', href: '/search' },
-  { icon: TrendingUp, title: 'Recommendations', text: 'Match users to societies by fit, confidence and availability.', href: '/recommendations' },
+const aiPrompts = [
+  'Best societies near Cyber Hub under Rs 1.2L rent',
+  'Family-friendly 3BHK societies on Golf Course Road',
+  'Pet-friendly societies near Sector 65',
+  'Best rental yield societies in Gurgaon',
 ];
+
+const reviewCards = [
+  {
+    name: 'Rohan Mehta',
+    society: 'DLF The Crest',
+    title: 'Shortlisting became much clearer',
+    text: 'The society score and commute view helped us compare Golf Course Road options without jumping between five portals.',
+  },
+  {
+    name: 'Neha Arora',
+    society: 'M3M Golf Estate',
+    title: 'Better for family decisions',
+    text: 'We could see amenities, schools and resident fit before booking visits. That saved us a full weekend.',
+  },
+  {
+    name: 'Amit Kumar',
+    society: 'Sobha City',
+    title: 'Useful owner-side leads',
+    text: 'The listing flow feels focused because enquiries come with society, budget and move-in context.',
+  },
+];
+
+const ownerBenefits = [
+  { icon: KeyRound, title: 'Verified Leads', text: 'Enquiries from users searching by society, budget and move-in intent.' },
+  { icon: Home, title: 'Faster Closures', text: 'Reduce random calls and focus on serious tenants and buyers.' },
+  { icon: Building2, title: 'Better Visibility', text: 'Your property appears inside the right society profile and search results.' },
+];
+
+function scoreOf(society: any, fallback = '8.2') {
+  return society?.score || society?.overallScore || fallback;
+}
+
+function initials(name: string) {
+  return name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 export function HomePage() {
   const [societies, setSocieties] = useState<any[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchPublicSocieties()
-      .then((items) => setSocieties(items.slice(0, 4)))
+      .then((items) => setSocieties(items))
       .catch((error) => console.error('Societies fetch failed:', error));
     fetchPublicProperties()
-      .then((items) => setProperties(items.slice(0, 6)))
+      .then((items) => setProperties(items))
       .catch((error) => console.error('Properties fetch failed:', error));
   }, []);
 
+  const featuredSocieties = useMemo(() => societies.slice(0, 4), [societies]);
+  const mapSocieties = useMemo(() => societies.slice(0, 5), [societies]);
+  const featuredProperties = useMemo(() => properties.slice(0, 4), [properties]);
+  const averageScore = useMemo(() => {
+    const scores = societies.map((society) => Number(scoreOf(society, '0'))).filter((score) => Number.isFinite(score) && score > 0);
+    if (!scores.length) return '8.2';
+    return (scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(1);
+  }, [societies]);
+
   return (
     <div className="min-h-screen bg-white">
-      <HeroSearch />
+      <SocietyFlatsHero />
 
-      <section className="bg-white py-8">
-        <div className="container mx-auto px-4">
-          <div className="rounded-[2rem] bg-white border border-navy-100 shadow-soft p-6 md:p-8 grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              [String(societies.length), 'Live Societies', Building2],
-              [String(properties.length), 'Live Homes', Home],
-              [String(properties.filter((p) => p.verified).length), 'Verified Homes', Shield],
-              [String(societies.filter((s) => s.featured).length), 'Featured Societies', Star],
-            ].map(([value, label, Icon]) => {
-              const LucideIcon = Icon as typeof Building2;
-              return (
-                <div key={String(label)} className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-navy-100 flex items-center justify-center shrink-0"><LucideIcon className="w-6 h-6 text-navy-600" /></div>
-                  <div><p className="text-3xl font-bold text-navy-900">{String(value)}</p><p className="text-sm text-navy-500">{String(label)}</p></div>
+      <section className="border-y border-navy-100 bg-white">
+        <div className="container mx-auto grid divide-y divide-navy-100 px-4 md:grid-cols-5 md:divide-x md:divide-y-0">
+          {[
+            { icon: Building2, value: '150+', label: 'Gurgaon societies tracked', tone: 'bg-blue-50 text-blue-700' },
+            { icon: Home, value: `${properties.length || '2,500+'}`, label: 'Homes reviewed across societies', tone: 'bg-emerald-50 text-emerald-700' },
+            { icon: MessageCircle, value: '24 hrs', label: 'Callback support', tone: 'bg-violet-50 text-violet-700' },
+            { icon: Star, value: averageScore, label: 'Avg society score', tone: 'bg-gold-100 text-gold-700' },
+            { icon: Sparkles, value: 'AI', label: 'URL, brochure and chat tools', tone: 'bg-blue-50 text-blue-700' },
+          ].map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div key={stat.label} className="flex items-center gap-4 py-5 md:px-4">
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${stat.tone}`}>
+                  <Icon className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-2xl font-black leading-none text-navy-950">{stat.value}</p>
+                  <p className="mt-1 text-xs font-semibold leading-4 text-navy-500">{stat.label}</p>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      <section className="bg-ivory-100 py-14 md:py-20">
-        <div className="container mx-auto px-4">
-          <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <section className="bg-white px-4 py-12">
+        <div className="container mx-auto">
+          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-navy-600">SocietyFlats tools</p>
-              <h2 className="max-w-4xl text-4xl font-extrabold tracking-tight text-navy-900 md:text-5xl">Use the platform, not just listings.</h2>
-              <p className="mt-4 max-w-2xl text-lg text-navy-500">These features connect search, society intelligence, owner leads and admin verification into one workflow.</p>
+              <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.2em] text-blue-700">Curated for Gurgaon</p>
+              <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">
+                Featured societies in Gurgaon
+              </h2>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-navy-500">
+                Explore premium Gurgaon societies with rent ranges, resale trends, lifestyle fit, location strengths and available homes.
+              </p>
             </div>
-            <Link to="/recommendations">
-              <Button className="rounded-full bg-navy-600 hover:bg-navy-700">
-                Start with recommendations <ArrowRight className="ml-2 h-4 w-4" />
+            <Link to="/search?tab=societies">
+              <Button variant="outline" className="rounded-full border-blue-100 bg-white px-5 font-extrabold text-blue-700 hover:bg-blue-50">
+                View all societies <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {platformTools.map((tool) => {
-              const Icon = tool.icon;
-              return (
-                <Link key={tool.href} to={tool.href} className="group rounded-[2rem] border border-navy-100 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-apple">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-navy-100 text-navy-700">
-                    <Icon className="h-5 w-5" />
+          {featuredSocieties.length > 0 ? (
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              {featuredSocieties.map((society) => (
+                <Link
+                  key={society.id}
+                  to={`/society/${society.slug}`}
+                  className="group overflow-hidden rounded-[1.75rem] border border-navy-100 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-premium"
+                >
+                  <div className="relative h-52 overflow-hidden bg-blue-50">
+                    <img src={societyImage(society)} alt={society.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-950/30 via-transparent to-transparent" />
+                    <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-black text-navy-950 shadow-sm">
+                      <Star className="h-3.5 w-3.5 fill-gold-500 text-gold-500" />
+                      {scoreOf(society)}
+                    </span>
+                    <span className="absolute right-3 top-3 rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-black text-emerald-700">
+                      Verified
+                    </span>
                   </div>
-                  <h3 className="mt-5 text-xl font-bold text-navy-900">{tool.title}</h3>
-                  <p className="mt-2 min-h-[56px] text-sm leading-6 text-navy-500">{tool.text}</p>
-                  <div className="mt-5 flex items-center text-sm font-semibold text-navy-700">
-                    Open tool <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <div className="p-4">
+                    <h3 className="text-lg font-black text-navy-950 transition group-hover:text-blue-700">{society.name}</h3>
+                    <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-navy-500">
+                      <MapPin className="h-3.5 w-3.5" /> {formatPublicLocation(society)}
+                    </p>
+                    <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-ivory-100 p-3">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-navy-300">Rent</p>
+                        <p className="mt-1 text-xs font-black text-navy-950">{society.rentRange || 'On request'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-navy-300">Resale</p>
+                        <p className="mt-1 text-xs font-black text-navy-950">{society.buyRange || 'On request'}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid grid-cols-5 gap-1">
+                      {['Loc', 'Sec', 'Ame', 'ROI', 'Fit'].map((label, index) => (
+                        <div key={label} className="text-center">
+                          <div className="h-1.5 overflow-hidden rounded-full bg-blue-50">
+                            <div className="h-full rounded-full bg-blue-700" style={{ width: `${78 + index * 4}%` }} />
+                          </div>
+                          <p className="mt-1 text-[9px] font-bold text-navy-300">{label}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <span className="mt-4 inline-flex items-center text-sm font-black text-blue-700">
+                      View Society <ArrowRight className="ml-1 h-4 w-4 transition group-hover:translate-x-1" />
+                    </span>
                   </div>
                 </Link>
-              );
-            })}
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[1.5rem] border border-dashed border-navy-200 bg-ivory-100 p-6 text-navy-500">
+              Gurgaon society profiles are being added. Use admin to publish verified society pages.
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-ivory-100 px-4 py-14">
+        <div className="absolute right-[-10rem] top-[-12rem] h-[36rem] w-[36rem] rounded-full bg-white/80 blur-3xl" />
+        <div className="absolute left-[-8rem] bottom-[-14rem] h-[32rem] w-[32rem] rounded-full bg-gold-200/25 blur-3xl" />
+        <div className="container relative mx-auto grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-blue-700 shadow-sm">
+              <Sparkles className="h-4 w-4" /> AI Advisor
+            </span>
+            <h2 className="mt-5 font-display text-4xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">
+              Tell us what matters. We find your perfect society.
+            </h2>
+            <p className="mt-4 max-w-xl text-base leading-7 text-navy-500">
+              Our AI scores every society against your budget, commute, family needs, pet preference and lifestyle priorities, then ranks the best matches with real reasons.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {[
+                { icon: MessageCircle, title: 'AI Chat', text: 'Ask anything about Gurgaon societies and get instant expert answers.' },
+                { icon: Sparkles, title: 'Smart Matching', text: 'Weighted scoring across budget, commute, security and lifestyle.' },
+                { icon: Building2, title: 'Auto-Import', text: 'Official URLs and brochures enrich society data before admin review.' },
+                { icon: BarChart3, title: 'Rent Intelligence', text: 'Society-level rent and resale signals support better shortlists.' },
+              ].map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <Link
+                    key={feature.title}
+                    to={feature.title === 'AI Chat' ? '/chat' : feature.title === 'Smart Matching' ? '/recommendations' : '/ai-advisor'}
+                    className="rounded-[1.25rem] border border-blue-100 bg-white/90 p-4 shadow-sm transition hover:-translate-y-1 hover:bg-white hover:shadow-soft"
+                  >
+                    <Icon className="h-5 w-5 text-blue-700" />
+                    <h3 className="mt-4 text-base font-black text-navy-950">{feature.title}</h3>
+                    <p className="mt-1 text-sm leading-6 text-navy-500">{feature.text}</p>
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link to="/ai-advisor">
+                <Button className="rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">
+                  Ask AI Advisor <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/recommendations">
+                <Button variant="outline" className="rounded-full border-blue-100 bg-white px-6 font-bold text-blue-700 hover:bg-blue-50">
+                  Recommendation engine
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-[1.75rem] border border-blue-100 bg-white/95 p-5 shadow-premium">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                <Sparkles className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="font-black text-navy-950">AI Society Advisor</p>
+                <p className="text-xs font-semibold text-navy-400">Finding your best match</p>
+              </div>
+            </div>
+
+            <div className="rounded-[1.25rem] border border-blue-100 bg-blue-50 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.14em] text-navy-400">Monthly budget</p>
+                  <p className="mt-1 text-3xl font-black text-navy-950">Rs 85,000/mo</p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700 shadow-sm">Rent</span>
+              </div>
+              <div className="mt-4 h-2 rounded-full bg-white">
+                <div className="h-full w-[72%] rounded-full bg-blue-700" />
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {['Security', 'Connectivity', 'Family', 'Budget', 'Pets'].map((priority, index) => (
+                  <span
+                    key={priority}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-black ${
+                      index < 4 ? 'border-blue-200 bg-white text-blue-700' : 'border-navy-100 bg-ivory-100 text-navy-400'
+                    }`}
+                  >
+                    {priority}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {aiPrompts.slice(0, 4).map((prompt) => (
+                <Link
+                  key={prompt}
+                  to={`/ai-advisor?q=${encodeURIComponent(prompt)}`}
+                  className="rounded-2xl border border-blue-100 bg-white px-3 py-3 text-sm font-semibold text-navy-600 transition hover:border-blue-200 hover:bg-blue-50"
+                >
+                  {prompt}
+                </Link>
+              ))}
+            </div>
+
+            <div className="mt-5 space-y-2">
+              {(featuredSocieties.length ? featuredSocieties : [{ name: 'DLF The Crest' }, { name: 'M3M Golf Estate' }, { name: 'Sobha City' }]).slice(0, 3).map((society, index) => (
+                <div key={society.name} className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-ivory-100 p-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-700 text-sm font-black text-white">{index + 1}</span>
+                  <p className="flex-1 text-sm font-black text-navy-950">{society.name}</p>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">{92 - index * 5}% match</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-navy-600 mb-3">From Admin Inventory</p>
-              <h2 className="text-4xl md:text-6xl font-extrabold text-navy-900 tracking-tight">Featured societies in Gurgaon.</h2>
-              <p className="text-lg text-navy-500 mt-4 max-w-2xl">Society profiles now come from your admin panel, including score, media, SEO and nearby intelligence.</p>
+      <section className="bg-ivory-100 px-4 py-14">
+        <div className="container mx-auto grid gap-6 lg:grid-cols-[20rem_1fr]">
+          <div>
+            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-emerald-700">Maps and lifestyle</p>
+            <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950">See societies by location strength.</h2>
+            <p className="mt-3 text-base leading-7 text-navy-500">
+              Map intelligence turns nearby metro, schools, hospitals and office hubs into a shortlist you can actually act on.
+            </p>
+            <div className="mt-6 space-y-3">
+              {(mapSocieties.length ? mapSocieties : [{ name: 'DLF The Crest', sector: 'Sector 54' }, { name: 'M3M Golf Estate', sector: 'Sector 65' }, { name: 'Sobha City', sector: 'Sector 108' }]).slice(0, 4).map((society, index) => (
+                <Link key={society.name} to={society.slug ? `/society/${society.slug}` : '/search?tab=societies'} className="flex items-center gap-3 rounded-2xl border border-navy-100 bg-white p-3 transition hover:border-blue-200 hover:bg-blue-50">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-sm font-black text-blue-700">{scoreOf(society, `${8.8 - index * 0.3}`)}</span>
+                  <div>
+                    <p className="text-sm font-black text-navy-950">{society.name}</p>
+                    <p className="text-xs font-semibold text-navy-400">{society.sector || formatPublicLocation(society)}</p>
+                  </div>
+                </Link>
+              ))}
             </div>
-            <Link to="/search?tab=societies"><Button variant="outline" className="rounded-full border-navy-200 text-navy-700 hover:bg-navy-50">View all societies <ArrowRight className="w-4 h-4 ml-2" /></Button></Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {societies.map((society) => (
-              <Link key={society.id} to={`/society/${society.slug}`} className="group overflow-hidden rounded-[2rem] bg-white border border-navy-100 shadow-sm hover:shadow-apple transition-all duration-300">
-                <div className="relative h-56 overflow-hidden bg-navy-50">
-                  <img src={societyImage(society)} alt={society.name} className="h-full w-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-navy-950/35 to-transparent" />
-                  <div className="absolute top-4 left-4 rounded-full bg-white/95 px-3 py-1 text-sm font-semibold text-navy-900 shadow-sm">Score {society.score || '8.5'}</div>
-                </div>
-                <div className="p-5">
-                  <h3 className="text-xl font-bold text-navy-900">{society.name}</h3>
-                  <p className="text-sm text-navy-500 mt-1 flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {formatPublicLocation(society)}</p>
-                  <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                    <div><p className="text-navy-400">Rent</p><p className="font-semibold text-navy-900">{society.rentRange || 'On request'}</p></div>
-                    <div><p className="text-navy-400">Buy</p><p className="font-semibold text-navy-900">{society.buyRange || 'On request'}</p></div>
+          <div className="relative min-h-[28rem] overflow-hidden rounded-[1.75rem] border border-navy-100 bg-[#dce8f0] shadow-soft">
+            <div className="absolute inset-0 opacity-70">
+              {[20, 44, 68].map((top) => <span key={`h-${top}`} className="absolute left-0 right-0 h-2 bg-white" style={{ top: `${top}%` }} />)}
+              {[18, 38, 58, 78].map((left) => <span key={`v-${left}`} className="absolute bottom-0 top-0 w-2 bg-white" style={{ left: `${left}%` }} />)}
+            </div>
+            {[
+              { left: 30, top: 28, score: '9.1', tone: 'bg-emerald-500', name: 'DLF Crest' },
+              { left: 55, top: 42, score: '8.7', tone: 'bg-blue-600', name: 'M3M Golf' },
+              { left: 72, top: 60, score: '8.4', tone: 'bg-blue-600', name: 'Sobha City' },
+              { left: 42, top: 68, score: '7.9', tone: 'bg-gold-500', name: 'Ireo Skyon' },
+            ].map((pin) => (
+              <div key={pin.name} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${pin.left}%`, top: `${pin.top}%` }}>
+                <span className={`flex h-12 w-12 items-center justify-center rounded-full border-4 border-white text-sm font-black text-white shadow-xl ${pin.tone}`}>
+                  {pin.score}
+                </span>
+              </div>
+            ))}
+            <div className="absolute bottom-5 right-5 rounded-full bg-white/90 px-4 py-2 text-xs font-black text-blue-700 shadow-sm backdrop-blur">
+              Map preview · connect live maps API later
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white px-4 py-14">
+        <div className="container mx-auto grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+          <div>
+            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">Market insights</p>
+            <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950">Pricing, demand and society signals in one view.</h2>
+            <p className="mt-3 text-base leading-7 text-navy-500">
+              Intelligence turns society data into better conversations before visits, callbacks and final decisions.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {whySocietyFlats.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.title} className="rounded-2xl border border-navy-100 bg-white p-4 shadow-sm">
+                    <Icon className="h-5 w-5 text-blue-700" />
+                    <h3 className="mt-3 text-base font-black text-navy-950">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-6 text-navy-500">{item.text}</p>
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-4">{society.amenities.slice(0, 2).map((tag) => <span key={tag} className="text-xs rounded-full bg-navy-100 text-navy-600 px-2.5 py-1">{tag}</span>)}</div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-soft">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-lg font-black text-navy-950">Gurgaon rent velocity</p>
+                <p className="text-sm font-semibold text-navy-400">Indicative trend layer for society decisions</p>
+              </div>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">+12% QoQ</span>
+            </div>
+            <div className="flex h-44 items-end gap-2">
+              {[48, 62, 54, 76, 70, 88, 80, 95, 78, 92, 98, 90].map((height, index) => (
+                <div key={index} className="flex flex-1 flex-col items-center gap-2">
+                  <span className="w-full rounded-t-lg bg-blue-700" style={{ height: `${height}%` }} />
+                  <span className="text-[10px] font-bold text-navy-300">{index + 1}</span>
                 </div>
+              ))}
+            </div>
+            <div className="mt-6 overflow-hidden rounded-2xl border border-navy-100">
+              {['Golf Course Road', 'Golf Course Extension', 'Dwarka Expressway', 'Sohna Road'].map((locality, index) => (
+                <div key={locality} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-b border-navy-50 px-4 py-3 last:border-b-0">
+                  <p className="text-sm font-black text-navy-950">{locality}</p>
+                  <p className="text-sm font-black text-navy-700">Rs {90 - index * 8}K avg</p>
+                  <p className="text-sm font-black text-emerald-700">+{12 - index}%</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {featuredProperties.length > 0 ? (
+        <section className="bg-white px-4 py-12">
+          <div className="container mx-auto">
+            <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">Live Inventory</p>
+                <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">Latest verified homes</h2>
+                <p className="mt-3 max-w-2xl text-base leading-7 text-navy-500">
+                  Fresh rental and resale homes from Gurgaon societies, verified before they reach serious tenants and buyers.
+                </p>
+              </div>
+              <Link to="/search?tab=rent">
+                <Button className="rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">
+                  View all homes <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </Link>
+            </div>
+
+            <div className="flex gap-5 overflow-x-auto pb-3 scrollbar-hide">
+              {featuredProperties.map((property) => (
+                <Link key={property.id} to={propertyUrl(property)} className="group w-[22rem] shrink-0 overflow-hidden rounded-[1.5rem] border border-navy-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium">
+                  <div className="relative h-56 overflow-hidden bg-blue-50">
+                    <img src={propertyImage(property)} alt={property.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                    <span className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-black text-white">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Verified
+                    </span>
+                  </div>
+                  <div className="p-5">
+                    <p className="text-sm font-bold text-blue-700">{property.listingType || 'Rent'}</p>
+                    <h3 className="mt-2 text-xl font-black text-navy-950">{property.title}</h3>
+                    <p className="mt-1 text-sm text-navy-500">{property.society} · {property.locality}</p>
+                    <div className="mt-5 flex items-end justify-between">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.08em] text-navy-300">Price</p>
+                        <p className="text-xl font-black text-navy-950">{property.price || 'On request'}</p>
+                      </div>
+                      <p className="text-right text-sm font-semibold text-navy-500">{property.bedrooms || '-'} BHK<br />{property.areaSqft || '-'} sq.ft</p>
+                    </div>
+                    <div className="mt-5 grid grid-cols-2 gap-2 text-center text-xs font-black">
+                      <span className="rounded-full bg-blue-50 px-3 py-2 text-blue-700">Request Callback</span>
+                      <span className="rounded-full bg-emerald-50 px-3 py-2 text-emerald-700">Shortlist</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="bg-white px-4 py-12">
+          <div className="container mx-auto rounded-[1.5rem] border border-dashed border-navy-200 bg-ivory-100 p-7 shadow-sm">
+            <h2 className="font-display text-3xl font-black text-navy-950">Verified homes are being added.</h2>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-navy-500">
+              We are updating live inventory for Gurgaon societies. Request a callback and our team will help you find matching homes.
+            </p>
+            <Link to="/chat" className="mt-5 inline-flex">
+              <Button className="rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">Request Callback</Button>
+            </Link>
+          </div>
+        </section>
+      )}
+
+      <section className="bg-ivory-100 px-4 py-14">
+        <div className="container mx-auto">
+          <div className="mb-8 max-w-3xl">
+            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">Reviews and confidence</p>
+            <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950">Trust signals stay inside the journey.</h2>
+          </div>
+          <div className="grid gap-5 lg:grid-cols-3">
+            {reviewCards.map((review) => (
+              <div key={review.name} className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-50 text-sm font-black text-blue-700">{initials(review.name)}</span>
+                  <div>
+                    <p className="font-black text-navy-950">{review.name}</p>
+                    <p className="text-xs font-semibold text-navy-400">Verified enquiry · {review.society}</p>
+                  </div>
+                </div>
+                <div className="mt-4 flex text-gold-500">
+                  {[0, 1, 2, 3, 4].map((star) => <Star key={star} className="h-4 w-4 fill-current" />)}
+                </div>
+                <h3 className="mt-3 text-lg font-black text-navy-950">{review.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-navy-500">{review.text}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-ivory-200">
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-navy-600 mb-3">Explore by lifestyle</p>
-            <h2 className="text-4xl md:text-6xl font-extrabold text-navy-900">Find the society that fits your day.</h2>
+      <section className="relative overflow-hidden bg-blue-50 px-4 py-14">
+        <div className="absolute left-[-10rem] top-[-12rem] h-[30rem] w-[30rem] rounded-full bg-white/70 blur-3xl" />
+        <div className="container relative mx-auto grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div>
+            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">Broker CRM</p>
+            <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">Leads move from enquiry to visit without chaos.</h2>
+            <p className="mt-4 max-w-xl text-base leading-7 text-navy-500">
+              Admin, broker and owner workflows connect to the same society-first profile, so every callback has context.
+            </p>
+            <div className="mt-6 space-y-3">
+              {[
+                { icon: MessageCircle, title: 'Callback queue', text: 'Every enquiry lands with society, budget and intent.' },
+                { icon: BarChart3, title: 'Analytics', text: 'Track searches, views, leads and high-demand societies.' },
+                { icon: ShieldCheck, title: 'Verification workflow', text: 'Images, official URLs and RERA notes remain review-first.' },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.title} className="flex gap-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <p className="font-black text-navy-950">{item.title}</p>
+                      <p className="text-sm leading-6 text-navy-500">{item.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="grid md:grid-cols-4 gap-6">
-            {lifestyles.map((item) => {
+          <div className="rounded-[1.5rem] border border-blue-100 bg-white p-5 shadow-soft">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="font-black text-navy-950">Lead pipeline</p>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">Live CRM</span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {['New', 'Contacted', 'Visit'].map((stage, stageIndex) => (
+                <div key={stage} className="rounded-2xl border border-blue-100 bg-ivory-100 p-3">
+                  <p className="mb-3 text-center text-xs font-black uppercase tracking-[0.12em] text-navy-400">{stage}</p>
+                  {[0, 1, 2].map((lead) => (
+                    <div key={lead} className="mb-2 rounded-xl border border-blue-100 bg-white p-3 last:mb-0">
+                      <p className="text-sm font-black text-navy-950">{['Rahul', 'Neha', 'Amit'][lead]}</p>
+                      <p className="mt-1 text-xs text-navy-400">{['DLF Crest', 'M3M Golf', 'Sobha City'][(lead + stageIndex) % 3]}</p>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white px-4 py-14">
+        <div className="container mx-auto grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">For Property Owners</p>
+            <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950">Own a flat in Gurgaon? List it with SocietyFlats.</h2>
+            <p className="mt-3 max-w-xl text-base leading-7 text-navy-500">
+              Reach serious tenants and buyers looking specifically inside verified Gurgaon societies. Add your property once and receive qualified enquiries through a cleaner, society-first flow.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link to="/sell">
+                <Button className="rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">List Your Property</Button>
+              </Link>
+              <Link to="/chat">
+                <Button variant="outline" className="rounded-full border-navy-200 bg-white px-6 font-black text-navy-800 hover:bg-blue-50">Talk to Us</Button>
+              </Link>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {ownerBenefits.map((item) => {
               const Icon = item.icon;
               return (
-                <Link key={item.title} to={`/search?tab=societies&q=${encodeURIComponent(item.title)}`} className="group rounded-[2rem] min-h-[230px] border border-navy-100 bg-white p-7 shadow-sm hover:shadow-apple transition-all">
-                  <Icon className="w-9 h-9 text-navy-600 mb-5" />
-                  <h3 className="text-2xl font-bold text-navy-900">{item.title}</h3>
-                  <p className="text-sm text-navy-500 mt-3 leading-relaxed">{item.text}</p>
+                <Link key={item.title} to="/sell" className="rounded-[1.35rem] border border-navy-100 bg-ivory-100 p-5 transition hover:-translate-y-1 hover:bg-white hover:shadow-soft">
+                  <Icon className="h-6 w-6 text-blue-700" />
+                  <h3 className="mt-5 font-black text-navy-950">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-navy-500">{item.text}</p>
                 </Link>
               );
             })}
@@ -151,75 +614,65 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-navy-600 mb-3">Latest Inventory</p>
-              <h2 className="text-4xl md:text-6xl font-extrabold text-navy-900 tracking-tight">Rent, buy and resale listings.</h2>
-              <p className="text-lg text-navy-500 mt-4 max-w-2xl">Properties created in admin now appear on the public homepage and search pages.</p>
+      {chatOpen ? (
+        <div className="fixed bottom-24 right-4 z-40 w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-premium md:bottom-6 md:right-6">
+          <div className="flex items-center gap-3 border-b border-blue-100 bg-blue-50 px-4 py-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-700 text-sm font-black text-white">AI</span>
+            <div className="min-w-0 flex-1">
+              <p className="font-black text-navy-950">SocietyFlats AI</p>
+              <p className="text-xs font-semibold text-emerald-700">Online · Gurgaon expert</p>
             </div>
-            <Link to="/search?tab=rent"><Button className="rounded-full bg-navy-600 hover:bg-navy-700">Explore inventory <ArrowRight className="w-4 h-4 ml-2" /></Button></Link>
+            <button
+              onClick={() => setChatOpen(false)}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-navy-400 transition hover:text-navy-950"
+              aria-label="Collapse SocietyFlats AI chat"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {properties.map((property) => (
-              <Link key={property.id} to={propertyUrl(property)} className="group overflow-hidden rounded-[2rem] border border-navy-100 bg-white shadow-sm hover:shadow-apple transition-all">
-                <div className="h-56 overflow-hidden bg-navy-50">
-                  <img src={propertyImage(property)} alt={property.title} className="h-full w-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
-                </div>
-                <div className="p-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{property.listingType}</span>
-                    {property.verified ? <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700"><CheckCircle2 className="h-3.5 w-3.5" /> Verified</span> : null}
-                  </div>
-                  <h3 className="mt-4 text-xl font-bold text-navy-900">{property.title}</h3>
-                  <p className="mt-2 text-sm text-navy-500">{property.society} • {property.locality}</p>
-                  <div className="mt-5 flex items-end justify-between">
-                    <div><p className="text-sm text-navy-400">Price</p><p className="text-lg font-bold text-navy-900">{property.price || 'On request'}</p></div>
-                    <div className="text-right text-sm text-navy-500">{property.bedrooms || '-'} BHK<br />{property.areaSqft || '-'} sq.ft</div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+          <div className="space-y-3 p-4">
+            <div className="max-w-[88%] rounded-2xl bg-ivory-100 px-4 py-3 text-sm font-semibold leading-6 text-navy-600">
+              Hi. I can help you find the right Gurgaon society based on budget, commute and lifestyle.
+            </div>
+            <div className="ml-auto max-w-[82%] rounded-2xl bg-blue-700 px-4 py-3 text-sm font-bold leading-6 text-white">
+              Best societies near Cyber City under Rs 1L
+            </div>
+            <div className="max-w-[92%] rounded-2xl bg-ivory-100 px-4 py-3 text-sm font-semibold leading-6 text-navy-600">
+              Top picks: <strong>DLF Crest</strong>, <strong>Ireo Skyon</strong> and <strong>DLF Park Place</strong>. Want a rent or family-fit view?
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {['Compare', 'Show rentals', 'Schedule callback'].map((item) => (
+                <Link
+                  key={item}
+                  to={item === 'Compare' ? '/compare' : item === 'Show rentals' ? '/search?tab=rent' : '/chat'}
+                  className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100"
+                >
+                  {item}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
-
-      <section className="py-16 md:py-24 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-10 items-center rounded-[2.5rem] bg-ivory-200 border border-navy-100 p-8 md:p-12">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-navy-600 mb-3">Rent • Buy • Sell</p>
-              <h2 className="text-4xl md:text-6xl font-extrabold text-navy-900 tracking-tight">One society profile. Three transaction flows.</h2>
-              <p className="text-lg text-navy-500 mt-5 leading-relaxed">Understand a society once, then switch between rentals, resale inventory and owner listing flows without losing context.</p>
-              <div className="grid sm:grid-cols-3 gap-4 mt-8">
-                {[
-                  { icon: KeyRound, title: 'Rent', text: 'Move-in dates and tenant fit.' },
-                  { icon: Home, title: 'Buy', text: 'Price, appreciation and yield.' },
-                  { icon: BadgeIndianRupee, title: 'Sell', text: 'Owner listing and qualified leads.' },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  return <div key={item.title} className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm"><Icon className="w-6 h-6 text-navy-600 mb-3" /><h3 className="font-bold text-navy-900">{item.title}</h3><p className="text-sm text-navy-500 mt-1">{item.text}</p></div>;
-                })}
-              </div>
-            </div>
-            <div className="rounded-[2rem] bg-white p-6 shadow-sm border border-navy-100">
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { icon: Star, label: 'Top societies', value: societies.length },
-                  { icon: TrendingUp, label: 'Live inventory', value: properties.length },
-                  { icon: Shield, label: 'Verified homes', value: properties.filter((p) => p.verified).length },
-                  { icon: Building2, label: 'Featured societies', value: societies.filter((s) => s.featured).length },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  return <div key={item.label} className="rounded-[1.5rem] bg-ivory-200 p-5"><Icon className="h-5 w-5 text-navy-600" /><p className="mt-4 text-3xl font-bold text-navy-900">{item.value}</p><p className="text-sm text-navy-500">{item.label}</p></div>;
-                })}
-              </div>
-            </div>
+          <div className="flex items-center gap-2 border-t border-blue-100 bg-white p-3">
+            <input
+              aria-label="Ask SocietyFlats AI"
+              className="min-w-0 flex-1 rounded-full border border-blue-100 bg-ivory-100 px-4 py-2.5 text-sm font-semibold text-navy-700 outline-none placeholder:text-navy-300"
+              placeholder="Ask about any society..."
+              readOnly
+            />
+            <Link to="/chat" className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-700 text-white transition hover:bg-blue-800" aria-label="Open full SocietyFlats chat">
+              <Send className="h-4 w-4" />
+            </Link>
           </div>
         </div>
-      </section>
+      ) : (
+        <button
+          onClick={() => setChatOpen(true)}
+          className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-blue-700 text-white shadow-premium transition hover:scale-105 hover:bg-blue-800 md:bottom-6 md:right-6"
+          aria-label="Open SocietyFlats AI chat"
+        >
+          <MessageCircle className="h-6 w-6" />
+        </button>
+      )}
     </div>
   );
 }

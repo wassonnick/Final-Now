@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, Heart, Scale, MapPin, Building2, Sparkles, BarChart3, User, Home, KeyRound, BadgeIndianRupee } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Search, Menu, X, Heart, Scale, MapPin, Building2, Sparkles, BarChart3, User, Home, KeyRound, BadgeIndianRupee, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAppStore } from '@/store';
@@ -11,7 +11,9 @@ export function Navbar() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const { compareList, shortlist, isAuthenticated, user } = useAppStore();
+  const isHomePage = location.pathname === '/';
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,12 +34,27 @@ export function Navbar() {
     { label: 'AI Advisor', href: '/ai-advisor', icon: Sparkles },
     { label: 'Compare', href: '/compare', icon: Scale, badge: compareList.length },
   ];
+  const desktopLinks = [
+    { label: 'Societies', href: '/search?tab=societies' },
+    { label: 'Rent', href: '/search?tab=rent' },
+    { label: 'Buy', href: '/search?tab=buy' },
+    { label: 'Insights', href: '/insights' },
+    { label: 'Map', href: '/maps' },
+    { label: 'AI Advisor', href: '/ai-advisor', ai: true },
+  ];
+  const bottomActions = [
+    { label: 'Search', href: '/search?tab=societies', icon: Search },
+    { label: 'Compare', href: '/compare', icon: Scale, badge: compareList.length },
+    { label: 'AI Match', href: '/ai-advisor', icon: Sparkles },
+    { label: 'Chat', href: '/chat', icon: MessageCircle },
+  ];
 
   return (
+    <>
     <header className="sticky top-0 z-50 w-full bg-white/86 backdrop-blur-2xl border-b border-navy-100/80">
       <div className="container mx-auto px-4 h-20 flex items-center justify-between gap-5">
-        <Link to="/" className="flex items-center gap-3 shrink-0">
-          <div className="w-10 h-10 rounded-2xl bg-navy-600 flex items-center justify-center shadow-sm shadow-navy-600/20">
+        <Link to="/" className="flex items-center gap-3 shrink-0 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4">
+          <div className="w-10 h-10 rounded-2xl bg-blue-700 flex items-center justify-center shadow-sm shadow-blue-700/20">
             <Building2 className="w-5 h-5 text-white" />
           </div>
           <div className="hidden sm:block leading-tight">
@@ -47,20 +64,20 @@ export function Navbar() {
           </div>
         </Link>
 
-        <nav className="hidden xl:flex items-center gap-1.5 rounded-full bg-ivory-200/70 border border-navy-100 px-2 py-1.5">
-          {navLinks.slice(0, 7).map((link) => (
-            <Link key={link.href} to={link.href} className="relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold text-navy-600 hover:text-navy-900 hover:bg-white transition-colors">
-              <link.icon className="w-4 h-4" />
+        <nav className="hidden xl:flex items-center gap-1 rounded-full bg-ivory-200/70 border border-navy-100 px-2 py-1.5">
+          {desktopLinks.map((link) => (
+            <Link key={link.href} to={link.href} className={cn("relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-bold transition-colors", link.ai ? "text-blue-700 hover:bg-white" : "text-navy-600 hover:text-navy-900 hover:bg-white")}>
+              {link.ai ? <Sparkles className="w-4 h-4" /> : null}
               <span>{link.label}</span>
             </Link>
           ))}
         </nav>
 
-        <form onSubmit={handleSearch} className="hidden lg:block flex-1 max-w-sm relative">
+        <form onSubmit={handleSearch} className="hidden lg:block flex-1 min-w-[15rem] max-w-md relative">
           <div className={cn('relative flex items-center rounded-full border bg-white transition-all duration-200', isSearchFocused ? 'border-navy-300 shadow-soft ring-4 ring-navy-100/70' : 'border-navy-100 shadow-sm')}>
             <MapPin className="w-4 h-4 text-navy-400 ml-4 shrink-0" />
             <Input type="text" placeholder="Search society or sector..." className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 pl-2 h-11" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => setIsSearchFocused(true)} onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)} />
-            <Button type="submit" size="sm" className="mr-1 rounded-full bg-navy-600 hover:bg-navy-700 h-9 w-9 p-0"><Search className="w-4 h-4" /></Button>
+            <Button type="submit" size="sm" className="mr-1 rounded-full bg-blue-700 hover:bg-blue-800 h-9 w-9 p-0"><Search className="w-4 h-4" /></Button>
           </div>
         </form>
 
@@ -79,7 +96,7 @@ export function Navbar() {
             <Button variant="ghost" size="sm" className="hidden sm:flex rounded-full text-navy-700 hover:bg-navy-50" onClick={() => navigate('/login')}>Sign In</Button>
           )}
 
-          <Link to="/sell" className="hidden lg:block"><Button size="sm" className="rounded-full bg-navy-600 hover:bg-navy-700 text-white px-5 shadow-sm">List Property</Button></Link>
+          <Link to="/sell" className="hidden lg:block"><Button size="sm" className="rounded-full bg-blue-700 hover:bg-blue-800 text-white px-5 shadow-sm">List Property</Button></Link>
           <button className="xl:hidden p-2 rounded-full hover:bg-navy-50 transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}</button>
         </div>
       </div>
@@ -93,6 +110,34 @@ export function Navbar() {
           </div>
         </div>
       )}
+
     </header>
+    <nav className={cn("fixed bottom-3 left-3 right-3 z-50 rounded-[1.25rem] border border-navy-100 bg-white/95 p-2 shadow-apple backdrop-blur-xl xl:hidden", isHomePage && "hidden")}>
+      <div className="grid grid-cols-4 gap-1">
+        {bottomActions.map((action) => {
+          const Icon = action.icon;
+          const isActive = location.pathname === action.href.split('?')[0];
+          return (
+            <Link
+              key={action.href}
+              to={action.href}
+              className={cn(
+                'relative flex flex-col items-center justify-center rounded-2xl px-2 py-2 text-[11px] font-semibold transition',
+                isActive ? 'bg-navy-600 text-white' : 'text-navy-600 hover:bg-navy-50'
+              )}
+            >
+              <Icon className="mb-1 h-4 w-4" />
+              {action.label}
+              {action.badge && action.badge > 0 ? (
+                <span className="absolute right-2 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] text-white">
+                  {action.badge}
+                </span>
+              ) : null}
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+    </>
   );
 }

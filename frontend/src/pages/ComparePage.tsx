@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { X, Plus, ArrowRight, CheckCircle2, XCircle, Minus } from 'lucide-react';
+import { X, Plus, ArrowRight, CheckCircle2, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/store';
@@ -29,20 +29,58 @@ export function ComparePage() {
 
   if (compareList.length === 0) {
     return (
-      <div className="min-h-screen bg-ivory-100 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-20 h-20 bg-navy-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Plus className="w-10 h-10 text-navy-400" />
+      <div className="min-h-screen bg-[#F8FAFC]">
+        <section className="border-b border-navy-100 bg-white">
+          <div className="container mx-auto px-4 py-10">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Compare journey</p>
+            <h1 className="mt-3 max-w-3xl text-4xl font-extrabold text-navy-900 md:text-5xl">Shortlist societies with the same decision grid.</h1>
+            <p className="mt-3 max-w-2xl text-navy-500">
+              Compare location, live inventory, amenities and public-safe data before opening a society profile or asking AI for a recommendation.
+            </p>
           </div>
-          <h2 className="text-2xl font-semibold text-navy-900 mb-3">No Societies to Compare</h2>
-          <p className="text-navy-500 mb-6">
-            Add societies to compare them side-by-side on intelligence scores, amenities, and more.
-          </p>
-          <Link to="/search">
-            <Button className="bg-navy-500 hover:bg-navy-600">
-              Browse Societies <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
+        </section>
+
+        <div className="container mx-auto px-4 py-10">
+          <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+            <div className="rounded-[2rem] border border-navy-100 bg-white p-7 shadow-sm">
+              <div className="grid gap-4 md:grid-cols-3">
+                {['DLF Park Place', 'M3M Heights', 'Emaar Palm Hills'].map((name, index) => (
+                  <div key={name} className="rounded-[1.5rem] bg-[#F8FAFC] p-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-navy-400">Society {index + 1}</p>
+                    <h3 className="mt-3 text-xl font-bold text-navy-900">{name}</h3>
+                    <div className="mt-5 space-y-3 text-sm text-navy-600">
+                      <div className="flex justify-between"><span>Score</span><span className="font-bold text-navy-900">{['9.1', '8.7', '8.4'][index]}</span></div>
+                      <div className="flex justify-between"><span>Metro</span><span>Nearby</span></div>
+                      <div className="flex justify-between"><span>Inventory</span><span>Live</span></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-7 flex flex-col gap-3 rounded-[1.5rem] bg-blue-50 p-5 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="font-bold text-navy-900">No societies selected yet</h2>
+                  <p className="mt-1 text-sm text-navy-600">Start from search, then open society profiles and compare your shortlist.</p>
+                </div>
+                <Button asChild className="rounded-full bg-blue-600 hover:bg-blue-700">
+                  <Link to="/search?tab=societies">
+                    Browse Societies <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+
+            <aside className="rounded-[2rem] border border-navy-100 bg-navy-900 p-6 text-white shadow-sm">
+              <Plus className="h-6 w-6 text-blue-200" />
+              <h2 className="mt-4 text-2xl font-bold">Need a ranked answer?</h2>
+              <p className="mt-3 text-sm leading-6 text-navy-200">
+                Use the advisor when the choice depends on budget, commute, school access or rental intent.
+              </p>
+              <Button asChild className="mt-6 w-full rounded-full bg-white text-navy-900 hover:bg-navy-100">
+                <Link to="/ai-advisor">Open AI Advisor</Link>
+              </Button>
+            </aside>
+          </div>
         </div>
       </div>
     );
@@ -58,8 +96,9 @@ export function ComparePage() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-navy-900">Compare Societies</h1>
-              <p className="text-sm text-navy-500 mt-1">Side-by-side comparison on 8 intelligence parameters</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">Compare journey</p>
+              <h1 className="mt-1 text-2xl font-semibold text-navy-900">Compare Societies</h1>
+              <p className="text-sm text-navy-500 mt-1">Side-by-side comparison on intelligence, amenities, stats and next actions</p>
             </div>
             <div className="flex items-center gap-3">
               {compareList.length < 3 && (

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Building2, ExternalLink, FileText, MapPin, School, Shield, Train } from 'lucide-react';
+import { ArrowLeft, Building2, CheckCircle2, ExternalLink, FileText, MapPin, MessageCircle, Phone, School, Shield, Train } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -231,6 +231,30 @@ export function SocietyPage() {
     ['Google Maps', field(society, 'googleMapsUrl', 'google_maps_url', '')],
     ['RERA Search', reraUrl],
   ].filter(([, href]) => Boolean(href));
+  const societyLocation = safeLocation(society);
+  const whatsappMessage = encodeURIComponent(`Hi, I am exploring homes in ${society.name}. Please share verified options.`);
+  const whyChoose = [
+    {
+      label: 'Location confidence',
+      value: field(society, 'nearbyMetro', 'nearby_metro', '') ? 'Metro context added' : 'Map review pending',
+      icon: Train,
+    },
+    {
+      label: 'Public-safe profile',
+      value: field(society, 'status', 'status', 'Verified'),
+      icon: Shield,
+    },
+    {
+      label: 'Inventory',
+      value: properties.length ? `${properties.length} live listing${properties.length === 1 ? '' : 's'}` : 'No live listings yet',
+      icon: Building2,
+    },
+    {
+      label: 'Admin review',
+      value: field(society, 'verificationStatus', 'verification_status', 'Manual verification'),
+      icon: CheckCircle2,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-ivory-100">
@@ -279,7 +303,7 @@ export function SocietyPage() {
                   </div>
                   <h1 className="text-4xl font-extrabold tracking-tight text-navy-900 md:text-6xl">{society.name}</h1>
                   <p className="mt-3 flex items-center gap-2 text-lg text-navy-500">
-                    <MapPin className="h-5 w-5" /> {safeLocation(society)}
+                    <MapPin className="h-5 w-5" /> {societyLocation}
                   </p>
                 </div>
                 <div className="min-w-32 rounded-[1.5rem] bg-navy-600 px-6 py-5 text-center text-white">
@@ -288,6 +312,46 @@ export function SocietyPage() {
                 </div>
               </div>
               {society.description ? <p className="mt-7 text-lg leading-relaxed text-navy-600">{society.description}</p> : null}
+              <div className="mt-7 flex flex-col gap-3 border-t border-navy-100 pt-5 sm:flex-row">
+                <Button asChild className="rounded-full bg-blue-600 hover:bg-blue-700">
+                  <Link to={`/search?tab=rent&q=${encodeURIComponent(society.name)}`}>View available rentals</Link>
+                </Button>
+                <Button asChild variant="outline" className="rounded-full border-navy-200">
+                  <Link to={`/sell?society=${encodeURIComponent(society.name)}`}>List your property</Link>
+                </Button>
+                <a
+                  href={`https://wa.me/919999988888?text=${whatsappMessage}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center rounded-full border border-green-200 bg-green-50 px-5 py-2.5 text-sm font-semibold text-green-700 hover:bg-green-100"
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp us
+                </a>
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-navy-100 bg-white p-7 shadow-sm">
+              <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">Decision snapshot</p>
+                  <h2 className="mt-2 text-2xl font-bold text-navy-900">Why people shortlist {society.name}</h2>
+                </div>
+                <Button asChild variant="outline" className="rounded-full">
+                  <Link to={`/compare?society=${encodeURIComponent(society.name)}`}>Compare society</Link>
+                </Button>
+              </div>
+              <div className="mt-6 grid gap-4 md:grid-cols-4">
+                {whyChoose.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className="rounded-[1.25rem] bg-[#F8FAFC] p-4">
+                      <Icon className="h-5 w-5 text-blue-600" />
+                      <p className="mt-3 text-sm text-navy-400">{item.label}</p>
+                      <p className="mt-1 text-sm font-bold text-navy-900">{item.value}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
@@ -417,6 +481,11 @@ export function SocietyPage() {
               </div>
               <Button asChild className="mt-6 w-full rounded-full bg-navy-600 hover:bg-navy-700">
                 <Link to={`/search?tab=rent&q=${encodeURIComponent(society.name)}`}>View homes in this society</Link>
+              </Button>
+              <Button asChild variant="outline" className="mt-3 w-full rounded-full">
+                <Link to="/chat">
+                  <Phone className="mr-2 h-4 w-4" /> Request callback
+                </Link>
               </Button>
             </div>
           </aside>
