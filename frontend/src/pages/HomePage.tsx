@@ -134,23 +134,23 @@ export function HomePage() {
       <SocietyFlatsHero />
 
       <section className="border-y border-navy-100 bg-white">
-        <div className="container mx-auto grid divide-y divide-navy-100 px-4 md:grid-cols-5 md:divide-x md:divide-y-0">
+        <div className="container mx-auto grid grid-cols-2 gap-2 px-4 py-2.5 md:grid-cols-5 md:gap-0 md:divide-x md:divide-navy-100 md:px-4 md:py-0">
           {[
-            { icon: Building2, value: '150+', label: 'Gurgaon societies tracked', tone: 'bg-blue-50 text-blue-700' },
-            { icon: Home, value: `${properties.length || '2,500+'}`, label: 'Homes reviewed across societies', tone: 'bg-emerald-50 text-emerald-700' },
+            { icon: Building2, value: '150+', label: 'Gurgaon societies', tone: 'bg-blue-50 text-blue-700' },
+            { icon: Home, value: `${properties.length || '2,500+'}`, label: 'Homes reviewed', tone: 'bg-emerald-50 text-emerald-700' },
             { icon: MessageCircle, value: '24 hrs', label: 'Callback support', tone: 'bg-violet-50 text-violet-700' },
             { icon: Star, value: averageScore, label: 'Avg society score', tone: 'bg-gold-100 text-gold-700' },
-            { icon: Sparkles, value: 'AI', label: 'URL, brochure and chat tools', tone: 'bg-blue-50 text-blue-700' },
+            { icon: Sparkles, value: 'AI Advisor', label: 'Smart shortlists', tone: 'bg-blue-50 text-blue-700' },
           ].map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="flex items-center gap-4 py-5 md:px-4">
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${stat.tone}`}>
-                  <Icon className="h-5 w-5" />
+              <div key={stat.label} className="flex items-center gap-2 rounded-xl border border-navy-100 bg-white p-2.5 shadow-sm last:col-span-2 md:col-span-1 md:gap-4 md:rounded-none md:border-0 md:p-0 md:px-4 md:py-5 md:shadow-none md:last:col-span-1">
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl md:h-11 md:w-11 ${stat.tone}`}>
+                  <Icon className="h-4 w-4 md:h-5 md:w-5" />
                 </span>
                 <div>
-                  <p className="text-2xl font-black leading-none text-navy-950">{stat.value}</p>
-                  <p className="mt-1 text-xs font-semibold leading-4 text-navy-500">{stat.label}</p>
+                  <p className="text-[26px] font-black leading-none text-navy-950 md:text-2xl">{stat.value}</p>
+                  <p className="mt-1 text-[12px] font-semibold leading-4 text-navy-500 md:text-xs">{stat.label}</p>
                 </div>
               </div>
             );
@@ -356,7 +356,7 @@ export function HomePage() {
             </p>
             <div className="mt-6 space-y-3">
               {(mapSocieties.length ? mapSocieties : [{ name: 'DLF The Crest', sector: 'Sector 54' }, { name: 'M3M Golf Estate', sector: 'Sector 65' }, { name: 'Sobha City', sector: 'Sector 108' }]).slice(0, 4).map((society, index) => (
-                <Link key={society.name} to={society.slug ? `/society/${society.slug}` : '/search?tab=societies'} className="flex items-center gap-3 rounded-2xl border border-navy-100 bg-white p-3 transition hover:border-blue-200 hover:bg-blue-50">
+                <Link key={society.name} to={society.slug ? `/society/${society.slug}` : '/search?tab=societies'} className="flex items-center gap-2 rounded-xl border border-navy-100 bg-white p-2.5 transition hover:border-blue-200 hover:bg-blue-50">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-sm font-black text-blue-700">{scoreOf(society, `${8.8 - index * 0.3}`)}</span>
                   <div>
                     <p className="text-sm font-black text-navy-950">{society.name}</p>
@@ -615,7 +615,7 @@ export function HomePage() {
       </section>
 
       {chatOpen ? (
-        <div className="fixed bottom-24 right-4 z-40 w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-premium md:bottom-6 md:right-6">
+        <div className="fixed bottom-[5.5rem] right-5 z-40 w-[21rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-premium md:bottom-6 md:right-6 md:w-[22rem]">
           <div className="flex items-center gap-3 border-b border-blue-100 bg-blue-50 px-4 py-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-700 text-sm font-black text-white">AI</span>
             <div className="min-w-0 flex-1">
@@ -667,7 +667,7 @@ export function HomePage() {
       ) : (
         <button
           onClick={() => setChatOpen(true)}
-          className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-blue-700 text-white shadow-premium transition hover:scale-105 hover:bg-blue-800 md:bottom-6 md:right-6"
+          className="fixed bottom-6 right-5 z-40 flex h-[60px] w-[60px] items-center justify-center rounded-full bg-blue-700 text-white shadow-premium transition hover:scale-105 hover:bg-blue-800 md:bottom-6 md:right-6 md:h-14 md:w-14"
           aria-label="Open SocietyFlats AI chat"
         >
           <MessageCircle className="h-6 w-6" />

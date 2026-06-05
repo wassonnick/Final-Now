@@ -1,0 +1,146 @@
+# SocietyFlats Feature Status
+
+## Built / Mostly Built
+
+- React + TypeScript + Vite frontend structure
+- Laravel API backend structure
+- PostgreSQL-ready backend setup
+- Public homepage
+- Premium SocietyFlats hero section
+- Public societies listing page
+- Public society detail page
+- Public properties listing page
+- Public property detail page
+- Property enquiry/lead form on property detail page
+- Public API connection for societies
+- Public API connection for properties
+- Public lead submission API
+- Admin login page
+- Admin dashboard page
+- Admin society list page
+- Admin add/edit society form
+- Admin delete society functionality
+- Admin society publish/status workflow
+- Admin society image approval logic
+- Admin society SEO fields
+- Admin society amenities/nearby fields
+- Admin society RERA/source fields
+- Admin property list page
+- Admin add/edit property form
+- Admin delete property functionality
+- Admin property publish/status workflow
+- Property fields for rent/sale/resale/builder floor
+- Lead backend model and API
+- Admin stats backend API
+- Image upload backend endpoint
+- Society URL fetch/import workflow
+- Society brochure/PDF extraction workflow
+- Create society from fetched data workflow
+- Society enrichment endpoint
+- Basic compare page UI
+- AI Advisor page UI
+- Insights page UI
+- Maps Intelligence page UI
+- Broker CRM page UI
+- Chat/Callback page UI
+- Recommendations page UI
+- Sell/Owner listing page UI
+- App routing for public and admin pages
+- Basic admin token protection
+- Project documentation/handover files
+
+## Partial / Needs Finishing
+
+- Homepage UI polish
+- Mobile homepage design
+- Mobile search experience
+- Floating chat/mobile AI experience
+- Society cards design
+- Property cards design
+- Society detail page design
+- Property detail page design
+- Search page filtering
+- Compare page functionality
+- Add-to-compare buttons from society cards
+- Compare list persistence
+- AI Advisor logic
+- AI Advisor backend integration
+- Market Insights real data
+- Maps Intelligence real map/data integration
+- Broker CRM actual workflow
+- Chat/Callback actual workflow
+- Recommendations real matching logic
+- Sell/Owner listing form backend wiring
+- Admin leads frontend backend wiring
+- Lead detail update workflow
+- Lead status/follow-up workflow
+- Property image gallery upload
+- Society image library/approved image workflow
+- Admin review moderation
+- Admin users page functionality
+- Admin settings persistence
+- Admin analytics real metrics
+- Admin advanced search functionality
+- Admin AI settings functionality
+- SEO fields are present but SEO page strategy is incomplete
+- URL fetch/import needs reliability testing across builder websites
+- Brochure extraction needs manual verification workflow
+- Public lead capture works, but CRM handling is incomplete
+- Build dependency issue may require local npm install cleanup
+
+## Needs To Build
+
+- Full backend-powered admin leads CRM
+- Owner listing submission to backend
+- Convert owner lead to property
+- WhatsApp lead integration
+- Callback scheduling workflow
+- Visit scheduling workflow
+- Lead assignment to team/broker
+- Lead notes and activity timeline
+- Follow-up reminder system
+- Real AI Advisor backend endpoint
+- Rule-based society recommendation engine
+- Later AI-powered recommendation engine
+- Advanced property search backend
+- Budget/BHK/furnishing/family/pet filters
+- Server-side search and pagination
+- Locality/sector landing pages
+- Society SEO landing pages
+- Rent in Gurgaon landing pages
+- Builder-wise landing pages
+- Sitemap generation
+- Meta title/description management
+- Schema markup for societies/properties
+- Review and rating submission system
+- Review moderation backend
+- User/customer login
+- Owner dashboard
+- Broker/partner dashboard
+- Referral/partner program module
+- Commission tracking
+- Partner lead submission form
+- Partner earnings dashboard
+- Admin partner approval system
+- Property verification workflow
+- Society verification workflow
+- Source confidence scoring UI
+- Bulk society import
+- Bulk property import
+- Image moderation queue
+- Real map integration
+- Nearby commute intelligence
+- School/hospital/metro distance automation
+- Market rent trend engine
+- Property price/rent history
+- Saved/shortlisted properties
+- Contact reveal gating
+- OTP phone verification
+- Email/WhatsApp notifications
+- Payment/paid promotion module later
+- Role-based admin permissions
+- Production-grade authentication
+- Audit logs
+- Backup/restore workflow
+- Error logging/monitoring
+- Final deployment checklist
