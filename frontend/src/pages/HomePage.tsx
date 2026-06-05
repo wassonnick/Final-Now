@@ -143,8 +143,9 @@ export function HomePage() {
             { icon: Sparkles, value: 'AI Advisor', label: 'Smart shortlists', tone: 'bg-blue-50 text-blue-700' },
           ].map((stat) => {
             const Icon = stat.icon;
+            const mobileVisibility = stat.label === 'Smart shortlists' ? 'hidden md:flex' : 'flex';
             return (
-              <div key={stat.label} className="flex items-center gap-2 rounded-xl border border-navy-100 bg-white p-2.5 shadow-sm last:col-span-2 md:col-span-1 md:gap-4 md:rounded-none md:border-0 md:p-0 md:px-4 md:py-5 md:shadow-none md:last:col-span-1">
+              <div key={stat.label} className={`${mobileVisibility} items-center gap-2 rounded-xl border border-navy-100 bg-white p-2.5 shadow-sm md:col-span-1 md:gap-4 md:rounded-none md:border-0 md:p-0 md:px-4 md:py-5 md:shadow-none`}>
                 <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl md:h-11 md:w-11 ${stat.tone}`}>
                   <Icon className="h-4 w-4 md:h-5 md:w-5" />
                 </span>
@@ -158,16 +159,17 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-12">
+      <section className="bg-white px-4 py-10 md:py-12">
         <div className="container mx-auto">
           <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.2em] text-blue-700">Curated for Gurgaon</p>
-              <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">
+              <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">
                 Featured societies in Gurgaon
               </h2>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-navy-500">
-                Explore premium Gurgaon societies with rent ranges, resale trends, lifestyle fit, location strengths and available homes.
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
+                <span className="md:hidden">Compare Gurgaon societies by rent, resale and lifestyle fit.</span>
+                <span className="hidden md:inline">Explore premium Gurgaon societies with rent ranges, resale trends, lifestyle fit, location strengths and available homes.</span>
               </p>
             </div>
             <Link to="/search?tab=societies">
@@ -185,7 +187,7 @@ export function HomePage() {
                   to={`/society/${society.slug}`}
                   className="group overflow-hidden rounded-[1.75rem] border border-navy-100 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-premium"
                 >
-                  <div className="relative h-52 overflow-hidden bg-blue-50">
+                  <div className="relative h-44 overflow-hidden bg-blue-50 md:h-52">
                     <img src={societyImage(society)} alt={society.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-blue-950/30 via-transparent to-transparent" />
                     <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-black text-navy-950 shadow-sm">
@@ -196,8 +198,8 @@ export function HomePage() {
                       Verified
                     </span>
                   </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-black text-navy-950 transition group-hover:text-blue-700">{society.name}</h3>
+                  <div className="p-3.5 md:p-4">
+                    <h3 className="text-base font-black text-navy-950 transition group-hover:text-blue-700 md:text-lg">{society.name}</h3>
                     <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-navy-500">
                       <MapPin className="h-3.5 w-3.5" /> {formatPublicLocation(society)}
                     </p>
@@ -211,7 +213,7 @@ export function HomePage() {
                         <p className="mt-1 text-xs font-black text-navy-950">{society.buyRange || 'On request'}</p>
                       </div>
                     </div>
-                    <div className="mt-4 grid grid-cols-5 gap-1">
+                    <div className="mt-4 hidden grid-cols-5 gap-1 sm:grid">
                       {['Loc', 'Sec', 'Ame', 'ROI', 'Fit'].map((label, index) => (
                         <div key={label} className="text-center">
                           <div className="h-1.5 overflow-hidden rounded-full bg-blue-50">
@@ -236,7 +238,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-ivory-100 px-4 py-14">
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-ivory-100 px-4 py-10 md:py-14">
         <div className="absolute right-[-10rem] top-[-12rem] h-[36rem] w-[36rem] rounded-full bg-white/80 blur-3xl" />
         <div className="absolute left-[-8rem] bottom-[-14rem] h-[32rem] w-[32rem] rounded-full bg-gold-200/25 blur-3xl" />
         <div className="container relative mx-auto grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
@@ -244,13 +246,15 @@ export function HomePage() {
             <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-blue-700 shadow-sm">
               <Sparkles className="h-4 w-4" /> AI Advisor
             </span>
-            <h2 className="mt-5 font-display text-4xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">
-              Tell us what matters. We find your perfect society.
+            <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:mt-5 md:text-5xl">
+              <span className="md:hidden">Ask SocietyFlats AI</span>
+              <span className="hidden md:inline">Tell us what matters. We find your perfect society.</span>
             </h2>
-            <p className="mt-4 max-w-xl text-base leading-7 text-navy-500">
-              Our AI scores every society against your budget, commute, family needs, pet preference and lifestyle priorities, then ranks the best matches with real reasons.
+            <p className="mt-3 max-w-xl text-sm leading-6 text-navy-500 md:mt-4 md:text-base md:leading-7">
+              <span className="md:hidden">Tell us your budget and commute. Get a smart society shortlist.</span>
+              <span className="hidden md:inline">Our AI scores every society against your budget, commute, family needs, pet preference and lifestyle priorities, then ranks the best matches with real reasons.</span>
             </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="mt-6 hidden gap-3 md:grid md:grid-cols-2">
               {[
                 { icon: MessageCircle, title: 'AI Chat', text: 'Ask anything about Gurgaon societies and get instant expert answers.' },
                 { icon: Sparkles, title: 'Smart Matching', text: 'Weighted scoring across budget, commute, security and lifestyle.' },
@@ -274,10 +278,10 @@ export function HomePage() {
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/ai-advisor">
                 <Button className="rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">
-                  Ask AI Advisor <ArrowRight className="ml-2 h-4 w-4" />
+                  <span className="md:hidden">Start AI Advisor</span><span className="hidden md:inline">Ask AI Advisor</span> <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/recommendations">
+              <Link to="/recommendations" className="hidden md:inline-flex">
                 <Button variant="outline" className="rounded-full border-blue-100 bg-white px-6 font-bold text-blue-700 hover:bg-blue-50">
                   Recommendation engine
                 </Button>
@@ -285,7 +289,7 @@ export function HomePage() {
             </div>
           </div>
 
-          <div className="rounded-[1.75rem] border border-blue-100 bg-white/95 p-5 shadow-premium">
+          <div className="hidden rounded-[1.75rem] border border-blue-100 bg-white/95 p-5 shadow-premium md:block">
             <div className="mb-4 flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                 <Sparkles className="h-5 w-5" />
@@ -346,7 +350,20 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-ivory-100 px-4 py-14">
+      <section className="bg-ivory-100 px-4 py-10 md:hidden">
+        <div className="container mx-auto rounded-[1.5rem] border border-blue-100 bg-white p-5 shadow-sm">
+          <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Maps and lifestyle</p>
+          <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">See society location strength.</h2>
+          <p className="mt-3 text-sm leading-6 text-navy-500">Check metro, schools, hospitals and office access before visiting.</p>
+          <Link to="/maps" className="mt-5 inline-flex">
+            <Button className="rounded-full bg-blue-700 px-5 font-black text-white hover:bg-blue-800">
+              Explore Map Intelligence <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      <section className="hidden bg-ivory-100 px-4 py-14 md:block">
         <div className="container mx-auto grid gap-6 lg:grid-cols-[20rem_1fr]">
           <div>
             <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-emerald-700">Maps and lifestyle</p>
@@ -391,7 +408,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-14">
+      <section className="hidden bg-white px-4 py-14 md:block">
         <div className="container mx-auto grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div>
             <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">Market insights</p>
@@ -442,14 +459,15 @@ export function HomePage() {
       </section>
 
       {featuredProperties.length > 0 ? (
-        <section className="bg-white px-4 py-12">
+        <section className="bg-white px-4 py-10 md:py-12">
           <div className="container mx-auto">
-            <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="mb-6 flex flex-col gap-4 md:mb-8 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">Live Inventory</p>
-                <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">Latest verified homes</h2>
-                <p className="mt-3 max-w-2xl text-base leading-7 text-navy-500">
-                  Fresh rental and resale homes from Gurgaon societies, verified before they reach serious tenants and buyers.
+                <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">Latest verified homes</h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
+                  <span className="md:hidden">Fresh verified homes in Gurgaon societies.</span>
+                  <span className="hidden md:inline">Fresh rental and resale homes from Gurgaon societies, verified before they reach serious tenants and buyers.</span>
                 </p>
               </div>
               <Link to="/search?tab=rent">
@@ -461,16 +479,16 @@ export function HomePage() {
 
             <div className="flex gap-5 overflow-x-auto pb-3 scrollbar-hide">
               {featuredProperties.map((property) => (
-                <Link key={property.id} to={propertyUrl(property)} className="group w-[22rem] shrink-0 overflow-hidden rounded-[1.5rem] border border-navy-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium">
-                  <div className="relative h-56 overflow-hidden bg-blue-50">
+                <Link key={property.id} to={propertyUrl(property)} className="group w-[18rem] shrink-0 overflow-hidden rounded-[1.5rem] border border-navy-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium md:w-[22rem]">
+                  <div className="relative h-44 overflow-hidden bg-blue-50 md:h-56">
                     <img src={propertyImage(property)} alt={property.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                     <span className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-black text-white">
                       <CheckCircle2 className="h-3.5 w-3.5" /> Verified
                     </span>
                   </div>
-                  <div className="p-5">
+                  <div className="p-4 md:p-5">
                     <p className="text-sm font-bold text-blue-700">{property.listingType || 'Rent'}</p>
-                    <h3 className="mt-2 text-xl font-black text-navy-950">{property.title}</h3>
+                    <h3 className="mt-2 text-lg font-black text-navy-950 md:text-xl">{property.title}</h3>
                     <p className="mt-1 text-sm text-navy-500">{property.society} · {property.locality}</p>
                     <div className="mt-5 flex items-end justify-between">
                       <div>
@@ -490,8 +508,8 @@ export function HomePage() {
           </div>
         </section>
       ) : (
-        <section className="bg-white px-4 py-12">
-          <div className="container mx-auto rounded-[1.5rem] border border-dashed border-navy-200 bg-ivory-100 p-7 shadow-sm">
+        <section className="bg-white px-4 py-10 md:py-12">
+          <div className="container mx-auto rounded-[1.5rem] border border-dashed border-navy-200 bg-ivory-100 p-5 shadow-sm md:p-7">
             <h2 className="font-display text-3xl font-black text-navy-950">Verified homes are being added.</h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-navy-500">
               We are updating live inventory for Gurgaon societies. Request a callback and our team will help you find matching homes.
@@ -503,7 +521,7 @@ export function HomePage() {
         </section>
       )}
 
-      <section className="bg-ivory-100 px-4 py-14">
+      <section className="hidden bg-ivory-100 px-4 py-14 md:block">
         <div className="container mx-auto">
           <div className="mb-8 max-w-3xl">
             <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">Reviews and confidence</p>
@@ -530,7 +548,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-blue-50 px-4 py-14">
+      <section className="hidden relative overflow-hidden bg-blue-50 px-4 py-14 md:block">
         <div className="absolute left-[-10rem] top-[-12rem] h-[30rem] w-[30rem] rounded-full bg-white/70 blur-3xl" />
         <div className="container relative mx-auto grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div>
@@ -582,24 +600,28 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-14">
-        <div className="container mx-auto grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+      <section className="bg-white px-4 py-10 md:py-14">
+        <div className="container mx-auto grid gap-6 md:gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
             <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">For Property Owners</p>
-            <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950">Own a flat in Gurgaon? List it with SocietyFlats.</h2>
-            <p className="mt-3 max-w-xl text-base leading-7 text-navy-500">
-              Reach serious tenants and buyers looking specifically inside verified Gurgaon societies. Add your property once and receive qualified enquiries through a cleaner, society-first flow.
+            <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
+              <span className="md:hidden">List your Gurgaon flat.</span>
+              <span className="hidden md:inline">Own a flat in Gurgaon? List it with SocietyFlats.</span>
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
+              <span className="md:hidden">Get verified tenant and buyer enquiries from society-focused users.</span>
+              <span className="hidden md:inline">Reach serious tenants and buyers looking specifically inside verified Gurgaon societies. Add your property once and receive qualified enquiries through a cleaner, society-first flow.</span>
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/sell">
-                <Button className="rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">List Your Property</Button>
+                <Button className="w-full rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800 md:w-auto">List Property</Button>
               </Link>
               <Link to="/chat">
-                <Button variant="outline" className="rounded-full border-navy-200 bg-white px-6 font-black text-navy-800 hover:bg-blue-50">Talk to Us</Button>
+                <Button variant="outline" className="w-full rounded-full border-navy-200 bg-white px-6 font-black text-navy-800 hover:bg-blue-50 md:w-auto">Talk to Us</Button>
               </Link>
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="hidden gap-4 sm:grid-cols-3 md:grid">
             {ownerBenefits.map((item) => {
               const Icon = item.icon;
               return (
@@ -667,7 +689,7 @@ export function HomePage() {
       ) : (
         <button
           onClick={() => setChatOpen(true)}
-          className="fixed bottom-6 right-5 z-40 flex h-[60px] w-[60px] items-center justify-center rounded-full bg-blue-700 text-white shadow-premium transition hover:scale-105 hover:bg-blue-800 md:bottom-6 md:right-6 md:h-14 md:w-14"
+          className="fixed bottom-5 right-5 z-40 flex h-[58px] w-[58px] items-center justify-center rounded-full bg-blue-700 text-white shadow-premium transition hover:scale-105 hover:bg-blue-800 md:bottom-6 md:right-6 md:h-14 md:w-14"
           aria-label="Open SocietyFlats AI chat"
         >
           <MessageCircle className="h-6 w-6" />
