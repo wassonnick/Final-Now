@@ -372,12 +372,9 @@ export default function SocietyFlatsHero() {
             <span className="italic text-blue-600">love living in.</span>
           </h1>
 
-          <p className="mt-2 max-w-[700px] text-[16px] font-medium leading-[1.45] text-blue-500 sm:mt-4 sm:text-[19px] sm:leading-7">
-            <span className="sm:hidden">Compare society scores before you visit.</span>
-            <span className="hidden sm:inline">
-              Verified scores on security, maintenance, amenities and
-              connectivity, before you sign a lease or buy a home.
-            </span>
+          <p className="mt-4 hidden max-w-[700px] text-[19px] font-medium leading-7 text-blue-500 sm:block">
+            Verified scores on security, maintenance, amenities and
+            connectivity, before you sign a lease or buy a home.
           </p>
 
           <div className="mt-3 w-full rounded-[26px] border border-blue-100 bg-white/90 p-2.5 shadow-[0_24px_75px_rgba(37,99,235,0.12)] backdrop-blur-xl sm:mt-6 sm:p-3">
@@ -429,10 +426,6 @@ export default function SocietyFlatsHero() {
                 <ArrowRight className="h-5 w-5" />
               </button>
             </div>
-
-            <p className="mt-2 px-2 text-[13px] font-bold text-blue-500 sm:mt-3 sm:px-3 sm:text-[14px]">
-              Search by society, sector, road or landmark.
-            </p>
           </div>
 
           <div className="mt-3 grid max-w-[880px] grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
