@@ -56,3 +56,50 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 }
+
+/* =========================================================
+   SocietyFlats Mobile Clean-up Patch
+   Mobile-only helpers for shorter, cleaner homepage flow.
+   Desktop remains unchanged.
+========================================================= */
+@media (max-width: 767px) {
+  html,
+  body,
+  #root {
+    overflow-x: hidden;
+  }
+
+  body {
+    padding-bottom: 76px;
+  }
+
+  footer {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+
+  footer h3,
+  footer h4 {
+    font-size: 0.95rem !important;
+  }
+
+  footer a,
+  footer p,
+  footer li {
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+  }
+
+  footer .container,
+  footer [class*="container"] {
+    gap: 1.25rem !important;
+  }
+
+  .shadow-premium {
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  .shadow-soft {
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07) !important;
+  }
+}
