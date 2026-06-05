@@ -1,4 +1,9 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const rawApiBaseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  'https://final-now.onrender.com/api';
+
+const API_BASE_URL = String(rawApiBaseUrl).replace(/\/$/, '');
 
 type JsonValue = Record<string, unknown> | Array<unknown>;
 
@@ -14,6 +19,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: response.statusText }));
     throw new Error(error.message || 'Request failed');
+  }
+
+  if (response.status === 204) {
+    return {} as T;
   }
 
   return response.json() as Promise<T>;
@@ -33,8 +42,9 @@ export const backendApi = {
   deleteProperty: (id: string) => request(`/admin/properties/${id}`, { method: 'DELETE' }),
 
   listLeads: (params = '') => request(`/admin/leads${params}`),
+  getLead: (id: string) => request(`/admin/leads/${id}`),
   updateLead: (id: string, payload: JsonValue) => request(`/admin/leads/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  addLeadNote: (id: string, description: string) => request(`/admin/leads/${id}/notes`, { method: 'POST', body: JSON.stringify({ description }) }),
+  deleteLead: (id: string) => request(`/admin/leads/${id}`, { method: 'DELETE' }),
 
   publicSocieties: (params = '') => request(`/societies${params}`),
   publicProperties: (params = '') => request(`/properties${params}`),
