@@ -355,16 +355,16 @@ export default function SocietyFlatsHero() {
 
   return (
     <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_72%_18%,rgba(37,99,235,0.10),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]">
-      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-8 px-6 pb-6 pt-8 lg:grid-cols-[minmax(0,1.55fr)_minmax(380px,0.75fr)] lg:gap-10 lg:px-24 lg:pb-10 lg:pt-12">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-3 px-5 pb-2 pt-3 sm:gap-8 sm:px-6 sm:pb-6 sm:pt-8 lg:grid-cols-[minmax(0,1.55fr)_minmax(380px,0.75fr)] lg:gap-10 lg:px-24 lg:pb-10 lg:pt-12">
         <div className="max-w-[860px]">
-          <div className="mb-4 inline-flex items-center gap-3 rounded-full border border-blue-100 bg-white/80 px-4 py-2 shadow-sm">
+          <div className="mb-3 inline-flex items-center gap-3 rounded-full border border-blue-100 bg-white/80 px-3 py-1.5 shadow-sm sm:mb-4 sm:px-4 sm:py-2">
             <span className="h-2 w-2 rounded-full bg-amber-500" />
-            <span className="text-[12px] font-black uppercase tracking-[0.26em] text-blue-700">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-700 sm:text-[12px] sm:tracking-[0.26em]">
               Gurgaon Society Intelligence
             </span>
           </div>
 
-          <h1 className="max-w-[740px] font-serif text-[49px] font-black leading-[0.93] tracking-[-0.045em] text-slate-950 sm:text-[63px] lg:text-[69px] xl:text-[74px]">
+          <h1 className="max-w-[740px] font-serif text-[40px] font-black leading-[0.97] tracking-[-0.045em] text-slate-950 sm:text-[63px] sm:leading-[0.93] lg:text-[69px] xl:text-[74px]">
             Find a society
             <br />
             you will actually
@@ -372,13 +372,13 @@ export default function SocietyFlatsHero() {
             <span className="italic text-blue-600">love living in.</span>
           </h1>
 
-          <p className="mt-4 max-w-[700px] text-[17px] font-medium leading-7 text-blue-500 sm:text-[19px]">
+          <p className="mt-3 max-w-[700px] text-[17px] font-medium leading-[1.55] text-blue-500 sm:mt-4 sm:text-[19px] sm:leading-7">
             Verified scores on security, maintenance, amenities and
             connectivity, before you sign a lease or buy a home.
           </p>
 
-          <div className="mt-6 w-full rounded-[26px] border border-blue-100 bg-white/90 p-3 shadow-[0_24px_75px_rgba(37,99,235,0.12)] backdrop-blur-xl">
-            <div className="mb-3 flex flex-wrap gap-2">
+          <div className="mt-3 w-full rounded-[26px] border border-blue-100 bg-white/90 p-2.5 shadow-[0_24px_75px_rgba(37,99,235,0.12)] backdrop-blur-xl sm:mt-6 sm:p-3">
+            <div className="mb-2.5 grid grid-cols-4 gap-1.5 sm:mb-3 sm:flex sm:flex-wrap sm:gap-2">
               {[
                 { key: "rent", label: "Rent" },
                 { key: "buy", label: "Buy" },
@@ -390,7 +390,7 @@ export default function SocietyFlatsHero() {
                   type="button"
                   onClick={() => setActiveTab(tab.key as Intent)}
                   className={cn(
-                    "rounded-2xl px-5 py-2.5 text-sm font-extrabold transition",
+                    "whitespace-nowrap rounded-2xl px-2 py-2 text-[13px] font-extrabold transition sm:px-5 sm:py-2.5 sm:text-sm",
                     activeTab === tab.key
                       ? "bg-blue-600 text-white shadow-md shadow-blue-200"
                       : "text-blue-300 hover:bg-blue-50 hover:text-blue-600"
@@ -401,8 +401,8 @@ export default function SocietyFlatsHero() {
               ))}
             </div>
 
-            <div className="flex flex-col gap-3 rounded-[22px] bg-slate-50/70 p-3 sm:flex-row sm:items-center">
-              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-white px-4 py-4">
+            <div className="flex flex-col gap-2 rounded-[22px] bg-slate-50/70 p-2.5 sm:flex-row sm:items-center sm:gap-3 sm:p-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl bg-white px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-4">
                 <Search className="h-5 w-5 shrink-0 text-blue-500" />
                 <input
                   value={query}
@@ -412,28 +412,28 @@ export default function SocietyFlatsHero() {
                       handleSearch();
                     }
                   }}
-                  placeholder="Search society, locality, builder or landmark in Gurgaon..."
-                  className="min-w-0 flex-1 bg-transparent text-[16px] font-semibold text-slate-700 outline-none placeholder:text-blue-400"
+                  placeholder="Search society, sector or landmark..."
+                  className="min-w-0 flex-1 bg-transparent text-[15px] font-semibold text-slate-700 outline-none placeholder:text-blue-500 sm:text-[16px]"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={handleSearch}
-                className="flex h-[56px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-8 text-[16px] font-black text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 sm:min-w-[220px]"
+                className="flex h-12 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 text-[15px] font-black text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 sm:h-[56px] sm:w-auto sm:min-w-[220px] sm:px-8 sm:text-[16px]"
               >
                 Search Societies
                 <ArrowRight className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="mt-3 px-3 text-[14px] font-bold text-blue-400">
-              Search by society name, sector, road, builder or nearby landmark.
+            <p className="mt-2 px-2 text-[13px] font-bold text-blue-500 sm:mt-3 sm:px-3 sm:text-[14px]">
+              Search by society, sector, road or landmark.
             </p>
           </div>
 
-          <div className="mt-3 flex max-w-[880px] flex-wrap items-center gap-2">
-            <span className="mr-1 text-[14px] font-bold text-blue-400">
+          <div className="mt-3 grid max-w-[880px] grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
+            <span className="col-span-2 text-[13px] font-bold text-blue-500 sm:mr-1 sm:text-[14px]">
               Popular searches:
             </span>
 
@@ -450,7 +450,7 @@ export default function SocietyFlatsHero() {
                   key={item.label}
                   type="button"
                   onClick={() => setQuery(item.label)}
-                  className="inline-flex max-w-full items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-4 py-2 text-[14px] font-extrabold text-blue-500 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
+                  className="inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-2 text-[13px] font-extrabold text-blue-500 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 sm:justify-start sm:px-4 sm:text-[14px]"
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   <span className="whitespace-nowrap">{item.label}</span>
@@ -460,12 +460,12 @@ export default function SocietyFlatsHero() {
           </div>
         </div>
 
-        <div className="flex items-start justify-center lg:-mt-3 lg:justify-end">
+        <div className="hidden items-start justify-center lg:-mt-3 lg:flex lg:justify-end">
           <AIAdvisorChatBox />
         </div>
       </div>
 
-      <div className="pointer-events-none absolute bottom-0 left-0 h-32 w-full bg-gradient-to-t from-blue-50/70 to-transparent" />
+      <div className="pointer-events-none absolute bottom-0 left-0 h-12 w-full sm:h-32 bg-gradient-to-t from-blue-50/70 to-transparent" />
     </section>
   );
 }
