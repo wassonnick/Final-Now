@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Home,
   KeyRound,
+  Loader2,
   MapPin,
   MessageCircle,
   Route,
@@ -112,6 +113,22 @@ const ownerBenefits = [
   },
 ];
 
+
+type AdvisorMatch = {
+  id?: number;
+  society_name: string;
+  slug?: string;
+  sector?: string;
+  locality?: string;
+  score?: number;
+  reason?: string;
+};
+
+function getApiBaseUrl() {
+  const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
+  return envUrl ? String(envUrl).replace(/\/$/, "") : "https://final-now.onrender.com/api";
+}
+
 function scoreOf(society: any, fallback = "8.2") {
   return society?.score || society?.overallScore || fallback;
 }
@@ -130,6 +147,10 @@ export function HomePage() {
   const [properties, setProperties] = useState<any[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
   const [floatingAiInput, setFloatingAiInput] = useState("");
+  const [floatingAiQuery, setFloatingAiQuery] = useState("Best societies near Cyber City under Rs 1L");
+  const [floatingAiReply, setFloatingAiReply] = useState("Top picks: DLF Crest, Ireo Skyon and DLF Park Place. Want a rent or family-fit view?");
+  const [floatingAiMatches, setFloatingAiMatches] = useState<AdvisorMatch[]>([]);
+  const [isFloatingAiLoading, setIsFloatingAiLoading] = useState(false);
   const [leadContext, setLeadContext] = useState<{
     source: string;
     title: string;
@@ -169,10 +190,42 @@ export function HomePage() {
     setLeadContext(context);
   };
 
-  const submitFloatingAi = () => {
+  const submitFloatingAi = async () => {
     const cleanQuery = floatingAiInput.trim();
-    if (!cleanQuery) return;
-    window.location.href = `/search?q=${encodeURIComponent(cleanQuery)}&intent=general`;
+    if (!cleanQuery || isFloatingAiLoading) return;
+
+    setFloatingAiQuery(cleanQuery);
+    setFloatingAiInput("");
+    setIsFloatingAiLoading(true);
+
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/ai/advisor`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: cleanQuery, intent: "rent" }),
+      });
+
+      if (!response.ok) throw new Error("Floating AI request failed");
+
+      const payload = await response.json();
+      const matches = Array.isArray(payload?.matches) ? payload.matches.slice(0, 3) : [];
+      setFloatingAiMatches(matches);
+      setFloatingAiReply(
+        payload?.reply ||
+          (matches.length
+            ? "These are the strongest society matches from the live database."
+            : "No exact live match was found yet. Try a society name, sector, budget or request a callback."),
+      );
+    } catch (error) {
+      console.error("Floating AI search failed:", error);
+      setFloatingAiMatches([]);
+      setFloatingAiReply("I could not fetch live AI matches right now. Please try again or schedule a callback.");
+    } finally {
+      setIsFloatingAiLoading(false);
+    }
   };
 
   return (
@@ -1117,23 +1170,49 @@ export function HomePage() {
               commute and lifestyle.
             </div>
             <div className="ml-auto max-w-[82%] rounded-2xl bg-blue-700 px-4 py-3 text-sm font-bold leading-6 text-white">
-              Best societies near Cyber City under Rs 1L
+              {floatingAiQuery}
             </div>
             <div className="max-w-[92%] rounded-2xl bg-ivory-100 px-4 py-3 text-sm font-semibold leading-6 text-navy-600">
-              Top picks: <strong>DLF Crest</strong>, <strong>Ireo Skyon</strong>{" "}
-              and <strong>DLF Park Place</strong>. Want a rent or family-fit
-              view?
+              {isFloatingAiLoading ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Finding live matches...
+                </span>
+              ) : (
+                floatingAiReply
+              )}
             </div>
+            {floatingAiMatches.length > 0 ? (
+              <div className="space-y-2">
+                {floatingAiMatches.map((match, index) => (
+                  <Link
+                    key={`${match.id || index}-${match.society_name}`}
+                    to={match.slug ? `/society/${match.slug}` : `/search?q=${encodeURIComponent(floatingAiQuery)}&intent=general`}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white px-3 py-2 text-sm font-black text-navy-900 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
+                  >
+                    <span className="min-w-0 truncate">
+                      {index + 1}. {match.society_name}
+                      <span className="ml-1 text-xs font-bold text-blue-500">
+                        {match.sector || match.locality || "Gurgaon"}
+                      </span>
+                    </span>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-blue-600" />
+                  </Link>
+                ))}
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2">
-              {["Compare", "Show rentals"].map((item) => (
-                <Link
-                  key={item}
-                  to={item === "Compare" ? "/compare" : "/search?tab=rent"}
-                  className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100"
-                >
-                  {item}
-                </Link>
-              ))}
+              <Link
+                to="/compare"
+                className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100"
+              >
+                Compare
+              </Link>
+              <Link
+                to={`/search?q=${encodeURIComponent(floatingAiQuery)}&intent=general`}
+                className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100"
+              >
+                Open results
+              </Link>
               <button
                 type="button"
                 onClick={() =>
@@ -1169,11 +1248,11 @@ export function HomePage() {
             />
             <button
               type="submit"
-              disabled={!floatingAiInput.trim()}
+              disabled={!floatingAiInput.trim() || isFloatingAiLoading}
               className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-700 text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Search with SocietyFlats AI"
             >
-              <Send className="h-4 w-4" />
+              {isFloatingAiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>
           </form>
         </div>

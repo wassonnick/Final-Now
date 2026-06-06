@@ -45,18 +45,26 @@ class AIController extends Controller
             ->limit(120)
             ->get();
 
-        $matches = $societies
+        $scoredMatches = $societies
             ->map(fn (Society $society) => $this->scoreSociety($society, $properties->get($society->id, collect()), $signals, $intent))
-            ->filter(fn (array $match) => $match['raw_score'] >= 25)
+            ->filter(function (array $match) use ($signals) {
+                if (!$signals['has_specific_signals']) {
+                    return $match['raw_score'] >= 25;
+                }
+
+                return $match['is_relevant'] && $match['raw_score'] >= 25;
+            })
             ->sortByDesc('raw_score')
-            ->values()
+            ->values();
+
+        $matches = $scoredMatches
             ->take(5)
             ->map(fn (array $match) => $this->formatMatch($match))
             ->values();
 
-        if ($matches->isEmpty()) {
+        if ($matches->isEmpty() && !$signals['has_specific_signals']) {
             $matches = $societies
-                ->take(5)
+                ->take(3)
                 ->map(fn (Society $society) => $this->formatMatch($this->scoreSociety($society, $properties->get($society->id, collect()), $signals, $intent, true)))
                 ->values();
         }
@@ -70,6 +78,7 @@ class AIController extends Controller
                 'budget' => $signals['budget'],
                 'locations' => $signals['locations'],
                 'priorities' => $signals['priorities'],
+                'keywords' => $signals['keywords'],
             ],
             'matches' => $matches,
         ]);
@@ -175,14 +184,43 @@ class AIController extends Controller
 
         preg_match('/\b([1-5])\s*(bhk|bed|bedroom)\b/i', $message, $bhkMatch);
 
+        $bhk = isset($bhkMatch[1]) ? (int) $bhkMatch[1] : null;
+        $budget = $this->extractBudget($text);
+        $keywords = $this->extractSearchKeywords($text);
+
         return [
             'text' => $text,
             'intent' => $intent,
-            'bhk' => isset($bhkMatch[1]) ? (int) $bhkMatch[1] : null,
-            'budget' => $this->extractBudget($text),
+            'bhk' => $bhk,
+            'budget' => $budget,
             'locations' => $locations,
             'priorities' => array_values(array_unique($priorities)),
+            'keywords' => $keywords,
+            'has_specific_signals' => $bhk || $budget || !empty($locations) || !empty($priorities) || !empty($keywords),
         ];
+    }
+
+
+    private function extractSearchKeywords(string $text): array
+    {
+        $clean = preg_replace('/[^a-z0-9\s]/', ' ', Str::lower($text));
+        $tokens = preg_split('/\s+/', trim((string) $clean)) ?: [];
+        $stopWords = [
+            'best', 'top', 'good', 'better', 'society', 'societies', 'flat', 'flats', 'home', 'homes',
+            'near', 'around', 'under', 'below', 'upto', 'within', 'budget', 'rent', 'rental', 'buy',
+            'resale', 'sale', 'for', 'in', 'at', 'on', 'and', 'or', 'the', 'a', 'an', 'with', 'without',
+            'bhk', 'bed', 'bedroom', 'bedrooms', 'rs', 'l', 'lac', 'lakh', 'k', 'cr', 'crore', 'gurgaon', 'gurugram',
+        ];
+
+        $keywords = [];
+        foreach ($tokens as $token) {
+            if (strlen($token) < 3 || in_array($token, $stopWords, true) || is_numeric($token)) {
+                continue;
+            }
+            $keywords[] = $token;
+        }
+
+        return array_values(array_unique(array_slice($keywords, 0, 6)));
     }
 
     private function extractLocations(string $text): array
@@ -246,6 +284,7 @@ class AIController extends Controller
         $score = ((float) ($society->score ?: 8.0)) * 8;
         $reasons = [];
         $tags = [];
+        $relevanceHits = 0;
         $haystack = Str::lower(implode(' ', array_filter([
             $society->name,
             $society->builder,
@@ -259,17 +298,26 @@ class AIController extends Controller
             $society->amenities ? implode(' ', (array) $society->amenities) : '',
         ])));
 
+
+        foreach ($signals['keywords'] as $keyword) {
+            if (Str::contains($haystack, $keyword)) {
+                $score += 30;
+                $relevanceHits += 3;
+                $reasons[] = 'Directly matches your search term: '.Str::title($keyword).'.';
+                $tags[] = Str::title($keyword);
+            } else {
+                $score -= 12;
+            }
+        }
+
         foreach ($signals['locations'] as $location) {
             if (Str::contains($haystack, $location)) {
                 $score += 22;
+                $relevanceHits += 2;
                 $reasons[] = 'Matches your preferred location: '.Str::title($location).'.';
                 $tags[] = Str::title($location);
                 break;
             }
-        }
-
-        if (!$signals['locations'] && Str::contains($haystack, ['gurgaon', 'gurugram', 'golf course', 'dlf', 'sector'])) {
-            $score += 5;
         }
 
         $matchingProperties = $properties;
@@ -277,6 +325,7 @@ class AIController extends Controller
             $matchingProperties = $matchingProperties->filter(fn (Property $property) => (int) $property->bedrooms === (int) $signals['bhk']);
             if ($matchingProperties->isNotEmpty() || Str::contains($haystack, (string) $signals['bhk'].'bhk')) {
                 $score += 14;
+                $relevanceHits += 1;
                 $reasons[] = 'Has inventory/signals for '.$signals['bhk'].'BHK homes.';
                 $tags[] = $signals['bhk'].'BHK';
             }
@@ -293,6 +342,7 @@ class AIController extends Controller
 
             if ($budgetMatches->isNotEmpty() || ($rangePrice && $rangePrice <= ((int) $signals['budget'] * 1.2))) {
                 $score += 18;
+                $relevanceHits += 1;
                 $reasons[] = 'Looks aligned with your budget range.';
                 $tags[] = 'Budget match';
             } else {
@@ -303,26 +353,31 @@ class AIController extends Controller
         foreach ($signals['priorities'] as $priority) {
             if ($priority === 'family' && (Str::contains($haystack, ['school', 'family', 'kids']) || (float) $society->lifestyle_score >= 8)) {
                 $score += 8;
+                $relevanceHits += 1;
                 $reasons[] = 'Good family-living signals from schools/lifestyle data.';
                 $tags[] = 'Family Friendly';
             }
             if ($priority === 'pet_friendly' && Str::contains($haystack, ['pet', 'dog', 'park'])) {
                 $score += 8;
+                $relevanceHits += 1;
                 $reasons[] = 'Pet-friendly signals found in society details.';
                 $tags[] = 'Pet Friendly';
             }
             if ($priority === 'metro' && Str::contains($haystack, ['metro', 'rapid metro'])) {
                 $score += 8;
+                $relevanceHits += 1;
                 $reasons[] = 'Metro connectivity is mentioned in society intelligence.';
                 $tags[] = 'Near Metro';
             }
             if ($priority === 'office_access' && Str::contains($haystack, ['cyber city', 'cyber hub', 'udyog vihar', 'office', 'golf course'])) {
                 $score += 8;
+                $relevanceHits += 1;
                 $reasons[] = 'Strong office-hub connectivity signals.';
                 $tags[] = 'Office Access';
             }
             if ($priority === 'luxury' && ((float) $society->score >= 8.5 || $society->status === 'Premium')) {
                 $score += 8;
+                $relevanceHits += 1;
                 $reasons[] = 'Premium society profile with high overall score.';
                 $tags[] = 'Premium';
             }
@@ -352,6 +407,8 @@ class AIController extends Controller
         return [
             'society' => $society,
             'raw_score' => round(max(0, min(100, $score)), 1),
+            'is_relevant' => $relevanceHits > 0 || !$signals['has_specific_signals'] || $fallback,
+            'relevance_hits' => $relevanceHits,
             'reasons' => array_values(array_unique(array_slice($reasons, 0, 3))),
             'tags' => array_values(array_unique(array_slice($tags, 0, 4))),
         ];
@@ -382,7 +439,7 @@ class AIController extends Controller
     private function replyFor(Collection $matches, array $signals, string $intent): string
     {
         if ($matches->isEmpty()) {
-            return 'I could not find a strong live match yet. Please request a callback and our team will shortlist verified options manually.';
+            return 'I could not find a strong live database match for this exact requirement yet. Please request a callback and our team will shortlist verified options manually.';
         }
 
         $pieces = [];

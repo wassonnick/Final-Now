@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   ArrowRight,
   Bot,
@@ -98,6 +99,7 @@ function AIAdvisorChatBox() {
   const [input, setInput] = useState("");
   const [intent] = useState<Intent>("rent");
   const [isLoading, setIsLoading] = useState(false);
+  const [lastQuery, setLastQuery] = useState("Best 3BHK near Cyber City under Rs 1L");
 
   const [messages, setMessages] = useState<AdvisorMessage[]>([
     {
@@ -128,6 +130,7 @@ function AIAdvisorChatBox() {
       text: cleanMessage,
     };
 
+    setLastQuery(cleanMessage);
     setMessages((current) => [...current, userMessage]);
     setInput("");
     setIsLoading(true);
@@ -161,7 +164,7 @@ function AIAdvisorChatBox() {
         text:
           data?.reply ||
           "Based on your requirement, these societies are a strong fit.",
-        matches: apiMatches.length > 0 ? apiMatches.slice(0, 3) : demoMatches,
+        matches: apiMatches.slice(0, 3),
       };
 
       setMessages((current) => [...current, assistantMessage]);
@@ -184,10 +187,12 @@ function AIAdvisorChatBox() {
   const latestMatches = useMemo(() => {
     const messageWithMatches = [...messages]
       .reverse()
-      .find((message) => message.matches && message.matches.length > 0);
+      .find((message) => Array.isArray(message.matches));
 
     return messageWithMatches?.matches?.slice(0, 3) || demoMatches;
   }, [messages]);
+
+  const latestSearchUrl = `/search?q=${encodeURIComponent(lastQuery)}&intent=general`;
 
   return (
     <aside className="hidden lg:block w-full max-w-[445px] shrink-0">
@@ -257,10 +262,11 @@ function AIAdvisorChatBox() {
               </div>
 
               <div className="space-y-1.5">
-                {latestMatches.map((match, index) => (
-                  <div
+                {latestMatches.length > 0 ? latestMatches.map((match, index) => (
+                  <Link
                     key={`${match.id}-${match.society_name}`}
-                    className="flex items-center gap-2.5 rounded-2xl bg-white px-3 py-1.5 shadow-sm"
+                    to={match.slug ? `/society/${match.slug}` : latestSearchUrl}
+                    className="flex items-center gap-2.5 rounded-2xl bg-white px-3 py-1.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                   >
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[12px] font-black text-white">
                       {index + 1}
@@ -285,18 +291,32 @@ function AIAdvisorChatBox() {
                           : "Very Good"}
                       </p>
                     </div>
+                  </Link>
+                )) : (
+                  <div className="rounded-2xl bg-white px-3 py-2 text-[12px] font-bold leading-relaxed text-slate-500 shadow-sm">
+                    No exact AI match yet. Try a society name, sector, budget or request a callback.
                   </div>
-                ))}
+                )}
               </div>
 
-              <div className="mt-2 rounded-full bg-white/90 px-3 py-1.5">
-                <div className="relative h-2 rounded-full bg-blue-100">
-                  <span className="absolute left-[18%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-emerald-500 shadow" />
-                  <span className="absolute left-[52%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-blue-600 shadow" />
-                  <span className="absolute left-[82%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-amber-700 shadow" />
+              {latestMatches.length > 0 ? (
+                <div className="mt-2 rounded-full bg-white/90 px-3 py-1.5">
+                  <div className="relative h-2 rounded-full bg-blue-100">
+                    <span className="absolute left-[18%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-emerald-500 shadow" />
+                    <span className="absolute left-[52%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-blue-600 shadow" />
+                    <span className="absolute left-[82%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-amber-700 shadow" />
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
+
+
+              <Link
+                to={latestSearchUrl}
+                className="mt-2 flex items-center justify-center rounded-full border border-blue-100 bg-white px-3 py-1.5 text-[11px] font-black text-blue-600 transition hover:border-blue-300 hover:bg-blue-50"
+              >
+                Open AI shortlist <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              </Link>
 
             <div className="flex flex-wrap gap-1.5">
               {["Family", "Metro", "Pets", "Under Rs 1L"].map((chip) => (
