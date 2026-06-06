@@ -222,18 +222,27 @@ function AIAdvisorChatBox() {
           </div>
 
           <div className="space-y-2">
-            <div className="rounded-2xl bg-white px-3.5 py-2.5 text-[12px] font-semibold leading-relaxed text-slate-700 shadow-sm">
-              Hi! I’m your SocietyFlats AI advisor for Gurgaon. Tell me your
-              needs and I’ll help you find the right society.
-            </div>
+            <div className="max-h-[178px] space-y-2 overflow-y-auto pr-1">
+              {messages.slice(-4).map((message) => (
+                <div
+                  key={message.id}
+                  className={cn(
+                    "max-w-[92%] rounded-2xl px-3.5 py-2.5 text-[12px] font-semibold leading-relaxed shadow-sm",
+                    message.role === "user"
+                      ? "ml-auto bg-blue-600 text-white shadow-md shadow-blue-200"
+                      : "bg-white text-slate-700"
+                  )}
+                >
+                  {message.text}
+                </div>
+              ))}
 
-            <div className="ml-auto max-w-[88%] rounded-2xl bg-blue-600 px-3.5 py-2 text-[12px] font-bold leading-relaxed text-white shadow-md shadow-blue-200">
-              Best 3BHK near Cyber City under Rs 1L
-            </div>
-
-            <div className="rounded-2xl bg-white px-3.5 py-2.5 text-[12px] font-semibold leading-relaxed text-blue-600 shadow-sm">
-              Here are the top 3 societies that match your requirements near
-              Cyber City for 3BHK homes.
+              {isLoading ? (
+                <div className="inline-flex items-center gap-2 rounded-2xl bg-white px-3.5 py-2.5 text-[12px] font-bold text-blue-600 shadow-sm">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Finding live matches...
+                </div>
+              ) : null}
             </div>
 
             <div className="rounded-[20px] border border-blue-100 bg-blue-50/70 p-2.5">

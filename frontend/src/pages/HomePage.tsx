@@ -129,6 +129,7 @@ export function HomePage() {
   const [societies, setSocieties] = useState<any[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
+  const [floatingAiInput, setFloatingAiInput] = useState("");
   const [leadContext, setLeadContext] = useState<{
     source: string;
     title: string;
@@ -166,6 +167,12 @@ export function HomePage() {
   const openLead = (context: typeof leadContext) => {
     if (!context) return;
     setLeadContext(context);
+  };
+
+  const submitFloatingAi = () => {
+    const cleanQuery = floatingAiInput.trim();
+    if (!cleanQuery) return;
+    window.location.href = `/search?q=${encodeURIComponent(cleanQuery)}&intent=general`;
   };
 
   return (
@@ -1146,21 +1153,29 @@ export function HomePage() {
               </button>
             </div>
           </div>
-          <div className="flex items-center gap-2 border-t border-blue-100 bg-white p-3">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              submitFloatingAi();
+            }}
+            className="flex items-center gap-2 border-t border-blue-100 bg-white p-3"
+          >
             <input
+              value={floatingAiInput}
+              onChange={(event) => setFloatingAiInput(event.target.value)}
               aria-label="Ask SocietyFlats AI"
               className="min-w-0 flex-1 rounded-full border border-blue-100 bg-ivory-100 px-4 py-2.5 text-sm font-semibold text-navy-700 outline-none placeholder:text-navy-300"
               placeholder="Ask about any society..."
-              readOnly
             />
-            <Link
-              to="/chat"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-700 text-white transition hover:bg-blue-800"
-              aria-label="Open full SocietyFlats chat"
+            <button
+              type="submit"
+              disabled={!floatingAiInput.trim()}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-700 text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Search with SocietyFlats AI"
             >
               <Send className="h-4 w-4" />
-            </Link>
-          </div>
+            </button>
+          </form>
         </div>
       ) : (
         <button

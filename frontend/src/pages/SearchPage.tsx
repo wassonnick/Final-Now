@@ -50,6 +50,21 @@ const quickLocalities = [
   "Sector 70",
 ];
 
+
+type AdvisorMatch = {
+  id?: number;
+  society_name: string;
+  slug?: string;
+  sector?: string;
+  locality?: string;
+  score?: number;
+  rent_range?: string;
+  buy_range?: string;
+  available_homes?: number;
+  reason?: string;
+  tags?: string[];
+};
+
 function getApiBaseUrl() {
   const envUrl =
     import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
@@ -186,6 +201,8 @@ export function SearchPage() {
 
   const [societies, setSocieties] = useState<any[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
+  const [aiMatches, setAiMatches] = useState<AdvisorMatch[]>([]);
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   useEffect(() => {
     fetchPublicSocieties()
@@ -200,6 +217,49 @@ export function SearchPage() {
     setActiveTab(searchParams.get("tab") || "societies");
     setQuery(searchParams.get("q") || searchParams.get("locality") || "");
   }, [searchParams]);
+
+  const isAiSearch = searchParams.get("intent") === "general";
+
+  useEffect(() => {
+    const aiQuery = (searchParams.get("q") || searchParams.get("locality") || "").trim();
+
+    if (!isAiSearch || !aiQuery) {
+      setAiMatches([]);
+      return;
+    }
+
+    let cancelled = false;
+    setIsAiLoading(true);
+
+    fetch(`${getApiBaseUrl()}/ai/advisor`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message: aiQuery, intent: "rent" }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("AI search failed");
+        return response.json();
+      })
+      .then((payload) => {
+        if (!cancelled) {
+          setAiMatches(Array.isArray(payload?.matches) ? payload.matches : []);
+        }
+      })
+      .catch((error) => {
+        console.error("AI search fetch failed:", error);
+        if (!cancelled) setAiMatches([]);
+      })
+      .finally(() => {
+        if (!cancelled) setIsAiLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAiSearch, searchParams]);
 
   const filteredSocieties = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -218,6 +278,29 @@ export function SearchPage() {
       return !q || text.includes(q);
     });
   }, [query, societies]);
+
+  const aiSocietyResults = useMemo(
+    () =>
+      aiMatches.map((match, index) => ({
+        id: match.id || `ai-${index}`,
+        name: match.society_name,
+        slug: match.slug || "",
+        sector: match.sector || "",
+        locality: match.locality || "Gurgaon",
+        score: match.score,
+        rentRange: match.rent_range,
+        buyRange: match.buy_range,
+        description: match.reason,
+        aiReason: match.reason,
+        aiTags: match.tags || [],
+      })),
+    [aiMatches],
+  );
+
+  const societyResults =
+    activeTab === "societies" && isAiSearch && aiSocietyResults.length > 0
+      ? aiSocietyResults
+      : filteredSocieties;
 
   const filteredProperties = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -247,6 +330,7 @@ export function SearchPage() {
     params.set("tab", tab);
     if (searchValue.trim()) params.set("q", searchValue.trim());
     else params.delete("q");
+    if (tab !== "societies") params.delete("intent");
     params.delete("locality");
     setSearchParams(params);
   };
@@ -301,14 +385,14 @@ export function SearchPage() {
 
   const visibleCount =
     activeTab === "societies"
-      ? filteredSocieties.length
+      ? societyResults.length
       : filteredProperties.length;
-  const selectedSociety = filteredSocieties[0] || societies[0];
-  const recommendedSocieties = filteredSocieties.slice(0, 3);
+  const selectedSociety = societyResults[0] || societies[0];
+  const recommendedSocieties = societyResults.slice(0, 3);
   const aiRecommendedSocieties = useMemo(() => {
-    const base = filteredSocieties.length > 0 ? filteredSocieties : societies;
+    const base = societyResults.length > 0 ? societyResults : societies;
     return base.slice(0, 3);
-  }, [filteredSocieties, societies]);
+  }, [societyResults, societies]);
   const aiRecommendedProperties = useMemo(() => {
     const base =
       filteredProperties.length > 0 ? filteredProperties : properties;
@@ -517,8 +601,9 @@ export function SearchPage() {
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-navy-500">
-                    {visibleCount} {resultLabel(activeTab).toLowerCase()} result
-                    {visibleCount === 1 ? "" : "s"} found
+                    {isAiLoading && activeTab === "societies"
+                      ? "Finding AI matches..."
+                      : `${visibleCount} ${resultLabel(activeTab).toLowerCase()} result${visibleCount === 1 ? "" : "s"} found`}
                   </p>
                   <h2 className="text-lg font-black text-navy-950 md:text-xl">
                     {query
@@ -590,7 +675,7 @@ export function SearchPage() {
                       {recommendedSocieties.map((society) => (
                         <Link
                           key={society.id}
-                          to={`/society/${society.slug}`}
+                          to={society.slug ? `/society/${society.slug}` : "/societies"}
                           className="rounded-2xl bg-white/90 p-3 shadow-sm"
                         >
                           <p className="text-sm font-bold text-navy-900">
@@ -647,10 +732,10 @@ export function SearchPage() {
               />
             ) : activeTab === "societies" ? (
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {filteredSocieties.map((society) => (
+                {societyResults.map((society) => (
                   <Link
                     key={society.id}
-                    to={`/society/${society.slug}`}
+                    to={society.slug ? `/society/${society.slug}` : "/societies"}
                     className="group overflow-hidden rounded-[1.5rem] border border-navy-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-apple"
                   >
                     <div className="relative h-52 overflow-hidden bg-navy-50 md:h-56">
@@ -675,6 +760,11 @@ export function SearchPage() {
                         <MapPin className="h-4 w-4" />{" "}
                         {formatPublicLocation(society)}
                       </p>
+                      {society.aiReason ? (
+                        <p className="mt-3 rounded-2xl bg-blue-50 px-3 py-2 text-xs font-bold leading-5 text-blue-700">
+                          AI match: {society.aiReason}
+                        </p>
+                      ) : null}
                       <div className="mt-5 grid grid-cols-2 gap-3 rounded-2xl bg-ivory-100 p-3 text-sm">
                         <div>
                           <p className="text-navy-400">Rent</p>
