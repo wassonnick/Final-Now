@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Admin\AdminStatsController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\SocietyController;
+use App\Http\Controllers\Api\AIController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', fn () => response()->json([
@@ -16,6 +17,7 @@ Route::get('/societies/{slug}', [SocietyController::class, 'show']);
 Route::get('/properties', [PropertyController::class, 'index']);
 Route::get('/properties/{idOrSlug}', [PropertyController::class, 'show']);
 Route::post('/leads', [LeadController::class, 'store']);
+Route::post('/ai/advisor', [AIController::class, 'advisor']);
 Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/stats', AdminStatsController::class);
     Route::post('/uploads/images', [ImageUploadController::class, 'store']);
