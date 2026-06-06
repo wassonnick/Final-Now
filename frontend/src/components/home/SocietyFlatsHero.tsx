@@ -163,7 +163,7 @@ function AIAdvisorChatBox() {
         role: "assistant",
         text:
           data?.reply ||
-          "Based on your requirement, these societies are a strong fit.",
+          "I found the closest society matches from the live SocietyFlats database. Open a result to view details and available homes.",
         matches: apiMatches.slice(0, 3),
       };
 

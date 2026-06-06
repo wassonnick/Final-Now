@@ -216,7 +216,7 @@ export function HomePage() {
       setFloatingAiReply(
         payload?.reply ||
           (matches.length
-            ? "These are the strongest society matches from the live database."
+            ? "I found the closest society matches from the live SocietyFlats database. Open a result to view society details and available homes."
             : "No exact live match was found yet. Try a society name, sector, budget or request a callback."),
       );
     } catch (error) {

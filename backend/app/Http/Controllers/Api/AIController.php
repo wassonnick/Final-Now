@@ -454,9 +454,8 @@ class AIController extends Controller
         }
 
         $requirement = $pieces ? ' for '.implode(' ', $pieces) : '';
-        $label = $intent === 'rent' ? 'rental' : 'buy/resale';
 
-        return 'Based on your '.$label.' requirement'.$requirement.', these societies are the strongest live database matches.';
+        return 'I found the closest society matches'.$requirement.' from the live SocietyFlats database. Open a result to view society details, available homes and next-step options.';
     }
 
     private function priceFromText(?string $value): ?int
