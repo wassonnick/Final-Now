@@ -131,6 +131,20 @@ function getSocietyLocality(property: Property | null): string {
   return property.locality || "Gurgaon";
 }
 
+function cleanLeadPhone(value: string) {
+  return value.replace(/\D/g, "").slice(0, 10);
+}
+
+function isValidLeadPhone(value: string) {
+  return /^[6-9]\d{9}$/.test(value);
+}
+
+function leadRequirementFor(listingType: string, leadType: "callback" | "enquiry") {
+  const cleanType = String(listingType || "Property").trim();
+  const purpose = leadType === "callback" ? "callback" : "enquiry";
+  return `${cleanType} ${purpose}`;
+}
+
 function getPhotos(property: Property): string[] {
   const savedImages = parseList(property.images);
   const galleryImages = parseList(property.galleryImages ?? property.gallery_images);
@@ -315,6 +329,13 @@ export function PropertyPage() {
     event.preventDefault();
     if (!property) return;
 
+    const normalizedPhone = cleanLeadPhone(leadForm.phone);
+
+    if (!isValidLeadPhone(normalizedPhone)) {
+      setLeadError("Enter a valid 10-digit Indian mobile number starting with 6, 7, 8 or 9.");
+      return;
+    }
+
     setLeadSubmitting(true);
     setLeadError("");
 
@@ -327,14 +348,14 @@ export function PropertyPage() {
         },
         body: JSON.stringify({
           name: leadForm.name,
-          phone: leadForm.phone,
+          phone: normalizedPhone,
           email: leadForm.email || null,
           message: leadForm.message,
           property_title: title,
           property_slug: property.slug || slug,
           society_name: societyName || property.locality || "Gurgaon",
           source: leadType === "callback" ? "property_callback" : "property_enquiry",
-          requirement: `${listingType || "Property"} ${leadType === "callback" ? "callback" : "enquiry"}`,
+          requirement: leadRequirementFor(listingType, leadType),
         }),
       });
 
@@ -804,7 +825,7 @@ export function PropertyPage() {
 
             {leadSuccess ? (
               <div className="mt-6 rounded-2xl bg-green-50 p-5 text-green-700">
-                Lead submitted successfully. We will contact you shortly.
+                Request received. Our team will contact you shortly.
               </div>
             ) : (
               <form onSubmit={submitLead} className="mt-6 space-y-4">
@@ -818,8 +839,10 @@ export function PropertyPage() {
                 <input
                   required
                   value={leadForm.phone}
-                  onChange={(event) => setLeadForm({ ...leadForm, phone: event.target.value })}
-                  placeholder="Phone number"
+                  inputMode="numeric"
+                  maxLength={10}
+                  onChange={(event) => setLeadForm({ ...leadForm, phone: cleanLeadPhone(event.target.value) })}
+                  placeholder="10-digit mobile number"
                   className="w-full rounded-2xl border border-navy-100 px-4 py-3 outline-none focus:border-blue-400"
                 />
                 <input

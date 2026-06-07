@@ -1,4 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+from pathlib import Path
+import re
+
+root = Path(".")
+modal_path = root / "frontend/src/components/leads/PublicLeadModal.tsx"
+property_path = root / "frontend/src/pages/PropertyPage.tsx"
+admin_store_path = root / "frontend/src/lib/adminLeadStore.ts"
+admin_page_path = root / "frontend/src/pages/admin/AdminLeadsPage.tsx"
+lead_model_path = root / "backend/app/Models/Lead.php"
+
+# 1) Replace PublicLeadModal with a shorter compact modal.
+modal_path.write_text(r'''import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Building2, CheckCircle2, Home, Phone, X } from "lucide-react";
 
@@ -321,3 +332,153 @@ export function PublicLeadModal({
     </div>
   );
 }
+''', encoding="utf-8")
+
+# 2) Patch PropertyPage custom modal and submit payload.
+property_text = property_path.read_text(encoding="utf-8")
+
+# Insert helper functions if missing.
+if "function cleanLeadPhone" not in property_text:
+    marker = "function getPhotos(property: Property): string[] {"
+    property_text = property_text.replace(
+        marker,
+        '''function cleanLeadPhone(value: string) {
+  return value.replace(/\\D/g, "").slice(0, 10);
+}
+
+function isValidLeadPhone(value: string) {
+  return /^[6-9]\\d{9}$/.test(value);
+}
+
+function leadRequirementFor(listingType: string, leadType: "callback" | "enquiry") {
+  const cleanType = String(listingType || "Property").trim();
+  const purpose = leadType === "callback" ? "callback" : "enquiry";
+  return `${cleanType} ${purpose}`;
+}
+
+''' + marker
+    )
+
+# Force phone validation inside submitLead.
+if "const normalizedPhone = cleanLeadPhone(leadForm.phone);" not in property_text:
+    property_text = property_text.replace(
+        '''    setLeadSubmitting(true);
+    setLeadError("");
+
+    try {''',
+        '''    const normalizedPhone = cleanLeadPhone(leadForm.phone);
+
+    if (!isValidLeadPhone(normalizedPhone)) {
+      setLeadError("Enter a valid 10-digit Indian mobile number starting with 6, 7, 8 or 9.");
+      return;
+    }
+
+    setLeadSubmitting(true);
+    setLeadError("");
+
+    try {'''
+    )
+
+property_text = property_text.replace(
+    '''          phone: leadForm.phone,''',
+    '''          phone: normalizedPhone,''',
+)
+
+if "requirement: leadRequirementFor(listingType, leadType)," not in property_text:
+    property_text = property_text.replace(
+        '''          source: leadType === "callback" ? "property_callback" : "property_enquiry",''',
+        '''          source: leadType === "callback" ? "property_callback" : "property_enquiry",
+          requirement: leadRequirementFor(listingType, leadType),'''
+    )
+
+# Make property modal phone input numeric-only if exact block exists.
+property_text = property_text.replace(
+    '''                  value={leadForm.phone}
+                  onChange={(event) => setLeadForm({ ...leadForm, phone: event.target.value })}
+                  placeholder="Phone number"''',
+    '''                  value={leadForm.phone}
+                  inputMode="numeric"
+                  maxLength={10}
+                  onChange={(event) => setLeadForm({ ...leadForm, phone: cleanLeadPhone(event.target.value) })}
+                  placeholder="10-digit mobile number"'''
+)
+
+# Make old property modal success copy cleaner.
+property_text = property_text.replace(
+    "Lead submitted successfully. We will contact you shortly.",
+    "Request received. Our team will contact you shortly."
+)
+
+property_path.write_text(property_text, encoding="utf-8")
+
+# 3) Make admin store infer requirement if backend field is empty.
+admin_store = admin_store_path.read_text(encoding="utf-8")
+
+if "function inferLeadRequirement" not in admin_store:
+    admin_store = admin_store.replace(
+        "function mapApiLead(apiLead: ApiLead): AdminLead {",
+        '''function inferLeadRequirement(apiLead: ApiLead): string {
+  const explicit = String(apiLead.requirement || "").trim();
+  if (explicit) return explicit;
+
+  const source = String(apiLead.source || "").toLowerCase();
+  const message = String(apiLead.message || "").toLowerCase();
+  const propertyTitle = String(apiLead.property_title || apiLead.property?.title || "").trim();
+
+  if (source.includes("property_callback")) return "Property callback";
+  if (source.includes("property_enquiry")) return "Property enquiry";
+  if (propertyTitle && source.includes("society_page")) return "Property callback";
+  if (message.includes("rent")) return "Rent requirement";
+  if (message.includes("buy") || message.includes("sale")) return "Buy requirement";
+  if (message.includes("visit")) return "Visit requirement";
+  if (message.includes("callback")) return "Callback request";
+
+  return "";
+}
+
+function mapApiLead(apiLead: ApiLead): AdminLead {'''
+    )
+
+admin_store = admin_store.replace(
+    "requirement: apiLead.requirement || apiLead.message || '',",
+    "requirement: inferLeadRequirement(apiLead) || apiLead.message || '',"
+)
+
+# Add Requirement column to CSV export if possible.
+admin_store = admin_store.replace(
+    "const headers = ['Name', 'Phone', 'Email', 'Society', 'Property', 'Budget', 'Source', 'Status', 'Priority', 'Assigned To', 'Follow Up'];",
+    "const headers = ['Name', 'Phone', 'Email', 'Society', 'Property', 'Requirement', 'Budget', 'Source', 'Status', 'Priority', 'Assigned To', 'Follow Up'];"
+)
+admin_store = admin_store.replace(
+    "lead.property, lead.budget, lead.source,",
+    "lead.property, lead.requirement, lead.budget, lead.source,"
+)
+
+admin_store_path.write_text(admin_store, encoding="utf-8")
+
+# 4) Admin list: show requirement where budget used to show "Not specified".
+admin_page = admin_page_path.read_text(encoding="utf-8")
+
+# Replace the simple budget rendering if present.
+admin_page = admin_page.replace(
+    "{lead.budget}",
+    "{lead.requirement || lead.budget || 'Not specified'}"
+)
+
+admin_page_path.write_text(admin_page, encoding="utf-8")
+
+# 5) Backend safety: make sure Lead model fillable includes requirement.
+if lead_model_path.exists():
+    lead_model = lead_model_path.read_text(encoding="utf-8")
+    if "'requirement'" not in lead_model and '"requirement"' not in lead_model:
+        # Add after message when possible.
+        lead_model = lead_model.replace("'message',", "'message',\n        'requirement',")
+        lead_model = lead_model.replace('"message",', '"message",\n        "requirement",')
+        lead_model_path.write_text(lead_model, encoding="utf-8")
+
+print("C4E applied:")
+print("- PublicLeadModal compacted further")
+print("- PropertyPage custom modal sends requirement + validates phone")
+print("- Admin lead list shows requirement instead of budget line")
+print("- Admin store infers requirement for older/missing records")
+print("- Lead model checked for requirement fillable")

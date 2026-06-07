@@ -216,7 +216,7 @@ export function AdminLeadsPage() {
                 <div>
                   <p className="font-medium text-slate-800">{lead.society}</p>
                   <p className="mt-1 text-sm text-slate-500">{lead.property}</p>
-                  <p className="mt-1 text-sm font-medium text-blue-700">{lead.budget}</p>
+                  <p className="mt-1 text-sm font-medium text-blue-700">{lead.requirement || lead.budget || 'Not specified'}</p>
                 </div>
 
                 <select disabled={savingLeadId === lead.id} value={lead.status} onChange={(event) => handleStatusChange(lead, event.target.value as LeadStatus)} className={`h-10 rounded-full border-0 px-3 text-sm font-medium outline-none disabled:opacity-60 ${statusClass(lead.status)}`}>
