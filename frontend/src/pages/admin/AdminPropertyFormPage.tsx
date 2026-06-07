@@ -109,6 +109,48 @@ function fieldSummary(label: string, value: string) {
   return value ? `${label}: ${value}` : `${label}: missing`;
 }
 
+function isRentalListing(listingType: string) {
+  return String(listingType || "").toLowerCase().includes("rent");
+}
+
+function isSaleListing(listingType: string) {
+  const value = String(listingType || "").toLowerCase();
+  return value.includes("sale") || value.includes("buy") || value.includes("sell") || value.includes("resale");
+}
+
+function pricingLabels(listingType: string) {
+  if (isRentalListing(listingType)) {
+    return {
+      price: "Monthly Rent",
+      pricePlaceholder: "₹85,000/mo",
+      deposit: "Security Deposit",
+      depositPlaceholder: "₹1,70,000",
+      maintenance: "Maintenance",
+      maintenancePlaceholder: "Included / ₹12,000",
+    };
+  }
+
+  if (String(listingType || "").toLowerCase().includes("builder")) {
+    return {
+      price: "Asking Price",
+      pricePlaceholder: "₹4.2 Cr",
+      deposit: "Booking Amount",
+      depositPlaceholder: "₹5,00,000",
+      maintenance: "Maintenance",
+      maintenancePlaceholder: "₹12,000 / Included",
+    };
+  }
+
+  return {
+    price: "Sale Price",
+    pricePlaceholder: "₹4.2 Cr",
+    deposit: "Token / Booking Amount",
+    depositPlaceholder: "₹5,00,000",
+    maintenance: "Maintenance",
+    maintenancePlaceholder: "₹12,000 / Included",
+  };
+}
+
 export function AdminPropertyFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -195,6 +237,10 @@ export function AdminPropertyFormPage() {
       percent: Math.round((done / checks.length) * 100),
     };
   }, [property, propertyImages.length]);
+
+  const labels = pricingLabels(property.listingType);
+  const rentalListing = isRentalListing(property.listingType);
+  const saleListing = isSaleListing(property.listingType);
 
   const updateField = (key: string, value: any) => {
     setProperty((current: any) => ({ ...current, [key]: value }));
@@ -333,11 +379,19 @@ export function AdminPropertyFormPage() {
   };
 
   const generateDescription = () => {
-    const text = `${property.bedrooms || "Spacious"} BHK ${String(
-      property.listingType || "property",
-    ).toLowerCase()} listing in ${property.society || "this society"}, ${
+    const listingKind = rentalListing
+      ? "rental home"
+      : saleListing
+        ? "resale home"
+        : "property";
+
+    const audience = rentalListing
+      ? "tenants and families looking for verified rental options"
+      : "buyers and investors looking for verified resale options";
+
+    const text = `${property.bedrooms || "Spacious"} BHK ${listingKind} in ${property.society || "this society"}, ${
       property.locality || "Gurgaon"
-    }. Ideal for families and professionals looking for a verified society with strong connectivity, security and lifestyle amenities.`;
+    }. Suitable for ${audience}, with strong society context, connectivity, security and lifestyle amenities.`;
 
     updateField("description", text);
   };
@@ -425,7 +479,9 @@ export function AdminPropertyFormPage() {
           <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-sm font-medium text-slate-500">Mode</p>
             <p className="mt-3 text-2xl font-bold text-slate-950">{property.listingType}</p>
-            <p className="mt-2 text-sm text-blue-600">{property.status}</p>
+            <p className="mt-2 text-sm text-blue-600">
+              {rentalListing ? "Rental listing" : saleListing ? "Sale / resale listing" : property.status}
+            </p>
           </div>
 
           <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -519,39 +575,43 @@ export function AdminPropertyFormPage() {
             </section>
 
             <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-xl font-bold tracking-tight text-slate-950">Pricing & Configuration</h2>
+              <h2 className="text-xl font-bold tracking-tight text-slate-950">
+                {rentalListing ? "Rent & Configuration" : "Sale Price & Configuration"}
+              </h2>
               <p className="mt-1 text-sm text-slate-500">
-                These fields support rent, resale and seller inventory workflows.
+                {rentalListing
+                  ? "Add rent, deposit and configuration details for rental inventory."
+                  : "Add asking price, booking/token amount and configuration details for sale inventory."}
               </p>
 
               <div className="mt-6 grid gap-4 md:grid-cols-3">
                 <label className="text-sm font-medium text-slate-700">
-                  Price / Rent
+                  {labels.price}
                   <Input
                     value={property.price}
                     onChange={(event) => updateField("price", event.target.value)}
                     className="mt-2 h-12 rounded-2xl border-slate-200"
-                    placeholder="₹85,000/mo or ₹4.2 Cr"
+                    placeholder={labels.pricePlaceholder}
                   />
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  Security Deposit
+                  {labels.deposit}
                   <Input
                     value={property.securityDeposit}
                     onChange={(event) => updateField("securityDeposit", event.target.value)}
                     className="mt-2 h-12 rounded-2xl border-slate-200"
-                    placeholder="₹1,70,000"
+                    placeholder={labels.depositPlaceholder}
                   />
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  Maintenance
+                  {labels.maintenance}
                   <Input
                     value={property.maintenance}
                     onChange={(event) => updateField("maintenance", event.target.value)}
                     className="mt-2 h-12 rounded-2xl border-slate-200"
-                    placeholder="Included / ₹12,000"
+                    placeholder={labels.maintenancePlaceholder}
                   />
                 </label>
 
@@ -761,7 +821,7 @@ export function AdminPropertyFormPage() {
               <div className="mt-3 space-y-2 text-sm text-slate-600">
                 <p>{fieldSummary("Title", property.title)}</p>
                 <p>{fieldSummary("Society", property.society)}</p>
-                <p>{fieldSummary("Price", property.price)}</p>
+                <p>{fieldSummary(labels.price, property.price)}</p>
                 <p>{fieldSummary("Images", propertyImages.length ? `${propertyImages.length}` : "")}</p>
               </div>
             </section>
