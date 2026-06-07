@@ -148,6 +148,15 @@ function getPhotos(property: Property): string[] {
       ];
 }
 
+function safePropertyPath(property: Property): string {
+  const rawSlug = String(property?.slug || "").replace(/^\/+/, "").replace(/^property\//, "");
+
+  if (rawSlug) return `/property/${rawSlug}`;
+  if (property?.id) return `/property/${property.id}`;
+
+  return "/properties";
+}
+
 export function PropertyPage() {
   const { slug } = useParams();
 
@@ -156,6 +165,7 @@ export function PropertyPage() {
   const [fetchError, setFetchError] = useState("");
   const [activeImage, setActiveImage] = useState(0);
   const [isShortlisted, setIsShortlisted] = useState(false);
+  const [similarProperties, setSimilarProperties] = useState<Property[]>([]);
 
   const [leadOpen, setLeadOpen] = useState(false);
   const [leadType, setLeadType] = useState<"callback" | "enquiry">("callback");
@@ -226,6 +236,62 @@ export function PropertyPage() {
   const furnishedStatus = getField(property, "furnishedStatus", "furnished_status", "-");
   const amenities = useMemo(() => parseList(property?.amenities), [property?.amenities]);
   const photos = useMemo(() => (property ? getPhotos(property) : []), [property]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchSimilarProperties() {
+      if (!property) {
+        setSimilarProperties([]);
+        return;
+      }
+
+      const searchTerm = societyName || property.locality || societyLocality || "";
+
+      if (!searchTerm) {
+        setSimilarProperties([]);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/properties?q=${encodeURIComponent(searchTerm)}`);
+
+        if (!response.ok) throw new Error("Similar properties API failed");
+
+        const json = await response.json();
+        const items = Array.isArray(json?.data?.data)
+          ? json.data.data
+          : Array.isArray(json?.data)
+            ? json.data
+            : [];
+
+        const currentSlug = String(property.slug || slug || "").toLowerCase();
+        const currentId = String(property.id || "");
+
+        const matches = items
+          .filter((item: Property) => {
+            const itemSlug = String(item.slug || "").toLowerCase();
+            const itemId = String(item.id || "");
+
+            if (currentSlug && itemSlug && itemSlug === currentSlug) return false;
+            if (currentId && itemId && itemId === currentId) return false;
+
+            return Boolean(item?.title || item?.slug || item?.id);
+          })
+          .slice(0, 3);
+
+        if (mounted) setSimilarProperties(matches);
+      } catch {
+        if (mounted) setSimilarProperties([]);
+      }
+    }
+
+    fetchSimilarProperties();
+
+    return () => {
+      mounted = false;
+    };
+  }, [property, societyName, societyLocality, slug]);
 
   const whatsappMessage = encodeURIComponent(
     `Hi, I am interested in ${title}. Please share details.`,
@@ -528,6 +594,74 @@ export function PropertyPage() {
                 </div>
               </section>
             ) : null}
+
+            <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
+                    Same society options
+                  </p>
+                  <h2 className="mt-2 text-xl font-bold text-navy-900 md:text-2xl">
+                    Similar properties in {societyName || "this area"}
+                  </h2>
+                </div>
+                <Button asChild variant="outline" className="hidden rounded-full border-blue-200 text-blue-700 sm:inline-flex">
+                  <Link to={`/search?tab=rent&q=${encodeURIComponent(societyName || societyLocality || title)}`}>
+                    View all
+                  </Link>
+                </Button>
+              </div>
+
+              {similarProperties.length ? (
+                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  {similarProperties.map((item) => {
+                    const itemTitle = item.title || "Similar home";
+                    const itemPrice = item.price || item.rent || "On request";
+                    const itemBedrooms = item.bedrooms || "-";
+                    const itemArea = getField(item, "areaSqft", "area_sqft", "-");
+                    const itemPath = safePropertyPath(item);
+                    const itemPhoto = getPhotos(item)[0];
+
+                    return (
+                      <Link
+                        key={String(item.id || item.slug || itemTitle)}
+                        to={itemPath}
+                        className="group overflow-hidden rounded-[1.5rem] border border-navy-100 bg-white transition-all hover:shadow-soft"
+                      >
+                        <div className="h-32 bg-navy-50 md:h-36">
+                          <img src={itemPhoto} alt={itemTitle} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        </div>
+                        <div className="p-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
+                            {getField(item, "listingType", "listing_type", "Property")}
+                          </p>
+                          <h3 className="mt-2 line-clamp-2 font-bold text-navy-900 group-hover:text-blue-700">
+                            {itemTitle}
+                          </h3>
+                          <p className="mt-2 text-sm text-navy-500">
+                            {itemBedrooms} BHK • {itemArea} sq.ft
+                          </p>
+                          <div className="mt-3 flex items-center justify-between gap-3 border-t border-navy-100 pt-3">
+                            <p className="font-bold text-navy-900">{itemPrice}</p>
+                            <span className="text-sm font-semibold text-blue-700">View</span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-2xl bg-blue-50 p-5">
+                  <h3 className="font-bold text-navy-900">Want more options in this society?</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-navy-600">
+                    Request a callback and we will check similar homes, owner availability and matching inventory in {societyName || societyLocality}.
+                  </p>
+                  <Button onClick={() => openLead("callback")} className="mt-4 rounded-full bg-blue-600 hover:bg-blue-700">
+                    <Phone className="mr-2 h-4 w-4" /> Request similar options
+                  </Button>
+                </div>
+              )}
+            </section>
           </div>
 
           <aside className="hidden lg:block">
