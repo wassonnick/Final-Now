@@ -1200,7 +1200,7 @@ export function SocietyPage() {
         }
         defaultRequirement={
           selectedLeadProperty
-            ? `${field(selectedLeadProperty, "listingType", "listing_type", "Property")} requirement for ${selectedLeadProperty.title}. Please confirm availability, price and visit timing.`
+            ? `${field(selectedLeadProperty, "listingType", "listing_type", "Property")} requirement for ${selectedLeadProperty.title}.`
             : `Looking for homes or society guidance in ${society.name}, ${societyLocation || "Gurgaon"}.`
         }
         submitLabel="Request callback"

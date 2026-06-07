@@ -32,8 +32,19 @@ const emptyForm = {
 
 const requirementChips = ["Rent", "Buy", "Visit", "Callback"];
 
-function isValidIndianMobile(phone: string) {
-  return /^[6-9]\d{9}$/.test(phone);
+function cleanPhoneNumber(value: string) {
+  return value.replace(/\D/g, "").slice(0, 10);
+}
+
+function isValidIndianMobile(value: string) {
+  return /^[6-9]\d{9}$/.test(value);
+}
+
+function normalizeRequirement(value?: string) {
+  const clean = String(value || "").trim();
+  if (!clean) return "";
+  if (/requirement|callback|enquiry|visit/i.test(clean)) return clean;
+  return `${clean} requirement`;
 }
 
 export function PublicLeadModal({
@@ -48,7 +59,7 @@ export function PublicLeadModal({
   propertySlug,
   budget = "",
   submitLabel = "Request callback",
-  successMessage = "Thanks. Our team will contact you shortly.",
+  successMessage,
   onClose,
 }: PublicLeadModalProps) {
   const [form, setForm] = useState(emptyForm);
@@ -57,26 +68,8 @@ export function PublicLeadModal({
   const [error, setError] = useState("");
 
   const isPropertyLead = Boolean(propertyTitle);
-  const phoneDigits = form.phone.replace(/\D/g, "");
-  const phoneIsValid = isValidIndianMobile(phoneDigits);
-
-  const compactTitle = useMemo(() => {
-    if (success) return "Request received";
-    if (isPropertyLead) return "Request property callback";
-    return "Request society callback";
-  }, [isPropertyLead, success]);
-
-  const compactSubtitle = useMemo(() => {
-    if (success) {
-      return "Your request has been saved. Our team will contact you shortly.";
-    }
-
-    if (isPropertyLead) {
-      return "Confirm availability, pricing and visit timing for this home.";
-    }
-
-    return "Tell us your requirement and we will help with availability and visit planning.";
-  }, [isPropertyLead, success]);
+  const phoneDigits = useMemo(() => cleanPhoneNumber(form.phone), [form.phone]);
+  const phoneValid = isValidIndianMobile(phoneDigits);
 
   useEffect(() => {
     if (!open) return;
@@ -84,7 +77,7 @@ export function PublicLeadModal({
     setForm({
       ...emptyForm,
       message: defaultMessage,
-      requirement: defaultRequirement,
+      requirement: normalizeRequirement(defaultRequirement),
       budget,
     });
     setSuccess(false);
@@ -94,46 +87,67 @@ export function PublicLeadModal({
 
   if (!open) return null;
 
-  const selectRequirement = (chip: string) => {
-    if (isPropertyLead) return;
+  const displayTitle = success
+    ? "Request received"
+    : isPropertyLead
+      ? "Request property callback"
+      : "Request callback";
 
-    const nextRequirement = `${chip} requirement`;
+  const displaySubtitle = success
+    ? "We have saved your request. Our team will contact you shortly."
+    : isPropertyLead
+      ? "Confirm availability, price and visit timing."
+      : "Tell us what you need. We will check availability and guide you.";
+
+  const finalRequirement =
+    normalizeRequirement(form.requirement) ||
+    normalizeRequirement(defaultRequirement) ||
+    (isPropertyLead ? "Property callback" : "Society callback");
+
+  const selectRequirement = (chip: string) => {
+    const nextRequirement = normalizeRequirement(chip);
     setForm((current) => ({
       ...current,
       requirement: nextRequirement,
       message:
-        current.message || defaultMessage || `I need help with ${chip.toLowerCase()} options.`,
+        current.message ||
+        `I need help with ${chip.toLowerCase()} options${societyName ? ` in ${societyName}` : ""}.`,
     }));
-  };
-
-  const updatePhone = (value: string) => {
-    const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
-    setForm((current) => ({ ...current, phone: digitsOnly }));
   };
 
   const submitLead = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError("");
 
-    if (!phoneIsValid) {
+    const normalizedPhone = cleanPhoneNumber(form.phone);
+
+    if (!form.name.trim()) {
+      setError("Please enter your name.");
+      return;
+    }
+
+    if (!isValidIndianMobile(normalizedPhone)) {
       setError("Enter a valid 10-digit Indian mobile number starting with 6, 7, 8 or 9.");
       return;
     }
 
     setSubmitting(true);
-    setError("");
 
     try {
       await backendApi.createLead({
         name: form.name.trim(),
-        phone: phoneDigits,
-        email: form.email || null,
+        phone: normalizedPhone,
+        email: form.email.trim() || null,
         source,
         society_name: societyName || null,
         property_title: propertyTitle || null,
         property_slug: propertySlug || null,
-        message: form.message || defaultMessage || defaultRequirement,
-        requirement: form.requirement || defaultRequirement || null,
-        budget: form.budget || budget || null,
+        requirement: finalRequirement,
+        budget: form.budget.trim() || budget || null,
+        message:
+          form.message.trim() ||
+          defaultMessage ||
+          `${finalRequirement}${societyName ? ` for ${societyName}` : ""}`,
       });
 
       setSuccess(true);
@@ -146,9 +160,9 @@ export function PublicLeadModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/60 px-3 pb-4 pt-8 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-[1.75rem] bg-white shadow-2xl sm:rounded-[2rem]">
-        <div className="relative border-b border-navy-100 px-5 py-5 sm:px-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/60 px-3 pb-3 pt-6 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className="max-h-[88vh] w-full max-w-[390px] overflow-y-auto rounded-[1.5rem] bg-white shadow-2xl sm:max-w-md">
+        <div className="relative border-b border-navy-100 px-5 py-4">
           <button
             type="button"
             onClick={onClose}
@@ -158,29 +172,29 @@ export function PublicLeadModal({
             <X className="h-4 w-4" />
           </button>
 
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-600">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-600">
             SocietyFlats callback
           </p>
 
-          <h3 className="mt-2 max-w-[84%] text-2xl font-extrabold leading-tight text-navy-900 sm:text-3xl">
-            {compactTitle}
+          <h3 className="mt-2 max-w-[82%] text-2xl font-extrabold leading-tight text-navy-900">
+            {displayTitle}
           </h3>
 
-          <p className="mt-2 max-w-[88%] text-sm leading-relaxed text-navy-500 sm:text-base">
-            {compactSubtitle}
+          <p className="mt-2 max-w-[88%] text-sm leading-relaxed text-navy-500">
+            {displaySubtitle}
           </p>
 
           {!success ? (
-            <div className="mt-4 space-y-2">
+            <div className="mt-3 space-y-2">
               {societyName ? (
-                <div className="flex items-center gap-2 rounded-2xl bg-blue-50 px-4 py-3 text-sm font-bold text-navy-800">
+                <div className="flex h-10 items-center gap-2 rounded-2xl bg-blue-50 px-4 text-sm font-bold text-navy-800">
                   <Building2 className="h-4 w-4 text-blue-600" />
                   {societyName}
                 </div>
               ) : null}
 
               {propertyTitle ? (
-                <div className="flex items-center gap-2 rounded-2xl bg-[#F8FAFC] px-4 py-3 text-sm font-bold text-navy-800">
+                <div className="flex h-10 items-center gap-2 rounded-2xl bg-[#F8FAFC] px-4 text-sm font-bold text-navy-800">
                   <Home className="h-4 w-4 text-blue-600" />
                   {propertyTitle}
                 </div>
@@ -190,44 +204,43 @@ export function PublicLeadModal({
         </div>
 
         {success ? (
-          <div className="px-5 py-6 sm:px-6">
+          <div className="px-5 py-5">
             <div className="rounded-2xl bg-green-50 p-5 text-green-700">
               <CheckCircle2 className="h-7 w-7" />
               <h4 className="mt-3 text-lg font-bold">Lead submitted successfully</h4>
               <p className="mt-2 text-sm leading-relaxed">
-                We have received your request. Our team will contact you shortly.
+                Your request has been received. Our team will contact you shortly.
               </p>
             </div>
 
             <Button
               type="button"
               onClick={onClose}
-              className="mt-5 w-full rounded-full bg-blue-600 font-bold hover:bg-blue-700"
+              className="mt-4 h-11 w-full rounded-full bg-blue-600 font-bold hover:bg-blue-700"
             >
               Done
             </Button>
           </div>
         ) : (
-          <form onSubmit={submitLead} className="px-5 py-5 sm:px-6">
+          <form onSubmit={submitLead} className="px-5 py-4">
             {!isPropertyLead ? (
-              <div className="mb-4">
-                <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-navy-300">
+              <div className="mb-3">
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
                   What do you need?
                 </p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {requirementChips.map((chip) => {
-                    const active = form.requirement
-                      .toLowerCase()
-                      .includes(chip.toLowerCase());
+                    const requirement = normalizeRequirement(chip);
+                    const active = form.requirement === requirement;
 
                     return (
                       <button
                         key={chip}
                         type="button"
                         onClick={() => selectRequirement(chip)}
-                        className={`rounded-full border px-4 py-2 text-sm font-bold transition ${
+                        className={`h-9 rounded-full border px-3 text-sm font-bold transition ${
                           active
-                            ? "border-blue-200 bg-blue-50 text-blue-700"
+                            ? "border-blue-300 bg-blue-50 text-blue-700"
                             : "border-navy-100 bg-white text-navy-500 hover:bg-navy-50"
                         }`}
                       >
@@ -239,13 +252,13 @@ export function PublicLeadModal({
               </div>
             ) : null}
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <input
                 required
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
                 placeholder="Your name"
-                className="h-12 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                className="h-11 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
               <div>
@@ -255,11 +268,14 @@ export function PublicLeadModal({
                   pattern="[6-9][0-9]{9}"
                   maxLength={10}
                   value={form.phone}
-                  onChange={(event) => updatePhone(event.target.value)}
+                  onChange={(event) => {
+                    setForm({ ...form, phone: cleanPhoneNumber(event.target.value) });
+                    if (error) setError("");
+                  }}
                   placeholder="10-digit mobile number"
-                  className="h-12 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                  className="h-11 w-full rounded-2xl border border-blue-200 bg-blue-50/40 px-4 text-sm font-bold text-navy-900 outline-none focus:border-blue-500 focus:bg-white"
                 />
-                <p className={`mt-1 text-xs ${phoneDigits.length && !phoneIsValid ? "text-red-600" : "text-navy-300"}`}>
+                <p className={`mt-1 text-[11px] ${phoneDigits.length && !phoneValid ? "text-red-600" : "text-navy-300"}`}>
                   {phoneDigits.length}/10 digits · India mobile number only
                 </p>
               </div>
@@ -269,21 +285,21 @@ export function PublicLeadModal({
                 value={form.email}
                 onChange={(event) => setForm({ ...form, email: event.target.value })}
                 placeholder="Email optional"
-                className="h-12 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                className="h-11 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
               <input
                 value={form.budget}
                 onChange={(event) => setForm({ ...form, budget: event.target.value })}
                 placeholder="Budget optional"
-                className="h-12 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                className="h-11 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
               <textarea
                 value={form.message}
                 onChange={(event) => setForm({ ...form, message: event.target.value })}
-                placeholder="Tell us what you need"
-                rows={3}
+                placeholder="Message optional"
+                rows={2}
                 className="w-full rounded-2xl border border-navy-100 px-4 py-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
@@ -295,15 +311,11 @@ export function PublicLeadModal({
 
               <Button
                 disabled={submitting}
-                className="h-12 w-full rounded-full bg-blue-600 font-bold text-white hover:bg-blue-700"
+                className="h-11 w-full rounded-full bg-blue-600 font-bold text-white hover:bg-blue-700"
               >
                 <Phone className="mr-2 h-4 w-4" />
                 {submitting ? "Submitting..." : submitLabel}
               </Button>
-
-              <p className="text-center text-xs leading-relaxed text-navy-300">
-                We use your details only to respond to this property/society request.
-              </p>
             </div>
           </form>
         )}
