@@ -449,7 +449,43 @@ export function SocietyPage() {
                   {society.description}
                 </p>
               ) : null}
-              <div className="mt-7 flex flex-col gap-3 border-t border-navy-100 pt-5 sm:flex-row">
+              <div className="mt-7 grid gap-3 border-t border-navy-100 pt-5 sm:grid-cols-3">
+                <div className="rounded-2xl bg-blue-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">
+                    Available homes
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-navy-900">
+                    {properties.length || "0"}
+                  </p>
+                  <p className="mt-1 text-xs text-navy-500">
+                    live option{properties.length === 1 ? "" : "s"} in database
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-[#F8FAFC] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-navy-500">
+                    Rent range
+                  </p>
+                  <p className="mt-2 text-lg font-bold text-navy-900">
+                    {field(society, "rentRange", "rent_range", "On request")}
+                  </p>
+                  <p className="mt-1 text-xs text-navy-500">
+                    subject to live availability
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-[#F8FAFC] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-navy-500">
+                    Buy range
+                  </p>
+                  <p className="mt-2 text-lg font-bold text-navy-900">
+                    {field(society, "buyRange", "buy_range", "On request")}
+                  </p>
+                  <p className="mt-1 text-xs text-navy-500">
+                    resale guidance where available
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Button
                   asChild
                   className="rounded-full bg-blue-600 hover:bg-blue-700"
@@ -457,9 +493,30 @@ export function SocietyPage() {
                   <Link
                     to={`/search?tab=rent&q=${encodeURIComponent(society.name)}`}
                   >
-                    View available rentals
+                    View available homes
                   </Link>
                 </Button>
+
+                <Button
+                  onClick={() => setCallbackOpen(true)}
+                  variant="outline"
+                  className="rounded-full border-blue-200 text-blue-700 hover:bg-blue-50"
+                >
+                  <Phone className="mr-2 h-4 w-4" /> Request callback
+                </Button>
+
+                <Button
+                  asChild
+                  variant="outline"
+                  className="rounded-full border-navy-200"
+                >
+                  <Link
+                    to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}
+                  >
+                    Find homes like this
+                  </Link>
+                </Button>
+
                 <Button
                   asChild
                   variant="outline"
@@ -471,6 +528,7 @@ export function SocietyPage() {
                     List your property
                   </Link>
                 </Button>
+
                 <a
                   href={`https://wa.me/919999988888?text=${whatsappMessage}`}
                   target="_blank"
@@ -705,9 +763,29 @@ export function SocietyPage() {
 
           <aside className="space-y-5">
             <div className="sticky top-24 rounded-[2rem] border border-navy-100 bg-white p-6 shadow-soft">
-              <h3 className="text-xl font-bold text-navy-900">
-                Society market snapshot
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
+                Next step
+              </p>
+              <h3 className="mt-2 text-xl font-bold text-navy-900">
+                Get verified options in {society.name}
               </h3>
+              <p className="mt-3 text-sm leading-relaxed text-navy-500">
+                Share your requirement once. SocietyFlats will help you check
+                live availability, budget fit and visit planning for this
+                society.
+              </p>
+
+              <div className="mt-5 rounded-2xl bg-blue-50 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm font-medium text-blue-700">
+                    Live homes
+                  </span>
+                  <span className="text-lg font-bold text-navy-900">
+                    {properties.length || "0"}
+                  </span>
+                </div>
+              </div>
+
               <div className="mt-5 space-y-4">
                 {[
                   [
@@ -752,27 +830,72 @@ export function SocietyPage() {
                   </div>
                 ))}
               </div>
+
+              <Button
+                onClick={() => setCallbackOpen(true)}
+                className="mt-6 w-full rounded-full bg-blue-600 hover:bg-blue-700"
+              >
+                <Phone className="mr-2 h-4 w-4" /> Request callback
+              </Button>
+
               <Button
                 asChild
-                className="mt-6 w-full rounded-full bg-navy-600 hover:bg-navy-700"
+                variant="outline"
+                className="mt-3 w-full rounded-full border-navy-200"
               >
                 <Link
                   to={`/search?tab=rent&q=${encodeURIComponent(society.name)}`}
                 >
-                  View homes in this society
+                  View available homes
                 </Link>
               </Button>
+
               <Button
-                onClick={() => setCallbackOpen(true)}
-                variant="outline"
-                className="mt-3 w-full rounded-full"
+                asChild
+                variant="ghost"
+                className="mt-2 w-full rounded-full text-blue-700 hover:bg-blue-50"
               >
-                <Phone className="mr-2 h-4 w-4" /> Request callback
+                <Link
+                  to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}
+                >
+                  Find homes like this
+                </Link>
               </Button>
+
+              <div className="mt-5 rounded-2xl border border-navy-100 bg-[#F8FAFC] p-4">
+                <p className="text-sm font-semibold text-navy-900">
+                  Why request a callback?
+                </p>
+                <ul className="mt-3 space-y-2 text-sm text-navy-500">
+                  <li>• Confirm live availability before visiting.</li>
+                  <li>• Compare rent, resale and society fit.</li>
+                  <li>• Get help shortlisting similar societies.</li>
+                </ul>
+              </div>
             </div>
           </aside>
         </div>
       </section>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-navy-100 bg-white/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            asChild
+            className="rounded-full bg-navy-600 hover:bg-navy-700"
+          >
+            <Link to={`/search?tab=rent&q=${encodeURIComponent(society.name)}`}>
+              View homes
+            </Link>
+          </Button>
+          <Button
+            onClick={() => setCallbackOpen(true)}
+            variant="outline"
+            className="rounded-full border-blue-200 text-blue-700"
+          >
+            <Phone className="mr-2 h-4 w-4" /> Callback
+          </Button>
+        </div>
+      </div>
 
       <PublicLeadModal
         open={callbackOpen}
