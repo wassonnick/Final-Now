@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+from pathlib import Path
+
+path = Path("frontend/src/pages/admin/AdminSocietiesPage.tsx")
+
+path.write_text(r'''import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BarChart3,
@@ -485,3 +489,6 @@ export function AdminSocietiesPage() {
     </AdminLayout>
   );
 }
+''', encoding="utf-8")
+
+print("C6B AdminSocietiesPage mobile + quick actions applied.")
