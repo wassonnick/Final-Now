@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+from pathlib import Path
+import re
+
+root = Path(".")
+modal_path = root / "frontend/src/components/leads/PublicLeadModal.tsx"
+society_path = root / "frontend/src/pages/SocietyPage.tsx"
+property_path = root / "frontend/src/pages/PropertyPage.tsx"
+
+modal_path.write_text(r'''import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Building2, CheckCircle2, Home, Phone, X } from "lucide-react";
 
@@ -323,3 +331,37 @@ export function PublicLeadModal({
     </div>
   );
 }
+''', encoding="utf-8")
+
+# Ensure SocietyPage property inventory callbacks send an explicit requirement.
+society_text = society_path.read_text(encoding="utf-8")
+
+society_text = re.sub(
+    r'defaultRequirement=\{\s*selectedLeadProperty\s*\?\s*`[^`]*`\s*:\s*`Looking for homes or society guidance in \$\{society\.name\}, \$\{societyLocation \|\| "Gurgaon"\}\.`\s*\}',
+    '''defaultRequirement={
+          selectedLeadProperty
+            ? `${field(selectedLeadProperty, "listingType", "listing_type", "Property")} requirement for ${selectedLeadProperty.title}.`
+            : `Looking for homes or society guidance in ${society.name}, ${societyLocation || "Gurgaon"}.`
+        }''',
+    society_text,
+    flags=re.S,
+)
+
+society_path.write_text(society_text, encoding="utf-8")
+
+# Ensure PropertyPage custom lead form sends requirement to backend.
+property_text = property_path.read_text(encoding="utf-8")
+
+if "requirement:" not in property_text[property_text.find("body: JSON.stringify({"):property_text.find("body: JSON.stringify({")+800]:
+    property_text = property_text.replace(
+        '''          source: leadType === "callback" ? "property_callback" : "property_enquiry",''',
+        '''          source: leadType === "callback" ? "property_callback" : "property_enquiry",
+          requirement: `${listingType || "Property"} ${leadType === "callback" ? "callback" : "enquiry"}`,'''
+    )
+
+property_path.write_text(property_text, encoding="utf-8")
+
+print("C4D applied.")
+print("Modal compacted.")
+print("Chips aligned.")
+print("Frontend now sends explicit requirement for society/property leads.")
