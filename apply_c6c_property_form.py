@@ -1,4 +1,8 @@
-import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "react";
+from pathlib import Path
+
+path = Path("frontend/src/pages/admin/AdminPropertyFormPage.tsx")
+
+path.write_text(r'''import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -796,3 +800,6 @@ export function AdminPropertyFormPage() {
     </AdminLayout>
   );
 }
+''', encoding="utf-8")
+
+print("C6C-1 AdminPropertyFormPage mobile + save UX applied.")
