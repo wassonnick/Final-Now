@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+from pathlib import Path
+
+path = Path("frontend/src/pages/admin/AdminLeadDetailPage.tsx")
+
+path.write_text(r'''import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -199,7 +203,7 @@ export function AdminLeadDetailPage() {
 
   if (loading) {
     return (
-      <AdminLayout title="Lead Details">
+      <AdminLayout>
         <div className="flex min-h-[420px] items-center justify-center">
           <div className="text-center">
             <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
@@ -212,7 +216,7 @@ export function AdminLeadDetailPage() {
 
   if (!lead) {
     return (
-      <AdminLayout title="Lead Details">
+      <AdminLayout>
         <div className="rounded-[32px] border border-slate-200 bg-white p-10 text-center shadow-sm">
           <h1 className="text-2xl font-bold text-slate-950">Lead not found</h1>
           <p className="mt-2 text-slate-500">
@@ -232,7 +236,7 @@ export function AdminLeadDetailPage() {
   }
 
   return (
-    <AdminLayout title="Lead Details">
+    <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -600,3 +604,6 @@ export function AdminLeadDetailPage() {
     </AdminLayout>
   );
 }
+''', encoding="utf-8")
+
+print("C5A AdminLeadDetailPage applied.")
