@@ -680,63 +680,92 @@ export function PropertyPage() {
           </div>
 
           <aside className="hidden lg:block">
-            <div className="sticky top-24 rounded-[1.5rem] border border-navy-100 bg-white p-4 shadow-soft">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
-                Next step
-              </p>
-              <h3 className="mt-1 text-lg font-bold leading-tight text-navy-900">
-                Confirm this home
-              </h3>
-
-              <div className="mt-3 rounded-2xl bg-blue-50 p-3">
-                <p className="text-xs text-blue-700">Price</p>
-                <p className="mt-1 text-2xl font-bold text-navy-900">{price}</p>
+            <div className="sticky top-20 rounded-[1.25rem] border border-navy-100 bg-white p-4 shadow-soft">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">
+                    Next step
+                  </p>
+                  <h3 className="mt-1 text-base font-bold leading-tight text-navy-900">
+                    Confirm this home
+                  </h3>
+                </div>
+                <div className="rounded-2xl bg-blue-50 px-3 py-2 text-right">
+                  <p className="text-[11px] text-blue-700">Price</p>
+                  <p className="text-lg font-bold leading-tight text-navy-900">
+                    {price}
+                  </p>
+                </div>
               </div>
 
-              <div className="mt-3 space-y-1.5">
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 {[
-                  ["Bedrooms", `${property.bedrooms || "-"} BHK`],
+                  ["BHK", `${property.bedrooms || "-"}`],
                   ["Area", `${areaSqft || "-"} sq.ft`],
+                  ["Type", propertyType],
                   ["Society", societyName || "Gurgaon"],
-                  ["Location", societyLocality],
                 ].map(([label, value]) => (
-                  <div key={label} className="flex items-center justify-between gap-4 border-b border-navy-100 py-1.5 last:border-0">
-                    <span className="text-xs text-navy-500">{label}</span>
-                    <span className="max-w-[170px] truncate text-right text-sm font-semibold text-navy-900">{value}</span>
+                  <div key={label} className="rounded-xl bg-[#F8FAFC] px-3 py-2">
+                    <p className="text-[11px] text-navy-400">{label}</p>
+                    <p className="mt-0.5 truncate text-sm font-semibold text-navy-900">
+                      {value}
+                    </p>
                   </div>
                 ))}
               </div>
 
+              <div className="mt-3 rounded-xl border border-navy-100 px-3 py-2">
+                <p className="text-[11px] text-navy-400">Location</p>
+                <p className="mt-0.5 truncate text-sm font-semibold text-navy-900">
+                  {societyLocality}
+                </p>
+              </div>
+
               <div className="mt-3 space-y-2">
-                <Button onClick={() => openLead("callback")} className="h-10 w-full rounded-full bg-blue-600 hover:bg-blue-700">
-                  <Phone className="mr-2 h-4 w-4" /> Request callback
+                <Button
+                  onClick={() => openLead("callback")}
+                  className="h-9 w-full rounded-full bg-blue-600 text-sm hover:bg-blue-700"
+                >
+                  <Phone className="mr-2 h-4 w-4" /> Callback
                 </Button>
-                <Button onClick={() => openLead("enquiry")} variant="outline" className="h-10 w-full rounded-full border-blue-200 text-blue-700">
-                  <Mail className="mr-2 h-4 w-4" /> Send enquiry
+                <Button
+                  onClick={() => openLead("enquiry")}
+                  variant="outline"
+                  className="h-9 w-full rounded-full border-blue-200 text-sm text-blue-700"
+                >
+                  <Mail className="mr-2 h-4 w-4" /> Enquire
                 </Button>
+              </div>
+
+              <div className="mt-2 grid grid-cols-2 gap-2">
                 <a
                   href={`https://wa.me/919999988888?text=${whatsappMessage}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="block w-full rounded-full border border-green-200 bg-green-50 px-4 py-2 text-center text-sm font-semibold text-green-700 hover:bg-green-100"
+                  className="inline-flex h-9 items-center justify-center rounded-full border border-green-200 bg-green-50 px-3 text-xs font-semibold text-green-700 hover:bg-green-100"
                 >
-                  WhatsApp enquiry
+                  WhatsApp
                 </a>
-              </div>
-
-              <div className="mt-3 grid gap-2">
-                {societySlug ? (
-                  <Button asChild variant="ghost" className="h-9 w-full rounded-full text-blue-700 hover:bg-blue-50">
-                    <Link to={`/society/${societySlug}`}>
-                      View society first <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                ) : null}
-
-                <Button onClick={() => openLead("callback")} variant="outline" className="h-9 w-full rounded-full border-navy-200 text-navy-700">
-                  Ask for similar homes
+                <Button
+                  onClick={() => openLead("callback")}
+                  variant="outline"
+                  className="h-9 rounded-full border-navy-200 text-xs text-navy-700"
+                >
+                  Similar homes
                 </Button>
               </div>
+
+              {societySlug ? (
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="mt-2 h-9 w-full rounded-full text-sm text-blue-700 hover:bg-blue-50"
+                >
+                  <Link to={`/society/${societySlug}`}>
+                    View society first <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : null}
             </div>
           </aside>
         </div>
