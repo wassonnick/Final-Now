@@ -161,6 +161,7 @@ export function SocietyPage() {
   const { slug } = useParams();
   const [apiSociety, setApiSociety] = useState<any | null>(null);
   const [apiProperties, setApiProperties] = useState<any[]>([]);
+  const [relatedSocieties, setRelatedSocieties] = useState<any[]>([]);
   const [loading, setLoading] = useState(Boolean(API_BASE_URL));
   const [error, setError] = useState<string | null>(null);
   const [callbackOpen, setCallbackOpen] = useState(false);
@@ -198,9 +199,20 @@ export function SocietyPage() {
           }
         }
 
+        let relatedData: any[] = [];
+        try {
+          const societiesResponse = await fetch(`${API_BASE_URL}/societies`);
+          if (societiesResponse.ok) {
+            relatedData = extractApiArray<any>(await societiesResponse.json());
+          }
+        } catch {
+          relatedData = [];
+        }
+
         if (mounted) {
           setApiSociety(societyData);
           setApiProperties(propertyData);
+          setRelatedSocieties(relatedData);
           setError(null);
         }
       } catch (err) {
@@ -224,6 +236,51 @@ export function SocietyPage() {
   const society = apiSociety || fallbackSociety;
   const fallbackProperties = getSocietyProperties(society?.name);
   const properties = apiProperties.length ? apiProperties : fallbackProperties;
+
+  const similarSocieties = useMemo(() => {
+    if (!society || !relatedSocieties.length) return [];
+
+    const currentSlug = String(
+      field(society, "slug", "slug", slug || ""),
+    ).toLowerCase();
+    const currentName = String(society?.name || "").toLowerCase();
+    const currentSector = String(field(society, "sector", "sector", ""));
+    const currentLocality = String(field(society, "locality", "locality", ""));
+    const currentBuilder = String(field(society, "builder", "builder", ""));
+
+    return relatedSocieties
+      .map((item) => {
+        const itemSlug = String(field(item, "slug", "slug", "")).toLowerCase();
+        const itemName = String(item?.name || "").toLowerCase();
+
+        if (!itemName || itemSlug === currentSlug || itemName === currentName) {
+          return null;
+        }
+
+        let matchScore = 0;
+        if (currentSector && currentSector === String(field(item, "sector", "sector", ""))) {
+          matchScore += 3;
+        }
+        if (
+          currentLocality &&
+          currentLocality === String(field(item, "locality", "locality", ""))
+        ) {
+          matchScore += 2;
+        }
+        if (currentBuilder && currentBuilder === String(field(item, "builder", "builder", ""))) {
+          matchScore += 1;
+        }
+        if (field<boolean>(item, "featured", "featured", false)) {
+          matchScore += 1;
+        }
+
+        return { item, matchScore };
+      })
+      .filter(Boolean)
+      .sort((a: any, b: any) => b.matchScore - a.matchScore)
+      .slice(0, 3)
+      .map((entry: any) => entry.item);
+  }, [relatedSocieties, slug, society]);
 
   if (loading) {
     return (
@@ -724,6 +781,92 @@ export function SocietyPage() {
                   );
                 })}
               </div>
+            </div>
+
+            <div className="rounded-[1.5rem] border border-blue-100 bg-white p-5 shadow-sm md:hidden">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
+                You may also like
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-navy-900">
+                Similar societies nearby
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-navy-500">
+                Based on location, builder profile and live SocietyFlats data.
+              </p>
+
+              {similarSocieties.length ? (
+                <div className="mt-4 space-y-3">
+                  {similarSocieties.map((item) => {
+                    const itemSlug = field<string>(item, "slug", "slug", "");
+                    const itemLocation = [
+                      field(item, "sector", "sector", ""),
+                      field(item, "locality", "locality", ""),
+                    ]
+                      .filter(Boolean)
+                      .join(", ") || "Gurgaon";
+
+                    return (
+                      <div
+                        key={itemSlug || item.name}
+                        className="rounded-2xl border border-navy-100 bg-[#F8FAFC] p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="font-bold text-navy-900">
+                              {item.name}
+                            </h3>
+                            <p className="mt-1 flex items-center gap-1 text-xs text-navy-500">
+                              <MapPin className="h-3.5 w-3.5" /> {itemLocation}
+                            </p>
+                          </div>
+                          <div className="rounded-xl bg-blue-50 px-3 py-2 text-center">
+                            <p className="text-[10px] uppercase text-blue-600">
+                              Score
+                            </p>
+                            <p className="text-sm font-bold text-navy-900">
+                              {field(item, "score", "score", "8.5")}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-3 border-t border-navy-100 pt-3">
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.12em] text-navy-400">
+                              Rent range
+                            </p>
+                            <p className="text-sm font-semibold text-navy-900">
+                              {field(item, "rentRange", "rent_range", "On request")}
+                            </p>
+                          </div>
+                          <Button
+                            asChild
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full border-blue-200 text-blue-700"
+                          >
+                            <Link to={`/society/${itemSlug}`}>View</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-2xl bg-blue-50 p-4">
+                  <p className="font-semibold text-navy-900">
+                    Want similar society suggestions?
+                  </p>
+                  <p className="mt-2 text-sm text-navy-500">
+                    Share your budget and family requirement. We will shortlist
+                    matching Gurgaon societies for you.
+                  </p>
+                  <Button
+                    onClick={() => setCallbackOpen(true)}
+                    className="mt-4 w-full rounded-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Phone className="mr-2 h-4 w-4" /> Request shortlist
+                  </Button>
+                </div>
+              )}
             </div>
 
             {field(society, "faq", "faq", "") ? (
