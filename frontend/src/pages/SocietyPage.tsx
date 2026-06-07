@@ -161,9 +161,13 @@ export function SocietyPage() {
   const { slug } = useParams();
   const [apiSociety, setApiSociety] = useState<any | null>(null);
   const [apiProperties, setApiProperties] = useState<any[]>([]);
+  const [relatedSocieties, setRelatedSocieties] = useState<any[]>([]);
   const [loading, setLoading] = useState(Boolean(API_BASE_URL));
   const [error, setError] = useState<string | null>(null);
   const [callbackOpen, setCallbackOpen] = useState(false);
+  const [selectedLeadProperty, setSelectedLeadProperty] = useState<any | null>(
+    null,
+  );
 
   const fallbackSociety = useMemo(() => findPublicSociety(slug), [slug]);
 
@@ -198,9 +202,20 @@ export function SocietyPage() {
           }
         }
 
+        let relatedData: any[] = [];
+        try {
+          const societiesResponse = await fetch(`${API_BASE_URL}/societies`);
+          if (societiesResponse.ok) {
+            relatedData = extractApiArray<any>(await societiesResponse.json());
+          }
+        } catch {
+          relatedData = [];
+        }
+
         if (mounted) {
           setApiSociety(societyData);
           setApiProperties(propertyData);
+          setRelatedSocieties(relatedData);
           setError(null);
         }
       } catch (err) {
@@ -224,6 +239,57 @@ export function SocietyPage() {
   const society = apiSociety || fallbackSociety;
   const fallbackProperties = getSocietyProperties(society?.name);
   const properties = apiProperties.length ? apiProperties : fallbackProperties;
+
+  const similarSocieties = useMemo(() => {
+    if (!society || !relatedSocieties.length) return [];
+
+    const currentSlug = String(
+      field(society, "slug", "slug", slug || ""),
+    ).toLowerCase();
+    const currentName = String(society?.name || "").toLowerCase();
+    const currentSector = String(field(society, "sector", "sector", ""));
+    const currentLocality = String(field(society, "locality", "locality", ""));
+    const currentBuilder = String(field(society, "builder", "builder", ""));
+
+    return relatedSocieties
+      .map((item) => {
+        const itemSlug = String(field(item, "slug", "slug", "")).toLowerCase();
+        const itemName = String(item?.name || "").toLowerCase();
+
+        if (!itemName || itemSlug === currentSlug || itemName === currentName) {
+          return null;
+        }
+
+        let matchScore = 0;
+        if (
+          currentSector &&
+          currentSector === String(field(item, "sector", "sector", ""))
+        ) {
+          matchScore += 3;
+        }
+        if (
+          currentLocality &&
+          currentLocality === String(field(item, "locality", "locality", ""))
+        ) {
+          matchScore += 2;
+        }
+        if (
+          currentBuilder &&
+          currentBuilder === String(field(item, "builder", "builder", ""))
+        ) {
+          matchScore += 1;
+        }
+        if (field<boolean>(item, "featured", "featured", false)) {
+          matchScore += 1;
+        }
+
+        return { item, matchScore };
+      })
+      .filter(Boolean)
+      .sort((a: any, b: any) => b.matchScore - a.matchScore)
+      .slice(0, 3)
+      .map((entry: any) => entry.item);
+  }, [relatedSocieties, slug, society]);
 
   if (loading) {
     return (
@@ -493,7 +559,7 @@ export function SocietyPage() {
 
               <div className="mt-5 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap md:mt-6">
                 <Button
-                  onClick={() => setCallbackOpen(true)}
+                  onClick={openSocietyCallback}
                   className="rounded-full bg-blue-600 hover:bg-blue-700"
                 >
                   <Phone className="mr-2 h-4 w-4" /> Callback
@@ -625,51 +691,136 @@ export function SocietyPage() {
             </div>
 
             <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
-              <h2 className="text-xl font-bold text-navy-900 md:text-2xl">
-                Available inventory
-              </h2>
-              <div className="mt-6 grid gap-5 md:grid-cols-2">
-                {properties.length ? (
-                  properties.map((property) => (
-                    <Link
-                      key={property.id || property.slug}
-                      to={safePropertyUrl(property)}
-                      className="overflow-hidden rounded-[1.5rem] border border-navy-100 transition-all hover:shadow-soft"
-                    >
-                      <div className="h-44 bg-navy-50">
-                        <img
-                          src={safePropertyImage(property)}
-                          alt={property.title}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="p-5">
-                        <p className="text-xs font-semibold text-blue-700">
-                          {field(
-                            property,
-                            "listingType",
-                            "listing_type",
-                            "Rent",
-                          )}
-                        </p>
-                        <h3 className="mt-2 font-bold text-navy-900">
-                          {property.title}
-                        </h3>
-                        <p className="mt-2 text-sm text-navy-500">
-                          {field(property, "bedrooms", "bedrooms", "-")} BHK •{" "}
-                          {field(property, "areaSqft", "area_sqft", "-")} sq.ft
-                        </p>
-                        <p className="mt-4 text-lg font-bold text-navy-900">
-                          {property.price || "On request"}
-                        </p>
-                      </div>
-                    </Link>
-                  ))
-                ) : (
-                  <p className="text-navy-500">
-                    No live inventory yet. Add properties in admin and assign
-                    them to this society.
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
+                    Live homes
                   </p>
+                  <h2 className="mt-2 text-xl font-bold text-navy-900 md:text-2xl">
+                    Available inventory
+                  </h2>
+                </div>
+                <p className="text-sm text-navy-500">
+                  {properties.length
+                    ? `${properties.length} option${properties.length === 1 ? "" : "s"} linked to this society`
+                    : "Callback recommended"}
+                </p>
+              </div>
+
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                {properties.length ? (
+                  properties.map((property) => {
+                    const propertyUrl = safePropertyUrl(property);
+                    const listingType = field(
+                      property,
+                      "listingType",
+                      "listing_type",
+                      "Rent",
+                    );
+                    const bedrooms = field(
+                      property,
+                      "bedrooms",
+                      "bedrooms",
+                      "-",
+                    );
+                    const area = field(property, "areaSqft", "area_sqft", "-");
+
+                    return (
+                      <div
+                        key={property.id || property.slug}
+                        className="overflow-hidden rounded-[1.5rem] border border-navy-100 bg-white transition-all hover:shadow-soft"
+                      >
+                        <Link to={propertyUrl} className="block">
+                          <div className="h-36 bg-navy-50 md:h-44">
+                            <img
+                              src={safePropertyImage(property)}
+                              alt={property.title}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        </Link>
+
+                        <div className="p-4 md:p-5">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
+                              {listingType}
+                            </p>
+                            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                              Verified lead
+                            </span>
+                          </div>
+
+                          <Link to={propertyUrl} className="group/title block">
+                            <h3 className="mt-2 line-clamp-2 font-bold text-navy-900 group-hover/title:text-blue-700">
+                              {property.title}
+                            </h3>
+                          </Link>
+
+                          <p className="mt-2 text-sm text-navy-500">
+                            {bedrooms} BHK • {area} sq.ft
+                          </p>
+
+                          <div className="mt-4 flex items-center justify-between gap-3">
+                            <p className="text-lg font-bold text-navy-900">
+                              {property.price || "On request"}
+                            </p>
+                            <p className="hidden text-xs text-navy-400 sm:block">
+                              Visit-ready enquiry
+                            </p>
+                          </div>
+
+                          <div className="mt-4 grid grid-cols-2 gap-3">
+                            <Button
+                              asChild
+                              variant="outline"
+                              className="rounded-full border-navy-200"
+                            >
+                              <Link to={propertyUrl}>View details</Link>
+                            </Button>
+                            <Button
+                              onClick={() => openPropertyCallback(property)}
+                              className="rounded-full bg-blue-600 hover:bg-blue-700"
+                            >
+                              Callback
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-[1.5rem] border border-blue-100 bg-blue-50 p-5 md:col-span-2">
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-700">
+                      Inventory check
+                    </p>
+                    <h3 className="mt-2 text-xl font-bold text-navy-900">
+                      No live homes are listed publicly yet.
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-navy-600">
+                      Request a callback and we will check owner/broker
+                      availability for {society.name} before you spend time
+                      browsing other portals.
+                    </p>
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                      <Button
+                        onClick={openSocietyCallback}
+                        className="rounded-full bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Phone className="mr-2 h-4 w-4" /> Request callback
+                      </Button>
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="rounded-full border-blue-200 text-blue-700"
+                      >
+                        <Link
+                          to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}
+                        >
+                          Find similar homes
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -724,6 +875,98 @@ export function SocietyPage() {
                   );
                 })}
               </div>
+            </div>
+
+            <div className="rounded-[1.5rem] border border-blue-100 bg-white p-5 shadow-sm md:hidden">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
+                You may also like
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-navy-900">
+                Similar societies nearby
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-navy-500">
+                Based on location, builder profile and live SocietyFlats data.
+              </p>
+
+              {similarSocieties.length ? (
+                <div className="mt-4 space-y-3">
+                  {similarSocieties.map((item) => {
+                    const itemSlug = field<string>(item, "slug", "slug", "");
+                    const itemLocation =
+                      [
+                        field(item, "sector", "sector", ""),
+                        field(item, "locality", "locality", ""),
+                      ]
+                        .filter(Boolean)
+                        .join(", ") || "Gurgaon";
+
+                    return (
+                      <div
+                        key={itemSlug || item.name}
+                        className="rounded-2xl border border-navy-100 bg-[#F8FAFC] p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="font-bold text-navy-900">
+                              {item.name}
+                            </h3>
+                            <p className="mt-1 flex items-center gap-1 text-xs text-navy-500">
+                              <MapPin className="h-3.5 w-3.5" /> {itemLocation}
+                            </p>
+                          </div>
+                          <div className="rounded-xl bg-blue-50 px-3 py-2 text-center">
+                            <p className="text-[10px] uppercase text-blue-600">
+                              Score
+                            </p>
+                            <p className="text-sm font-bold text-navy-900">
+                              {field(item, "score", "score", "8.5")}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-3 border-t border-navy-100 pt-3">
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.12em] text-navy-400">
+                              Rent range
+                            </p>
+                            <p className="text-sm font-semibold text-navy-900">
+                              {field(
+                                item,
+                                "rentRange",
+                                "rent_range",
+                                "On request",
+                              )}
+                            </p>
+                          </div>
+                          <Button
+                            asChild
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full border-blue-200 text-blue-700"
+                          >
+                            <Link to={`/society/${itemSlug}`}>View</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-2xl bg-blue-50 p-4">
+                  <p className="font-semibold text-navy-900">
+                    Want similar society suggestions?
+                  </p>
+                  <p className="mt-2 text-sm text-navy-500">
+                    Share your budget and family requirement. We will shortlist
+                    matching Gurgaon societies for you.
+                  </p>
+                  <Button
+                    onClick={openSocietyCallback}
+                    className="mt-4 w-full rounded-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Phone className="mr-2 h-4 w-4" /> Request shortlist
+                  </Button>
+                </div>
+              )}
             </div>
 
             {field(society, "faq", "faq", "") ? (
@@ -833,7 +1076,7 @@ export function SocietyPage() {
               </div>
 
               <Button
-                onClick={() => setCallbackOpen(true)}
+                onClick={openSocietyCallback}
                 className="mt-4 w-full rounded-full bg-blue-600 hover:bg-blue-700"
               >
                 <Phone className="mr-2 h-4 w-4" /> Request callback
@@ -870,7 +1113,7 @@ export function SocietyPage() {
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-navy-100 bg-white/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
         <div className="grid grid-cols-2 gap-3">
           <Button
-            onClick={() => setCallbackOpen(true)}
+            onClick={openSocietyCallback}
             className="rounded-full bg-blue-600 hover:bg-blue-700"
           >
             <Phone className="mr-2 h-4 w-4" /> Callback
@@ -889,12 +1132,30 @@ export function SocietyPage() {
 
       <PublicLeadModal
         open={callbackOpen}
-        title={`Request callback for ${society.name}`}
-        subtitle="Share your details and our team will help with rentals, availability and visit planning for this society."
+        title={
+          selectedLeadProperty
+            ? `Request callback for ${selectedLeadProperty.title}`
+            : `Request callback for ${society.name}`
+        }
+        subtitle={
+          selectedLeadProperty
+            ? "Share your details and our team will help verify availability, pricing and visit timing for this home."
+            : "Share your details and our team will help with rentals, availability and visit planning for this society."
+        }
         source="society_page"
         societyName={society.name}
-        defaultMessage={`I want a callback for ${society.name}.`}
-        defaultRequirement={`Looking for homes or society guidance in ${society.name}, ${societyLocation || "Gurgaon"}.`}
+        propertyTitle={selectedLeadProperty?.title}
+        propertySlug={selectedLeadProperty?.slug}
+        defaultMessage={
+          selectedLeadProperty
+            ? `I want a callback for ${selectedLeadProperty.title} in ${society.name}.`
+            : `I want a callback for ${society.name}.`
+        }
+        defaultRequirement={
+          selectedLeadProperty
+            ? `Interested in ${selectedLeadProperty.title}. Please confirm availability, price and visit timing.`
+            : `Looking for homes or society guidance in ${society.name}, ${societyLocation || "Gurgaon"}.`
+        }
         submitLabel="Request callback"
         onClose={() => setCallbackOpen(false)}
       />
