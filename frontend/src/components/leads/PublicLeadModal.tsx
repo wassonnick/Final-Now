@@ -30,14 +30,10 @@ const emptyForm = {
   budget: "",
 };
 
-const societyRequirementChips = ["Rent", "Buy", "Visit", "Callback"];
+const requirementChips = ["Rent", "Buy", "Visit", "Callback"];
 
-function cleanPhoneNumber(value: string) {
-  return value.replace(/\D/g, "").slice(0, 10);
-}
-
-function isValidIndianMobile(value: string) {
-  return /^[6-9]\d{9}$/.test(value);
+function isValidIndianMobile(phone: string) {
+  return /^[6-9]\d{9}$/.test(phone);
 }
 
 export function PublicLeadModal({
@@ -52,7 +48,7 @@ export function PublicLeadModal({
   propertySlug,
   budget = "",
   submitLabel = "Request callback",
-  successMessage,
+  successMessage = "Thanks. Our team will contact you shortly.",
   onClose,
 }: PublicLeadModalProps) {
   const [form, setForm] = useState(emptyForm);
@@ -61,7 +57,26 @@ export function PublicLeadModal({
   const [error, setError] = useState("");
 
   const isPropertyLead = Boolean(propertyTitle);
-  const phoneDigits = useMemo(() => cleanPhoneNumber(form.phone), [form.phone]);
+  const phoneDigits = form.phone.replace(/\D/g, "");
+  const phoneIsValid = isValidIndianMobile(phoneDigits);
+
+  const compactTitle = useMemo(() => {
+    if (success) return "Request received";
+    if (isPropertyLead) return "Request property callback";
+    return "Request society callback";
+  }, [isPropertyLead, success]);
+
+  const compactSubtitle = useMemo(() => {
+    if (success) {
+      return "Your request has been saved. Our team will contact you shortly.";
+    }
+
+    if (isPropertyLead) {
+      return "Confirm availability, pricing and visit timing for this home.";
+    }
+
+    return "Tell us your requirement and we will help with availability and visit planning.";
+  }, [isPropertyLead, success]);
 
   useEffect(() => {
     if (!open) return;
@@ -69,69 +84,56 @@ export function PublicLeadModal({
     setForm({
       ...emptyForm,
       message: defaultMessage,
-      requirement: isPropertyLead ? defaultRequirement : defaultRequirement,
+      requirement: defaultRequirement,
       budget,
     });
     setSuccess(false);
     setError("");
     setSubmitting(false);
-  }, [open, defaultMessage, defaultRequirement, budget, isPropertyLead]);
+  }, [open, defaultMessage, defaultRequirement, budget]);
 
   if (!open) return null;
 
-  const displayTitle = success
-    ? "Request received"
-    : isPropertyLead
-      ? "Request property callback"
-      : title || "Request society callback";
+  const selectRequirement = (chip: string) => {
+    if (isPropertyLead) return;
 
-  const displaySubtitle = success
-    ? "Your enquiry has been shared with SocietyFlats."
-    : subtitle;
-
-  const finalSuccessMessage =
-    successMessage || "Lead submitted successfully. Our team will contact you shortly.";
-
-  const updateRequirement = (requirement: string) => {
+    const nextRequirement = `${chip} requirement`;
     setForm((current) => ({
       ...current,
-      requirement,
+      requirement: nextRequirement,
       message:
-        current.message ||
-        `I need help with ${requirement.toLowerCase()} options${societyName ? ` in ${societyName}` : ""}.`,
+        current.message || defaultMessage || `I need help with ${chip.toLowerCase()} options.`,
     }));
+  };
+
+  const updatePhone = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+    setForm((current) => ({ ...current, phone: digitsOnly }));
   };
 
   const submitLead = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError("");
 
-    const normalizedPhone = cleanPhoneNumber(form.phone);
-
-    if (!form.name.trim()) {
-      setError("Please enter your name.");
-      return;
-    }
-
-    if (!isValidIndianMobile(normalizedPhone)) {
-      setError("Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8 or 9.");
+    if (!phoneIsValid) {
+      setError("Enter a valid 10-digit Indian mobile number starting with 6, 7, 8 or 9.");
       return;
     }
 
     setSubmitting(true);
+    setError("");
 
     try {
       await backendApi.createLead({
         name: form.name.trim(),
-        phone: normalizedPhone,
-        email: form.email.trim() || null,
+        phone: phoneDigits,
+        email: form.email || null,
         source,
         society_name: societyName || null,
         property_title: propertyTitle || null,
         property_slug: propertySlug || null,
-        message: form.message.trim() || defaultMessage || defaultRequirement,
+        message: form.message || defaultMessage || defaultRequirement,
         requirement: form.requirement || defaultRequirement || null,
-        budget: form.budget.trim() || budget || null,
+        budget: form.budget || budget || null,
       });
 
       setSuccess(true);
@@ -144,45 +146,42 @@ export function PublicLeadModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/60 px-3 py-4 backdrop-blur-sm sm:items-center sm:px-4">
-      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-[2rem] bg-white shadow-2xl">
-        <div className="sticky top-0 z-10 border-b border-navy-100 bg-white px-6 py-5 sm:px-7">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-600">
-                {success ? "Submitted" : "SocietyFlats Callback"}
-              </p>
-              <h3 className="mt-2 text-2xl font-extrabold tracking-tight text-navy-900">
-                {displayTitle}
-              </h3>
-              {displaySubtitle ? (
-                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-navy-500">
-                  {displaySubtitle}
-                </p>
-              ) : null}
-            </div>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/60 px-3 pb-4 pt-8 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-[1.75rem] bg-white shadow-2xl sm:rounded-[2rem]">
+        <div className="relative border-b border-navy-100 px-5 py-5 sm:px-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-4 top-4 rounded-full border border-navy-100 bg-white p-2 text-navy-400 shadow-sm hover:bg-navy-50"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full border border-navy-100 p-2 text-navy-500 hover:bg-navy-50"
-              aria-label="Close lead form"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-600">
+            SocietyFlats callback
+          </p>
 
-          {!success && (societyName || propertyTitle) ? (
+          <h3 className="mt-2 max-w-[84%] text-2xl font-extrabold leading-tight text-navy-900 sm:text-3xl">
+            {compactTitle}
+          </h3>
+
+          <p className="mt-2 max-w-[88%] text-sm leading-relaxed text-navy-500 sm:text-base">
+            {compactSubtitle}
+          </p>
+
+          {!success ? (
             <div className="mt-4 space-y-2">
               {societyName ? (
                 <div className="flex items-center gap-2 rounded-2xl bg-blue-50 px-4 py-3 text-sm font-bold text-navy-800">
-                  <Building2 className="h-4 w-4 text-blue-700" />
+                  <Building2 className="h-4 w-4 text-blue-600" />
                   {societyName}
                 </div>
               ) : null}
+
               {propertyTitle ? (
                 <div className="flex items-center gap-2 rounded-2xl bg-[#F8FAFC] px-4 py-3 text-sm font-bold text-navy-800">
-                  <Home className="h-4 w-4 text-blue-700" />
+                  <Home className="h-4 w-4 text-blue-600" />
                   {propertyTitle}
                 </div>
               ) : null}
@@ -190,70 +189,77 @@ export function PublicLeadModal({
           ) : null}
         </div>
 
-        <div className="px-6 py-6 sm:px-7">
-          {success ? (
-            <div className="space-y-5">
-              <div className="rounded-2xl bg-green-50 p-5 text-green-800">
-                <CheckCircle2 className="h-7 w-7" />
-                <p className="mt-4 text-lg font-bold">{finalSuccessMessage}</p>
-                <p className="mt-2 text-sm leading-relaxed text-green-700">
-                  We have saved your request with the society/property context.
-                </p>
-              </div>
-              <Button onClick={onClose} className="w-full rounded-full bg-blue-600 hover:bg-blue-700">
-                Done
-              </Button>
+        {success ? (
+          <div className="px-5 py-6 sm:px-6">
+            <div className="rounded-2xl bg-green-50 p-5 text-green-700">
+              <CheckCircle2 className="h-7 w-7" />
+              <h4 className="mt-3 text-lg font-bold">Lead submitted successfully</h4>
+              <p className="mt-2 text-sm leading-relaxed">
+                We have received your request. Our team will contact you shortly.
+              </p>
             </div>
-          ) : (
-            <form onSubmit={submitLead} className="space-y-4">
-              {!isPropertyLead ? (
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-navy-400">
-                    What do you need?
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {societyRequirementChips.map((chip) => (
+
+            <Button
+              type="button"
+              onClick={onClose}
+              className="mt-5 w-full rounded-full bg-blue-600 font-bold hover:bg-blue-700"
+            >
+              Done
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={submitLead} className="px-5 py-5 sm:px-6">
+            {!isPropertyLead ? (
+              <div className="mb-4">
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-navy-300">
+                  What do you need?
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {requirementChips.map((chip) => {
+                    const active = form.requirement
+                      .toLowerCase()
+                      .includes(chip.toLowerCase());
+
+                    return (
                       <button
                         key={chip}
                         type="button"
-                        onClick={() => updateRequirement(chip)}
+                        onClick={() => selectRequirement(chip)}
                         className={`rounded-full border px-4 py-2 text-sm font-bold transition ${
-                          form.requirement === chip
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-navy-100 bg-white text-navy-600 hover:bg-navy-50"
+                          active
+                            ? "border-blue-200 bg-blue-50 text-blue-700"
+                            : "border-navy-100 bg-white text-navy-500 hover:bg-navy-50"
                         }`}
                       >
                         {chip}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              ) : null}
+              </div>
+            ) : null}
 
+            <div className="space-y-3">
               <input
                 required
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
                 placeholder="Your name"
-                className="w-full rounded-2xl border border-navy-100 px-4 py-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                className="h-12 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
               <div>
                 <input
                   required
-                  type="tel"
                   inputMode="numeric"
-                  autoComplete="tel"
+                  pattern="[6-9][0-9]{9}"
                   maxLength={10}
                   value={form.phone}
-                  onChange={(event) => {
-                    setForm({ ...form, phone: cleanPhoneNumber(event.target.value) });
-                    if (error) setError("");
-                  }}
+                  onChange={(event) => updatePhone(event.target.value)}
                   placeholder="10-digit mobile number"
-                  className="w-full rounded-2xl border border-blue-200 bg-blue-50/40 px-4 py-3 text-sm font-bold text-navy-900 outline-none focus:border-blue-500 focus:bg-white"
+                  className="h-12 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
                 />
-                <p className="mt-1 px-1 text-xs text-navy-400">
+                <p className={`mt-1 text-xs ${phoneDigits.length && !phoneIsValid ? "text-red-600" : "text-navy-300"}`}>
                   {phoneDigits.length}/10 digits · India mobile number only
                 </p>
               </div>
@@ -263,20 +269,20 @@ export function PublicLeadModal({
                 value={form.email}
                 onChange={(event) => setForm({ ...form, email: event.target.value })}
                 placeholder="Email optional"
-                className="w-full rounded-2xl border border-navy-100 px-4 py-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                className="h-12 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
               <input
                 value={form.budget}
                 onChange={(event) => setForm({ ...form, budget: event.target.value })}
                 placeholder="Budget optional"
-                className="w-full rounded-2xl border border-navy-100 px-4 py-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                className="h-12 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
               <textarea
                 value={form.message}
                 onChange={(event) => setForm({ ...form, message: event.target.value })}
-                placeholder="Message optional"
+                placeholder="Tell us what you need"
                 rows={3}
                 className="w-full rounded-2xl border border-navy-100 px-4 py-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
@@ -289,18 +295,18 @@ export function PublicLeadModal({
 
               <Button
                 disabled={submitting}
-                className="w-full rounded-full bg-blue-600 font-bold text-white hover:bg-blue-700"
+                className="h-12 w-full rounded-full bg-blue-600 font-bold text-white hover:bg-blue-700"
               >
                 <Phone className="mr-2 h-4 w-4" />
                 {submitting ? "Submitting..." : submitLabel}
               </Button>
 
-              <p className="text-center text-xs leading-relaxed text-navy-400">
+              <p className="text-center text-xs leading-relaxed text-navy-300">
                 We use your details only to respond to this property/society request.
               </p>
-            </form>
-          )}
-        </div>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
