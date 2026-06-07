@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+from pathlib import Path
+
+path = Path("frontend/src/pages/admin/AdminDashboardPage.tsx")
+
+path.write_text(r'''import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -329,3 +333,6 @@ export function AdminDashboardPage() {
     </AdminLayout>
   );
 }
+''', encoding="utf-8")
+
+print("C5D Admin dashboard action cards applied.")
