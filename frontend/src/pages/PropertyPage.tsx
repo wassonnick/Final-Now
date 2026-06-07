@@ -602,8 +602,11 @@ export function PropertyPage() {
                     Same society options
                   </p>
                   <h2 className="mt-2 text-xl font-bold text-navy-900 md:text-2xl">
-                    Similar properties in {societyName || "this area"}
+                    Similar properties in {societyName || "this society"}
                   </h2>
+                  <p className="mt-2 text-sm text-navy-500">
+                    Continue shortlisting without leaving the current society profile.
+                  </p>
                 </div>
                 <Button asChild variant="outline" className="hidden rounded-full border-blue-200 text-blue-700 sm:inline-flex">
                   <Link to={`/search?tab=rent&q=${encodeURIComponent(societyName || societyLocality || title)}`}>
@@ -612,7 +615,7 @@ export function PropertyPage() {
                 </Button>
               </div>
 
-              {similarProperties.length ? (
+              {similarProperties.length > 0 ? (
                 <div className="mt-5 grid gap-4 md:grid-cols-3">
                   {similarProperties.map((item) => {
                     const itemTitle = item.title || "Similar home";
@@ -651,79 +654,88 @@ export function PropertyPage() {
                   })}
                 </div>
               ) : (
-                <div className="mt-5 rounded-2xl bg-blue-50 p-5">
-                  <h3 className="font-bold text-navy-900">Want more options in this society?</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-navy-600">
-                    Request a callback and we will check similar homes, owner availability and matching inventory in {societyName || societyLocality}.
+                <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
+                    No public alternatives shown yet
                   </p>
-                  <Button onClick={() => openLead("callback")} className="mt-4 rounded-full bg-blue-600 hover:bg-blue-700">
-                    <Phone className="mr-2 h-4 w-4" /> Request similar options
-                  </Button>
+                  <h3 className="mt-2 text-lg font-bold text-navy-900">
+                    Want more options in {societyName || "this society"}?
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-navy-600">
+                    Request similar options and we will check owner/broker availability, matching budgets and visit-ready homes in {societyName || societyLocality || "this society"}.
+                  </p>
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                    <Button onClick={() => openLead("callback")} className="rounded-full bg-blue-600 hover:bg-blue-700">
+                      <Phone className="mr-2 h-4 w-4" /> Request similar options
+                    </Button>
+                    <Button asChild variant="outline" className="rounded-full border-blue-200 text-blue-700">
+                      <Link to={`/search?tab=rent&q=${encodeURIComponent(societyName || societyLocality || title)}`}>
+                        Search nearby homes
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               )}
             </section>
           </div>
 
           <aside className="hidden lg:block">
-            <div className="sticky top-24 rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-soft">
+            <div className="sticky top-24 rounded-[1.5rem] border border-navy-100 bg-white p-4 shadow-soft">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                 Next step
               </p>
-              <h3 className="mt-2 text-lg font-bold leading-tight text-navy-900">
-                Confirm availability & visit timing
+              <h3 className="mt-1 text-lg font-bold leading-tight text-navy-900">
+                Confirm this home
               </h3>
 
-              <div className="mt-4 rounded-2xl bg-blue-50 p-4">
+              <div className="mt-3 rounded-2xl bg-blue-50 p-3">
                 <p className="text-xs text-blue-700">Price</p>
                 <p className="mt-1 text-2xl font-bold text-navy-900">{price}</p>
               </div>
 
-              <div className="mt-4 space-y-2">
+              <div className="mt-3 space-y-1.5">
                 {[
                   ["Bedrooms", `${property.bedrooms || "-"} BHK`],
                   ["Area", `${areaSqft || "-"} sq.ft`],
                   ["Society", societyName || "Gurgaon"],
                   ["Location", societyLocality],
                 ].map(([label, value]) => (
-                  <div key={label} className="flex items-center justify-between gap-4 border-b border-navy-100 py-2 last:border-0">
+                  <div key={label} className="flex items-center justify-between gap-4 border-b border-navy-100 py-1.5 last:border-0">
                     <span className="text-xs text-navy-500">{label}</span>
-                    <span className="text-right text-sm font-semibold text-navy-900">{value}</span>
+                    <span className="max-w-[170px] truncate text-right text-sm font-semibold text-navy-900">{value}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-4 space-y-2">
-                <Button onClick={() => openLead("callback")} className="w-full rounded-full bg-blue-600 hover:bg-blue-700">
+              <div className="mt-3 space-y-2">
+                <Button onClick={() => openLead("callback")} className="h-10 w-full rounded-full bg-blue-600 hover:bg-blue-700">
                   <Phone className="mr-2 h-4 w-4" /> Request callback
                 </Button>
-                <Button onClick={() => openLead("enquiry")} variant="outline" className="w-full rounded-full border-blue-200 text-blue-700">
+                <Button onClick={() => openLead("enquiry")} variant="outline" className="h-10 w-full rounded-full border-blue-200 text-blue-700">
                   <Mail className="mr-2 h-4 w-4" /> Send enquiry
                 </Button>
                 <a
                   href={`https://wa.me/919999988888?text=${whatsappMessage}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="block w-full rounded-full border border-green-200 bg-green-50 px-4 py-2.5 text-center text-sm font-semibold text-green-700 hover:bg-green-100"
+                  className="block w-full rounded-full border border-green-200 bg-green-50 px-4 py-2 text-center text-sm font-semibold text-green-700 hover:bg-green-100"
                 >
                   WhatsApp enquiry
                 </a>
               </div>
 
-              {societySlug ? (
-                <Button asChild variant="ghost" className="mt-3 w-full rounded-full text-blue-700 hover:bg-blue-50">
-                  <Link to={`/society/${societySlug}`}>
-                    View society first <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              ) : null}
+              <div className="mt-3 grid gap-2">
+                {societySlug ? (
+                  <Button asChild variant="ghost" className="h-9 w-full rounded-full text-blue-700 hover:bg-blue-50">
+                    <Link to={`/society/${societySlug}`}>
+                      View society first <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                ) : null}
 
-              <div className="mt-4 rounded-2xl border border-navy-100 bg-[#F8FAFC] p-3">
-                <p className="text-sm font-semibold text-navy-900">Why enquire?</p>
-                <ul className="mt-2 space-y-1 text-xs text-navy-500">
-                  <li>• Confirm live availability.</li>
-                  <li>• Check final rent/price and visit timing.</li>
-                  <li>• Ask for similar homes in the same society.</li>
-                </ul>
+                <Button onClick={() => openLead("callback")} variant="outline" className="h-9 w-full rounded-full border-navy-200 text-navy-700">
+                  Ask for similar homes
+                </Button>
               </div>
             </div>
           </aside>
