@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -16,14 +17,14 @@ import {
   Share2,
   Shield,
   X,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
+  import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
 
 interface SocietyRef {
   name?: string;
@@ -36,29 +37,28 @@ interface Property {
   id?: number | string;
   title?: string;
   slug?: string;
-  description?: string;
-  listing_type?: string;
-  listingType?: string;
-  property_type?: string;
-  propertyType?: string;
-  status?: string;
-  price?: string;
-  rent?: string;
-  area_sqft?: number | string;
-  areaSqft?: number | string;
-  bedrooms?: number | string;
-  bathrooms?: number | string;
-  furnished_status?: string;
-  furnishedStatus?: string;
-  maintenance?: string;
-  security_deposit?: string;
-  securityDeposit?: string;
-  floor?: string;
-  facing?: string;
-  locality?: string;
-  sector?: string;
-  featured?: boolean;
-  verified?: boolean;
+  description?: string | null;
+  listing_type?: string | null;
+  listingType?: string | null;
+  property_type?: string | null;
+  propertyType?: string | null;
+  status?: string | null;
+  price?: string | null;
+  rent?: string | null;
+  area_sqft?: number | string | null;
+  areaSqft?: number | string | null;
+  bedrooms?: number | string | null;
+  bathrooms?: number | string | null;
+  furnished_status?: string | null;
+  furnishedStatus?: string | null;
+  maintenance?: string | null;
+  security_deposit?: string | null;
+  securityDeposit?: string | null;
+  floor?: string | null;
+  facing?: string | null;
+  locality?: string | null;
+  featured?: boolean | null;
+  verified?: boolean | null;
   amenities?: string[] | string | null;
   images?: string[] | string | null;
   cover_image?: string | null;
@@ -66,144 +66,85 @@ interface Property {
   gallery_images?: string[] | string | null;
   galleryImages?: string[] | string | null;
   society?: string | SocietyRef | null;
-  society_name?: string;
-  societyName?: string;
-  society_slug?: string;
-  societySlug?: string;
+  society_name?: string | null;
+  societyName?: string | null;
 }
 
-type ApiResponse = {
-  status?: string;
-  data?: Property | { data?: Property };
-  property?: Property;
-};
+function getField<T = string>(item: any, camel: string, snake: string, fallback: T): T {
+  return (item?.[camel] ?? item?.[snake] ?? fallback) as T;
+}
 
 function parseList(value: unknown): string[] {
-  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  if (Array.isArray(value)) {
+    return value.map(String).map((item) => item.trim()).filter(Boolean);
+  }
 
-  if (typeof value === 'string' && value.trim()) {
-    const trimmed = value.trim();
-
+  if (typeof value === "string" && value.trim()) {
     try {
-      const parsed = JSON.parse(trimmed);
-      if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.map(String).map((item) => item.trim()).filter(Boolean);
+      }
     } catch {
-      // Fall back to comma/new-line splitting below.
+      return value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
     }
-
-    return trimmed
-      .split(/,|\n/)
-      .map((item) => item.trim())
-      .filter(Boolean);
   }
 
   return [];
 }
 
-function valueOf<T = any>(item: any, camel: string, snake: string, fallback?: T): T {
-  return (item?.[camel] ?? item?.[snake] ?? fallback) as T;
-}
-
-function extractProperty(payload: ApiResponse): Property | null {
+function extractProperty(payload: any): Property | null {
   if (!payload) return null;
-
-  if (payload.property) return payload.property;
-
-  if (payload.data && 'data' in payload.data && payload.data.data) {
-    return payload.data.data;
-  }
-
-  if (payload.data && !Array.isArray(payload.data)) {
-    return payload.data as Property;
-  }
-
+  if (payload.data?.data && typeof payload.data.data === "object") return payload.data.data;
+  if (payload.data && typeof payload.data === "object" && !Array.isArray(payload.data)) return payload.data;
+  if (payload.property && typeof payload.property === "object") return payload.property;
+  if (typeof payload === "object" && !Array.isArray(payload)) return payload;
   return null;
 }
 
-function cleanSlug(value?: string) {
-  return String(value || '')
-    .replace(/^\/+/, '')
-    .replace(/^property\//, '')
-    .trim();
+function getSocietyName(property: Property | null): string {
+  if (!property) return "";
+  if (typeof property.society === "object" && property.society?.name) return property.society.name;
+  if (typeof property.society === "string") return property.society;
+  return property.societyName || property.society_name || "";
 }
 
-function fallbackTitle(slug?: string) {
-  const clean = cleanSlug(slug);
-  if (!clean) return 'Property';
-  return clean
-    .split('-')
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+function getSocietySlug(property: Property | null): string {
+  if (!property) return "";
+  if (typeof property.society === "object" && property.society?.slug) return property.society.slug;
+  return "";
 }
 
-function safePrice(property: Property) {
-  return property.price || property.rent || 'On request';
+function getSocietyLocality(property: Property | null): string {
+  if (!property) return "Gurgaon";
+
+  if (typeof property.society === "object") {
+    const location = [property.society?.sector, property.society?.locality]
+      .filter(Boolean)
+      .join(", ");
+    if (location) return location;
+  }
+
+  return property.locality || "Gurgaon";
 }
 
-function safeListingType(property: Property) {
-  return valueOf<string>(property, 'listingType', 'listing_type', 'Property');
-}
-
-function safePropertyType(property: Property) {
-  return valueOf<string>(property, 'propertyType', 'property_type', 'Apartment');
-}
-
-function safeArea(property: Property) {
-  return valueOf<string | number>(property, 'areaSqft', 'area_sqft', '-');
-}
-
-function safeFurnished(property: Property) {
-  return valueOf<string>(property, 'furnishedStatus', 'furnished_status', '-');
-}
-
-function societyObject(property: Property): SocietyRef | null {
-  return typeof property.society === 'object' && property.society
-    ? property.society
-    : null;
-}
-
-function societyNameFor(property: Property) {
-  const society = societyObject(property);
-  return (
-    society?.name ||
-    property.societyName ||
-    property.society_name ||
-    (typeof property.society === 'string' ? property.society : '') ||
-    ''
-  );
-}
-
-function societySlugFor(property: Property) {
-  const society = societyObject(property);
-  return society?.slug || property.societySlug || property.society_slug || '';
-}
-
-function societyLocalityFor(property: Property) {
-  const society = societyObject(property);
-  return society
-    ? [society.sector, society.locality].filter(Boolean).join(', ')
-    : [property.sector, property.locality].filter(Boolean).join(', ');
-}
-
-function propertyPhotos(property: Property) {
+function getPhotos(property: Property): string[] {
   const savedImages = parseList(property.images);
-  const galleryImages = [
-    ...parseList(property.galleryImages),
-    ...parseList(property.gallery_images),
-  ];
+  const galleryImages = parseList(property.galleryImages ?? property.gallery_images);
   const coverImage = property.coverImage || property.cover_image;
 
-  const photos = [
-    ...savedImages,
-    ...galleryImages,
-    ...(coverImage ? [coverImage] : []),
-  ].filter(Boolean);
+  const photos = [...savedImages, ...galleryImages, coverImage]
+    .filter(Boolean)
+    .map(String)
+    .filter((value, index, self) => self.indexOf(value) === index);
 
-  return Array.from(new Set(photos)).length
-    ? Array.from(new Set(photos))
+  return photos.length
+    ? photos
     : [
-        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1400&q=80',
+        "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1400&q=80",
       ];
 }
 
@@ -212,69 +153,60 @@ export function PropertyPage() {
 
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
-  const [pageError, setPageError] = useState('');
+  const [fetchError, setFetchError] = useState("");
   const [activeImage, setActiveImage] = useState(0);
   const [isShortlisted, setIsShortlisted] = useState(false);
 
   const [leadOpen, setLeadOpen] = useState(false);
-  const [leadType, setLeadType] = useState<'callback' | 'enquiry'>('callback');
+  const [leadType, setLeadType] = useState<"callback" | "enquiry">("callback");
   const [leadSubmitting, setLeadSubmitting] = useState(false);
   const [leadSuccess, setLeadSuccess] = useState(false);
-  const [leadError, setLeadError] = useState('');
+  const [leadError, setLeadError] = useState("");
 
   const [leadForm, setLeadForm] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    message: '',
+    name: "",
+    phone: "",
+    email: "",
+    message: "",
   });
 
   useEffect(() => {
     let mounted = true;
 
-    const fetchProperty = async () => {
-      setLoading(true);
-      setPageError('');
+    async function fetchProperty() {
+      if (!slug) {
+        setLoading(false);
+        setFetchError("Property URL is missing.");
+        return;
+      }
 
       try {
-        const clean = cleanSlug(slug);
-
-        if (!clean) {
-          throw new Error('Missing property slug');
-        }
-
-        const response = await fetch(`${API_BASE}/properties/${encodeURIComponent(clean)}`, {
-          headers: {
-            Accept: 'application/json',
-          },
-        });
+        setLoading(true);
+        setFetchError("");
+        const cleanSlug = String(slug).replace(/^property\//, "");
+        const response = await fetch(`${API_BASE}/properties/${encodeURIComponent(cleanSlug)}`);
 
         if (!response.ok) {
-          throw new Error(`Property API failed with ${response.status}`);
+          throw new Error(`Property API failed with status ${response.status}`);
         }
 
-        const data: ApiResponse = await response.json();
-        const nextProperty = extractProperty(data);
-
-        if (!nextProperty) {
-          throw new Error('Property response did not include data');
-        }
+        const json = await response.json();
+        const nextProperty = extractProperty(json);
 
         if (mounted) {
           setProperty(nextProperty);
           setActiveImage(0);
         }
       } catch (error) {
-        console.error('Property fetch failed:', error);
-
+        console.error("Property fetch failed:", error);
         if (mounted) {
+          setFetchError("Unable to load this property right now.");
           setProperty(null);
-          setPageError('Unable to load this property right now.');
         }
       } finally {
         if (mounted) setLoading(false);
       }
-    };
+    }
 
     fetchProperty();
 
@@ -283,41 +215,49 @@ export function PropertyPage() {
     };
   }, [slug]);
 
-  const societyName = property ? societyNameFor(property) : '';
-  const societySlug = property ? societySlugFor(property) : '';
-  const societyLocality = property ? societyLocalityFor(property) : '';
-  const title = property?.title || fallbackTitle(slug);
-  const photos = useMemo(() => (property ? propertyPhotos(property) : []), [property]);
+  const title = property?.title || "Property";
+  const societyName = getSocietyName(property);
+  const societySlug = getSocietySlug(property);
+  const societyLocality = getSocietyLocality(property);
+  const price = property?.price || property?.rent || "On request";
+  const listingType = getField(property, "listingType", "listing_type", "Property");
+  const propertyType = getField(property, "propertyType", "property_type", "Apartment");
+  const areaSqft = getField(property, "areaSqft", "area_sqft", "-");
+  const furnishedStatus = getField(property, "furnishedStatus", "furnished_status", "-");
   const amenities = useMemo(() => parseList(property?.amenities), [property?.amenities]);
+  const photos = useMemo(() => (property ? getPhotos(property) : []), [property]);
 
-  const openLead = (type: 'callback' | 'enquiry') => {
+  const whatsappMessage = encodeURIComponent(
+    `Hi, I am interested in ${title}. Please share details.`,
+  );
+
+  const openLead = (type: "callback" | "enquiry") => {
     setLeadType(type);
     setLeadOpen(true);
     setLeadSuccess(false);
-    setLeadError('');
+    setLeadError("");
     setLeadForm((current) => ({
       ...current,
       message:
-        type === 'callback'
+        type === "callback"
           ? `I want a callback for ${title}.`
           : `I am interested in ${title}. Please share details.`,
     }));
   };
 
-  const submitLead = async (event: React.FormEvent) => {
+  const submitLead = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     if (!property) return;
 
     setLeadSubmitting(true);
-    setLeadError('');
+    setLeadError("");
 
     try {
       const response = await fetch(`${API_BASE}/leads`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           name: leadForm.name,
@@ -326,24 +266,17 @@ export function PropertyPage() {
           message: leadForm.message,
           property_title: title,
           property_slug: property.slug || slug,
-          society_name: societyName || property.locality || 'Gurgaon',
-          source: leadType === 'callback' ? 'property_callback' : 'property_enquiry',
+          society_name: societyName || property.locality || "Gurgaon",
+          source: leadType === "callback" ? "property_callback" : "property_enquiry",
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Lead submission failed');
-      }
+      if (!response.ok) throw new Error("Lead submission failed");
 
       setLeadSuccess(true);
-      setLeadForm({
-        name: '',
-        phone: '',
-        email: '',
-        message: '',
-      });
+      setLeadForm({ name: "", phone: "", email: "", message: "" });
     } catch {
-      setLeadError('Unable to submit enquiry. Please try again.');
+      setLeadError("Unable to submit enquiry. Please try again.");
     } finally {
       setLeadSubmitting(false);
     }
@@ -351,13 +284,10 @@ export function PropertyPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-ivory-100 py-20">
-        <div className="container mx-auto px-4 text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
-          <h1 className="mt-6 text-3xl font-bold text-navy-900">
-            Loading property...
-          </h1>
-          <p className="mt-2 text-navy-500">Fetching live SocietyFlats data.</p>
+      <div className="flex min-h-screen items-center justify-center bg-ivory-100 px-4">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-navy-900">Loading property...</h1>
+          <p className="mt-3 text-navy-500">Fetching live property details.</p>
         </div>
       </div>
     );
@@ -367,69 +297,45 @@ export function PropertyPage() {
     return (
       <div className="min-h-screen bg-ivory-100 py-20">
         <div className="container mx-auto px-4 text-center">
-          <div className="mx-auto max-w-xl rounded-[2rem] border border-navy-100 bg-white p-8 shadow-sm">
-            <h1 className="text-3xl font-bold text-navy-900">
-              Property not found
-            </h1>
-            <p className="mt-3 text-navy-500">
-              {pageError || 'This property may have been removed or is not live yet.'}
-            </p>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button asChild className="rounded-full bg-navy-600 hover:bg-navy-700">
-                <Link to="/properties">Back to properties</Link>
-              </Button>
-              <Button asChild variant="outline" className="rounded-full">
-                <Link to="/search">Search live homes</Link>
-              </Button>
-            </div>
+          <h1 className="text-4xl font-bold text-navy-900">Property not found</h1>
+          <p className="mx-auto mt-3 max-w-xl text-navy-500">
+            {fetchError || "This property could not be found in the live inventory."}
+          </p>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button asChild className="rounded-full bg-navy-600 hover:bg-navy-700">
+              <Link to="/properties">Back to properties</Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-full">
+              <Link to="/search">Search homes</Link>
+            </Button>
           </div>
         </div>
       </div>
     );
   }
 
-  const whatsappMessage = encodeURIComponent(
-    `Hi, I am interested in ${title}. Please share details.`
-  );
-
   return (
-    <div className="min-h-screen bg-ivory-100 pb-24 lg:pb-0">
-      <div className="bg-white">
+    <div className="min-h-screen bg-ivory-100 pb-20 md:pb-0">
+      <section className="bg-white">
         <div className="container mx-auto px-4 py-5 md:py-6">
           <Button asChild variant="ghost" className="mb-4 rounded-full text-navy-600">
-            <Link to={societySlug ? `/society/${societySlug}` : '/properties'}>
+            <Link to={societySlug ? `/society/${societySlug}` : "/properties"}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              {societySlug ? 'Back to society' : 'Back to properties'}
+              {societyName ? `Back to ${societyName}` : "Back to properties"}
             </Link>
           </Button>
 
-          <div
-            className={cn(
-              'grid gap-4',
-              photos.length > 1 ? 'lg:grid-cols-[1fr_280px]' : 'lg:grid-cols-1'
-            )}
-          >
-            <div className="relative h-[260px] overflow-hidden rounded-[1.5rem] bg-navy-50 md:h-[420px] lg:rounded-[2rem]">
-              <img
-                src={photos[activeImage] || photos[0]}
-                alt={title}
-                className="h-full w-full object-cover"
-                onError={(event) => {
-                  event.currentTarget.src =
-                    'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1400&q=80';
-                }}
-              />
-              <div className="absolute left-4 top-4 flex gap-2">
+          <div className={photos.length > 1 ? "grid gap-4 lg:grid-cols-[1fr_240px]" : "grid gap-4"}>
+            <div className="relative h-[260px] overflow-hidden rounded-[1.5rem] bg-navy-50 md:h-[460px] md:rounded-[2rem]">
+              <img src={photos[activeImage] || photos[0]} alt={title} className="h-full w-full object-cover" />
+              <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                 {property.verified ? (
                   <Badge className="border-0 bg-green-500 text-white">
-                    <Shield className="mr-1 h-3 w-3" />
-                    Verified
+                    <Shield className="mr-1 h-3 w-3" /> Verified
                   </Badge>
                 ) : null}
                 {property.featured ? (
-                  <Badge className="border-0 bg-gold-500 text-navy-900">
-                    Featured
-                  </Badge>
+                  <Badge className="border-0 bg-amber-50 text-amber-700">Featured</Badge>
                 ) : null}
               </div>
             </div>
@@ -438,160 +344,117 @@ export function PropertyPage() {
               <div className="hidden gap-3 lg:grid">
                 {photos.slice(0, 3).map((photo, index) => (
                   <button
-                    key={photo + index}
+                    key={`${photo}-${index}`}
+                    type="button"
                     onClick={() => setActiveImage(index)}
                     className={cn(
-                      'relative overflow-hidden rounded-2xl border-2 bg-navy-50',
-                      activeImage === index ? 'border-navy-500' : 'border-transparent'
+                      "overflow-hidden rounded-[1.25rem] border-2 bg-navy-50",
+                      activeImage === index ? "border-blue-500" : "border-transparent",
                     )}
                   >
-                    <img
-                      src={photo}
-                      alt={title}
-                      className="h-full min-h-[128px] w-full object-cover"
-                    />
+                    <img src={photo} alt={title} className="h-full min-h-[135px] w-full object-cover" />
                   </button>
                 ))}
               </div>
             ) : null}
-
-            {photos.length > 1 ? (
-              <div className="flex gap-3 overflow-x-auto pb-1 lg:hidden">
-                {photos.slice(0, 5).map((photo, index) => (
-                  <button
-                    key={photo + index}
-                    onClick={() => setActiveImage(index)}
-                    className={cn(
-                      'h-20 w-28 flex-shrink-0 overflow-hidden rounded-2xl border-2 bg-navy-50',
-                      activeImage === index ? 'border-navy-500' : 'border-transparent'
-                    )}
-                  >
-                    <img src={photo} alt={title} className="h-full w-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            ) : null}
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto px-4 py-6 md:py-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="space-y-5 lg:col-span-2 md:space-y-6">
-            <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+      <main className="container mx-auto px-4 py-6 md:py-8">
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+          <div className="space-y-6">
+            <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="mb-3 flex flex-wrap gap-2">
-                    <Badge className="border-blue-100 bg-blue-50 text-blue-700">
-                      {safeListingType(property)}
-                    </Badge>
-                    {property.status ? (
-                      <Badge variant="outline">{property.status}</Badge>
-                    ) : null}
+                    <Badge className="border-blue-100 bg-blue-50 text-blue-700">{listingType}</Badge>
+                    {property.status ? <Badge variant="outline">{property.status}</Badge> : null}
                   </div>
 
                   <h1 className="text-3xl font-extrabold tracking-tight text-navy-900 md:text-5xl">
                     {title}
                   </h1>
 
-                  <div className="mt-3 flex items-center gap-2 text-navy-500">
+                  <p className="mt-3 flex items-center gap-2 text-navy-500">
                     <MapPin className="h-4 w-4" />
-                    <span>
-                      {societyName || 'Gurgaon'} • {property.locality || societyLocality || 'Gurgaon'}
-                    </span>
-                  </div>
+                    <span>{societyName || "Gurgaon"} • {societyLocality}</span>
+                  </p>
                 </div>
 
-                <div className="hidden items-center gap-2 md:flex">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(isShortlisted && 'border-red-200 bg-red-50 text-red-600')}
-                    onClick={() => setIsShortlisted(!isShortlisted)}
-                  >
-                    <Heart className={cn('mr-1.5 h-4 w-4', isShortlisted && 'fill-current')} />
-                    {isShortlisted ? 'Saved' : 'Save'}
-                  </Button>
-
-                  <Button variant="outline" size="sm">
-                    <Share2 className="mr-1.5 h-4 w-4" />
-                    Share
-                  </Button>
+                <div className="rounded-[1.5rem] bg-blue-50 px-5 py-4 text-left md:text-right">
+                  <p className="text-sm text-blue-700">Price</p>
+                  <p className="mt-1 text-2xl font-bold text-navy-900">{price}</p>
                 </div>
               </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-3 md:flex md:flex-wrap">
-                <Badge variant="outline" className="justify-center rounded-full px-4 py-2">
-                  <Home className="mr-1 h-3 w-3" />
-                  {safePropertyType(property)}
-                </Badge>
-                <Badge variant="outline" className="justify-center rounded-full px-4 py-2">
-                  <Bed className="mr-1 h-3 w-3" />
-                  {property.bedrooms || '-'} BHK
-                </Badge>
-                <Badge variant="outline" className="justify-center rounded-full px-4 py-2">
-                  <Bath className="mr-1 h-3 w-3" />
-                  {property.bathrooms || '-'} Baths
-                </Badge>
-                <Badge variant="outline" className="justify-center rounded-full px-4 py-2">
-                  <Maximize className="mr-1 h-3 w-3" />
-                  {safeArea(property)} sq.ft
-                </Badge>
-              </div>
-
-              <div className="mt-5 rounded-2xl bg-blue-50 p-4 md:hidden">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">
-                  Price
-                </p>
-                <p className="mt-1 text-2xl font-bold text-navy-900">
-                  {safePrice(property)}
-                </p>
-              </div>
-
-              <div className="mt-5 grid grid-cols-2 gap-3 md:hidden">
-                <Button
-                  onClick={() => openLead('callback')}
-                  className="rounded-full bg-blue-600 hover:bg-blue-700"
-                >
-                  <Phone className="mr-2 h-4 w-4" />
-                  Callback
-                </Button>
-                <Button
-                  onClick={() => openLead('enquiry')}
-                  variant="outline"
-                  className="rounded-full border-navy-200"
-                >
-                  Enquire
-                </Button>
-              </div>
-            </div>
-
-            <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
-              <h3 className="mb-5 text-2xl font-bold text-navy-900">Property Details</h3>
-              <div className="grid grid-cols-2 gap-5 md:grid-cols-3">
+              <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
                 {[
-                  { label: 'Listing Type', value: safeListingType(property) },
-                  { label: 'Price', value: safePrice(property) },
-                  { label: 'Bedrooms', value: property.bedrooms },
-                  { label: 'Bathrooms', value: property.bathrooms },
-                  { label: 'Furnished', value: safeFurnished(property) },
-                  { label: 'Facing', value: property.facing },
-                ].map((detail) => (
-                  <div key={detail.label}>
-                    <p className="mb-1 text-sm text-navy-500">{detail.label}</p>
-                    <p className="font-medium capitalize text-navy-900">
-                      {detail.value || '-'}
-                    </p>
+                  { label: "Type", value: propertyType, icon: Home },
+                  { label: "Bedrooms", value: `${property.bedrooms || "-"} BHK`, icon: Bed },
+                  { label: "Baths", value: property.bathrooms || "-", icon: Bath },
+                  { label: "Area", value: `${areaSqft || "-"} sq.ft`, icon: Maximize },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className="rounded-2xl bg-[#F8FAFC] p-4">
+                      <Icon className="h-4 w-4 text-blue-600" />
+                      <p className="mt-2 text-xs text-navy-400">{item.label}</p>
+                      <p className="mt-1 font-semibold text-navy-900">{item.value}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Button onClick={() => openLead("callback")} className="rounded-full bg-blue-600 hover:bg-blue-700">
+                  <Phone className="mr-2 h-4 w-4" /> Request callback
+                </Button>
+                <Button onClick={() => openLead("enquiry")} variant="outline" className="rounded-full">
+                  <Mail className="mr-2 h-4 w-4" /> Send enquiry
+                </Button>
+                <Button
+                  variant="outline"
+                  className={cn("rounded-full", isShortlisted && "border-red-200 bg-red-50 text-red-600")}
+                  onClick={() => setIsShortlisted(!isShortlisted)}
+                >
+                  <Heart className={cn("mr-2 h-4 w-4", isShortlisted && "fill-current")} />
+                  {isShortlisted ? "Saved" : "Save"}
+                </Button>
+                <Button variant="outline" className="rounded-full">
+                  <Share2 className="mr-2 h-4 w-4" /> Share
+                </Button>
+              </div>
+            </section>
+
+            <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+              <h2 className="text-2xl font-bold text-navy-900">Property details</h2>
+              <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3">
+                {[
+                  ["Listing type", listingType],
+                  ["Price", price],
+                  ["Bedrooms", property.bedrooms],
+                  ["Bathrooms", property.bathrooms],
+                  ["Furnished", furnishedStatus],
+                  ["Facing", property.facing],
+                  ["Floor", property.floor],
+                  ["Maintenance", property.maintenance],
+                  ["Security deposit", getField(property, "securityDeposit", "security_deposit", "-")],
+                ].map(([label, value]) => (
+                  <div key={String(label)}>
+                    <p className="text-sm text-navy-500">{label}</p>
+                    <p className="mt-1 font-semibold capitalize text-navy-900">{value || "-"}</p>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
 
-            <div className="hidden rounded-[2rem] border border-navy-100 bg-white p-7 shadow-sm md:block">
+            <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
               <div className="grid gap-4 md:grid-cols-3">
                 {[
-                  { label: 'Verified society', value: societyName || 'Gurgaon inventory', icon: Shield },
-                  { label: 'Location context', value: societyLocality || property.locality || 'Gurgaon', icon: MapPin },
-                  { label: 'Next action', value: 'Callback, visit or WhatsApp', icon: CalendarCheck },
+                  { label: "Verified society", value: societyName || "Gurgaon inventory", icon: Shield },
+                  { label: "Location context", value: societyLocality, icon: MapPin },
+                  { label: "Next action", value: "Callback, visit or WhatsApp", icon: CalendarCheck },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -603,24 +466,21 @@ export function PropertyPage() {
                   );
                 })}
               </div>
-            </div>
+            </section>
 
-            <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
-              <h3 className="mb-4 text-2xl font-bold text-navy-900">Description</h3>
-              <p className="whitespace-pre-line leading-relaxed text-navy-600">
-                {property.description || 'No description available.'}
+            <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+              <h2 className="text-2xl font-bold text-navy-900">Description</h2>
+              <p className="mt-4 whitespace-pre-line leading-relaxed text-navy-600">
+                {property.description || "No description available."}
               </p>
-            </div>
+            </section>
 
-            <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
-              <h3 className="mb-4 text-2xl font-bold text-navy-900">Amenities</h3>
-              <div className="flex flex-wrap gap-2">
+            <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+              <h2 className="text-2xl font-bold text-navy-900">Amenities</h2>
+              <div className="mt-4 flex flex-wrap gap-2">
                 {amenities.length ? (
                   amenities.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full bg-ivory-200 px-4 py-2 text-sm text-navy-700"
-                    >
+                    <span key={item} className="rounded-full bg-ivory-200 px-4 py-2 text-sm text-navy-700">
                       {item}
                     </span>
                   ))
@@ -628,16 +488,12 @@ export function PropertyPage() {
                   <p className="text-navy-500">No amenities added yet.</p>
                 )}
               </div>
-            </div>
+            </section>
 
             {societyName ? (
-              <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
-                  Society context
-                </p>
-                <h3 className="mt-2 text-2xl font-bold text-navy-900">
-                  About {societyName}
-                </h3>
+              <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">Society context</p>
+                <h2 className="mt-2 text-2xl font-bold text-navy-900">About {societyName}</h2>
                 <p className="mt-3 text-navy-500">
                   Review the society profile before requesting a visit so the property decision includes location, amenities and inventory context.
                 </p>
@@ -648,49 +504,28 @@ export function PropertyPage() {
                     </Button>
                   ) : null}
                   <Button asChild variant="outline" className="rounded-full">
-                    <Link to={`/compare?society=${encodeURIComponent(societyName)}`}>
-                      Compare area
-                    </Link>
+                    <Link to={`/compare?society=${encodeURIComponent(societyName)}`}>Compare area</Link>
                   </Button>
                 </div>
-              </div>
+              </section>
             ) : null}
           </div>
 
-          <aside className="hidden space-y-6 lg:block">
+          <aside className="hidden lg:block">
             <div className="sticky top-24 rounded-[2rem] border border-navy-100 bg-white p-6 shadow-soft">
-              <p className="mb-1 text-sm text-navy-500">Price</p>
-              <p className="text-3xl font-bold text-navy-900">
-                {safePrice(property)}
-              </p>
+              <p className="text-sm text-navy-500">Price</p>
+              <p className="mt-1 text-3xl font-bold text-navy-900">{price}</p>
 
               <div className="mt-6 space-y-3">
-                <Button
-                  onClick={() => openLead('callback')}
-                  className="w-full rounded-full bg-navy-600 hover:bg-navy-700"
-                >
-                  <Phone className="mr-2 h-4 w-4" />
-                  Request callback
+                <Button onClick={() => openLead("callback")} className="w-full rounded-full bg-blue-600 hover:bg-blue-700">
+                  <Phone className="mr-2 h-4 w-4" /> Request callback
                 </Button>
-
-                <Button
-                  onClick={() => openLead('enquiry')}
-                  variant="outline"
-                  className="w-full rounded-full"
-                >
-                  <Mail className="mr-2 h-4 w-4" />
-                  Send enquiry
+                <Button onClick={() => openLead("enquiry")} variant="outline" className="w-full rounded-full">
+                  <Mail className="mr-2 h-4 w-4" /> Send enquiry
                 </Button>
-
-                <Button
-                  onClick={() => openLead('callback')}
-                  variant="outline"
-                  className="w-full rounded-full"
-                >
-                  <CalendarCheck className="mr-2 h-4 w-4" />
-                  Schedule visit
+                <Button onClick={() => openLead("callback")} variant="outline" className="w-full rounded-full">
+                  <CalendarCheck className="mr-2 h-4 w-4" /> Schedule visit
                 </Button>
-
                 <a
                   href={`https://wa.me/919999988888?text=${whatsappMessage}`}
                   target="_blank"
@@ -701,7 +536,7 @@ export function PropertyPage() {
                 </a>
               </div>
 
-              {societyName && societySlug ? (
+              {societySlug ? (
                 <Button asChild variant="ghost" className="mt-4 w-full rounded-full text-blue-700">
                   <Link to={`/society/${societySlug}`}>
                     View society first <ArrowRight className="ml-2 h-4 w-4" />
@@ -711,22 +546,14 @@ export function PropertyPage() {
             </div>
           </aside>
         </div>
-      </div>
+      </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-navy-100 bg-white/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-navy-100 bg-white/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
         <div className="grid grid-cols-2 gap-3">
-          <Button
-            onClick={() => openLead('callback')}
-            className="rounded-full bg-blue-600 hover:bg-blue-700"
-          >
-            <Phone className="mr-2 h-4 w-4" />
-            Callback
+          <Button onClick={() => openLead("callback")} className="rounded-full bg-blue-600 hover:bg-blue-700">
+            <Phone className="mr-2 h-4 w-4" /> Callback
           </Button>
-          <Button
-            onClick={() => openLead('enquiry')}
-            variant="outline"
-            className="rounded-full border-navy-200"
-          >
+          <Button onClick={() => openLead("enquiry")} variant="outline" className="rounded-full border-blue-200 text-blue-700">
             Enquire
           </Button>
         </div>
@@ -734,18 +561,16 @@ export function PropertyPage() {
 
       {leadOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/60 px-4">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[2rem] bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-lg rounded-[2rem] bg-white p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-2xl font-bold text-navy-900">
-                  {leadType === 'callback' ? 'Request a callback' : 'Send enquiry'}
+                  {leadType === "callback" ? "Request a callback" : "Send enquiry"}
                 </h3>
-                <p className="mt-1 text-sm text-navy-500">
-                  Our team will contact you for {title}.
-                </p>
+                <p className="mt-1 text-sm text-navy-500">Our team will contact you for {title}.</p>
               </div>
-
               <button
+                type="button"
                 onClick={() => setLeadOpen(false)}
                 className="rounded-full border border-navy-100 p-2 text-navy-500 hover:bg-navy-50"
               >
@@ -766,7 +591,6 @@ export function PropertyPage() {
                   placeholder="Your name"
                   className="w-full rounded-2xl border border-navy-100 px-4 py-3 outline-none focus:border-blue-400"
                 />
-
                 <input
                   required
                   value={leadForm.phone}
@@ -774,7 +598,6 @@ export function PropertyPage() {
                   placeholder="Phone number"
                   className="w-full rounded-2xl border border-navy-100 px-4 py-3 outline-none focus:border-blue-400"
                 />
-
                 <input
                   type="email"
                   value={leadForm.email}
@@ -782,7 +605,6 @@ export function PropertyPage() {
                   placeholder="Email optional"
                   className="w-full rounded-2xl border border-navy-100 px-4 py-3 outline-none focus:border-blue-400"
                 />
-
                 <textarea
                   value={leadForm.message}
                   onChange={(event) => setLeadForm({ ...leadForm, message: event.target.value })}
@@ -792,13 +614,11 @@ export function PropertyPage() {
                 />
 
                 {leadError ? (
-                  <div className="rounded-2xl bg-red-50 p-3 text-sm text-red-700">
-                    {leadError}
-                  </div>
+                  <div className="rounded-2xl bg-red-50 p-3 text-sm text-red-700">{leadError}</div>
                 ) : null}
 
-                <Button disabled={leadSubmitting} className="w-full rounded-full bg-navy-600 hover:bg-navy-700">
-                  {leadSubmitting ? 'Submitting...' : 'Submit enquiry'}
+                <Button disabled={leadSubmitting} className="w-full rounded-full bg-blue-600 hover:bg-blue-700">
+                  {leadSubmitting ? "Submitting..." : "Submit enquiry"}
                 </Button>
               </form>
             )}
