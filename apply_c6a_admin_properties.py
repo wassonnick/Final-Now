@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+from pathlib import Path
+
+path = Path("frontend/src/pages/admin/AdminPropertiesPage.tsx")
+
+path.write_text(r'''import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BedDouble,
@@ -507,3 +511,6 @@ export function AdminPropertiesPage() {
     </AdminLayout>
   );
 }
+''', encoding="utf-8")
+
+print("C6A AdminPropertiesPage mobile + quick actions applied.")
