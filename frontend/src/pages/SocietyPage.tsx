@@ -700,6 +700,43 @@ export function SocietyPage() {
               ))}
             </div>
 
+            <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm md:hidden">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
+                About this society
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-navy-900">
+                Why consider {society.name}?
+              </h2>
+              {society.description ? (
+                <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-navy-600">
+                  {society.description}
+                </p>
+              ) : (
+                <p className="mt-3 text-sm leading-relaxed text-navy-600">
+                  This society profile is being verified. Request a callback to
+                  check live availability, rent fit and visit guidance before
+                  shortlisting.
+                </p>
+              )}
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-blue-50 p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
+                    Next step
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-navy-900">
+                    Check homes and availability
+                  </p>
+                </div>
+                <Button
+                  onClick={openSocietyCallback}
+                  size="sm"
+                  className="rounded-full bg-blue-600 hover:bg-blue-700"
+                >
+                  Callback
+                </Button>
+              </div>
+            </div>
+
             <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
