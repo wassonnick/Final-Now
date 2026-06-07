@@ -326,7 +326,7 @@ export function PropertyPage() {
           </Button>
 
           <div className={photos.length > 1 ? "grid gap-4 lg:grid-cols-[1fr_240px]" : "grid gap-4"}>
-            <div className="relative h-[260px] overflow-hidden rounded-[1.5rem] bg-navy-50 md:h-[460px] md:rounded-[2rem]">
+            <div className="relative h-[210px] overflow-hidden rounded-[1.5rem] bg-navy-50 sm:h-[260px] md:h-[440px] md:rounded-[2rem]">
               <img src={photos[activeImage] || photos[0]} alt={title} className="h-full w-full object-cover" />
               <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                 {property.verified ? (
@@ -406,30 +406,49 @@ export function PropertyPage() {
                 })}
               </div>
 
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap md:mt-6">
                 <Button onClick={() => openLead("callback")} className="rounded-full bg-blue-600 hover:bg-blue-700">
-                  <Phone className="mr-2 h-4 w-4" /> Request callback
+                  <Phone className="mr-2 h-4 w-4" /> Callback
                 </Button>
-                <Button onClick={() => openLead("enquiry")} variant="outline" className="rounded-full">
-                  <Mail className="mr-2 h-4 w-4" /> Send enquiry
+                <Button onClick={() => openLead("enquiry")} variant="outline" className="rounded-full border-blue-200 text-blue-700">
+                  <Mail className="mr-2 h-4 w-4" /> Enquire
                 </Button>
                 <Button
                   variant="outline"
-                  className={cn("rounded-full", isShortlisted && "border-red-200 bg-red-50 text-red-600")}
+                  className={cn("hidden rounded-full sm:inline-flex", isShortlisted && "border-red-200 bg-red-50 text-red-600")}
                   onClick={() => setIsShortlisted(!isShortlisted)}
                 >
                   <Heart className={cn("mr-2 h-4 w-4", isShortlisted && "fill-current")} />
                   {isShortlisted ? "Saved" : "Save"}
                 </Button>
-                <Button variant="outline" className="rounded-full">
+                <Button variant="outline" className="hidden rounded-full sm:inline-flex">
                   <Share2 className="mr-2 h-4 w-4" /> Share
                 </Button>
               </div>
             </section>
 
+            {societyName ? (
+              <section className="rounded-[1.5rem] border border-blue-100 bg-blue-50 p-4 shadow-sm md:hidden">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
+                  Society-first check
+                </p>
+                <h2 className="mt-2 text-lg font-bold text-navy-900">
+                  Review {societyName} before visiting
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-navy-600">
+                  See society profile, location context and similar options before confirming this home.
+                </p>
+                {societySlug ? (
+                  <Button asChild variant="outline" className="mt-4 w-full rounded-full border-blue-200 bg-white text-blue-700">
+                    <Link to={`/society/${societySlug}`}>View society profile</Link>
+                  </Button>
+                ) : null}
+              </section>
+            ) : null}
+
             <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
-              <h2 className="text-2xl font-bold text-navy-900">Property details</h2>
-              <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3">
+              <h2 className="text-xl font-bold text-navy-900 md:text-2xl">Property details</h2>
+              <div className="mt-4 grid grid-cols-2 gap-3 md:mt-5 md:grid-cols-3 md:gap-4">
                 {[
                   ["Listing type", listingType],
                   ["Price", price],
@@ -442,8 +461,8 @@ export function PropertyPage() {
                   ["Security deposit", getField(property, "securityDeposit", "security_deposit", "-")],
                 ].map(([label, value]) => (
                   <div key={String(label)}>
-                    <p className="text-sm text-navy-500">{label}</p>
-                    <p className="mt-1 font-semibold capitalize text-navy-900">{value || "-"}</p>
+                    <p className="text-xs text-navy-500 md:text-sm">{label}</p>
+                    <p className="mt-1 text-sm font-semibold capitalize text-navy-900 md:text-base">{value || "-"}</p>
                   </div>
                 ))}
               </div>
@@ -470,7 +489,7 @@ export function PropertyPage() {
 
             <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
               <h2 className="text-2xl font-bold text-navy-900">Description</h2>
-              <p className="mt-4 whitespace-pre-line leading-relaxed text-navy-600">
+              <p className="mt-4 line-clamp-3 whitespace-pre-line leading-relaxed text-navy-600 md:line-clamp-none">
                 {property.description || "No description available."}
               </p>
             </section>
@@ -512,19 +531,39 @@ export function PropertyPage() {
           </div>
 
           <aside className="hidden lg:block">
-            <div className="sticky top-24 rounded-[2rem] border border-navy-100 bg-white p-6 shadow-soft">
-              <p className="text-sm text-navy-500">Price</p>
-              <p className="mt-1 text-3xl font-bold text-navy-900">{price}</p>
+            <div className="sticky top-24 rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-soft">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
+                Next step
+              </p>
+              <h3 className="mt-2 text-lg font-bold leading-tight text-navy-900">
+                Confirm availability & visit timing
+              </h3>
 
-              <div className="mt-6 space-y-3">
+              <div className="mt-4 rounded-2xl bg-blue-50 p-4">
+                <p className="text-xs text-blue-700">Price</p>
+                <p className="mt-1 text-2xl font-bold text-navy-900">{price}</p>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                {[
+                  ["Bedrooms", `${property.bedrooms || "-"} BHK`],
+                  ["Area", `${areaSqft || "-"} sq.ft`],
+                  ["Society", societyName || "Gurgaon"],
+                  ["Location", societyLocality],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between gap-4 border-b border-navy-100 py-2 last:border-0">
+                    <span className="text-xs text-navy-500">{label}</span>
+                    <span className="text-right text-sm font-semibold text-navy-900">{value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 space-y-2">
                 <Button onClick={() => openLead("callback")} className="w-full rounded-full bg-blue-600 hover:bg-blue-700">
                   <Phone className="mr-2 h-4 w-4" /> Request callback
                 </Button>
-                <Button onClick={() => openLead("enquiry")} variant="outline" className="w-full rounded-full">
+                <Button onClick={() => openLead("enquiry")} variant="outline" className="w-full rounded-full border-blue-200 text-blue-700">
                   <Mail className="mr-2 h-4 w-4" /> Send enquiry
-                </Button>
-                <Button onClick={() => openLead("callback")} variant="outline" className="w-full rounded-full">
-                  <CalendarCheck className="mr-2 h-4 w-4" /> Schedule visit
                 </Button>
                 <a
                   href={`https://wa.me/919999988888?text=${whatsappMessage}`}
@@ -537,12 +576,21 @@ export function PropertyPage() {
               </div>
 
               {societySlug ? (
-                <Button asChild variant="ghost" className="mt-4 w-full rounded-full text-blue-700">
+                <Button asChild variant="ghost" className="mt-3 w-full rounded-full text-blue-700 hover:bg-blue-50">
                   <Link to={`/society/${societySlug}`}>
                     View society first <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               ) : null}
+
+              <div className="mt-4 rounded-2xl border border-navy-100 bg-[#F8FAFC] p-3">
+                <p className="text-sm font-semibold text-navy-900">Why enquire?</p>
+                <ul className="mt-2 space-y-1 text-xs text-navy-500">
+                  <li>• Confirm live availability.</li>
+                  <li>• Check final rent/price and visit timing.</li>
+                  <li>• Ask for similar homes in the same society.</li>
+                </ul>
+              </div>
             </div>
           </aside>
         </div>
