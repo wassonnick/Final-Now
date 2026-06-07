@@ -169,6 +169,16 @@ export function SocietyPage() {
     null,
   );
 
+  const openSocietyCallback = () => {
+    setSelectedLeadProperty(null);
+    setCallbackOpen(true);
+  };
+
+  const openPropertyCallback = (property: any) => {
+    setSelectedLeadProperty(property);
+    setCallbackOpen(true);
+  };
+
   const fallbackSociety = useMemo(() => findPublicSociety(slug), [slug]);
 
   useEffect(() => {
@@ -1157,7 +1167,10 @@ export function SocietyPage() {
             : `Looking for homes or society guidance in ${society.name}, ${societyLocation || "Gurgaon"}.`
         }
         submitLabel="Request callback"
-        onClose={() => setCallbackOpen(false)}
+        onClose={() => {
+          setCallbackOpen(false);
+          setSelectedLeadProperty(null);
+        }}
       />
     </div>
   );
