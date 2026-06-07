@@ -1,77 +1,51 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   BedDouble,
+  Building2,
   Copy,
   Edit3,
   Eye,
   Home,
   MapPin,
   Plus,
+  RefreshCw,
   Search,
   Trash2,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { AdminLayout } from '@/layouts/AdminLayout';
-import { Button } from '@/components/ui/button';
-import { adminFetch, adminHeaders } from '@/lib/adminApi';
-
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ||
-  'https://final-now.onrender.com/api';
+import { AdminLayout } from "@/layouts/AdminLayout";
+import { Button } from "@/components/ui/button";
+import { adminFetch, adminHeaders } from "@/lib/adminApi";
 
 const statusTone: Record<string, string> = {
-  Live: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-  Verification: 'bg-amber-50 text-amber-700 border-amber-100',
-  Draft: 'bg-slate-100 text-slate-600 border-slate-200',
-  Archived: 'bg-rose-50 text-rose-700 border-rose-100',
+  Live: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  Verification: "bg-amber-50 text-amber-700 border-amber-100",
+  Draft: "bg-slate-100 text-slate-600 border-slate-200",
+  Archived: "bg-rose-50 text-rose-700 border-rose-100",
 };
 
-const statuses = ['All', 'Live', 'Verification', 'Draft', 'Archived'];
-const listingTypes = ['All', 'Rent', 'Sale', 'Buy / Resale', 'Sell Listing', 'Builder Floor'];
+const typeTone: Record<string, string> = {
+  Rent: "bg-blue-50 text-blue-700 border-blue-100",
+  Sale: "bg-violet-50 text-violet-700 border-violet-100",
+  "Buy / Resale": "bg-violet-50 text-violet-700 border-violet-100",
+  "Sell Listing": "bg-amber-50 text-amber-700 border-amber-100",
+  "Builder Floor": "bg-slate-50 text-slate-700 border-slate-100",
+};
 
-function getPropertyImage(item: any) {
-  if (Array.isArray(item.images) && item.images[0]) {
-    return item.images[0];
-  }
-
-  if (typeof item.images === 'string') {
-    try {
-      const parsed = JSON.parse(item.images);
-
-      if (Array.isArray(parsed) && parsed[0]) {
-        return parsed[0];
-      }
-    } catch {
-      //
-    }
-  }
-
-  return 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&q=80';
-}
-
-function getSocietyName(item: any) {
-  if (typeof item?.society === 'string') {
-    return item.society;
-  }
-
-  if (typeof item?.society === 'object' && item?.society?.name) {
-    return item.society.name;
-  }
-
-  return item?.society_name || '-';
-}
+const statuses = ["All", "Live", "Verification", "Draft", "Archived"];
+const listingTypes = ["All", "Rent", "Sale", "Buy / Resale", "Sell Listing", "Builder Floor"];
 
 function parseArray(value: any): string[] {
   if (Array.isArray(value)) return value.filter(Boolean);
 
-  if (typeof value === 'string' && value.trim()) {
+  if (typeof value === "string" && value.trim()) {
     try {
       const parsed = JSON.parse(value);
       if (Array.isArray(parsed)) return parsed.filter(Boolean);
     } catch {
       return value
-        .split(',')
+        .split(",")
         .map((item) => item.trim())
         .filter(Boolean);
     }
@@ -80,56 +54,87 @@ function parseArray(value: any): string[] {
   return [];
 }
 
+function getPropertyImage(item: any) {
+  const images = parseArray(item?.images);
+  if (images[0]) return images[0];
+
+  if (item?.cover_image) return item.cover_image;
+  if (item?.coverImage) return item.coverImage;
+
+  return "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80";
+}
+
+function getSocietyName(item: any) {
+  if (typeof item?.society === "string") return item.society;
+  if (typeof item?.society === "object" && item?.society?.name) return item.society.name;
+  return item?.society_name || item?.societyName || "-";
+}
+
 function makeSlug(value: string) {
   return value
     .toLowerCase()
     .trim()
-    .replace(/^\/+/, '')
-    .replace(/^property\//, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
+    .replace(/^\/+/, "")
+    .replace(/^property\//, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
 
 function getListingType(item: any) {
-  return item?.listingType || item?.listing_type || '-';
+  return item?.listingType || item?.listing_type || "-";
+}
+
+function getPropertySlug(item: any) {
+  return String(item?.slug || item?.id || "").replace(/^\/+/, "").replace(/^property\//, "");
+}
+
+function getPropertyUrl(item: any) {
+  return `/property/${getPropertySlug(item)}`;
+}
+
+function getStatus(item: any) {
+  return item?.status || "Live";
+}
+
+function getArea(item: any) {
+  return item?.area_sqft || item?.areaSqft || "-";
 }
 
 export function AdminPropertiesPage() {
   const [properties, setProperties] = useState<any[]>([]);
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('All');
-  const [type, setType] = useState('All');
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("All");
+  const [type, setType] = useState("All");
   const [loading, setLoading] = useState(true);
-  const [actionMessage, setActionMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [actionMessage, setActionMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [duplicatingId, setDuplicatingId] = useState<number | string | null>(null);
   const [deletingId, setDeletingId] = useState<number | string | null>(null);
 
-  useEffect(() => {
-    async function loadProperties() {
-      try {
-        const res = await adminFetch('/admin/properties');
-        const json = await res.json().catch(() => ({}));
+  const loadProperties = async () => {
+    setLoading(true);
 
-        if (!res.ok) {
-          throw new Error(json?.message || 'Failed to load properties');
-        }
+    try {
+      const res = await adminFetch("/admin/properties");
+      const json = await res.json().catch(() => ({}));
 
-        const items = Array.isArray(json?.data)
-          ? json.data
-          : json?.data?.data || [];
-
-        setProperties(items);
-        setErrorMessage('');
-      } catch (err) {
-        console.error(err);
-        setErrorMessage('Unable to load properties from the live backend.');
-      } finally {
-        setLoading(false);
+      if (!res.ok) {
+        throw new Error(json?.message || "Failed to load properties");
       }
-    }
 
-    loadProperties();
+      const items = Array.isArray(json?.data) ? json.data : json?.data?.data || [];
+      setProperties(items);
+      setErrorMessage("");
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Unable to load properties from the live backend.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadProperties();
   }, []);
 
   const filtered = useMemo(() => {
@@ -137,17 +142,19 @@ export function AdminPropertiesPage() {
 
     return properties.filter((item: any) => {
       const searchable = [
-        item?.title || '',
+        item?.title || "",
         getSocietyName(item),
-        item?.locality || '',
-        item?.price || '',
+        item?.locality || "",
+        item?.price || "",
+        getListingType(item),
+        getStatus(item),
       ]
-        .join(' ')
+        .join(" ")
         .toLowerCase();
 
       const matchesQuery = !term || searchable.includes(term);
-      const matchesStatus = status === 'All' || item?.status === status;
-      const matchesType = type === 'All' || getListingType(item) === type;
+      const matchesStatus = status === "All" || getStatus(item) === status;
+      const matchesType = type === "All" || getListingType(item) === type;
 
       return matchesQuery && matchesStatus && matchesType;
     });
@@ -156,8 +163,9 @@ export function AdminPropertiesPage() {
   const stats = useMemo(() => {
     return {
       total: properties.length,
-      live: properties.filter((item: any) => item?.status === 'Live').length,
-      verification: properties.filter((item: any) => item?.status === 'Verification').length,
+      live: properties.filter((item: any) => getStatus(item) === "Live").length,
+      verification: properties.filter((item: any) => getStatus(item) === "Verification").length,
+      draft: properties.filter((item: any) => getStatus(item) === "Draft").length,
       featured: properties.filter((item: any) => item?.featured).length,
     };
   }, [properties]);
@@ -165,26 +173,26 @@ export function AdminPropertiesPage() {
   const duplicateProperty = async (item: any) => {
     if (duplicatingId) return;
 
-    const title = `${item?.title || 'Untitled property'} Copy`;
-    const baseSlug = makeSlug(item?.slug || item?.title || 'property');
+    const title = `${item?.title || "Untitled property"} Copy`;
+    const baseSlug = makeSlug(item?.slug || item?.title || "property");
 
     const payload = {
       title,
       slug: `${baseSlug}-copy-${Date.now().toString(36)}`,
-      listing_type: getListingType(item) === '-' ? 'Rent' : getListingType(item),
-      status: 'Draft',
-      society: getSocietyName(item) === '-' ? '' : getSocietyName(item),
-      locality: item?.locality || '',
-      price: item?.price || '',
-      security_deposit: item?.security_deposit || item?.securityDeposit || '',
-      maintenance: item?.maintenance || '',
-      bedrooms: item?.bedrooms || '',
-      bathrooms: item?.bathrooms || '',
-      area_sqft: item?.area_sqft || item?.areaSqft || '',
-      floor: item?.floor || '',
-      facing: item?.facing || '',
-      furnished_status: item?.furnished_status || item?.furnishedStatus || '',
-      description: item?.description || '',
+      listing_type: getListingType(item) === "-" ? "Rent" : getListingType(item),
+      status: "Draft",
+      society: getSocietyName(item) === "-" ? "" : getSocietyName(item),
+      locality: item?.locality || "",
+      price: item?.price || "",
+      security_deposit: item?.security_deposit || item?.securityDeposit || "",
+      maintenance: item?.maintenance || "",
+      bedrooms: item?.bedrooms || "",
+      bathrooms: item?.bathrooms || "",
+      area_sqft: item?.area_sqft || item?.areaSqft || "",
+      floor: item?.floor || "",
+      facing: item?.facing || "",
+      furnished_status: item?.furnished_status || item?.furnishedStatus || "",
+      description: item?.description || "",
       amenities: parseArray(item?.amenities),
       images: parseArray(item?.images),
       featured: false,
@@ -193,13 +201,13 @@ export function AdminPropertiesPage() {
 
     try {
       setDuplicatingId(item.id);
-      setActionMessage('');
-      setErrorMessage('');
+      setActionMessage("");
+      setErrorMessage("");
 
-      const response = await adminFetch('/admin/properties', {
-        method: 'POST',
+      const response = await adminFetch("/admin/properties", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...adminHeaders(),
         },
         body: JSON.stringify(payload),
@@ -208,17 +216,17 @@ export function AdminPropertiesPage() {
       const json = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(json?.message || 'Duplicate failed');
+        throw new Error(json?.message || "Duplicate failed");
       }
 
       if (json?.data) {
         setProperties((current) => [json.data, ...current]);
       }
 
-      setActionMessage(`Duplicated "${item?.title || 'property'}" as a draft.`);
+      setActionMessage(`Duplicated "${item?.title || "property"}" as a draft.`);
     } catch (err) {
       console.error(err);
-      setErrorMessage('Failed to duplicate property. Please try again.');
+      setErrorMessage("Failed to duplicate property. Please try again.");
     } finally {
       setDuplicatingId(null);
     }
@@ -227,17 +235,16 @@ export function AdminPropertiesPage() {
   const deleteProperty = async (item: any) => {
     if (deletingId) return;
 
-    const confirmed = window.confirm(`Delete "${item?.title || 'this property'}" ?`);
-
+    const confirmed = window.confirm(`Delete "${item?.title || "this property"}"?`);
     if (!confirmed) return;
 
     try {
       setDeletingId(item.id);
-      setActionMessage('');
-      setErrorMessage('');
+      setActionMessage("");
+      setErrorMessage("");
 
       const response = await adminFetch(`/admin/properties/${item.id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
           ...adminHeaders(),
         },
@@ -246,94 +253,71 @@ export function AdminPropertiesPage() {
       const json = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(json?.message || 'Delete failed');
+        throw new Error(json?.message || "Delete failed");
       }
 
       setProperties((prev) => prev.filter((property) => property.id !== item.id));
-      setActionMessage(`Deleted "${item?.title || 'property'}".`);
+      setActionMessage(`Deleted "${item?.title || "property"}".`);
     } catch (err) {
       console.error(err);
-      setErrorMessage('Failed to delete property. Please refresh and try again.');
+      setErrorMessage("Failed to delete property. Please refresh and try again.");
     } finally {
       setDeletingId(null);
     }
   };
 
   return (
-    <AdminLayout
-      title="Properties"
-      subtitle="Manage rent, buy and seller inventory"
-    >
-      <div className="mx-auto max-w-7xl space-y-5">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <AdminLayout title="Properties" subtitle="Manage live inventory, drafts and property actions">
+      <div className="space-y-6">
+        <section className="grid gap-4 md:grid-cols-4">
           {[
-            ['Total properties', stats.total],
-            ['Live listings', stats.live],
-            ['Under verification', stats.verification],
-            ['Featured', stats.featured],
-          ].map(([label, value]) => (
-            <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-              <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">{label}</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-950">{value}</p>
+            ["Total", stats.total, "All properties"],
+            ["Live", stats.live, "Public listings"],
+            ["Draft", stats.draft, "Hidden/admin only"],
+            ["Featured", stats.featured, "Highlighted"],
+          ].map(([label, value, helper]) => (
+            <div key={String(label)} className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-sm font-medium text-slate-500">{label}</p>
+              <p className="mt-3 text-4xl font-bold text-slate-950">{loading ? "-" : value}</p>
+              <p className="mt-2 text-sm text-blue-600">{helper}</p>
             </div>
           ))}
-        </div>
+        </section>
 
-        <section className="space-y-4">
-          {actionMessage ? (
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
-              {actionMessage}
-            </div>
-          ) : null}
+        {actionMessage ? (
+          <div className="rounded-2xl bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-700">
+            {actionMessage}
+          </div>
+        ) : null}
 
-          {errorMessage ? (
-            <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
-              {errorMessage}
-            </div>
-          ) : null}
+        {errorMessage ? (
+          <div className="rounded-2xl bg-amber-50 px-5 py-3 text-sm font-medium text-amber-700">
+            {errorMessage}
+          </div>
+        ) : null}
 
-          <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:flex-row xl:items-center xl:justify-between">
+        <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h2 className="text-lg font-semibold tracking-tight text-slate-950">Property inventory</h2>
+              <h2 className="text-xl font-bold tracking-tight text-slate-950">Property inventory</h2>
               <p className="mt-1 text-sm text-slate-500">
-                Search, publish and update Gurgaon listings.
+                Search, edit and manage Gurgaon listings.
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-              <div className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 xl:w-[360px]">
-                <Search className="h-4 w-4 shrink-0 text-slate-400" />
-                <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-                  placeholder="Search title, society or locality"
-                />
-              </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full border-slate-200"
+                onClick={loadProperties}
+                disabled={loading}
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
 
-              <div className="grid gap-3 sm:grid-cols-2 xl:flex">
-                <select
-                  value={status}
-                  onChange={(event) => setStatus(event.target.value)}
-                  className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none"
-                >
-                  {statuses.map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={type}
-                  onChange={(event) => setType(event.target.value)}
-                  className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none"
-                >
-                  {listingTypes.map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-              </div>
-
-              <Button asChild className="rounded-xl bg-blue-600 hover:bg-blue-700">
+              <Button asChild className="rounded-full bg-blue-600 hover:bg-blue-700">
                 <Link to="/admin/properties/new">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Property
@@ -342,136 +326,182 @@ export function AdminPropertiesPage() {
             </div>
           </div>
 
-          {loading ? (
-            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center font-medium text-slate-950 shadow-sm">
-              Loading properties...
+          <div className="mt-6 grid gap-3 lg:grid-cols-[1fr_180px_190px]">
+            <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 px-4">
+              <Search className="h-4 w-4 text-slate-400" />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                placeholder="Search title, society, locality or price"
+              />
             </div>
-          ) : null}
 
-          {!loading && filtered.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center shadow-sm">
-              <p className="font-medium text-slate-950">No properties found</p>
-              <p className="mt-1 text-sm text-slate-500">Try changing filters or create a new property listing.</p>
-            </div>
-          ) : null}
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
+              className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+            >
+              {statuses.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
 
-          {!loading && filtered.map((item: any) => {
-            const itemStatus = item?.status || 'Live';
-            const listingType = getListingType(item);
+            <select
+              value={type}
+              onChange={(event) => setType(event.target.value)}
+              className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+            >
+              {listingTypes.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
+          </div>
 
-            return (
-              <article
-                key={item.id}
-                className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 xl:grid-cols-[1.45fr_1fr_0.8fr_210px] xl:items-center"
-              >
-                <div className="flex min-w-0 gap-4">
-                  <img
-                    src={getPropertyImage(item)}
-                    alt=""
-                    className="h-24 w-28 shrink-0 rounded-xl object-cover"
-                  />
+          <div className="mt-6">
+            {loading ? (
+              <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                Loading properties...
+              </div>
+            ) : null}
 
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="max-w-xl text-base font-semibold text-slate-950">
-                        {item?.title || 'Untitled property'}
-                      </h3>
+            {!loading && filtered.length === 0 ? (
+              <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-10 text-center">
+                <p className="text-lg font-bold text-slate-950">No properties found</p>
+                <p className="mt-2 text-sm text-slate-500">
+                  Try changing filters or create a new property listing.
+                </p>
+                <Button asChild className="mt-5 rounded-full bg-blue-600 hover:bg-blue-700">
+                  <Link to="/admin/properties/new">Add Property</Link>
+                </Button>
+              </div>
+            ) : null}
 
-                      {item?.featured ? (
-                        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                          Featured
-                        </span>
-                      ) : null}
+            {!loading && filtered.length ? (
+              <div className="grid gap-4">
+                {filtered.map((item: any) => {
+                  const itemStatus = getStatus(item);
+                  const listingType = getListingType(item);
+                  const propertyUrl = getPropertyUrl(item);
+                  const editUrl = `/admin/properties/${item.id}/edit`;
 
-                      {item?.verified ? (
-                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                          Verified
-                        </span>
-                      ) : null}
-                    </div>
+                  return (
+                    <article
+                      key={item.id || item.slug}
+                      className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm transition hover:border-blue-100 hover:shadow-lg xl:grid xl:grid-cols-[220px_1fr]"
+                    >
+                      <Link to={propertyUrl} className="block h-44 bg-slate-100 xl:h-full">
+                        <img
+                          src={getPropertyImage(item)}
+                          alt={item?.title || "Property"}
+                          className="h-full w-full object-cover"
+                        />
+                      </Link>
 
-                    <p className="mt-1 text-sm font-medium text-slate-700">{item?.price || 'Price pending'}</p>
+                      <div className="p-5">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap gap-2">
+                              <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusTone[itemStatus] || statusTone.Live}`}>
+                                {itemStatus}
+                              </span>
+                              <span className={`rounded-full border px-3 py-1 text-xs font-bold ${typeTone[listingType] || "bg-slate-50 text-slate-600 border-slate-100"}`}>
+                                {listingType}
+                              </span>
+                              {item?.featured ? (
+                                <span className="rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                                  Featured
+                                </span>
+                              ) : null}
+                              {item?.verified ? (
+                                <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                                  Verified
+                                </span>
+                              ) : null}
+                            </div>
 
-                    <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-600">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Home className="h-4 w-4 text-slate-400" />
-                        {getSocietyName(item)}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <MapPin className="h-4 w-4 text-slate-400" />
-                        {item?.locality || 'Gurgaon'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                            <h3 className="mt-3 line-clamp-2 text-xl font-bold text-slate-950">
+                              {item?.title || "Untitled property"}
+                            </h3>
 
-                <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4 xl:grid-cols-2">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">Type</p>
-                    <p className="mt-1 font-semibold text-slate-950">{listingType}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">BHK</p>
-                    <p className="mt-1 font-semibold text-slate-950">{item?.bedrooms || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">Area</p>
-                    <p className="mt-1 font-semibold text-slate-950">{item?.area_sqft || item?.areaSqft || '-'}</p>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <BedDouble className="h-4 w-4 text-slate-400" />
-                    {item?.furnished_status || item?.furnishedStatus || 'Furnishing n/a'}
-                  </div>
-                </div>
+                            <p className="mt-2 text-lg font-bold text-blue-700">
+                              {item?.price || "Price pending"}
+                            </p>
 
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusTone[itemStatus] || statusTone.Live}`}>
-                    {itemStatus}
-                  </span>
-                  <span className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                    {item?.floor || 'Floor n/a'}
-                  </span>
-                </div>
+                            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
+                              <span className="inline-flex items-center gap-1">
+                                <Building2 className="h-4 w-4" />
+                                {getSocietyName(item)}
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                {item?.locality || "Gurgaon"}
+                              </span>
+                            </div>
+                          </div>
 
-                <div className="flex flex-wrap gap-2 xl:justify-end">
-                  <Button variant="outline" size="sm" className="rounded-xl" asChild>
-                    <Link to={`/property/${item?.slug || item?.id}`}>
-                      <Eye className="mr-1.5 h-3.5 w-3.5" />
-                      View
-                    </Link>
-                  </Button>
+                          <div className="grid grid-cols-3 gap-2 rounded-[22px] bg-slate-50 p-3 text-center lg:min-w-[230px]">
+                            <div>
+                              <p className="text-xs text-slate-400">BHK</p>
+                              <p className="mt-1 font-bold text-slate-950">{item?.bedrooms || "-"}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-slate-400">Area</p>
+                              <p className="mt-1 font-bold text-slate-950">{getArea(item)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-slate-400">Floor</p>
+                              <p className="mt-1 font-bold text-slate-950">{item?.floor || "-"}</p>
+                            </div>
+                          </div>
+                        </div>
 
-                  <Button variant="outline" size="sm" className="rounded-xl" asChild>
-                    <Link to={`/admin/properties/${item.id}/edit`}>
-                      <Edit3 className="mr-1.5 h-3.5 w-3.5" />
-                      Edit
-                    </Link>
-                  </Button>
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
+                            <Link to={propertyUrl}>
+                              <Eye className="mr-1.5 h-4 w-4" />
+                              View
+                            </Link>
+                          </Button>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-xl"
-                    disabled={duplicatingId === item.id || deletingId === item.id}
-                    onClick={() => duplicateProperty(item)}
-                  >
-                    <Copy className="mr-1.5 h-3.5 w-3.5" />
-                    Copy
-                  </Button>
+                          <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
+                            <Link to={editUrl}>
+                              <Edit3 className="mr-1.5 h-4 w-4" />
+                              Edit
+                            </Link>
+                          </Button>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-xl text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                    disabled={deletingId === item.id || duplicatingId === item.id}
-                    onClick={() => deleteProperty(item)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </article>
-            );
-          })}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full border-slate-200"
+                            onClick={() => duplicateProperty(item)}
+                            disabled={duplicatingId === item.id}
+                          >
+                            <Copy className="mr-1.5 h-4 w-4" />
+                            {duplicatingId === item.id ? "Copying..." : "Copy"}
+                          </Button>
+
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="rounded-full text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                            onClick={() => deleteProperty(item)}
+                            disabled={deletingId === item.id}
+                          >
+                            <Trash2 className="mr-1.5 h-4 w-4" />
+                            {deletingId === item.id ? "Deleting..." : "Delete"}
+                          </Button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
         </section>
       </div>
     </AdminLayout>
