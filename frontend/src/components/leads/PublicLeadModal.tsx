@@ -32,7 +32,7 @@ const emptyForm = {
 
 const requirementChips = ["Rent", "Buy", "Visit", "Callback"];
 
-function cleanPhoneNumber(value: string) {
+function cleanPhone(value: string) {
   return value.replace(/\D/g, "").slice(0, 10);
 }
 
@@ -49,8 +49,6 @@ function normalizeRequirement(value?: string) {
 
 export function PublicLeadModal({
   open,
-  title,
-  subtitle,
   source,
   defaultMessage = "",
   defaultRequirement = "",
@@ -59,7 +57,6 @@ export function PublicLeadModal({
   propertySlug,
   budget = "",
   submitLabel = "Request callback",
-  successMessage,
   onClose,
 }: PublicLeadModalProps) {
   const [form, setForm] = useState(emptyForm);
@@ -68,7 +65,7 @@ export function PublicLeadModal({
   const [error, setError] = useState("");
 
   const isPropertyLead = Boolean(propertyTitle);
-  const phoneDigits = useMemo(() => cleanPhoneNumber(form.phone), [form.phone]);
+  const phoneDigits = useMemo(() => cleanPhone(form.phone), [form.phone]);
   const phoneValid = isValidIndianMobile(phoneDigits);
 
   useEffect(() => {
@@ -76,6 +73,7 @@ export function PublicLeadModal({
 
     setForm({
       ...emptyForm,
+      phone: "",
       message: defaultMessage,
       requirement: normalizeRequirement(defaultRequirement),
       budget,
@@ -94,10 +92,10 @@ export function PublicLeadModal({
       : "Request callback";
 
   const displaySubtitle = success
-    ? "We have saved your request. Our team will contact you shortly."
+    ? "Your request has been saved. Our team will contact you shortly."
     : isPropertyLead
       ? "Confirm availability, price and visit timing."
-      : "Tell us what you need. We will check availability and guide you.";
+      : "Select your need and share your mobile number.";
 
   const finalRequirement =
     normalizeRequirement(form.requirement) ||
@@ -119,14 +117,12 @@ export function PublicLeadModal({
     event.preventDefault();
     setError("");
 
-    const normalizedPhone = cleanPhoneNumber(form.phone);
-
     if (!form.name.trim()) {
       setError("Please enter your name.");
       return;
     }
 
-    if (!isValidIndianMobile(normalizedPhone)) {
+    if (!isValidIndianMobile(phoneDigits)) {
       setError("Enter a valid 10-digit Indian mobile number starting with 6, 7, 8 or 9.");
       return;
     }
@@ -136,7 +132,7 @@ export function PublicLeadModal({
     try {
       await backendApi.createLead({
         name: form.name.trim(),
-        phone: normalizedPhone,
+        phone: phoneDigits,
         email: form.email.trim() || null,
         source,
         society_name: societyName || null,
@@ -161,7 +157,7 @@ export function PublicLeadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/60 px-3 pb-3 pt-6 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="max-h-[88vh] w-full max-w-[390px] overflow-y-auto rounded-[1.5rem] bg-white shadow-2xl sm:max-w-md">
+      <div className="max-h-[86vh] w-full max-w-[390px] overflow-y-auto rounded-[1.5rem] bg-white shadow-2xl sm:max-h-[82vh] sm:max-w-[420px]">
         <div className="relative border-b border-navy-100 px-5 py-4">
           <button
             type="button"
@@ -180,21 +176,21 @@ export function PublicLeadModal({
             {displayTitle}
           </h3>
 
-          <p className="mt-2 max-w-[88%] text-sm leading-relaxed text-navy-500">
+          <p className="mt-1.5 max-w-[88%] text-sm leading-relaxed text-navy-500">
             {displaySubtitle}
           </p>
 
           {!success ? (
             <div className="mt-3 space-y-2">
               {societyName ? (
-                <div className="flex h-10 items-center gap-2 rounded-2xl bg-blue-50 px-4 text-sm font-bold text-navy-800">
+                <div className="flex h-9 items-center gap-2 rounded-2xl bg-blue-50 px-4 text-sm font-bold text-navy-800">
                   <Building2 className="h-4 w-4 text-blue-600" />
                   {societyName}
                 </div>
               ) : null}
 
               {propertyTitle ? (
-                <div className="flex h-10 items-center gap-2 rounded-2xl bg-[#F8FAFC] px-4 text-sm font-bold text-navy-800">
+                <div className="flex h-9 items-center gap-2 rounded-2xl bg-[#F8FAFC] px-4 text-sm font-bold text-navy-800">
                   <Home className="h-4 w-4 text-blue-600" />
                   {propertyTitle}
                 </div>
@@ -209,7 +205,7 @@ export function PublicLeadModal({
               <CheckCircle2 className="h-7 w-7" />
               <h4 className="mt-3 text-lg font-bold">Lead submitted successfully</h4>
               <p className="mt-2 text-sm leading-relaxed">
-                Your request has been received. Our team will contact you shortly.
+                We have received your request. Our team will contact you shortly.
               </p>
             </div>
 
@@ -258,7 +254,7 @@ export function PublicLeadModal({
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
                 placeholder="Your name"
-                className="h-11 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                className="h-10 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
               <div>
@@ -269,38 +265,40 @@ export function PublicLeadModal({
                   maxLength={10}
                   value={form.phone}
                   onChange={(event) => {
-                    setForm({ ...form, phone: cleanPhoneNumber(event.target.value) });
+                    setForm({ ...form, phone: cleanPhone(event.target.value) });
                     if (error) setError("");
                   }}
                   placeholder="10-digit mobile number"
-                  className="h-11 w-full rounded-2xl border border-blue-200 bg-blue-50/40 px-4 text-sm font-bold text-navy-900 outline-none focus:border-blue-500 focus:bg-white"
+                  className="h-10 w-full rounded-2xl border border-blue-200 bg-blue-50/40 px-4 text-sm font-bold text-navy-900 outline-none focus:border-blue-500 focus:bg-white"
                 />
                 <p className={`mt-1 text-[11px] ${phoneDigits.length && !phoneValid ? "text-red-600" : "text-navy-300"}`}>
                   {phoneDigits.length}/10 digits · India mobile number only
                 </p>
               </div>
 
-              <input
-                type="email"
-                value={form.email}
-                onChange={(event) => setForm({ ...form, email: event.target.value })}
-                placeholder="Email optional"
-                className="h-11 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
-              />
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => setForm({ ...form, email: event.target.value })}
+                  placeholder="Email optional"
+                  className="h-10 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                />
 
-              <input
-                value={form.budget}
-                onChange={(event) => setForm({ ...form, budget: event.target.value })}
-                placeholder="Budget optional"
-                className="h-11 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
-              />
+                <input
+                  value={form.budget}
+                  onChange={(event) => setForm({ ...form, budget: event.target.value })}
+                  placeholder="Budget optional"
+                  className="h-10 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                />
+              </div>
 
               <textarea
                 value={form.message}
                 onChange={(event) => setForm({ ...form, message: event.target.value })}
                 placeholder="Message optional"
                 rows={2}
-                className="w-full rounded-2xl border border-navy-100 px-4 py-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                className="w-full rounded-2xl border border-navy-100 px-4 py-2.5 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
               {error ? (
@@ -311,7 +309,7 @@ export function PublicLeadModal({
 
               <Button
                 disabled={submitting}
-                className="h-11 w-full rounded-full bg-blue-600 font-bold text-white hover:bg-blue-700"
+                className="h-10 w-full rounded-full bg-blue-600 font-bold text-white hover:bg-blue-700"
               >
                 <Phone className="mr-2 h-4 w-4" />
                 {submitting ? "Submitting..." : submitLabel}

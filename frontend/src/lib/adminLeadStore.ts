@@ -131,6 +131,25 @@ function notesToBackend(notes: LeadNote[]) {
   return notes.map((item) => item.createdAt ? `${item.createdAt}: ${item.text}` : item.text).join('\n');
 }
 
+function inferLeadRequirement(apiLead: ApiLead): string {
+  const explicit = String(apiLead.requirement || "").trim();
+  if (explicit) return explicit;
+
+  const source = String(apiLead.source || "").toLowerCase();
+  const message = String(apiLead.message || "").toLowerCase();
+  const propertyTitle = String(apiLead.property_title || apiLead.property?.title || "").trim();
+
+  if (source.includes("property_callback")) return "Property callback";
+  if (source.includes("property_enquiry")) return "Property enquiry";
+  if (propertyTitle && source.includes("society_page")) return "Property callback";
+  if (message.includes("rent")) return "Rent requirement";
+  if (message.includes("buy") || message.includes("sale")) return "Buy requirement";
+  if (message.includes("visit")) return "Visit requirement";
+  if (message.includes("callback")) return "Callback request";
+
+  return "";
+}
+
 function mapApiLead(apiLead: ApiLead): AdminLead {
   return {
     id: apiLead.id,
@@ -140,7 +159,7 @@ function mapApiLead(apiLead: ApiLead): AdminLead {
     society: apiLead.society_name || apiLead.society?.name || apiLead.property?.society?.name || 'Not specified',
     property: apiLead.property_title || apiLead.property?.title || apiLead.property_slug || 'General enquiry',
     budget: apiLead.budget || 'Not specified',
-    requirement: apiLead.requirement || apiLead.message || '',
+    requirement: inferLeadRequirement(apiLead) || apiLead.message || '',
     source: apiLead.source || 'Website',
     status: normalizeStatus(apiLead.status),
     priority: normalizePriority(apiLead.priority),
@@ -241,7 +260,7 @@ export function addLeadNote(id: number, text: string): AdminLead | undefined {
 }
 
 export function exportLeadsCsv(leads: AdminLead[]) {
-  const headers = ['Name', 'Phone', 'Email', 'Society', 'Property', 'Budget', 'Source', 'Status', 'Priority', 'Assigned To', 'Follow Up'];
+  const headers = ['Name', 'Phone', 'Email', 'Society', 'Property', 'Requirement', 'Budget', 'Source', 'Status', 'Priority', 'Assigned To', 'Follow Up'];
   const rows = leads.map((lead) => [
     lead.name,
     lead.phone,
