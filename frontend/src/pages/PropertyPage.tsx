@@ -334,6 +334,7 @@ export function PropertyPage() {
           property_slug: property.slug || slug,
           society_name: societyName || property.locality || "Gurgaon",
           source: leadType === "callback" ? "property_callback" : "property_enquiry",
+          requirement: `${listingType || "Property"} ${leadType === "callback" ? "callback" : "enquiry"}`,
         }),
       });
 

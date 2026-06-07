@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+from pathlib import Path
+
+root = Path(".")
+modal_path = root / "frontend/src/components/leads/PublicLeadModal.tsx"
+society_path = root / "frontend/src/pages/SocietyPage.tsx"
+property_path = root / "frontend/src/pages/PropertyPage.tsx"
+
+modal_path.write_text(r'''import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Building2, CheckCircle2, Home, Phone, X } from "lucide-react";
 
@@ -311,3 +318,43 @@ export function PublicLeadModal({
     </div>
   );
 }
+''', encoding="utf-8")
+
+society_text = society_path.read_text(encoding="utf-8")
+
+old_society_requirement = '''        defaultRequirement={
+          selectedLeadProperty
+            ? `Interested in ${selectedLeadProperty.title}. Please confirm availability, price and visit timing.`
+            : `Looking for homes or society guidance in ${society.name}, ${societyLocation || "Gurgaon"}.`
+        }'''
+
+new_society_requirement = '''        defaultRequirement={
+          selectedLeadProperty
+            ? `${field(selectedLeadProperty, "listingType", "listing_type", "Property")} requirement for ${selectedLeadProperty.title}. Please confirm availability, price and visit timing.`
+            : `Looking for homes or society guidance in ${society.name}, ${societyLocation || "Gurgaon"}.`
+        }'''
+
+if old_society_requirement in society_text:
+    society_text = society_text.replace(old_society_requirement, new_society_requirement)
+else:
+    print("WARNING: SocietyPage defaultRequirement block not found. Modal still updated.")
+
+society_path.write_text(society_text, encoding="utf-8")
+
+property_text = property_path.read_text(encoding="utf-8")
+
+old_property_source = '''          source: leadType === "callback" ? "property_callback" : "property_enquiry",'''
+new_property_source = '''          source: leadType === "callback" ? "property_callback" : "property_enquiry",
+          requirement: `${listingType || "Property"} ${leadType === "callback" ? "callback" : "enquiry"}`,'''
+
+if old_property_source in property_text and "requirement: `${listingType || \"Property\"}" not in property_text:
+    property_text = property_text.replace(old_property_source, new_property_source)
+else:
+    print("WARNING: PropertyPage lead requirement may already be patched or source block not found.")
+
+property_path.write_text(property_text, encoding="utf-8")
+
+print("C4C fix applied:")
+print("- PublicLeadModal compacted")
+print("- SocietyPage property callback requirement patched if matching block existed")
+print("- PropertyPage lead requirement patched if matching block existed")
