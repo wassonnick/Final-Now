@@ -988,25 +988,26 @@ export function SearchPage() {
               </div>
             )}
 
-            <div className="rounded-[1.5rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-ivory-100 p-4 shadow-sm md:p-5">
+            <div className="rounded-[1.25rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-ivory-100 p-3 shadow-sm md:rounded-[1.5rem] md:p-5">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-blue-700">
+                  <p className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-blue-700 md:text-xs md:tracking-[0.16em]">
                     <Sparkles className="h-4 w-4" /> AI powered recommendations
                   </p>
-                  <h3 className="mt-2 font-display text-xl font-black tracking-tight text-navy-950 md:text-2xl">
+                  <h3 className="mt-1 font-display text-lg font-black tracking-tight text-navy-950 md:mt-2 md:text-2xl">
                     Similar matches for{" "}
                     {query ? `“${query}”` : "your Gurgaon search"}
                   </h3>
-                  <p className="mt-1 text-sm leading-6 text-navy-500">
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-navy-500 md:text-sm md:leading-6">
                     Based on your search intent, budget signals, locality and
                     available published inventory.
                   </p>
                 </div>
                 <Button
                   asChild
+                  size="sm"
                   variant="outline"
-                  className="w-fit rounded-full border-blue-100 bg-white font-bold text-blue-700 hover:bg-blue-50"
+                  className="w-full rounded-full border-blue-100 bg-white font-bold text-blue-700 hover:bg-blue-50 md:w-fit"
                 >
                   <Link
                     to={`/ai-advisor?q=${encodeURIComponent(query || resultLabel(activeTab))}`}
@@ -1016,7 +1017,7 @@ export function SearchPage() {
                 </Button>
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="mt-3 grid gap-2 md:mt-4 md:grid-cols-3 md:gap-3">
                 {(activeTab === "societies"
                   ? aiRecommendedSocieties
                   : aiRecommendedProperties
@@ -1043,17 +1044,20 @@ export function SearchPage() {
                     <Link
                       key={`${isSociety ? "society" : "property"}-${item.id}-${index}`}
                       to={link}
-                      className="group overflow-hidden rounded-[1.25rem] border border-blue-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-soft"
+                      className={cn(
+                        "group overflow-hidden rounded-[1.1rem] border border-blue-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-soft md:rounded-[1.25rem]",
+                        index > 1 && "hidden md:block",
+                      )}
                     >
-                      <div className="flex gap-3 p-3">
+                      <div className="flex gap-3 p-2.5 md:p-3">
                         <img
                           src={image}
                           alt={title}
-                          className="h-20 w-24 shrink-0 rounded-2xl object-cover"
+                          className="h-16 w-20 shrink-0 rounded-2xl object-cover md:h-20 md:w-24"
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-black text-blue-700">
+                            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-black text-blue-700 md:py-1">
                               AI #{index + 1}
                             </span>
                             {isSociety && item.score ? (
@@ -1062,20 +1066,38 @@ export function SearchPage() {
                               </span>
                             ) : null}
                           </div>
-                          <h4 className="mt-2 line-clamp-1 text-sm font-black text-navy-950 group-hover:text-blue-700">
+                          <h4 className="mt-1.5 line-clamp-1 text-sm font-black text-navy-950 group-hover:text-blue-700 md:mt-2">
                             {title}
                           </h4>
-                          <p className="mt-1 line-clamp-1 text-xs font-semibold text-navy-500">
+                          <p className="mt-0.5 line-clamp-1 text-xs font-semibold text-navy-500 md:mt-1">
                             {subtitle}
                           </p>
-                          <p className="mt-2 line-clamp-2 text-xs leading-5 text-navy-500">
-                            {reason}
-                          </p>
+                          <div className="mt-1.5 flex items-center justify-between gap-2 md:mt-2">
+                            <p className="line-clamp-1 text-xs leading-5 text-navy-500 md:line-clamp-2">
+                              {reason}
+                            </p>
+                            <span className="shrink-0 text-xs font-black text-blue-700">
+                              View →
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </Link>
                   );
                 })}
+              </div>
+
+              <div className="mt-3 flex justify-center md:mt-4">
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full text-xs font-black text-blue-700 hover:bg-blue-50 hover:text-blue-800 md:text-sm"
+                >
+                  <Link to={`/search?tab=${activeTab}&q=${encodeURIComponent(query || "")}`}>
+                    View all similar matches
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
