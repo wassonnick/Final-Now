@@ -347,15 +347,52 @@ export function AdminPropertyFormPage() {
   };
 
   const handleSave = async (status: string) => {
-    const validationError = validate();
+    const title = String(property.title || "").trim();
+    const society = String(property.society || "").trim();
+    const locality = String(property.locality || "").trim();
+    const price = String(property.price || "").trim();
+    const deposit = String(property.securityDeposit || "").trim();
+    const area = String(property.areaSqft || "").trim();
+
+    const listingTypeValue = String(property.listingType || "").toLowerCase();
+    const isRent = listingTypeValue.includes("rent");
+    const isBuilderFloor = listingTypeValue.includes("builder");
+    const isSaleLike =
+      listingTypeValue.includes("sale") ||
+      listingTypeValue.includes("buy") ||
+      listingTypeValue.includes("sell") ||
+      listingTypeValue.includes("resale");
+
+    const priceLabel = isRent
+      ? "Monthly rent"
+      : isBuilderFloor
+        ? "Asking price"
+        : "Sale price";
+
+    let validationError = "";
+
+    if (!title) {
+      validationError = "Property title is required.";
+    } else if (!locality) {
+      validationError = "Locality is required.";
+    } else if (!price) {
+      validationError = `${priceLabel} is required.`;
+    } else if (isRent && !society) {
+      validationError = "Society is required for rent listings.";
+    } else if (isRent && !deposit) {
+      validationError = "Security deposit is required for rent listings.";
+    } else if (isSaleLike && !isBuilderFloor && !society) {
+      validationError = "Society is required for sale/resale listings.";
+    } else if (isBuilderFloor && !area) {
+      validationError = "Area is required for builder floor listings.";
+    }
 
     if (validationError) {
       setError(validationError);
+      setSuccess("");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-
-    const title = String(property.title || "").trim();
 
     try {
       setSaving(true);
