@@ -36,7 +36,35 @@ class SocietyController extends Controller {
         'data' => $society,
     ]);
 }
-  public function store(Request $request): JsonResponse { $p=$this->withSocietyDefaults($this->payload($request)); $p['slug']=$p['slug']??Str::slug($p['name']); $s=Society::create($p); return response()->json(['status'=>'ok','message'=>'Society created successfully.','data'=>$s],201); }
+  public function store(Request $request): JsonResponse
+  {
+      $p = $this->withSocietyDefaults($this->payload($request));
+
+      $p['slug'] = $p['slug'] ?? Str::slug($p['name']);
+
+      $scoreFields = [
+          'score',
+          'security_score',
+          'maintenance_score',
+          'connectivity_score',
+          'lifestyle_score',
+          'investment_score',
+      ];
+
+      foreach ($scoreFields as $scoreField) {
+          if (!array_key_exists($scoreField, $p) || $p[$scoreField] === null || $p[$scoreField] === '') {
+              $p[$scoreField] = 0;
+          }
+      }
+
+      $s = Society::create($p);
+
+      return response()->json([
+          'status' => 'ok',
+          'message' => 'Society created successfully.',
+          'data' => $s,
+      ], 201);
+  }
   public function update(Request $request, Society $society): JsonResponse { $p=$this->withSocietyDefaults($this->payload($request,true), true); if(isset($p['name'])&&empty($p['slug'])) $p['slug']=Str::slug($p['name']); $society->update($p); return response()->json(['status'=>'ok','message'=>'Society updated successfully.','data'=>$society]); }
   public function fetchFromUrl(Request $request, SocietyUrlEnrichmentService $enrichment): JsonResponse {
     $validated = $request->validate([
