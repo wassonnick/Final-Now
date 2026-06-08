@@ -500,21 +500,14 @@ export function SearchPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <section className="border-b border-navy-100 bg-white/95 backdrop-blur">
-        <div className="container mx-auto px-3 py-4 md:px-4 md:py-6">
+        <div className="container mx-auto px-3 py-3 md:px-4 md:py-4">
           <div className="hidden flex-col gap-5 md:flex lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600 md:text-sm">
-                Search results
-              </p>
-              <h1 className="mt-1 font-display text-2xl font-black tracking-tight text-navy-950 md:text-[2rem]">
-                Search Gurgaon societies
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
-                Search Gurgaon societies, compare locations and open verified
-                inventory from the same place.
-              </p>
+              <p className="sr-only">Search results</p>
+              <h1 className="sr-only">Search Gurgaon societies and homes</h1>
+              <p className="sr-only">Search societies, rentals and resale homes from verified inventory.</p>
             </div>
-            <div className="hidden flex-wrap gap-2 md:flex">
+            <div className="hidden flex-wrap gap-2">
               <Button
                 asChild
                 size="sm"
@@ -544,12 +537,12 @@ export function SearchPage() {
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={(event) => event.key === "Enter" && submitSearch()}
                   placeholder="Search society, sector or landmark..."
-                  className="h-10 rounded-full border-navy-100 pl-10 text-sm md:h-12 md:pl-12 md:text-base"
+                  className="h-11 rounded-full border-navy-100 pl-11 text-sm md:h-12 md:pl-12 md:text-base"
                 />
               </div>
               <Button
                 onClick={submitSearch}
-                className="h-10 w-10 shrink-0 rounded-full bg-blue-600 px-0 font-black hover:bg-blue-700 md:h-12 md:w-auto md:px-7"
+                className="h-11 w-11 shrink-0 rounded-full bg-blue-600 px-0 font-black hover:bg-blue-700 md:h-12 md:w-auto md:px-7"
                 aria-label="Search"
               >
                 <Search className="h-5 w-5 md:hidden" />
@@ -616,7 +609,7 @@ export function SearchPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-3 pb-52 pt-4 md:px-4 md:pb-10 md:pt-6">
+      <section className="container mx-auto px-3 pb-52 pt-3 md:px-4 md:pb-10 md:pt-4">
         <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
           <aside className="hidden space-y-4 lg:sticky lg:top-24 lg:block lg:self-start">
             <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
