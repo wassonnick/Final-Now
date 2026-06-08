@@ -89,13 +89,7 @@ function societySearchUrl(society: any, tab = "rent") {
   return `/search?tab=${tab}&q=${encodeURIComponent(society?.name || "")}`;
 }
 
-function societyCallbackUrl(society: any) {
-  return `/chat?source=search_society_card&society=${encodeURIComponent(society?.name || "")}`;
-}
 
-function propertyCallbackUrl(property: any) {
-  return `/chat?source=search_property_card&property=${encodeURIComponent(property?.title || "")}&society=${encodeURIComponent(property?.society || "")}`;
-}
 
 function compactValue(value: unknown, fallback = "On request") {
   const text = String(value || "").trim();
