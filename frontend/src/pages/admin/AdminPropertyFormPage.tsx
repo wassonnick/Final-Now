@@ -20,15 +20,6 @@ import { adminFetch, adminHeaders, uploadAdminImage } from "@/lib/adminApi";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
 
-const societies = [
-  "DLF Crest",
-  "DLF Park Place",
-  "M3M Golf Estate",
-  "Tata Primanti",
-  "Ireo Victory Valley",
-  "Aralias",
-];
-
 const localities = [
   "Sector 54, Gurgaon",
   "Golf Course Road, Gurgaon",
@@ -70,6 +61,40 @@ const emptyProperty = {
   featured: false,
   verified: false,
 };
+
+type SocietyOption = {
+  id?: number | string;
+  name: string;
+  slug?: string;
+  sector?: string;
+  locality?: string;
+  status?: string;
+};
+
+function extractSocieties(payload: any): SocietyOption[] {
+  const raw = Array.isArray(payload?.data)
+    ? payload.data
+    : Array.isArray(payload?.data?.data)
+      ? payload.data.data
+      : [];
+
+  return raw
+    .map((item: any) => ({
+      id: item.id,
+      name: item.name || "",
+      slug: item.slug || "",
+      sector: item.sector || "",
+      locality: item.locality || "",
+      status: item.status || "",
+    }))
+    .filter((item: SocietyOption) => Boolean(item.name))
+    .sort((a: SocietyOption, b: SocietyOption) => a.name.localeCompare(b.name));
+}
+
+function societyLabel(item: SocietyOption) {
+  const location = [item.sector, item.locality].filter(Boolean).join(", ");
+  return location ? `${item.name} — ${location}` : item.name;
+}
 
 function parseArray(value: any): string[] {
   if (Array.isArray(value)) return value.filter(Boolean);
@@ -173,12 +198,38 @@ export function AdminPropertyFormPage() {
   const isEdit = Boolean(id);
 
   const [property, setProperty] = useState(emptyProperty);
+  const [societyOptions, setSocietyOptions] = useState<SocietyOption[]>([]);
+  const [societiesLoading, setSocietiesLoading] = useState(true);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [saveMode, setSaveMode] = useState<"Draft" | "Live" | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    async function loadSocieties() {
+      try {
+        setSocietiesLoading(true);
+
+        const response = await adminFetch("/admin/societies");
+        const json = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(json?.message || "Failed to load societies");
+        }
+
+        setSocietyOptions(extractSocieties(json));
+      } catch (err) {
+        console.error(err);
+        setError("Unable to load live societies. You can still type/select if already saved.");
+      } finally {
+        setSocietiesLoading(false);
+      }
+    }
+
+    void loadSocieties();
+  }, []);
 
   useEffect(() => {
     async function loadProperty() {
@@ -259,6 +310,24 @@ export function AdminPropertyFormPage() {
   const saleListing = isSaleListing(property.listingType);
   const builderFloorListing = isBuilderFloorListing(property.listingType);
   const validationHint = requiredFieldHint(property.listingType);
+
+  const societyDropdownOptions = useMemo(() => {
+    const currentSociety = String(property.society || "").trim();
+    const exists = societyOptions.some((item) => item.name === currentSociety);
+
+    if (currentSociety && !exists) {
+      return [
+        {
+          name: currentSociety,
+          status: "Current",
+        },
+        ...societyOptions,
+      ];
+    }
+
+    return societyOptions;
+  }, [property.society, societyOptions]);
+
 
   const publishValidationError = useMemo(() => {
     const title = String(property.title || "").trim();
@@ -683,11 +752,22 @@ export function AdminPropertyFormPage() {
                     onChange={(event) => updateField("society", event.target.value)}
                     className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
-                    <option value="">Select Society</option>
-                    {societies.map((item) => (
-                      <option key={item}>{item}</option>
+                    <option value="">
+                      {societiesLoading ? "Loading societies..." : "Select Society"}
+                    </option>
+                    {societyDropdownOptions.map((item) => (
+                      <option key={`${item.id || item.name}-${item.name}`} value={item.name}>
+                        {societyLabel(item)}
+                      </option>
                     ))}
                   </select>
+                  <span className="mt-1 block text-xs font-normal text-slate-400">
+                    {societiesLoading
+                      ? "Fetching live societies..."
+                      : societyOptions.length
+                        ? `${societyOptions.length} live societies loaded`
+                        : "No live societies loaded"}
+                  </span>
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
