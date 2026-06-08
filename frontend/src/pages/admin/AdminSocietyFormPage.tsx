@@ -302,19 +302,28 @@ export function AdminSocietyFormPage() {
 
       const nextSociety: AdminSociety = {
         ...society,
+        slug: society.slug || slugifySociety(society.name),
         score: String(society.score || "").trim() || "0",
         securityScore: String(society.securityScore || "").trim() || "0",
         maintenanceScore: String(society.maintenanceScore || "").trim() || "0",
         connectivityScore: String(society.connectivityScore || "").trim() || "0",
         lifestyleScore: String(society.lifestyleScore || "").trim() || "0",
         investmentScore: String(society.investmentScore || "").trim() || "0",
-        status: mode === "publish" && society.status === "Draft" ? "Verified" : society.status,
-        isPublished: mode === "publish" ? true : society.isPublished,
+        status: mode === "publish" ? "Verified" : "Draft",
+        isPublished: mode === "publish",
+        city: society.city || "Gurgaon",
+        state: society.state || "Haryana",
+        amenities: Array.isArray(society.amenities) ? society.amenities : [],
+        galleryImages: Array.isArray(society.galleryImages) ? society.galleryImages : [],
       };
 
       await saveAdminSociety(nextSociety, isEdit);
       setSaved(true);
-      setMessage(mode === "publish" ? "Society saved and marked ready for public profile." : "Society draft saved.");
+      setMessage(
+        mode === "publish"
+          ? "Society saved and published."
+          : "Society saved as draft and removed from public publishing."
+      );
       navigate("/admin/societies");
     } catch (err) {
       console.error(err);
@@ -424,7 +433,11 @@ export function AdminSocietyFormPage() {
               className="rounded-full border-slate-200"
             >
               <Save className="mr-2 h-4 w-4" />
-              {saving && saveMode === "draft" ? "Saving..." : isEdit ? "Save changes" : "Save draft"}
+              {saving && saveMode === "draft"
+                ? "Saving..."
+                : society.isPublished || society.status !== "Draft"
+                  ? "Unpublish / Save Draft"
+                  : "Save Draft"}
             </Button>
 
             <Button
@@ -434,7 +447,11 @@ export function AdminSocietyFormPage() {
               className="rounded-full bg-blue-600 px-5 hover:bg-blue-700"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
-              {saving && saveMode === "publish" ? "Publishing..." : "Publish / Verify"}
+              {saving && saveMode === "publish"
+                ? "Publishing..."
+                : society.isPublished
+                  ? "Update Published"
+                  : "Publish / Verify"}
             </Button>
           </div>
         </div>
@@ -953,7 +970,11 @@ export function AdminSocietyFormPage() {
               className="h-11 rounded-full border-slate-200"
             >
               <Save className="mr-2 h-4 w-4" />
-              {saving && saveMode === "draft" ? "Saving..." : "Draft"}
+              {saving && saveMode === "draft"
+                ? "Saving..."
+                : society.isPublished || society.status !== "Draft"
+                  ? "Unpublish"
+                  : "Draft"}
             </Button>
 
             <Button
@@ -963,7 +984,11 @@ export function AdminSocietyFormPage() {
               className="h-11 rounded-full bg-blue-600 hover:bg-blue-700"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
-              {saving && saveMode === "publish" ? "Publishing..." : "Publish"}
+              {saving && saveMode === "publish"
+                ? "Publishing..."
+                : society.isPublished
+                  ? "Update"
+                  : "Publish"}
             </Button>
           </div>
         </div>
