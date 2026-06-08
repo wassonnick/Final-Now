@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { Input } from "@/components/ui/input";
 import {
   fetchPublicProperties,
@@ -416,6 +417,50 @@ export function SearchPage() {
       filteredProperties.length > 0 ? filteredProperties : properties;
     return base.slice(0, 3);
   }, [filteredProperties, properties]);
+
+  const [callbackTarget, setCallbackTarget] = useState<{
+    type: "society" | "property";
+    societyName: string;
+    propertyTitle?: string;
+    source: string;
+  } | null>(null);
+
+  const openSocietyCallback = (society: any) => {
+    setCallbackTarget({
+      type: "society",
+      societyName: society?.name || "Selected society",
+      source: "search_society_card",
+    });
+  };
+
+  const openPropertyCallback = (property: any) => {
+    setCallbackTarget({
+      type: "property",
+      societyName: property?.society || "Selected society",
+      propertyTitle: property?.title || "Selected property",
+      source: "search_property_card",
+    });
+  };
+
+  const callbackTitle =
+    callbackTarget?.type === "property"
+      ? "Request property callback"
+      : "Request society callback";
+
+  const callbackSubtitle =
+    callbackTarget?.type === "property"
+      ? "Share your mobile number and our team will help verify availability, pricing and visit timing for this home."
+      : "Share your mobile number and our team will help with availability, matching homes and visit planning for this society.";
+
+  const callbackMessage =
+    callbackTarget?.type === "property"
+      ? `I want a callback for ${callbackTarget.propertyTitle} in ${callbackTarget.societyName}.`
+      : `I want a callback for ${callbackTarget?.societyName || "this society"}.`;
+
+  const callbackRequirement =
+    callbackTarget?.type === "property"
+      ? `Search page enquiry for ${callbackTarget.propertyTitle} in ${callbackTarget.societyName}.`
+      : `Search page enquiry for homes in ${callbackTarget?.societyName || "this society"}.`;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -824,10 +869,13 @@ export function SearchPage() {
                             </Link>
                           </Button>
 
-                          <Button asChild variant="outline" className="h-10 w-full rounded-full border-navy-100 px-2 text-xs font-bold md:text-sm">
-                            <Link to={societyCallbackUrl(society)}>
-                              Callback
-                            </Link>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-10 w-full rounded-full border-navy-100 px-2 text-xs font-bold md:text-sm"
+                            onClick={() => openSocietyCallback(society)}
+                          >
+                            Callback
                           </Button>
                         </div>
                       </div>
@@ -916,10 +964,13 @@ export function SearchPage() {
                         </Button>
 
                         <div className="grid grid-cols-2 gap-2">
-                          <Button asChild variant="outline" className="h-10 w-full rounded-full border-blue-100 px-2 text-xs font-bold text-blue-700 md:text-sm">
-                            <Link to={propertyCallbackUrl(property)}>
-                              Callback
-                            </Link>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-10 w-full rounded-full border-blue-100 px-2 text-xs font-bold text-blue-700 md:text-sm"
+                            onClick={() => openPropertyCallback(property)}
+                          >
+                            Callback
                           </Button>
 
                           {property.society ? (
@@ -1030,6 +1081,17 @@ export function SearchPage() {
           </div>
         </div>
       </section>
+      <PublicLeadModal
+        open={Boolean(callbackTarget)}
+        title={callbackTitle}
+        subtitle={callbackSubtitle}
+        source={callbackTarget?.source || "search_page"}
+        societyName={callbackTarget?.societyName || ""}
+        defaultMessage={callbackMessage}
+        defaultRequirement={callbackRequirement}
+        submitLabel="Request callback"
+        onClose={() => setCallbackTarget(null)}
+      />
     </div>
   );
 }
