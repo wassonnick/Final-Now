@@ -271,18 +271,22 @@ export function AdminSocietyFormPage() {
     setSaved(false);
   };
 
-  const validate = () => {
+  const validate = (mode: "draft" | "publish" = "draft") => {
     if (!society.name.trim()) return "Society name is required.";
     if (!society.slug.trim()) return "SEO slug is required.";
     if (!society.locality.trim() && !society.sector.trim()) {
       return "Add at least one location field: sector or locality.";
     }
 
+    if (mode === "publish" && !String(society.score || "").trim()) {
+      return "Society score is required before publishing. Add a score like 8.0 or save as draft.";
+    }
+
     return "";
   };
 
   const handleSave = async (mode: "draft" | "publish" = "draft") => {
-    const validationError = validate();
+    const validationError = validate(mode);
 
     if (validationError) {
       setError(validationError);
@@ -298,6 +302,12 @@ export function AdminSocietyFormPage() {
 
       const nextSociety: AdminSociety = {
         ...society,
+        score: String(society.score || "").trim() || "0",
+        securityScore: String(society.securityScore || "").trim() || "0",
+        maintenanceScore: String(society.maintenanceScore || "").trim() || "0",
+        connectivityScore: String(society.connectivityScore || "").trim() || "0",
+        lifestyleScore: String(society.lifestyleScore || "").trim() || "0",
+        investmentScore: String(society.investmentScore || "").trim() || "0",
         status: mode === "publish" && society.status === "Draft" ? "Verified" : society.status,
         isPublished: mode === "publish" ? true : society.isPublished,
       };
@@ -653,10 +663,13 @@ export function AdminSocietyFormPage() {
             <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
               <h2 className="text-xl font-bold tracking-tight text-slate-950">Scores & Market Ranges</h2>
               <p className="mt-1 text-sm text-slate-500">Keep this practical and useful for users.</p>
+              <p className="mt-2 rounded-2xl bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
+                Score is required before publishing because the live database requires a non-empty society score. Use values like 7.5, 8.0 or 9.2.
+              </p>
 
               <div className="mt-6 grid gap-4 md:grid-cols-3">
                 {[
-                  ["Score", "score"],
+                  ["Score *", "score"],
                   ["Security Score", "securityScore"],
                   ["Maintenance Score", "maintenanceScore"],
                   ["Connectivity Score", "connectivityScore"],
