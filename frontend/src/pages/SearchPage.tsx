@@ -500,7 +500,7 @@ export function SearchPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <section className="border-b border-navy-100 bg-white/95 backdrop-blur">
-        <div className="container mx-auto px-3 py-3 md:px-4 md:py-4">
+        <div className="container mx-auto px-3 py-2 md:px-4 md:py-3">
           <div className="hidden flex-col gap-5 md:flex lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="sr-only">Search results</p>
@@ -609,7 +609,7 @@ export function SearchPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-3 pb-52 pt-3 md:px-4 md:pb-10 md:pt-4">
+      <section className="container mx-auto px-3 pb-52 pt-2 md:px-4 md:pb-10 md:pt-3">
         <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
           <aside className="hidden space-y-4 lg:sticky lg:top-24 lg:block lg:self-start">
             <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
@@ -692,7 +692,7 @@ export function SearchPage() {
           </aside>
 
           <div className="min-w-0 space-y-5 md:space-y-6">
-            <div className="rounded-[1.25rem] border border-navy-100 bg-white p-3 shadow-sm md:rounded-[1.5rem] md:p-4">
+            <div className="rounded-[1.25rem] border border-navy-100 bg-white p-3 shadow-sm md:rounded-[1.35rem] md:p-3">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-600 md:text-sm md:normal-case md:tracking-normal md:text-navy-500">
