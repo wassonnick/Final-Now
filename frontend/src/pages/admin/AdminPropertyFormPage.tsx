@@ -151,6 +151,22 @@ function pricingLabels(listingType: string) {
   };
 }
 
+function isBuilderFloorListing(listingType: string) {
+  return String(listingType || "").toLowerCase().includes("builder");
+}
+
+function requiredFieldHint(listingType: string) {
+  if (isRentalListing(listingType)) {
+    return "For rent listings, title, society, locality, monthly rent and security deposit are required.";
+  }
+
+  if (isBuilderFloorListing(listingType)) {
+    return "For builder floors, title, locality, asking price and area are required. Booking amount is optional.";
+  }
+
+  return "For sale/resale listings, title, society, locality and sale price are required. Token amount is optional.";
+}
+
 export function AdminPropertyFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -241,6 +257,8 @@ export function AdminPropertyFormPage() {
   const labels = pricingLabels(property.listingType);
   const rentalListing = isRentalListing(property.listingType);
   const saleListing = isSaleListing(property.listingType);
+  const builderFloorListing = isBuilderFloorListing(property.listingType);
+  const validationHint = requiredFieldHint(property.listingType);
 
   const updateField = (key: string, value: any) => {
     setProperty((current: any) => ({ ...current, [key]: value }));
@@ -302,11 +320,28 @@ export function AdminPropertyFormPage() {
 
   const validate = () => {
     const title = String(property.title || "").trim();
+    const price = String(property.price || "").trim();
+    const deposit = String(property.securityDeposit || "").trim();
+    const society = String(property.society || "").trim();
+    const locality = String(property.locality || "").trim();
+    const area = String(property.areaSqft || "").trim();
 
     if (!title) return "Property title is required.";
-    if (!property.society) return "Please select a society.";
-    if (!property.locality) return "Please select a locality.";
-    if (!property.price) return "Please add price or rent.";
+    if (!locality) return "Please select a locality.";
+    if (!price) return `${labels.price} is required.`;
+
+    if (rentalListing) {
+      if (!society) return "Please select a society for the rental listing.";
+      if (!deposit) return "Security deposit is required for rent listings.";
+    }
+
+    if (saleListing && !builderFloorListing) {
+      if (!society) return "Please select a society for the sale/resale listing.";
+    }
+
+    if (builderFloorListing && !area) {
+      return "Area is required for builder floor listings.";
+    }
 
     return "";
   };
@@ -506,7 +541,7 @@ export function AdminPropertyFormPage() {
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <label className="md:col-span-2 text-sm font-medium text-slate-700">
-                  Property Title
+                  Property Title <span className="text-rose-500">*</span>
                   <Input
                     value={property.title}
                     onChange={(event) => updateField("title", event.target.value)}
@@ -545,7 +580,7 @@ export function AdminPropertyFormPage() {
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  Society
+                  Society {!builderFloorListing ? <span className="text-rose-500">*</span> : <span className="text-xs font-normal text-slate-400">(optional for builder floor)</span>}
                   <select
                     value={property.society}
                     onChange={(event) => updateField("society", event.target.value)}
@@ -559,7 +594,7 @@ export function AdminPropertyFormPage() {
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  Locality
+                  Locality <span className="text-rose-500">*</span>
                   <select
                     value={property.locality}
                     onChange={(event) => updateField("locality", event.target.value)}
@@ -583,10 +618,13 @@ export function AdminPropertyFormPage() {
                   ? "Add rent, deposit and configuration details for rental inventory."
                   : "Add asking price, booking/token amount and configuration details for sale inventory."}
               </p>
+              <p className="mt-2 rounded-2xl bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
+                {validationHint}
+              </p>
 
               <div className="mt-6 grid gap-4 md:grid-cols-3">
                 <label className="text-sm font-medium text-slate-700">
-                  {labels.price}
+                  {labels.price} <span className="text-rose-500">*</span>
                   <Input
                     value={property.price}
                     onChange={(event) => updateField("price", event.target.value)}
@@ -596,7 +634,7 @@ export function AdminPropertyFormPage() {
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  {labels.deposit}
+                  {labels.deposit} {rentalListing ? <span className="text-rose-500">*</span> : <span className="text-xs font-normal text-slate-400">(optional)</span>}
                   <Input
                     value={property.securityDeposit}
                     onChange={(event) => updateField("securityDeposit", event.target.value)}
@@ -636,7 +674,7 @@ export function AdminPropertyFormPage() {
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  Area (sq ft)
+                  Area (sq ft) {builderFloorListing ? <span className="text-rose-500">*</span> : null}
                   <Input
                     value={property.areaSqft}
                     onChange={(event) => updateField("areaSqft", event.target.value)}
@@ -818,6 +856,7 @@ export function AdminPropertyFormPage() {
 
             <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
               <h2 className="font-bold text-slate-950">Listing checklist</h2>
+              <p className="mt-2 text-sm text-blue-700">{validationHint}</p>
               <div className="mt-3 space-y-2 text-sm text-slate-600">
                 <p>{fieldSummary("Title", property.title)}</p>
                 <p>{fieldSummary("Society", property.society)}</p>
