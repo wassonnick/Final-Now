@@ -506,8 +506,8 @@ export function SearchPage() {
               <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600 md:text-sm">
                 Search results
               </p>
-              <h1 className="mt-3 font-display text-3xl font-black tracking-tight text-navy-950 md:text-5xl">
-                Find verified societies and homes.
+              <h1 className="mt-1 font-display text-xl font-black tracking-tight text-navy-950 md:text-2xl">
+                Search verified Gurgaon inventory
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
                 Search Gurgaon societies, compare locations and open verified
@@ -524,6 +524,7 @@ export function SearchPage() {
               </Button>
               <Button
                 asChild
+                size="sm"
                 className="rounded-full bg-blue-600 hover:bg-blue-700"
               >
                 <Link to="/ai-advisor">
