@@ -895,7 +895,7 @@ export function SearchPage() {
               <div
                 className={cn(
                   viewMode === "grid"
-                    ? "grid gap-5 md:grid-cols-2 xl:grid-cols-3"
+                    ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
                     : "space-y-4",
                 )}
               >
@@ -905,7 +905,7 @@ export function SearchPage() {
                     className={cn(
                       "group overflow-hidden border border-navy-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-apple",
                       viewMode === "grid"
-                        ? "rounded-[1.5rem]"
+                        ? "rounded-[1.25rem]"
                         : "grid rounded-[1.5rem] md:grid-cols-[260px_1fr]",
                     )}
                   >
@@ -913,7 +913,7 @@ export function SearchPage() {
                       <div
                         className={cn(
                           "relative overflow-hidden bg-navy-50",
-                          viewMode === "grid" ? "h-40 md:h-60" : "h-40 md:h-full",
+                          viewMode === "grid" ? "h-32 md:h-36" : "h-32 md:h-full",
                         )}
                       >
                         <img
@@ -927,7 +927,7 @@ export function SearchPage() {
                       </div>
                     </Link>
 
-                    <div className="p-5 md:p-6">
+                    <div className="p-3.5 md:p-4">
                       <div className="flex items-center justify-between gap-3">
                         <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
                           {property.listingType}
@@ -964,8 +964,8 @@ export function SearchPage() {
                         </div>
                       </div>
 
-                      <div className="mt-5 grid gap-2">
-                        <Button asChild className="h-11 w-full rounded-full bg-navy-700 px-3 text-sm hover:bg-navy-800">
+                      <div className="mt-2.5 grid gap-1.5">
+                        <Button asChild className="h-9 w-full rounded-full bg-navy-700 px-3 text-sm hover:bg-navy-800">
                           <Link to={propertyUrl(property)}>
                             View Property
                           </Link>
@@ -975,14 +975,14 @@ export function SearchPage() {
                           <Button
                             type="button"
                             variant="outline"
-                            className="h-10 w-full rounded-full border-blue-100 px-2 text-xs font-bold text-blue-700 md:text-sm"
+                            className="h-8 w-full rounded-full border-blue-100 px-2 text-xs font-bold text-blue-700 md:text-sm"
                             onClick={() => openPropertyCallback(property)}
                           >
                             Callback
                           </Button>
 
                           {property.society ? (
-                            <Button asChild variant="outline" className="h-10 w-full rounded-full border-navy-100 px-2 text-xs font-bold md:text-sm">
+                            <Button asChild variant="outline" className="h-8 w-full rounded-full border-navy-100 px-2 text-xs font-bold md:text-sm">
                               <Link to={`/search?tab=societies&q=${encodeURIComponent(property.society)}`}>
                                 Society
                               </Link>
