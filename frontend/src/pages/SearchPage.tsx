@@ -808,17 +808,17 @@ export function SearchPage() {
                 onSubmitLead={submitLead}
               />
             ) : activeTab === "societies" ? (
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {societyResults.map((society) => (
                   <article
                     key={society.id}
-                    className="group overflow-hidden rounded-[1.5rem] border border-navy-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-apple"
+                    className="group overflow-hidden rounded-[1.35rem] border border-navy-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-apple"
                   >
                     <Link
                       to={society.slug ? `/society/${society.slug}` : "/societies"}
                       className="block"
                     >
-                      <div className="relative h-40 overflow-hidden bg-navy-50 md:h-56">
+                      <div className="relative h-36 overflow-hidden bg-navy-50 md:h-44">
                         <img
                           src={societyImage(society)}
                           alt={society.name}
@@ -834,23 +834,23 @@ export function SearchPage() {
                       </div>
                     </Link>
 
-                    <div className="p-5 md:p-6">
-                      <h2 className="line-clamp-2 text-xl font-black text-navy-950 md:text-2xl">
+                    <div className="p-4 md:p-5">
+                      <h2 className="line-clamp-1 text-xl font-black text-navy-950 md:text-[1.35rem]">
                         {society.name}
                       </h2>
 
-                      <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-navy-500">
+                      <p className="mt-1.5 flex items-center gap-2 text-sm font-semibold text-navy-500">
                         <MapPin className="h-4 w-4 shrink-0" />{" "}
                         <span className="line-clamp-1">{formatPublicLocation(society)}</span>
                       </p>
 
                       {society.aiReason ? (
-                        <p className="mt-3 rounded-2xl bg-blue-50 px-3 py-2 text-xs font-bold leading-5 text-blue-700">
+                        <p className="mt-2 rounded-2xl bg-blue-50 px-3 py-1.5 text-xs font-bold leading-5 text-blue-700">
                           AI match: {society.aiReason}
                         </p>
                       ) : null}
 
-                      <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl bg-ivory-100 p-3 text-sm">
+                      <div className="mt-3 grid grid-cols-2 gap-3 rounded-2xl bg-ivory-100 p-3 text-sm">
                         <div>
                           <p className="text-navy-400">Rent</p>
                           <p className="line-clamp-1 font-black text-navy-900">
@@ -865,15 +865,15 @@ export function SearchPage() {
                         </div>
                       </div>
 
-                      <div className="mt-5 grid gap-2">
-                        <Button asChild className="h-11 w-full rounded-full bg-navy-700 px-3 text-sm hover:bg-navy-800">
+                      <div className="mt-3 grid gap-2">
+                        <Button asChild className="h-10 w-full rounded-full bg-navy-700 px-3 text-sm hover:bg-navy-800">
                           <Link to={society.slug ? `/society/${society.slug}` : "/societies"}>
                             View Society
                           </Link>
                         </Button>
 
                         <div className="grid grid-cols-2 gap-2">
-                          <Button asChild variant="outline" className="h-10 w-full rounded-full border-blue-100 px-2 text-xs font-bold text-blue-700 md:text-sm">
+                          <Button asChild variant="outline" className="h-9 w-full rounded-full border-blue-100 px-2 text-xs font-bold text-blue-700 md:text-sm">
                             <Link to={societySearchUrl(society, "rent")}>
                               View Homes
                             </Link>
@@ -882,7 +882,7 @@ export function SearchPage() {
                           <Button
                             type="button"
                             variant="outline"
-                            className="h-10 w-full rounded-full border-navy-100 px-2 text-xs font-bold md:text-sm"
+                            className="h-9 w-full rounded-full border-navy-100 px-2 text-xs font-bold md:text-sm"
                             onClick={() => openSocietyCallback(society)}
                           >
                             Callback
