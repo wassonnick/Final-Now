@@ -1,4 +1,8 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+from pathlib import Path
+
+path = Path("frontend/src/pages/admin/AdminSocietyFormPage.tsx")
+
+path.write_text(r'''import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -958,3 +962,6 @@ export function AdminSocietyFormPage() {
     </AdminLayout>
   );
 }
+''', encoding="utf-8")
+
+print("C6D AdminSocietyFormPage mobile + save UX applied.")
