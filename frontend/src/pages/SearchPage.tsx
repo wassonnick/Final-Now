@@ -590,14 +590,14 @@ export function SearchPage() {
       </section>
 
       <section className="container mx-auto px-3 pb-52 pt-2 md:px-4 md:pb-10 md:pt-3">
-        <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
-          <aside className="hidden space-y-4 lg:sticky lg:top-24 lg:block lg:self-start">
-            <div className="rounded-[1.35rem] border border-navy-100 bg-white p-4 shadow-sm">
+        <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
+          <aside className="hidden space-y-3 lg:sticky lg:top-24 lg:block lg:self-start">
+            <div className="rounded-[1.25rem] border border-navy-100 bg-white p-3.5 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-black text-navy-900">Filters</h2>
                 <SlidersHorizontal className="h-4 w-4 text-navy-400" />
               </div>
-              <div className="mt-4 space-y-4">
+              <div className="mt-3 space-y-3">
                 <div>
                   <p className="text-[11px] font-black uppercase tracking-[0.16em] text-navy-400">
                     Intent
@@ -610,7 +610,7 @@ export function SearchPage() {
                           key={tab.key}
                           onClick={() => updateTab(tab.key)}
                           className={cn(
-                            "flex items-center justify-between rounded-2xl px-3 py-2.5 text-sm font-bold transition",
+                            "flex items-center justify-between rounded-xl px-3 py-2 text-sm font-bold transition",
                             activeTab === tab.key
                               ? "bg-blue-50 text-blue-700"
                               : "bg-ivory-200 text-navy-600 hover:bg-navy-50",
@@ -629,30 +629,30 @@ export function SearchPage() {
                   <p className="text-[11px] font-black uppercase tracking-[0.16em] text-navy-400">
                     Popular locality
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-1.5">
                     {quickLocalities.map((item) => (
                       <button
                         key={item}
                         onClick={() => applyQuickSearch(item)}
-                        className="shrink-0 rounded-full border border-navy-100 bg-white px-3 py-1.5 text-xs font-bold text-navy-600 hover:border-blue-200 hover:bg-blue-50"
+                        className="shrink-0 rounded-full border border-navy-100 bg-white px-2.5 py-1 text-[11px] font-bold text-navy-600 hover:border-blue-200 hover:bg-blue-50"
                       >
                         {item}
                       </button>
                     ))}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-[#EFF6FF] p-3">
+                <div className="rounded-xl bg-[#EFF6FF] p-3">
                   <div className="flex items-center gap-2 text-sm font-black text-blue-700">
                     <Shield className="h-4 w-4" /> Public-safe data
                   </div>
-                  <p className="mt-2 text-xs leading-5 text-navy-500">
+                  <p className="mt-1.5 text-[11px] leading-5 text-navy-500">
                     Only live properties and published society profiles are shown here.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-[1.35rem] border border-navy-100 bg-navy-900 p-4 text-white shadow-sm">
+            <div className="rounded-[1.25rem] border border-navy-100 bg-navy-900 p-3.5 text-white shadow-sm">
               <Bot className="h-5 w-5 text-blue-200" />
               <h3 className="mt-3 text-base font-black">Need a shortcut?</h3>
               <p className="mt-2 text-xs leading-5 text-navy-200">
@@ -660,7 +660,7 @@ export function SearchPage() {
               </p>
               <Button
                 asChild
-                className="mt-3 h-10 w-full rounded-full bg-white text-sm font-black text-navy-900 hover:bg-navy-100"
+                className="mt-3 h-9 w-full rounded-full bg-white text-xs font-black text-navy-900 hover:bg-navy-100"
               >
                 <Link to={`/ai-advisor?q=${encodeURIComponent(query)}`}>
                   Open AI Advisor
@@ -863,7 +863,7 @@ export function SearchPage() {
                         </div>
                       </div>
 
-                      <div className="mt-3 grid gap-2">
+                      <div className="mt-2 grid gap-1.5">
                         <Button asChild className="h-9 w-full rounded-full bg-navy-700 px-3 text-sm hover:bg-navy-800">
                           <Link to={society.slug ? `/society/${society.slug}` : "/societies"}>
                             View Society
