@@ -806,20 +806,20 @@ export function SearchPage() {
                         </div>
                       </div>
 
-                      <div className="mt-5 grid gap-2 sm:grid-cols-3">
-                        <Button asChild className="rounded-full bg-navy-700 hover:bg-navy-800">
+                      <div className="mt-5 grid gap-2 sm:grid-cols-1 xl:grid-cols-3">
+                        <Button asChild className="rounded-full bg-navy-700 px-3 text-sm hover:bg-navy-800">
                           <Link to={society.slug ? `/society/${society.slug}` : "/societies"}>
                             View Society
                           </Link>
                         </Button>
 
-                        <Button asChild variant="outline" className="rounded-full border-blue-100 text-blue-700">
+                        <Button asChild variant="outline" className="rounded-full border-blue-100 px-3 text-sm text-blue-700">
                           <Link to={societySearchUrl(society, "rent")}>
                             View Homes
                           </Link>
                         </Button>
 
-                        <Button asChild variant="outline" className="rounded-full border-navy-100">
+                        <Button asChild variant="outline" className="rounded-full border-navy-100 px-3 text-sm">
                           <Link to={societyCallbackUrl(society)}>
                             Callback
                           </Link>
@@ -902,21 +902,21 @@ export function SearchPage() {
                         </div>
                       </div>
 
-                      <div className="mt-5 grid gap-2 sm:grid-cols-3">
-                        <Button asChild className="rounded-full bg-navy-700 hover:bg-navy-800">
+                      <div className="mt-5 grid gap-2 sm:grid-cols-1 xl:grid-cols-3">
+                        <Button asChild className="rounded-full bg-navy-700 px-3 text-sm hover:bg-navy-800">
                           <Link to={propertyUrl(property)}>
                             View Property
                           </Link>
                         </Button>
 
-                        <Button asChild variant="outline" className="rounded-full border-blue-100 text-blue-700">
+                        <Button asChild variant="outline" className="rounded-full border-blue-100 px-3 text-sm text-blue-700">
                           <Link to={propertyCallbackUrl(property)}>
                             Callback
                           </Link>
                         </Button>
 
                         {property.society ? (
-                          <Button asChild variant="outline" className="rounded-full border-navy-100">
+                          <Button asChild variant="outline" className="rounded-full border-navy-100 px-3 text-sm">
                             <Link to={`/search?tab=societies&q=${encodeURIComponent(property.society)}`}>
                               Society
                             </Link>
