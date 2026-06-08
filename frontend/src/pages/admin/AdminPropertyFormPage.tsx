@@ -45,6 +45,7 @@ const emptyProperty = {
   listingType: "Rent",
   status: "Draft",
   society: "",
+  societyId: "",
   locality: "",
   price: "",
   securityDeposit: "",
@@ -72,16 +73,21 @@ type SocietyOption = {
 };
 
 function extractSocieties(payload: any): SocietyOption[] {
-  const raw = Array.isArray(payload?.data)
-    ? payload.data
-    : Array.isArray(payload?.data?.data)
-      ? payload.data.data
-      : [];
+  const raw =
+    Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.data?.data)
+          ? payload.data.data
+          : Array.isArray(payload?.societies)
+            ? payload.societies
+            : [];
 
   return raw
     .map((item: any) => ({
-      id: item.id,
-      name: item.name || "",
+      id: item.id ?? item.value ?? item.society_id,
+      name: item.name || item.label || item.society_name || "",
       slug: item.slug || "",
       sector: item.sector || "",
       locality: item.locality || "",
@@ -89,6 +95,17 @@ function extractSocieties(payload: any): SocietyOption[] {
     }))
     .filter((item: SocietyOption) => Boolean(item.name))
     .sort((a: SocietyOption, b: SocietyOption) => a.name.localeCompare(b.name));
+}
+
+function mergeSocietyOptions(existing: SocietyOption[], next: SocietyOption[]) {
+  const map = new Map<string, SocietyOption>();
+
+  [...existing, ...next].forEach((item) => {
+    const key = String(item.id || item.name).toLowerCase();
+    if (!map.has(key)) map.set(key, item);
+  });
+
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function societyLabel(item: SocietyOption) {
@@ -117,7 +134,14 @@ function parseArray(value: any): string[] {
 function getSocietyName(data: any): string {
   if (typeof data?.society === "string") return data.society;
   if (data?.society?.name) return data.society.name;
-  return data?.society_name || "";
+  return data?.society_name || data?.societyName || "";
+}
+
+function getSocietyId(data: any): string {
+  if (data?.society_id) return String(data.society_id);
+  if (data?.societyId) return String(data.societyId);
+  if (typeof data?.society === "object" && data?.society?.id) return String(data.society.id);
+  return "";
 }
 
 function makeSlug(value: string) {
@@ -212,17 +236,34 @@ export function AdminPropertyFormPage() {
       try {
         setSocietiesLoading(true);
 
-        const response = await adminFetch("/admin/societies");
-        const json = await response.json().catch(() => ({}));
+        let allSocieties: SocietyOption[] = [];
+        const maxPages = 20;
 
-        if (!response.ok) {
-          throw new Error(json?.message || "Failed to load societies");
+        for (let page = 1; page <= maxPages; page += 1) {
+          const response = await adminFetch(`/admin/societies?page=${page}&per_page=100`);
+          const json = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(json?.message || "Failed to load societies");
+          }
+
+          const pageItems = extractSocieties(json);
+          allSocieties = mergeSocietyOptions(allSocieties, pageItems);
+
+          const paginated = json?.data && !Array.isArray(json.data) ? json.data : null;
+          const currentPage = Number(paginated?.current_page || page);
+          const lastPage = Number(paginated?.last_page || page);
+          const hasNext = Boolean(paginated?.next_page_url);
+
+          if (!pageItems.length || currentPage >= lastPage || !hasNext) {
+            break;
+          }
         }
 
-        setSocietyOptions(extractSocieties(json));
+        setSocietyOptions(allSocieties);
       } catch (err) {
         console.error(err);
-        setError("Unable to load live societies. You can still type/select if already saved.");
+        setError("Unable to load all live societies. Existing selected society will still be preserved.");
       } finally {
         setSocietiesLoading(false);
       }
@@ -230,6 +271,22 @@ export function AdminPropertyFormPage() {
 
     void loadSocieties();
   }, []);
+
+
+  useEffect(() => {
+    const currentSociety = String((property as any).society || "").trim();
+    const currentSocietyId = String((property as any).societyId || "").trim();
+
+    if (currentSociety || !currentSocietyId || !societyOptions.length) return;
+
+    const matched = societyOptions.find((item) => String(item.id || "") === currentSocietyId);
+    if (matched?.name) {
+      setProperty((current: any) => ({
+        ...current,
+        society: matched.name,
+      }));
+    }
+  }, [(property as any).society, (property as any).societyId, societyOptions]);
 
   useEffect(() => {
     async function loadProperty() {
@@ -254,6 +311,7 @@ export function AdminPropertyFormPage() {
           listingType: data.listing_type || data.listingType || "Rent",
           status: data.status || "Draft",
           society: getSocietyName(data),
+          societyId: getSocietyId(data),
           locality: data.locality || "",
           price: data.price || "",
           securityDeposit: data.security_deposit || data.securityDeposit || "",
@@ -313,11 +371,17 @@ export function AdminPropertyFormPage() {
 
   const societyDropdownOptions = useMemo(() => {
     const currentSociety = String(property.society || "").trim();
-    const exists = societyOptions.some((item) => item.name === currentSociety);
+    const currentSocietyId = String((property as any).societyId || "").trim();
 
-    if (currentSociety && !exists) {
+    const existsByName = societyOptions.some((item) => item.name === currentSociety);
+    const existsById = currentSocietyId
+      ? societyOptions.some((item) => String(item.id || "") === currentSocietyId)
+      : false;
+
+    if (currentSociety && !existsByName) {
       return [
         {
+          id: currentSocietyId || "current",
           name: currentSociety,
           status: "Current",
         },
@@ -325,8 +389,19 @@ export function AdminPropertyFormPage() {
       ];
     }
 
+    if (!currentSociety && currentSocietyId && !existsById) {
+      return [
+        {
+          id: currentSocietyId,
+          name: `Saved society #${currentSocietyId}`,
+          status: "Current",
+        },
+        ...societyOptions,
+      ];
+    }
+
     return societyOptions;
-  }, [property.society, societyOptions]);
+  }, [property.society, (property as any).societyId, societyOptions]);
 
 
   const publishValidationError = useMemo(() => {
@@ -528,6 +603,7 @@ export function AdminPropertyFormPage() {
         listing_type: property.listingType,
         status,
         society: property.society,
+        society_id: (property as any).societyId || undefined,
         locality: property.locality,
         price: property.price || "On Request",
         security_deposit: property.securityDeposit,
@@ -749,7 +825,17 @@ export function AdminPropertyFormPage() {
                   Society {!builderFloorListing ? <span className="text-rose-500">*</span> : <span className="text-xs font-normal text-slate-400">(optional for builder floor)</span>}
                   <select
                     value={property.society}
-                    onChange={(event) => updateField("society", event.target.value)}
+                    onChange={(event) => {
+                      const selectedName = event.target.value;
+                      const selectedOption = societyDropdownOptions.find((item) => item.name === selectedName);
+                      setProperty((current: any) => ({
+                        ...current,
+                        society: selectedName,
+                        societyId: selectedOption?.id ? String(selectedOption.id) : "",
+                      }));
+                      if (error) setError("");
+                      if (success) setSuccess("");
+                    }}
                     className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     <option value="">
