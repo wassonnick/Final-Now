@@ -234,15 +234,27 @@ private function withSocietyDefaults(array $payload, bool $partial = false): arr
         $payload['amenities'] = $payload['amenities'] ?? [];
         $payload['gallery_images'] = $payload['gallery_images'] ?? [];
         $payload['approved_gallery_image_urls'] = $payload['approved_gallery_image_urls'] ?? [];
+        $payload['fields_to_verify'] = $payload['fields_to_verify'] ?? [];
         $payload['image_status'] = $payload['image_status'] ?? 'placeholder';
         $payload['image_approved_by_admin'] = $payload['image_approved_by_admin'] ?? false;
-        $payload['fields_to_verify'] = $payload['fields_to_verify'] ?? [];
         $payload['official_source_status'] = $payload['official_source_status'] ?? 'pending';
         $payload['data_quality'] = $payload['data_quality'] ?? 'manual_entry';
         $payload['is_published'] = $payload['is_published'] ?? false;
         $payload['featured'] = $payload['featured'] ?? false;
         $payload['show_in_hero'] = $payload['show_in_hero'] ?? false;
         $payload['search_boost'] = $payload['search_boost'] ?? false;
+    }
+
+    foreach (['amenities', 'gallery_images', 'approved_gallery_image_urls', 'fields_to_verify'] as $arrayField) {
+        if (array_key_exists($arrayField, $payload)) {
+            if (is_array($payload[$arrayField])) {
+                $payload[$arrayField] = json_encode(array_values($payload[$arrayField]));
+            }
+
+            if ($payload[$arrayField] === null || $payload[$arrayField] === '') {
+                $payload[$arrayField] = '[]';
+            }
+        }
     }
 
     return $payload;
