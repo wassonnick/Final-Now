@@ -499,8 +499,8 @@ export function SearchPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <section className="border-b border-navy-100 bg-white">
-        <div className="container mx-auto px-3 py-2 md:px-4 md:py-8">
+      <section className="border-b border-navy-100 bg-white/95 backdrop-blur">
+        <div className="container mx-auto px-3 py-3 md:px-4 md:py-5">
           <div className="hidden flex-col gap-5 md:flex lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600 md:text-sm">
@@ -533,7 +533,7 @@ export function SearchPage() {
             </div>
           </div>
 
-          <div className="mt-0 rounded-[1.25rem] border border-navy-100 bg-white p-2.5 shadow-soft md:mt-6 md:rounded-[1.5rem] md:p-4">
+          <div className="mt-3 rounded-[1.25rem] border border-navy-100 bg-white p-2.5 shadow-soft md:mt-4 md:rounded-[1.5rem] md:p-3">
             <div className="flex gap-2 lg:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-navy-400" />
@@ -542,19 +542,19 @@ export function SearchPage() {
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={(event) => event.key === "Enter" && submitSearch()}
                   placeholder="Search society, sector or landmark..."
-                  className="h-11 rounded-full border-navy-100 pl-11 text-sm md:h-14 md:pl-12 md:text-base"
+                  className="h-11 rounded-full border-navy-100 pl-11 text-sm md:h-12 md:pl-12 md:text-base"
                 />
               </div>
               <Button
                 onClick={submitSearch}
-                className="h-11 w-11 shrink-0 rounded-full bg-blue-600 px-0 font-black hover:bg-blue-700 md:h-14 md:w-auto md:px-8"
+                className="h-11 w-11 shrink-0 rounded-full bg-blue-600 px-0 font-black hover:bg-blue-700 md:h-12 md:w-auto md:px-7"
                 aria-label="Search"
               >
                 <Search className="h-5 w-5 md:hidden" />
                 <span className="hidden md:inline">Search</span>
               </Button>
             </div>
-            <div className="mt-2 flex flex-col gap-2 md:mt-4 md:flex-row md:items-center md:gap-2">
+            <div className="mt-2 flex flex-col gap-2 md:mt-3 md:flex-row md:items-center md:gap-2">
               <div className="grid w-full grid-cols-[1.12fr_0.94fr_0.94fr] gap-2 md:flex md:w-auto md:flex-wrap">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
@@ -614,7 +614,7 @@ export function SearchPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-3 pb-52 pt-3 md:px-4 md:py-10">
+      <section className="container mx-auto px-3 pb-52 pt-3 md:px-4 md:pb-10 md:pt-6">
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           <aside className="hidden space-y-4 lg:sticky lg:top-24 lg:block lg:self-start">
             <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
