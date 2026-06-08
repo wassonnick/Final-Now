@@ -451,6 +451,8 @@ export function SearchPage() {
     type: "society" | "property";
     societyName: string;
     propertyTitle?: string;
+    propertySlug?: string;
+    propertyIntent?: "Rent" | "Buy" | "Callback";
     source: string;
   } | null>(null);
 
@@ -463,10 +465,23 @@ export function SearchPage() {
   };
 
   const openPropertyCallback = (property: any) => {
+    const listingType = String(property?.listingType || "").toLowerCase();
+    const propertyIntent =
+      listingType.includes("rent")
+        ? "Rent"
+        : listingType.includes("sale") ||
+            listingType.includes("buy") ||
+            listingType.includes("resale") ||
+            listingType.includes("builder")
+          ? "Buy"
+          : "Callback";
+
     setCallbackTarget({
       type: "property",
       societyName: property?.society || "Selected society",
       propertyTitle: property?.title || "Selected property",
+      propertySlug: property?.slug || "",
+      propertyIntent,
       source: "search_property_card",
     });
   };
@@ -488,7 +503,7 @@ export function SearchPage() {
 
   const callbackRequirement =
     callbackTarget?.type === "property"
-      ? `Search page enquiry for ${callbackTarget.propertyTitle} in ${callbackTarget.societyName}.`
+      ? callbackTarget.propertyIntent || "Callback"
       : `Search page enquiry for homes in ${callbackTarget?.societyName || "this society"}.`;
 
   return (
@@ -646,15 +661,24 @@ export function SearchPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.25rem] border border-navy-100 bg-navy-900 p-3.5 text-white shadow-sm">
-              <Bot className="h-5 w-5 text-blue-200" />
-              <h3 className="mt-3 text-base font-black">Need a shortcut?</h3>
-              <p className="mt-2 text-xs leading-5 text-navy-200">
-                Let AI rank this search by budget, commute and lifestyle.
+            <div className="rounded-[1.25rem] border border-blue-100 bg-blue-50 p-3.5 text-navy-900 shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white">
+                  <Bot className="h-4 w-4" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-black">AI shortlist</h3>
+                  <p className="text-[11px] font-bold text-blue-700">
+                    Rank this search
+                  </p>
+                </div>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-navy-600">
+                Get a quick shortlist by budget, commute and lifestyle.
               </p>
               <Button
                 asChild
-                className="mt-3 h-9 w-full rounded-full bg-white text-xs font-black text-navy-900 hover:bg-navy-100"
+                className="mt-3 h-9 w-full rounded-full bg-blue-600 text-xs font-black text-white hover:bg-blue-700"
               >
                 <Link to={`/ai-advisor?q=${encodeURIComponent(query)}`}>
                   Open AI Advisor
@@ -1111,6 +1135,8 @@ export function SearchPage() {
         subtitle={callbackSubtitle}
         source={callbackTarget?.source || "search_page"}
         societyName={callbackTarget?.societyName || ""}
+        propertyTitle={callbackTarget?.propertyTitle || ""}
+        propertySlug={callbackTarget?.propertySlug || ""}
         defaultMessage={callbackMessage}
         defaultRequirement={callbackRequirement}
         submitLabel="Request callback"

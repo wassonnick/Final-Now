@@ -156,8 +156,14 @@ export function PublicLeadModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/60 px-3 pb-3 pt-6 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="max-h-[86vh] w-full max-w-[390px] overflow-y-auto rounded-[1.5rem] bg-white shadow-2xl sm:max-h-[82vh] sm:max-w-[420px]">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/60 px-3 pb-3 pt-6 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[86vh] w-full max-w-[390px] overflow-y-auto rounded-[1.5rem] bg-white shadow-2xl sm:max-h-[82vh] sm:max-w-[420px]"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="relative border-b border-navy-100 px-5 py-4">
           <button
             type="button"
@@ -219,7 +225,16 @@ export function PublicLeadModal({
           </div>
         ) : (
           <form onSubmit={submitLead} className="px-5 py-4">
-            {!isPropertyLead ? (
+            {isPropertyLead ? (
+              <div className="mb-3">
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
+                  Selected requirement
+                </p>
+                <div className="inline-flex h-9 items-center rounded-full border border-blue-300 bg-blue-50 px-4 text-sm font-bold text-blue-700">
+                  {form.requirement.replace(/ requirement$/i, "") || "Callback"}
+                </div>
+              </div>
+            ) : (
               <div className="mb-3">
                 <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
                   What do you need?
@@ -246,7 +261,7 @@ export function PublicLeadModal({
                   })}
                 </div>
               </div>
-            ) : null}
+            )}
 
             <div className="space-y-2.5">
               <input
