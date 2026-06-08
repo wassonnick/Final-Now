@@ -124,76 +124,111 @@ function EmptyResults({
   onSubmitLead: () => void;
 }) {
   const isSocietySearch = activeTab === "societies";
+  const searchLabel = query.trim() || "your requirement";
+  const advisorUrl = `/ai-advisor?q=${encodeURIComponent(searchLabel)}`;
+  const browseUrl = isSocietySearch ? "/search?tab=societies" : "/search?tab=rent";
+  const browseLabel = isSocietySearch ? "Browse all societies" : "Browse available homes";
 
   return (
-    <div className="overflow-hidden rounded-[1.75rem] border border-dashed border-blue-200 bg-white shadow-sm">
-      <div className="bg-gradient-to-br from-blue-50 via-white to-ivory-100 p-6 md:p-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-100">
-            <Search className="h-5 w-5" />
-          </span>
-          <p className="mt-5 text-xs font-black uppercase tracking-[0.18em] text-blue-700">
-            No exact match found
-          </p>
-          <h3 className="mt-2 text-2xl font-black tracking-tight text-navy-950 md:text-3xl">
-            {isSocietySearch
-              ? "No matching societies found yet."
-              : "No matching homes found yet."}
-          </h3>
-          <p className="mt-3 text-sm leading-6 text-navy-500 md:text-base">
-            {query
-              ? `We could not find a live result for “${query}”. Leave your number and our Gurgaon team will shortlist matching ${isSocietySearch ? "societies" : "homes"} for you.`
-              : `Tell us your requirement and our Gurgaon team will help you shortlist the right ${isSocietySearch ? "societies" : "homes"}.`}
-          </p>
+    <div className="overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-sm md:rounded-[1.75rem]">
+      <div className="bg-gradient-to-br from-blue-50 via-white to-ivory-100 p-4 md:p-8">
+        <div className="mx-auto max-w-3xl">
+          <div className="grid gap-5 md:grid-cols-[1fr_0.9fr] md:items-center">
+            <div className="text-center md:text-left">
+              <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-100 md:mx-0 md:h-12 md:w-12">
+                <Search className="h-5 w-5" />
+              </span>
 
-          <div className="mt-6 grid gap-3 rounded-[1.25rem] border border-blue-100 bg-white p-3 shadow-sm md:grid-cols-[1fr_1fr_auto]">
-            <Input
-              value={leadName}
-              onChange={(event) => onLeadNameChange(event.target.value)}
-              placeholder="Your name"
-              className="h-12 rounded-full border-navy-100 bg-ivory-100 px-5"
-            />
-            <Input
-              value={leadPhone}
-              onChange={(event) => onLeadPhoneChange(event.target.value)}
-              placeholder="Mobile number"
-              className="h-12 rounded-full border-navy-100 bg-ivory-100 px-5"
-            />
-            <Button
-              onClick={onSubmitLead}
-              disabled={
-                isSubmittingLead || !leadName.trim() || !leadPhone.trim()
-              }
-              className="h-12 rounded-full bg-blue-600 px-6 font-black text-white hover:bg-blue-700 disabled:opacity-60"
-            >
-              <PhoneCall className="mr-2 h-4 w-4" />
-              {isSubmittingLead ? "Sending..." : "Request callback"}
-            </Button>
+              <p className="mt-4 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700 md:mt-5 md:text-xs md:tracking-[0.18em]">
+                No exact live match found
+              </p>
+
+              <h3 className="mt-2 text-xl font-black tracking-tight text-navy-950 md:text-3xl">
+                {isSocietySearch
+                  ? "We can still find the right society."
+                  : "We can still find matching homes."}
+              </h3>
+
+              <p className="mt-2 text-sm leading-6 text-navy-500 md:mt-3 md:text-base">
+                {query
+                  ? `No live result is currently matching “${query}”. Share your number and our Gurgaon team will check offline inventory, fresh owner listings and similar options.`
+                  : `Tell us your requirement and our Gurgaon team will shortlist verified ${isSocietySearch ? "societies" : "homes"} for you.`}
+              </p>
+
+              <div className="mt-4 flex flex-wrap justify-center gap-2 md:justify-start">
+                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-navy-600 shadow-sm">
+                  Offline inventory check
+                </span>
+                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-navy-600 shadow-sm">
+                  Verified callback
+                </span>
+                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-navy-600 shadow-sm">
+                  Similar matches
+                </span>
+              </div>
+            </div>
+
+            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-3 shadow-sm md:p-4">
+              <p className="mb-3 text-center text-sm font-black text-navy-900 md:text-left">
+                Get matching options on call
+              </p>
+
+              <div className="grid gap-2">
+                <Input
+                  value={leadName}
+                  onChange={(event) => onLeadNameChange(event.target.value)}
+                  placeholder="Your name"
+                  className="h-11 rounded-full border-navy-100 bg-ivory-100 px-5 md:h-12"
+                />
+                <Input
+                  value={leadPhone}
+                  onChange={(event) => onLeadPhoneChange(event.target.value)}
+                  placeholder="Mobile number"
+                  className="h-11 rounded-full border-navy-100 bg-ivory-100 px-5 md:h-12"
+                />
+                <Button
+                  onClick={onSubmitLead}
+                  disabled={
+                    isSubmittingLead || !leadName.trim() || !leadPhone.trim()
+                  }
+                  className="h-11 rounded-full bg-blue-600 px-6 font-black text-white hover:bg-blue-700 disabled:opacity-60 md:h-12"
+                >
+                  <PhoneCall className="mr-2 h-4 w-4" />
+                  {isSubmittingLead ? "Sending..." : "Request callback"}
+                </Button>
+              </div>
+
+              {leadStatus === "success" ? (
+                <p className="mt-3 rounded-2xl bg-emerald-50 px-3 py-2 text-center text-sm font-bold text-emerald-700">
+                  Request received. Our team will contact you shortly.
+                </p>
+              ) : null}
+              {leadStatus === "error" ? (
+                <p className="mt-3 rounded-2xl bg-red-50 px-3 py-2 text-center text-sm font-bold text-red-600">
+                  Could not submit right now. Please try again.
+                </p>
+              ) : null}
+            </div>
           </div>
 
-          {leadStatus === "success" ? (
-            <p className="mt-3 text-sm font-bold text-emerald-700">
-              Request received. Our team will contact you shortly.
-            </p>
-          ) : null}
-          {leadStatus === "error" ? (
-            <p className="mt-3 text-sm font-bold text-red-600">
-              Could not submit right now. Please try again.
-            </p>
-          ) : null}
-
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <div className="mt-5 grid gap-2 sm:grid-cols-3">
             <Link
-              to="/chat"
-              className="inline-flex items-center rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50"
+              to={advisorUrl}
+              className="inline-flex h-11 items-center justify-center rounded-full border border-blue-100 bg-white px-4 text-sm font-black text-blue-700 hover:bg-blue-50"
             >
-              <MessageCircle className="mr-2 h-4 w-4" /> Chat with team
+              <Sparkles className="mr-2 h-4 w-4" /> Ask AI Advisor
             </Link>
             <Link
-              to="/ai-advisor"
-              className="inline-flex items-center rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50"
+              to={browseUrl}
+              className="inline-flex h-11 items-center justify-center rounded-full border border-blue-100 bg-white px-4 text-sm font-black text-blue-700 hover:bg-blue-50"
             >
-              <Sparkles className="mr-2 h-4 w-4" /> Try AI Advisor
+              <Building2 className="mr-2 h-4 w-4" /> {browseLabel}
+            </Link>
+            <Link
+              to="/chat"
+              className="inline-flex h-11 items-center justify-center rounded-full border border-blue-100 bg-white px-4 text-sm font-black text-blue-700 hover:bg-blue-50"
+            >
+              <MessageCircle className="mr-2 h-4 w-4" /> Chat with team
             </Link>
           </div>
         </div>
