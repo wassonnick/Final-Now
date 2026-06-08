@@ -83,6 +83,24 @@ function resultLabel(tab: string) {
   return "Societies";
 }
 
+
+function societySearchUrl(society: any, tab = "rent") {
+  return `/search?tab=${tab}&q=${encodeURIComponent(society?.name || "")}`;
+}
+
+function societyCallbackUrl(society: any) {
+  return `/chat?source=search_society_card&society=${encodeURIComponent(society?.name || "")}`;
+}
+
+function propertyCallbackUrl(property: any) {
+  return `/chat?source=search_property_card&property=${encodeURIComponent(property?.title || "")}&society=${encodeURIComponent(property?.society || "")}`;
+}
+
+function compactValue(value: unknown, fallback = "On request") {
+  const text = String(value || "").trim();
+  return text || fallback;
+}
+
 function EmptyResults({
   activeTab,
   query,
@@ -733,58 +751,82 @@ export function SearchPage() {
             ) : activeTab === "societies" ? (
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {societyResults.map((society) => (
-                  <Link
+                  <article
                     key={society.id}
-                    to={society.slug ? `/society/${society.slug}` : "/societies"}
                     className="group overflow-hidden rounded-[1.5rem] border border-navy-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-apple"
                   >
-                    <div className="relative h-52 overflow-hidden bg-navy-50 md:h-56">
-                      <img
-                        src={societyImage(society)}
-                        alt={society.name}
-                        className="h-full w-full object-cover transition group-hover:scale-[1.03]"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-navy-950/30 via-transparent to-transparent" />
-                      <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-black text-blue-700">
-                        Society
-                      </span>
-                      <span className="absolute right-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-black text-navy-900">
-                        Score {society.score || "New"}
-                      </span>
-                    </div>
+                    <Link
+                      to={society.slug ? `/society/${society.slug}` : "/societies"}
+                      className="block"
+                    >
+                      <div className="relative h-44 overflow-hidden bg-navy-50 md:h-56">
+                        <img
+                          src={societyImage(society)}
+                          alt={society.name}
+                          className="h-full w-full object-cover transition group-hover:scale-[1.03]"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-navy-950/30 via-transparent to-transparent" />
+                        <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-black text-blue-700">
+                          Society
+                        </span>
+                        <span className="absolute right-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-black text-navy-900">
+                          Score {society.score || "New"}
+                        </span>
+                      </div>
+                    </Link>
+
                     <div className="p-5 md:p-6">
-                      <h2 className="text-xl font-black text-navy-950 md:text-2xl">
+                      <h2 className="line-clamp-2 text-xl font-black text-navy-950 md:text-2xl">
                         {society.name}
                       </h2>
+
                       <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-navy-500">
-                        <MapPin className="h-4 w-4" />{" "}
-                        {formatPublicLocation(society)}
+                        <MapPin className="h-4 w-4 shrink-0" />{" "}
+                        <span className="line-clamp-1">{formatPublicLocation(society)}</span>
                       </p>
+
                       {society.aiReason ? (
                         <p className="mt-3 rounded-2xl bg-blue-50 px-3 py-2 text-xs font-bold leading-5 text-blue-700">
                           AI match: {society.aiReason}
                         </p>
                       ) : null}
-                      <div className="mt-5 grid grid-cols-2 gap-3 rounded-2xl bg-ivory-100 p-3 text-sm">
+
+                      <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl bg-ivory-100 p-3 text-sm">
                         <div>
                           <p className="text-navy-400">Rent</p>
-                          <p className="font-black text-navy-900">
-                            {society.rentRange || "On request"}
+                          <p className="line-clamp-1 font-black text-navy-900">
+                            {compactValue(society.rentRange)}
                           </p>
                         </div>
                         <div>
                           <p className="text-navy-400">Buy</p>
-                          <p className="font-black text-navy-900">
-                            {society.buyRange || "On request"}
+                          <p className="line-clamp-1 font-black text-navy-900">
+                            {compactValue(society.buyRange)}
                           </p>
                         </div>
                       </div>
-                      <div className="mt-5 flex items-center justify-between border-t border-navy-100 pt-4 text-sm font-black text-blue-700">
-                        View society{" "}
-                        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+
+                      <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                        <Button asChild className="rounded-full bg-navy-700 hover:bg-navy-800">
+                          <Link to={society.slug ? `/society/${society.slug}` : "/societies"}>
+                            View Society
+                          </Link>
+                        </Button>
+
+                        <Button asChild variant="outline" className="rounded-full border-blue-100 text-blue-700">
+                          <Link to={societySearchUrl(society, "rent")}>
+                            View Homes
+                          </Link>
+                        </Button>
+
+                        <Button asChild variant="outline" className="rounded-full border-navy-100">
+                          <Link to={societyCallbackUrl(society)}>
+                            Callback
+                          </Link>
+                        </Button>
                       </div>
                     </div>
-                  </Link>
+                  </article>
                 ))}
               </div>
             ) : (
@@ -796,9 +838,8 @@ export function SearchPage() {
                 )}
               >
                 {filteredProperties.map((property) => (
-                  <Link
+                  <article
                     key={property.id}
-                    to={propertyUrl(property)}
                     className={cn(
                       "group overflow-hidden border border-navy-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-apple",
                       viewMode === "grid"
@@ -806,21 +847,24 @@ export function SearchPage() {
                         : "grid rounded-[1.5rem] md:grid-cols-[260px_1fr]",
                     )}
                   >
-                    <div
-                      className={cn(
-                        "relative overflow-hidden bg-navy-50",
-                        viewMode === "grid" ? "h-56 md:h-60" : "h-56 md:h-full",
-                      )}
-                    >
-                      <img
-                        src={propertyImage(property)}
-                        alt={property.title}
-                        className="h-full w-full object-cover transition group-hover:scale-[1.03]"
-                      />
-                      <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-black text-blue-700">
-                        {activeTab === "rent" ? "Rent" : "Buy / Resale"}
-                      </span>
-                    </div>
+                    <Link to={propertyUrl(property)} className="block">
+                      <div
+                        className={cn(
+                          "relative overflow-hidden bg-navy-50",
+                          viewMode === "grid" ? "h-44 md:h-60" : "h-44 md:h-full",
+                        )}
+                      >
+                        <img
+                          src={propertyImage(property)}
+                          alt={property.title}
+                          className="h-full w-full object-cover transition group-hover:scale-[1.03]"
+                        />
+                        <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-black text-blue-700">
+                          {activeTab === "rent" ? "Rent" : "Buy / Resale"}
+                        </span>
+                      </div>
+                    </Link>
+
                     <div className="p-5 md:p-6">
                       <div className="flex items-center justify-between gap-3">
                         <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
@@ -832,27 +876,55 @@ export function SearchPage() {
                           </span>
                         ) : null}
                       </div>
-                      <h2 className="mt-4 text-xl font-black text-navy-950 md:text-2xl">
+
+                      <h2 className="mt-4 line-clamp-2 text-xl font-black text-navy-950 md:text-2xl">
                         {property.title}
                       </h2>
-                      <p className="mt-2 text-sm font-semibold text-navy-500">
-                        {property.society} • {property.locality}
+
+                      <p className="mt-2 line-clamp-1 text-sm font-semibold text-navy-500">
+                        {property.society || "Gurgaon"} • {property.locality || "Verified listing"}
                       </p>
-                      <div className="mt-6 flex items-end justify-between">
+
+                      <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-ivory-100 p-3">
                         <div>
-                          <p className="text-sm text-navy-400">Price</p>
-                          <p className="text-xl font-black text-navy-900">
-                            {property.price || "On request"}
+                          <p className="text-xs text-navy-400">Price</p>
+                          <p className="line-clamp-1 font-black text-navy-900">
+                            {compactValue(property.price)}
                           </p>
                         </div>
-                        <div className="text-right text-sm font-semibold text-navy-500">
-                          {property.bedrooms || "-"} BHK
-                          <br />
-                          {property.areaSqft || "-"} sq.ft
+                        <div>
+                          <p className="text-xs text-navy-400">BHK</p>
+                          <p className="font-black text-navy-900">{property.bedrooms || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-navy-400">Area</p>
+                          <p className="line-clamp-1 font-black text-navy-900">{property.areaSqft || "-"} sq.ft</p>
                         </div>
                       </div>
+
+                      <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                        <Button asChild className="rounded-full bg-navy-700 hover:bg-navy-800">
+                          <Link to={propertyUrl(property)}>
+                            View Property
+                          </Link>
+                        </Button>
+
+                        <Button asChild variant="outline" className="rounded-full border-blue-100 text-blue-700">
+                          <Link to={propertyCallbackUrl(property)}>
+                            Callback
+                          </Link>
+                        </Button>
+
+                        {property.society ? (
+                          <Button asChild variant="outline" className="rounded-full border-navy-100">
+                            <Link to={`/search?tab=societies&q=${encodeURIComponent(property.society)}`}>
+                              Society
+                            </Link>
+                          </Button>
+                        ) : null}
+                      </div>
                     </div>
-                  </Link>
+                  </article>
                 ))}
               </div>
             )}
