@@ -420,7 +420,7 @@ export function SearchPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <section className="border-b border-navy-100 bg-white">
-        <div className="container mx-auto px-4 py-3 md:py-8">
+        <div className="container mx-auto px-3 py-2 md:px-4 md:py-8">
           <div className="hidden flex-col gap-5 md:flex lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600 md:text-sm">
@@ -453,8 +453,8 @@ export function SearchPage() {
             </div>
           </div>
 
-          <div className="mt-0 rounded-[1.5rem] border border-navy-100 bg-white p-3 shadow-soft md:mt-6 md:p-4">
-            <div className="flex flex-col gap-3 lg:flex-row">
+          <div className="mt-0 rounded-[1.25rem] border border-navy-100 bg-white p-2.5 shadow-soft md:mt-6 md:rounded-[1.5rem] md:p-4">
+            <div className="flex gap-2 lg:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-navy-400" />
                 <Input
@@ -462,17 +462,19 @@ export function SearchPage() {
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={(event) => event.key === "Enter" && submitSearch()}
                   placeholder="Search society, sector or landmark..."
-                  className="h-13 rounded-full border-navy-100 pl-12 text-sm md:h-14 md:text-base"
+                  className="h-11 rounded-full border-navy-100 pl-11 text-sm md:h-14 md:pl-12 md:text-base"
                 />
               </div>
               <Button
                 onClick={submitSearch}
-                className="h-13 rounded-full bg-blue-600 px-8 font-black hover:bg-blue-700 md:h-14"
+                className="h-11 w-11 shrink-0 rounded-full bg-blue-600 px-0 font-black hover:bg-blue-700 md:h-14 md:w-auto md:px-8"
+                aria-label="Search"
               >
-                Search
+                <Search className="h-5 w-5 md:hidden" />
+                <span className="hidden md:inline">Search</span>
               </Button>
             </div>
-            <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:gap-2">
+            <div className="mt-2 flex flex-col gap-2 md:mt-4 md:flex-row md:items-center md:gap-2">
               <div className="grid w-full grid-cols-[1.12fr_0.94fr_0.94fr] gap-2 md:flex md:w-auto md:flex-wrap">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
@@ -481,7 +483,7 @@ export function SearchPage() {
                       key={tab.key}
                       onClick={() => updateTab(tab.key)}
                       className={cn(
-                        "inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-1.5 text-[13px] font-black transition md:h-auto md:justify-start md:gap-2 md:px-4 md:py-2 md:text-sm md:font-bold",
+                        "inline-flex h-10 min-w-0 items-center justify-center gap-1 rounded-full px-1.5 text-[12px] font-black transition md:h-auto md:justify-start md:gap-2 md:px-4 md:py-2 md:text-sm md:font-bold",
                         activeTab === tab.key
                           ? "bg-navy-700 text-white"
                           : "bg-ivory-200 text-navy-600 hover:bg-navy-100",
@@ -532,7 +534,7 @@ export function SearchPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 pb-52 pt-4 md:py-10">
+      <section className="container mx-auto px-3 pb-52 pt-3 md:px-4 md:py-10">
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           <aside className="hidden space-y-4 lg:sticky lg:top-24 lg:block lg:self-start">
             <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
@@ -615,23 +617,24 @@ export function SearchPage() {
           </aside>
 
           <div className="min-w-0 space-y-5 md:space-y-6">
-            <div className="rounded-[1.5rem] border border-navy-100 bg-white p-4 shadow-sm">
+            <div className="rounded-[1.25rem] border border-navy-100 bg-white p-3 shadow-sm md:rounded-[1.5rem] md:p-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-navy-500">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-600 md:text-sm md:normal-case md:tracking-normal md:text-navy-500">
                     {isAiLoading && activeTab === "societies"
                       ? "Finding AI matches..."
                       : `${visibleCount} ${resultLabel(activeTab).toLowerCase()} result${visibleCount === 1 ? "" : "s"} found`}
                   </p>
-                  <h2 className="text-lg font-black text-navy-950 md:text-xl">
+                  <h2 className="mt-1 line-clamp-2 text-base font-black text-navy-950 md:mt-0 md:text-xl">
                     {query
-                      ? `Showing matches for “${query}”`
-                      : "Explore published SocietyFlats inventory"}
+                      ? `Matches for “${query}”`
+                      : "Published SocietyFlats inventory"}
                   </h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
+                    size="sm"
                     className="rounded-full md:hidden"
                     onClick={() => setShowMap((value) => !value)}
                   >
@@ -647,7 +650,8 @@ export function SearchPage() {
                   </Button>
                   <Button
                     asChild
-                    className="rounded-full bg-blue-600 hover:bg-blue-700"
+                    size="sm"
+                    className="rounded-full bg-blue-600 hover:bg-blue-700 md:h-10 md:px-4"
                   >
                     <Link
                       to={`/recommendations?q=${encodeURIComponent(query)}`}
@@ -659,12 +663,12 @@ export function SearchPage() {
                 </div>
               </div>
 
-              <div className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
                 {quickLocalities.map((item) => (
                   <button
                     key={item}
                     onClick={() => applyQuickSearch(item)}
-                    className="shrink-0 rounded-full border border-navy-100 bg-ivory-100 px-3 py-2 text-xs font-bold text-navy-600"
+                    className="shrink-0 rounded-full border border-navy-100 bg-ivory-100 px-3 py-1.5 text-xs font-bold text-navy-600"
                   >
                     {item}
                   </button>
@@ -759,7 +763,7 @@ export function SearchPage() {
                       to={society.slug ? `/society/${society.slug}` : "/societies"}
                       className="block"
                     >
-                      <div className="relative h-44 overflow-hidden bg-navy-50 md:h-56">
+                      <div className="relative h-40 overflow-hidden bg-navy-50 md:h-56">
                         <img
                           src={societyImage(society)}
                           alt={society.name}
@@ -853,7 +857,7 @@ export function SearchPage() {
                       <div
                         className={cn(
                           "relative overflow-hidden bg-navy-50",
-                          viewMode === "grid" ? "h-44 md:h-60" : "h-44 md:h-full",
+                          viewMode === "grid" ? "h-40 md:h-60" : "h-40 md:h-full",
                         )}
                       >
                         <img
