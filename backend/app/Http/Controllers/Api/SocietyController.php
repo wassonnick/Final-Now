@@ -216,6 +216,7 @@ private function withSocietyDefaults(array $payload, bool $partial = false): arr
         'connectivity_score',
         'lifestyle_score',
         'investment_score',
+        'source_confidence_score',
     ];
 
     foreach ($scoreFields as $field) {
@@ -239,6 +240,7 @@ private function withSocietyDefaults(array $payload, bool $partial = false): arr
         $payload['image_approved_by_admin'] = $payload['image_approved_by_admin'] ?? false;
         $payload['official_source_status'] = $payload['official_source_status'] ?? 'pending';
         $payload['data_quality'] = $payload['data_quality'] ?? 'manual_entry';
+        $payload['source_confidence_score'] = $payload['source_confidence_score'] ?? 0;
         $payload['is_published'] = $payload['is_published'] ?? false;
         $payload['featured'] = $payload['featured'] ?? false;
         $payload['show_in_hero'] = $payload['show_in_hero'] ?? false;
