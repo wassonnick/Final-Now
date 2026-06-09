@@ -601,7 +601,7 @@ export function HomePage() {
             <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
               See societies by location strength.
             </h2>
-            <p className="mt-2 text-sm leading-6 text-navy-500">
+            <p className="mt-1.5 text-xs leading-5 text-navy-500">
               Map intelligence turns nearby metro, schools, hospitals and office
               hubs into a shortlist you can actually act on.
             </p>
@@ -1019,19 +1019,19 @@ export function HomePage() {
         </div>
       </section>
 
-<section className="bg-white px-4 py-10 md:py-14">
-        <div className="container mx-auto grid gap-6 md:gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+<section className="bg-white px-4 py-8 md:py-10">
+        <div className="container mx-auto grid gap-5 md:gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div>
-            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">
+            <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
               For Property Owners
             </p>
-            <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
+            <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-3xl">
               <span className="md:hidden">List your Gurgaon flat.</span>
               <span className="hidden md:inline">
                 Own a flat in Gurgaon? List it with SocietyFlats.
               </span>
             </h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
+            <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500 md:text-[15px] md:leading-6">
               <span className="md:hidden">
                 Get verified tenant and buyer enquiries from society-focused
                 users.
@@ -1042,9 +1042,9 @@ export function HomePage() {
                 qualified enquiries through a cleaner, society-first flow.
               </span>
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               <Link to="/sell">
-                <Button className="w-full rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800 md:w-auto">
+                <Button className="h-10 w-full rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800 md:w-auto">
                   List Property
                 </Button>
               </Link>
@@ -1062,23 +1062,23 @@ export function HomePage() {
                   })
                 }
                 variant="outline"
-                className="w-full rounded-full border-navy-200 bg-white px-6 font-black text-navy-800 hover:bg-blue-50 md:w-auto"
+                className="h-10 w-full rounded-full border-blue-100 bg-white px-5 text-sm font-black text-blue-700 hover:bg-blue-50 md:w-auto"
               >
                 Talk to Us
               </Button>
             </div>
           </div>
-          <div className="hidden gap-4 sm:grid-cols-3 md:grid">
+          <div className="hidden gap-3 sm:grid-cols-3 md:grid">
             {ownerBenefits.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
                   key={item.title}
                   to="/sell"
-                  className="rounded-[1.35rem] border border-navy-100 bg-ivory-100 p-5 transition hover:-translate-y-1 hover:bg-white hover:shadow-soft"
+                  className="rounded-[1.1rem] border border-blue-100 bg-blue-50/35 p-4 transition hover:-translate-y-1 hover:bg-white hover:shadow-soft"
                 >
-                  <Icon className="h-6 w-6 text-blue-700" />
-                  <h3 className="mt-5 font-black text-navy-950">
+                  <Icon className="h-5 w-5 text-blue-700" />
+                  <h3 className="mt-4 text-sm font-black text-navy-950">
                     {item.title}
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-navy-500">
