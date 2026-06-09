@@ -231,26 +231,30 @@ function EmptyResults({
   );
 }
 
+function resolveSearchTab(tab: string | null, intent: string | null) {
+  const cleanTab = (tab || "").toLowerCase().trim();
+  const cleanIntent = (intent || "").toLowerCase().trim();
+
+  if (cleanTab === "rent" || cleanTab === "buy" || cleanTab === "societies") {
+    return cleanTab;
+  }
+
+  if (cleanIntent === "rent") {
+    return "rent";
+  }
+
+  if (cleanIntent === "buy" || cleanIntent === "resale" || cleanIntent === "sale") {
+    return "buy";
+  }
+
+  return "societies";
+}
+
 export function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get("tab");
-
   const rawIntent = searchParams.get("intent");
-
-
-  const initialTab =
-
-    rawTab ||
-
-    (rawIntent === "rent"
-
-      ? "rent"
-
-      : rawIntent === "buy" || rawIntent === "resale"
-
-        ? "buy"
-
-        : "societies");
+  const initialTab = resolveSearchTab(rawTab, rawIntent);
   const initialQuery =
     searchParams.get("q") || searchParams.get("locality") || "";
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -279,18 +283,7 @@ export function SearchPage() {
   }, []);
 
   useEffect(() => {
-    const currentTab = searchParams.get("tab");
-    const currentIntent = searchParams.get("intent");
-
-    const resolvedTab =
-      currentTab ||
-      (currentIntent === "rent"
-        ? "rent"
-        : currentIntent === "buy" || currentIntent === "resale"
-          ? "buy"
-          : "societies");
-
-    setActiveTab(resolvedTab);
+    setActiveTab(resolveSearchTab(searchParams.get("tab"), searchParams.get("intent")));
     setQuery(searchParams.get("q") || searchParams.get("locality") || "");
   }, [searchParams]);
 
