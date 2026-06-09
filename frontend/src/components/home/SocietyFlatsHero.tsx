@@ -195,7 +195,7 @@ function AIAdvisorChatBox() {
   const latestSearchUrl = `/search?q=${encodeURIComponent(lastQuery)}&intent=general`;
 
   return (
-    <aside className="hidden w-full max-w-[390px] shrink-0 lg:block">
+    <aside className="hidden w-full max-w-[370px] shrink-0 lg:block">
       <div className="rounded-[26px] border border-blue-100/90 bg-white/88 p-2.5 shadow-[0_24px_75px_rgba(37,99,235,0.14)] backdrop-blur-2xl">
         <div className="rounded-[20px] bg-gradient-to-br from-blue-50 via-white to-white p-3">
           <div className="mb-2 flex items-center justify-between rounded-2xl bg-white/75 px-3 py-2.5 shadow-sm">
@@ -227,7 +227,7 @@ function AIAdvisorChatBox() {
           </div>
 
           <div className="space-y-2">
-            <div className="max-h-[128px] space-y-2 overflow-y-auto pr-1">
+            <div className="max-h-[112px] space-y-2 overflow-y-auto pr-1">
               {messages.slice(-4).map((message) => (
                 <div
                   key={message.id}
@@ -384,7 +384,7 @@ export default function SocietyFlatsHero() {
 
   return (
     <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_72%_18%,rgba(37,99,235,0.10),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]">
-      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-3 px-4 pb-3 pt-3 sm:gap-6 sm:px-6 sm:pb-6 sm:pt-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(360px,0.75fr)] lg:gap-8 lg:px-20 lg:pb-8 lg:pt-8">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-3 px-4 pb-3 pt-3 sm:gap-5 sm:px-6 sm:pb-5 sm:pt-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.72fr)] lg:gap-7 lg:px-20 lg:pb-6 lg:pt-6">
         <div className="max-w-[860px]">
           <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/80 px-3 py-1.5 shadow-sm sm:mb-3">
             <span className="h-2 w-2 rounded-full bg-amber-500" />
@@ -393,17 +393,17 @@ export default function SocietyFlatsHero() {
             </span>
           </div>
 
-          <h1 className="max-w-[720px] font-serif text-[34px] font-black leading-[0.98] tracking-[-0.04em] text-slate-950 sm:text-[50px] sm:leading-[0.94] lg:text-[54px] xl:text-[58px]">
+          <h1 className="max-w-[720px] font-serif text-[31px] font-black leading-[0.98] tracking-[-0.04em] text-slate-950 sm:text-[46px] sm:leading-[0.94] lg:text-[50px] xl:text-[54px]">
             Search smarter
             <br />
             Gurgaon societies.
           </h1>
 
-          <p className="mt-2 hidden max-w-[600px] text-[15px] font-semibold leading-6 text-blue-500 sm:block">
+          <p className="mt-2 hidden max-w-[560px] text-[14px] font-semibold leading-6 text-blue-500 sm:block">
             Verified rentals, resale homes and society intelligence in one search-first experience.
           </p>
 
-          <div className="mt-3 w-full rounded-[22px] border border-blue-100 bg-white/90 p-2.5 shadow-[0_18px_55px_rgba(37,99,235,0.11)] backdrop-blur-xl sm:mt-4 sm:p-3">
+          <div className="mt-3 w-full rounded-[20px] border border-blue-100 bg-white/90 p-2 shadow-[0_14px_42px_rgba(37,99,235,0.10)] backdrop-blur-xl sm:mt-3 sm:p-2.5">
             <div className="mb-2 grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
               {[
                 { key: "rent", label: "Rent" },
@@ -427,8 +427,8 @@ export default function SocietyFlatsHero() {
               ))}
             </div>
 
-            <div className="flex flex-col gap-2 rounded-[20px] bg-slate-50/70 p-2 sm:flex-row sm:items-center sm:gap-3 sm:p-2.5">
-              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl bg-white px-3 py-3 sm:gap-3 sm:px-4 sm:py-3.5">
+            <div className="flex flex-col gap-2 rounded-[18px] bg-slate-50/70 p-2 sm:flex-row sm:items-center sm:gap-2 sm:p-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl bg-white px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
                 <Search className="h-5 w-5 shrink-0 text-blue-500" />
                 <input
                   value={query}
@@ -446,7 +446,7 @@ export default function SocietyFlatsHero() {
               <button
                 type="button"
                 onClick={handleSearch}
-                className="flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 text-[14px] font-black text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 sm:h-[50px] sm:w-auto sm:min-w-[190px] sm:px-7 sm:text-[15px]"
+                className="flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 text-[14px] font-black text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 sm:h-[46px] sm:w-auto sm:min-w-[175px] sm:px-6 sm:text-[15px]"
               >
                 Search Societies
                 <ArrowRight className="h-5 w-5" />
