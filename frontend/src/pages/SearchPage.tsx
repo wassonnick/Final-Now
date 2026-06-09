@@ -233,7 +233,24 @@ function EmptyResults({
 
 export function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get("tab") || "societies";
+  const rawTab = searchParams.get("tab");
+
+  const rawIntent = searchParams.get("intent");
+
+
+  const initialTab =
+
+    rawTab ||
+
+    (rawIntent === "rent"
+
+      ? "rent"
+
+      : rawIntent === "buy" || rawIntent === "resale"
+
+        ? "buy"
+
+        : "societies");
   const initialQuery =
     searchParams.get("q") || searchParams.get("locality") || "";
   const [activeTab, setActiveTab] = useState(initialTab);
