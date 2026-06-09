@@ -406,21 +406,21 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-ivory-100 px-4 py-10 md:py-14">
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-ivory-100 px-4 py-8 md:py-10">
         <div className="absolute right-[-10rem] top-[-12rem] h-[36rem] w-[36rem] rounded-full bg-white/80 blur-3xl" />
         <div className="absolute left-[-8rem] bottom-[-14rem] h-[32rem] w-[32rem] rounded-full bg-gold-200/25 blur-3xl" />
-        <div className="container relative mx-auto grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+        <div className="container relative mx-auto grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-blue-700 shadow-sm">
+            <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700 shadow-sm">
               <Sparkles className="h-4 w-4" /> AI Advisor
             </span>
-            <h2 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:mt-5 md:text-5xl">
+            <h2 className="mt-3 font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:mt-4 md:text-4xl">
               <span className="md:hidden">Ask SocietyFlats AI</span>
               <span className="hidden md:inline">
                 Tell us what matters. We find your perfect society.
               </span>
             </h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-navy-500 md:mt-4 md:text-base md:leading-7">
+            <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500 md:mt-3 md:text-[15px] md:leading-6">
               <span className="md:hidden">
                 Tell us your budget and commute. Get a smart society shortlist.
               </span>
@@ -430,7 +430,7 @@ export function HomePage() {
                 best matches with real reasons.
               </span>
             </p>
-            <div className="mt-6 hidden gap-3 md:grid md:grid-cols-2">
+            <div className="mt-4 hidden gap-3 md:grid md:grid-cols-2">
               {[
                 {
                   icon: MessageCircle,
@@ -464,22 +464,22 @@ export function HomePage() {
                           ? "/recommendations"
                           : "/ai-advisor"
                     }
-                    className="rounded-[1.25rem] border border-blue-100 bg-white/90 p-4 shadow-sm transition hover:-translate-y-1 hover:bg-white hover:shadow-soft"
+                    className="rounded-[1.1rem] border border-blue-100 bg-white/90 p-3 shadow-sm transition hover:-translate-y-1 hover:bg-white hover:shadow-soft"
                   >
                     <Icon className="h-5 w-5 text-blue-700" />
-                    <h3 className="mt-4 text-base font-black text-navy-950">
+                    <h3 className="mt-3 text-sm font-black text-navy-950">
                       {feature.title}
                     </h3>
-                    <p className="mt-1 text-sm leading-6 text-navy-500">
+                    <p className="mt-1 text-xs leading-5 text-navy-500">
                       {feature.text}
                     </p>
                   </Link>
                 );
               })}
             </div>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               <Link to="/ai-advisor">
-                <Button className="rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">
+                <Button className="h-10 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
                   <span className="md:hidden">Start AI Advisor</span>
                   <span className="hidden md:inline">Ask AI Advisor</span>{" "}
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -488,7 +488,7 @@ export function HomePage() {
               <Link to="/recommendations" className="hidden md:inline-flex">
                 <Button
                   variant="outline"
-                  className="rounded-full border-blue-100 bg-white px-6 font-bold text-blue-700 hover:bg-blue-50"
+                  className="h-10 rounded-full border-blue-100 bg-white px-5 text-sm font-bold text-blue-700 hover:bg-blue-50"
                 >
                   Recommendation engine
                 </Button>
@@ -496,8 +496,8 @@ export function HomePage() {
             </div>
           </div>
 
-          <div className="hidden rounded-[1.75rem] border border-blue-100 bg-white/95 p-5 shadow-premium md:block">
-            <div className="mb-4 flex items-center gap-3">
+          <div className="hidden rounded-[1.35rem] border border-blue-100 bg-white/95 p-4 shadow-soft md:block">
+            <div className="mb-3 flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                 <Sparkles className="h-5 w-5" />
               </span>
@@ -509,13 +509,13 @@ export function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-[1.25rem] border border-blue-100 bg-blue-50 p-4">
+            <div className="rounded-[1.1rem] border border-blue-100 bg-blue-50 p-3">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-black uppercase tracking-[0.14em] text-navy-400">
                     Monthly budget
                   </p>
-                  <p className="mt-1 text-3xl font-black text-navy-950">
+                  <p className="mt-1 text-2xl font-black text-navy-950">
                     Rs 85,000/mo
                   </p>
                 </div>
@@ -523,15 +523,15 @@ export function HomePage() {
                   Rent
                 </span>
               </div>
-              <div className="mt-4 h-2 rounded-full bg-white">
+              <div className="mt-3 h-2 rounded-full bg-white">
                 <div className="h-full w-[72%] rounded-full bg-blue-700" />
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 {["Security", "Connectivity", "Family", "Budget", "Pets"].map(
                   (priority, index) => (
                     <span
                       key={priority}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-black ${
+                      className={`rounded-full border px-2.5 py-1 text-[11px] font-black ${
                         index < 4
                           ? "border-blue-200 bg-white text-blue-700"
                           : "border-navy-100 bg-ivory-100 text-navy-400"
@@ -544,19 +544,19 @@ export function HomePage() {
               </div>
             </div>
 
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {aiPrompts.slice(0, 4).map((prompt) => (
                 <Link
                   key={prompt}
                   to={`/ai-advisor?q=${encodeURIComponent(prompt)}`}
-                  className="rounded-2xl border border-blue-100 bg-white px-3 py-3 text-sm font-semibold text-navy-600 transition hover:border-blue-200 hover:bg-blue-50"
+                  className="rounded-xl border border-blue-100 bg-white px-3 py-2.5 text-xs font-bold text-navy-600 transition hover:border-blue-200 hover:bg-blue-50"
                 >
                   {prompt}
                 </Link>
               ))}
             </div>
 
-            <div className="mt-5 space-y-2">
+            <div className="mt-4 space-y-2">
               {(featuredSocieties.length
                 ? featuredSocieties
                 : [
@@ -569,15 +569,15 @@ export function HomePage() {
                 .map((society, index) => (
                   <div
                     key={society.name}
-                    className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-ivory-100 p-3"
+                    className="flex items-center gap-2 rounded-xl border border-blue-100 bg-ivory-100 p-2.5"
                   >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-700 text-sm font-black text-white">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-700 text-xs font-black text-white">
                       {index + 1}
                     </span>
                     <p className="flex-1 text-sm font-black text-navy-950">
                       {society.name}
                     </p>
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700">
                       {92 - index * 5}% match
                     </span>
                   </div>
