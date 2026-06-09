@@ -955,99 +955,71 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="hidden relative overflow-hidden bg-blue-50/45 px-4 py-10 md:block">
-        <div className="absolute left-[-10rem] top-[-12rem] h-[30rem] w-[30rem] rounded-full bg-white/70 blur-3xl" />
-        <div className="container relative mx-auto grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div>
-            <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-              Broker CRM
-            </p>
-            <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
-              Leads move from enquiry to visit without chaos.
-            </h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-navy-500">
-              Admin, broker and owner workflows connect to the same
-              society-first profile, so every callback has context.
-            </p>
-            <div className="mt-5 space-y-2">
+            <section className="hidden bg-white px-4 py-8 md:block">
+        <div className="container mx-auto rounded-[1.35rem] border border-blue-100 bg-blue-50/45 p-5 shadow-sm">
+          <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
+            <div>
+              <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
+                Broker CRM
+              </p>
+              <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
+                Lead flow built around societies.
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500">
+                Every enquiry keeps the society, budget, intent and callback context together.
+              </p>
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-3">
               {[
                 {
                   icon: MessageCircle,
-                  title: "Callback queue",
-                  text: "Every enquiry lands with society, budget and intent.",
+                  title: "New enquiry",
+                  text: "Requirement captured",
+                  count: "12",
                 },
                 {
                   icon: BarChart3,
-                  title: "Analytics",
-                  text: "Track searches, views, leads and high-demand societies.",
+                  title: "Follow-up",
+                  text: "Broker action queue",
+                  count: "8",
                 },
                 {
                   icon: ShieldCheck,
-                  title: "Verification workflow",
-                  text: "Images, official URLs and RERA notes remain review-first.",
+                  title: "Visit ready",
+                  text: "Verified lead context",
+                  count: "5",
                 },
               ].map((item) => {
                 const Icon = item.icon;
                 return (
                   <div
                     key={item.title}
-                    className="flex gap-3 rounded-xl border border-blue-100 bg-white p-3 shadow-sm"
+                    className="rounded-[1.1rem] border border-blue-100 bg-white p-4 shadow-sm"
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <div>
-                      <p className="text-sm font-black text-navy-950">{item.title}</p>
-                      <p className="text-xs leading-5 text-navy-500">
-                        {item.text}
-                      </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="text-2xl font-black text-navy-950">
+                        {item.count}
+                      </span>
                     </div>
+                    <h3 className="mt-3 text-sm font-black text-navy-950">
+                      {item.title}
+                    </h3>
+                    <p className="mt-1 text-xs font-semibold text-navy-500">
+                      {item.text}
+                    </p>
                   </div>
                 );
               })}
             </div>
           </div>
-          <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-soft">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="font-black text-navy-950">Lead pipeline</p>
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
-                Live CRM
-              </span>
-            </div>
-            <div className="grid gap-2 md:grid-cols-3">
-              {["New", "Contacted", "Visit"].map((stage, stageIndex) => (
-                <div
-                  key={stage}
-                  className="rounded-xl border border-blue-100 bg-blue-50/45 p-2.5"
-                >
-                  <p className="mb-2 text-center text-[11px] font-black uppercase tracking-[0.12em] text-navy-400">
-                    {stage}
-                  </p>
-                  {[0, 1, 2].map((lead) => (
-                    <div
-                      key={lead}
-                      className="mb-2 rounded-xl border border-blue-100 bg-white p-2.5 last:mb-0"
-                    >
-                      <p className="text-xs font-black text-navy-950">
-                        {["Rahul", "Neha", "Amit"][lead]}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-navy-400">
-                        {
-                          ["DLF Crest", "M3M Golf", "Sobha City"][
-                            (lead + stageIndex) % 3
-                          ]
-                        }
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
-      <section className="bg-white px-4 py-10 md:py-14">
+<section className="bg-white px-4 py-10 md:py-14">
         <div className="container mx-auto grid gap-6 md:gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
             <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">
