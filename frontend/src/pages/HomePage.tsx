@@ -741,7 +741,7 @@ export function HomePage() {
             </div>
           </div>
           <div className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-soft">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between">
               <div>
                 <p className="text-lg font-black text-navy-950">
                   Gurgaon rent velocity
@@ -955,21 +955,21 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="hidden relative overflow-hidden bg-blue-50 px-4 py-14 md:block">
+      <section className="hidden relative overflow-hidden bg-blue-50/45 px-4 py-10 md:block">
         <div className="absolute left-[-10rem] top-[-12rem] h-[30rem] w-[30rem] rounded-full bg-white/70 blur-3xl" />
-        <div className="container relative mx-auto grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+        <div className="container relative mx-auto grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
-            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">
+            <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
               Broker CRM
             </p>
-            <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">
+            <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
               Leads move from enquiry to visit without chaos.
             </h2>
-            <p className="mt-4 max-w-xl text-base leading-7 text-navy-500">
+            <p className="mt-3 max-w-xl text-sm leading-6 text-navy-500">
               Admin, broker and owner workflows connect to the same
               society-first profile, so every callback has context.
             </p>
-            <div className="mt-6 space-y-3">
+            <div className="mt-5 space-y-2">
               {[
                 {
                   icon: MessageCircle,
@@ -991,14 +991,14 @@ export function HomePage() {
                 return (
                   <div
                     key={item.title}
-                    className="flex gap-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm"
+                    className="flex gap-3 rounded-xl border border-blue-100 bg-white p-3 shadow-sm"
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                      <Icon className="h-5 w-5" />
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                      <Icon className="h-4 w-4" />
                     </span>
                     <div>
-                      <p className="font-black text-navy-950">{item.title}</p>
-                      <p className="text-sm leading-6 text-navy-500">
+                      <p className="text-sm font-black text-navy-950">{item.title}</p>
+                      <p className="text-xs leading-5 text-navy-500">
                         {item.text}
                       </p>
                     </div>
@@ -1007,31 +1007,31 @@ export function HomePage() {
               })}
             </div>
           </div>
-          <div className="rounded-[1.5rem] border border-blue-100 bg-white p-5 shadow-soft">
+          <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-soft">
             <div className="mb-4 flex items-center justify-between">
               <p className="font-black text-navy-950">Lead pipeline</p>
               <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
                 Live CRM
               </span>
             </div>
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-2 md:grid-cols-3">
               {["New", "Contacted", "Visit"].map((stage, stageIndex) => (
                 <div
                   key={stage}
-                  className="rounded-2xl border border-blue-100 bg-ivory-100 p-3"
+                  className="rounded-xl border border-blue-100 bg-blue-50/45 p-2.5"
                 >
-                  <p className="mb-3 text-center text-xs font-black uppercase tracking-[0.12em] text-navy-400">
+                  <p className="mb-2 text-center text-[11px] font-black uppercase tracking-[0.12em] text-navy-400">
                     {stage}
                   </p>
                   {[0, 1, 2].map((lead) => (
                     <div
                       key={lead}
-                      className="mb-2 rounded-xl border border-blue-100 bg-white p-3 last:mb-0"
+                      className="mb-2 rounded-xl border border-blue-100 bg-white p-2.5 last:mb-0"
                     >
-                      <p className="text-sm font-black text-navy-950">
+                      <p className="text-xs font-black text-navy-950">
                         {["Rahul", "Neha", "Amit"][lead]}
                       </p>
-                      <p className="mt-1 text-xs text-navy-400">
+                      <p className="mt-0.5 text-[11px] text-navy-400">
                         {
                           ["DLF Crest", "M3M Golf", "Sobha City"][
                             (lead + stageIndex) % 3
