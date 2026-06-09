@@ -406,9 +406,9 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-ivory-100 px-4 py-8 md:py-10">
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-50/40 px-4 py-8 md:py-10">
         <div className="absolute right-[-10rem] top-[-12rem] h-[36rem] w-[36rem] rounded-full bg-white/80 blur-3xl" />
-        <div className="absolute left-[-8rem] bottom-[-14rem] h-[32rem] w-[32rem] rounded-full bg-gold-200/25 blur-3xl" />
+        <div className="absolute left-[-8rem] bottom-[-14rem] h-[32rem] w-[32rem] rounded-full bg-blue-100/35 blur-3xl" />
         <div className="container relative mx-auto grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700 shadow-sm">
