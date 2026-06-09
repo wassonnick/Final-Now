@@ -140,9 +140,19 @@ function isValidLeadPhone(value: string) {
 }
 
 function leadRequirementFor(listingType: string, leadType: "callback" | "enquiry") {
-  const cleanType = String(listingType || "Property").trim();
-  const purpose = leadType === "callback" ? "callback" : "enquiry";
-  return `${cleanType} ${purpose}`;
+  const cleanType = String(listingType || "Property").toLowerCase();
+
+  const intent =
+    cleanType.includes("rent")
+      ? "Rent"
+      : cleanType.includes("sale") ||
+          cleanType.includes("buy") ||
+          cleanType.includes("resale") ||
+          cleanType.includes("builder")
+        ? "Buy"
+        : "Property";
+
+  return leadType === "callback" ? `${intent} callback` : `${intent} enquiry`;
 }
 
 function getPhotos(property: Property): string[] {
@@ -320,8 +330,8 @@ export function PropertyPage() {
       ...current,
       message:
         type === "callback"
-          ? `I want a callback for ${title}.`
-          : `I am interested in ${title}. Please share details.`,
+          ? `I want a callback for ${title}. Society: ${societyName || "Not specified"}. Location: ${societyLocality || "Gurgaon"}. Listing type: ${listingType}. Price: ${price}.`
+          : `I am interested in ${title}. Society: ${societyName || "Not specified"}. Location: ${societyLocality || "Gurgaon"}. Listing type: ${listingType}. Price: ${price}. Please share details.`,
     }));
   };
 
@@ -347,14 +357,16 @@ export function PropertyPage() {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          name: leadForm.name,
+          name: leadForm.name.trim(),
           phone: normalizedPhone,
           email: leadForm.email || null,
-          message: leadForm.message,
+          message:
+            leadForm.message ||
+            `${leadType === "callback" ? "Callback" : "Enquiry"} requested for ${title}. Society: ${societyName || "Not specified"}. Location: ${societyLocality || "Gurgaon"}. Listing type: ${listingType}. Price: ${price}.`,
           property_title: title,
           property_slug: property.slug || slug,
           society_name: societyName || property.locality || "Gurgaon",
-          source: leadType === "callback" ? "property_callback" : "property_enquiry",
+          source: leadType === "callback" ? "property_page_callback" : "property_page_enquiry",
           requirement: leadRequirementFor(listingType, leadType),
         }),
       });
