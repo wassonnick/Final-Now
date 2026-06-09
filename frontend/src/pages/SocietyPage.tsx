@@ -585,7 +585,7 @@ export function SocietyPage() {
 
               <div className="mt-5 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap md:mt-6">
                 <Button
-                  onClick={openSocietyCallback}
+                  onClick={() => openSocietyCallback()}
                   className="rounded-full bg-blue-600 hover:bg-blue-700"
                 >
                   <Phone className="mr-2 h-4 w-4" /> Callback
@@ -744,7 +744,7 @@ export function SocietyPage() {
                   </p>
                 </div>
                 <Button
-                  onClick={openSocietyCallback}
+                  onClick={() => openSocietyCallback()}
                   size="sm"
                   className="rounded-full bg-blue-600 hover:bg-blue-700"
                 >
@@ -866,7 +866,7 @@ export function SocietyPage() {
                     </p>
                     <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                       <Button
-                        onClick={openSocietyCallback}
+                        onClick={() => openSocietyCallback()}
                         className="rounded-full bg-blue-600 hover:bg-blue-700"
                       >
                         <Phone className="mr-2 h-4 w-4" /> Request callback
@@ -1023,7 +1023,7 @@ export function SocietyPage() {
                     matching Gurgaon societies for you.
                   </p>
                   <Button
-                    onClick={openSocietyCallback}
+                    onClick={() => openSocietyCallback()}
                     className="mt-4 w-full rounded-full bg-blue-600 hover:bg-blue-700"
                   >
                     <Phone className="mr-2 h-4 w-4" /> Request shortlist
@@ -1139,7 +1139,7 @@ export function SocietyPage() {
               </div>
 
               <Button
-                onClick={openSocietyCallback}
+                onClick={() => openSocietyCallback()}
                 className="mt-4 w-full rounded-full bg-blue-600 hover:bg-blue-700"
               >
                 <Phone className="mr-2 h-4 w-4" /> Request callback
@@ -1176,7 +1176,7 @@ export function SocietyPage() {
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-navy-100 bg-white/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
         <div className="grid grid-cols-2 gap-3">
           <Button
-            onClick={openSocietyCallback}
+            onClick={() => openSocietyCallback()}
             className="rounded-full bg-blue-600 hover:bg-blue-700"
           >
             <Phone className="mr-2 h-4 w-4" /> Callback
