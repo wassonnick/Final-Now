@@ -434,8 +434,19 @@ export function SearchPage() {
         body: JSON.stringify({
           name: leadName.trim(),
           phone: leadPhone.trim(),
-          source: `search_empty_state_${activeTab}`,
-          message: `Search query: ${query || "No query"} | Intent: ${resultLabel(activeTab)}`,
+          source: `search_no_results_${activeTab}`,
+          requirement:
+            activeTab === "rent"
+              ? "Rent"
+              : activeTab === "buy"
+                ? "Buy"
+                : "Society search",
+          message: [
+            `Search page no-result lead`,
+            `Query: ${query || "No query"}`,
+            `Intent: ${resultLabel(activeTab)}`,
+            `Requested help: Find matching ${activeTab === "societies" ? "societies/homes" : "homes"}`,
+          ].join(" | "),
         }),
       });
 
@@ -481,7 +492,7 @@ export function SearchPage() {
     setCallbackTarget({
       type: "society",
       societyName: society?.name || "Selected society",
-      source: "search_society_card",
+      source: `search_society_card_${activeTab}`,
     });
   };
 
@@ -503,7 +514,7 @@ export function SearchPage() {
       propertyTitle: property?.title || "Selected property",
       propertySlug: property?.slug || "",
       propertyIntent,
-      source: "search_property_card",
+      source: `search_property_card_${propertyIntent.toLowerCase()}`,
     });
   };
 
@@ -519,13 +530,17 @@ export function SearchPage() {
 
   const callbackMessage =
     callbackTarget?.type === "property"
-      ? `I want a callback for ${callbackTarget.propertyTitle} in ${callbackTarget.societyName}.`
-      : `I want a callback for ${callbackTarget?.societyName || "this society"}.`;
+      ? `I want a callback for ${callbackTarget.propertyTitle} in ${callbackTarget.societyName}. Search query: ${query || "No query"}.`
+      : `I want a callback for ${callbackTarget?.societyName || "this society"}. Search query: ${query || "No query"}.`;
 
   const callbackRequirement =
     callbackTarget?.type === "property"
       ? callbackTarget.propertyIntent || "Callback"
-      : `Search page enquiry for homes in ${callbackTarget?.societyName || "this society"}.`;
+      : activeTab === "rent"
+        ? "Rent"
+        : activeTab === "buy"
+          ? "Buy"
+          : `Society enquiry for ${callbackTarget?.societyName || "this society"}`;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
