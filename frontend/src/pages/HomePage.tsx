@@ -581,7 +581,7 @@ export function HomePage() {
           <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950">
             See society location strength.
           </h2>
-          <p className="mt-2 text-sm leading-6 text-navy-500">
+          <p className="mt-1.5 text-sm leading-6 text-navy-500">
             Check metro, schools, hospitals and office access before visiting.
           </p>
           <Link to="/maps" className="mt-4 inline-flex">
@@ -710,7 +710,7 @@ export function HomePage() {
       <section className="hidden bg-white px-4 py-14 md:block">
         <div className="container mx-auto grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div>
-            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">
+            <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
               Market insights
             </p>
             <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950">
@@ -911,39 +911,39 @@ export function HomePage() {
         </section>
       )}
 
-      <section className="hidden bg-ivory-100 px-4 py-14 md:block">
+      <section className="hidden bg-blue-50/35 px-4 py-10 md:block">
         <div className="container mx-auto">
-          <div className="mb-8 max-w-3xl">
+          <div className="mb-6 max-w-3xl">
             <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">
               Reviews and confidence
             </p>
-            <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950">
+            <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
               Trust signals stay inside the journey.
             </h2>
           </div>
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-3">
             {reviewCards.map((review) => (
               <div
                 key={review.name}
-                className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm"
+                className="rounded-[1.2rem] border border-blue-100 bg-white p-4 shadow-sm"
               >
                 <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-50 text-sm font-black text-blue-700">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-xs font-black text-blue-700">
                     {initials(review.name)}
                   </span>
                   <div>
-                    <p className="font-black text-navy-950">{review.name}</p>
+                    <p className="text-sm font-black text-navy-950">{review.name}</p>
                     <p className="text-xs font-semibold text-navy-400">
                       Verified enquiry · {review.society}
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 flex text-gold-500">
+                <div className="mt-3 flex text-gold-500">
                   {[0, 1, 2, 3, 4].map((star) => (
                     <Star key={star} className="h-4 w-4 fill-current" />
                   ))}
                 </div>
-                <h3 className="mt-3 text-lg font-black text-navy-950">
+                <h3 className="mt-2 text-base font-black text-navy-950">
                   {review.title}
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-navy-500">
