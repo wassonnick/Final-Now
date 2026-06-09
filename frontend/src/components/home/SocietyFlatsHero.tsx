@@ -372,12 +372,20 @@ export default function SocietyFlatsHero() {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
+    const cleanQuery = query.trim();
 
-    if (query.trim()) {
-      params.set("q", query.trim());
+    if (cleanQuery) {
+      params.set("q", cleanQuery);
     }
 
-    params.set("intent", activeTab);
+    if (activeTab === "rent") {
+      params.set("tab", "rent");
+    } else if (activeTab === "buy" || activeTab === "resale") {
+      params.set("tab", "buy");
+    } else {
+      params.set("tab", "societies");
+      params.set("intent", "general");
+    }
 
     window.location.href = `/search?${params.toString()}`;
   };
