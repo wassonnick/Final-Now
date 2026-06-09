@@ -195,7 +195,7 @@ function AIAdvisorChatBox() {
   const latestSearchUrl = `/search?q=${encodeURIComponent(lastQuery)}&intent=general`;
 
   return (
-    <aside className="hidden w-full max-w-[405px] shrink-0 lg:block">
+    <aside className="hidden w-full max-w-[390px] shrink-0 lg:block">
       <div className="rounded-[26px] border border-blue-100/90 bg-white/88 p-2.5 shadow-[0_24px_75px_rgba(37,99,235,0.14)] backdrop-blur-2xl">
         <div className="rounded-[20px] bg-gradient-to-br from-blue-50 via-white to-white p-3">
           <div className="mb-2 flex items-center justify-between rounded-2xl bg-white/75 px-3 py-2.5 shadow-sm">
@@ -227,7 +227,7 @@ function AIAdvisorChatBox() {
           </div>
 
           <div className="space-y-2">
-            <div className="max-h-[150px] space-y-2 overflow-y-auto pr-1">
+            <div className="max-h-[128px] space-y-2 overflow-y-auto pr-1">
               {messages.slice(-4).map((message) => (
                 <div
                   key={message.id}
@@ -393,17 +393,17 @@ export default function SocietyFlatsHero() {
             </span>
           </div>
 
-          <h1 className="max-w-[720px] font-serif text-[34px] font-black leading-[0.98] tracking-[-0.04em] text-slate-950 sm:text-[54px] sm:leading-[0.94] lg:text-[58px] xl:text-[62px]">
+          <h1 className="max-w-[720px] font-serif text-[34px] font-black leading-[0.98] tracking-[-0.04em] text-slate-950 sm:text-[50px] sm:leading-[0.94] lg:text-[54px] xl:text-[58px]">
             Search smarter
             <br />
             Gurgaon societies.
           </h1>
 
-          <p className="mt-3 hidden max-w-[620px] text-[16px] font-semibold leading-7 text-blue-500 sm:block">
+          <p className="mt-2 hidden max-w-[600px] text-[15px] font-semibold leading-6 text-blue-500 sm:block">
             Verified rentals, resale homes and society intelligence in one search-first experience.
           </p>
 
-          <div className="mt-3 w-full rounded-[22px] border border-blue-100 bg-white/90 p-2.5 shadow-[0_18px_55px_rgba(37,99,235,0.11)] backdrop-blur-xl sm:mt-5 sm:p-3">
+          <div className="mt-3 w-full rounded-[22px] border border-blue-100 bg-white/90 p-2.5 shadow-[0_18px_55px_rgba(37,99,235,0.11)] backdrop-blur-xl sm:mt-4 sm:p-3">
             <div className="mb-2 grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
               {[
                 { key: "rent", label: "Rent" },
