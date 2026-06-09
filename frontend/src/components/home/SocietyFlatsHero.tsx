@@ -393,16 +393,14 @@ export default function SocietyFlatsHero() {
             </span>
           </div>
 
-          <h1 className="max-w-[720px] font-serif text-[34px] font-black leading-[0.98] tracking-[-0.04em] text-slate-950 sm:text-[54px] sm:leading-[0.94] lg:text-[60px] xl:text-[64px]">
-            Find a society
+          <h1 className="max-w-[720px] font-serif text-[34px] font-black leading-[0.98] tracking-[-0.04em] text-slate-950 sm:text-[54px] sm:leading-[0.94] lg:text-[58px] xl:text-[62px]">
+            Search smarter
             <br />
-            you will actually
-            <span className="italic text-blue-600"> love living in.</span>
+            Gurgaon societies.
           </h1>
 
-          <p className="mt-3 hidden max-w-[640px] text-[16px] font-semibold leading-7 text-blue-500 sm:block">
-            Search verified Gurgaon societies, rentals and resale homes with
-            society-level intelligence.
+          <p className="mt-3 hidden max-w-[620px] text-[16px] font-semibold leading-7 text-blue-500 sm:block">
+            Verified rentals, resale homes and society intelligence in one search-first experience.
           </p>
 
           <div className="mt-3 w-full rounded-[22px] border border-blue-100 bg-white/90 p-2.5 shadow-[0_18px_55px_rgba(37,99,235,0.11)] backdrop-blur-xl sm:mt-5 sm:p-3">
