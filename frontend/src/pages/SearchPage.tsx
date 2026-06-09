@@ -279,7 +279,18 @@ export function SearchPage() {
   }, []);
 
   useEffect(() => {
-    setActiveTab(searchParams.get("tab") || "societies");
+    const currentTab = searchParams.get("tab");
+    const currentIntent = searchParams.get("intent");
+
+    const resolvedTab =
+      currentTab ||
+      (currentIntent === "rent"
+        ? "rent"
+        : currentIntent === "buy" || currentIntent === "resale"
+          ? "buy"
+          : "societies");
+
+    setActiveTab(resolvedTab);
     setQuery(searchParams.get("q") || searchParams.get("locality") || "");
   }, [searchParams]);
 
