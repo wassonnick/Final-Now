@@ -165,17 +165,33 @@ export function SocietyPage() {
   const [loading, setLoading] = useState(Boolean(API_BASE_URL));
   const [error, setError] = useState<string | null>(null);
   const [callbackOpen, setCallbackOpen] = useState(false);
+  const [callbackSource, setCallbackSource] = useState("society_page_callback");
   const [selectedLeadProperty, setSelectedLeadProperty] = useState<any | null>(
     null,
   );
 
-  const openSocietyCallback = () => {
+  const openSocietyCallback = (source = "society_page_callback") => {
     setSelectedLeadProperty(null);
+    setCallbackSource(source);
     setCallbackOpen(true);
   };
 
   const openPropertyCallback = (property: any) => {
+    const listingType = String(
+      field(property, "listingType", "listing_type", "property"),
+    ).toLowerCase();
+
     setSelectedLeadProperty(property);
+    setCallbackSource(
+      listingType.includes("rent")
+        ? "society_page_property_rent_callback"
+        : listingType.includes("sale") ||
+            listingType.includes("buy") ||
+            listingType.includes("resale") ||
+            listingType.includes("builder")
+          ? "society_page_property_buy_callback"
+          : "society_page_property_callback",
+    );
     setCallbackOpen(true);
   };
 
@@ -1189,14 +1205,14 @@ export function SocietyPage() {
             ? "Share your details and our team will help verify availability, pricing and visit timing for this home."
             : "Share your details and our team will help with rentals, availability and visit planning for this society."
         }
-        source="society_page"
+        source={callbackSource}
         societyName={society.name}
         propertyTitle={selectedLeadProperty?.title}
         propertySlug={selectedLeadProperty?.slug}
         defaultMessage={
           selectedLeadProperty
-            ? `I want a callback for ${selectedLeadProperty.title} in ${society.name}.`
-            : `I want a callback for ${society.name}.`
+            ? `I want a callback for ${selectedLeadProperty.title} in ${society.name}. Page: society profile. Location: ${societyLocation || "Gurgaon"}.`
+            : `I want a callback for ${society.name}. Page: society profile. Location: ${societyLocation || "Gurgaon"}. Live homes shown: ${properties.length}.`
         }
         defaultRequirement={
           selectedLeadProperty
@@ -1207,6 +1223,7 @@ export function SocietyPage() {
         onClose={() => {
           setCallbackOpen(false);
           setSelectedLeadProperty(null);
+          setCallbackSource("society_page_callback");
         }}
       />
     </div>
