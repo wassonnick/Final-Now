@@ -195,7 +195,7 @@ function AIAdvisorChatBox() {
   const latestSearchUrl = `/search?q=${encodeURIComponent(lastQuery)}&intent=general`;
 
   return (
-    <aside className="hidden lg:block w-full max-w-[445px] shrink-0">
+    <aside className="hidden w-full max-w-[405px] shrink-0 lg:block">
       <div className="rounded-[26px] border border-blue-100/90 bg-white/88 p-2.5 shadow-[0_24px_75px_rgba(37,99,235,0.14)] backdrop-blur-2xl">
         <div className="rounded-[20px] bg-gradient-to-br from-blue-50 via-white to-white p-3">
           <div className="mb-2 flex items-center justify-between rounded-2xl bg-white/75 px-3 py-2.5 shadow-sm">
@@ -227,7 +227,7 @@ function AIAdvisorChatBox() {
           </div>
 
           <div className="space-y-2">
-            <div className="max-h-[178px] space-y-2 overflow-y-auto pr-1">
+            <div className="max-h-[150px] space-y-2 overflow-y-auto pr-1">
               {messages.slice(-4).map((message) => (
                 <div
                   key={message.id}
@@ -384,30 +384,29 @@ export default function SocietyFlatsHero() {
 
   return (
     <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_72%_18%,rgba(37,99,235,0.10),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]">
-      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-3 px-5 pb-2 pt-3 sm:gap-8 sm:px-6 sm:pb-6 sm:pt-8 lg:grid-cols-[minmax(0,1.55fr)_minmax(380px,0.75fr)] lg:gap-10 lg:px-24 lg:pb-10 lg:pt-12">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-3 px-4 pb-3 pt-3 sm:gap-6 sm:px-6 sm:pb-6 sm:pt-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(360px,0.75fr)] lg:gap-8 lg:px-20 lg:pb-8 lg:pt-8">
         <div className="max-w-[860px]">
-          <div className="mb-3 inline-flex items-center gap-3 rounded-full border border-blue-100 bg-white/80 px-3 py-1.5 shadow-sm sm:mb-4 sm:px-4 sm:py-2">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/80 px-3 py-1.5 shadow-sm sm:mb-3">
             <span className="h-2 w-2 rounded-full bg-amber-500" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-700 sm:text-[12px] sm:tracking-[0.26em]">
+            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-700 sm:text-[11px] sm:tracking-[0.22em]">
               Gurgaon Society Intelligence
             </span>
           </div>
 
-          <h1 className="max-w-[740px] font-serif text-[40px] font-black leading-[0.97] tracking-[-0.045em] text-slate-950 sm:text-[63px] sm:leading-[0.93] lg:text-[69px] xl:text-[74px]">
+          <h1 className="max-w-[720px] font-serif text-[34px] font-black leading-[0.98] tracking-[-0.04em] text-slate-950 sm:text-[54px] sm:leading-[0.94] lg:text-[60px] xl:text-[64px]">
             Find a society
             <br />
             you will actually
-            <br />
-            <span className="italic text-blue-600">love living in.</span>
+            <span className="italic text-blue-600"> love living in.</span>
           </h1>
 
-          <p className="mt-4 hidden max-w-[700px] text-[19px] font-medium leading-7 text-blue-500 sm:block">
-            Verified scores on security, maintenance, amenities and
-            connectivity, before you sign a lease or buy a home.
+          <p className="mt-3 hidden max-w-[640px] text-[16px] font-semibold leading-7 text-blue-500 sm:block">
+            Search verified Gurgaon societies, rentals and resale homes with
+            society-level intelligence.
           </p>
 
-          <div className="mt-3 w-full rounded-[26px] border border-blue-100 bg-white/90 p-2.5 shadow-[0_24px_75px_rgba(37,99,235,0.12)] backdrop-blur-xl sm:mt-6 sm:p-3">
-            <div className="mb-2.5 grid grid-cols-4 gap-1.5 sm:mb-3 sm:flex sm:flex-wrap sm:gap-2">
+          <div className="mt-3 w-full rounded-[22px] border border-blue-100 bg-white/90 p-2.5 shadow-[0_18px_55px_rgba(37,99,235,0.11)] backdrop-blur-xl sm:mt-5 sm:p-3">
+            <div className="mb-2 grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
               {[
                 { key: "rent", label: "Rent" },
                 { key: "buy", label: "Buy" },
@@ -419,7 +418,7 @@ export default function SocietyFlatsHero() {
                   type="button"
                   onClick={() => setActiveTab(tab.key as Intent)}
                   className={cn(
-                    "whitespace-nowrap rounded-2xl px-2 py-2 text-[13px] font-extrabold transition sm:px-5 sm:py-2.5 sm:text-sm",
+                    "whitespace-nowrap rounded-2xl px-2 py-1.5 text-[12px] font-extrabold transition sm:px-4 sm:py-2 sm:text-sm",
                     activeTab === tab.key
                       ? "bg-blue-600 text-white shadow-md shadow-blue-200"
                       : "text-blue-300 hover:bg-blue-50 hover:text-blue-600"
@@ -430,8 +429,8 @@ export default function SocietyFlatsHero() {
               ))}
             </div>
 
-            <div className="flex flex-col gap-2 rounded-[22px] bg-slate-50/70 p-2.5 sm:flex-row sm:items-center sm:gap-3 sm:p-3">
-              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl bg-white px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-4">
+            <div className="flex flex-col gap-2 rounded-[20px] bg-slate-50/70 p-2 sm:flex-row sm:items-center sm:gap-3 sm:p-2.5">
+              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl bg-white px-3 py-3 sm:gap-3 sm:px-4 sm:py-3.5">
                 <Search className="h-5 w-5 shrink-0 text-blue-500" />
                 <input
                   value={query}
@@ -449,7 +448,7 @@ export default function SocietyFlatsHero() {
               <button
                 type="button"
                 onClick={handleSearch}
-                className="flex h-12 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 text-[15px] font-black text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 sm:h-[56px] sm:w-auto sm:min-w-[220px] sm:px-8 sm:text-[16px]"
+                className="flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 text-[14px] font-black text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 sm:h-[50px] sm:w-auto sm:min-w-[190px] sm:px-7 sm:text-[15px]"
               >
                 Search Societies
                 <ArrowRight className="h-5 w-5" />
