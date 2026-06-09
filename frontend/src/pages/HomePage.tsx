@@ -573,39 +573,39 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-ivory-100 px-4 py-10 md:hidden">
-        <div className="container mx-auto rounded-[1.5rem] border border-blue-100 bg-white p-5 shadow-sm">
-          <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-700">
+      <section className="bg-blue-50/40 px-4 py-8 md:hidden">
+        <div className="container mx-auto rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm">
+          <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">
             Maps and lifestyle
           </p>
-          <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
+          <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950">
             See society location strength.
           </h2>
-          <p className="mt-3 text-sm leading-6 text-navy-500">
+          <p className="mt-2 text-sm leading-6 text-navy-500">
             Check metro, schools, hospitals and office access before visiting.
           </p>
-          <Link to="/maps" className="mt-5 inline-flex">
-            <Button className="rounded-full bg-blue-700 px-5 font-black text-white hover:bg-blue-800">
+          <Link to="/maps" className="mt-4 inline-flex">
+            <Button className="h-10 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
               Explore Map Intelligence <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
         </div>
       </section>
 
-      <section className="hidden bg-ivory-100 px-4 py-14 md:block">
-        <div className="container mx-auto grid gap-6 lg:grid-cols-[20rem_1fr]">
+      <section className="hidden bg-blue-50/35 px-4 py-10 md:block">
+        <div className="container mx-auto grid gap-6 lg:grid-cols-[18rem_1fr]">
           <div>
-            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
+            <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">
               Maps and lifestyle
             </p>
-            <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950">
+            <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
               See societies by location strength.
             </h2>
-            <p className="mt-3 text-base leading-7 text-navy-500">
+            <p className="mt-2 text-sm leading-6 text-navy-500">
               Map intelligence turns nearby metro, schools, hospitals and office
               hubs into a shortlist you can actually act on.
             </p>
-            <div className="mt-6 space-y-3">
+            <div className="mt-5 space-y-2">
               {(mapSocieties.length
                 ? mapSocieties
                 : [
@@ -623,9 +623,9 @@ export function HomePage() {
                         ? `/society/${society.slug}`
                         : "/search?tab=societies"
                     }
-                    className="flex items-center gap-2 rounded-xl border border-navy-100 bg-white p-2.5 transition hover:border-blue-200 hover:bg-blue-50"
+                    className="flex items-center gap-2 rounded-xl border border-blue-100 bg-white p-2.5 shadow-sm transition hover:border-blue-200 hover:bg-blue-50"
                   >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-sm font-black text-blue-700">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-xs font-black text-blue-700">
                       {scoreOf(society, `${8.8 - index * 0.3}`)}
                     </span>
                     <div>
@@ -641,8 +641,8 @@ export function HomePage() {
             </div>
           </div>
 
-          <div className="relative min-h-[28rem] overflow-hidden rounded-[1.75rem] border border-navy-100 bg-[#dce8f0] shadow-soft">
-            <div className="absolute inset-0 opacity-70">
+          <div className="relative min-h-[22rem] overflow-hidden rounded-[1.35rem] border border-blue-100 bg-[#eaf3fb] shadow-soft">
+            <div className="absolute inset-0 opacity-60">
               {[20, 44, 68].map((top) => (
                 <span
                   key={`h-${top}`}
@@ -684,7 +684,7 @@ export function HomePage() {
                 left: 42,
                 top: 68,
                 score: "7.9",
-                tone: "bg-gold-500",
+                tone: "bg-blue-500",
                 name: "Ireo Skyon",
               },
             ].map((pin) => (
@@ -694,13 +694,13 @@ export function HomePage() {
                 style={{ left: `${pin.left}%`, top: `${pin.top}%` }}
               >
                 <span
-                  className={`flex h-12 w-12 items-center justify-center rounded-full border-4 border-white text-sm font-black text-white shadow-xl ${pin.tone}`}
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-white text-xs font-black text-white shadow-xl ${pin.tone}`}
                 >
                   {pin.score}
                 </span>
               </div>
             ))}
-            <div className="absolute bottom-5 right-5 rounded-full bg-white/90 px-4 py-2 text-xs font-black text-blue-700 shadow-sm backdrop-blur">
+            <div className="absolute bottom-4 right-4 rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-black text-blue-700 shadow-sm backdrop-blur">
               Map preview · connect live maps API later
             </div>
           </div>
