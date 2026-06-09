@@ -232,7 +232,7 @@ export function HomePage() {
     <div className="min-h-screen bg-white">
       <SocietyFlatsHero />
 
-      <section className="border-y border-navy-100 bg-white">
+      <section className="border-y border-navy-100 bg-white/95">
         <div className="container mx-auto grid grid-cols-2 gap-2 px-4 py-2.5 md:grid-cols-5 md:gap-0 md:divide-x md:divide-navy-100 md:px-4 md:py-0">
           {[
             {
@@ -272,15 +272,15 @@ export function HomePage() {
             return (
               <div
                 key={stat.label}
-                className={`${mobileVisibility} items-center gap-2 rounded-xl border border-navy-100 bg-white p-2.5 shadow-sm md:col-span-1 md:gap-4 md:rounded-none md:border-0 md:p-0 md:px-4 md:py-5 md:shadow-none`}
+                className={`${mobileVisibility} items-center gap-2 rounded-xl border border-navy-100 bg-white p-2 shadow-sm md:col-span-1 md:gap-3 md:rounded-none md:border-0 md:p-0 md:px-4 md:py-4 md:shadow-none`}
               >
                 <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl md:h-11 md:w-11 ${stat.tone}`}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl md:h-10 md:w-10 ${stat.tone}`}
                 >
                   <Icon className="h-4 w-4 md:h-5 md:w-5" />
                 </span>
                 <div>
-                  <p className="text-[26px] font-black leading-none text-navy-950 md:text-2xl">
+                  <p className="text-[22px] font-black leading-none text-navy-950 md:text-xl">
                     {stat.value}
                   </p>
                   <p className="mt-1 text-[12px] font-semibold leading-4 text-navy-500 md:text-xs">
@@ -293,17 +293,17 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-10 md:py-12">
+      <section className="bg-white px-4 py-8 md:py-10">
         <div className="container mx-auto">
-          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.2em] text-blue-700">
+              <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
                 Curated for Gurgaon
               </p>
-              <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">
+              <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
                 Featured societies in Gurgaon
               </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500 md:text-[15px] md:leading-6">
                 <span className="md:hidden">
                   Compare Gurgaon societies by rent, resale and lifestyle fit.
                 </span>
@@ -316,7 +316,7 @@ export function HomePage() {
             <Link to="/search?tab=societies">
               <Button
                 variant="outline"
-                className="rounded-full border-blue-100 bg-white px-5 font-extrabold text-blue-700 hover:bg-blue-50"
+                className="h-10 rounded-full border-blue-100 bg-white px-4 text-sm font-extrabold text-blue-700 hover:bg-blue-50"
               >
                 View all societies <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -324,14 +324,14 @@ export function HomePage() {
           </div>
 
           {featuredSocieties.length > 0 ? (
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {featuredSocieties.map((society) => (
                 <Link
                   key={society.id}
                   to={`/society/${society.slug}`}
-                  className="group overflow-hidden rounded-[1.75rem] border border-navy-100 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-premium"
+                  className="group overflow-hidden rounded-[1.25rem] border border-navy-100 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-premium"
                 >
-                  <div className="relative h-44 overflow-hidden bg-blue-50 md:h-52">
+                  <div className="relative h-32 overflow-hidden bg-blue-50 md:h-36">
                     <img
                       src={societyImage(society)}
                       alt={society.name}
@@ -346,15 +346,15 @@ export function HomePage() {
                       Verified
                     </span>
                   </div>
-                  <div className="p-3.5 md:p-4">
-                    <h3 className="text-base font-black text-navy-950 transition group-hover:text-blue-700 md:text-lg">
+                  <div className="p-3 md:p-3.5">
+                    <h3 className="line-clamp-1 text-base font-black text-navy-950 transition group-hover:text-blue-700 md:text-lg">
                       {society.name}
                     </h3>
                     <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-navy-500">
                       <MapPin className="h-3.5 w-3.5" />{" "}
                       {formatPublicLocation(society)}
                     </p>
-                    <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-ivory-100 p-3">
+                    <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl bg-ivory-100 p-2.5">
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.08em] text-navy-300">
                           Rent
@@ -372,7 +372,7 @@ export function HomePage() {
                         </p>
                       </div>
                     </div>
-                    <div className="mt-4 hidden grid-cols-5 gap-1 sm:grid">
+                    <div className="mt-3 hidden grid-cols-5 gap-1 sm:grid">
                       {["Loc", "Sec", "Ame", "ROI", "Fit"].map(
                         (label, index) => (
                           <div key={label} className="text-center">
@@ -389,7 +389,7 @@ export function HomePage() {
                         ),
                       )}
                     </div>
-                    <span className="mt-4 inline-flex items-center text-sm font-black text-blue-700">
+                    <span className="mt-3 inline-flex items-center text-sm font-black text-blue-700">
                       View Society{" "}
                       <ArrowRight className="ml-1 h-4 w-4 transition group-hover:translate-x-1" />
                     </span>
