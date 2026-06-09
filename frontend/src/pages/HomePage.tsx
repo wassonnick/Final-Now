@@ -409,154 +409,127 @@ export function HomePage() {
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-ivory-100 px-4 py-8 md:py-10">
         <div className="absolute right-[-10rem] top-[-12rem] h-[36rem] w-[36rem] rounded-full bg-white/80 blur-3xl" />
         <div className="absolute left-[-8rem] bottom-[-14rem] h-[32rem] w-[32rem] rounded-full bg-gold-200/25 blur-3xl" />
-        <div className="container relative mx-auto grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <div className="container relative mx-auto grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700 shadow-sm">
               <Sparkles className="h-4 w-4" /> AI Advisor
             </span>
+
             <h2 className="mt-3 font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:mt-4 md:text-4xl">
-              <span className="md:hidden">Ask SocietyFlats AI</span>
-              <span className="hidden md:inline">
-                Tell us what matters. We find your perfect society.
-              </span>
+              Find your best-fit society faster.
             </h2>
+
             <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500 md:mt-3 md:text-[15px] md:leading-6">
-              <span className="md:hidden">
-                Tell us your budget and commute. Get a smart society shortlist.
-              </span>
-              <span className="hidden md:inline">
-                Our AI scores every society against your budget, commute, family
-                needs, pet preference and lifestyle priorities, then ranks the
-                best matches with real reasons.
-              </span>
+              Tell us your budget, commute and lifestyle preference. SocietyFlats AI turns it into a ranked Gurgaon shortlist.
             </p>
-            <div className="mt-4 hidden gap-3 md:grid md:grid-cols-2">
+
+            <div className="mt-5 grid gap-2">
               {[
                 {
                   icon: MessageCircle,
-                  title: "AI Chat",
-                  text: "Ask anything about Gurgaon societies and get instant expert answers.",
+                  title: "Ask in plain English",
+                  text: "Example: 3BHK near Cyber City under Rs 1L.",
+                  href: "/chat",
                 },
                 {
                   icon: Sparkles,
-                  title: "Smart Matching",
-                  text: "Weighted scoring across budget, commute, security and lifestyle.",
+                  title: "Get ranked matches",
+                  text: "Shortlist by budget, commute, security and family fit.",
+                  href: "/recommendations",
                 },
                 {
                   icon: Building2,
-                  title: "Auto-Import",
-                  text: "Official URLs and brochures enrich society data before admin review.",
-                },
-                {
-                  icon: BarChart3,
-                  title: "Rent Intelligence",
-                  text: "Society-level rent and resale signals support better shortlists.",
+                  title: "Open society pages",
+                  text: "View score, rent range, resale signals and available homes.",
+                  href: "/ai-advisor",
                 },
               ].map((feature) => {
                 const Icon = feature.icon;
                 return (
                   <Link
                     key={feature.title}
-                    to={
-                      feature.title === "AI Chat"
-                        ? "/chat"
-                        : feature.title === "Smart Matching"
-                          ? "/recommendations"
-                          : "/ai-advisor"
-                    }
-                    className="rounded-[1.1rem] border border-blue-100 bg-white/90 p-3 shadow-sm transition hover:-translate-y-1 hover:bg-white hover:shadow-soft"
+                    to={feature.href}
+                    className="flex items-center gap-3 rounded-[1.1rem] border border-blue-100 bg-white/90 p-3 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-soft"
                   >
-                    <Icon className="h-5 w-5 text-blue-700" />
-                    <h3 className="mt-3 text-sm font-black text-navy-950">
-                      {feature.title}
-                    </h3>
-                    <p className="mt-1 text-xs leading-5 text-navy-500">
-                      {feature.text}
-                    </p>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-black text-navy-950">
+                        {feature.title}
+                      </h3>
+                      <p className="mt-0.5 text-xs leading-5 text-navy-500">
+                        {feature.text}
+                      </p>
+                    </div>
                   </Link>
                 );
               })}
             </div>
+
             <div className="mt-5 flex flex-wrap gap-3">
               <Link to="/ai-advisor">
                 <Button className="h-10 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
-                  <span className="md:hidden">Start AI Advisor</span>
-                  <span className="hidden md:inline">Ask AI Advisor</span>{" "}
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  Ask AI Advisor <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/recommendations" className="hidden md:inline-flex">
+              <Link to="/search?tab=societies">
                 <Button
                   variant="outline"
                   className="h-10 rounded-full border-blue-100 bg-white px-5 text-sm font-bold text-blue-700 hover:bg-blue-50"
                 >
-                  Recommendation engine
+                  Browse societies
                 </Button>
               </Link>
             </div>
           </div>
 
           <div className="hidden rounded-[1.35rem] border border-blue-100 bg-white/95 p-4 shadow-soft md:block">
-            <div className="mb-3 flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
-                <Sparkles className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="font-black text-navy-950">AI Society Advisor</p>
-                <p className="text-xs font-semibold text-navy-400">
-                  Finding your best match
-                </p>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                  <Sparkles className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-black text-navy-950">Live AI shortlist</p>
+                  <p className="text-xs font-semibold text-navy-400">
+                    Sample Gurgaon match flow
+                  </p>
+                </div>
               </div>
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
+                Rent
+              </span>
             </div>
 
             <div className="rounded-[1.1rem] border border-blue-100 bg-blue-50 p-3">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-black uppercase tracking-[0.14em] text-navy-400">
-                    Monthly budget
+                    Requirement
                   </p>
-                  <p className="mt-1 text-2xl font-black text-navy-950">
-                    Rs 85,000/mo
+                  <p className="mt-1 text-xl font-black text-navy-950">
+                    3BHK near Cyber City
                   </p>
                 </div>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700 shadow-sm">
-                  Rent
-                </span>
+                <p className="text-right text-sm font-black text-blue-700">
+                  Rs 85K/mo
+                </p>
               </div>
-              <div className="mt-3 h-2 rounded-full bg-white">
-                <div className="h-full w-[72%] rounded-full bg-blue-700" />
-              </div>
+
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {["Security", "Connectivity", "Family", "Budget", "Pets"].map(
-                  (priority, index) => (
-                    <span
-                      key={priority}
-                      className={`rounded-full border px-2.5 py-1 text-[11px] font-black ${
-                        index < 4
-                          ? "border-blue-200 bg-white text-blue-700"
-                          : "border-navy-100 bg-ivory-100 text-navy-400"
-                      }`}
-                    >
-                      {priority}
-                    </span>
-                  ),
-                )}
+                {["Security", "Commute", "Family", "Budget"].map((priority) => (
+                  <span
+                    key={priority}
+                    className="rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-black text-blue-700"
+                  >
+                    {priority}
+                  </span>
+                ))}
               </div>
             </div>
 
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {aiPrompts.slice(0, 4).map((prompt) => (
-                <Link
-                  key={prompt}
-                  to={`/ai-advisor?q=${encodeURIComponent(prompt)}`}
-                  className="rounded-xl border border-blue-100 bg-white px-3 py-2.5 text-xs font-bold text-navy-600 transition hover:border-blue-200 hover:bg-blue-50"
-                >
-                  {prompt}
-                </Link>
-              ))}
-            </div>
-
-            <div className="mt-4 space-y-2">
+            <div className="mt-3 space-y-2">
               {(featuredSocieties.length
                 ? featuredSocieties
                 : [
@@ -567,9 +540,10 @@ export function HomePage() {
               )
                 .slice(0, 3)
                 .map((society, index) => (
-                  <div
+                  <Link
                     key={society.name}
-                    className="flex items-center gap-2 rounded-xl border border-blue-100 bg-ivory-100 p-2.5"
+                    to={society.slug ? `/society/${society.slug}` : "/search?tab=societies"}
+                    className="flex items-center gap-2 rounded-xl border border-blue-100 bg-white p-2.5 transition hover:bg-blue-50"
                   >
                     <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-700 text-xs font-black text-white">
                       {index + 1}
@@ -580,8 +554,20 @@ export function HomePage() {
                     <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700">
                       {92 - index * 5}% match
                     </span>
-                  </div>
+                  </Link>
                 ))}
+            </div>
+
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {aiPrompts.slice(0, 2).map((prompt) => (
+                <Link
+                  key={prompt}
+                  to={`/ai-advisor?q=${encodeURIComponent(prompt)}`}
+                  className="rounded-xl border border-blue-100 bg-ivory-100 px-3 py-2.5 text-xs font-bold text-navy-600 transition hover:border-blue-200 hover:bg-blue-50"
+                >
+                  {prompt}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
