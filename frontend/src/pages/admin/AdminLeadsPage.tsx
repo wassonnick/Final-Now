@@ -72,13 +72,25 @@ function priorityClass(priority: LeadPriority) {
 function sourceLabel(source?: string) {
   const value = String(source || "").toLowerCase();
 
-  if (value.includes("property_callback")) return "Property callback";
-  if (value.includes("property_enquiry")) return "Property enquiry";
+  if (value.includes("property_page_callback") || value.includes("property_callback")) {
+    return "Property callback";
+  }
+
+  if (value.includes("property_page_enquiry") || value.includes("property_enquiry")) {
+    return "Property enquiry";
+  }
+
+  if (value.includes("search_no_results")) return "Search no-result";
+  if (value.includes("search_property_card")) return "Search property";
+  if (value.includes("search_society_card")) return "Search society";
+  if (value.includes("society_page_property")) return "Society property";
+  if (value.includes("society_page")) return "Society page";
   if (value.includes("owner")) return "Owner listing";
   if (value.includes("floating")) return "Floating chat";
-  if (value.includes("society")) return "Society callback";
   if (value.includes("homepage")) return "Homepage";
   if (value.includes("search")) return "Search";
+  if (value.includes("society")) return "Society callback";
+
   return source || "Website";
 }
 
