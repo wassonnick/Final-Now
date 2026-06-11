@@ -162,79 +162,95 @@ export function AdminDashboardPage() {
         ) : null}
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          {[
-            {
-              label: "Societies",
-              value: loading ? "-" : stats.societies,
-              helper: loading ? "Loading..." : `${stats.featured_societies} featured`,
-              href: "/admin/societies",
-              icon: Building2,
-              tone: "blue",
-            },
-            {
-              label: "Properties",
-              value: loading ? "-" : stats.properties,
-              helper: loading ? "Loading..." : `${stats.live_properties} live`,
-              href: "/admin/properties",
-              icon: Home,
-              tone: "blue",
-            },
-            {
-              label: "Today Leads",
-              value: leadLoading ? "-" : leadSummary.today,
-              helper: "Fresh enquiries",
-              href: "/admin/leads",
-              icon: MessageSquareText,
-              tone: "blue",
-            },
-            {
-              label: "Follow-ups",
-              value: leadLoading ? "-" : leadSummary.followUpsToday,
-              helper: "Due today",
-              href: "/admin/leads",
-              icon: RefreshCw,
-              tone: "emerald",
-            },
-            {
-              label: "Overdue",
-              value: leadLoading ? "-" : leadSummary.overdue,
-              helper: "Needs action",
-              href: "/admin/leads",
-              icon: Target,
-              tone: "rose",
-            },
-            {
-              label: "Hot Leads",
-              value: leadLoading ? "-" : leadSummary.hot,
-              helper: "Priority follow-ups",
-              href: "/admin/leads",
-              icon: Target,
-              tone: "rose",
-            },
-          ].map((item) => {
-            const Icon = item.icon;
+          <Link to="/admin/leads" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-slate-500">Today</p>
+                <p className="mt-3 text-4xl font-bold text-slate-950">
+                  {leadLoading ? "-" : leadSummary.today}
+                </p>
+                <p className="mt-2 text-sm text-blue-600">New enquiries</p>
+              </div>
+              <div className="rounded-2xl bg-blue-50 p-3 text-blue-700">
+                <MessageSquareText className="h-6 w-6" />
+              </div>
+            </div>
+          </Link>
 
-            return (
-              <Link
-                key={item.label}
-                to={item.href}
-                className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">{item.label}</p>
-                    <p className="mt-3 text-4xl font-bold text-slate-950">{item.value}</p>
-                    <p className={`mt-2 text-sm ${item.tone === "rose" ? "text-rose-600" : item.tone === "emerald" ? "text-emerald-600" : "text-blue-600"}`}>
-                      {item.helper}
-                    </p>
-                  </div>
-                  <div className={`rounded-2xl p-3 ${item.tone === "rose" ? "bg-rose-50 text-rose-600" : item.tone === "emerald" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-700"}`}>
-                    <Icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+          <Link to="/admin/leads" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-slate-500">Active Leads</p>
+                <p className="mt-3 text-4xl font-bold text-slate-950">
+                  {leadLoading ? "-" : leadSummary.open}
+                </p>
+                <p className="mt-2 text-sm text-blue-600">In pipeline</p>
+              </div>
+              <div className="rounded-2xl bg-blue-50 p-3 text-blue-700">
+                <Users className="h-6 w-6" />
+              </div>
+            </div>
+          </Link>
+
+          <Link to="/admin/leads" className="rounded-[28px] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-slate-500">Follow-ups</p>
+                <p className="mt-3 text-4xl font-bold text-slate-950">
+                  {leadLoading ? "-" : leadSummary.followUpsToday}
+                </p>
+                <p className="mt-2 text-sm text-emerald-600">Due today</p>
+              </div>
+              <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
+                <RefreshCw className="h-6 w-6" />
+              </div>
+            </div>
+          </Link>
+
+          <Link to="/admin/leads" className="rounded-[28px] border border-rose-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-slate-500">Overdue</p>
+                <p className="mt-3 text-4xl font-bold text-slate-950">
+                  {leadLoading ? "-" : leadSummary.overdue}
+                </p>
+                <p className="mt-2 text-sm text-rose-600">Needs action</p>
+              </div>
+              <div className="rounded-2xl bg-rose-50 p-3 text-rose-600">
+                <Target className="h-6 w-6" />
+              </div>
+            </div>
+          </Link>
+
+          <Link to="/admin/leads" className="rounded-[28px] border border-rose-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-slate-500">Hot Leads</p>
+                <p className="mt-3 text-4xl font-bold text-slate-950">
+                  {leadLoading ? "-" : leadSummary.hot}
+                </p>
+                <p className="mt-2 text-sm text-rose-600">Priority follow-ups</p>
+              </div>
+              <div className="rounded-2xl bg-rose-50 p-3 text-rose-600">
+                <Target className="h-6 w-6" />
+              </div>
+            </div>
+          </Link>
+
+          <Link to="/admin/leads" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-slate-500">Booked</p>
+                <p className="mt-3 text-4xl font-bold text-slate-950">
+                  {leadLoading ? "-" : leadSummary.booked}
+                </p>
+                <p className="mt-2 text-sm text-blue-600">Closed wins</p>
+              </div>
+              <div className="rounded-2xl bg-blue-50 p-3 text-blue-700">
+                <BarChart3 className="h-6 w-6" />
+              </div>
+            </div>
+          </Link>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
