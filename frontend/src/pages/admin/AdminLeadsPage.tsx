@@ -303,6 +303,8 @@ export function AdminLeadsPage() {
           {[
             ["Today", todayLeads, "New enquiries"],
             ["Active Leads", activeLeads, "In pipeline"],
+            ["Follow-ups", followUpsToday, "Due today"],
+            ["Overdue", overdueFollowUps, "Needs action"],
             ["Hot Leads", hotLeads, "Priority follow-ups"],
             ["Booked", bookedLeads, "Closed wins"],
           ].map(([label, value, helper]) => (
