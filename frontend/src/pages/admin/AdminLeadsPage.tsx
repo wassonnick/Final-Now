@@ -132,7 +132,17 @@ function displayRequirement(lead: AdminLead) {
 }
 
 function displayFollowUp(lead: AdminLead) {
-  return lead.followUpAt || "Not set";
+  if (!lead.followUpAt) return "Not set";
+
+  const date = new Date(lead.followUpAt);
+  if (Number.isNaN(date.getTime())) return lead.followUpAt;
+
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function AdminLeadsPage() {

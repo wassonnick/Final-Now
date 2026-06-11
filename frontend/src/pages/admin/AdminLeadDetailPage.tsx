@@ -112,6 +112,22 @@ function formatDate(value?: string) {
   });
 }
 
+function normalizeFollowUpInput(value?: string) {
+  if (!value) return "";
+  const raw = String(value).trim();
+
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw;
+
+  const pad = (item: number) => String(item).padStart(2, "0");
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function whatsappUrl(lead: AdminLead) {
   const phone = cleanPhone(lead.phone);
   const message = encodeURIComponent(
@@ -541,7 +557,7 @@ export function AdminLeadDetailPage() {
                 <label className="text-sm font-medium text-slate-700">
                   Next Follow-up
                   <Input
-                    value={lead.followUpAt}
+                    value={normalizeFollowUpInput(lead.followUpAt)}
                     onChange={(event) => updateField("followUpAt", event.target.value)}
                     className="mt-2 h-12 rounded-2xl border-slate-200"
                     placeholder="2026-06-08 11:00"
