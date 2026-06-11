@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   CalendarDays,
   Download,
@@ -178,6 +178,48 @@ function followUpLabel(lead: AdminLead) {
   return "Not set";
 }
 
+function dashboardLeadViewMatches(lead: AdminLead, view: string) {
+  if (!view || view === "all") return true;
+
+  if (view === "today") {
+    if (!lead.createdAt) return false;
+    const date = new Date(lead.createdAt);
+    return !Number.isNaN(date.getTime()) && date.toDateString() === new Date().toDateString();
+  }
+
+  if (view === "active") {
+    return !["Booked", "Lost"].includes(lead.status);
+  }
+
+  if (view === "followups") {
+    return followUpState(lead) === "today";
+  }
+
+  if (view === "overdue") {
+    return followUpState(lead) === "overdue";
+  }
+
+  if (view === "hot") {
+    return lead.priority === "Hot";
+  }
+
+  if (view === "booked") {
+    return lead.status === "Booked";
+  }
+
+  return true;
+}
+
+function dashboardLeadViewLabel(view: string) {
+  if (view === "today") return "Today’s leads";
+  if (view === "active") return "Active leads";
+  if (view === "followups") return "Follow-ups due today";
+  if (view === "overdue") return "Overdue follow-ups";
+  if (view === "hot") return "Hot leads";
+  if (view === "booked") return "Booked leads";
+  return "";
+}
+
 function followUpClass(lead: AdminLead) {
   const state = followUpState(lead);
 
@@ -189,6 +231,7 @@ function followUpClass(lead: AdminLead) {
 }
 
 export function AdminLeadsPage() {
+  const location = useLocation();
   const [leads, setLeads] = useState<AdminLead[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"All" | LeadStatus>("All");
@@ -196,6 +239,12 @@ export function AdminLeadsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [savingLeadId, setSavingLeadId] = useState<number | null>(null);
+
+  const dashboardView = useMemo(() => {
+    return new URLSearchParams(location.search).get("view") || "all";
+  }, [location.search]);
+
+  const dashboardViewLabel = dashboardLeadViewLabel(dashboardView);
 
   const loadLeads = async () => {
     setLoading(true);
@@ -220,31 +269,33 @@ export function AdminLeadsPage() {
   const filteredLeads = useMemo(() => {
     const search = query.trim().toLowerCase();
 
-    return leads.filter((lead) => {
-      const matchesSearch =
-        !search ||
-        [
-          lead.name,
-          lead.phone,
-          lead.email,
-          lead.society,
-          lead.property,
-          lead.budget,
-          lead.assignedTo,
-          lead.source,
-          lead.requirement,
-          sourceLabel(lead.source),
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(search);
+    return leads
+      .filter((lead) => dashboardLeadViewMatches(lead, dashboardView))
+      .filter((lead) => {
+        const matchesSearch =
+          !search ||
+          [
+            lead.name,
+            lead.phone,
+            lead.email,
+            lead.society,
+            lead.property,
+            lead.budget,
+            lead.assignedTo,
+            lead.source,
+            lead.requirement,
+            sourceLabel(lead.source),
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(search);
 
-      const matchesStatus = status === "All" || lead.status === status;
-      const matchesPriority = priority === "All" || lead.priority === priority;
+        const matchesStatus = status === "All" || lead.status === status;
+        const matchesPriority = priority === "All" || lead.priority === priority;
 
-      return matchesSearch && matchesStatus && matchesPriority;
-    });
-  }, [leads, priority, query, status]);
+        return matchesSearch && matchesStatus && matchesPriority;
+      });
+  }, [dashboardView, leads, priority, query, status]);
 
   const todayLeads = leads.filter((lead) => isToday(lead.createdAt)).length;
   const activeLeads = leads.filter((lead) => !["Booked", "Lost"].includes(lead.status)).length;
@@ -345,6 +396,17 @@ export function AdminLeadsPage() {
               </Button>
             </div>
           </div>
+
+          {dashboardViewLabel ? (
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+              <span>
+                Showing: <strong>{dashboardViewLabel}</strong>
+              </span>
+              <Link to="/admin/leads" className="font-semibold hover:underline">
+                Clear filter
+              </Link>
+            </div>
+          ) : null}
 
           <div className="mt-6 grid gap-3 lg:grid-cols-[1fr_190px_190px]">
             <div className="relative">
