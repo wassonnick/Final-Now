@@ -153,6 +153,41 @@ function displayFollowUp(lead: AdminLead) {
   });
 }
 
+function followUpState(lead: AdminLead) {
+  if (!lead.followUpAt) return "not_set";
+
+  const date = new Date(lead.followUpAt);
+  if (Number.isNaN(date.getTime())) return "not_set";
+
+  const now = new Date();
+  const sameDay = date.toDateString() === now.toDateString();
+
+  if (date.getTime() < now.getTime() && !sameDay) return "overdue";
+  if (sameDay) return "today";
+
+  return "upcoming";
+}
+
+function followUpLabel(lead: AdminLead) {
+  const state = followUpState(lead);
+
+  if (state === "overdue") return "Overdue";
+  if (state === "today") return "Today";
+  if (state === "upcoming") return "Upcoming";
+
+  return "Not set";
+}
+
+function followUpClass(lead: AdminLead) {
+  const state = followUpState(lead);
+
+  if (state === "overdue") return "bg-rose-50 text-rose-700 border-rose-100";
+  if (state === "today") return "bg-blue-50 text-blue-700 border-blue-100";
+  if (state === "upcoming") return "bg-emerald-50 text-emerald-700 border-emerald-100";
+
+  return "bg-slate-50 text-slate-500 border-slate-100";
+}
+
 export function AdminLeadsPage() {
   const [leads, setLeads] = useState<AdminLead[]>([]);
   const [query, setQuery] = useState("");
@@ -215,6 +250,8 @@ export function AdminLeadsPage() {
   const activeLeads = leads.filter((lead) => !["Booked", "Lost"].includes(lead.status)).length;
   const bookedLeads = leads.filter((lead) => lead.status === "Booked").length;
   const hotLeads = leads.filter((lead) => lead.priority === "Hot").length;
+  const followUpsToday = leads.filter((lead) => followUpState(lead) === "today").length;
+  const overdueFollowUps = leads.filter((lead) => followUpState(lead) === "overdue").length;
 
   const handleStatusChange = async (lead: AdminLead, nextStatus: LeadStatus) => {
     const previousLeads = leads;
@@ -414,7 +451,10 @@ export function AdminLeadsPage() {
                   </div>
 
                   <div className="mt-4 text-sm text-slate-500 xl:mt-0">
-                    <p className="flex items-center gap-1">
+                    <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${followUpClass(lead)}`}>
+                      {followUpLabel(lead)}
+                    </span>
+                    <p className="mt-2 flex items-center gap-1">
                       <CalendarDays className="h-3.5 w-3.5" />
                       {displayFollowUp(lead)}
                     </p>
