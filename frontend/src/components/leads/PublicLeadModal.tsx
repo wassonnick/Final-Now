@@ -105,11 +105,6 @@ export function PublicLeadModal({
       ? "Confirm availability, price and visit timing."
       : "Select your need and share your mobile number.";
 
-    if (!isValidLeadPhone(form.phone)) {
-      setStatus("error");
-      return;
-    }
-
   const finalRequirement =
     normalizeRequirement(form.requirement) ||
     normalizeRequirement(defaultRequirement) ||
