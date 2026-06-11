@@ -121,6 +121,52 @@ function whatsappUrl(lead: AdminLead) {
   return `https://wa.me/91${phone.slice(-10)}?text=${message}`;
 }
 
+function formatFollowUpDate(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function getQuickFollowUpValue(type: "today_evening" | "tomorrow_morning" | "two_days" | "next_week") {
+  const date = new Date();
+
+  if (type === "today_evening") {
+    date.setHours(18, 0, 0, 0);
+  }
+
+  if (type === "tomorrow_morning") {
+    date.setDate(date.getDate() + 1);
+    date.setHours(10, 30, 0, 0);
+  }
+
+  if (type === "two_days") {
+    date.setDate(date.getDate() + 2);
+    date.setHours(11, 0, 0, 0);
+  }
+
+  if (type === "next_week") {
+    date.setDate(date.getDate() + 7);
+    date.setHours(11, 0, 0, 0);
+  }
+
+  return formatFollowUpDate(date);
+}
+
+const quickNoteTemplates = [
+  "Called, no answer",
+  "WhatsApp sent",
+  "Visit scheduled",
+  "Budget mismatch",
+  "Not interested",
+];
+
+const quickFollowUps = [
+  ["Today evening", "today_evening"],
+  ["Tomorrow morning", "tomorrow_morning"],
+  ["2 days later", "two_days"],
+  ["Next week", "next_week"],
+] as const;
+
 export function AdminLeadDetailPage() {
   const { id } = useParams();
 
@@ -220,6 +266,15 @@ export function AdminLeadDetailPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const applyQuickFollowUp = (type: "today_evening" | "tomorrow_morning" | "two_days" | "next_week") => {
+    if (!lead) return;
+    updateField("followUpAt", getQuickFollowUpValue(type));
+  };
+
+  const applyQuickNote = (text: string) => {
+    setNote(text);
   };
 
   if (loading) {
@@ -491,6 +546,18 @@ export function AdminLeadDetailPage() {
                     className="mt-2 h-12 rounded-2xl border-slate-200"
                     placeholder="2026-06-08 11:00"
                   />
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {quickFollowUps.map(([label, value]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => applyQuickFollowUp(value)}
+                        className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-700 hover:bg-blue-100"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </label>
 
                 <label className="md:col-span-2 text-sm font-medium text-slate-700">
@@ -509,6 +576,19 @@ export function AdminLeadDetailPage() {
               <h2 className="text-lg font-semibold tracking-tight text-slate-950">
                 Notes & Timeline
               </h2>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {quickNoteTemplates.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => applyQuickNote(item)}
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
 
               <div className="mt-4 flex flex-col gap-3 md:flex-row">
                 <Input
