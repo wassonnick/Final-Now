@@ -162,7 +162,7 @@ export function AdminDashboardPage() {
         ) : null}
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <Link to="/admin/leads" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg">
+          <Link to="/admin/leads?view=today" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-slate-500">Today</p>
@@ -177,7 +177,7 @@ export function AdminDashboardPage() {
             </div>
           </Link>
 
-          <Link to="/admin/leads" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg">
+          <Link to="/admin/leads?view=active" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-slate-500">Active Leads</p>
@@ -192,7 +192,7 @@ export function AdminDashboardPage() {
             </div>
           </Link>
 
-          <Link to="/admin/leads" className="rounded-[28px] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+          <Link to="/admin/leads?view=followups" className="rounded-[28px] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-slate-500">Follow-ups</p>
@@ -207,7 +207,7 @@ export function AdminDashboardPage() {
             </div>
           </Link>
 
-          <Link to="/admin/leads" className="rounded-[28px] border border-rose-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+          <Link to="/admin/leads?view=overdue" className="rounded-[28px] border border-rose-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-slate-500">Overdue</p>
@@ -222,7 +222,7 @@ export function AdminDashboardPage() {
             </div>
           </Link>
 
-          <Link to="/admin/leads" className="rounded-[28px] border border-rose-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+          <Link to="/admin/leads?view=hot" className="rounded-[28px] border border-rose-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-slate-500">Hot Leads</p>
@@ -237,7 +237,7 @@ export function AdminDashboardPage() {
             </div>
           </Link>
 
-          <Link to="/admin/leads" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg">
+          <Link to="/admin/leads?view=booked" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-slate-500">Booked</p>
