@@ -39,6 +39,84 @@ const statuses: LeadStatus[] = [
 const priorities: LeadPriority[] = ["Hot", "Warm", "Cold"];
 const agents = ["Nitin", "Amit", "Rohit", "Priya", "Unassigned"];
 
+function leadTimelineItems(lead?: AdminLead | null) {
+  const rawNotes = (lead as { notes?: unknown } | null | undefined)?.notes;
+
+  if (!rawNotes) return [];
+
+  if (Array.isArray(rawNotes)) {
+    return rawNotes
+      .map((item, index) => {
+        if (typeof item === "string") {
+          return {
+            id: `note-${index}`,
+            text: item,
+            meta: "Timeline note",
+          };
+        }
+
+        if (item && typeof item === "object") {
+          const note = item as { text?: unknown; body?: unknown; note?: unknown; createdAt?: unknown; created_at?: unknown };
+          return {
+            id: `note-${index}`,
+            text: String(note.text || note.body || note.note || ""),
+            meta: String(note.createdAt || note.created_at || "Timeline note"),
+          };
+        }
+
+        return null;
+      })
+      .filter((item): item is { id: string; text: string; meta: string } => Boolean(item?.text));
+  }
+
+  if (typeof rawNotes === "string") {
+    const value = rawNotes.trim();
+
+    if (!value) return [];
+
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((item, index) => {
+            if (typeof item === "string") {
+              return {
+                id: `note-${index}`,
+                text: item,
+                meta: "Timeline note",
+              };
+            }
+
+            if (item && typeof item === "object") {
+              const note = item as { text?: unknown; body?: unknown; note?: unknown; createdAt?: unknown; created_at?: unknown };
+              return {
+                id: `note-${index}`,
+                text: String(note.text || note.body || note.note || ""),
+                meta: String(note.createdAt || note.created_at || "Timeline note"),
+              };
+            }
+
+            return null;
+          })
+          .filter((item): item is { id: string; text: string; meta: string } => Boolean(item?.text));
+      }
+    } catch {
+      // plain text notes fallback
+    }
+
+    return value
+      .split("\n")
+      .map((item, index) => ({
+        id: `note-${index}`,
+        text: item.trim(),
+        meta: "Timeline note",
+      }))
+      .filter((item) => Boolean(item.text));
+  }
+
+  return [];
+}
+
 function statusClass(status: LeadStatus) {
   switch (status) {
     case "New":
@@ -715,6 +793,33 @@ export function AdminLeadDetailPage() {
               <h2 className="text-lg font-semibold tracking-tight text-slate-950">
                 Notes & Timeline
               </h2>
+
+              <div className="mt-4 rounded-3xl border border-blue-100 bg-blue-50 p-4">
+                <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
+                      Latest activity
+                    </p>
+                    {leadTimelineItems(lead).length ? (
+                      <>
+                        <p className="mt-2 text-sm font-semibold text-slate-950">
+                          {leadTimelineItems(lead)[0].text}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {leadTimelineItems(lead)[0].meta}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="mt-2 text-sm text-slate-500">
+                        No timeline notes yet. Add the first call note or follow-up update below.
+                      </p>
+                    )}
+                  </div>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-blue-700">
+                    {leadTimelineItems(lead).length} notes
+                  </span>
+                </div>
+              </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {quickNoteTemplates.map((item) => (
