@@ -152,6 +152,25 @@ function priorityClass(priority: LeadPriority) {
 function sourceLabel(source?: string) {
   const value = String(source || "").toLowerCase();
 
+  if (
+    value.includes("owner") ||
+    value.includes("sell") ||
+    value.includes("seller") ||
+    value.includes("listing_submission") ||
+    value.includes("list_property")
+  ) {
+    return "Owner listing";
+  }
+
+  if (
+    value.includes("broker") ||
+    value.includes("partner") ||
+    value.includes("agent") ||
+    value.includes("crm_intake")
+  ) {
+    return "Broker partner";
+  }
+
   if (value.includes("property_page_callback") || value.includes("property_callback")) {
     return "Property callback";
   }
@@ -165,11 +184,12 @@ function sourceLabel(source?: string) {
   if (value.includes("search_society_card")) return "Search society";
   if (value.includes("society_page_property")) return "Society property";
   if (value.includes("society_page")) return "Society page";
-  if (value.includes("owner")) return "Owner listing";
   if (value.includes("floating")) return "Floating chat";
   if (value.includes("homepage")) return "Homepage";
-  if (value.includes("search")) return "Search";
-  if (value.includes("society")) return "Society callback";
+  if (value.includes("callback")) return "General callback";
+  if (value.includes("search")) return "Search enquiry";
+  if (value.includes("society")) return "Society enquiry";
+  if (value.includes("property")) return "Property enquiry";
 
   return source || "Website";
 }

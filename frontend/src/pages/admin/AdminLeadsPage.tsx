@@ -82,6 +82,25 @@ function priorityClass(priority: LeadPriority) {
 function sourceLabel(source?: string) {
   const value = String(source || "").toLowerCase();
 
+  if (
+    value.includes("owner") ||
+    value.includes("sell") ||
+    value.includes("seller") ||
+    value.includes("listing_submission") ||
+    value.includes("list_property")
+  ) {
+    return "Owner listing";
+  }
+
+  if (
+    value.includes("broker") ||
+    value.includes("partner") ||
+    value.includes("agent") ||
+    value.includes("crm_intake")
+  ) {
+    return "Broker partner";
+  }
+
   if (value.includes("property_page_callback") || value.includes("property_callback")) {
     return "Property callback";
   }
@@ -95,11 +114,12 @@ function sourceLabel(source?: string) {
   if (value.includes("search_society_card")) return "Search society";
   if (value.includes("society_page_property")) return "Society property";
   if (value.includes("society_page")) return "Society page";
-  if (value.includes("owner")) return "Owner listing";
   if (value.includes("floating")) return "Floating chat";
   if (value.includes("homepage")) return "Homepage";
-  if (value.includes("search")) return "Search";
-  if (value.includes("society")) return "Society callback";
+  if (value.includes("callback")) return "General callback";
+  if (value.includes("search")) return "Search enquiry";
+  if (value.includes("society")) return "Society enquiry";
+  if (value.includes("property")) return "Property enquiry";
 
   return source || "Website";
 }
@@ -107,10 +127,31 @@ function sourceLabel(source?: string) {
 function sourceClass(source?: string) {
   const value = String(source || "").toLowerCase();
 
+  if (
+    value.includes("owner") ||
+    value.includes("sell") ||
+    value.includes("seller") ||
+    value.includes("listing_submission") ||
+    value.includes("list_property")
+  ) {
+    return "bg-emerald-50 text-emerald-700 border-emerald-100";
+  }
+
+  if (
+    value.includes("broker") ||
+    value.includes("partner") ||
+    value.includes("agent") ||
+    value.includes("crm_intake")
+  ) {
+    return "bg-orange-50 text-orange-700 border-orange-100";
+  }
+
   if (value.includes("property")) return "bg-violet-50 text-violet-700 border-violet-100";
   if (value.includes("society")) return "bg-blue-50 text-blue-700 border-blue-100";
-  if (value.includes("owner")) return "bg-emerald-50 text-emerald-700 border-emerald-100";
-  if (value.includes("floating") || value.includes("chat")) return "bg-amber-50 text-amber-700 border-amber-100";
+  if (value.includes("floating") || value.includes("chat") || value.includes("callback")) {
+    return "bg-amber-50 text-amber-700 border-amber-100";
+  }
+
   return "bg-slate-50 text-slate-600 border-slate-100";
 }
 
