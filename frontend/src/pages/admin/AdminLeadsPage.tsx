@@ -433,15 +433,16 @@ export function AdminLeadsPage() {
             </div>
           ) : null}
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            {pipelineViews.map((item) => {
+          <div className="sticky top-0 z-20 -mx-4 mt-5 border-y border-slate-100 bg-white/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
+            <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0">
+              {pipelineViews.map((item) => {
               const active = dashboardView === item.view || (!dashboardView && item.view === "all");
 
               return (
                 <Link
                   key={item.view}
                   to={item.view === "all" ? "/admin/leads" : `/admin/leads?view=${item.view}`}
-                  className={`rounded-full border px-4 py-2 text-sm font-bold transition ${
+                  className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition ${
                     active
                       ? "border-blue-200 bg-blue-600 text-white shadow-sm"
                       : "border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
@@ -459,7 +460,8 @@ export function AdminLeadsPage() {
                   </span>
                 </Link>
               );
-            })}
+              })}
+            </div>
           </div>
 
           <div className="mt-6 grid gap-3 lg:grid-cols-[1fr_190px_190px]">
