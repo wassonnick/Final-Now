@@ -514,12 +514,12 @@ export function AdminLeadsPage() {
               return (
                 <div
                   key={lead.id}
-                  className="border-b border-slate-200 px-4 py-4 last:border-0 xl:grid xl:grid-cols-[1.3fr_1.6fr_150px_110px_150px_210px] xl:items-center xl:gap-4 xl:px-5"
+                  className="border-b border-slate-200 bg-white px-4 py-5 last:border-0 xl:grid xl:grid-cols-[1.3fr_1.6fr_150px_110px_150px_210px] xl:items-center xl:gap-4 xl:px-5"
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3 xl:block">
                       <div>
-                        <p className="font-bold text-slate-950">{lead.name}</p>
+                        <p className="text-base font-bold text-slate-950">{lead.name}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                           {lead.phone ? (
                             <a href={`tel:${cleanPhone(lead.phone)}`} className="inline-flex items-center gap-1 hover:text-blue-700">
@@ -539,15 +539,16 @@ export function AdminLeadsPage() {
                     </div>
                   </div>
 
-                  <div className="mt-4 xl:mt-0">
+                  <div className="mt-4 rounded-2xl bg-slate-50 p-3 xl:mt-0 xl:bg-transparent xl:p-0">
                     <p className="font-semibold text-slate-950">{lead.society || "Not specified"}</p>
                     <p className="mt-1 text-sm text-slate-500">{lead.property || "General enquiry"}</p>
-                    <p className="mt-1 text-sm font-semibold text-blue-700">
+                    <p className="mt-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 xl:bg-transparent xl:px-0 xl:py-0 xl:text-sm">
                       {displayRequirement(lead)}
                     </p>
                   </div>
 
-                  <div className="mt-4 xl:mt-0">
+                  <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-3 xl:mt-0 xl:border-0 xl:p-0">
+                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Status</p>
                     <select
                       value={lead.status}
                       disabled={savingLeadId === lead.id}
@@ -568,7 +569,8 @@ export function AdminLeadsPage() {
                     </span>
                   </div>
 
-                  <div className="mt-4 text-sm text-slate-500 xl:mt-0">
+                  <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-3 text-sm text-slate-500 xl:mt-0 xl:border-0 xl:p-0">
+                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Follow-up</p>
                     <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${followUpClass(lead)}`}>
                       {followUpLabel(lead)}
                     </span>
@@ -607,7 +609,7 @@ export function AdminLeadsPage() {
                       onClick={() => handleDelete(lead)}
                       size="icon"
                       variant="ghost"
-                      className="rounded-full text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                      className="h-10 rounded-full text-rose-500 hover:bg-rose-50 hover:text-rose-600"
                       aria-label="Delete lead"
                     >
                       <Trash2 className="h-4 w-4" />
