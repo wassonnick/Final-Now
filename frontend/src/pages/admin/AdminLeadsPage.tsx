@@ -114,8 +114,16 @@ function canUsePhone(phone?: string) {
 
 function whatsappUrl(lead: AdminLead) {
   const digits = cleanPhone(lead.phone).slice(-10);
+  const interest = lead.property || lead.society || "your property requirement";
+  const requirement = lead.requirement || "Not specified";
   const message = encodeURIComponent(
-    `Hi ${lead.name || ""}, this is SocietyFlats regarding ${lead.property || lead.society || "your property requirement"}. Requirement: ${lead.requirement || "Not specified"}.`
+    [
+      `Hi ${lead.name || ""}, this is SocietyFlats.`,
+      `We received your enquiry for ${interest}.`,
+      `Requirement: ${requirement}.`,
+      "We can help with availability, pricing and visit timing.",
+      "Please let us know a good time to connect.",
+    ].join("\n")
   );
 
   return `https://wa.me/91${digits}?text=${message}`;
