@@ -235,6 +235,16 @@ function pipelineViewCount(leads: AdminLead[], view: string) {
   return leads.filter((lead) => dashboardLeadViewMatches(lead, view)).length;
 }
 
+function pipelineEmptyMessage(view: string) {
+  if (view === "today") return "No new leads today.";
+  if (view === "active") return "No active leads in the pipeline.";
+  if (view === "followups") return "No follow-ups due today.";
+  if (view === "overdue") return "No overdue follow-ups. You’re clear for now.";
+  if (view === "hot") return "No hot leads right now.";
+  if (view === "booked") return "No booked leads yet.";
+  return "No leads found for the selected filters.";
+}
+
 function followUpClass(lead: AdminLead) {
   const state = followUpState(lead);
 
@@ -609,7 +619,7 @@ export function AdminLeadsPage() {
 
             {!loading && !filteredLeads.length ? (
               <div className="p-10 text-center text-slate-500">
-                No leads found for this CRM view or selected filters.
+                {pipelineEmptyMessage(dashboardView)}
               </div>
             ) : null}
           </div>
