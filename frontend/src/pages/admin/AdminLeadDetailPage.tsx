@@ -313,6 +313,31 @@ export function AdminLeadDetailPage() {
     }
   };
 
+  const applyQuickConversion = async (
+    updates: Partial<AdminLead>,
+    noteText: string,
+  ) => {
+    if (!lead) return;
+
+    setSaving(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const updatedLead = { ...lead, ...updates };
+      const savedLead = await saveAdminLead(updatedLead);
+      const notedLead = await addLeadNoteRemote(savedLead, noteText);
+
+      setLead(notedLead);
+      setMessage(`${noteText} saved.`);
+    } catch (err) {
+      console.error("Could not apply quick conversion:", err);
+      setError("Could not update this lead. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <AdminLayout title="Lead Details">
@@ -605,6 +630,84 @@ export function AdminLeadDetailPage() {
                     placeholder="Rent requirement, Buy requirement, Visit, Callback..."
                   />
                 </label>
+              </div>
+            </section>
+
+            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold tracking-tight text-slate-950">
+                    Quick conversion actions
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Update status or priority and add a timeline note in one click.
+                  </p>
+                </div>
+                <span className="rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
+                  Current: {lead.status} / {lead.priority}
+                </span>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={saving}
+                  onClick={() =>
+                    void applyQuickConversion(
+                      { priority: "Hot" },
+                      "Lead marked Hot from detail page",
+                    )
+                  }
+                  className="h-auto justify-start rounded-2xl border-rose-100 bg-rose-50 px-4 py-4 text-left text-rose-700 hover:bg-rose-100"
+                >
+                  Mark Hot
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={saving}
+                  onClick={() =>
+                    void applyQuickConversion(
+                      { status: "Site Visit", priority: lead.priority === "Cold" ? "Warm" : lead.priority },
+                      "Site visit scheduled from detail page",
+                    )
+                  }
+                  className="h-auto justify-start rounded-2xl border-blue-100 bg-blue-50 px-4 py-4 text-left text-blue-700 hover:bg-blue-100"
+                >
+                  Site Visit
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={saving}
+                  onClick={() =>
+                    void applyQuickConversion(
+                      { status: "Booked", priority: "Hot" },
+                      "Lead marked Booked from detail page",
+                    )
+                  }
+                  className="h-auto justify-start rounded-2xl border-emerald-100 bg-emerald-50 px-4 py-4 text-left text-emerald-700 hover:bg-emerald-100"
+                >
+                  Mark Booked
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={saving}
+                  onClick={() =>
+                    void applyQuickConversion(
+                      { status: "Lost", priority: "Cold" },
+                      "Lead marked Lost from detail page",
+                    )
+                  }
+                  className="h-auto justify-start rounded-2xl border-slate-200 bg-slate-50 px-4 py-4 text-left text-slate-700 hover:bg-slate-100"
+                >
+                  Mark Lost
+                </Button>
               </div>
             </section>
 
