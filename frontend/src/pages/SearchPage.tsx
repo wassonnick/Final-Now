@@ -96,6 +96,14 @@ function compactValue(value: unknown, fallback = "On request") {
   return text || fallback;
 }
 
+function cleanLeadPhone(value: string) {
+  return String(value || "").replace(/\D/g, "").slice(0, 10);
+}
+
+function isValidLeadPhone(value: string) {
+  return /^[6-9]\d{9}$/.test(cleanLeadPhone(value));
+}
+
 function EmptyResults({
   activeTab,
   query,
@@ -176,7 +184,7 @@ function EmptyResults({
                 />
                 <Input
                   value={leadPhone}
-                  onChange={(event) => onLeadPhoneChange(event.target.value)}
+                  onChange={(event) => onLeadPhoneChange(cleanLeadPhone(event.target.value))}
                   placeholder="Mobile number"
                   className="h-11 rounded-full border-navy-100 bg-ivory-100 px-5 md:h-12"
                 />
@@ -419,7 +427,12 @@ export function SearchPage() {
   };
 
   const submitLead = async () => {
-    if (!leadName.trim() || !leadPhone.trim() || isSubmittingLead) return;
+    const normalizedPhone = cleanLeadPhone(leadPhone);
+
+    if (!leadName.trim() || !isValidLeadPhone(normalizedPhone) || isSubmittingLead) {
+      setLeadStatus("error");
+      return;
+    }
 
     setIsSubmittingLead(true);
     setLeadStatus("idle");
@@ -433,7 +446,7 @@ export function SearchPage() {
         },
         body: JSON.stringify({
           name: leadName.trim(),
-          phone: leadPhone.trim(),
+          phone: normalizedPhone,
           source: `search_no_results_${activeTab}`,
           requirement:
             activeTab === "rent"

@@ -47,6 +47,14 @@ function normalizeRequirement(value?: string) {
   return `${clean} requirement`;
 }
 
+function cleanLeadPhone(value: string) {
+  return String(value || "").replace(/\D/g, "").slice(0, 10);
+}
+
+function isValidLeadPhone(value: string) {
+  return /^[6-9]\d{9}$/.test(cleanLeadPhone(value));
+}
+
 export function PublicLeadModal({
   open,
   source,
@@ -96,6 +104,11 @@ export function PublicLeadModal({
     : isPropertyLead
       ? "Confirm availability, price and visit timing."
       : "Select your need and share your mobile number.";
+
+    if (!isValidLeadPhone(form.phone)) {
+      setStatus("error");
+      return;
+    }
 
   const finalRequirement =
     normalizeRequirement(form.requirement) ||

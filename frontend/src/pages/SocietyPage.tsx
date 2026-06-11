@@ -1216,8 +1216,15 @@ export function SocietyPage() {
         }
         defaultRequirement={
           selectedLeadProperty
-            ? `${field(selectedLeadProperty, "listingType", "listing_type", "Property")} requirement for ${selectedLeadProperty.title}.`
-            : `Looking for homes or society guidance in ${society.name}, ${societyLocation || "Gurgaon"}.`
+            ? String(field(selectedLeadProperty, "listingType", "listing_type", "Property")).toLowerCase().includes("rent")
+              ? "Rent"
+              : String(field(selectedLeadProperty, "listingType", "listing_type", "Property")).toLowerCase().includes("sale") ||
+                  String(field(selectedLeadProperty, "listingType", "listing_type", "Property")).toLowerCase().includes("buy") ||
+                  String(field(selectedLeadProperty, "listingType", "listing_type", "Property")).toLowerCase().includes("resale") ||
+                  String(field(selectedLeadProperty, "listingType", "listing_type", "Property")).toLowerCase().includes("builder")
+                ? "Buy"
+                : "Callback"
+            : "Visit"
         }
         submitLabel="Request callback"
         onClose={() => {
