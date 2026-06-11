@@ -301,6 +301,18 @@ export function AdminLeadDetailPage() {
     setNote(text);
   };
 
+  const recordContactAction = async (text: string) => {
+    if (!lead) return;
+
+    try {
+      const updated = await addLeadNoteRemote(lead, text);
+      setLead(updated);
+      setMessage(`${text} noted in timeline.`);
+    } catch (err) {
+      console.error("Could not record contact action:", err);
+    }
+  };
+
   if (loading) {
     return (
       <AdminLayout title="Lead Details">
@@ -357,7 +369,7 @@ export function AdminLeadDetailPage() {
           <div className="flex flex-wrap gap-3">
             {canCall ? (
               <Button asChild variant="outline" className="rounded-full border-slate-200">
-                <a href={`tel:${phoneDigits}`}>
+                <a href={`tel:${phoneDigits}`} onClick={() => void recordContactAction("Call action opened from lead detail")}>
                   <Phone className="mr-2 h-4 w-4" />
                   Call
                 </a>
@@ -366,7 +378,7 @@ export function AdminLeadDetailPage() {
 
             {canCall ? (
               <Button asChild variant="outline" className="rounded-full border-emerald-200 text-emerald-700">
-                <a href={whatsappUrl(lead)} target="_blank" rel="noreferrer">
+                <a href={whatsappUrl(lead)} target="_blank" rel="noreferrer" onClick={() => void recordContactAction("WhatsApp opened from lead detail")}>
                   <MessageCircle className="mr-2 h-4 w-4" />
                   WhatsApp
                 </a>
@@ -661,6 +673,7 @@ export function AdminLeadDetailPage() {
                 {canCall ? (
                   <a
                     href={`tel:${phoneDigits}`}
+                    onClick={() => void recordContactAction("Call action opened from lead detail")}
                     className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
                     <Phone className="h-5 w-5 text-blue-600" />
@@ -673,6 +686,7 @@ export function AdminLeadDetailPage() {
                     href={whatsappUrl(lead)}
                     target="_blank"
                     rel="noreferrer"
+                    onClick={() => void recordContactAction("WhatsApp opened from lead detail")}
                     className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-medium text-emerald-700 hover:bg-emerald-100"
                   >
                     <MessageCircle className="h-5 w-5 text-emerald-600" />
