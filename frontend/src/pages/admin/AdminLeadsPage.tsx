@@ -230,6 +230,11 @@ function dashboardLeadViewLabel(view: string) {
   return "";
 }
 
+function pipelineViewCount(leads: AdminLead[], view: string) {
+  if (view === "all") return leads.length;
+  return leads.filter((lead) => dashboardLeadViewMatches(lead, view)).length;
+}
+
 function followUpClass(lead: AdminLead) {
   const state = followUpState(lead);
 
@@ -432,7 +437,16 @@ export function AdminLeadsPage() {
                       : "border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                   }`}
                 >
-                  {item.label}
+                  <span>{item.label}</span>
+                  <span
+                    className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
+                      active
+                        ? "bg-white/20 text-white"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {pipelineViewCount(leads, item.view)}
+                  </span>
                 </Link>
               );
             })}
