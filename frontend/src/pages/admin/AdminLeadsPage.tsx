@@ -384,7 +384,7 @@ export function AdminLeadsPage() {
             ["Hot Leads", hotLeads, "Priority follow-ups"],
             ["Booked", bookedLeads, "Closed wins"],
           ].map(([label, value, helper]) => (
-            <div key={String(label)} className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+            <div key={String(label)} className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-3xl font-bold text-slate-950">{value}</p>
               <p className="mt-2 text-sm font-medium text-blue-600">{label}</p>
               <p className="mt-1 text-xs text-slate-400">{helper}</p>
