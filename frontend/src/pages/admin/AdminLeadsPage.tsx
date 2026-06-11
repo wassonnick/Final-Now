@@ -43,6 +43,8 @@ const pipelineViews = [
   { label: "Overdue", view: "overdue" },
   { label: "Hot", view: "hot" },
   { label: "Booked", view: "booked" },
+  { label: "Owner Leads", view: "owner" },
+  { label: "Broker Leads", view: "broker" },
 ];
 
 const priorities: Array<"All" | LeadPriority> = ["All", "Hot", "Warm", "Cold"];
@@ -258,6 +260,27 @@ function dashboardLeadViewMatches(lead: AdminLead, view: string) {
     return lead.status === "Booked";
   }
 
+  if (view === "owner") {
+    const value = String(lead.source || "").toLowerCase();
+    return (
+      value.includes("owner") ||
+      value.includes("sell") ||
+      value.includes("seller") ||
+      value.includes("listing_submission") ||
+      value.includes("list_property")
+    );
+  }
+
+  if (view === "broker") {
+    const value = String(lead.source || "").toLowerCase();
+    return (
+      value.includes("broker") ||
+      value.includes("partner") ||
+      value.includes("agent") ||
+      value.includes("crm_intake")
+    );
+  }
+
   return true;
 }
 
@@ -268,6 +291,8 @@ function dashboardLeadViewLabel(view: string) {
   if (view === "overdue") return "Overdue follow-ups";
   if (view === "hot") return "Hot leads";
   if (view === "booked") return "Booked leads";
+  if (view === "owner") return "Owner listing leads";
+  if (view === "broker") return "Broker partner leads";
   return "";
 }
 
@@ -283,6 +308,8 @@ function pipelineEmptyMessage(view: string) {
   if (view === "overdue") return "No overdue follow-ups. You’re clear for now.";
   if (view === "hot") return "No hot leads right now.";
   if (view === "booked") return "No booked leads yet.";
+  if (view === "owner") return "No owner listing leads yet.";
+  if (view === "broker") return "No broker partner leads yet.";
   return "No leads found for the selected filters.";
 }
 
