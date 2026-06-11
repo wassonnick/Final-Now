@@ -161,7 +161,7 @@ export function AdminDashboardPage() {
           </div>
         ) : null}
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <Link to="/admin/leads" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg">
             <div className="flex items-start justify-between gap-4">
               <div>
