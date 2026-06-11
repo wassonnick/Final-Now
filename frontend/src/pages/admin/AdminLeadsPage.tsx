@@ -35,6 +35,16 @@ const statuses: Array<"All" | LeadStatus> = [
   "Lost",
 ];
 
+const pipelineViews = [
+  { label: "All", view: "all" },
+  { label: "Today", view: "today" },
+  { label: "Active", view: "active" },
+  { label: "Follow-ups", view: "followups" },
+  { label: "Overdue", view: "overdue" },
+  { label: "Hot", view: "hot" },
+  { label: "Booked", view: "booked" },
+];
+
 const priorities: Array<"All" | LeadPriority> = ["All", "Hot", "Warm", "Cold"];
 
 function statusClass(status: LeadStatus) {
@@ -408,6 +418,26 @@ export function AdminLeadsPage() {
             </div>
           ) : null}
 
+          <div className="mt-5 flex flex-wrap gap-2">
+            {pipelineViews.map((item) => {
+              const active = dashboardView === item.view || (!dashboardView && item.view === "all");
+
+              return (
+                <Link
+                  key={item.view}
+                  to={item.view === "all" ? "/admin/leads" : `/admin/leads?view=${item.view}`}
+                  className={`rounded-full border px-4 py-2 text-sm font-bold transition ${
+                    active
+                      ? "border-blue-200 bg-blue-600 text-white shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+
           <div className="mt-6 grid gap-3 lg:grid-cols-[1fr_190px_190px]">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -565,7 +595,7 @@ export function AdminLeadsPage() {
 
             {!loading && !filteredLeads.length ? (
               <div className="p-10 text-center text-slate-500">
-                No leads found for the selected filters.
+                No leads found for this CRM view or selected filters.
               </div>
             ) : null}
           </div>
