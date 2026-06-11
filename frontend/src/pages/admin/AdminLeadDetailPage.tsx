@@ -872,20 +872,54 @@ export function AdminLeadDetailPage() {
           </div>
 
           <aside className="space-y-6">
-            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold tracking-tight text-slate-950">
-                Contact actions
-              </h2>
+            <section className="rounded-[32px] border border-blue-100 bg-white p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
+                    Next action
+                  </p>
+                  <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                    Contact & convert
+                  </h2>
+                </div>
+                <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusClass(lead.status)}`}>
+                  {lead.status}
+                </span>
+              </div>
 
-              <div className="mt-5 space-y-3">
+              <div className="mt-5 rounded-3xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  Follow-up
+                </p>
+                <p className="mt-2 text-sm font-bold text-slate-950">
+                  {lead.followUpAt ? normalizeFollowUpInput(lead.followUpAt) : "Not set"}
+                </p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {quickFollowUps.slice(0, 2).map((item) => (
+                    <button
+                      key={item[1]}
+                      type="button"
+                      onClick={() => applyQuickFollowUp(item[1])}
+                      className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:border-blue-200 hover:text-blue-700"
+                    >
+                      {item[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-3">
                 {canCall ? (
                   <a
                     href={`tel:${phoneDigits}`}
                     onClick={() => void recordContactAction("Call action opened from lead detail")}
-                    className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
-                    <Phone className="h-5 w-5 text-blue-600" />
-                    Call {lead.phone}
+                    <span className="inline-flex items-center gap-3">
+                      <Phone className="h-5 w-5 text-blue-600" />
+                      Call Lead
+                    </span>
+                    <span className="text-xs text-slate-400">{lead.phone}</span>
                   </a>
                 ) : null}
 
@@ -895,22 +929,59 @@ export function AdminLeadDetailPage() {
                     target="_blank"
                     rel="noreferrer"
                     onClick={() => void recordContactAction("WhatsApp opened from lead detail")}
-                    className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-medium text-emerald-700 hover:bg-emerald-100"
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-medium text-emerald-700 hover:bg-emerald-100"
                   >
-                    <MessageCircle className="h-5 w-5 text-emerald-600" />
-                    Open WhatsApp
+                    <span className="inline-flex items-center gap-3">
+                      <MessageCircle className="h-5 w-5 text-emerald-600" />
+                      WhatsApp Lead
+                    </span>
+                    <span className="text-xs text-emerald-600">Open</span>
                   </a>
                 ) : null}
 
                 {lead.email ? (
                   <a
                     href={`mailto:${lead.email}`}
-                    className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
-                    <Mail className="h-5 w-5 text-slate-600" />
-                    Email Lead
+                    <span className="inline-flex items-center gap-3">
+                      <Mail className="h-5 w-5 text-slate-600" />
+                      Email Lead
+                    </span>
+                    <span className="text-xs text-slate-400">Mail</span>
                   </a>
                 ) : null}
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={saving}
+                  onClick={() =>
+                    void applyQuickConversion(
+                      { status: "Contacted", priority: lead.priority === "Cold" ? "Warm" : lead.priority },
+                      "Lead contacted from next action panel",
+                    )
+                  }
+                  className="rounded-full border-blue-100 text-blue-700 hover:bg-blue-50"
+                >
+                  Contacted
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={saving}
+                  onClick={() =>
+                    void applyQuickConversion(
+                      { status: "Negotiation", priority: "Hot" },
+                      "Lead moved to Negotiation from next action panel",
+                    )
+                  }
+                  className="rounded-full border-amber-100 text-amber-700 hover:bg-amber-50"
+                >
+                  Negotiation
+                </Button>
               </div>
             </section>
 
