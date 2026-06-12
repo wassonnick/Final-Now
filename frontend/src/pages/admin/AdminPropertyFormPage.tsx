@@ -605,7 +605,7 @@ export function AdminPropertyFormPage() {
       setError("");
 
       const uniqueSlug = sourceLeadId && !isEdit
-        ? `${makeSlug(title)}-owner-lead-${sourceLeadId}`
+        ? `${makeSlug(title)}-owner-lead-${sourceLeadId}-${Date.now()}`
         : makeSlug(title);
 
       const payload = {
