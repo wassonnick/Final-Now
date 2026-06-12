@@ -277,9 +277,36 @@ function displayStatusOption(lead: AdminLead, status: string) {
   return status;
 }
 
+
+function ownerLeadIntent(lead: AdminLead) {
+  const value = String(lead.requirement || lead.source || "").toLowerCase();
+
+  if (value.includes("sale") || value.includes("sell")) return "Owner sale listing";
+  if (value.includes("rent")) return "Owner rental listing";
+
+  return "Owner listing enquiry";
+}
+
+function displayOwnerRequirement(lead: AdminLead) {
+  if (!isOwnerSource(lead.source)) return lead.requirement || "Not specified";
+  return ownerLeadIntent(lead);
+}
+
+function ownerLeadNextStep(lead: AdminLead) {
+  if (!isOwnerSource(lead.source)) return "";
+
+  if (lead.status === "Booked") return "Inventory active";
+  if (lead.status === "Lost") return "Owner inactive";
+  if (lead.status === "Negotiation") return "Confirm final price/rent and listing terms";
+  if (lead.status === "Contacted") return "Verify ownership, society and property details";
+  if (lead.status === "Site Visit") return "Collect photos and inspect property readiness";
+
+  return "Call owner and verify listing details";
+}
+
 function displayLeadRequirement(lead: AdminLead) {
   if (isBrokerSource(lead.source)) return "Broker partner onboarding";
-  if (isOwnerSource(lead.source)) return lead.requirement || "Owner listing enquiry";
+  if (isOwnerSource(lead.source)) return displayOwnerRequirement(lead);
   return lead.requirement || "Not specified";
 }
 
@@ -1380,6 +1407,11 @@ export function AdminLeadDetailPage() {
                   <p className="text-xs font-bold uppercase tracking-[0.18em] opacity-70">Lead type</p>
                   <h3 className="mt-2 text-base font-extrabold">{leadTypeTitle(lead.source)}</h3>
                   <p className="mt-2 text-xs leading-5 opacity-80">{leadTypeDescription(lead.source)}</p>
+                  {isOwnerSource(lead.source) ? (
+                    <p className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-xs font-semibold leading-5">
+                      Next step: {ownerLeadNextStep(lead)}
+                    </p>
+                  ) : null}
                 </div>
 
                 <p>
