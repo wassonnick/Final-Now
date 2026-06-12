@@ -776,6 +776,27 @@ export function AdminPropertyFormPage() {
           </div>
         ) : null}
 
+        {sourceLeadId ? (
+          <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-blue-800 shadow-sm">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-500">
+                  Owner CRM source
+                </p>
+                <p className="mt-1 font-semibold text-blue-950">
+                  This draft property was started from owner lead #{sourceLeadId}.
+                </p>
+              </div>
+              <Link
+                to={`/admin/leads/${sourceLeadId}`}
+                className="inline-flex rounded-full border border-blue-200 bg-white px-4 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+              >
+                View source lead
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
         {publishValidationError ? (
           <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-medium text-blue-700">
             Publish blocked: {publishValidationError}
