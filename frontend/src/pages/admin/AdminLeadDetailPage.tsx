@@ -194,6 +194,105 @@ function sourceLabel(source?: string) {
   return source || "Website";
 }
 
+function leadTypeTitle(source?: string) {
+  const value = String(source || "").toLowerCase();
+
+  if (
+    value.includes("broker") ||
+    value.includes("partner") ||
+    value.includes("agent") ||
+    value.includes("crm_intake") ||
+    value.includes("public_broker_crm")
+  ) {
+    return "Broker partner lead";
+  }
+
+  if (
+    value.includes("owner") ||
+    value.includes("sell") ||
+    value.includes("seller") ||
+    value.includes("listing_submission") ||
+    value.includes("list_property")
+  ) {
+    return "Owner listing lead";
+  }
+
+  if (value.includes("property")) return "Property enquiry";
+  if (value.includes("society")) return "Society enquiry";
+  if (value.includes("search")) return "Search enquiry";
+  if (value.includes("floating") || value.includes("chat") || value.includes("callback")) return "Callback lead";
+
+  return "Website lead";
+}
+
+function leadTypeDescription(source?: string) {
+  const value = String(source || "").toLowerCase();
+
+  if (
+    value.includes("broker") ||
+    value.includes("partner") ||
+    value.includes("agent") ||
+    value.includes("crm_intake") ||
+    value.includes("public_broker_crm")
+  ) {
+    return "Partner or broker enquiry. Verify area coverage, lead-sharing terms and commission expectations.";
+  }
+
+  if (
+    value.includes("owner") ||
+    value.includes("sell") ||
+    value.includes("seller") ||
+    value.includes("listing_submission") ||
+    value.includes("list_property")
+  ) {
+    return "Owner inventory enquiry. Verify ownership, property details, photos, availability and expected pricing.";
+  }
+
+  if (value.includes("property")) {
+    return "User showed interest in a property. Confirm availability, price, visit timing and decision timeline.";
+  }
+
+  if (value.includes("society")) {
+    return "User showed interest in a society. Understand rent/buy need and match available inventory.";
+  }
+
+  if (value.includes("search")) {
+    return "Search-generated lead. Clarify exact requirement and suggest matching societies or properties.";
+  }
+
+  return "General website lead. Call back and qualify the requirement before assigning next action.";
+}
+
+function leadTypeClass(source?: string) {
+  const value = String(source || "").toLowerCase();
+
+  if (
+    value.includes("broker") ||
+    value.includes("partner") ||
+    value.includes("agent") ||
+    value.includes("crm_intake") ||
+    value.includes("public_broker_crm")
+  ) {
+    return "border-orange-100 bg-orange-50 text-orange-900";
+  }
+
+  if (
+    value.includes("owner") ||
+    value.includes("sell") ||
+    value.includes("seller") ||
+    value.includes("listing_submission") ||
+    value.includes("list_property")
+  ) {
+    return "border-emerald-100 bg-emerald-50 text-emerald-900";
+  }
+
+  if (value.includes("property")) return "border-violet-100 bg-violet-50 text-violet-900";
+  if (value.includes("society")) return "border-blue-100 bg-blue-50 text-blue-900";
+  if (value.includes("search")) return "border-sky-100 bg-sky-50 text-sky-900";
+
+  return "border-slate-100 bg-slate-50 text-slate-900";
+}
+
 function cleanPhone(phone?: string) {
   return String(phone || "").replace(/[^0-9]/g, "");
 }
@@ -1019,6 +1118,12 @@ export function AdminLeadDetailPage() {
                   <UserCheck className="h-4 w-4 text-slate-400" />
                   Assigned to {lead.assignedTo || "Unassigned"}
                 </p>
+                <div className={`rounded-2xl border p-4 ${leadTypeClass(lead.source)}`}>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] opacity-70">Lead type</p>
+                  <h3 className="mt-2 text-base font-extrabold">{leadTypeTitle(lead.source)}</h3>
+                  <p className="mt-2 text-xs leading-5 opacity-80">{leadTypeDescription(lead.source)}</p>
+                </div>
+
                 <p>
                   <span className="font-medium text-slate-950">Source:</span> {sourceLabel(lead.source)}
                 </p>
