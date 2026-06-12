@@ -75,6 +75,31 @@ function isOwnerLeadSource(source?: string) {
 }
 
 
+
+function cleanLeadInterestMeta(lead: AdminLead) {
+  if (isBrokerLeadSource(lead.source)) {
+    return lead.property || "Broker partner enquiry";
+  }
+
+  if (isOwnerLeadSource(lead.source)) {
+    return lead.property || "Owner listing enquiry";
+  }
+
+  return lead.property || "General enquiry";
+}
+
+function cleanLeadInterestRequirement(lead: AdminLead) {
+  if (isBrokerLeadSource(lead.source)) {
+    return "Broker partner onboarding";
+  }
+
+  if (isOwnerLeadSource(lead.source)) {
+    return lead.requirement || "Owner inventory submission";
+  }
+
+  return lead.requirement || "Not specified";
+}
+
 function cleanLeadInterest(lead: AdminLead) {
   if (isBrokerLeadSource(lead.source)) {
     return {
@@ -697,7 +722,7 @@ export function AdminLeadsPage() {
 
                   <div className="mt-4 rounded-2xl bg-slate-50 p-3 xl:mt-0 xl:bg-transparent xl:p-0">
                     <p className="font-semibold text-slate-950">{lead.society || "Not specified"}</p>
-                    <p className="mt-1 text-sm text-slate-500">{lead.property || "General enquiry"}</p>
+                    <p className="mt-1 text-sm text-slate-500">{cleanLeadInterestMeta(lead)}</p>
                     <p className="mt-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 xl:bg-transparent xl:px-0 xl:py-0 xl:text-sm">
                       {displayRequirement(lead)}
                     </p>
