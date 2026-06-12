@@ -462,7 +462,7 @@ function BrokerCrmLiveLeads() {
 
                 <div>
                   <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                    {lead.status || 'New'}
+                    {displayBrokerCrmStatus(lead)}
                   </span>
                   <p className="mt-2 text-xs text-slate-500">{lead.priority || 'Warm'}</p>
                 </div>

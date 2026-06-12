@@ -146,6 +146,21 @@ function cleanLeadInterestSubtitle(lead: AdminLead) {
   return lead.requirement || lead.property || "Not specified";
 }
 
+
+function displayLeadStatusOptionLabel(lead: AdminLead, status: LeadStatus) {
+  if (isBrokerLeadSource(lead.source)) {
+    if (status === "Booked") return "Active Partner";
+    if (status === "Lost") return "Not Suitable";
+  }
+
+  if (isOwnerLeadSource(lead.source)) {
+    if (status === "Booked") return "Owner Active";
+    if (status === "Lost") return "Inactive Owner";
+  }
+
+  return status;
+}
+
 function displayLeadStatusLabel(lead: AdminLead) {
   if (isBrokerLeadSource(lead.source)) {
     if (lead.status === "Booked") return "Active Partner";
@@ -724,7 +739,7 @@ export function AdminLeadsPage() {
                     <p className="font-semibold text-slate-950">{lead.society || "Not specified"}</p>
                     <p className="mt-1 text-sm text-slate-500">{cleanLeadInterestMeta(lead)}</p>
                     <p className="mt-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 xl:bg-transparent xl:px-0 xl:py-0 xl:text-sm">
-                      {displayRequirement(lead)}
+                      {cleanLeadInterestRequirement(lead)}
                     </p>
                   </div>
 
@@ -739,7 +754,7 @@ export function AdminLeadsPage() {
                       {statuses
                         .filter((item) => item !== "All")
                         .map((item) => (
-                          <option key={item}>{item}</option>
+                          <option key={item} value={item}>{displayLeadStatusOptionLabel(lead, item)}</option>
                         ))}
                     </select>
                   </div>
