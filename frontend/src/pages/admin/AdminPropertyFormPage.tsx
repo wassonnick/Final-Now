@@ -648,8 +648,19 @@ export function AdminPropertyFormPage() {
         throw new Error(json?.message || "Save failed");
       }
 
-      setSuccess(status === "Draft" ? "Property draft saved." : "Property listing saved and published.");
-      navigate("/admin/properties");
+      setSuccess(
+        sourceLeadId && status === "Draft"
+          ? `Draft property saved from Owner CRM lead #${sourceLeadId}.`
+          : status === "Draft"
+            ? "Property draft saved."
+            : "Property listing saved and published.",
+      );
+
+      if (sourceLeadId && status === "Draft") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        navigate("/admin/properties");
+      }
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Could not save the property. Please try again.");
