@@ -328,6 +328,18 @@ export function AdminDashboardPage() {
                 <p className="mt-1 text-sm text-slate-500">Follow-up pipeline</p>
               </Link>
 
+              <Link to="/admin/owner-crm" className={actionCardClass(false)}>
+                <Home className="h-5 w-5 text-blue-600" />
+                <p className="mt-3 font-bold">Owner CRM</p>
+                <p className="mt-1 text-sm text-slate-500">Owner inventory leads</p>
+              </Link>
+
+              <Link to="/admin/broker-crm" className={actionCardClass(false)}>
+                <Users className="h-5 w-5 text-blue-600" />
+                <p className="mt-3 font-bold">Broker CRM</p>
+                <p className="mt-1 text-sm text-slate-500">Partner enquiries</p>
+              </Link>
+
               <Link to="/search" className={actionCardClass(false)}>
                 <Search className="h-5 w-5 text-blue-600" />
                 <p className="mt-3 font-bold">View Site</p>
