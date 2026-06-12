@@ -96,6 +96,31 @@ function cleanLeadInterest(lead: AdminLead) {
   };
 }
 
+
+function cleanLeadInterestTitle(lead: AdminLead) {
+  if (isBrokerLeadSource(lead.source)) {
+    return lead.society || lead.property || "Broker partner enquiry";
+  }
+
+  if (isOwnerLeadSource(lead.source)) {
+    return lead.society || lead.property || "Owner listing enquiry";
+  }
+
+  return lead.society || lead.property || "General enquiry";
+}
+
+function cleanLeadInterestSubtitle(lead: AdminLead) {
+  if (isBrokerLeadSource(lead.source)) {
+    return "Broker partner onboarding";
+  }
+
+  if (isOwnerLeadSource(lead.source)) {
+    return lead.requirement || "Owner inventory submission";
+  }
+
+  return lead.requirement || lead.property || "Not specified";
+}
+
 function displayLeadStatusLabel(lead: AdminLead) {
   if (isBrokerLeadSource(lead.source)) {
     if (lead.status === "Booked") return "Active Partner";
