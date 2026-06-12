@@ -442,8 +442,12 @@ function BrokerCrmLiveLeads() {
                 </div>
 
                 <div>
-                  <p className="font-medium text-slate-800">{lead.society || lead.property || 'General partner enquiry'}</p>
-                  <p className="mt-1 text-slate-500">{lead.requirement || 'Broker partner onboarding'}</p>
+                  <p className="font-medium text-slate-800">
+                    {lead.society || lead.property || 'General partner enquiry'}
+                  </p>
+                  <p className="mt-1 text-slate-500">
+                    {lead.requirement || 'Broker partner onboarding'}
+                  </p>
                 </div>
 
                 <div>
