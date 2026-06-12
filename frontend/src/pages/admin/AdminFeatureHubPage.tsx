@@ -399,6 +399,28 @@ function brokerPartnerPriorityLabel(lead: AdminLead) {
 }
 
 
+
+function brokerPartnerFilterMatches(lead: AdminLead, filter: string) {
+  if (filter === "all") return true;
+  if (filter === "new") return lead.status === "New";
+  if (filter === "verification") return lead.status === "Contacted" || lead.status === "Site Visit";
+  if (filter === "commission") return lead.status === "Negotiation";
+  if (filter === "active") return lead.status === "Booked";
+  if (filter === "not_suitable") return lead.status === "Lost";
+
+  return true;
+}
+
+function brokerPartnerFilterLabel(filter: string) {
+  if (filter === "new") return "New";
+  if (filter === "verification") return "Verification";
+  if (filter === "commission") return "Commission";
+  if (filter === "active") return "Active";
+  if (filter === "not_suitable") return "Not Suitable";
+
+  return "All";
+}
+
 function brokerPartnerMetrics(leads: AdminLead[]) {
   return {
     total: leads.length,
@@ -413,6 +435,7 @@ function brokerPartnerMetrics(leads: AdminLead[]) {
 function BrokerCrmLiveLeads() {
   const [leads, setLeads] = useState<AdminLead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [partnerFilter, setPartnerFilter] = useState("all");
 
   useEffect(() => {
     let mounted = true;
@@ -438,7 +461,11 @@ function BrokerCrmLiveLeads() {
   }, []);
 
   const brokerLeads = useMemo(() => leads.filter(isBrokerLead), [leads]);
-  const visibleLeads = brokerLeads.slice(0, 6);
+  const filteredBrokerLeads = useMemo(
+    () => brokerLeads.filter((lead) => brokerPartnerFilterMatches(lead, partnerFilter)),
+    [brokerLeads, partnerFilter],
+  );
+  const visibleLeads = filteredBrokerLeads.slice(0, 6);
   const metrics = brokerPartnerMetrics(brokerLeads);
 
   return (
@@ -476,6 +503,45 @@ function BrokerCrmLiveLeads() {
             <p className="mt-1 text-xs text-slate-500">{note}</p>
           </div>
         ))}
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        {[
+          ["all", "All", metrics.total],
+          ["new", "New", metrics.newPartners],
+          ["verification", "Verification", metrics.verificationStarted],
+          ["commission", "Commission", metrics.commissionDiscussion],
+          ["active", "Active", metrics.activePartners],
+          ["not_suitable", "Not Suitable", metrics.notSuitable],
+        ].map(([value, label, count]) => (
+          <button
+            key={String(value)}
+            type="button"
+            onClick={() => setPartnerFilter(String(value))}
+            className={`rounded-full border px-4 py-2 text-xs font-bold transition ${
+              partnerFilter === value
+                ? "border-blue-600 bg-blue-600 text-white"
+                : "border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+            }`}
+          >
+            {label} · {count}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+        <p className="font-medium text-slate-600">
+          Showing {visibleLeads.length} {brokerPartnerFilterLabel(partnerFilter).toLowerCase()} partner lead{visibleLeads.length === 1 ? "" : "s"}
+        </p>
+        {partnerFilter !== "all" ? (
+          <button
+            type="button"
+            onClick={() => setPartnerFilter("all")}
+            className="text-xs font-bold text-blue-600 hover:text-blue-700"
+          >
+            Clear filter
+          </button>
+        ) : null}
       </div>
 
       <div className="mt-5 rounded-2xl border border-slate-100">
@@ -536,7 +602,7 @@ function BrokerCrmLiveLeads() {
           </div>
         ) : (
           <div className="px-4 py-8 text-sm font-medium text-slate-500">
-            No broker partner leads yet. Public broker enquiries will appear here once submitted.
+            No {brokerPartnerFilterLabel(partnerFilter).toLowerCase()} broker partner leads found.
           </div>
         )}
       </div>
