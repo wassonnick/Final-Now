@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -16,6 +17,8 @@ import {
 
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
+import { fetchAdminLeads } from '@/lib/adminLeadStore';
+import type { AdminLead } from '@/lib/adminLeadStore';
 
 type FeatureKey =
   | 'ai'
@@ -353,6 +356,121 @@ function StatusList({ title, items, done = false }: { title: string; items: stri
   );
 }
 
+function isBrokerLead(lead: AdminLead) {
+  const value = String(lead.source || '').toLowerCase();
+
+  return (
+    value.includes('broker') ||
+    value.includes('partner') ||
+    value.includes('agent') ||
+    value.includes('crm_intake') ||
+    value.includes('public_broker_crm')
+  );
+}
+
+function BrokerCrmLiveLeads() {
+  const [leads, setLeads] = useState<AdminLead[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchAdminLeads()
+      .then((items) => {
+        if (mounted) {
+          setLeads(items);
+        }
+      })
+      .catch((error) => {
+        console.error('Could not load broker CRM leads:', error);
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const brokerLeads = useMemo(() => leads.filter(isBrokerLead), [leads]);
+  const visibleLeads = brokerLeads.slice(0, 6);
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-500">Live broker queue</p>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+            Broker partner leads
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Partner, broker and agent enquiries pulled directly from the main Leads CRM.
+          </p>
+        </div>
+
+        <Button asChild className="rounded-full bg-blue-600 hover:bg-blue-700">
+          <Link to="/admin/leads?view=broker">
+            Open full broker queue
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-slate-100">
+        <div className="grid grid-cols-[1.1fr_1fr_0.8fr_0.8fr] gap-4 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+          <span>Lead</span>
+          <span>Interest</span>
+          <span>Status</span>
+          <span>Action</span>
+        </div>
+
+        {loading ? (
+          <div className="px-4 py-8 text-sm font-medium text-slate-500">Loading broker leads...</div>
+        ) : visibleLeads.length ? (
+          <div className="divide-y divide-slate-100">
+            {visibleLeads.map((lead) => (
+              <div key={lead.id} className="grid grid-cols-[1.1fr_1fr_0.8fr_0.8fr] gap-4 px-4 py-4 text-sm">
+                <div>
+                  <p className="font-semibold text-slate-950">{lead.name || 'Unnamed lead'}</p>
+                  <p className="mt-1 text-slate-500">{lead.phone || 'No phone'}</p>
+                  <span className="mt-2 inline-flex rounded-full bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-700">
+                    Broker partner
+                  </span>
+                </div>
+
+                <div>
+                  <p className="font-medium text-slate-800">{lead.society || lead.property || 'General partner enquiry'}</p>
+                  <p className="mt-1 text-slate-500">{lead.requirement || 'Broker partner onboarding'}</p>
+                </div>
+
+                <div>
+                  <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                    {lead.status || 'New'}
+                  </span>
+                  <p className="mt-2 text-xs text-slate-500">{lead.priority || 'Warm'}</p>
+                </div>
+
+                <div>
+                  <Button asChild variant="outline" size="sm" className="rounded-full">
+                    <Link to={`/admin/leads/${lead.id}`}>Open</Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="px-4 py-8 text-sm font-medium text-slate-500">
+            No broker partner leads yet. Public broker enquiries will appear here once submitted.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export function AdminFeatureHubPage({ feature }: AdminFeatureHubPageProps) {
   const config = featureConfigs[feature];
   const Icon = config.icon;
@@ -407,6 +525,8 @@ export function AdminFeatureHubPage({ feature }: AdminFeatureHubPageProps) {
             </div>
           ))}
         </section>
+
+        {feature === 'broker-crm' ? <BrokerCrmLiveLeads /> : null}
 
         <section className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-blue-900">
           <div className="flex gap-3">
