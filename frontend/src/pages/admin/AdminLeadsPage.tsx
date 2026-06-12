@@ -49,6 +49,45 @@ const pipelineViews = [
 
 const priorities: Array<"All" | LeadPriority> = ["All", "Hot", "Warm", "Cold"];
 
+
+function isBrokerLeadSource(source?: string) {
+  const value = String(source || "").toLowerCase();
+
+  return (
+    value.includes("broker") ||
+    value.includes("partner") ||
+    value.includes("agent") ||
+    value.includes("crm_intake") ||
+    value.includes("public_broker_crm")
+  );
+}
+
+function isOwnerLeadSource(source?: string) {
+  const value = String(source || "").toLowerCase();
+
+  return (
+    value.includes("owner") ||
+    value.includes("sell") ||
+    value.includes("seller") ||
+    value.includes("listing_submission") ||
+    value.includes("list_property")
+  );
+}
+
+function displayLeadStatusLabel(lead: AdminLead) {
+  if (isBrokerLeadSource(lead.source)) {
+    if (lead.status === "Booked") return "Active Partner";
+    if (lead.status === "Lost") return "Not Suitable";
+  }
+
+  if (isOwnerLeadSource(lead.source)) {
+    if (lead.status === "Booked") return "Owner Active";
+    if (lead.status === "Lost") return "Inactive Owner";
+  }
+
+  return lead.status;
+}
+
 function statusClass(status: LeadStatus) {
   switch (status) {
     case "New":

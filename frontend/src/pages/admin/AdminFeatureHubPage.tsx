@@ -368,6 +368,16 @@ function isBrokerLead(lead: AdminLead) {
   );
 }
 
+
+function displayBrokerCrmStatus(lead: AdminLead) {
+  if (isBrokerLead(lead)) {
+    if (lead.status === "Booked") return "Active Partner";
+    if (lead.status === "Lost") return "Not Suitable";
+  }
+
+  return lead.status;
+}
+
 function BrokerCrmLiveLeads() {
   const [leads, setLeads] = useState<AdminLead[]>([]);
   const [loading, setLoading] = useState(true);

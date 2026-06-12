@@ -248,6 +248,35 @@ function isOwnerSource(source?: string) {
 }
 
 
+
+function displayLeadStatus(lead: AdminLead) {
+  if (isBrokerSource(lead.source)) {
+    if (lead.status === "Booked") return "Active Partner";
+    if (lead.status === "Lost") return "Not Suitable";
+  }
+
+  if (isOwnerSource(lead.source)) {
+    if (lead.status === "Booked") return "Owner Active";
+    if (lead.status === "Lost") return "Inactive Owner";
+  }
+
+  return lead.status;
+}
+
+function displayStatusOption(lead: AdminLead, status: LeadStatus) {
+  if (isBrokerSource(lead.source)) {
+    if (status === "Booked") return "Active Partner";
+    if (status === "Lost") return "Not Suitable";
+  }
+
+  if (isOwnerSource(lead.source)) {
+    if (status === "Booked") return "Owner Active";
+    if (status === "Lost") return "Inactive Owner";
+  }
+
+  return status;
+}
+
 function displayLeadRequirement(lead: AdminLead) {
   if (isBrokerSource(lead.source)) return "Broker partner onboarding";
   if (isOwnerSource(lead.source)) return lead.requirement || "Owner listing enquiry";
@@ -693,7 +722,7 @@ export function AdminLeadDetailPage() {
         <section className="grid gap-4 md:grid-cols-4">
           <div className={`rounded-[24px] border p-5 ${statusClass(lead.status)}`}>
             <p className="text-xs font-bold uppercase tracking-[0.14em] opacity-70">Status</p>
-            <p className="mt-2 text-xl font-bold">{lead.status}</p>
+            <p className="mt-2 text-xl font-bold">{displayLeadStatus(lead)}</p>
           </div>
           <div className={`rounded-[24px] border p-5 ${priorityClass(lead.priority)}`}>
             <p className="text-xs font-bold uppercase tracking-[0.14em] opacity-70">Priority</p>
@@ -731,7 +760,7 @@ export function AdminLeadDetailPage() {
             <div className="flex flex-wrap gap-2">
               {statuses.map((item) => (
                 <button
-                  key={item}
+                  key={displayStatusOption(lead, item)}
                   type="button"
                   onClick={() => quickStatus(item)}
                   className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
@@ -740,7 +769,7 @@ export function AdminLeadDetailPage() {
                       : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  {item}
+                  {displayStatusOption(lead, item)}
                 </button>
               ))}
             </div>
@@ -825,7 +854,7 @@ export function AdminLeadDetailPage() {
                     className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     {statuses.map((item) => (
-                      <option key={item}>{item}</option>
+                      <option key={displayStatusOption(lead, item)}>{displayStatusOption(lead, item)}</option>
                     ))}
                   </select>
                 </label>
@@ -838,7 +867,7 @@ export function AdminLeadDetailPage() {
                     className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     {priorities.map((item) => (
-                      <option key={item}>{item}</option>
+                      <option key={displayStatusOption(lead, item)}>{displayStatusOption(lead, item)}</option>
                     ))}
                   </select>
                 </label>
@@ -851,7 +880,7 @@ export function AdminLeadDetailPage() {
                     className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     {agents.map((item) => (
-                      <option key={item}>{item}</option>
+                      <option key={displayStatusOption(lead, item)}>{displayStatusOption(lead, item)}</option>
                     ))}
                   </select>
                 </label>
@@ -867,7 +896,7 @@ export function AdminLeadDetailPage() {
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {quickFollowUps.map(([label, value]) => (
                       <button
-                        key={value}
+                        key={displayStatusOption(lead, value)}
                         type="button"
                         onClick={() => applyQuickFollowUp(value)}
                         className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-700 hover:bg-blue-100"
@@ -901,7 +930,7 @@ export function AdminLeadDetailPage() {
                   </p>
                 </div>
                 <span className="rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
-                  Current: {lead.status} / {lead.priority}
+                  Current: {displayLeadStatus(lead)} / {lead.priority}
                 </span>
               </div>
 
@@ -1172,12 +1201,12 @@ export function AdminLeadDetailPage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 {quickNoteTemplates.map((item) => (
                   <button
-                    key={item}
+                    key={displayStatusOption(lead, item)}
                     type="button"
                     onClick={() => applyQuickNote(item)}
                     className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700"
                   >
-                    {item}
+                    {displayStatusOption(lead, item)}
                   </button>
                 ))}
               </div>
