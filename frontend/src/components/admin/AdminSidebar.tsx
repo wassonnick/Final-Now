@@ -32,6 +32,7 @@ const links = [
   { label: "AI Features", href: "/admin/ai", icon: Bot },
   { label: "Maps", href: "/admin/maps", icon: MapPinned },
   { label: "Broker CRM", href: "/admin/broker-crm", icon: BriefcaseBusiness },
+  { label: "Owner CRM", href: "/admin/owner-crm", icon: BriefcaseBusiness },
   { label: "Chat", href: "/admin/chat", icon: MessageSquareText },
   { label: "Analytics", href: "/admin/analytics", icon: LineChart },
   { label: "Advanced Search", href: "/admin/advanced-search", icon: Search },
