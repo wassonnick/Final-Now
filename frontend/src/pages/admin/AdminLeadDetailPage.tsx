@@ -222,6 +222,31 @@ function sourceLabel(source?: string) {
   return source || "Website";
 }
 
+
+function isBrokerSource(source?: string) {
+  const value = String(source || "").toLowerCase();
+
+  return (
+    value.includes("broker") ||
+    value.includes("partner") ||
+    value.includes("agent") ||
+    value.includes("crm_intake") ||
+    value.includes("public_broker_crm")
+  );
+}
+
+function isOwnerSource(source?: string) {
+  const value = String(source || "").toLowerCase();
+
+  return (
+    value.includes("owner") ||
+    value.includes("sell") ||
+    value.includes("seller") ||
+    value.includes("listing_submission") ||
+    value.includes("list_property")
+  );
+}
+
 function leadTypeTitle(source?: string) {
   const value = String(source || "").toLowerCase();
 
