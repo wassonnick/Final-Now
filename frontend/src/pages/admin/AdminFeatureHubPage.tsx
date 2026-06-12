@@ -695,6 +695,21 @@ function isPropertyLinkedToOwnerLead(property: OwnerLinkedProperty, leadId: numb
   return text.includes(`source lead id: ${String(leadId).toLowerCase()}`);
 }
 
+
+function ownerDraftPropertyUrlFromLead(lead: AdminLead) {
+  const params = new URLSearchParams();
+
+  if (lead.name) params.set("ownerName", lead.name);
+  if (lead.phone) params.set("ownerPhone", lead.phone);
+  if (lead.society) params.set("society", lead.society);
+  if (lead.property) params.set("property", lead.property);
+  if (lead.budget) params.set("expectedPrice", lead.budget);
+  if (lead.requirement) params.set("requirement", lead.requirement);
+  params.set("sourceLeadId", String(lead.id));
+
+  return `/admin/properties/new?${params.toString()}`;
+}
+
 function ownerInventoryStage(lead: AdminLead) {
   if (lead.status === "Booked") return "Inventory active";
   if (lead.status === "Lost") return "Inactive owner";
@@ -897,9 +912,19 @@ function OwnerCrmLiveLeads() {
                 </div>
 
                 <div>
-                  <Button asChild variant="outline" size="sm" className="rounded-full">
-                    <Link to={`/admin/leads/${lead.id}`}>Open profile</Link>
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button asChild variant="outline" size="sm" className="rounded-full">
+                      <Link to={`/admin/leads/${lead.id}`}>Open profile</Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                    >
+                      <Link to={ownerDraftPropertyUrlFromLead(lead)}>Create draft</Link>
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
