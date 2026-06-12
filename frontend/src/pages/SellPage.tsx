@@ -66,18 +66,42 @@ export function SellPage() {
     setSubmitting(true);
     setError("");
 
+    const cleanPhone = form.phone.replace(/[^0-9]/g, "").slice(-10);
+    const listingIntent = purpose === "rent" ? "Rent" : "Sale";
+    const societyName = form.society.trim();
+    const towerName = form.tower.trim();
+    const propertyDetails = form.details.trim();
+    const expectation = form.expectation.trim();
+
+    const propertyTitle =
+      [propertyDetails, societyName].filter(Boolean).join(" · ") ||
+      `Owner ${listingIntent} Listing`;
+
+    const ownerMessage = [
+      "Owner listing submission from Sell page",
+      `Intent: ${listingIntent}`,
+      `Owner name: ${form.name.trim() || "Not provided"}`,
+      `Phone: ${cleanPhone || form.phone || "Not provided"}`,
+      `Society: ${societyName || "Not provided"}`,
+      `Tower / Block: ${towerName || "Not provided"}`,
+      `Property details: ${propertyDetails || "Not provided"}`,
+      `Expected ${purpose === "rent" ? "rent" : "sale price"}: ${expectation || "Not provided"}`,
+      "Suggested next action: Call owner, verify property details, ask for photos, confirm availability and expected pricing.",
+    ].join("\n");
+
     try {
       await backendApi.createLead({
-        name: form.name,
-        phone: form.phone,
-        source:
-          purpose === "rent" ? "owner_listing_rent" : "owner_listing_sale",
-        society_name: form.society || null,
-        property_title:
-          [form.details, form.society].filter(Boolean).join(" · ") || null,
-        message: `Owner wants to ${purpose === "rent" ? "rent out" : "sell"} a property. Society: ${form.society || "Not provided"}. Tower: ${form.tower || "Not provided"}. Details: ${form.details || "Not provided"}. Expectation: ${form.expectation || "Not provided"}.`,
-        requirement: `${purpose === "rent" ? "Owner rental listing" : "Owner sale listing"} from Sell page`,
-        budget: form.expectation || null,
+        name: form.name.trim(),
+        phone: cleanPhone || form.phone,
+        source: purpose === "rent" ? "owner_listing_rent" : "owner_listing_sale",
+        society_name: societyName || null,
+        property_title: propertyTitle,
+        message: ownerMessage,
+        requirement:
+          purpose === "rent"
+            ? "Owner listing - Rent"
+            : "Owner listing - Sale",
+        budget: expectation || null,
       });
       setSuccess(true);
     } catch (leadError) {
