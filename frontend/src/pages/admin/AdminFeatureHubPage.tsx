@@ -36,6 +36,10 @@ type FeatureConfig = {
     label: string;
     href: string;
   };
+  actions?: Array<{
+    label: string;
+    href: string;
+  }>;
   metrics: Array<{
     label: string;
     value: string;
@@ -132,13 +136,23 @@ const featureConfigs: Record<FeatureKey, FeatureConfig> = {
     summary:
       'Broker CRM organizes buyer, tenant, owner and broker conversations around lead status, property interest and next follow-up.',
     primaryAction: {
-      label: 'Open leads',
-      href: '/admin/leads',
+      label: 'Open Broker Leads',
+      href: '/admin/leads?view=broker',
     },
+    actions: [
+      {
+        label: 'Open Owner Leads',
+        href: '/admin/leads?view=owner',
+      },
+      {
+        label: 'Open All Leads',
+        href: '/admin/leads',
+      },
+    ],
     metrics: [
-      { label: 'Lead source', value: 'Captured', note: 'Admin lead detail exists' },
-      { label: 'Pipeline', value: 'To connect', note: 'Stages and assignments next' },
-      { label: 'Follow-up', value: 'Manual', note: 'Automation can be added later' },
+      { label: 'Broker leads', value: 'Live filter', note: 'Open broker partner enquiries' },
+      { label: 'Owner leads', value: 'Live filter', note: 'Open owner inventory submissions' },
+      { label: 'Follow-up', value: 'CRM ready', note: 'Use status, priority and next action' },
     ],
     workflows: [
       'Track inquiry source and property/society interest',
@@ -152,14 +166,14 @@ const featureConfigs: Record<FeatureKey, FeatureConfig> = {
       'Property and society context',
     ],
     pending: [
-      'Broker assignment model',
-      'Pipeline stages',
-      'Follow-up reminders and notes timeline',
+      'Broker onboarding source polishing',
+      'Broker assignment owner field',
+      'Public partner form conversion polish',
     ],
     nextBuild: [
-      'Add CRM stages: New, Contacted, Visit, Negotiation, Closed',
-      'Add broker owner field to leads',
-      'Add lead activity timeline',
+      'Use Broker Leads filter for partner enquiries',
+      'Use Owner Leads filter for owner inventory',
+      'Add broker assignment and commission tracking later',
     ],
   },
   chat: {
@@ -363,13 +377,23 @@ export function AdminFeatureHubPage({ feature }: AdminFeatureHubPageProps) {
               </div>
             </div>
 
-            {config.primaryAction ? (
-              <Button asChild className="rounded-full bg-blue-600 hover:bg-blue-700">
-                <Link to={config.primaryAction.href}>
-                  {config.primaryAction.label}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+            {config.primaryAction || config.actions?.length ? (
+              <div className="flex flex-wrap gap-3">
+                {config.primaryAction ? (
+                  <Button asChild className="rounded-full bg-blue-600 hover:bg-blue-700">
+                    <Link to={config.primaryAction.href}>
+                      {config.primaryAction.label}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                ) : null}
+
+                {config.actions?.map((action) => (
+                  <Button key={action.href} asChild variant="outline" className="rounded-full">
+                    <Link to={action.href}>{action.label}</Link>
+                  </Button>
+                ))}
+              </div>
             ) : null}
           </div>
         </section>
