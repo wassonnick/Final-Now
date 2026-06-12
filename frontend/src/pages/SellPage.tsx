@@ -120,13 +120,13 @@ export function SellPage() {
         <div className="relative container mx-auto px-4 py-20 md:py-28">
           <div className="grid lg:grid-cols-2 gap-10 items-center">
             <div>
-              <Badge className="mb-5 bg-gold-500/15 text-gold-300 border-gold-400/30">
+              <Badge className="mb-5 border-gold-400/50 bg-gold-500/20 text-gold-200 shadow-sm">
                 Owner inventory engine
               </Badge>
-              <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight leading-tight">
+              <h1 className="max-w-2xl text-4xl md:text-6xl font-display font-bold tracking-tight leading-tight text-white drop-shadow-[0_8px_28px_rgba(0,0,0,0.45)]">
                 List your property from the society page.
               </h1>
-              <p className="text-lg text-navy-100 mt-5 max-w-2xl">
+              <p className="text-lg text-white/85 mt-5 max-w-2xl">
                 Rent out or sell your flat with society-first context,
                 AI-generated listing content and lead capture built around real
                 buyer and tenant intent.
@@ -139,7 +139,7 @@ export function SellPage() {
                 ].map((item) => (
                   <div
                     key={item}
-                    className="flex items-center gap-2 text-sm text-navy-100"
+                    className="flex items-center gap-2 text-sm font-medium text-white/85"
                   >
                     <CheckCircle2 className="w-4 h-4 text-gold-400" />
                     {item}
