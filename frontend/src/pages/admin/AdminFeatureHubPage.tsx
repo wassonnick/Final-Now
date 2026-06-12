@@ -378,6 +378,26 @@ function displayBrokerCrmStatus(lead: AdminLead) {
   return lead.status;
 }
 
+
+function brokerPartnerStep(lead: AdminLead) {
+  if (lead.status === "Booked") return "Active partner";
+  if (lead.status === "Lost") return "Not suitable";
+  if (lead.status === "Negotiation") return "Commission discussion";
+  if (lead.status === "Contacted") return "Verification started";
+  if (lead.status === "Site Visit") return "Field verification";
+  return "New partner enquiry";
+}
+
+function brokerPartnerArea(lead: AdminLead) {
+  return lead.society || lead.property || "Area not specified";
+}
+
+function brokerPartnerPriorityLabel(lead: AdminLead) {
+  if (lead.priority === "Hot") return "High potential";
+  if (lead.priority === "Cold") return "Low priority";
+  return "Needs review";
+}
+
 function BrokerCrmLiveLeads() {
   const [leads, setLeads] = useState<AdminLead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -433,8 +453,8 @@ function BrokerCrmLiveLeads() {
         <div className="grid grid-cols-[1.1fr_1fr_0.8fr_0.8fr] gap-4 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
           <span>Lead</span>
           <span>Interest</span>
-          <span>Status</span>
-          <span>Action</span>
+          <span>Partner stage</span>
+          <span>Profile</span>
         </div>
 
         {loading ? (
@@ -442,21 +462,26 @@ function BrokerCrmLiveLeads() {
         ) : visibleLeads.length ? (
           <div className="divide-y divide-slate-100">
             {visibleLeads.map((lead) => (
-              <div key={lead.id} className="grid grid-cols-[1.1fr_1fr_0.8fr_0.8fr] gap-4 px-4 py-4 text-sm">
+              <div key={lead.id} className="grid grid-cols-[1.1fr_1fr_0.9fr_0.8fr] gap-4 px-4 py-4 text-sm">
                 <div>
                   <p className="font-semibold text-slate-950">{lead.name || 'Unnamed lead'}</p>
                   <p className="mt-1 text-slate-500">{lead.phone || 'No phone'}</p>
-                  <span className="mt-2 inline-flex rounded-full bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-700">
-                    Broker partner
-                  </span>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="inline-flex rounded-full bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-700">
+                      Broker partner
+                    </span>
+                    <span className="inline-flex rounded-full bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-600">
+                      {brokerPartnerPriorityLabel(lead)}
+                    </span>
+                  </div>
                 </div>
 
                 <div>
                   <p className="font-medium text-slate-800">
-                    {lead.society || lead.property || 'General partner enquiry'}
+                    {brokerPartnerArea(lead)}
                   </p>
                   <p className="mt-1 text-slate-500">
-                    {isBrokerLead(lead) ? 'Broker partner onboarding' : lead.requirement || 'Broker partner onboarding'}
+                    Broker partner onboarding
                   </p>
                 </div>
 
@@ -464,12 +489,17 @@ function BrokerCrmLiveLeads() {
                   <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
                     {displayBrokerCrmStatus(lead)}
                   </span>
-                  <p className="mt-2 text-xs text-slate-500">{lead.priority || 'Warm'}</p>
+                  <p className="mt-2 text-xs font-semibold text-slate-600">
+                    {brokerPartnerStep(lead)}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Assigned: {lead.assignedTo || 'Unassigned'}
+                  </p>
                 </div>
 
                 <div>
                   <Button asChild variant="outline" size="sm" className="rounded-full">
-                    <Link to={`/admin/leads/${lead.id}`}>Open</Link>
+                    <Link to={`/admin/leads/${lead.id}`}>Open profile</Link>
                   </Button>
                 </div>
               </div>
