@@ -247,6 +247,13 @@ function isOwnerSource(source?: string) {
   );
 }
 
+
+function displayLeadRequirement(lead: AdminLead) {
+  if (isBrokerSource(lead.source)) return "Broker partner onboarding";
+  if (isOwnerSource(lead.source)) return lead.requirement || "Owner listing enquiry";
+  return lead.requirement || "Not specified";
+}
+
 function leadTypeTitle(source?: string) {
   const value = String(source || "").toLowerCase();
 
@@ -698,7 +705,7 @@ export function AdminLeadDetailPage() {
           <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Requirement</p>
             <p className="mt-2 text-lg font-bold text-slate-950">
-              {lead.requirement || "Not specified"}
+              {displayLeadRequirement(lead)}
             </p>
           </div>
           <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -890,7 +897,7 @@ export function AdminLeadDetailPage() {
                     Quick conversion actions
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    Update status or priority and add a timeline note in one click.
+                    Use actions based on the lead type and next business step.
                   </p>
                 </div>
                 <span className="rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
@@ -898,67 +905,197 @@ export function AdminLeadDetailPage() {
                 </span>
               </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={saving}
-                  onClick={() =>
-                    void applyQuickConversion(
-                      { priority: "Hot" },
-                      "Lead marked Hot from detail page",
-                    )
-                  }
-                  className="h-auto justify-start rounded-2xl border-rose-100 bg-rose-50 px-4 py-4 text-left text-rose-700 hover:bg-rose-100"
-                >
-                  Mark Hot
-                </Button>
+              {isBrokerSource(lead.source) ? (
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        { status: "Contacted", priority: "Warm" },
+                        "Broker partner verified from lead detail",
+                      )
+                    }
+                    className="h-auto justify-start rounded-2xl border-orange-100 bg-orange-50 px-4 py-4 text-left text-orange-700 hover:bg-orange-100"
+                  >
+                    Verify Partner
+                  </Button>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={saving}
-                  onClick={() =>
-                    void applyQuickConversion(
-                      { status: "Site Visit", priority: lead.priority === "Cold" ? "Warm" : lead.priority },
-                      "Site visit scheduled from detail page",
-                    )
-                  }
-                  className="h-auto justify-start rounded-2xl border-blue-100 bg-blue-50 px-4 py-4 text-left text-blue-700 hover:bg-blue-100"
-                >
-                  Site Visit
-                </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        { status: "Negotiation", priority: "Hot" },
+                        "Commission discussion started with broker partner",
+                      )
+                    }
+                    className="h-auto justify-start rounded-2xl border-amber-100 bg-amber-50 px-4 py-4 text-left text-amber-700 hover:bg-amber-100"
+                  >
+                    Discuss Commission
+                  </Button>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={saving}
-                  onClick={() =>
-                    void applyQuickConversion(
-                      { status: "Booked", priority: "Hot" },
-                      "Lead marked Booked from detail page",
-                    )
-                  }
-                  className="h-auto justify-start rounded-2xl border-emerald-100 bg-emerald-50 px-4 py-4 text-left text-emerald-700 hover:bg-emerald-100"
-                >
-                  Mark Booked
-                </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        { status: "Booked", priority: "Hot" },
+                        "Broker partner marked active",
+                      )
+                    }
+                    className="h-auto justify-start rounded-2xl border-emerald-100 bg-emerald-50 px-4 py-4 text-left text-emerald-700 hover:bg-emerald-100"
+                  >
+                    Mark Broker Active
+                  </Button>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={saving}
-                  onClick={() =>
-                    void applyQuickConversion(
-                      { status: "Lost", priority: "Cold" },
-                      "Lead marked Lost from detail page",
-                    )
-                  }
-                  className="h-auto justify-start rounded-2xl border-slate-200 bg-slate-50 px-4 py-4 text-left text-slate-700 hover:bg-slate-100"
-                >
-                  Mark Lost
-                </Button>
-              </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        { status: "Lost", priority: "Cold" },
+                        "Broker partner lead rejected or not suitable",
+                      )
+                    }
+                    className="h-auto justify-start rounded-2xl border-slate-200 bg-slate-50 px-4 py-4 text-left text-slate-700 hover:bg-slate-100"
+                  >
+                    Not Suitable
+                  </Button>
+                </div>
+              ) : isOwnerSource(lead.source) ? (
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        { status: "Contacted", priority: "Warm" },
+                        "Ownership and basic property details verified",
+                      )
+                    }
+                    className="h-auto justify-start rounded-2xl border-emerald-100 bg-emerald-50 px-4 py-4 text-left text-emerald-700 hover:bg-emerald-100"
+                  >
+                    Verify Ownership
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        { status: "Contacted", priority: "Warm" },
+                        "Photos requested from property owner",
+                      )
+                    }
+                    className="h-auto justify-start rounded-2xl border-blue-100 bg-blue-50 px-4 py-4 text-left text-blue-700 hover:bg-blue-100"
+                  >
+                    Ask Photos
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        { status: "Negotiation", priority: "Hot" },
+                        "Expected price or rent confirmed with owner",
+                      )
+                    }
+                    className="h-auto justify-start rounded-2xl border-amber-100 bg-amber-50 px-4 py-4 text-left text-amber-700 hover:bg-amber-100"
+                  >
+                    Confirm Price
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        { status: "Lost", priority: "Cold" },
+                        "Owner listing lead marked inactive",
+                      )
+                    }
+                    className="h-auto justify-start rounded-2xl border-slate-200 bg-slate-50 px-4 py-4 text-left text-slate-700 hover:bg-slate-100"
+                  >
+                    Mark Inactive
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        { priority: "Hot" },
+                        "Lead marked Hot from detail page",
+                      )
+                    }
+                    className="h-auto justify-start rounded-2xl border-rose-100 bg-rose-50 px-4 py-4 text-left text-rose-700 hover:bg-rose-100"
+                  >
+                    <Flame className="mr-2 h-4 w-4" />
+                    Mark Hot
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        {
+                          status: "Site Visit",
+                          priority: lead.priority === "Cold" ? "Warm" : lead.priority,
+                        },
+                        "Site visit scheduled from detail page",
+                      )
+                    }
+                    className="h-auto justify-start rounded-2xl border-blue-100 bg-blue-50 px-4 py-4 text-left text-blue-700 hover:bg-blue-100"
+                  >
+                    Site Visit
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        { status: "Booked", priority: "Hot" },
+                        "Lead marked Booked from detail page",
+                      )
+                    }
+                    className="h-auto justify-start rounded-2xl border-emerald-100 bg-emerald-50 px-4 py-4 text-left text-emerald-700 hover:bg-emerald-100"
+                  >
+                    Mark Booked
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        { status: "Lost", priority: "Cold" },
+                        "Lead marked Lost from detail page",
+                      )
+                    }
+                    className="h-auto justify-start rounded-2xl border-slate-200 bg-slate-50 px-4 py-4 text-left text-slate-700 hover:bg-slate-100"
+                  >
+                    Mark Lost
+                  </Button>
+                </div>
+              )}
             </section>
 
             {submittedDetailItems(lead).length ? (
@@ -1223,7 +1360,7 @@ export function AdminLeadDetailPage() {
                   Raw source: {lead.source || "Not specified"}
                 </p>
                 <p>
-                  <span className="font-medium text-slate-950">Requirement:</span> {lead.requirement || "Not specified"}
+                  <span className="font-medium text-slate-950">Requirement:</span> {displayLeadRequirement(lead)}
                 </p>
                 <p>
                   <span className="font-medium text-slate-950">Budget:</span> {lead.budget || "Not specified"}
