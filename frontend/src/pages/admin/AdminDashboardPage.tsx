@@ -43,6 +43,31 @@ function isOpenLead(lead: AdminLead) {
   return !["Booked", "Lost"].includes(lead.status);
 }
 
+
+function isOwnerLeadSource(source?: string) {
+  const value = String(source || "").toLowerCase();
+
+  return (
+    value.includes("owner") ||
+    value.includes("sell") ||
+    value.includes("seller") ||
+    value.includes("listing_submission") ||
+    value.includes("list_property")
+  );
+}
+
+function isBrokerLeadSource(source?: string) {
+  const value = String(source || "").toLowerCase();
+
+  return (
+    value.includes("broker") ||
+    value.includes("partner") ||
+    value.includes("agent") ||
+    value.includes("crm_intake") ||
+    value.includes("public_broker_crm")
+  );
+}
+
 function isHotLead(lead: AdminLead) {
   return lead.priority === "Hot";
 }
@@ -142,6 +167,8 @@ export function AdminDashboardPage() {
       followUps: leads.filter((lead) => Boolean(lead.followUpAt)).length,
       followUpsToday: leads.filter((lead) => followUpState(lead) === "today").length,
       overdue: leads.filter((lead) => followUpState(lead) === "overdue").length,
+      owner: leads.filter((lead) => isOwnerLeadSource(lead.source)).length,
+      broker: leads.filter((lead) => isBrokerLeadSource(lead.source)).length,
     };
   }, [leads]);
 
@@ -248,6 +275,36 @@ export function AdminDashboardPage() {
               </div>
               <div className="rounded-2xl bg-blue-50 p-3 text-blue-700">
                 <BarChart3 className="h-6 w-6" />
+              </div>
+            </div>
+          </Link>
+
+          <Link to="/admin/owner-crm" className="rounded-[28px] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-slate-500">Owner Leads</p>
+                <p className="mt-3 text-4xl font-bold text-slate-950">
+                  {leadLoading ? "-" : leadSummary.owner}
+                </p>
+                <p className="mt-2 text-sm text-emerald-600">Inventory sources</p>
+              </div>
+              <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
+                <Home className="h-6 w-6" />
+              </div>
+            </div>
+          </Link>
+
+          <Link to="/admin/broker-crm" className="rounded-[28px] border border-blue-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-slate-500">Broker Leads</p>
+                <p className="mt-3 text-4xl font-bold text-slate-950">
+                  {leadLoading ? "-" : leadSummary.broker}
+                </p>
+                <p className="mt-2 text-sm text-blue-600">Partner enquiries</p>
+              </div>
+              <div className="rounded-2xl bg-blue-50 p-3 text-blue-700">
+                <Users className="h-6 w-6" />
               </div>
             </div>
           </Link>
