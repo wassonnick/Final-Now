@@ -292,6 +292,21 @@ function displayOwnerRequirement(lead: AdminLead) {
   return ownerLeadIntent(lead);
 }
 
+
+function ownerDraftPropertyUrl(lead: AdminLead) {
+  const params = new URLSearchParams();
+
+  if (lead.name) params.set("ownerName", lead.name);
+  if (lead.phone) params.set("ownerPhone", lead.phone);
+  if (lead.society) params.set("society", lead.society);
+  if (lead.property) params.set("property", lead.property);
+  if (lead.budget) params.set("expectedPrice", lead.budget);
+  params.set("requirement", displayLeadRequirement(lead));
+  params.set("sourceLeadId", String(lead.id));
+
+  return `/admin/properties/new?${params.toString()}`;
+}
+
 function ownerLeadNextStep(lead: AdminLead) {
   if (!isOwnerSource(lead.source)) return "";
 
@@ -1083,6 +1098,16 @@ export function AdminLeadDetailPage() {
                     className="h-auto justify-start rounded-2xl border-slate-200 bg-slate-50 px-4 py-4 text-left text-slate-700 hover:bg-slate-100"
                   >
                     Mark Inactive
+                  </Button>
+
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-auto justify-start rounded-2xl border-blue-100 bg-blue-50 px-4 py-4 text-left text-blue-700 hover:bg-blue-100 md:col-span-2"
+                  >
+                    <Link to={ownerDraftPropertyUrl(lead)}>
+                      Create Draft Property
+                    </Link>
                   </Button>
                 </div>
               ) : (
