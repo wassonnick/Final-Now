@@ -263,7 +263,7 @@ function displayLeadStatus(lead: AdminLead) {
   return lead.status;
 }
 
-function displayStatusOption(lead: AdminLead, status: LeadStatus) {
+function displayStatusOption(lead: AdminLead, status: string) {
   if (isBrokerSource(lead.source)) {
     if (status === "Booked") return "Active Partner";
     if (status === "Lost") return "Not Suitable";
@@ -760,7 +760,7 @@ export function AdminLeadDetailPage() {
             <div className="flex flex-wrap gap-2">
               {statuses.map((item) => (
                 <button
-                  key={displayStatusOption(lead, item)}
+                  key={item}
                   type="button"
                   onClick={() => quickStatus(item)}
                   className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
@@ -769,7 +769,7 @@ export function AdminLeadDetailPage() {
                       : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  {displayStatusOption(lead, item)}
+                  {item}
                 </button>
               ))}
             </div>
@@ -854,7 +854,7 @@ export function AdminLeadDetailPage() {
                     className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     {statuses.map((item) => (
-                      <option key={displayStatusOption(lead, item)}>{displayStatusOption(lead, item)}</option>
+                      <option key={item} value={item}>{item}</option>
                     ))}
                   </select>
                 </label>
@@ -867,7 +867,7 @@ export function AdminLeadDetailPage() {
                     className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     {priorities.map((item) => (
-                      <option key={displayStatusOption(lead, item)}>{displayStatusOption(lead, item)}</option>
+                      <option key={item} value={item}>{item}</option>
                     ))}
                   </select>
                 </label>
@@ -880,7 +880,7 @@ export function AdminLeadDetailPage() {
                     className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     {agents.map((item) => (
-                      <option key={displayStatusOption(lead, item)}>{displayStatusOption(lead, item)}</option>
+                      <option key={item} value={item}>{item}</option>
                     ))}
                   </select>
                 </label>
@@ -896,7 +896,7 @@ export function AdminLeadDetailPage() {
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {quickFollowUps.map(([label, value]) => (
                       <button
-                        key={displayStatusOption(lead, value)}
+                        key={value}
                         type="button"
                         onClick={() => applyQuickFollowUp(value)}
                         className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-700 hover:bg-blue-100"
@@ -1201,12 +1201,12 @@ export function AdminLeadDetailPage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 {quickNoteTemplates.map((item) => (
                   <button
-                    key={displayStatusOption(lead, item)}
+                    key={item}
                     type="button"
                     onClick={() => applyQuickNote(item)}
                     className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700"
                   >
-                    {displayStatusOption(lead, item)}
+                    {item}
                   </button>
                 ))}
               </div>
@@ -1260,7 +1260,7 @@ export function AdminLeadDetailPage() {
                   </h2>
                 </div>
                 <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusClass(lead.status)}`}>
-                  {lead.status}
+                  {displayLeadStatus(lead)}
                 </span>
               </div>
 

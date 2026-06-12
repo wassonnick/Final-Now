@@ -74,6 +74,28 @@ function isOwnerLeadSource(source?: string) {
   );
 }
 
+
+function cleanLeadInterest(lead: AdminLead) {
+  if (isBrokerLeadSource(lead.source)) {
+    return {
+      title: lead.society || lead.property || "Broker partner enquiry",
+      subtitle: "Broker partner onboarding",
+    };
+  }
+
+  if (isOwnerLeadSource(lead.source)) {
+    return {
+      title: lead.society || lead.property || "Owner listing enquiry",
+      subtitle: lead.requirement || "Owner inventory submission",
+    };
+  }
+
+  return {
+    title: lead.society || lead.property || "General enquiry",
+    subtitle: lead.requirement || lead.property || "Not specified",
+  };
+}
+
 function displayLeadStatusLabel(lead: AdminLead) {
   if (isBrokerLeadSource(lead.source)) {
     if (lead.status === "Booked") return "Active Partner";
