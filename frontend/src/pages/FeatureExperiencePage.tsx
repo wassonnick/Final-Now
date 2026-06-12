@@ -313,11 +313,7 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
         phone: cleanPhone || form.phone,
         email: form.email.trim() || undefined,
         society_name: society || undefined,
-        property_title: isBrokerCrm
-          ? [role || 'Broker partner', society].filter(Boolean).join(' · ')
-          : role || undefined,
         source: isBrokerCrm ? 'public_broker_crm' : 'public_chat_callback',
-        requirement: isBrokerCrm ? 'Broker partner onboarding' : role || 'Website callback',
         message: isBrokerCrm
           ? brokerMessage
           : `${role}: ${userMessage || 'Callback requested from SocietyFlats feature page.'}`,
