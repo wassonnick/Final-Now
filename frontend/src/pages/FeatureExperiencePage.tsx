@@ -291,16 +291,39 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
     setNotice('');
 
     try {
+      const isBrokerCrm = feature === 'broker-crm';
+      const cleanPhone = form.phone.replace(/[^0-9]/g, '').slice(-10);
+      const role = form.role.trim();
+      const society = form.society.trim();
+      const userMessage = form.message.trim();
+
+      const brokerMessage = [
+        'Broker partner enquiry from public Broker CRM page',
+        `Role: ${role || 'Not provided'}`,
+        `Name: ${form.name.trim() || 'Not provided'}`,
+        `Phone: ${cleanPhone || form.phone || 'Not provided'}`,
+        `Email: ${form.email.trim() || 'Not provided'}`,
+        `Area / Society: ${society || 'Not provided'}`,
+        `Message: ${userMessage || 'Not provided'}`,
+        'Suggested next action: Call partner, verify area coverage, discuss lead sharing and commission structure.',
+      ].join('\n');
+
       await submitLead({
-        name: form.name,
-        phone: form.phone,
-        email: form.email || undefined,
-        society_name: form.society || undefined,
-        source: feature === 'broker-crm' ? 'public_broker_crm' : 'public_chat_callback',
-        message: `${form.role}: ${form.message || 'Callback requested from SocietyFlats feature page.'}`,
+        name: form.name.trim(),
+        phone: cleanPhone || form.phone,
+        email: form.email.trim() || undefined,
+        society_name: society || undefined,
+        property_title: isBrokerCrm
+          ? [role || 'Broker partner', society].filter(Boolean).join(' · ')
+          : role || undefined,
+        source: isBrokerCrm ? 'public_broker_crm' : 'public_chat_callback',
+        requirement: isBrokerCrm ? 'Broker partner onboarding' : role || 'Website callback',
+        message: isBrokerCrm
+          ? brokerMessage
+          : `${role}: ${userMessage || 'Callback requested from SocietyFlats feature page.'}`,
       });
       setState('success');
-      setNotice(feature === 'broker-crm' ? 'Lead added to the CRM queue. Admin can follow up from Leads.' : 'Callback request sent. Admin can see it in Leads.');
+      setNotice(isBrokerCrm ? 'Broker partner lead added to Broker CRM. Admin can follow up from the broker queue.' : 'Callback request sent. Admin can see it in Leads.');
     } catch (error) {
       setState('error');
       setNotice(error instanceof Error ? error.message : 'Unable to submit. Please try again.');
