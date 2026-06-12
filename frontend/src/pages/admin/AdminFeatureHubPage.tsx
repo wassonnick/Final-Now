@@ -398,6 +398,18 @@ function brokerPartnerPriorityLabel(lead: AdminLead) {
   return "Needs review";
 }
 
+
+function brokerPartnerMetrics(leads: AdminLead[]) {
+  return {
+    total: leads.length,
+    newPartners: leads.filter((lead) => lead.status === "New").length,
+    verificationStarted: leads.filter((lead) => lead.status === "Contacted" || lead.status === "Site Visit").length,
+    commissionDiscussion: leads.filter((lead) => lead.status === "Negotiation").length,
+    activePartners: leads.filter((lead) => lead.status === "Booked").length,
+    notSuitable: leads.filter((lead) => lead.status === "Lost").length,
+  };
+}
+
 function BrokerCrmLiveLeads() {
   const [leads, setLeads] = useState<AdminLead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -427,6 +439,7 @@ function BrokerCrmLiveLeads() {
 
   const brokerLeads = useMemo(() => leads.filter(isBrokerLead), [leads]);
   const visibleLeads = brokerLeads.slice(0, 6);
+  const metrics = brokerPartnerMetrics(brokerLeads);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -447,6 +460,22 @@ function BrokerCrmLiveLeads() {
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {[
+          ["New Partners", metrics.newPartners, "Fresh partner enquiries"],
+          ["Verification", metrics.verificationStarted, "Contacted / field check"],
+          ["Commission", metrics.commissionDiscussion, "Terms discussion"],
+          ["Active Partners", metrics.activePartners, "Ready to work"],
+          ["Not Suitable", metrics.notSuitable, "Rejected / inactive"],
+        ].map(([label, value, note]) => (
+          <div key={String(label)} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <p className="text-2xl font-bold text-slate-950">{value}</p>
+            <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-blue-600">{label}</p>
+            <p className="mt-1 text-xs text-slate-500">{note}</p>
+          </div>
+        ))}
       </div>
 
       <div className="mt-5 rounded-2xl border border-slate-100">
