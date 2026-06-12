@@ -604,9 +604,13 @@ export function AdminPropertyFormPage() {
       setSaveMode(status as "Draft" | "Live");
       setError("");
 
+      const uniqueSlug = sourceLeadId && !isEdit
+        ? `${makeSlug(title)}-owner-lead-${sourceLeadId}`
+        : makeSlug(title);
+
       const payload = {
         title,
-        slug: makeSlug(title),
+        slug: uniqueSlug,
         listing_type: property.listingType,
         status,
         society: property.society,
