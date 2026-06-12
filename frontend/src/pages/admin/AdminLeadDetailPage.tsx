@@ -117,6 +117,34 @@ function leadTimelineItems(lead?: AdminLead | null) {
   return [];
 }
 
+
+function isSubmittedDetailNote(text: string) {
+  const value = text.toLowerCase();
+
+  return (
+    value.includes("broker partner enquiry from public broker crm page") ||
+    value.includes("owner listing submission from sell page") ||
+    value.includes("owner wants to rent") ||
+    value.includes("owner wants to sell") ||
+    value.includes("callback requested from societyflats feature page")
+  );
+}
+
+function submittedDetailItems(lead?: AdminLead | null) {
+  return leadTimelineItems(lead).filter((item) => isSubmittedDetailNote(item.text));
+}
+
+function adminTimelineItems(lead?: AdminLead | null) {
+  return leadTimelineItems(lead).filter((item) => !isSubmittedDetailNote(item.text));
+}
+
+function formatSubmittedDetails(text: string) {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 function statusClass(status: LeadStatus) {
   switch (status) {
     case "New":
@@ -908,6 +936,45 @@ export function AdminLeadDetailPage() {
               </div>
             </section>
 
+            {submittedDetailItems(lead).length ? (
+              <section className="rounded-[32px] border border-amber-100 bg-amber-50 p-6 shadow-sm">
+                <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600">
+                      Submitted details
+                    </p>
+                    <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                      Original enquiry context
+                    </h2>
+                    <p className="mt-1 text-sm text-amber-800/80">
+                      Captured from the public form before admin follow-up started.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-amber-700">
+                    Form submission
+                  </span>
+                </div>
+
+                <div className="mt-5 space-y-2">
+                  {formatSubmittedDetails(submittedDetailItems(lead)[0].text).map((line, index) => (
+                    <div
+                      key={`${line}-${index}`}
+                      className="rounded-2xl border border-amber-100 bg-white px-4 py-3 text-sm leading-6 text-slate-700"
+                    >
+                      {line.includes(":") ? (
+                        <>
+                          <span className="font-bold text-slate-950">{line.split(":")[0]}:</span>
+                          <span>{line.slice(line.indexOf(":") + 1)}</span>
+                        </>
+                      ) : (
+                        <span className="font-semibold text-slate-800">{line}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
             <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold tracking-tight text-slate-950">
                 Notes & Timeline
@@ -919,13 +986,13 @@ export function AdminLeadDetailPage() {
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
                       Latest activity
                     </p>
-                    {leadTimelineItems(lead).length ? (
+                    {adminTimelineItems(lead).length ? (
                       <>
                         <p className="mt-2 text-sm font-semibold text-slate-950">
-                          {leadTimelineItems(lead)[0].text}
+                          {adminTimelineItems(lead)[0].text}
                         </p>
                         <p className="mt-1 text-xs text-slate-500">
-                          {leadTimelineItems(lead)[0].meta}
+                          {adminTimelineItems(lead)[0].meta}
                         </p>
                       </>
                     ) : (
@@ -935,7 +1002,7 @@ export function AdminLeadDetailPage() {
                     )}
                   </div>
                   <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-blue-700">
-                    {leadTimelineItems(lead).length} notes
+                    {adminTimelineItems(lead).length} notes
                   </span>
                 </div>
               </div>
@@ -971,20 +1038,20 @@ export function AdminLeadDetailPage() {
               </div>
 
               <div className="mt-5 space-y-3">
-                {lead.notes.map((item) => (
+                {adminTimelineItems(lead).map((item) => (
                   <div
                     key={item.id}
                     className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
                   >
                     <p className="text-sm text-slate-800">{item.text}</p>
-                    {item.createdAt ? (
-                      <p className="mt-1 text-xs text-slate-400">{item.createdAt}</p>
+                    {item.meta ? (
+                      <p className="mt-1 text-xs text-slate-400">{item.meta}</p>
                     ) : null}
                   </div>
                 ))}
 
-                {!lead.notes.length ? (
-                  <p className="text-sm text-slate-500">No notes yet.</p>
+                {!adminTimelineItems(lead).length ? (
+                  <p className="text-sm text-slate-500">No admin timeline notes yet.</p>
                 ) : null}
               </div>
             </section>
