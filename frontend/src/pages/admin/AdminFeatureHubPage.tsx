@@ -482,6 +482,7 @@ function brokerPartnerMetrics(leads: AdminLead[]) {
 
 function BrokerCrmLiveLeads() {
   const [leads, setLeads] = useState<AdminLead[]>([]);
+  const [linkedProperties, setLinkedProperties] = useState<OwnerLinkedProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [partnerFilter, setPartnerFilter] = useState("all");
 
@@ -680,6 +681,20 @@ function displayOwnerCrmStatus(lead: AdminLead) {
   return lead.status;
 }
 
+
+type OwnerLinkedProperty = {
+  id?: number | string;
+  title?: string;
+  status?: string;
+  description?: string;
+  slug?: string;
+};
+
+function isPropertyLinkedToOwnerLead(property: OwnerLinkedProperty, leadId: number | string) {
+  const text = String(property.description || "").toLowerCase();
+  return text.includes(`source lead id: ${String(leadId).toLowerCase()}`);
+}
+
 function ownerInventoryStage(lead: AdminLead) {
   if (lead.status === "Booked") return "Inventory active";
   if (lead.status === "Lost") return "Inactive owner";
@@ -727,6 +742,7 @@ function ownerFilterLabel(filter: string) {
 
 function OwnerCrmLiveLeads() {
   const [leads, setLeads] = useState<AdminLead[]>([]);
+  const [linkedProperties, setLinkedProperties] = useState<OwnerLinkedProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [ownerFilter, setOwnerFilter] = useState("all");
 
