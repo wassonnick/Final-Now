@@ -446,7 +446,7 @@ function BrokerCrmLiveLeads() {
                     {lead.society || lead.property || 'General partner enquiry'}
                   </p>
                   <p className="mt-1 text-slate-500">
-                    {lead.requirement || 'Broker partner onboarding'}
+                    {isBrokerLead(lead) ? 'Broker partner onboarding' : lead.requirement || 'Broker partner onboarding'}
                   </p>
                 </div>
 
