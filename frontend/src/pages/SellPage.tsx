@@ -113,44 +113,44 @@ export function SellPage() {
   };
 
   return (
-    <div className="min-h-screen bg-ivory-100">
-      <section className="relative overflow-hidden bg-navy-950 text-white">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1920&q=80')] bg-cover bg-center opacity-25" />
-        <div className="absolute inset-0 bg-gradient-to-br from-navy-950 via-navy-900/95 to-navy-950" />
-        <div className="relative container mx-auto px-4 py-20 md:py-28">
-          <div className="grid lg:grid-cols-2 gap-10 items-center">
+    <div className="min-h-screen bg-[#f7fbff]">
+      <section className="relative overflow-hidden border-b border-blue-100 bg-gradient-to-br from-white via-blue-50/80 to-slate-50">
+        <div className="absolute left-[-12rem] top-[-10rem] h-96 w-96 rounded-full bg-blue-200/30 blur-3xl" />
+        <div className="absolute right-[-10rem] top-24 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl" />
+        <div className="relative container mx-auto px-4 py-14 md:py-20">
+          <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
             <div>
-              <Badge className="mb-5 border-gold-400/50 bg-gold-500/20 text-gold-200 shadow-sm">
-                Owner inventory engine
+              <Badge className="mb-5 rounded-full border-blue-200 bg-white px-4 py-1.5 text-blue-700 shadow-sm">
+                Owner listing engine
               </Badge>
-              <h1 className="max-w-2xl text-4xl md:text-6xl font-display font-bold tracking-tight leading-tight text-white drop-shadow-[0_8px_28px_rgba(0,0,0,0.45)]">
-                List your property from the society page.
+              <h1 className="max-w-2xl text-4xl font-black tracking-[-0.045em] leading-[0.98] text-slate-950 md:text-6xl">
+                List your flat with verified society context.
               </h1>
-              <p className="text-lg text-white/85 mt-5 max-w-2xl">
-                Rent out or sell your flat with society-first context,
-                AI-generated listing content and lead capture built around real
-                buyer and tenant intent.
+              <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 md:text-lg">
+                Share basic property details once. SocietyFlats routes it into
+                the lead CRM with rent/sale intent, society name and owner
+                follow-up context.
               </p>
-              <div className="grid sm:grid-cols-3 gap-4 mt-8">
+              <div className="mt-7 grid gap-3 sm:grid-cols-3">
                 {[
-                  "Verified society context",
-                  "AI listing copy",
-                  "Buyer/renter leads",
+                  "Verified society page",
+                  "CRM-ready owner lead",
+                  "Tenant/buyer matching",
                 ].map((item) => (
                   <div
                     key={item}
-                    className="flex items-center gap-2 text-sm font-medium text-white/85"
+                    className="flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-gold-400" />
+                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
                     {item}
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-[2rem] bg-white p-5 md:p-7 text-navy-900 shadow-2xl">
+            <div className="rounded-[2rem] border border-blue-100 bg-white p-5 text-navy-900 shadow-xl shadow-blue-100/60 md:p-7">
               <div className="flex items-center gap-2 mb-5">
-                <BadgeIndianRupee className="w-5 h-5 text-gold-600" />
+                <BadgeIndianRupee className="w-5 h-5 text-blue-700" />
                 <h2 className="text-2xl font-display font-bold">
                   Start listing
                 </h2>
@@ -246,7 +246,7 @@ export function SellPage() {
                   ) : null}
                   <Button
                     disabled={submitting}
-                    className="w-full h-12 rounded-xl bg-navy-700 hover:bg-navy-800 text-white font-semibold"
+                    className="w-full h-12 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold shadow-lg shadow-blue-100"
                   >
                     {submitting ? "Submitting..." : "Continue"}{" "}
                     <ArrowRight className="w-4 h-4 ml-2" />
