@@ -1,5 +1,5 @@
 import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -219,6 +219,7 @@ function requiredFieldHint(listingType: string) {
 export function AdminPropertyFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isEdit = Boolean(id);
 
   const [property, setProperty] = useState(emptyProperty);
@@ -666,6 +667,45 @@ export function AdminPropertyFormPage() {
 
     updateField("description", text);
   };
+
+
+  useEffect(() => {
+    if (isEdit) return;
+
+    const params = new URLSearchParams(location.search);
+    const ownerName = params.get("ownerName") || "";
+    const ownerPhone = params.get("ownerPhone") || "";
+    const society = params.get("society") || "";
+    const property = params.get("property") || "";
+    const expectedPrice = params.get("expectedPrice") || "";
+    const requirement = params.get("requirement") || "";
+    const sourceLeadId = params.get("sourceLeadId") || "";
+
+    if (!ownerName && !ownerPhone && !society && !property && !expectedPrice && !sourceLeadId) return;
+
+    setProperty((current) => ({
+      ...current,
+      title: current.title || property || `${society || "Owner"} property draft`,
+      listingType: requirement.toLowerCase().includes("rent") ? "Rent" : "Sale",
+      status: current.status || "Draft",
+      society: current.society || society,
+      price: current.price || expectedPrice,
+      description:
+        current.description ||
+        [
+          "Draft property created from Owner CRM lead.",
+          ownerName ? `Owner: ${ownerName}` : "",
+          ownerPhone ? `Phone: ${ownerPhone}` : "",
+          society ? `Society: ${society}` : "",
+          property ? `Property details: ${property}` : "",
+          expectedPrice ? `Expected price/rent: ${expectedPrice}` : "",
+          requirement ? `Requirement: ${requirement}` : "",
+          sourceLeadId ? `Source lead ID: ${sourceLeadId}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+    }));
+  }, [isEdit, location.search]);
 
   if (loading) {
     return (
