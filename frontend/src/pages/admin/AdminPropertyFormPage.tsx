@@ -648,7 +648,7 @@ export function AdminPropertyFormPage() {
       navigate("/admin/properties");
     } catch (err) {
       console.error(err);
-      setError("Could not save the property. Please try again.");
+      setError(err instanceof Error ? err.message : "Could not save the property. Please try again.");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setSaving(false);
@@ -695,7 +695,11 @@ export function AdminPropertyFormPage() {
       listingType: requirement.toLowerCase().includes("rent") ? "Rent" : "Sale",
       status: current.status || "Draft",
       society: current.society || society,
+      locality: current.locality || "Gurgaon",
       price: current.price || expectedPrice,
+      bedrooms: current.bedrooms || "3",
+      bathrooms: current.bathrooms || "3",
+      areaSqft: current.areaSqft || "1000",
       description:
         current.description ||
         [
