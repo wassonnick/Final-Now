@@ -364,6 +364,12 @@ export function AdminPropertyFormPage() {
     };
   }, [property, propertyImages.length]);
 
+
+  const sourceLeadId = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("sourceLeadId") || "";
+  }, [location.search]);
+
   const labels = pricingLabels(property.listingType);
   const rentalListing = isRentalListing(property.listingType);
   const saleListing = isSaleListing(property.listingType);
