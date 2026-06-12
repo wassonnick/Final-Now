@@ -23,7 +23,7 @@ import type { AdminLead } from '@/lib/adminLeadStore';
 type FeatureKey =
   | 'ai'
   | 'maps'
-  | 'broker-crm'
+  | 'broker-crm' | 'owner-crm'
   | 'chat'
   | 'analytics'
   | 'advanced-search'
@@ -129,6 +129,54 @@ const featureConfigs: Record<FeatureKey, FeatureConfig> = {
       'Add missing-map filter on societies list',
       'Add Places lookup from society edit',
       'Add map preview beside coordinates',
+    ],
+  },
+  'owner-crm': {
+    title: 'Owner CRM',
+    subtitle: 'Inventory workspace for owner listing leads',
+    icon: BriefcaseBusiness,
+    status: 'Owner queue live',
+    summary:
+      'Owner CRM organizes property owner submissions, verification, pricing follow-ups and inventory activation.',
+    primaryAction: {
+      label: 'Open Owner Leads',
+      href: '/admin/leads?view=owner',
+    },
+    actions: [
+      {
+        label: 'Open Broker CRM',
+        href: '/admin/broker-crm',
+      },
+      {
+        label: 'Open All Leads',
+        href: '/admin/leads',
+      },
+    ],
+    metrics: [
+      { label: 'Owner leads', value: 'Live filter', note: 'Open owner inventory submissions' },
+      { label: 'Verification', value: 'CRM ready', note: 'Check ownership, price and photos' },
+      { label: 'Activation', value: 'Lead detail', note: 'Mark owner active after verification' },
+    ],
+    workflows: [
+      'Track owner listing submissions',
+      'Verify ownership and society details',
+      'Confirm expected rent or sale price',
+      'Request photos and activate inventory',
+    ],
+    connected: [
+      'Sell page owner form',
+      'Admin leads list',
+      'Lead detail page',
+    ],
+    pending: [
+      'Owner document/photo upload',
+      'Inventory activation workflow',
+      'Owner communication templates',
+    ],
+    nextBuild: [
+      'Use Owner Leads filter for owner inventory',
+      'Add owner verification checklist',
+      'Connect owner lead to property creation later',
     ],
   },
   'broker-crm': {
@@ -610,6 +658,247 @@ function BrokerCrmLiveLeads() {
   );
 }
 
+
+function isOwnerLead(lead: AdminLead) {
+  const value = String(lead.source || '').toLowerCase();
+
+  return (
+    value.includes('owner') ||
+    value.includes('sell') ||
+    value.includes('seller') ||
+    value.includes('listing_submission') ||
+    value.includes('list_property')
+  );
+}
+
+function displayOwnerCrmStatus(lead: AdminLead) {
+  if (isOwnerLead(lead)) {
+    if (lead.status === "Booked") return "Owner Active";
+    if (lead.status === "Lost") return "Inactive Owner";
+  }
+
+  return lead.status;
+}
+
+function ownerInventoryStage(lead: AdminLead) {
+  if (lead.status === "Booked") return "Inventory active";
+  if (lead.status === "Lost") return "Inactive owner";
+  if (lead.status === "Negotiation") return "Price confirmation";
+  if (lead.status === "Contacted") return "Ownership verification";
+  if (lead.status === "Site Visit") return "Photo / property check";
+  return "New owner submission";
+}
+
+function ownerInventoryArea(lead: AdminLead) {
+  return lead.society || lead.property || "Society not specified";
+}
+
+function ownerInventoryMetrics(leads: AdminLead[]) {
+  return {
+    total: leads.length,
+    newOwners: leads.filter((lead) => lead.status === "New").length,
+    verification: leads.filter((lead) => lead.status === "Contacted" || lead.status === "Site Visit").length,
+    priceConfirmation: leads.filter((lead) => lead.status === "Negotiation").length,
+    activeInventory: leads.filter((lead) => lead.status === "Booked").length,
+    inactive: leads.filter((lead) => lead.status === "Lost").length,
+  };
+}
+
+function ownerFilterMatches(lead: AdminLead, filter: string) {
+  if (filter === "all") return true;
+  if (filter === "new") return lead.status === "New";
+  if (filter === "verification") return lead.status === "Contacted" || lead.status === "Site Visit";
+  if (filter === "price") return lead.status === "Negotiation";
+  if (filter === "active") return lead.status === "Booked";
+  if (filter === "inactive") return lead.status === "Lost";
+
+  return true;
+}
+
+function ownerFilterLabel(filter: string) {
+  if (filter === "new") return "New";
+  if (filter === "verification") return "Verification";
+  if (filter === "price") return "Price";
+  if (filter === "active") return "Active";
+  if (filter === "inactive") return "Inactive";
+
+  return "All";
+}
+
+function OwnerCrmLiveLeads() {
+  const [leads, setLeads] = useState<AdminLead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [ownerFilter, setOwnerFilter] = useState("all");
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchAdminLeads()
+      .then((items) => {
+        if (mounted) {
+          setLeads(items);
+        }
+      })
+      .catch((error) => {
+        console.error('Could not load owner CRM leads:', error);
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const ownerLeads = useMemo(() => leads.filter(isOwnerLead), [leads]);
+  const filteredOwnerLeads = useMemo(
+    () => ownerLeads.filter((lead) => ownerFilterMatches(lead, ownerFilter)),
+    [ownerLeads, ownerFilter],
+  );
+  const visibleLeads = filteredOwnerLeads.slice(0, 6);
+  const metrics = ownerInventoryMetrics(ownerLeads);
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500">Live owner queue</p>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+            Owner inventory leads
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Owner listing submissions pulled directly from the main Leads CRM.
+          </p>
+        </div>
+
+        <Button asChild className="rounded-full bg-blue-600 hover:bg-blue-700">
+          <Link to="/admin/leads?view=owner">
+            Open full owner queue
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {[
+          ["New Owners", metrics.newOwners, "Fresh submissions"],
+          ["Verification", metrics.verification, "Ownership / photos"],
+          ["Price", metrics.priceConfirmation, "Rent / sale discussion"],
+          ["Active Inventory", metrics.activeInventory, "Ready to work"],
+          ["Inactive", metrics.inactive, "Rejected / inactive"],
+        ].map(([label, value, note]) => (
+          <div key={String(label)} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <p className="text-2xl font-bold text-slate-950">{value}</p>
+            <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-600">{label}</p>
+            <p className="mt-1 text-xs text-slate-500">{note}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        {[
+          ["all", "All", metrics.total],
+          ["new", "New", metrics.newOwners],
+          ["verification", "Verification", metrics.verification],
+          ["price", "Price", metrics.priceConfirmation],
+          ["active", "Active", metrics.activeInventory],
+          ["inactive", "Inactive", metrics.inactive],
+        ].map(([value, label, count]) => (
+          <button
+            key={String(value)}
+            type="button"
+            onClick={() => setOwnerFilter(String(value))}
+            className={`rounded-full border px-4 py-2 text-xs font-bold transition ${
+              ownerFilter === value
+                ? "border-emerald-600 bg-emerald-600 text-white"
+                : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+            }`}
+          >
+            {label} · {count}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+        <p className="font-medium text-slate-600">
+          Showing {visibleLeads.length} {ownerFilterLabel(ownerFilter).toLowerCase()} owner lead{visibleLeads.length === 1 ? "" : "s"}
+        </p>
+        {ownerFilter !== "all" ? (
+          <button
+            type="button"
+            onClick={() => setOwnerFilter("all")}
+            className="text-xs font-bold text-emerald-600 hover:text-emerald-700"
+          >
+            Clear filter
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-slate-100">
+        <div className="grid grid-cols-[1.1fr_1fr_0.9fr_0.8fr] gap-4 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+          <span>Owner</span>
+          <span>Inventory</span>
+          <span>Stage</span>
+          <span>Profile</span>
+        </div>
+
+        {loading ? (
+          <div className="px-4 py-8 text-sm font-medium text-slate-500">Loading owner leads...</div>
+        ) : visibleLeads.length ? (
+          <div className="divide-y divide-slate-100">
+            {visibleLeads.map((lead) => (
+              <div key={lead.id} className="grid grid-cols-[1.1fr_1fr_0.9fr_0.8fr] gap-4 px-4 py-4 text-sm">
+                <div>
+                  <p className="font-semibold text-slate-950">{lead.name || 'Unnamed owner'}</p>
+                  <p className="mt-1 text-slate-500">{lead.phone || 'No phone'}</p>
+                  <span className="mt-2 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                    Owner listing
+                  </span>
+                </div>
+
+                <div>
+                  <p className="font-medium text-slate-800">
+                    {ownerInventoryArea(lead)}
+                  </p>
+                  <p className="mt-1 text-slate-500">
+                    {lead.requirement || 'Owner inventory submission'}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                    {displayOwnerCrmStatus(lead)}
+                  </span>
+                  <p className="mt-2 text-xs font-semibold text-slate-600">
+                    {ownerInventoryStage(lead)}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Assigned: {lead.assignedTo || 'Unassigned'}
+                  </p>
+                </div>
+
+                <div>
+                  <Button asChild variant="outline" size="sm" className="rounded-full">
+                    <Link to={`/admin/leads/${lead.id}`}>Open profile</Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="px-4 py-8 text-sm font-medium text-slate-500">
+            No {ownerFilterLabel(ownerFilter).toLowerCase()} owner leads found.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+
 export function AdminFeatureHubPage({ feature }: AdminFeatureHubPageProps) {
   const config = featureConfigs[feature];
   const Icon = config.icon;
@@ -666,6 +955,7 @@ export function AdminFeatureHubPage({ feature }: AdminFeatureHubPageProps) {
         </section>
 
         {feature === 'broker-crm' ? <BrokerCrmLiveLeads /> : null}
+        {feature === 'owner-crm' ? <OwnerCrmLiveLeads /> : null}
 
         <section className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-blue-900">
           <div className="flex gap-3">

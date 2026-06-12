@@ -124,6 +124,7 @@ function AppShell() {
           <Route path="/admin/ai" element={<AdminFeatureHubPage feature="ai" />} />
           <Route path="/admin/maps" element={<AdminFeatureHubPage feature="maps" />} />
           <Route path="/admin/broker-crm" element={<AdminFeatureHubPage feature="broker-crm" />} />
+          <Route path="/admin/owner-crm" element={<AdminFeatureHubPage feature="owner-crm" />} />
           <Route path="/admin/chat" element={<AdminFeatureHubPage feature="chat" />} />
           <Route path="/admin/analytics" element={<AdminFeatureHubPage feature="analytics" />} />
           <Route path="/admin/advanced-search" element={<AdminFeatureHubPage feature="advanced-search" />} />
