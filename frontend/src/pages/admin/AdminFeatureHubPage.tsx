@@ -922,8 +922,11 @@ function OwnerCrmLiveLeads() {
                       size="sm"
                       className="rounded-full border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                     >
-                      <Link to={ownerDraftPropertyUrlFromLead(lead)}>Create draft</Link>
+                      <Link to={ownerDraftPropertyUrlFromLead(lead)}>Create / review draft</Link>
                     </Button>
+                    <p className="text-[11px] leading-4 text-slate-400">
+                      Check existing drafts before creating another.
+                    </p>
                   </div>
                 </div>
               </div>
