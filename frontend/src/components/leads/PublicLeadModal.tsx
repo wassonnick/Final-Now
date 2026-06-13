@@ -28,9 +28,11 @@ const emptyForm = {
   message: "",
   requirement: "",
   budget: "",
+  preferredTime: "",
 };
 
 const requirementChips = ["Rent", "Buy", "Visit", "Callback"];
+const preferredTimeChips = ["Now", "Today", "Tomorrow", "Weekend"];
 
 function cleanPhone(value: string) {
   return value.replace(/\D/g, "").slice(0, 10);
@@ -138,6 +140,21 @@ export function PublicLeadModal({
 
     setSubmitting(true);
 
+    const selectedBudget = form.budget.trim() || budget || "";
+    const selectedTime = form.preferredTime.trim();
+    const baseMessage =
+      form.message.trim() ||
+      defaultMessage ||
+      `${finalRequirement}${societyName ? ` for ${societyName}` : ""}`;
+
+    const enrichedMessage = [
+      baseMessage,
+      selectedBudget ? `Budget: ${selectedBudget}.` : "",
+      selectedTime ? `Preferred callback time: ${selectedTime}.` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
     try {
       await backendApi.createLead({
         name: form.name.trim(),
@@ -148,11 +165,8 @@ export function PublicLeadModal({
         property_title: propertyTitle || null,
         property_slug: propertySlug || null,
         requirement: finalRequirement,
-        budget: form.budget.trim() || budget || null,
-        message:
-          form.message.trim() ||
-          defaultMessage ||
-          `${finalRequirement}${societyName ? ` for ${societyName}` : ""}`,
+        budget: selectedBudget || null,
+        message: enrichedMessage,
       });
 
       setSuccess(true);
@@ -315,6 +329,32 @@ export function PublicLeadModal({
                   placeholder="Budget optional"
                   className="h-10 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
                 />
+              </div>
+
+              <div>
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
+                  Preferred callback time
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {preferredTimeChips.map((chip) => {
+                    const active = form.preferredTime === chip;
+
+                    return (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => setForm({ ...form, preferredTime: chip })}
+                        className={`h-9 rounded-full border px-2 text-[11px] font-bold transition ${
+                          active
+                            ? "border-blue-300 bg-blue-50 text-blue-700"
+                            : "border-navy-100 bg-white text-navy-500 hover:bg-navy-50"
+                        }`}
+                      >
+                        {chip}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <textarea
