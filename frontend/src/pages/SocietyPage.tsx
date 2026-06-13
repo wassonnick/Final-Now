@@ -1236,20 +1236,28 @@ export function SocietyPage() {
       </section>
 
       <div className="fixed inset-x-3 bottom-3 z-50 rounded-2xl border border-navy-100 bg-white/95 px-3 py-2 shadow-[0_-10px_24px_rgba(15,23,42,0.12)] backdrop-blur md:hidden">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-2">
           <Button
             onClick={() => openSocietyCallback()}
-            className="rounded-full bg-blue-600 hover:bg-blue-700"
+            className="h-10 rounded-full bg-blue-600 px-2 text-xs font-bold hover:bg-blue-700"
           >
-            <Phone className="mr-2 h-4 w-4" /> Callback
+            <Phone className="mr-1.5 h-4 w-4" /> Call
           </Button>
+          <a
+            href={`https://wa.me/919999988888?text=${whatsappMessage}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-10 items-center justify-center rounded-full border border-green-200 bg-green-50 px-2 text-xs font-bold text-green-700 hover:bg-green-100"
+          >
+            <MessageCircle className="mr-1.5 h-4 w-4" /> WhatsApp
+          </a>
           <Button
             asChild
             variant="outline"
-            className="rounded-full border-navy-200"
+            className="h-10 rounded-full border-navy-200 px-2 text-xs font-bold"
           >
             <Link to={`/search?tab=rent&q=${encodeURIComponent(society.name)}`}>
-              View homes
+              Homes
             </Link>
           </Button>
         </div>
