@@ -4,6 +4,11 @@ import { useNavigate } from 'react-router-dom';
 const ADMIN_SESSION_KEY = 'societyflats_admin_session';
 const ADMIN_TOKEN_KEY = 'societyflats_admin_token';
 
+
+function sanitizeAdminToken(value: string) {
+  return String(value || '').trim();
+}
+
 export type AdminSession = {
   email: string;
   name: string;
@@ -39,18 +44,15 @@ export function clearAdminSession() {
 }
 
 export function getAdminToken() {
-  const token = localStorage.getItem(ADMIN_TOKEN_KEY) || import.meta.env.VITE_ADMIN_API_TOKEN || '';
-  const cleanToken = sanitizeAdminToken(token);
+  const envToken = sanitizeAdminToken(import.meta.env.VITE_ADMIN_API_TOKEN || '');
 
-  if (cleanToken !== token) {
-    localStorage.setItem(ADMIN_TOKEN_KEY, cleanToken);
+  if (envToken) {
+    return envToken;
   }
 
-  return cleanToken;
-}
+  if (typeof window === 'undefined') return '';
 
-function sanitizeAdminToken(token: string) {
-  return token.trim().replace(/[\r\n]+/g, '');
+  return sanitizeAdminToken(localStorage.getItem(ADMIN_TOKEN_KEY) || '');
 }
 
 export function useAdminAuth() {
