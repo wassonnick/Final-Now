@@ -103,8 +103,8 @@ function formatLeadDate(value?: string) {
 
 function actionCardClass(featured = false) {
   return featured
-    ? "group rounded-[28px] border border-blue-100 bg-blue-600 p-5 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
-    : "group rounded-[28px] border border-slate-200 bg-white p-5 text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg";
+    ? "group rounded-[22px] border border-blue-100 bg-blue-600 p-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg sm:rounded-[28px] sm:p-5"
+    : "group rounded-[22px] border border-slate-200 bg-white p-4 text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg sm:rounded-[28px] sm:p-5";
 }
 
 export function AdminDashboardPage() {
@@ -188,7 +188,7 @@ export function AdminDashboardPage() {
           </div>
         ) : null}
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <Link to="/admin/leads?view=today" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -310,7 +310,7 @@ export function AdminDashboardPage() {
           </Link>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
@@ -366,7 +366,7 @@ export function AdminDashboardPage() {
               Jump directly into the most common admin tasks.
             </p>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="mt-5 grid grid-cols-2 gap-3">
               <Link to="/admin/societies/new" className={actionCardClass(true)}>
                 <Plus className="h-5 w-5" />
                 <p className="mt-3 font-bold">Add Society</p>
@@ -421,7 +421,7 @@ export function AdminDashboardPage() {
             </Button>
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {recentLeads.length ? (
               recentLeads.map((lead) => (
                 <Link
