@@ -1,52 +1,72 @@
-const rawApiBaseUrl =
+import { getAdminToken } from '@/hooks/useAdminAuth';
+
+const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
   'https://final-now.onrender.com/api';
 
-const API_BASE_URL = String(rawApiBaseUrl).replace(/\/$/, '');
+function buildHeaders(path: string, headers: HeadersInit = {}): HeadersInit {
+  const token = path.startsWith('/admin') ? getAdminToken() : '';
 
-type JsonValue = Record<string, unknown> | Array<unknown>;
+  return {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}`, 'X-Admin-Token': token } : {}),
+    ...headers,
+  };
+}
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function request(path: string, options: RequestInit = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
+    headers: buildHeaders(path, options.headers || {}),
   });
 
+  const json = await response.json().catch(() => ({}));
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: response.statusText }));
-    throw new Error(error.message || 'Request failed');
+    throw new Error(json?.message || `Request failed: ${response.status}`);
   }
 
-  if (response.status === 204) {
-    return {} as T;
-  }
-
-  return response.json() as Promise<T>;
+  return json;
 }
 
 export const backendApi = {
-  adminStats: () => request('/admin/stats'),
+  request,
 
-  listSocieties: (params = '') => request(`/admin/societies${params}`),
-  createSociety: (payload: JsonValue) => request('/admin/societies', { method: 'POST', body: JSON.stringify(payload) }),
-  updateSociety: (id: string, payload: JsonValue) => request(`/admin/societies/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  deleteSociety: (id: string) => request(`/admin/societies/${id}`, { method: 'DELETE' }),
+  createLead(payload: Record<string, unknown>) {
+    return request('/leads', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
 
-  listProperties: (params = '') => request(`/admin/properties${params}`),
-  createProperty: (payload: JsonValue) => request('/admin/properties', { method: 'POST', body: JSON.stringify(payload) }),
-  updateProperty: (id: string, payload: JsonValue) => request(`/admin/properties/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  deleteProperty: (id: string) => request(`/admin/properties/${id}`, { method: 'DELETE' }),
+  listLeads(params = '') {
+    const query = params ? `?${params}` : '';
 
-  listLeads: (params = '') => request(`/admin/leads${params}`),
-  getLead: (id: string) => request(`/admin/leads/${id}`),
-  updateLead: (id: string, payload: JsonValue) => request(`/admin/leads/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  deleteLead: (id: string) => request(`/admin/leads/${id}`, { method: 'DELETE' }),
+    return request(`/admin/leads${query}`, {
+      method: 'GET',
+    });
+  },
 
-  publicSocieties: (params = '') => request(`/societies${params}`),
-  publicProperties: (params = '') => request(`/properties${params}`),
-  createLead: (payload: JsonValue) => request('/leads', { method: 'POST', body: JSON.stringify(payload) }),
+  getLead(id: string) {
+    return request(`/admin/leads/${id}`, {
+      method: 'GET',
+    });
+  },
+
+  updateLead(id: string, payload: Record<string, unknown>) {
+    return request(`/admin/leads/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteLead(id: string) {
+    return request(`/admin/leads/${id}`, {
+      method: 'DELETE',
+    });
+  },
 };
+
+export { API_BASE_URL };
