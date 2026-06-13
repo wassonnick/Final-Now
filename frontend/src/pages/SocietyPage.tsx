@@ -314,6 +314,20 @@ export function SocietyPage() {
   const fallbackProperties = getSocietyProperties(society?.name);
   const properties = apiProperties.length ? apiProperties : fallbackProperties;
 
+  // C16 society SEO route effect
+  useEffect(() => {
+    const societyNameForSeo = society?.name || "SocietyFlats Society Profile";
+
+    setPublicSeo(
+      society?.name
+        ? `${society.name} Gurgaon | SocietyFlats`
+        : "SocietyFlats Society Profile",
+      society?.name
+        ? `Explore ${society.name} with live verified homes, society intelligence, location context and callback support on SocietyFlats.`
+        : "Explore verified Gurgaon society profiles, live homes and society intelligence on SocietyFlats.",
+    );
+  }, [society?.name]);
+
   const similarSocieties = useMemo(() => {
     if (!society || !relatedSocieties.length) return [];
 

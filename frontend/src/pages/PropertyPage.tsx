@@ -93,6 +93,31 @@ function filterPublicLiveProperties(properties: any[]) {
   return Array.isArray(properties) ? properties.filter(isPublicLiveProperty) : [];
 }
 
+function setPublicSeo(title: string, description: string, noindex = false) {
+  document.title = title;
+
+  let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.name = "description";
+    document.head.appendChild(meta);
+  }
+  meta.content = description;
+
+  let robots = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+
+  if (noindex) {
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      document.head.appendChild(robots);
+    }
+    robots.content = "noindex, nofollow";
+  } else if (robots) {
+    robots.remove();
+  }
+}
+
 function getField<T = string>(item: any, camel: string, snake: string, fallback: T): T {
   return (item?.[camel] ?? item?.[snake] ?? fallback) as T;
 }
@@ -307,6 +332,25 @@ export function PropertyPage() {
   const furnishedStatus = getField(property, "furnishedStatus", "furnished_status", "-");
   const amenities = useMemo(() => parseList(property?.amenities), [property?.amenities]);
   const photos = useMemo(() => (property ? getPhotos(property) : []), [property]);
+
+  // C16 property SEO route effect
+  useEffect(() => {
+    if (property) {
+      setPublicSeo(
+        `${title} | ${societyName || "Gurgaon"} | SocietyFlats`,
+        `View ${title} in ${societyName || societyLocality || "Gurgaon"} with verified availability, society context, price and callback support on SocietyFlats.`,
+      );
+      return;
+    }
+
+    if (!loading) {
+      setPublicSeo(
+        "Property unavailable | SocietyFlats",
+        "This property is not currently available in the public SocietyFlats live inventory.",
+        true,
+      );
+    }
+  }, [property, loading, title, societyName, societyLocality]);
 
   useEffect(() => {
     let mounted = true;
