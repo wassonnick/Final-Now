@@ -44,15 +44,15 @@ export function clearAdminSession() {
 }
 
 export function getAdminToken() {
-  const envToken = sanitizeAdminToken(import.meta.env.VITE_ADMIN_API_TOKEN || '');
+  if (typeof window !== 'undefined') {
+    const storedToken = sanitizeAdminToken(localStorage.getItem(ADMIN_TOKEN_KEY) || '');
 
-  if (envToken) {
-    return envToken;
+    if (storedToken) {
+      return storedToken;
+    }
   }
 
-  if (typeof window === 'undefined') return '';
-
-  return sanitizeAdminToken(localStorage.getItem(ADMIN_TOKEN_KEY) || '');
+  return sanitizeAdminToken(import.meta.env.VITE_ADMIN_API_TOKEN || '');
 }
 
 export function useAdminAuth() {
