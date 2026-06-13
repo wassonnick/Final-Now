@@ -70,6 +70,29 @@ interface Property {
   societyName?: string | null;
 }
 
+function isPublicLiveProperty(property: any) {
+  const rawStatus = String(
+    property?.status ||
+      property?.publication_status ||
+      property?.publicationStatus ||
+      "",
+  ).toLowerCase();
+
+  const explicitlyPublished =
+    property?.is_published === true ||
+    property?.isPublished === true ||
+    property?.published === true ||
+    Boolean(property?.published_at || property?.publishedAt);
+
+  if (explicitlyPublished) return true;
+
+  return rawStatus === "live" || rawStatus === "published" || rawStatus === "active";
+}
+
+function filterPublicLiveProperties(properties: any[]) {
+  return Array.isArray(properties) ? properties.filter(isPublicLiveProperty) : [];
+}
+
 function getField<T = string>(item: any, camel: string, snake: string, fallback: T): T {
   return (item?.[camel] ?? item?.[snake] ?? fallback) as T;
 }
@@ -246,6 +269,10 @@ export function PropertyPage() {
         const json = await response.json();
         const nextProperty = extractProperty(json);
 
+        if (!nextProperty || !isPublicLiveProperty(nextProperty)) {
+          throw new Error("Property not found in public inventory");
+        }
+
         if (mounted) {
           setProperty(nextProperty);
           setActiveImage(0);
@@ -319,6 +346,7 @@ export function PropertyPage() {
 
             if (currentSlug && itemSlug && itemSlug === currentSlug) return false;
             if (currentId && itemId && itemId === currentId) return false;
+            if (!isPublicLiveProperty(item)) return false;
 
             return Boolean(item?.title || item?.slug || item?.id);
           })
@@ -419,7 +447,7 @@ export function PropertyPage() {
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold text-navy-900">Property not found</h1>
           <p className="mx-auto mt-3 max-w-xl text-navy-500">
-            {fetchError || "This property could not be found in the live inventory."}
+            {fetchError || "This property is not available in the public live inventory."}
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild className="rounded-full bg-navy-600 hover:bg-navy-700">

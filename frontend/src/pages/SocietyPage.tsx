@@ -43,6 +43,29 @@ function splitLines(value?: string | null) {
     .filter(Boolean);
 }
 
+function isPublicLiveProperty(property: any) {
+  const rawStatus = String(
+    property?.status ||
+      property?.publication_status ||
+      property?.publicationStatus ||
+      "",
+  ).toLowerCase();
+
+  const explicitlyPublished =
+    property?.is_published === true ||
+    property?.isPublished === true ||
+    property?.published === true ||
+    Boolean(property?.published_at || property?.publishedAt);
+
+  if (explicitlyPublished) return true;
+
+  return rawStatus === "live" || rawStatus === "published" || rawStatus === "active";
+}
+
+function filterPublicLiveProperties(properties: any[]) {
+  return Array.isArray(properties) ? properties.filter(isPublicLiveProperty) : [];
+}
+
 function field<T = any>(
   item: any,
   camel: string,
@@ -240,7 +263,7 @@ export function SocietyPage() {
 
         if (mounted) {
           setApiSociety(societyData);
-          setApiProperties(propertyData);
+          setApiProperties(filterPublicLiveProperties(propertyData));
           setRelatedSocieties(relatedData);
           setError(null);
         }

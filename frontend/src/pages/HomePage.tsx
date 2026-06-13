@@ -142,6 +142,29 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+function isPublicLiveProperty(property: any) {
+  const rawStatus = String(
+    property?.status ||
+      property?.publication_status ||
+      property?.publicationStatus ||
+      "",
+  ).toLowerCase();
+
+  const explicitlyPublished =
+    property?.is_published === true ||
+    property?.isPublished === true ||
+    property?.published === true ||
+    Boolean(property?.published_at || property?.publishedAt);
+
+  if (explicitlyPublished) return true;
+
+  return rawStatus === "live" || rawStatus === "published" || rawStatus === "active";
+}
+
+function filterPublicLiveProperties(properties: any[]) {
+  return Array.isArray(properties) ? properties.filter(isPublicLiveProperty) : [];
+}
+
 export function HomePage() {
   const [societies, setSocieties] = useState<any[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
@@ -165,7 +188,7 @@ export function HomePage() {
       .then((items) => setSocieties(items))
       .catch((error) => console.error("Societies fetch failed:", error));
     fetchPublicProperties()
-      .then((items) => setProperties(items))
+      .then((items) => setProperties(filterPublicLiveProperties(items)))
       .catch((error) => console.error("Properties fetch failed:", error));
   }, []);
 

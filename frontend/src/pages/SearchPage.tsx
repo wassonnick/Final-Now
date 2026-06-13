@@ -239,6 +239,29 @@ function EmptyResults({
   );
 }
 
+function isPublicLiveProperty(property: any) {
+  const rawStatus = String(
+    property?.status ||
+      property?.publication_status ||
+      property?.publicationStatus ||
+      "",
+  ).toLowerCase();
+
+  const explicitlyPublished =
+    property?.is_published === true ||
+    property?.isPublished === true ||
+    property?.published === true ||
+    Boolean(property?.published_at || property?.publishedAt);
+
+  if (explicitlyPublished) return true;
+
+  return rawStatus === "live" || rawStatus === "published" || rawStatus === "active";
+}
+
+function filterPublicLiveProperties(properties: any[]) {
+  return Array.isArray(properties) ? properties.filter(isPublicLiveProperty) : [];
+}
+
 function resolveSearchTab(tab: string | null, intent: string | null) {
   const cleanTab = (tab || "").toLowerCase().trim();
   const cleanIntent = (intent || "").toLowerCase().trim();
@@ -286,7 +309,7 @@ export function SearchPage() {
       .then(setSocieties)
       .catch((error) => console.error("Societies fetch failed:", error));
     fetchPublicProperties()
-      .then(setProperties)
+      .then((items) => setProperties(filterPublicLiveProperties(items)))
       .catch((error) => console.error("Properties fetch failed:", error));
   }, []);
 
