@@ -16,7 +16,7 @@ import {
   Star,
 } from "lucide-react";
 
-type Intent = "rent" | "buy" | "resale" | "general";
+type Intent = "society" | "rent" | "buy" | "general";
 
 type AdvisorMatch = {
   id: number;
@@ -367,7 +367,7 @@ function AIAdvisorChatBox() {
 }
 
 export default function SocietyFlatsHero() {
-  const [activeTab, setActiveTab] = useState<Intent>("rent");
+  const [activeTab, setActiveTab] = useState<Intent>("society");
   const [query, setQuery] = useState("");
 
   const handleSearch = () => {
@@ -380,7 +380,7 @@ export default function SocietyFlatsHero() {
 
     if (activeTab === "rent") {
       params.set("tab", "rent");
-    } else if (activeTab === "buy" || activeTab === "resale") {
+    } else if (activeTab === "buy") {
       params.set("tab", "buy");
     } else {
       params.set("tab", "societies");
@@ -414,9 +414,9 @@ export default function SocietyFlatsHero() {
           <div className="mt-3 w-full rounded-[18px] border border-blue-100 bg-white/90 p-2 shadow-[0_12px_34px_rgba(37,99,235,0.09)] backdrop-blur-xl sm:mt-3 sm:p-2">
             <div className="mb-1.5 grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
               {[
+                { key: "society", label: "Society" },
                 { key: "rent", label: "Rent" },
                 { key: "buy", label: "Buy" },
-                { key: "resale", label: "Resale" },
                 { key: "general", label: "Ask AI" },
               ].map((tab) => (
                 <button
