@@ -787,7 +787,7 @@ export function AdminLeadsPage() {
                     </p>
                   </div>
 
-                  <div className="mt-3 grid grid-cols-3 gap-2 xl:mt-0 xl:block">
+                  <div className="mt-3 grid grid-cols-3 gap-2 xl:contents">
                     <div className="rounded-2xl border border-slate-100 bg-white p-2 xl:border-0 xl:p-0">
                       <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Status</p>
                       <select
