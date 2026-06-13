@@ -14,6 +14,7 @@ export function Navbar() {
   const location = useLocation();
   const { compareList, shortlist, isAuthenticated, user } = useAppStore();
   const isHomePage = location.pathname === '/';
+  const isPropertyOrSocietyPage = location.pathname.startsWith('/property/') || location.pathname.startsWith('/society/');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +113,10 @@ export function Navbar() {
       )}
 
     </header>
-    <nav className={cn("fixed bottom-3 left-3 right-3 z-50 rounded-[1.25rem] border border-navy-100 bg-white/95 p-2 shadow-apple backdrop-blur-xl xl:hidden", isHomePage && "hidden")}>
+    <nav className={cn(
+      "fixed bottom-3 left-3 right-3 z-50 rounded-[1.25rem] border border-navy-100 bg-white/95 p-2 shadow-apple backdrop-blur-xl xl:hidden",
+      (isHomePage || isPropertyOrSocietyPage) && "hidden",
+    )}>
       <div className="grid grid-cols-4 gap-1">
         {bottomActions.map((action) => {
           const Icon = action.icon;
