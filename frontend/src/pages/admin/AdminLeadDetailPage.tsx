@@ -337,6 +337,30 @@ function displayLeadRequirement(lead: AdminLead) {
   return lead.requirement || "Not specified";
 }
 
+function preferredCallbackTime(lead: AdminLead) {
+  const raw = [
+    (lead as { message?: unknown }).message,
+    (lead as { notes?: unknown }).notes,
+    (lead as { rawNotes?: unknown }).rawNotes,
+    (lead as { timeline?: unknown }).timeline,
+    lead.requirement,
+  ]
+    .map((item) => {
+      if (!item) return "";
+      if (typeof item === "string") return item;
+      try {
+        return JSON.stringify(item);
+      } catch {
+        return "";
+      }
+    })
+    .filter(Boolean)
+    .join("\n");
+
+  const match = raw.match(/Preferred callback time:\s*([^\n.]+)/i);
+  return match?.[1]?.trim() || "";
+}
+
 function leadTypeTitle(source?: string) {
   const value = String(source || "").toLowerCase();
 
@@ -1498,6 +1522,9 @@ export function AdminLeadDetailPage() {
                 </p>
                 <p>
                   <span className="font-medium text-slate-950">Requirement:</span> {displayLeadRequirement(lead)}
+                </p>
+                <p>
+                  <span className="font-medium text-slate-950">Preferred time:</span> {preferredCallbackTime(lead) || "Not specified"}
                 </p>
                 <p>
                   <span className="font-medium text-slate-950">Budget:</span> {lead.budget || "Not specified"}
