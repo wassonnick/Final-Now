@@ -392,7 +392,7 @@ export default function SocietyFlatsHero() {
 
   return (
     <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_72%_18%,rgba(37,99,235,0.10),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]">
-      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-3 px-4 pb-3 pt-3 sm:gap-5 sm:px-6 sm:pb-4 sm:pt-5 lg:grid-cols-[minmax(0,1.52fr)_minmax(320px,0.68fr)] lg:gap-6 lg:px-20 lg:pb-5 lg:pt-5">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-2 px-4 pb-2 pt-2 sm:gap-5 sm:px-6 sm:pb-4 sm:pt-5 lg:grid-cols-[minmax(0,1.52fr)_minmax(320px,0.68fr)] lg:gap-6 lg:px-20 lg:pb-5 lg:pt-5">
         <div className="max-w-[860px]">
           <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/80 px-3 py-1.5 shadow-sm sm:mb-3">
             <span className="h-2 w-2 rounded-full bg-amber-500" />
@@ -412,7 +412,7 @@ export default function SocietyFlatsHero() {
           </p>
 
           <div className="mt-3 w-full rounded-[18px] border border-blue-100 bg-white/90 p-2 shadow-[0_12px_34px_rgba(37,99,235,0.09)] backdrop-blur-xl sm:mt-3 sm:p-2">
-            <div className="mb-2 grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
+            <div className="mb-1.5 grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
               {[
                 { key: "rent", label: "Rent" },
                 { key: "buy", label: "Buy" },
@@ -436,7 +436,7 @@ export default function SocietyFlatsHero() {
             </div>
 
             <div className="flex flex-col gap-2 rounded-[16px] bg-slate-50/70 p-2 sm:flex-row sm:items-center sm:gap-2 sm:p-2">
-              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-white px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-2.5">
+              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-white px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5">
                 <Search className="h-5 w-5 shrink-0 text-blue-500" />
                 <input
                   value={query}
@@ -462,7 +462,7 @@ export default function SocietyFlatsHero() {
             </div>
           </div>
 
-          <div className="mt-3 grid max-w-[880px] grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
+          <div className="mt-2 grid max-w-[880px] grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
             <span className="col-span-2 text-[13px] font-bold text-blue-500 sm:mr-1 sm:text-[14px]">
               Popular searches:
             </span>

@@ -704,7 +704,7 @@ export function SearchPage() {
       </section>
 
       <section className="container mx-auto px-3 pb-52 pt-2 md:px-4 md:pb-10 md:pt-3">
-        <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
+        <div className="grid gap-3 lg:grid-cols-[240px_1fr] lg:gap-4">
           <aside className="hidden space-y-3 lg:sticky lg:top-24 lg:block lg:self-start">
             <div className="rounded-[1.25rem] border border-navy-100 bg-white p-3.5 shadow-sm">
               <div className="flex items-center justify-between">
@@ -716,7 +716,7 @@ export function SearchPage() {
                   <p className="text-[11px] font-black uppercase tracking-[0.16em] text-navy-400">
                     Intent
                   </p>
-                  <div className="mt-2.5 grid gap-1.5">
+                  <div className="mt-2 grid gap-1.5">
                     {tabs.map((tab) => {
                       const Icon = tab.icon;
                       return (
@@ -929,7 +929,7 @@ export function SearchPage() {
                 onSubmitLead={submitLead}
               />
             ) : activeTab === "societies" ? (
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
                 {societyResults.map((society) => (
                   <article
                     key={society.id}
@@ -1018,7 +1018,7 @@ export function SearchPage() {
               <div
                 className={cn(
                   viewMode === "grid"
-                    ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+                    ? "grid gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3"
                     : "space-y-4",
                 )}
               >
@@ -1036,7 +1036,7 @@ export function SearchPage() {
                       <div
                         className={cn(
                           "relative overflow-hidden bg-navy-50",
-                          viewMode === "grid" ? "h-32 md:h-36" : "h-32 md:h-full",
+                          viewMode === "grid" ? "h-28 md:h-36" : "h-28 md:h-full",
                         )}
                       >
                         <img
@@ -1070,7 +1070,7 @@ export function SearchPage() {
                         {property.society || "Gurgaon"} • {property.locality || "Verified listing"}
                       </p>
 
-                      <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-ivory-100 p-3">
+                      <div className="mt-3 grid grid-cols-3 gap-2 rounded-2xl bg-ivory-100 p-2.5 md:mt-5 md:p-3">
                         <div>
                           <p className="text-xs text-navy-400">Price</p>
                           <p className="line-clamp-1 font-black text-navy-900">

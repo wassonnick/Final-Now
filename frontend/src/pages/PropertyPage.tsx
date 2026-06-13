@@ -518,7 +518,7 @@ export function PropertyPage() {
           </Button>
 
           <div className={photos.length > 1 ? "grid gap-4 lg:grid-cols-[1fr_240px]" : "grid gap-4"}>
-            <div className="relative h-[210px] overflow-hidden rounded-[1.5rem] bg-navy-50 sm:h-[260px] md:h-[440px] md:rounded-[2rem]">
+            <div className="relative h-[190px] overflow-hidden rounded-[1.25rem] bg-navy-50 sm:h-[260px] md:h-[440px] md:rounded-[2rem]">
               <img src={photos[activeImage] || photos[0]} alt={title} className="h-full w-full object-cover" />
               <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                 {property.verified ? (
@@ -556,7 +556,7 @@ export function PropertyPage() {
       <main className="container mx-auto px-4 py-6 md:py-8">
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           <div className="space-y-6">
-            <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+            <section className="rounded-[1.5rem] border border-navy-100 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-7">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="mb-3 flex flex-wrap gap-2">
@@ -599,10 +599,10 @@ export function PropertyPage() {
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap md:mt-6">
-                <Button onClick={() => openLead("callback")} className="rounded-full bg-blue-600 hover:bg-blue-700">
+                <Button onClick={() => openLead("callback")} className="h-10 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700">
                   <Phone className="mr-2 h-4 w-4" /> Callback
                 </Button>
-                <Button onClick={() => openLead("enquiry")} variant="outline" className="rounded-full border-blue-200 text-blue-700">
+                <Button onClick={() => openLead("enquiry")} variant="outline" className="h-10 rounded-full border-blue-200 text-sm font-bold text-blue-700">
                   <Mail className="mr-2 h-4 w-4" /> Enquire
                 </Button>
                 <Button
@@ -897,8 +897,8 @@ export function PropertyPage() {
         </div>
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-navy-100 bg-white/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
-        <div className="grid grid-cols-2 gap-3">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-navy-100 bg-white/95 px-3 py-2 shadow-[0_-10px_24px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
+        <div className="grid grid-cols-2 gap-2">
           <Button onClick={() => openLead("callback")} className="rounded-full bg-blue-600 hover:bg-blue-700">
             <Phone className="mr-2 h-4 w-4" /> Callback
           </Button>

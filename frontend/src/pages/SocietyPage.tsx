@@ -547,7 +547,7 @@ export function SocietyPage() {
               gallery.length > 1 ? "lg:grid-cols-[1.4fr_0.6fr]" : ""
             }`}
           >
-            <div className="h-[220px] overflow-hidden rounded-[1.5rem] bg-navy-50 sm:h-[340px] lg:h-[420px] lg:rounded-[2rem]">
+            <div className="h-[190px] overflow-hidden rounded-[1.25rem] bg-navy-50 sm:h-[340px] lg:h-[420px] lg:rounded-[2rem]">
               <img
                 src={gallery[0]}
                 alt={society.name}
@@ -577,7 +577,7 @@ export function SocietyPage() {
       <section className="container mx-auto px-4 py-6 md:py-10">
         <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
           <div className="space-y-5 md:space-y-8">
-            <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+            <div className="rounded-[1.5rem] border border-navy-100 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-7">
               <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="mb-4 flex flex-wrap gap-2">
@@ -648,7 +648,7 @@ export function SocietyPage() {
               <div className="mt-5 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap md:mt-6">
                 <Button
                   onClick={() => openSocietyCallback()}
-                  className="rounded-full bg-blue-600 hover:bg-blue-700"
+                  className="h-10 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700"
                 >
                   <Phone className="mr-2 h-4 w-4" /> Callback
                 </Button>
@@ -656,7 +656,7 @@ export function SocietyPage() {
                 <Button
                   asChild
                   variant="outline"
-                  className="rounded-full border-navy-200"
+                  className="h-10 rounded-full border-navy-200 text-sm font-bold"
                 >
                   <Link
                     to={`/search?tab=rent&q=${encodeURIComponent(society.name)}`}
@@ -796,7 +796,7 @@ export function SocietyPage() {
                   shortlisting.
                 </p>
               )}
-              <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-blue-50 p-4">
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-blue-50 p-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
                     Next step
@@ -1235,7 +1235,7 @@ export function SocietyPage() {
         </div>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-navy-100 bg-white/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-navy-100 bg-white/95 px-3 py-2 shadow-[0_-10px_24px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
         <div className="grid grid-cols-2 gap-3">
           <Button
             onClick={() => openSocietyCallback()}
