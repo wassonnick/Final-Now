@@ -12,36 +12,17 @@ import {
 } from "lucide-react";
 
 
-// C13_PUBLISHING_OPTIONS
-const C13_PUBLISHING_OPTIONS = [
-  {
-    value: "draft",
-    label: "Draft",
-    helper: "Keep hidden from public pages while admin verifies inventory.",
-  },
-  {
-    value: "published",
-    label: "Published",
-    helper: "Show publicly once details, pricing and photos are verified.",
-  },
-];
+function c13PublicationPayload(status: string) {
+  const isLive = status === "Live";
 
-function c13PublishingStatusFromForm(form: any) {
-  const raw = String(form?.status || form?.publication_status || form?.publicationStatus || "").toLowerCase();
-  const isPublished = form?.is_published === true || form?.isPublished === true || form?.published === true;
-
-  if (isPublished || raw.includes("publish") || raw === "live" || raw === "active") return "published";
-  return "draft";
-}
-
-function c13ApplyPublishingStatus(payload: any, status: string) {
   return {
-    ...payload,
-    status,
-    publication_status: status,
-    is_published: status === "published",
+    status: isLive ? "published" : "draft",
+    publication_status: isLive ? "published" : "draft",
+    is_published: isLive,
   };
 }
+
+
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -661,6 +642,7 @@ export function AdminPropertyFormPage() {
         owner_name: ownerName || undefined,
         owner_phone: ownerPhone || undefined,
         owner_verification_status: sourceLeadId ? "Draft Created" : undefined,
+        ...c13PublicationPayload(status),
         owner_notes: sourceLeadId
           ? [
               ownerName ? `Owner: ${ownerName}` : "",
@@ -1283,46 +1265,6 @@ export function AdminPropertyFormPage() {
               <Save className="mr-2 h-4 w-4" />
               {saving && saveMode === "Draft" ? "Saving..." : "Draft"}
             </Button>
-
-            
-          {/* C13 Publishing control */}
-          <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
-              Publishing status
-            </p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {C13_PUBLISHING_OPTIONS.map((option) => {
-                const active =
-                  String((form as any).publicationStatus || (form as any).publication_status || (form as any).status || "draft").toLowerCase() ===
-                  option.value;
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() =>
-                      setForm((current: any) => ({
-                        ...current,
-                        publicationStatus: option.value,
-                        publication_status: option.value,
-                        status: option.value,
-                        is_published: option.value === "published",
-                      }))
-                    }
-                    className={`rounded-2xl border p-3 text-left transition ${
-                      active
-                        ? "border-blue-300 bg-white text-blue-800 shadow-sm"
-                        : "border-blue-100 bg-white/70 text-slate-600 hover:bg-white"
-                    }`}
-                  >
-                    <span className="block text-sm font-extrabold">{option.label}</span>
-                    <span className="mt-1 block text-xs leading-5">{option.helper}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
 <Button
               type="button"
               onClick={() => handleSave("Live")}

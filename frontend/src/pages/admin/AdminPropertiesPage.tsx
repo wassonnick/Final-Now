@@ -86,28 +86,7 @@ function C13InventoryBadge({ property }: { property: any }) {
 
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-bold ${c13InventoryStatusClass(status)}`}>
-
-      {/* C13 inventory filter */}
-      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
-        <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-          Inventory
-        </span>
-        {C13_PROPERTY_STATUS_FILTERS.map((filter) => (
-          <button
-            key={filter.value}
-            type="button"
-            onClick={() => setC13StatusFilter(filter.value)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${
-              c13StatusFilter === filter.value
-                ? "border-blue-300 bg-blue-50 text-blue-700"
-                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
-            }`}
-          >
-            {filter.label}
-          </button>
-        ))}
-      </div>
-      {c13InventoryStatusLabel(status)}
+{c13InventoryStatusLabel(status)}
     </span>
   );
 }
@@ -211,7 +190,7 @@ function getArea(item: any) {
 
 export function AdminPropertiesPage() {
   const [c13StatusFilter, setC13StatusFilter] = useState<"all" | AdminInventoryStatus>("all");
-  const [properties, setProperties] = useState<any[]>([]);
+const [properties, setProperties] = useState<any[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All");
   const [type, setType] = useState("All");
@@ -247,7 +226,7 @@ export function AdminPropertiesPage() {
     void loadProperties();
   }, []);
 
-  const filtered = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     const term = query.trim().toLowerCase();
 
     return properties.filter((item: any) => {
@@ -270,6 +249,12 @@ export function AdminPropertiesPage() {
     });
   }, [properties, query, status, type]);
 
+  const filtered = useMemo(() => {
+    return baseFiltered.filter((item: any) => {
+      return c13StatusFilter === "all" || c13NormalizeInventoryStatus(item) === c13StatusFilter;
+    });
+  }, [baseFiltered, c13StatusFilter]);
+
   const stats = useMemo(() => {
     return {
       total: properties.length,
@@ -283,7 +268,8 @@ export function AdminPropertiesPage() {
   const duplicateProperty = async (item: any) => {
     if (duplicatingId) return;
 
-    const title = `${item?.title || "Untitled property"} Copy`;
+    const title = `${item?.title || "Untitled property"}
+                              <div className="mt-2"><C13InventoryBadge property={item} /></div> Copy`;
     const baseSlug = makeSlug(item?.slug || item?.title || "property");
 
     const payload = {
@@ -345,7 +331,7 @@ export function AdminPropertiesPage() {
   const deleteProperty = async (item: any) => {
     if (deletingId) return;
 
-    const confirmed = window.confirm(`Delete "${item?.title || "this property"}"?`);
+    const confirmed = window.confirm(`Delete "${item?.title || "this property"}"?\n\nThis removes it from admin inventory. Continue only if you are sure.`);
     if (!confirmed) return;
 
     try {
@@ -399,6 +385,28 @@ export function AdminPropertiesPage() {
             {actionMessage}
           </div>
         ) : null}
+
+
+        {/* C13 inventory filter */}
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
+          <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+            Inventory
+          </span>
+          {C13_PROPERTY_STATUS_FILTERS.map((filter) => (
+            <button
+              key={filter.value}
+              type="button"
+              onClick={() => setC13StatusFilter(filter.value)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${
+                c13StatusFilter === filter.value
+                  ? "border-blue-300 bg-blue-50 text-blue-700"
+                  : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
 
         {errorMessage ? (
           <div className="rounded-2xl bg-amber-50 px-5 py-3 text-sm font-medium text-amber-700">
@@ -598,7 +606,7 @@ export function AdminPropertiesPage() {
                             size="sm"
                             variant="ghost"
                             className="rounded-full text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                            onClick={() => deleteProperty(item)}
+onClick={() => deleteProperty(item)}
                             disabled={deletingId === item.id}
                           >
                             <Trash2 className="mr-1.5 h-4 w-4" />
