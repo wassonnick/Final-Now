@@ -741,7 +741,7 @@ export function AdminLeadDetailPage() {
 
   return (
     <AdminLayout title="Lead Details">
-      <div className="space-y-6">
+      <div className="space-y-4 pb-24 lg:space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <Button asChild variant="ghost" className="mb-3 rounded-full text-slate-600">
@@ -750,7 +750,7 @@ export function AdminLeadDetailPage() {
                 Back to Leads
               </Link>
             </Button>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-950">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-950 lg:text-3xl">
               {lead.name || "Unnamed lead"}
             </h1>
             <p className="mt-1 text-slate-500">
@@ -758,9 +758,9 @@ export function AdminLeadDetailPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-3 gap-2 lg:flex lg:flex-wrap lg:gap-3">
             {canCall ? (
-              <Button asChild variant="outline" className="rounded-full border-slate-200">
+              <Button asChild variant="outline" className="h-10 rounded-full border-slate-200 px-3 text-xs lg:text-sm">
                 <a href={`tel:${phoneDigits}`} onClick={() => void recordContactAction("Call action opened from lead detail")}>
                   <Phone className="mr-2 h-4 w-4" />
                   Call
@@ -769,7 +769,7 @@ export function AdminLeadDetailPage() {
             ) : null}
 
             {canCall ? (
-              <Button asChild variant="outline" className="rounded-full border-emerald-200 text-emerald-700">
+              <Button asChild variant="outline" className="h-10 rounded-full border-emerald-200 px-3 text-xs text-emerald-700 lg:text-sm">
                 <a href={whatsappUrl(lead)} target="_blank" rel="noreferrer" onClick={() => void recordContactAction("WhatsApp opened from lead detail")}>
                   <MessageCircle className="mr-2 h-4 w-4" />
                   WhatsApp
@@ -780,7 +780,7 @@ export function AdminLeadDetailPage() {
             <Button
               onClick={handleSaveLead}
               disabled={saving}
-              className="rounded-full bg-blue-600 hover:bg-blue-700"
+              className="h-10 rounded-full bg-blue-600 px-3 text-xs hover:bg-blue-700 lg:text-sm"
             >
               <Save className="mr-2 h-4 w-4" />
               {saving ? "Saving..." : "Save Lead"}
@@ -794,25 +794,47 @@ export function AdminLeadDetailPage() {
           </div>
         ) : null}
 
+        {/* C18 mobile admin lead sticky actions */}
+        {canCall ? (
+          <div className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-[0_-10px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
+            <a
+              href={`tel:${phoneDigits}`}
+              onClick={() => void recordContactAction("Mobile sticky call opened from lead detail")}
+              className="inline-flex h-10 items-center justify-center rounded-full bg-blue-600 px-3 text-xs font-bold text-white"
+            >
+              <Phone className="mr-1.5 h-4 w-4" /> Call
+            </a>
+            <a
+              href={whatsappUrl(lead)}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => void recordContactAction("Mobile sticky WhatsApp opened from lead detail")}
+              className="inline-flex h-10 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-3 text-xs font-bold text-emerald-700"
+            >
+              <MessageCircle className="mr-1.5 h-4 w-4" /> WhatsApp
+            </a>
+          </div>
+        ) : null}
+
         {error ? (
           <div className="rounded-2xl bg-amber-50 px-5 py-3 text-sm font-medium text-amber-700">
             {error}
           </div>
         ) : null}
 
-        <section className="grid gap-4 md:grid-cols-4">
-          <div className={`rounded-[24px] border p-5 ${statusClass(lead.status)}`}>
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+          <div className={`rounded-[20px] border p-4 md:p-5 ${statusClass(lead.status)}`}>
             <p className="text-xs font-bold uppercase tracking-[0.14em] opacity-70">Status</p>
             <p className="mt-2 text-xl font-bold">{displayLeadStatus(lead)}</p>
           </div>
-          <div className={`rounded-[24px] border p-5 ${priorityClass(lead.priority)}`}>
+          <div className={`rounded-[20px] border p-4 md:p-5 ${priorityClass(lead.priority)}`}>
             <p className="text-xs font-bold uppercase tracking-[0.14em] opacity-70">Priority</p>
             <p className="mt-2 flex items-center gap-2 text-xl font-bold">
               <Flame className="h-5 w-5" />
               {lead.priority}
             </p>
           </div>
-          <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Requirement</p>
             <p className="mt-2 text-lg font-bold text-slate-950">
               {displayLeadRequirement(lead)}
@@ -827,7 +849,7 @@ export function AdminLeadDetailPage() {
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-lg font-semibold tracking-tight text-slate-950">
@@ -857,7 +879,7 @@ export function AdminLeadDetailPage() {
           </div>
         </section>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        <div className="grid gap-4 xl:grid-cols-[1fr_360px] xl:gap-6">
           <div className="space-y-6">
             <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3">
@@ -1375,8 +1397,8 @@ export function AdminLeadDetailPage() {
             </section>
           </div>
 
-          <aside className="space-y-6">
-            <section className="rounded-[32px] border border-blue-100 bg-white p-6 shadow-sm">
+          <aside className="space-y-4 xl:space-y-6">
+            <section className="rounded-[24px] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
