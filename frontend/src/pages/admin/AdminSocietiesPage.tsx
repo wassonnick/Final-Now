@@ -60,6 +60,7 @@ export function AdminSocietiesPage() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [bulkStatus, setBulkStatus] = useState<SocietyStatus>("Draft");
   const [bulkWorking, setBulkWorking] = useState(false);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<number | null>(null);
 
   const loadSocieties = async () => {
     try {
@@ -169,6 +170,44 @@ export function AdminSocietiesPage() {
       setError("Bulk update failed. Refresh and try again.");
     } finally {
       setBulkWorking(false);
+    }
+  };
+
+  const quickSocietyPrimaryAction = (status: string): { label: string; nextStatus: SocietyStatus } => {
+    if (status === "Verified") return { label: "Premium", nextStatus: "Premium" };
+    if (status === "Premium") return { label: "Move Draft", nextStatus: "Draft" };
+    return { label: "Verify", nextStatus: "Verified" };
+  };
+
+  const quickSocietyArchiveAction = (status: string): { label: string; nextStatus: SocietyStatus } => {
+    if (status === "Archived") return { label: "Restore", nextStatus: "Draft" };
+    return { label: "Archive", nextStatus: "Archived" };
+  };
+
+  const quickUpdateSocietyStatus = async (society: AdminSociety, nextStatus: SocietyStatus) => {
+    if (statusUpdatingId) return;
+
+    try {
+      setStatusUpdatingId(society.id);
+      setError("");
+      setMessage("");
+
+      const updated = await updateAdminSocietyStatus(society.id, nextStatus);
+
+      setSocieties((current) =>
+        current.map((item) => (item.id === society.id ? updated : item)),
+      );
+
+      setSelectedIds((current) =>
+        nextStatus === "Archived" ? current.filter((id) => id !== society.id) : current,
+      );
+
+      setMessage(`Updated "${society.name}" to ${nextStatus}.`);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to update society status. Open Edit and save if this profile needs required fields.");
+    } finally {
+      setStatusUpdatingId(null);
     }
   };
 
@@ -447,6 +486,36 @@ export function AdminSocietiesPage() {
                             <LinkIcon className="mr-1.5 h-4 w-4" />
                             Enrich URL
                           </Link>
+                        </Button>
+
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={quickSocietyPrimaryAction(status).nextStatus === "Verified" ? "default" : "outline"}
+                          className={
+                            quickSocietyPrimaryAction(status).nextStatus === "Verified"
+                              ? "rounded-full bg-emerald-600 px-3 text-xs font-bold hover:bg-emerald-700 sm:text-sm"
+                              : "rounded-full border-blue-200 px-3 text-xs font-bold text-blue-700 sm:text-sm"
+                          }
+                          onClick={() => quickUpdateSocietyStatus(item, quickSocietyPrimaryAction(status).nextStatus)}
+                          disabled={statusUpdatingId === item.id}
+                        >
+                          {statusUpdatingId === item.id ? "Updating..." : quickSocietyPrimaryAction(status).label}
+                        </Button>
+
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className={
+                            quickSocietyArchiveAction(status).nextStatus === "Archived"
+                              ? "rounded-full border-rose-200 px-3 text-xs font-bold text-rose-700 sm:text-sm"
+                              : "rounded-full border-slate-200 px-3 text-xs font-bold text-slate-700 sm:text-sm"
+                          }
+                          onClick={() => quickUpdateSocietyStatus(item, quickSocietyArchiveAction(status).nextStatus)}
+                          disabled={statusUpdatingId === item.id}
+                        >
+                          {quickSocietyArchiveAction(status).label}
                         </Button>
 
                         <Button
