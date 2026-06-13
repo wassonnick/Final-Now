@@ -307,6 +307,18 @@ function ownerDraftPropertyUrl(lead: AdminLead) {
   return `/admin/properties/new?${params.toString()}`;
 }
 
+function linkedDraftPropertyForLead(lead: AdminLead) {
+  return lead.linkedProperties?.find((property) =>
+    ["Draft", "Verification"].includes(String(property.status || ""))
+  );
+}
+
+function linkedLivePropertyForLead(lead: AdminLead) {
+  return lead.linkedProperties?.find((property) =>
+    String(property.status || "") === "Live"
+  );
+}
+
 function ownerLeadNextStep(lead: AdminLead) {
   if (!isOwnerSource(lead.source)) return "";
 
@@ -530,6 +542,9 @@ export function AdminLeadDetailPage() {
   const [saving, setSaving] = useState(false);
 
   const phoneDigits = useMemo(() => cleanPhone(lead?.phone), [lead?.phone]);
+  const linkedDraftProperty = lead ? linkedDraftPropertyForLead(lead) : undefined;
+  const linkedLiveProperty = lead ? linkedLivePropertyForLead(lead) : undefined;
+  const linkedOwnerProperty = linkedDraftProperty || linkedLiveProperty;
   const canCall = phoneDigits.length >= 10;
 
   const loadLead = async () => {
@@ -1039,7 +1054,30 @@ export function AdminLeadDetailPage() {
                   </Button>
                 </div>
               ) : isOwnerSource(lead.source) ? (
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <>
+                  {linkedOwnerProperty ? (
+                    <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">
+                        Linked owner property
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-slate-950">
+                        {linkedOwnerProperty.title || "Draft property"}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                        <span className="rounded-full bg-white px-3 py-1 text-emerald-700">
+                          Status: {linkedOwnerProperty.status || "Draft"}
+                        </span>
+                        <span className="rounded-full bg-white px-3 py-1 text-slate-600">
+                          ID: #{linkedOwnerProperty.id}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-xs leading-5 text-emerald-800">
+                        This owner lead already has a linked property. Open the existing property instead of creating a duplicate.
+                      </p>
+                    </div>
+                  ) : null}
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -1105,11 +1143,24 @@ export function AdminLeadDetailPage() {
                     variant="outline"
                     className="h-auto justify-start rounded-2xl border-blue-100 bg-blue-50 px-4 py-4 text-left text-blue-700 hover:bg-blue-100 md:col-span-2"
                   >
-                    <Link to={ownerDraftPropertyUrl(lead)}>
-                      Create Draft Property
+                    <Link
+                      to={
+                        linkedDraftProperty
+                          ? `/admin/properties/${linkedDraftProperty.id}/edit`
+                          : linkedLiveProperty
+                            ? `/property/${linkedLiveProperty.slug || linkedLiveProperty.id}`
+                            : ownerDraftPropertyUrl(lead)
+                      }
+                    >
+                      {linkedDraftProperty
+                        ? "View Draft Property"
+                        : linkedLiveProperty
+                          ? "View Published Property"
+                          : "Create Draft Property"}
                     </Link>
                   </Button>
                 </div>
+                </>
               ) : (
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <Button
