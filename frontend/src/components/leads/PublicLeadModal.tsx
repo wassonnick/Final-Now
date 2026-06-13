@@ -147,6 +147,10 @@ export function PublicLeadModal({
       defaultMessage ||
       `${finalRequirement}${societyName ? ` for ${societyName}` : ""}`;
 
+    const enrichedRequirement = selectedTime
+      ? `${finalRequirement} · Preferred time: ${selectedTime}`
+      : finalRequirement;
+
     const enrichedMessage = [
       baseMessage,
       selectedBudget ? `Budget: ${selectedBudget}.` : "",
@@ -164,7 +168,7 @@ export function PublicLeadModal({
         society_name: societyName || null,
         property_title: propertyTitle || null,
         property_slug: propertySlug || null,
-        requirement: finalRequirement,
+        requirement: enrichedRequirement,
         budget: selectedBudget || null,
         message: enrichedMessage,
       });
