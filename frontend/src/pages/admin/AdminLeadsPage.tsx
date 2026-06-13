@@ -613,7 +613,7 @@ export function AdminLeadsPage() {
           </div>
         ) : null}
 
-        <section className="grid gap-4 md:grid-cols-4">
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {[
             ["Today", todayLeads, "New enquiries"],
             ["Active Leads", activeLeads, "In pipeline"],
@@ -630,7 +630,7 @@ export function AdminLeadsPage() {
           ))}
         </section>
 
-        <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h2 className="text-xl font-bold tracking-tight text-slate-950">Lead Inbox</h2>
@@ -702,7 +702,7 @@ export function AdminLeadsPage() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 lg:grid-cols-[1fr_190px_190px]">
+          <div className="mt-4 grid gap-2.5 lg:mt-6 lg:grid-cols-[1fr_190px_190px] lg:gap-3">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
@@ -734,7 +734,7 @@ export function AdminLeadsPage() {
             </select>
           </div>
 
-          <div className="mt-6 overflow-hidden rounded-[24px] border border-slate-200">
+          <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200 md:mt-6 md:rounded-[24px]">
             <div className="hidden grid-cols-[1.3fr_1.6fr_150px_110px_150px_210px] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 xl:grid">
               <span>Lead</span>
               <span>Interest</span>
@@ -754,7 +754,7 @@ export function AdminLeadsPage() {
               return (
                 <div
                   key={lead.id}
-                  className="border-b border-slate-200 bg-white px-4 py-5 last:border-0 xl:grid xl:grid-cols-[1.3fr_1.6fr_150px_110px_150px_210px] xl:items-center xl:gap-4 xl:px-5"
+                  className="border-b border-slate-200 bg-white px-3 py-4 last:border-0 xl:grid xl:grid-cols-[1.3fr_1.6fr_150px_110px_150px_210px] xl:items-center xl:gap-4 xl:px-5 xl:py-5"
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3 xl:block">
@@ -779,7 +779,7 @@ export function AdminLeadsPage() {
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-2xl bg-slate-50 p-3 xl:mt-0 xl:bg-transparent xl:p-0">
+                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 xl:mt-0 xl:bg-transparent xl:p-0">
                     <p className="font-semibold text-slate-950">{lead.society || "Not specified"}</p>
                     <p className="mt-1 text-sm text-slate-500">{cleanLeadInterestMeta(lead)}</p>
                     <p className="mt-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 xl:bg-transparent xl:px-0 xl:py-0 xl:text-sm">
@@ -787,7 +787,7 @@ export function AdminLeadsPage() {
                     </p>
                   </div>
 
-                  <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-3 xl:mt-0 xl:border-0 xl:p-0">
+                  <div className="mt-3 rounded-2xl border border-slate-100 bg-white p-3 xl:mt-0 xl:border-0 xl:p-0">
                     <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Status</p>
                     <select
                       value={lead.status}
@@ -803,13 +803,13 @@ export function AdminLeadsPage() {
                     </select>
                   </div>
 
-                  <div className="mt-4 xl:mt-0">
+                  <div className="mt-3 xl:mt-0">
                     <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${priorityClass(lead.priority)}`}>
                       {lead.priority}
                     </span>
                   </div>
 
-                  <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-3 text-sm text-slate-500 xl:mt-0 xl:border-0 xl:p-0">
+                  <div className="mt-3 rounded-2xl border border-slate-100 bg-white p-3 text-sm text-slate-500 xl:mt-0 xl:border-0 xl:p-0">
                     <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Follow-up</p>
                     <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${followUpClass(lead)}`}>
                       {followUpLabel(lead)}
@@ -821,8 +821,8 @@ export function AdminLeadsPage() {
                     <p className="mt-1">{lead.assignedTo || "Unassigned"}</p>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-2 xl:mt-0">
-                    <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200">
+                  <div className="mt-3 grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 xl:mt-0 xl:flex xl:flex-wrap">
+                    <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200 px-3">
                       <Link to={`/admin/leads/${lead.id}`}>
                         <Eye className="mr-1.5 h-4 w-4" />
                         Open
