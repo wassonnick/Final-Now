@@ -338,13 +338,18 @@ function displayLeadRequirement(lead: AdminLead) {
 }
 
 function preferredCallbackTime(lead: AdminLead) {
-  const raw = [
+  const rawParts = [
     (lead as { message?: unknown }).message,
     (lead as { notes?: unknown }).notes,
     (lead as { rawNotes?: unknown }).rawNotes,
     (lead as { timeline?: unknown }).timeline,
+    (lead as { submittedDetails?: unknown }).submittedDetails,
+    (lead as { originalMessage?: unknown }).originalMessage,
+    (lead as { adminNotes?: unknown }).adminNotes,
     lead.requirement,
-  ]
+  ];
+
+  let raw = rawParts
     .map((item) => {
       if (!item) return "";
       if (typeof item === "string") return item;
@@ -357,9 +362,32 @@ function preferredCallbackTime(lead: AdminLead) {
     .filter(Boolean)
     .join("\n");
 
-  const match = raw.match(/Preferred callback time:\s*([^\n.]+)/i);
-  return match?.[1]?.trim() || "";
+  try {
+    raw += "\n" + JSON.stringify(lead);
+  } catch {
+    // Keep the explicit fields above if full serialization fails.
+  }
+
+  const cleanRaw = raw
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\n")
+    .replace(/\"/g, '"');
+
+  const patterns = [
+    /Preferred callback time:\s*([^\n.,"}]+)/i,
+    /preferred_callback_time["':\s]+([^\n.,"}]+)/i,
+    /preferredTime["':\s]+([^\n.,"}]+)/i,
+    /Preferred time:\s*([^\n.,"}]+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = cleanRaw.match(pattern);
+    if (match?.[1]?.trim()) return match[1].trim();
+  }
+
+  return "";
 }
+
 
 function leadTypeTitle(source?: string) {
   const value = String(source || "").toLowerCase();
