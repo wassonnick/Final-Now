@@ -17,6 +17,14 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { backendApi } from "@/services/backendApi";
 
+function cleanOwnerLeadPhone(value: string) {
+  return String(value || "").replace(/\D/g, "").slice(0, 10);
+}
+
+function isValidOwnerLeadPhone(value: string) {
+  return /^[6-9]\d{9}$/.test(cleanOwnerLeadPhone(value));
+}
+
 const steps = [
   {
     icon: Building2,
@@ -66,7 +74,14 @@ export function SellPage() {
     setSubmitting(true);
     setError("");
 
-    const cleanPhone = form.phone.replace(/[^0-9]/g, "").slice(-10);
+    const cleanPhone = cleanOwnerLeadPhone(form.phone);
+
+    if (!isValidOwnerLeadPhone(cleanPhone)) {
+      setError("Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8 or 9.");
+      setSubmitting(false);
+      return;
+    }
+
     const listingIntent = purpose === "rent" ? "Rent" : "Sale";
     const societyName = form.society.trim();
     const towerName = form.tower.trim();
@@ -92,7 +107,7 @@ export function SellPage() {
     try {
       await backendApi.createLead({
         name: form.name.trim(),
-        phone: cleanPhone || form.phone,
+        phone: cleanPhone,
         source: purpose === "rent" ? "owner_listing_rent" : "owner_listing_sale",
         society_name: societyName || null,
         property_title: propertyTitle,
@@ -181,7 +196,7 @@ export function SellPage() {
               </div>
               {success ? (
                 <div className="rounded-2xl bg-emerald-50 p-5 text-sm font-semibold leading-6 text-emerald-700">
-                  Listing request submitted. Our team will call you shortly.
+                  Listing request received. Our team will call you shortly to verify details and create the right draft.
                 </div>
               ) : (
                 <form onSubmit={submitOwnerLead} className="space-y-4">
@@ -234,11 +249,17 @@ export function SellPage() {
                     required
                     value={form.phone}
                     onChange={(event) =>
-                      updateForm("phone", event.target.value)
+                      updateForm("phone", cleanOwnerLeadPhone(event.target.value))
                     }
+                    inputMode="numeric"
+                    pattern="[6-9][0-9]{9}"
+                    maxLength={10}
                     className="h-12 rounded-xl"
-                    placeholder="Your phone number"
+                    placeholder="10-digit mobile number"
                   />
+                  <p className="text-xs text-navy-400">
+                    {form.phone.length}/10 digits · India mobile number only
+                  </p>
                   {error ? (
                     <div className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">
                       {error}

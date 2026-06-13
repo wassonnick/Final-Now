@@ -139,6 +139,25 @@ function isValidLeadPhone(value: string) {
   return /^[6-9]\d{9}$/.test(value);
 }
 
+function searchTabForListingType(listingType: string) {
+  const cleanType = String(listingType || "").toLowerCase();
+
+  if (
+    cleanType.includes("sale") ||
+    cleanType.includes("buy") ||
+    cleanType.includes("resale") ||
+    cleanType.includes("builder")
+  ) {
+    return "buy";
+  }
+
+  if (cleanType.includes("rent") || cleanType.includes("lease")) {
+    return "rent";
+  }
+
+  return "societies";
+}
+
 function leadRequirementFor(listingType: string, leadType: "callback" | "enquiry") {
   const cleanType = String(listingType || "Property").toLowerCase();
 
@@ -255,6 +274,7 @@ export function PropertyPage() {
   const societyLocality = getSocietyLocality(property);
   const price = property?.price || property?.rent || "On request";
   const listingType = getField(property, "listingType", "listing_type", "Property");
+  const listingSearchTab = searchTabForListingType(listingType);
   const propertyType = getField(property, "propertyType", "property_type", "Apartment");
   const areaSqft = getField(property, "areaSqft", "area_sqft", "-");
   const furnishedStatus = getField(property, "furnishedStatus", "furnished_status", "-");
@@ -643,7 +663,7 @@ export function PropertyPage() {
                   </p>
                 </div>
                 <Button asChild variant="outline" className="hidden rounded-full border-blue-200 text-blue-700 sm:inline-flex">
-                  <Link to={`/search?tab=rent&q=${encodeURIComponent(societyName || societyLocality || title)}`}>
+                  <Link to={`/search?tab=${listingSearchTab}&q=${encodeURIComponent(societyName || societyLocality || title)}`}>
                     View all
                   </Link>
                 </Button>
@@ -703,7 +723,7 @@ export function PropertyPage() {
                       <Phone className="mr-2 h-4 w-4" /> Request similar options
                     </Button>
                     <Button asChild variant="outline" className="rounded-full border-blue-200 text-blue-700">
-                      <Link to={`/search?tab=rent&q=${encodeURIComponent(societyName || societyLocality || title)}`}>
+                      <Link to={`/search?tab=${listingSearchTab}&q=${encodeURIComponent(societyName || societyLocality || title)}`}>
                         Search nearby homes
                       </Link>
                     </Button>
@@ -822,9 +842,11 @@ export function PropertyPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-2xl font-bold text-navy-900">
-                  {leadType === "callback" ? "Request a callback" : "Send enquiry"}
+                  {leadType === "callback" ? "Request property callback" : "Send property enquiry"}
                 </h3>
-                <p className="mt-1 text-sm text-navy-500">Our team will contact you for {title}.</p>
+                <p className="mt-1 text-sm text-navy-500">
+                  Our team will contact you for this {listingType.toLowerCase()} listing.
+                </p>
               </div>
               <button
                 type="button"
@@ -837,7 +859,7 @@ export function PropertyPage() {
 
             {leadSuccess ? (
               <div className="mt-6 rounded-2xl bg-green-50 p-5 text-green-700">
-                Request received. Our team will contact you shortly.
+                Property request received. Our team will contact you shortly with availability, visit options and next steps.
               </div>
             ) : (
               <form onSubmit={submitLead} className="mt-6 space-y-4">

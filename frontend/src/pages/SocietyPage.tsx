@@ -611,7 +611,7 @@ export function SocietyPage() {
                   <Link
                     to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}
                   >
-                    Find homes like this
+                    Explore matching homes
                   </Link>
                 </Button>
 
@@ -860,7 +860,7 @@ export function SocietyPage() {
                       No live homes are listed publicly yet.
                     </h3>
                     <p className="mt-2 text-sm leading-relaxed text-navy-600">
-                      Request a callback and we will check owner/broker
+                      Request a callback and we will check verified owner/broker
                       availability for {society.name} before you spend time
                       browsing other portals.
                     </p>
@@ -1019,7 +1019,7 @@ export function SocietyPage() {
                     Want similar society suggestions?
                   </p>
                   <p className="mt-2 text-sm text-navy-500">
-                    Share your budget and family requirement. We will shortlist
+                    Share your budget and requirement. We will shortlist
                     matching Gurgaon societies for you.
                   </p>
                   <Button
@@ -1165,7 +1165,7 @@ export function SocietyPage() {
                 <Link
                   to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}
                 >
-                  Find homes like this
+                  Explore matching homes
                 </Link>
               </Button>
             </div>
@@ -1217,16 +1217,17 @@ export function SocietyPage() {
         defaultRequirement={
           selectedLeadProperty
             ? String(field(selectedLeadProperty, "listingType", "listing_type", "Property")).toLowerCase().includes("rent")
-              ? "Rent"
+              ? "Rent callback"
               : String(field(selectedLeadProperty, "listingType", "listing_type", "Property")).toLowerCase().includes("sale") ||
                   String(field(selectedLeadProperty, "listingType", "listing_type", "Property")).toLowerCase().includes("buy") ||
                   String(field(selectedLeadProperty, "listingType", "listing_type", "Property")).toLowerCase().includes("resale") ||
                   String(field(selectedLeadProperty, "listingType", "listing_type", "Property")).toLowerCase().includes("builder")
-                ? "Buy"
-                : "Callback"
-            : "Visit"
+                ? "Buy callback"
+                : "Property callback"
+            : "Society callback"
         }
         submitLabel="Request callback"
+        successMessage="Society request received. Our team will call you shortly with matching homes, availability and visit options."
         onClose={() => {
           setCallbackOpen(false);
           setSelectedLeadProperty(null);

@@ -65,6 +65,7 @@ export function PublicLeadModal({
   propertySlug,
   budget = "",
   submitLabel = "Request callback",
+  successMessage,
   onClose,
 }: PublicLeadModalProps) {
   const [form, setForm] = useState(emptyForm);
@@ -73,8 +74,8 @@ export function PublicLeadModal({
   const [error, setError] = useState("");
 
   const isPropertyLead = Boolean(propertyTitle);
-  const phoneDigits = useMemo(() => cleanPhone(form.phone), [form.phone]);
-  const phoneValid = isValidIndianMobile(phoneDigits);
+  const phoneDigits = useMemo(() => cleanLeadPhone(form.phone), [form.phone]);
+  const phoneValid = isValidLeadPhone(phoneDigits);
 
   useEffect(() => {
     if (!open) return;
@@ -130,7 +131,7 @@ export function PublicLeadModal({
       return;
     }
 
-    if (!isValidIndianMobile(phoneDigits)) {
+    if (!isValidLeadPhone(phoneDigits)) {
       setError("Enter a valid 10-digit Indian mobile number starting with 6, 7, 8 or 9.");
       return;
     }
@@ -169,7 +170,7 @@ export function PublicLeadModal({
       onClick={onClose}
     >
       <div
-        className="max-h-[86vh] w-full max-w-[390px] overflow-y-auto rounded-[1.5rem] bg-white shadow-2xl sm:max-h-[82vh] sm:max-w-[420px]"
+        className="max-h-[88vh] w-full max-w-[390px] overflow-y-auto rounded-[1.5rem] bg-white shadow-2xl sm:max-h-[82vh] sm:max-w-[420px]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="relative border-b border-navy-100 px-5 py-4">
@@ -217,9 +218,9 @@ export function PublicLeadModal({
           <div className="px-5 py-5">
             <div className="rounded-2xl bg-green-50 p-5 text-green-700">
               <CheckCircle2 className="h-7 w-7" />
-              <h4 className="mt-3 text-lg font-bold">Lead submitted successfully</h4>
+              <h4 className="mt-3 text-lg font-bold">Request received</h4>
               <p className="mt-2 text-sm leading-relaxed">
-                We have received your request. Our team will contact you shortly.
+                {successMessage || "Thanks. Our team has received your request and will call you shortly with the right next step."}
               </p>
             </div>
 
@@ -232,7 +233,7 @@ export function PublicLeadModal({
             </Button>
           </div>
         ) : (
-          <form onSubmit={submitLead} className="px-5 py-4">
+          <form onSubmit={submitLead} className="px-4 py-3 sm:px-5 sm:py-4">
             {isPropertyLead ? (
               <div className="mb-3">
                 <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
