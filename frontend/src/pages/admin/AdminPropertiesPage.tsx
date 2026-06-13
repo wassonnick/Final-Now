@@ -91,17 +91,6 @@ function C13InventoryBadge({ property }: { property: any }) {
   );
 }
 
-function c13SourceLeadId(property: any) {
-  return (
-    property?.source_lead_id ||
-    property?.sourceLeadId ||
-    property?.owner_lead_id ||
-    property?.ownerLeadId ||
-    property?.lead_id ||
-    property?.leadId ||
-    ""
-  );
-}
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { adminFetch, adminHeaders } from "@/lib/adminApi";
@@ -280,8 +269,7 @@ const [properties, setProperties] = useState<any[]>([]);
   const duplicateProperty = async (item: any) => {
     if (duplicatingId) return;
 
-    const title = `${item?.title || "Untitled property"}
-                              <div className="mt-2"><C13InventoryBadge property={item} /></div> Copy`;
+    const title = `${item?.title || "Untitled property"} Copy`;
     const baseSlug = makeSlug(item?.slug || item?.title || "property");
 
     const payload = {
