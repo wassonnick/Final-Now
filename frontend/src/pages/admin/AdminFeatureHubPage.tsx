@@ -606,19 +606,6 @@ function BrokerCrmLiveLeads() {
         ) : visibleLeads.length ? (
           <div className="divide-y divide-slate-100">
             {visibleLeads.map((lead) => {
-              const linkedDraft = linkedOwnerDraftForLead(linkedProperties, lead);
-              const linkedLive = linkedOwnerLiveForLead(linkedProperties, lead);
-              const draftActionHref = linkedDraft
-                ? `/admin/properties/${linkedDraft.id}/edit`
-                : linkedLive
-                  ? `/property/${linkedLive.slug || linkedLive.id}`
-                  : ownerDraftPropertyUrlFromLead(lead);
-              const draftActionLabel = linkedDraft
-                ? "View draft"
-                : linkedLive
-                  ? "Published"
-                  : "Create draft";
-
               return (
               <div key={lead.id} className="grid min-w-[760px] grid-cols-[1.1fr_1fr_0.9fr_0.8fr] gap-4 px-4 py-4 text-sm">
                 <div>
@@ -957,12 +944,26 @@ function OwnerCrmLiveLeads() {
                       size="sm"
                       className="rounded-full border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                     >
-                      <Link to={draftActionHref}>{draftActionLabel}</Link>
+                      <Link
+                        to={
+                          linkedOwnerDraftForLead(linkedProperties, lead)
+                            ? `/admin/properties/${linkedOwnerDraftForLead(linkedProperties, lead)?.id}/edit`
+                            : linkedOwnerLiveForLead(linkedProperties, lead)
+                              ? `/property/${linkedOwnerLiveForLead(linkedProperties, lead)?.slug || linkedOwnerLiveForLead(linkedProperties, lead)?.id}`
+                              : ownerDraftPropertyUrlFromLead(lead)
+                        }
+                      >
+                        {linkedOwnerDraftForLead(linkedProperties, lead)
+                          ? "View draft"
+                          : linkedOwnerLiveForLead(linkedProperties, lead)
+                            ? "Published"
+                            : "Create draft"}
+                      </Link>
                     </Button>
                     <p className="text-[11px] leading-4 text-slate-400">
-                      {linkedDraft
+                      {linkedOwnerDraftForLead(linkedProperties, lead)
                         ? "Draft property already linked to this owner lead."
-                        : linkedLive
+                        : linkedOwnerLiveForLead(linkedProperties, lead)
                           ? "Property is published from this owner lead."
                           : "Creates a draft linked to this owner lead."}
                     </p>
