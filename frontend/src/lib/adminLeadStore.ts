@@ -26,6 +26,13 @@ export interface AdminLead {
   createdAt: string;
   followUpAt: string;
   notes: LeadNote[];
+  linkedProperties?: Array<{
+    id: number;
+    title: string;
+    slug: string;
+    status: string;
+    sourceLeadId?: number | string | null;
+  }>;
 }
 
 type ApiLead = {
@@ -56,6 +63,20 @@ type ApiLead = {
     society?: { name?: string | null } | null;
   } | null;
   society?: { id?: number; name?: string | null } | null;
+  linked_properties?: Array<{
+    id?: number;
+    title?: string | null;
+    slug?: string | null;
+    status?: string | null;
+    source_lead_id?: number | string | null;
+  }> | null;
+  linkedProperties?: Array<{
+    id?: number;
+    title?: string | null;
+    slug?: string | null;
+    status?: string | null;
+    source_lead_id?: number | string | null;
+  }> | null;
 };
 
 type ApiListResponse = {
@@ -151,6 +172,19 @@ function inferLeadRequirement(apiLead: ApiLead): string {
 }
 
 function mapApiLead(apiLead: ApiLead): AdminLead {
+
+  const linkedProperties = Array.isArray(apiLead.linked_properties || apiLead.linkedProperties)
+    ? (apiLead.linked_properties || apiLead.linkedProperties || [])
+        .map((property) => ({
+          id: Number(property.id || 0),
+          title: property.title || "",
+          slug: property.slug || "",
+          status: property.status || "",
+          sourceLeadId: property.source_lead_id || null,
+        }))
+        .filter((property) => property.id)
+    : [];
+
   return {
     id: apiLead.id,
     name: apiLead.name || 'Unknown Lead',
@@ -166,6 +200,7 @@ function mapApiLead(apiLead: ApiLead): AdminLead {
     assignedTo: apiLead.assigned_to || 'Unassigned',
     createdAt: apiLead.created_at || '',
     followUpAt: apiLead.follow_up_at || '',
+    linkedProperties,
     notes: parseNotes(apiLead.notes),
   };
 }

@@ -705,6 +705,12 @@ function isPropertyLinkedToOwnerLead(property: OwnerLinkedProperty, leadId: numb
 
 
 function linkedOwnerDraftForLead(properties: OwnerLinkedProperty[], lead: AdminLead) {
+  const apiLinked = lead.linkedProperties?.find((property) =>
+    ["Draft", "Verification"].includes(String(property.status || ""))
+  );
+
+  if (apiLinked) return apiLinked;
+
   return properties.find((property) =>
     isPropertyLinkedToOwnerLead(property, lead.id) &&
     ["Draft", "Verification"].includes(String(property.status || ""))
@@ -712,6 +718,12 @@ function linkedOwnerDraftForLead(properties: OwnerLinkedProperty[], lead: AdminL
 }
 
 function linkedOwnerLiveForLead(properties: OwnerLinkedProperty[], lead: AdminLead) {
+  const apiLinked = lead.linkedProperties?.find((property) =>
+    String(property.status || "") === "Live"
+  );
+
+  if (apiLinked) return apiLinked;
+
   return properties.find((property) =>
     isPropertyLinkedToOwnerLead(property, lead.id) &&
     String(property.status || "") === "Live"
