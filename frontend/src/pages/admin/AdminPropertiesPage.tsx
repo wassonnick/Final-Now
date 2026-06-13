@@ -376,17 +376,17 @@ const [properties, setProperties] = useState<any[]>([]);
 
   return (
     <AdminLayout title="Properties" subtitle="Manage live inventory, drafts and property actions">
-      <div className="space-y-6">
-        <section className="grid gap-4 md:grid-cols-4">
+      <div className="space-y-4 md:space-y-6">
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {[
             ["Total", stats.total, "All properties"],
             ["Live", stats.live, "Public listings"],
             ["Draft", stats.draft, "Hidden/admin only"],
             ["Featured", stats.featured, "Highlighted"],
           ].map(([label, value, helper]) => (
-            <div key={String(label)} className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+            <div key={String(label)} className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[28px] md:p-5">
               <p className="text-sm font-medium text-slate-500">{label}</p>
-              <p className="mt-3 text-4xl font-bold text-slate-950">{loading ? "-" : value}</p>
+              <p className="mt-2 text-2xl font-bold text-slate-950 md:mt-3 md:text-4xl">{loading ? "-" : value}</p>
               <p className="mt-2 text-sm text-blue-600">{helper}</p>
             </div>
           ))}
@@ -426,7 +426,7 @@ const [properties, setProperties] = useState<any[]>([]);
           </div>
         ) : null}
 
-        <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h2 className="text-xl font-bold tracking-tight text-slate-950">Property inventory</h2>
@@ -439,7 +439,7 @@ const [properties, setProperties] = useState<any[]>([]);
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-full border-slate-200"
+                className="rounded-full border-slate-200 px-3 text-xs sm:text-sm"
                 onClick={loadProperties}
                 disabled={loading}
               >
@@ -456,7 +456,7 @@ const [properties, setProperties] = useState<any[]>([]);
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 lg:grid-cols-[1fr_180px_190px]">
+          <div className="mt-4 grid gap-2.5 lg:mt-6 lg:grid-cols-[1fr_180px_190px] lg:gap-3">
             <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 px-4">
               <Search className="h-4 w-4 text-slate-400" />
               <input
@@ -488,7 +488,7 @@ const [properties, setProperties] = useState<any[]>([]);
             </select>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-4 md:mt-6">
             {loading ? (
               <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
                 Loading properties...
@@ -508,7 +508,7 @@ const [properties, setProperties] = useState<any[]>([]);
             ) : null}
 
             {!loading && filtered.length ? (
-              <div className="grid gap-4">
+              <div className="grid gap-3 md:gap-4">
                 {filtered.map((item: any) => {
                   const itemStatus = getStatus(item);
                   const listingType = getListingType(item);
@@ -518,9 +518,9 @@ const [properties, setProperties] = useState<any[]>([]);
                   return (
                     <article
                       key={item.id || item.slug}
-                      className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm transition hover:border-blue-100 hover:shadow-lg xl:grid xl:grid-cols-[220px_1fr]"
+                      className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition hover:border-blue-100 hover:shadow-lg md:rounded-[28px] xl:grid xl:grid-cols-[220px_1fr]"
                     >
-                      <Link to={propertyUrl} className="block h-44 bg-slate-100 xl:h-full">
+                      <Link to={propertyUrl} className="block h-32 bg-slate-100 sm:h-44 xl:h-full">
                         <img
                           src={getPropertyImage(item)}
                           alt={item?.title || "Property"}
@@ -528,7 +528,7 @@ const [properties, setProperties] = useState<any[]>([]);
                         />
                       </Link>
 
-                      <div className="p-5">
+                      <div className="p-4 md:p-5">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                           <div className="min-w-0">
                             <div className="flex flex-wrap gap-2">
@@ -550,15 +550,15 @@ const [properties, setProperties] = useState<any[]>([]);
                               ) : null}
                             </div>
 
-                            <h3 className="mt-3 line-clamp-2 text-xl font-bold text-slate-950">
+                            <h3 className="mt-2 line-clamp-2 text-lg font-bold text-slate-950 md:mt-3 md:text-xl">
                               {item?.title || "Untitled property"}
                             </h3>
 
-                            <p className="mt-2 text-lg font-bold text-blue-700">
+                            <p className="mt-1.5 text-base font-bold text-blue-700 md:mt-2 md:text-lg">
                               {item?.price || "Price pending"}
                             </p>
 
-                            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
+                            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-slate-500 md:mt-3 md:text-sm">
                               <span className="inline-flex items-center gap-1">
                                 <Building2 className="h-4 w-4" />
                                 {getSocietyName(item)}
@@ -570,7 +570,7 @@ const [properties, setProperties] = useState<any[]>([]);
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-3 gap-2 rounded-[22px] bg-slate-50 p-3 text-center lg:min-w-[230px]">
+                          <div className="grid grid-cols-3 gap-2 rounded-[18px] bg-slate-50 p-2.5 text-center lg:min-w-[230px] lg:rounded-[22px] lg:p-3">
                             <div>
                               <p className="text-xs text-slate-400">BHK</p>
                               <p className="mt-1 font-bold text-slate-950">{item?.bedrooms || "-"}</p>
@@ -586,7 +586,7 @@ const [properties, setProperties] = useState<any[]>([]);
                           </div>
                         </div>
 
-                        <div className="mt-5 flex flex-wrap gap-2">
+                        <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 sm:flex sm:flex-wrap sm:border-t-0 sm:pt-0 md:mt-5">
                           <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
                             <Link to={propertyUrl}>
                               <Eye className="mr-1.5 h-4 w-4" />
@@ -603,7 +603,7 @@ const [properties, setProperties] = useState<any[]>([]);
 
                           {/* C14-B source lead link */}
                           {c14SourceLeadId(item) ? (
-                            <Button asChild size="sm" variant="outline" className="rounded-full border-blue-200 text-blue-700">
+                            <Button asChild size="sm" variant="outline" className="rounded-full border-blue-200 bg-blue-50 px-3 text-xs font-bold text-blue-700 sm:text-sm">
                               <a href={`/admin/leads/${c14SourceLeadId(item)}`}>
                                 Source lead
                               </a>
