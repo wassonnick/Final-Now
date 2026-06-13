@@ -675,7 +675,17 @@ export function AdminPropertyFormPage() {
           "Content-Type": "application/json",
           ...adminHeaders(),
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(
+          isEdit
+            ? (() => {
+                // C13 slug edit fix: Laravel currently rejects the existing slug as duplicate on update/publish.
+                // Do not resend slug while editing; backend should keep the current slug.
+                const updatePayload = { ...(payload as any) };
+                delete updatePayload.slug;
+                return updatePayload;
+              })()
+            : payload,
+        ),
       });
 
       const json = await response.json().catch(() => ({}));
