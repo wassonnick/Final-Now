@@ -370,6 +370,17 @@ export function AdminPropertyFormPage() {
     return params.get("sourceLeadId") || "";
   }, [location.search]);
 
+  const ownerName = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("ownerName") || "";
+  }, [location.search]);
+
+  const ownerPhone = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("ownerPhone") || "";
+  }, [location.search]);
+
+
   const labels = pricingLabels(property.listingType);
   const rentalListing = isRentalListing(property.listingType);
   const saleListing = isSaleListing(property.listingType);
@@ -615,6 +626,19 @@ export function AdminPropertyFormPage() {
         status,
         society: property.society,
         society_id: (property as any).societyId || undefined,
+        source_lead_id: sourceLeadId ? Number(sourceLeadId) : undefined,
+        owner_name: ownerName || undefined,
+        owner_phone: ownerPhone || undefined,
+        owner_verification_status: sourceLeadId ? "Draft Created" : undefined,
+        owner_notes: sourceLeadId
+          ? [
+              ownerName ? `Owner: ${ownerName}` : "",
+              ownerPhone ? `Phone: ${ownerPhone}` : "",
+              sourceLeadId ? `Source lead ID: ${sourceLeadId}` : "",
+            ]
+              .filter(Boolean)
+              .join("\n")
+          : undefined,
         locality: property.locality,
         price: property.price || "On Request",
         security_deposit: property.securityDeposit,

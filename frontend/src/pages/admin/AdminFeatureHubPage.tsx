@@ -605,7 +605,21 @@ function BrokerCrmLiveLeads() {
           <div className="px-4 py-8 text-sm font-medium text-slate-500">Loading broker leads...</div>
         ) : visibleLeads.length ? (
           <div className="divide-y divide-slate-100">
-            {visibleLeads.map((lead) => (
+            {visibleLeads.map((lead) => {
+              const linkedDraft = linkedOwnerDraftForLead(linkedProperties, lead);
+              const linkedLive = linkedOwnerLiveForLead(linkedProperties, lead);
+              const draftActionHref = linkedDraft
+                ? `/admin/properties/${linkedDraft.id}/edit`
+                : linkedLive
+                  ? `/property/${linkedLive.slug || linkedLive.id}`
+                  : ownerDraftPropertyUrlFromLead(lead);
+              const draftActionLabel = linkedDraft
+                ? "View draft"
+                : linkedLive
+                  ? "Published"
+                  : "Create draft";
+
+              return (
               <div key={lead.id} className="grid min-w-[760px] grid-cols-[1.1fr_1fr_0.9fr_0.8fr] gap-4 px-4 py-4 text-sm">
                 <div>
                   <p className="font-semibold text-slate-950">{lead.name || 'Unnamed lead'}</p>
@@ -647,7 +661,8 @@ function BrokerCrmLiveLeads() {
                   </Button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="px-4 py-8 text-sm font-medium text-slate-500">
@@ -684,6 +699,7 @@ function displayOwnerCrmStatus(lead: AdminLead) {
 
 type OwnerLinkedProperty = {
   id?: number | string;
+  source_lead_id?: number | string | null;
   title?: string;
   status?: string;
   description?: string;
@@ -691,10 +707,29 @@ type OwnerLinkedProperty = {
 };
 
 function isPropertyLinkedToOwnerLead(property: OwnerLinkedProperty, leadId: number | string) {
+  if (property.source_lead_id && String(property.source_lead_id) === String(leadId)) {
+    return true;
+  }
+
   const text = String(property.description || "").toLowerCase();
   return text.includes(`source lead id: ${String(leadId).toLowerCase()}`);
 }
 
+
+
+function linkedOwnerDraftForLead(properties: OwnerLinkedProperty[], lead: AdminLead) {
+  return properties.find((property) =>
+    isPropertyLinkedToOwnerLead(property, lead.id) &&
+    ["Draft", "Verification"].includes(String(property.status || ""))
+  );
+}
+
+function linkedOwnerLiveForLead(properties: OwnerLinkedProperty[], lead: AdminLead) {
+  return properties.find((property) =>
+    isPropertyLinkedToOwnerLead(property, lead.id) &&
+    String(property.status || "") === "Live"
+  );
+}
 
 function ownerDraftPropertyUrlFromLead(lead: AdminLead) {
   const params = new URLSearchParams();
@@ -922,10 +957,14 @@ function OwnerCrmLiveLeads() {
                       size="sm"
                       className="rounded-full border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                     >
-                      <Link to={ownerDraftPropertyUrlFromLead(lead)}>Create / review draft</Link>
+                      <Link to={draftActionHref}>{draftActionLabel}</Link>
                     </Button>
                     <p className="text-[11px] leading-4 text-slate-400">
-                      Check existing drafts before creating another.
+                      {linkedDraft
+                        ? "Draft property already linked to this owner lead."
+                        : linkedLive
+                          ? "Property is published from this owner lead."
+                          : "Creates a draft linked to this owner lead."}
                     </p>
                   </div>
                 </div>

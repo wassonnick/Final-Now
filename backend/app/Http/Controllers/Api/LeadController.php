@@ -11,7 +11,7 @@ class LeadController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Lead::with(['property.society', 'society'])->latest();
+        $query = Lead::with(['property.society', 'society', 'linkedProperties'])->latest();
 
         if ($status = $request->query('status')) {
             $query->where('status', $status);
@@ -46,7 +46,7 @@ class LeadController extends Controller
     {
         return response()->json([
             'status' => 'ok',
-            'data' => $lead->load(['property.society', 'society']),
+            'data' => $lead->load(['property.society', 'society', 'linkedProperties']),
         ]);
     }
 
