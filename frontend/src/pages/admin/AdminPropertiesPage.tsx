@@ -121,6 +121,18 @@ const typeTone: Record<string, string> = {
   "Builder Floor": "bg-slate-50 text-slate-700 border-slate-100",
 };
 
+function c14SourceLeadId(property: any) {
+  return (
+    property?.source_lead_id ||
+    property?.sourceLeadId ||
+    property?.owner_lead_id ||
+    property?.ownerLeadId ||
+    property?.lead_id ||
+    property?.leadId ||
+    ""
+  );
+}
+
 const statuses = ["All", "Live", "Verification", "Draft", "Archived"];
 const listingTypes = ["All", "Rent", "Sale", "Buy / Resale", "Sell Listing", "Builder Floor"];
 
@@ -589,6 +601,15 @@ const [properties, setProperties] = useState<any[]>([]);
                             </Link>
                           </Button>
 
+                          {/* C14-B source lead link */}
+                          {c14SourceLeadId(item) ? (
+                            <Button asChild size="sm" variant="outline" className="rounded-full border-blue-200 text-blue-700">
+                              <a href={`/admin/leads/${c14SourceLeadId(item)}`}>
+                                Source lead
+                              </a>
+                            </Button>
+                          ) : null}
+
                           <Button
                             type="button"
                             size="sm"
@@ -606,7 +627,7 @@ const [properties, setProperties] = useState<any[]>([]);
                             size="sm"
                             variant="ghost"
                             className="rounded-full text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-onClick={() => deleteProperty(item)}
+                            onClick={() => deleteProperty(item)}
                             disabled={deletingId === item.id}
                           >
                             <Trash2 className="mr-1.5 h-4 w-4" />
