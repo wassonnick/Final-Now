@@ -283,6 +283,50 @@ function sourceClass(source?: string) {
   return "bg-slate-50 text-slate-600 border-slate-100";
 }
 
+function c14RequirementLabel(lead: AdminLead) {
+  const source = String(lead.source || "").toLowerCase();
+  const requirement = String(lead.requirement || "").trim();
+
+  if (source.includes("owner")) {
+    if (requirement.toLowerCase().includes("rent")) return "Owner Listing · Rent";
+    if (
+      requirement.toLowerCase().includes("sale") ||
+      requirement.toLowerCase().includes("sell") ||
+      requirement.toLowerCase().includes("buy")
+    ) {
+      return "Owner Listing · Sale";
+    }
+    return requirement || "Owner Listing";
+  }
+
+  if (source.includes("broker")) {
+    return requirement || "Broker Partner Lead";
+  }
+
+  if (source.includes("property")) {
+    if (requirement.toLowerCase().includes("rent")) return "Property · Rent";
+    if (
+      requirement.toLowerCase().includes("buy") ||
+      requirement.toLowerCase().includes("sale") ||
+      requirement.toLowerCase().includes("resale")
+    ) {
+      return "Property · Buy";
+    }
+    return requirement || "Property Enquiry";
+  }
+
+  if (source.includes("society")) {
+    return requirement || "Society Callback";
+  }
+
+  if (source.includes("chat")) {
+    return requirement || "Chat Enquiry";
+  }
+
+  return requirement || "General Enquiry";
+}
+
+
 function cleanPhone(phone?: string) {
   return String(phone || "").replace(/[^0-9]/g, "");
 }

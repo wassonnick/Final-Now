@@ -987,10 +987,10 @@ function OwnerCrmLiveLeads() {
                     </Button>
                     <p className="text-[11px] leading-4 text-slate-400">
                       {linkedOwnerDraftForLead(linkedProperties, lead)
-                        ? "Draft property already linked to this owner lead."
+                        ? "Draft property already linked to this owner lead for traceability."
                         : linkedOwnerLiveForLead(linkedProperties, lead)
                           ? "Property is published from this owner lead."
-                          : "Creates a draft linked to this owner lead."}
+                          : "Creates a draft linked to this owner lead for traceability."}
                     </p>
                   </div>
                 </div>
