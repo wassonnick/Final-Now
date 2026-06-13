@@ -165,6 +165,31 @@ function filterPublicLiveProperties(properties: any[]) {
   return Array.isArray(properties) ? properties.filter(isPublicLiveProperty) : [];
 }
 
+function setPublicSeo(title: string, description: string, noindex = false) {
+  document.title = title;
+
+  let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.name = "description";
+    document.head.appendChild(meta);
+  }
+  meta.content = description;
+
+  let robots = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+
+  if (noindex) {
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      document.head.appendChild(robots);
+    }
+    robots.content = "noindex, nofollow";
+  } else if (robots) {
+    robots.remove();
+  }
+}
+
 export function HomePage() {
   const [societies, setSocieties] = useState<any[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
@@ -183,6 +208,10 @@ export function HomePage() {
   } | null>(null);
 
   useEffect(() => {
+    setPublicSeo(
+      "SocietyFlats Gurgaon | Verified Society-First Rentals & Resale",
+      "Search verified Gurgaon society homes, compare society intelligence and request callbacks for rent, buy and owner listings.",
+    );
     window.scrollTo(0, 0);
     fetchPublicSocieties()
       .then((items) => setSocieties(items))
@@ -829,11 +858,11 @@ export function HomePage() {
                   Live Inventory
                 </p>
                 <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
-                  Latest verified homes
+                  Latest live verified homes
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500 md:text-[15px] md:leading-6">
                   <span className="md:hidden">
-                    Fresh verified homes in Gurgaon societies.
+                    Fresh live homes in verified Gurgaon societies.
                   </span>
                   <span className="hidden md:inline">
                     Fresh rental and resale homes from Gurgaon societies,

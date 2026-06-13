@@ -66,6 +66,31 @@ function filterPublicLiveProperties(properties: any[]) {
   return Array.isArray(properties) ? properties.filter(isPublicLiveProperty) : [];
 }
 
+function setPublicSeo(title: string, description: string, noindex = false) {
+  document.title = title;
+
+  let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.name = "description";
+    document.head.appendChild(meta);
+  }
+  meta.content = description;
+
+  let robots = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+
+  if (noindex) {
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      document.head.appendChild(robots);
+    }
+    robots.content = "noindex, nofollow";
+  } else if (robots) {
+    robots.remove();
+  }
+}
+
 function field<T = any>(
   item: any,
   camel: string,
@@ -880,11 +905,11 @@ export function SocietyPage() {
                       Inventory check
                     </p>
                     <h3 className="mt-2 text-xl font-bold text-navy-900">
-                      No live homes are listed publicly yet.
+                      No live verified homes are listed publicly yet.
                     </h3>
                     <p className="mt-2 text-sm leading-relaxed text-navy-600">
                       Request a callback and we will check verified owner/broker
-                      availability for {society.name} before you spend time
+                      availability before you spend time browsing elsewhere for {society.name} before you spend time
                       browsing other portals.
                     </p>
                     <div className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -1070,7 +1095,7 @@ export function SocietyPage() {
                   Official references
                 </h2>
                 <p className="mt-2 text-sm leading-relaxed text-navy-500">
-                  Project information is sourced from official/developer/RERA
+                  Project information is cross-checked from official/developer/RERA
                   references where available and manually verified before being
                   marked verified.
                 </p>

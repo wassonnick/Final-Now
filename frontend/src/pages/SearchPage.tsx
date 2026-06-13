@@ -78,6 +78,31 @@ function safeJoin(value: unknown) {
   return Array.isArray(value) ? value.join(" ") : "";
 }
 
+function setPublicSeo(title: string, description: string, noindex = false) {
+  document.title = title;
+
+  let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.name = "description";
+    document.head.appendChild(meta);
+  }
+  meta.content = description;
+
+  let robots = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+
+  if (noindex) {
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      document.head.appendChild(robots);
+    }
+    robots.content = "noindex, nofollow";
+  } else if (robots) {
+    robots.remove();
+  }
+}
+
 function resultLabel(tab: string) {
   if (tab === "rent") return "Rent homes";
   if (tab === "buy") return "Buy / Resale homes";
@@ -314,8 +339,16 @@ export function SearchPage() {
   }, []);
 
   useEffect(() => {
-    setActiveTab(resolveSearchTab(searchParams.get("tab"), searchParams.get("intent")));
-    setQuery(searchParams.get("q") || searchParams.get("locality") || "");
+    const nextTab = resolveSearchTab(searchParams.get("tab"), searchParams.get("intent"));
+    const nextQuery = searchParams.get("q") || searchParams.get("locality") || "";
+
+    setActiveTab(nextTab);
+    setQuery(nextQuery);
+
+    setPublicSeo(
+      `SocietyFlats Search${nextQuery ? ` | ${nextQuery}` : ""}`,
+      "Search live verified Gurgaon society homes, published society profiles and AI-assisted recommendations on SocietyFlats.",
+    );
   }, [searchParams]);
 
   const isAiSearch = searchParams.get("intent") === "general";
@@ -727,7 +760,7 @@ export function SearchPage() {
                     <Shield className="h-4 w-4" /> Public-safe data
                   </div>
                   <p className="mt-1.5 text-[11px] leading-5 text-navy-500">
-                    Only live properties and published society profiles are shown here.
+                    Only live verified properties and published society profiles are shown here. Draft and unverified inventory stays hidden from public search.
                   </p>
                 </div>
               </div>
@@ -1098,7 +1131,7 @@ export function SearchPage() {
                   </h3>
                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-navy-500 md:text-sm md:leading-6">
                     Based on your search intent, budget signals, locality and
-                    available published inventory.
+                    available live published inventory.
                   </p>
                 </div>
                 <Button
