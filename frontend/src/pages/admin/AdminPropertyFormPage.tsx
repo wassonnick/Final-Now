@@ -16,7 +16,8 @@ function c13PublicationPayload(status: string) {
   const isLive = status === "Live";
 
   return {
-    status: isLive ? "published" : "draft",
+    // Keep backend-approved status values. Laravel validates this field.
+    status,
     publication_status: isLive ? "published" : "draft",
     is_published: isLive,
   };
