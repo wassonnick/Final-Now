@@ -787,41 +787,44 @@ export function AdminLeadsPage() {
                     </p>
                   </div>
 
-                  <div className="mt-3 rounded-2xl border border-slate-100 bg-white p-3 xl:mt-0 xl:border-0 xl:p-0">
-                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Status</p>
-                    <select
-                      value={lead.status}
-                      disabled={savingLeadId === lead.id}
-                      onChange={(event) => handleStatusChange(lead, event.target.value as LeadStatus)}
-                      className={`h-10 rounded-full border-0 px-3 text-sm font-semibold outline-none disabled:opacity-60 ${statusClass(lead.status)}`}
-                    >
-                      {statuses
-                        .filter((item) => item !== "All")
-                        .map((item) => (
-                          <option key={item} value={item}>{displayLeadStatusOptionLabel(lead, item)}</option>
-                        ))}
-                    </select>
+                  <div className="mt-3 grid grid-cols-3 gap-2 xl:mt-0 xl:block">
+                    <div className="rounded-2xl border border-slate-100 bg-white p-2 xl:border-0 xl:p-0">
+                      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Status</p>
+                      <select
+                        value={lead.status}
+                        disabled={savingLeadId === lead.id}
+                        onChange={(event) => handleStatusChange(lead, event.target.value as LeadStatus)}
+                        className={`h-9 max-w-full rounded-full border-0 px-2 text-xs font-bold outline-none disabled:opacity-60 xl:h-10 xl:px-3 xl:text-sm ${statusClass(lead.status)}`}
+                      >
+                        {statuses
+                          .filter((item) => item !== "All")
+                          .map((item) => (
+                            <option key={item} value={item}>{displayLeadStatusOptionLabel(lead, item)}</option>
+                          ))}
+                      </select>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-100 bg-white p-2 xl:border-0 xl:p-0">
+                      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Priority</p>
+                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-bold xl:px-3 ${priorityClass(lead.priority)}`}>
+                        {lead.priority}
+                      </span>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-100 bg-white p-2 text-slate-500 xl:border-0 xl:p-0">
+                      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Follow-up</p>
+                      <span className={`inline-flex rounded-full border px-2 py-1 text-[11px] font-bold xl:px-3 xl:text-xs ${followUpClass(lead)}`}>
+                        {followUpLabel(lead)}
+                      </span>
+                      <p className="mt-1 hidden items-center gap-1 text-xs xl:flex">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {displayFollowUp(lead)}
+                      </p>
+                      <p className="mt-1 hidden text-xs xl:block">{lead.assignedTo || "Unassigned"}</p>
+                    </div>
                   </div>
 
-                  <div className="mt-3 xl:mt-0">
-                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${priorityClass(lead.priority)}`}>
-                      {lead.priority}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 rounded-2xl border border-slate-100 bg-white p-3 text-sm text-slate-500 xl:mt-0 xl:border-0 xl:p-0">
-                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Follow-up</p>
-                    <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${followUpClass(lead)}`}>
-                      {followUpLabel(lead)}
-                    </span>
-                    <p className="mt-2 flex items-center gap-1">
-                      <CalendarDays className="h-3.5 w-3.5" />
-                      {displayFollowUp(lead)}
-                    </p>
-                    <p className="mt-1">{lead.assignedTo || "Unassigned"}</p>
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 xl:mt-0 xl:flex xl:flex-wrap">
+                  <div className="mt-3 grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 border-t border-slate-100 pt-3 xl:mt-0 xl:flex xl:flex-wrap xl:border-t-0 xl:pt-0">
                     <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200 px-3">
                       <Link to={`/admin/leads/${lead.id}`}>
                         <Eye className="mr-1.5 h-4 w-4" />
