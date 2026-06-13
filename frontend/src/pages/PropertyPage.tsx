@@ -270,7 +270,10 @@ export function PropertyPage() {
     phone: "",
     email: "",
     message: "",
+    preferredTime: "",
   });
+
+  const preferredTimeChips = ["Now", "Today", "Tomorrow", "Weekend"];
 
   useEffect(() => {
     let mounted = true;
@@ -442,6 +445,19 @@ export function PropertyPage() {
     setLeadSubmitting(true);
     setLeadError("");
 
+    const selectedTime = leadForm.preferredTime.trim();
+    const baseRequirement = leadRequirementFor(listingType, leadType);
+    const enrichedRequirement = selectedTime
+      ? `${baseRequirement} · Preferred time: ${selectedTime}`
+      : baseRequirement;
+    const fallbackMessage = `${leadType === "callback" ? "Callback" : "Enquiry"} requested for ${title}. Society: ${societyName || "Not specified"}. Location: ${societyLocality || "Gurgaon"}. Listing type: ${listingType}. Price: ${price}.`;
+    const enrichedMessage = [
+      leadForm.message || fallbackMessage,
+      selectedTime ? `Preferred callback time: ${selectedTime}.` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
     try {
       const response = await fetch(`${API_BASE}/leads`, {
         method: "POST",
@@ -453,21 +469,19 @@ export function PropertyPage() {
           name: leadForm.name.trim(),
           phone: normalizedPhone,
           email: leadForm.email || null,
-          message:
-            leadForm.message ||
-            `${leadType === "callback" ? "Callback" : "Enquiry"} requested for ${title}. Society: ${societyName || "Not specified"}. Location: ${societyLocality || "Gurgaon"}. Listing type: ${listingType}. Price: ${price}.`,
+          message: enrichedMessage,
           property_title: title,
           property_slug: property.slug || slug,
           society_name: societyName || property.locality || "Gurgaon",
           source: leadType === "callback" ? "property_page_callback" : "property_page_enquiry",
-          requirement: leadRequirementFor(listingType, leadType),
+          requirement: enrichedRequirement,
         }),
       });
 
       if (!response.ok) throw new Error("Lead submission failed");
 
       setLeadSuccess(true);
-      setLeadForm({ name: "", phone: "", email: "", message: "" });
+      setLeadForm({ name: "", phone: "", email: "", message: "", preferredTime: "" });
     } catch {
       setLeadError("Unable to submit enquiry. Please try again.");
     } finally {
@@ -967,6 +981,32 @@ export function PropertyPage() {
                   placeholder="Email optional"
                   className="w-full rounded-2xl border border-navy-100 px-4 py-3 outline-none focus:border-blue-400"
                 />
+                <div>
+                  <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
+                    Preferred callback time
+                  </p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {preferredTimeChips.map((chip) => {
+                      const active = leadForm.preferredTime === chip;
+
+                      return (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => setLeadForm({ ...leadForm, preferredTime: chip })}
+                          className={`h-9 rounded-full border px-2 text-[11px] font-bold transition ${
+                            active
+                              ? "border-blue-300 bg-blue-50 text-blue-700"
+                              : "border-navy-100 bg-white text-navy-500 hover:bg-navy-50"
+                          }`}
+                        >
+                          {chip}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <textarea
                   value={leadForm.message}
                   onChange={(event) => setLeadForm({ ...leadForm, message: event.target.value })}
