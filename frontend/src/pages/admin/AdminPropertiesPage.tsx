@@ -14,6 +14,115 @@ import {
   Trash2,
 } from "lucide-react";
 
+
+// C13_ADMIN_INVENTORY_HELPERS
+type AdminInventoryStatus = "published" | "draft" | "owner_draft" | "pending" | "unknown";
+
+const C13_PROPERTY_STATUS_FILTERS: { value: "all" | AdminInventoryStatus; label: string }[] = [
+  { value: "all", label: "All inventory" },
+  { value: "published", label: "Published" },
+  { value: "draft", label: "Draft" },
+  { value: "owner_draft", label: "Owner draft" },
+  { value: "pending", label: "Pending" },
+];
+
+function c13NormalizeInventoryStatus(property: any): AdminInventoryStatus {
+  const raw = String(
+    property?.status ||
+      property?.publication_status ||
+      property?.publicationStatus ||
+      property?.property_status ||
+      property?.propertyStatus ||
+      "",
+  ).toLowerCase();
+
+  const ownerLinked = Boolean(
+    property?.source_lead_id ||
+      property?.sourceLeadId ||
+      property?.owner_lead_id ||
+      property?.ownerLeadId ||
+      property?.lead_id ||
+      property?.leadId,
+  );
+
+  const publishedFlag =
+    property?.is_published === true ||
+    property?.isPublished === true ||
+    property?.published === true ||
+    Boolean(property?.published_at || property?.publishedAt);
+
+  if (publishedFlag || raw.includes("publish") || raw === "live" || raw === "active") {
+    return "published";
+  }
+
+  if (ownerLinked && (raw.includes("draft") || raw.includes("pending") || !raw)) {
+    return "owner_draft";
+  }
+
+  if (raw.includes("draft")) return "draft";
+  if (raw.includes("pending") || raw.includes("review")) return "pending";
+
+  return ownerLinked ? "owner_draft" : "unknown";
+}
+
+function c13InventoryStatusLabel(status: AdminInventoryStatus) {
+  if (status === "published") return "Published";
+  if (status === "owner_draft") return "Owner Draft";
+  if (status === "draft") return "Draft";
+  if (status === "pending") return "Pending";
+  return "Unknown";
+}
+
+function c13InventoryStatusClass(status: AdminInventoryStatus) {
+  if (status === "published") return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  if (status === "owner_draft") return "border-blue-200 bg-blue-50 text-blue-700";
+  if (status === "draft") return "border-amber-200 bg-amber-50 text-amber-700";
+  if (status === "pending") return "border-purple-200 bg-purple-50 text-purple-700";
+  return "border-slate-200 bg-slate-50 text-slate-600";
+}
+
+function C13InventoryBadge({ property }: { property: any }) {
+  const status = c13NormalizeInventoryStatus(property);
+
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-bold ${c13InventoryStatusClass(status)}`}>
+
+      {/* C13 inventory filter */}
+      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
+        <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+          Inventory
+        </span>
+        {C13_PROPERTY_STATUS_FILTERS.map((filter) => (
+          <button
+            key={filter.value}
+            type="button"
+            onClick={() => setC13StatusFilter(filter.value)}
+            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${
+              c13StatusFilter === filter.value
+                ? "border-blue-300 bg-blue-50 text-blue-700"
+                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+            }`}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+      {c13InventoryStatusLabel(status)}
+    </span>
+  );
+}
+
+function c13SourceLeadId(property: any) {
+  return (
+    property?.source_lead_id ||
+    property?.sourceLeadId ||
+    property?.owner_lead_id ||
+    property?.ownerLeadId ||
+    property?.lead_id ||
+    property?.leadId ||
+    ""
+  );
+}
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { adminFetch, adminHeaders } from "@/lib/adminApi";
@@ -101,6 +210,7 @@ function getArea(item: any) {
 }
 
 export function AdminPropertiesPage() {
+  const [c13StatusFilter, setC13StatusFilter] = useState<"all" | AdminInventoryStatus>("all");
   const [properties, setProperties] = useState<any[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All");
