@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Lead extends Model
 {
@@ -40,4 +41,10 @@ class Lead extends Model
     {
         return $this->belongsTo(Society::class);
     }
+
+    public function linkedProperties(): HasMany
+    {
+        return $this->hasMany(Property::class, 'source_lead_id');
+    }
+
 }

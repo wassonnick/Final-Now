@@ -13,7 +13,7 @@ class PropertyController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $q = Property::query()->with('society');
+        $q = Property::query()->with(['society', 'sourceLead']);
 
         if (!$this->isAdminRequest($request)) {
             $q->where('status', 'Live');
@@ -45,7 +45,7 @@ class PropertyController extends Controller
 
     public function show(Request $request, string $idOrSlug): JsonResponse
     {
-        $query = Property::with('society');
+        $query = Property::with(['society', 'sourceLead']);
 
         if (!$this->isAdminRequest($request)) {
             $query->where('status', 'Live');
@@ -133,6 +133,11 @@ class PropertyController extends Controller
 
         return $r->validate([
             'society_id' => 'nullable|exists:societies,id',
+            'source_lead_id' => 'nullable|integer|exists:leads,id',
+            'owner_name' => 'nullable|string|max:255',
+            'owner_phone' => 'nullable|string|max:30',
+            'owner_verification_status' => 'nullable|string|max:100',
+            'owner_notes' => 'nullable|string|max:5000',
             'title' => "{$req}|string|max:255",
             'slug' => 'nullable|string|max:255|unique:properties,slug' . ($propertyId ? ',' . $propertyId : ''),
             'listing_type' => 'nullable|in:Rent,Sale,Buy / Resale,Sell Listing,Builder Floor',
