@@ -200,6 +200,7 @@ const [properties, setProperties] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [duplicatingId, setDuplicatingId] = useState<number | string | null>(null);
   const [deletingId, setDeletingId] = useState<number | string | null>(null);
+  const [publishingId, setPublishingId] = useState<number | string | null>(null);
 
   const loadProperties = async () => {
     setLoading(true);
@@ -359,6 +360,78 @@ const [properties, setProperties] = useState<any[]>([]);
       setErrorMessage("Failed to delete property. Please refresh and try again.");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const quickSetPropertyStatus = async (item: any, nextStatus: "Draft" | "Live") => {
+    if (publishingId) return;
+
+    const currentTitle = item?.title || "Untitled property";
+    const nextPublicationStatus = nextStatus === "Live" ? "published" : "draft";
+
+    try {
+      setPublishingId(item.id);
+      setActionMessage("");
+      setErrorMessage("");
+
+      const payload = {
+        title: currentTitle,
+        listing_type: getListingType(item) === "-" ? "Rent" : getListingType(item),
+        status: nextStatus,
+        publication_status: nextPublicationStatus,
+        is_published: nextStatus === "Live",
+        society: getSocietyName(item) === "-" ? "" : getSocietyName(item),
+        locality: item?.locality || "",
+        price: item?.price || "",
+        bedrooms: item?.bedrooms || "",
+        bathrooms: item?.bathrooms || "",
+        area_sqft: item?.area_sqft || item?.areaSqft || "",
+        floor: item?.floor || "",
+        facing: item?.facing || "",
+        furnished_status: item?.furnished_status || item?.furnishedStatus || "",
+        description: item?.description || "",
+        amenities: parseArray(item?.amenities),
+        images: parseArray(item?.images),
+        featured: Boolean(item?.featured),
+        verified: Boolean(item?.verified),
+      };
+
+      const response = await adminFetch(`/admin/properties/${item.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...adminHeaders(),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(json?.message || "Status update failed");
+      }
+
+      const updated = json?.data || {
+        ...item,
+        status: nextStatus,
+        publication_status: nextPublicationStatus,
+        is_published: nextStatus === "Live",
+      };
+
+      setProperties((current) =>
+        current.map((property) => (property.id === item.id ? updated : property)),
+      );
+
+      setActionMessage(
+        nextStatus === "Live"
+          ? `Published "${currentTitle}" to public inventory.`
+          : `Moved "${currentTitle}" back to Draft.`,
+      );
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Failed to update property status. Open Edit and save if this listing needs required fields.");
+    } finally {
+      setPublishingId(null);
     }
   };
 
@@ -597,6 +670,25 @@ const [properties, setProperties] = useState<any[]>([]);
                               </a>
                             </Button>
                           ) : null}
+
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={itemStatus === "Live" ? "outline" : "default"}
+                            className={
+                              itemStatus === "Live"
+                                ? "rounded-full border-amber-200 px-3 text-xs font-bold text-amber-700 sm:text-sm"
+                                : "rounded-full bg-emerald-600 px-3 text-xs font-bold hover:bg-emerald-700 sm:text-sm"
+                            }
+                            onClick={() => quickSetPropertyStatus(item, itemStatus === "Live" ? "Draft" : "Live")}
+                            disabled={publishingId === item.id}
+                          >
+                            {publishingId === item.id
+                              ? "Updating..."
+                              : itemStatus === "Live"
+                                ? "Move Draft"
+                                : "Publish"}
+                          </Button>
 
                           <Button
                             type="button"
