@@ -937,6 +937,19 @@ function OwnerCrmLiveLeads() {
                   <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
                     {displayOwnerCrmStatus(lead)}
                   </span>
+                  {linkedOwnerDraftForLead(linkedProperties, lead) ? (
+                    <span className="mt-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                      Draft Created
+                    </span>
+                  ) : linkedOwnerLiveForLead(linkedProperties, lead) ? (
+                    <span className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+                      Published
+                    </span>
+                  ) : (
+                    <span className="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                      Draft Pending
+                    </span>
+                  )}
                   <p className="mt-2 text-xs font-semibold text-slate-600">
                     {ownerInventoryStage(lead)}
                   </p>
@@ -966,9 +979,9 @@ function OwnerCrmLiveLeads() {
                         }
                       >
                         {linkedOwnerDraftForLead(linkedProperties, lead)
-                          ? "View draft"
+                          ? "Open draft"
                           : linkedOwnerLiveForLead(linkedProperties, lead)
-                            ? "Published"
+                            ? "View published"
                             : "Create draft"}
                       </Link>
                     </Button>
