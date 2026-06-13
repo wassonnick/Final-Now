@@ -593,8 +593,8 @@ function BrokerCrmLiveLeads() {
         ) : null}
       </div>
 
-      <div className="mt-5 rounded-2xl border border-slate-100">
-        <div className="grid grid-cols-[1.1fr_1fr_0.8fr_0.8fr] gap-4 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+      <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-100">
+        <div className="grid min-w-[760px] grid-cols-[1.1fr_1fr_0.8fr_0.8fr] gap-4 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
           <span>Lead</span>
           <span>Interest</span>
           <span>Partner stage</span>
@@ -606,7 +606,7 @@ function BrokerCrmLiveLeads() {
         ) : visibleLeads.length ? (
           <div className="divide-y divide-slate-100">
             {visibleLeads.map((lead) => (
-              <div key={lead.id} className="grid grid-cols-[1.1fr_1fr_0.9fr_0.8fr] gap-4 px-4 py-4 text-sm">
+              <div key={lead.id} className="grid min-w-[760px] grid-cols-[1.1fr_1fr_0.9fr_0.8fr] gap-4 px-4 py-4 text-sm">
                 <div>
                   <p className="font-semibold text-slate-950">{lead.name || 'Unnamed lead'}</p>
                   <p className="mt-1 text-slate-500">{lead.phone || 'No phone'}</p>
@@ -868,8 +868,8 @@ function OwnerCrmLiveLeads() {
         ) : null}
       </div>
 
-      <div className="mt-5 rounded-2xl border border-slate-100">
-        <div className="grid grid-cols-[1.1fr_1fr_0.9fr_0.8fr] gap-4 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+      <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-100">
+        <div className="grid min-w-[760px] grid-cols-[1.1fr_1fr_0.9fr_0.8fr] gap-4 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
           <span>Owner</span>
           <span>Inventory</span>
           <span>Stage</span>
@@ -881,7 +881,7 @@ function OwnerCrmLiveLeads() {
         ) : visibleLeads.length ? (
           <div className="divide-y divide-slate-100">
             {visibleLeads.map((lead) => (
-              <div key={lead.id} className="grid grid-cols-[1.1fr_1fr_0.9fr_0.8fr] gap-4 px-4 py-4 text-sm">
+              <div key={lead.id} className="grid min-w-[760px] grid-cols-[1.1fr_1fr_0.9fr_0.8fr] gap-4 px-4 py-4 text-sm">
                 <div>
                   <p className="font-semibold text-slate-950">{lead.name || 'Unnamed owner'}</p>
                   <p className="mt-1 text-slate-500">{lead.phone || 'No phone'}</p>
@@ -912,7 +912,7 @@ function OwnerCrmLiveLeads() {
                 </div>
 
                 <div>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex min-w-[150px] flex-col gap-2">
                     <Button asChild variant="outline" size="sm" className="rounded-full">
                       <Link to={`/admin/leads/${lead.id}`}>Open profile</Link>
                     </Button>
