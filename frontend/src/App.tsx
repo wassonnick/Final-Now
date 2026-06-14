@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -33,6 +34,7 @@ import { AdminReviewsPage } from '@/pages/admin/AdminReviewsPage';
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { AdminFeatureHubPage } from '@/pages/admin/AdminFeatureHubPage';
+import { getAdminSession } from '@/hooks/useAdminAuth';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +44,16 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function ProtectedAdminRoute({ children }: { children: ReactNode }) {
+  const location = useLocation();
+
+  if (!getAdminSession()) {
+    return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;
+  }
+
+  return <>{children}</>;
+}
 
 function AppShell() {
   const location = useLocation();
@@ -83,53 +95,53 @@ function AppShell() {
           {/* Admin */}
           <Route
             path="/admin"
-            element={<Navigate to="/admin/dashboard" replace />}
+            element={<Navigate to={getAdminSession() ? "/admin/dashboard" : "/admin/login"} replace />}
           />
 
           <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/dashboard" element={<ProtectedAdminRoute><AdminDashboardPage /></ProtectedAdminRoute>} />
 
-          <Route path="/admin/societies" element={<AdminSocietiesPage />} />
-          <Route path="/admin/societies/new-from-url" element={<AdminSocietyUrlCreatePage />} />
-          <Route path="/admin/societies/new" element={<AdminSocietyFormPage />} />
-          <Route path="/admin/societies/:id/edit" element={<AdminSocietyFormPage />} />
+          <Route path="/admin/societies" element={<ProtectedAdminRoute><AdminSocietiesPage /></ProtectedAdminRoute>} />
+          <Route path="/admin/societies/new-from-url" element={<ProtectedAdminRoute><AdminSocietyUrlCreatePage /></ProtectedAdminRoute>} />
+          <Route path="/admin/societies/new" element={<ProtectedAdminRoute><AdminSocietyFormPage /></ProtectedAdminRoute>} />
+          <Route path="/admin/societies/:id/edit" element={<ProtectedAdminRoute><AdminSocietyFormPage /></ProtectedAdminRoute>} />
 
-          <Route path="/admin/properties" element={<AdminPropertiesPage />} />
+          <Route path="/admin/properties" element={<ProtectedAdminRoute><AdminPropertiesPage /></ProtectedAdminRoute>} />
 
           <Route
             path="/admin/properties/new"
-            element={<AdminPropertyFormPage />}
+            element={<ProtectedAdminRoute><AdminPropertyFormPage /></ProtectedAdminRoute>}
           />
 
           <Route
             path="/admin/properties/new/"
-            element={<AdminPropertyFormPage />}
+            element={<ProtectedAdminRoute><AdminPropertyFormPage /></ProtectedAdminRoute>}
           />
 
           <Route
             path="/admin/properties/:id/edit"
-            element={<AdminPropertyFormPage />}
+            element={<ProtectedAdminRoute><AdminPropertyFormPage /></ProtectedAdminRoute>}
           />
 
           <Route
             path="/admin/properties/:id/edit/"
-            element={<AdminPropertyFormPage />}
+            element={<ProtectedAdminRoute><AdminPropertyFormPage /></ProtectedAdminRoute>}
           />
 
-          <Route path="/admin/leads" element={<AdminLeadsPage />} />
-          <Route path="/admin/leads/:id" element={<AdminLeadDetailPage />} />
+          <Route path="/admin/leads" element={<ProtectedAdminRoute><AdminLeadsPage /></ProtectedAdminRoute>} />
+          <Route path="/admin/leads/:id" element={<ProtectedAdminRoute><AdminLeadDetailPage /></ProtectedAdminRoute>} />
 
-          <Route path="/admin/reviews" element={<AdminReviewsPage />} />
-          <Route path="/admin/users" element={<AdminUsersPage />} />
-          <Route path="/admin/ai" element={<AdminFeatureHubPage feature="ai" />} />
-          <Route path="/admin/maps" element={<AdminFeatureHubPage feature="maps" />} />
-          <Route path="/admin/broker-crm" element={<AdminFeatureHubPage feature="broker-crm" />} />
-          <Route path="/admin/owner-crm" element={<AdminFeatureHubPage feature="owner-crm" />} />
-          <Route path="/admin/chat" element={<AdminFeatureHubPage feature="chat" />} />
-          <Route path="/admin/analytics" element={<AdminFeatureHubPage feature="analytics" />} />
-          <Route path="/admin/advanced-search" element={<AdminFeatureHubPage feature="advanced-search" />} />
-          <Route path="/admin/recommendations" element={<AdminFeatureHubPage feature="recommendations" />} />
-          <Route path="/admin/settings" element={<AdminSettingsPage />} />
+          <Route path="/admin/reviews" element={<ProtectedAdminRoute><AdminReviewsPage /></ProtectedAdminRoute>} />
+          <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsersPage /></ProtectedAdminRoute>} />
+          <Route path="/admin/ai" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="ai" /></ProtectedAdminRoute>} />
+          <Route path="/admin/maps" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="maps" /></ProtectedAdminRoute>} />
+          <Route path="/admin/broker-crm" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="broker-crm" /></ProtectedAdminRoute>} />
+          <Route path="/admin/owner-crm" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="owner-crm" /></ProtectedAdminRoute>} />
+          <Route path="/admin/chat" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="chat" /></ProtectedAdminRoute>} />
+          <Route path="/admin/analytics" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="analytics" /></ProtectedAdminRoute>} />
+          <Route path="/admin/advanced-search" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="advanced-search" /></ProtectedAdminRoute>} />
+          <Route path="/admin/recommendations" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="recommendations" /></ProtectedAdminRoute>} />
+          <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettingsPage /></ProtectedAdminRoute>} />
 
         </Routes>
       </main>
