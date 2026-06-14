@@ -386,7 +386,7 @@ type AdminFeatureHubPageProps = {
 
 function StatusList({ title, items, done = false }: { title: string; items: string[]; done?: boolean }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
       <h2 className="text-base font-semibold text-slate-950">{title}</h2>
       <div className="mt-4 space-y-3">
         {items.map((item) => (
@@ -402,6 +402,28 @@ function StatusList({ title, items, done = false }: { title: string; items: stri
       </div>
     </section>
   );
+}
+
+
+function cleanLeadPhone(value?: string) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+function leadPhoneHref(value?: string) {
+  const digits = cleanLeadPhone(value);
+  return digits ? `tel:${digits}` : "";
+}
+
+function leadWhatsAppHref(lead: AdminLead) {
+  const digits = cleanLeadPhone(lead.phone);
+  if (!digits) return "";
+
+  const phone = digits.length === 10 ? `91${digits}` : digits;
+  const message = encodeURIComponent(
+    `Hi ${lead.name || "there"}, this is SocietyFlats regarding your ${lead.requirement || "enquiry"}.`,
+  );
+
+  return `https://wa.me/${phone}?text=${message}`;
 }
 
 function isBrokerLead(lead: AdminLead) {
@@ -518,7 +540,7 @@ function BrokerCrmLiveLeads() {
   const metrics = brokerPartnerMetrics(brokerLeads);
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-500">Live broker queue</p>
@@ -538,7 +560,7 @@ function BrokerCrmLiveLeads() {
         </Button>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
         {[
           ["New Partners", metrics.newPartners, "Fresh partner enquiries"],
           ["Verification", metrics.verificationStarted, "Contacted / field check"],
@@ -546,7 +568,7 @@ function BrokerCrmLiveLeads() {
           ["Active Partners", metrics.activePartners, "Ready to work"],
           ["Not Suitable", metrics.notSuitable, "Rejected / inactive"],
         ].map(([label, value, note]) => (
-          <div key={String(label)} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+          <div key={String(label)} className="rounded-2xl border border-slate-100 bg-slate-50 p-3 md:p-4">
             <p className="text-2xl font-bold text-slate-950">{value}</p>
             <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-blue-600">{label}</p>
             <p className="mt-1 text-xs text-slate-500">{note}</p>
@@ -567,7 +589,7 @@ function BrokerCrmLiveLeads() {
             key={String(value)}
             type="button"
             onClick={() => setPartnerFilter(String(value))}
-            className={`rounded-full border px-4 py-2 text-xs font-bold transition ${
+            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${
               partnerFilter === value
                 ? "border-blue-600 bg-blue-600 text-white"
                 : "border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
@@ -593,7 +615,66 @@ function BrokerCrmLiveLeads() {
         ) : null}
       </div>
 
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-100">
+      <div className="mt-4 grid gap-3 md:hidden">
+        {loading ? (
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm font-medium text-slate-500">
+            Loading broker leads...
+          </div>
+        ) : visibleLeads.length ? (
+          visibleLeads.map((lead) => (
+            <div key={lead.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-bold text-slate-950">{lead.name || 'Unnamed lead'}</p>
+                  <p className="mt-1 text-xs text-slate-500">{lead.phone || 'No phone'}</p>
+                </div>
+                <span className="shrink-0 rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-bold text-orange-700">
+                  Broker
+                </span>
+              </div>
+
+              <div className="mt-3 rounded-2xl bg-white p-3">
+                <p className="text-sm font-semibold text-slate-800">{brokerPartnerArea(lead)}</p>
+                <p className="mt-1 text-xs text-slate-500">Broker partner onboarding</p>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                  {displayBrokerCrmStatus(lead)}
+                </span>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                  {brokerPartnerPriorityLabel(lead)}
+                </span>
+              </div>
+
+              <p className="mt-2 text-xs font-semibold text-slate-600">{brokerPartnerStep(lead)}</p>
+              <p className="mt-1 text-xs text-slate-400">Assigned: {lead.assignedTo || 'Unassigned'}</p>
+
+              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-200 pt-3">
+                <Button asChild variant="outline" size="sm" className="rounded-full px-3 text-xs">
+                  <Link to={`/admin/leads/${lead.id}`}>Open</Link>
+                </Button>
+                {leadPhoneHref(lead.phone) ? (
+                  <Button asChild variant="outline" size="sm" className="rounded-full px-3 text-xs">
+                    <a href={leadPhoneHref(lead.phone)}>Call</a>
+                  </Button>
+                ) : null}
+                {leadWhatsAppHref(lead) ? (
+                  <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 px-3 text-xs text-emerald-700">
+                    <a href={leadWhatsAppHref(lead)} target="_blank" rel="noreferrer">WhatsApp</a>
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm font-medium text-slate-500">
+            No {brokerPartnerFilterLabel(partnerFilter).toLowerCase()} broker partner leads found.
+          </div>
+        )}
+      </div>
+
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-slate-100 md:block">
         <div className="grid min-w-[760px] grid-cols-[1.1fr_1fr_0.8fr_0.8fr] gap-4 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
           <span>Lead</span>
           <span>Interest</span>
@@ -847,7 +928,7 @@ function OwnerCrmLiveLeads() {
         </Button>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
         {[
           ["New Owners", metrics.newOwners, "Fresh submissions"],
           ["Verification", metrics.verification, "Ownership / photos"],
@@ -855,7 +936,7 @@ function OwnerCrmLiveLeads() {
           ["Active Inventory", metrics.activeInventory, "Ready to work"],
           ["Inactive", metrics.inactive, "Rejected / inactive"],
         ].map(([label, value, note]) => (
-          <div key={String(label)} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+          <div key={String(label)} className="rounded-2xl border border-slate-100 bg-slate-50 p-3 md:p-4">
             <p className="text-2xl font-bold text-slate-950">{value}</p>
             <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-600">{label}</p>
             <p className="mt-1 text-xs text-slate-500">{note}</p>
@@ -876,7 +957,7 @@ function OwnerCrmLiveLeads() {
             key={String(value)}
             type="button"
             onClick={() => setOwnerFilter(String(value))}
-            className={`rounded-full border px-4 py-2 text-xs font-bold transition ${
+            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${
               ownerFilter === value
                 ? "border-emerald-600 bg-emerald-600 text-white"
                 : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
@@ -902,7 +983,89 @@ function OwnerCrmLiveLeads() {
         ) : null}
       </div>
 
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-100">
+      <div className="mt-4 grid gap-3 md:hidden">
+        {loading ? (
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm font-medium text-slate-500">
+            Loading owner leads...
+          </div>
+        ) : visibleLeads.length ? (
+          visibleLeads.map((lead) => {
+            const draftProperty = linkedOwnerDraftForLead(linkedProperties, lead);
+            const liveProperty = linkedOwnerLiveForLead(linkedProperties, lead);
+            const inventoryHref = draftProperty
+              ? `/admin/properties/${draftProperty.id}/edit`
+              : liveProperty
+                ? `/property/${liveProperty.slug || liveProperty.id}`
+                : ownerDraftPropertyUrlFromLead(lead);
+
+            const inventoryLabel = draftProperty
+              ? "Open draft"
+              : liveProperty
+                ? "View published"
+                : "Create draft";
+
+            return (
+              <div key={lead.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-bold text-slate-950">{lead.name || 'Unnamed owner'}</p>
+                    <p className="mt-1 text-xs text-slate-500">{lead.phone || 'No phone'}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                    Owner
+                  </span>
+                </div>
+
+                <div className="mt-3 rounded-2xl bg-white p-3">
+                  <p className="text-sm font-semibold text-slate-800">{ownerInventoryArea(lead)}</p>
+                  <p className="mt-1 text-xs text-slate-500">{lead.requirement || 'Owner inventory submission'}</p>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                    {displayOwnerCrmStatus(lead)}
+                  </span>
+                  {draftProperty ? (
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">Draft Created</span>
+                  ) : liveProperty ? (
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">Published</span>
+                  ) : (
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">Draft Pending</span>
+                  )}
+                </div>
+
+                <p className="mt-2 text-xs font-semibold text-slate-600">{ownerInventoryStage(lead)}</p>
+                <p className="mt-1 text-xs text-slate-400">Assigned: {lead.assignedTo || 'Unassigned'}</p>
+
+                <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-200 pt-3">
+                  <Button asChild variant="outline" size="sm" className="rounded-full px-3 text-xs">
+                    <Link to={`/admin/leads/${lead.id}`}>Open lead</Link>
+                  </Button>
+                  <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 bg-emerald-50 px-3 text-xs text-emerald-700">
+                    <Link to={inventoryHref}>{inventoryLabel}</Link>
+                  </Button>
+                  {leadPhoneHref(lead.phone) ? (
+                    <Button asChild variant="outline" size="sm" className="rounded-full px-3 text-xs">
+                      <a href={leadPhoneHref(lead.phone)}>Call</a>
+                    </Button>
+                  ) : null}
+                  {leadWhatsAppHref(lead) ? (
+                    <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 px-3 text-xs text-emerald-700">
+                      <a href={leadWhatsAppHref(lead)} target="_blank" rel="noreferrer">WhatsApp</a>
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm font-medium text-slate-500">
+            No {ownerFilterLabel(ownerFilter).toLowerCase()} owner leads found.
+          </div>
+        )}
+      </div>
+
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-slate-100 md:block">
         <div className="grid min-w-[760px] grid-cols-[1.1fr_1fr_0.9fr_0.8fr] gap-4 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
           <span>Owner</span>
           <span>Inventory</span>
