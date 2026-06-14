@@ -37,4 +37,11 @@ return [
 
     'admin_api_token' => env('ADMIN_API_TOKEN'),
 
+    'lead_notifications' => [
+        'enabled' => env('LEAD_NOTIFICATION_ENABLED', false),
+        'webhook_url' => env('LEAD_NOTIFICATION_WEBHOOK_URL'),
+        'webhook_token' => env('LEAD_NOTIFICATION_WEBHOOK_TOKEN'),
+        'admin_base_url' => env('ADMIN_FRONTEND_URL', 'https://societyflats.com'),
+    ],
+
 ];
