@@ -154,7 +154,7 @@ export function PublicLeadModal({
     const enrichedMessage = [
       baseMessage,
       selectedBudget ? `Budget: ${selectedBudget}.` : "",
-      selectedTime ? `Preferred callback time: ${selectedTime}.` : "",
+      selectedTime ? `Best time to call: ${selectedTime}.` : "",
     ]
       .filter(Boolean)
       .join("\n");
@@ -188,14 +188,14 @@ export function PublicLeadModal({
       onClick={onClose}
     >
       <div
-        className="max-h-[88vh] w-full max-w-[390px] overflow-y-auto rounded-[1.5rem] bg-white shadow-2xl sm:max-h-[82vh] sm:max-w-[420px]"
+        className="max-h-[86vh] w-full max-w-[390px] overflow-y-auto rounded-[1.35rem] bg-white shadow-2xl sm:max-h-[82vh] sm:max-w-[420px] sm:rounded-[1.5rem]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="relative border-b border-navy-100 px-5 py-4">
+        <div className="relative border-b border-navy-100 px-4 py-3.5 sm:px-5 sm:py-4">
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-full border border-navy-100 bg-white p-2 text-navy-400 shadow-sm hover:bg-navy-50"
+            className="absolute right-3 top-3 rounded-full border border-navy-100 bg-white p-2 text-navy-400 shadow-sm hover:bg-navy-50 sm:right-4 sm:top-4"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -205,16 +205,16 @@ export function PublicLeadModal({
             SocietyFlats callback
           </p>
 
-          <h3 className="mt-2 max-w-[82%] text-2xl font-extrabold leading-tight text-navy-900">
+          <h3 className="mt-1.5 max-w-[82%] text-xl font-extrabold leading-tight text-navy-900 sm:mt-2 sm:text-2xl">
             {displayTitle}
           </h3>
 
-          <p className="mt-1.5 max-w-[88%] text-sm leading-relaxed text-navy-500">
+          <p className="mt-1 max-w-[90%] text-sm leading-6 text-navy-500 sm:mt-1.5 sm:leading-relaxed">
             {displaySubtitle}
           </p>
 
           {!success ? (
-            <div className="mt-3 space-y-2">
+            <div className="mt-2.5 space-y-2 sm:mt-3">
               {societyName ? (
                 <div className="flex h-9 items-center gap-2 rounded-2xl bg-blue-50 px-4 text-sm font-bold text-navy-800">
                   <Building2 className="h-4 w-4 text-blue-600" />
@@ -233,7 +233,7 @@ export function PublicLeadModal({
         </div>
 
         {success ? (
-          <div className="px-5 py-5">
+          <div className="px-4 py-4 sm:px-5 sm:py-5">
             <div className="rounded-2xl bg-green-50 p-5 text-green-700">
               <CheckCircle2 className="h-7 w-7" />
               <h4 className="mt-3 text-lg font-bold">Request received</h4>
@@ -276,7 +276,7 @@ export function PublicLeadModal({
                         key={chip}
                         type="button"
                         onClick={() => selectRequirement(chip)}
-                        className={`h-9 rounded-full border px-3 text-sm font-bold transition ${
+                        className={`h-9 rounded-full border px-3 text-xs font-bold transition sm:text-sm ${
                           active
                             ? "border-blue-300 bg-blue-50 text-blue-700"
                             : "border-navy-100 bg-white text-navy-500 hover:bg-navy-50"
@@ -337,7 +337,7 @@ export function PublicLeadModal({
 
               <div>
                 <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
-                  Preferred callback time
+                  Best time to call
                 </p>
                 <div className="grid grid-cols-4 gap-2">
                   {preferredTimeChips.map((chip) => {
