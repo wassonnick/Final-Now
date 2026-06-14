@@ -188,7 +188,7 @@ export function PublicLeadModal({
       onClick={onClose}
     >
       <div
-        className="max-h-[86vh] w-full max-w-[390px] overflow-y-auto rounded-[1.35rem] bg-white shadow-2xl sm:max-h-[82vh] sm:max-w-[420px] sm:rounded-[1.5rem]"
+        className="flex max-h-[86vh] w-full max-w-[390px] flex-col overflow-hidden rounded-[1.35rem] bg-white shadow-2xl sm:max-h-[82vh] sm:max-w-[420px] sm:rounded-[1.5rem]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="relative border-b border-navy-100 px-4 py-3.5 sm:px-5 sm:py-4">
@@ -251,7 +251,8 @@ export function PublicLeadModal({
             </Button>
           </div>
         ) : (
-          <form onSubmit={submitLead} className="px-4 py-3 sm:px-5 sm:py-4">
+          <form onSubmit={submitLead} className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4">
             {isPropertyLead ? (
               <div className="mb-3">
                 <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
@@ -382,6 +383,7 @@ export function PublicLeadModal({
                 <Phone className="mr-2 h-4 w-4" />
                 {submitting ? "Submitting..." : submitLabel}
               </Button>
+            </div>
             </div>
           </form>
         )}
