@@ -362,13 +362,15 @@ export function PublicLeadModal({
                 </div>
               </div>
 
-              <textarea
-                value={form.message}
-                onChange={(event) => setForm({ ...form, message: event.target.value })}
-                placeholder="Message optional"
-                rows={1}
-                className="w-full rounded-2xl border border-navy-100 px-3 py-2 text-xs font-semibold text-navy-800 outline-none focus:border-blue-400"
-              />
+              {!isPropertyLead ? (
+                <textarea
+                  value={form.message}
+                  onChange={(event) => setForm({ ...form, message: event.target.value })}
+                  placeholder="Message optional"
+                  rows={1}
+                  className="w-full rounded-2xl border border-navy-100 px-3 py-2 text-xs font-semibold text-navy-800 outline-none focus:border-blue-400"
+                />
+              ) : null}
 
               {error ? (
                 <div className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">
