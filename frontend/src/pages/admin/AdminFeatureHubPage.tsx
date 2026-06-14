@@ -724,9 +724,23 @@ function BrokerCrmLiveLeads() {
                 </div>
 
                 <div>
-                  <Button asChild variant="outline" size="sm" className="rounded-full">
-                    <Link to={`/admin/leads/${lead.id}`}>Open profile</Link>
-                  </Button>
+                  <div className="flex min-w-[170px] flex-col gap-2">
+                    <Button asChild variant="outline" size="sm" className="rounded-full border-blue-200 text-blue-700">
+                      <Link to={`/admin/leads/${lead.id}`}>Open lead</Link>
+                    </Button>
+
+                    {leadPhoneHref(lead.phone) ? (
+                      <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200">
+                        <a href={leadPhoneHref(lead.phone)}>Call</a>
+                      </Button>
+                    ) : null}
+
+                    {leadWhatsAppHref(lead) ? (
+                      <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 text-emerald-700">
+                        <a href={leadWhatsAppHref(lead)} target="_blank" rel="noreferrer">WhatsApp</a>
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
               </div>
               );
@@ -1122,10 +1136,11 @@ function OwnerCrmLiveLeads() {
                 </div>
 
                 <div>
-                  <div className="flex min-w-[150px] flex-col gap-2">
-                    <Button asChild variant="outline" size="sm" className="rounded-full">
-                      <Link to={`/admin/leads/${lead.id}`}>Open profile</Link>
+                  <div className="flex min-w-[170px] flex-col gap-2">
+                    <Button asChild variant="outline" size="sm" className="rounded-full border-blue-200 text-blue-700">
+                      <Link to={`/admin/leads/${lead.id}`}>Open lead</Link>
                     </Button>
+
                     <Button
                       asChild
                       variant="outline"
@@ -1148,6 +1163,19 @@ function OwnerCrmLiveLeads() {
                             : "Create draft"}
                       </Link>
                     </Button>
+
+                    {leadPhoneHref(lead.phone) ? (
+                      <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200">
+                        <a href={leadPhoneHref(lead.phone)}>Call</a>
+                      </Button>
+                    ) : null}
+
+                    {leadWhatsAppHref(lead) ? (
+                      <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 text-emerald-700">
+                        <a href={leadWhatsAppHref(lead)} target="_blank" rel="noreferrer">WhatsApp</a>
+                      </Button>
+                    ) : null}
+
                     <p className="text-[11px] leading-4 text-slate-400">
                       {linkedOwnerDraftForLead(linkedProperties, lead)
                         ? "Draft property already linked to this owner lead for traceability."
