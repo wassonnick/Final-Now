@@ -839,6 +839,46 @@ function ownerDraftPropertyUrlFromLead(lead: AdminLead) {
   return `/admin/properties/new?${params.toString()}`;
 }
 
+
+function ownerLeadMessageValue(lead: AdminLead, label: string) {
+  const message = String((lead as AdminLead & { message?: string }).message || "");
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = message.match(new RegExp(`${escapedLabel}:\\s*(.+)`, "i"));
+
+  return match?.[1]?.trim() || "";
+}
+
+function ownerListingSnapshot(lead: AdminLead) {
+  const value = (label: string) => {
+    const result = ownerLeadMessageValue(lead, label);
+    return result && result.toLowerCase() !== "not provided" ? result : "";
+  };
+
+  return {
+    bhk: value("BHK"),
+    size: value("Size"),
+    floor: value("Floor"),
+    furnishing: value("Furnishing"),
+    availability: value("Availability"),
+    expected: lead.budget || value("Expected rent") || value("Expected sale price"),
+    preferredTime: value("Preferred callback time"),
+  };
+}
+
+function ownerListingSnapshotItems(lead: AdminLead) {
+  const snapshot = ownerListingSnapshot(lead);
+
+  return [
+    ["BHK", snapshot.bhk],
+    ["Size", snapshot.size],
+    ["Floor", snapshot.floor],
+    ["Furnishing", snapshot.furnishing],
+    ["Available", snapshot.availability],
+    ["Expected", snapshot.expected],
+    ["Best time", snapshot.preferredTime],
+  ].filter(([, value]) => Boolean(value));
+}
+
 function ownerInventoryStage(lead: AdminLead) {
   if (lead.status === "Booked") return "Inventory active";
   if (lead.status === "Lost") return "Inactive owner";
@@ -1016,7 +1056,7 @@ function OwnerCrmLiveLeads() {
               ? "Open draft"
               : liveProperty
                 ? "View published"
-                : "Create draft";
+                : "Create property draft";
 
             return (
               <div key={lead.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
@@ -1033,6 +1073,17 @@ function OwnerCrmLiveLeads() {
                 <div className="mt-3 rounded-2xl bg-white p-3">
                   <p className="text-sm font-semibold text-slate-800">{ownerInventoryArea(lead)}</p>
                   <p className="mt-1 text-xs text-slate-500">{lead.requirement || 'Owner inventory submission'}</p>
+
+                  {ownerListingSnapshotItems(lead).length ? (
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {ownerListingSnapshotItems(lead).slice(0, 6).map(([label, value]) => (
+                        <div key={`${lead.id}-${label}`} className="rounded-xl bg-slate-50 px-3 py-2">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{label}</p>
+                          <p className="mt-0.5 truncate text-xs font-bold text-slate-800">{value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -1108,6 +1159,17 @@ function OwnerCrmLiveLeads() {
                   <p className="mt-1 text-slate-500">
                     {lead.requirement || 'Owner inventory submission'}
                   </p>
+
+                  {ownerListingSnapshotItems(lead).length ? (
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {ownerListingSnapshotItems(lead).slice(0, 6).map(([label, value]) => (
+                        <div key={`${lead.id}-desktop-${label}`} className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{label}</p>
+                          <p className="mt-0.5 truncate text-xs font-bold text-slate-800">{value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div>
@@ -1160,7 +1222,7 @@ function OwnerCrmLiveLeads() {
                           ? "Open draft"
                           : linkedOwnerLiveForLead(linkedProperties, lead)
                             ? "View published"
-                            : "Create draft"}
+                            : "Create property draft"}
                       </Link>
                     </Button>
 
