@@ -100,7 +100,19 @@ export function SellPage() {
     const expectation = form.expectation.trim();
     const preferredTime = form.preferredTime.trim();
 
-    const propertySummary = [bhk, size].filter(Boolean).join(", ");
+    const formattedBhk = bhk
+      ? bhk.toLowerCase().includes("bhk")
+        ? bhk
+        : `${bhk} BHK`
+      : "";
+
+    const formattedSize = size
+      ? /sq|ft|yard|yd|acre/i.test(size)
+        ? size
+        : `${size} sq.ft.`
+      : "";
+
+    const propertySummary = [formattedBhk, formattedSize].filter(Boolean).join(", ");
     const propertyTitle =
       [propertySummary || propertyDetails, societyName].filter(Boolean).join(" · ") ||
       `Owner ${listingIntent} Listing`;
