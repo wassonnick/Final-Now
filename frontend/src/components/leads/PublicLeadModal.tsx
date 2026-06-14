@@ -188,7 +188,7 @@ export function PublicLeadModal({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[86vh] w-full max-w-[390px] flex-col overflow-hidden rounded-[1.35rem] bg-white shadow-2xl sm:max-h-[82vh] sm:max-w-[420px] sm:rounded-[1.5rem]"
+        className="flex max-h-[78vh] w-full max-w-[390px] flex-col overflow-hidden rounded-[1.35rem] bg-white shadow-2xl sm:max-h-[76vh] sm:max-w-[420px] sm:rounded-[1.5rem]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="relative border-b border-navy-100 px-4 py-3.5 sm:px-5 sm:py-4">
@@ -366,7 +366,7 @@ export function PublicLeadModal({
                 value={form.message}
                 onChange={(event) => setForm({ ...form, message: event.target.value })}
                 placeholder="Message optional"
-                rows={2}
+                rows={1}
                 className="w-full rounded-2xl border border-navy-100 px-4 py-2.5 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
@@ -375,7 +375,10 @@ export function PublicLeadModal({
                   {error}
                 </div>
               ) : null}
+            </div>
+            </div>
 
+            <div className="shrink-0 border-t border-navy-100 bg-white px-4 py-3 sm:px-5">
               <Button
                 disabled={submitting}
                 className="h-10 w-full rounded-full bg-blue-600 font-bold text-white hover:bg-blue-700"
@@ -383,7 +386,6 @@ export function PublicLeadModal({
                 <Phone className="mr-2 h-4 w-4" />
                 {submitting ? "Submitting..." : submitLabel}
               </Button>
-            </div>
             </div>
           </form>
         )}
