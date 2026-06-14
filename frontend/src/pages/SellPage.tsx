@@ -55,8 +55,14 @@ export function SellPage() {
     name: "",
     society: searchParams.get("society") || "",
     tower: "",
+    bhk: "",
+    size: "",
+    floor: "",
+    furnishing: "",
+    availability: "",
     details: "",
     expectation: "",
+    preferredTime: "",
     phone: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -85,11 +91,18 @@ export function SellPage() {
     const listingIntent = purpose === "rent" ? "Rent" : "Sale";
     const societyName = form.society.trim();
     const towerName = form.tower.trim();
+    const bhk = form.bhk.trim();
+    const size = form.size.trim();
+    const floor = form.floor.trim();
+    const furnishing = form.furnishing.trim();
+    const availability = form.availability.trim();
     const propertyDetails = form.details.trim();
     const expectation = form.expectation.trim();
+    const preferredTime = form.preferredTime.trim();
 
+    const propertySummary = [bhk, size].filter(Boolean).join(", ");
     const propertyTitle =
-      [propertyDetails, societyName].filter(Boolean).join(" · ") ||
+      [propertySummary || propertyDetails, societyName].filter(Boolean).join(" · ") ||
       `Owner ${listingIntent} Listing`;
 
     const ownerMessage = [
@@ -99,8 +112,14 @@ export function SellPage() {
       `Phone: ${cleanPhone || form.phone || "Not provided"}`,
       `Society: ${societyName || "Not provided"}`,
       `Tower / Block: ${towerName || "Not provided"}`,
+      `BHK: ${bhk || "Not provided"}`,
+      `Size: ${size || "Not provided"}`,
+      `Floor: ${floor || "Not provided"}`,
+      `Furnishing: ${furnishing || "Not provided"}`,
+      `Availability: ${availability || "Not provided"}`,
       `Property details: ${propertyDetails || "Not provided"}`,
       `Expected ${purpose === "rent" ? "rent" : "sale price"}: ${expectation || "Not provided"}`,
+      `Preferred callback time: ${preferredTime || "Not provided"}`,
       "Suggested next action: Call owner, verify property details, ask for photos, confirm availability and expected pricing.",
     ].join("\n");
 
@@ -114,8 +133,8 @@ export function SellPage() {
         message: ownerMessage,
         requirement:
           purpose === "rent"
-            ? "Owner listing - Rent"
-            : "Owner listing - Sale",
+            ? `Owner listing - Rent${preferredTime ? ` · Preferred time: ${preferredTime}` : ""}`
+            : `Owner listing - Sale${preferredTime ? ` · Preferred time: ${preferredTime}` : ""}`,
         budget: expectation || null,
       });
       setSuccess(true);
@@ -216,35 +235,95 @@ export function SellPage() {
                     className="h-12 rounded-xl"
                     placeholder="Society name e.g. DLF Park Place"
                   />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Input
+                      value={form.tower}
+                      onChange={(event) =>
+                        updateForm("tower", event.target.value)
+                      }
+                      className="h-12 rounded-xl"
+                      placeholder="Tower / block"
+                    />
+                    <Input
+                      required
+                      value={form.bhk}
+                      onChange={(event) =>
+                        updateForm("bhk", event.target.value)
+                      }
+                      className="h-12 rounded-xl"
+                      placeholder="BHK e.g. 3 BHK"
+                    />
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Input
+                      value={form.size}
+                      onChange={(event) =>
+                        updateForm("size", event.target.value)
+                      }
+                      className="h-12 rounded-xl"
+                      placeholder="Size e.g. 1983 sq.ft."
+                    />
+                    <Input
+                      value={form.floor}
+                      onChange={(event) =>
+                        updateForm("floor", event.target.value)
+                      }
+                      className="h-12 rounded-xl"
+                      placeholder="Floor e.g. 12th"
+                    />
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Input
+                      value={form.furnishing}
+                      onChange={(event) =>
+                        updateForm("furnishing", event.target.value)
+                      }
+                      className="h-12 rounded-xl"
+                      placeholder="Furnishing e.g. Semi furnished"
+                    />
+                    <Input
+                      value={form.availability}
+                      onChange={(event) =>
+                        updateForm("availability", event.target.value)
+                      }
+                      className="h-12 rounded-xl"
+                      placeholder="Availability e.g. Immediate"
+                    />
+                  </div>
+
                   <Input
-                    value={form.tower}
-                    onChange={(event) =>
-                      updateForm("tower", event.target.value)
-                    }
-                    className="h-12 rounded-xl"
-                    placeholder="Tower / block"
-                  />
-                  <Input
-                    required
                     value={form.details}
                     onChange={(event) =>
                       updateForm("details", event.target.value)
                     }
                     className="h-12 rounded-xl"
-                    placeholder="BHK and size e.g. 3 BHK, 1983 sq.ft."
+                    placeholder="Extra details optional"
                   />
-                  <Input
-                    value={form.expectation}
-                    onChange={(event) =>
-                      updateForm("expectation", event.target.value)
-                    }
-                    className="h-12 rounded-xl"
-                    placeholder={
-                      purpose === "rent"
-                        ? "Expected rent e.g. ₹85,000/month"
-                        : "Expected price e.g. ₹5.5 Cr"
-                    }
-                  />
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Input
+                      value={form.expectation}
+                      onChange={(event) =>
+                        updateForm("expectation", event.target.value)
+                      }
+                      className="h-12 rounded-xl"
+                      placeholder={
+                        purpose === "rent"
+                          ? "Expected rent e.g. ₹85,000/month"
+                          : "Expected price e.g. ₹5.5 Cr"
+                      }
+                    />
+                    <Input
+                      value={form.preferredTime}
+                      onChange={(event) =>
+                        updateForm("preferredTime", event.target.value)
+                      }
+                      className="h-12 rounded-xl"
+                      placeholder="Best time to call e.g. Today evening"
+                    />
+                  </div>
                   <Input
                     required
                     value={form.phone}
