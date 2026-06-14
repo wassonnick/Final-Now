@@ -99,14 +99,14 @@ export function PublicLeadModal({
   const displayTitle = success
     ? "Request received"
     : isPropertyLead
-      ? "Request property callback"
-      : "Request callback";
+      ? "Check property availability"
+      : "Request SocietyFlats callback";
 
   const displaySubtitle = success
-    ? "Your request has been saved. Our team will contact you shortly."
+    ? "Your request is saved. Our team will call you with the next best step."
     : isPropertyLead
-      ? "Confirm availability, price and visit timing."
-      : "Select your need and share your mobile number.";
+      ? "Share your number to confirm availability, price and visit timing."
+      : "Tell us what you need. We will shortlist the right society or home.";
 
   const finalRequirement =
     normalizeRequirement(form.requirement) ||
@@ -176,7 +176,7 @@ export function PublicLeadModal({
       setSuccess(true);
     } catch (leadError) {
       console.error("Lead submission failed:", leadError);
-      setError("Unable to submit right now. Please try again or use WhatsApp.");
+      setError("Unable to submit right now. Please try again or message us on WhatsApp.");
     } finally {
       setSubmitting(false);
     }
@@ -238,7 +238,7 @@ export function PublicLeadModal({
               <CheckCircle2 className="h-7 w-7" />
               <h4 className="mt-3 text-lg font-bold">Request received</h4>
               <p className="mt-2 text-sm leading-relaxed">
-                {successMessage || "Thanks. Our team has received your request and will call you shortly with the right next step."}
+                {successMessage || "Thanks. SocietyFlats has received your request. Our team will call you shortly with verified next steps."}
               </p>
             </div>
 
@@ -255,7 +255,7 @@ export function PublicLeadModal({
             {isPropertyLead ? (
               <div className="mb-3">
                 <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
-                  Selected requirement
+                  Your requirement
                 </p>
                 <div className="inline-flex h-9 items-center rounded-full border border-blue-300 bg-blue-50 px-4 text-sm font-bold text-blue-700">
                   {form.requirement.replace(/ requirement$/i, "") || "Callback"}
@@ -264,7 +264,7 @@ export function PublicLeadModal({
             ) : (
               <div className="mb-3">
                 <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
-                  What do you need?
+                  I am looking for
                 </p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {requirementChips.map((chip) => {

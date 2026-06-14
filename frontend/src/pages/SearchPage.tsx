@@ -589,8 +589,8 @@ export function SearchPage() {
 
   const callbackTitle =
     callbackTarget?.type === "property"
-      ? "Request property callback"
-      : "Request society callback";
+      ? "Check property availability"
+      : "Request society shortlist";
 
   const callbackSubtitle =
     callbackTarget?.type === "property"

@@ -615,10 +615,10 @@ export function PropertyPage() {
 
               <div className="mt-5 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap md:mt-6">
                 <Button onClick={() => openLead("callback")} className="h-10 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700">
-                  <Phone className="mr-2 h-4 w-4" /> Callback
+                  <Phone className="mr-2 h-4 w-4" /> Check availability
                 </Button>
                 <Button onClick={() => openLead("enquiry")} variant="outline" className="h-10 rounded-full border-blue-200 text-sm font-bold text-blue-700">
-                  <Mail className="mr-2 h-4 w-4" /> Enquire
+                  <Mail className="mr-2 h-4 w-4" /> Ask details
                 </Button>
                 <Button
                   variant="outline"
@@ -803,11 +803,11 @@ export function PropertyPage() {
                     Want more options in {societyName || "this society"}?
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-navy-600">
-                    Request similar options and we will check owner/broker availability, matching budgets and visit-ready homes in {societyName || societyLocality || "this society"}.
+                    Request matching options and we will check owner/broker availability, matching budgets and visit-ready homes in {societyName || societyLocality || "this society"}.
                   </p>
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                     <Button onClick={() => openLead("callback")} className="rounded-full bg-blue-600 hover:bg-blue-700">
-                      <Phone className="mr-2 h-4 w-4" /> Request similar options
+                      <Phone className="mr-2 h-4 w-4" /> Request matching options
                     </Button>
                     <Button asChild variant="outline" className="rounded-full border-blue-200 text-blue-700">
                       <Link to={`/search?tab=${listingSearchTab}&q=${encodeURIComponent(societyName || societyLocality || title)}`}>
@@ -867,14 +867,14 @@ export function PropertyPage() {
                   onClick={() => openLead("callback")}
                   className="h-9 w-full rounded-full bg-blue-600 text-sm hover:bg-blue-700"
                 >
-                  <Phone className="mr-2 h-4 w-4" /> Callback
+                  <Phone className="mr-2 h-4 w-4" /> Check availability
                 </Button>
                 <Button
                   onClick={() => openLead("enquiry")}
                   variant="outline"
                   className="h-9 w-full rounded-full border-blue-200 text-sm text-blue-700"
                 >
-                  <Mail className="mr-2 h-4 w-4" /> Enquire
+                  <Mail className="mr-2 h-4 w-4" /> Ask details
                 </Button>
               </div>
 
@@ -892,7 +892,7 @@ export function PropertyPage() {
                   variant="outline"
                   className="h-9 rounded-full border-navy-200 text-xs text-navy-700"
                 >
-                  Similar homes
+                  Similar options
                 </Button>
               </div>
 
@@ -915,7 +915,7 @@ export function PropertyPage() {
       <div className="fixed inset-x-3 bottom-3 z-50 rounded-2xl border border-navy-100 bg-white/95 px-3 py-2 shadow-[0_-10px_24px_rgba(15,23,42,0.12)] backdrop-blur md:hidden">
         <div className="grid grid-cols-3 gap-2">
           <Button onClick={() => openLead("callback")} className="h-10 rounded-full bg-blue-600 px-2 text-xs font-bold hover:bg-blue-700">
-            <Phone className="mr-1.5 h-4 w-4" /> Call
+            <Phone className="mr-1.5 h-4 w-4" /> Callback
           </Button>
           <a
             href={`https://wa.me/919999988888?text=${whatsappMessage}`}
@@ -937,10 +937,10 @@ export function PropertyPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-2xl font-bold text-navy-900">
-                  {leadType === "callback" ? "Request property callback" : "Send property enquiry"}
+                  {leadType === "callback" ? "Check property availability" : "Ask about this property"}
                 </h3>
                 <p className="mt-1 text-sm text-navy-500">
-                  Our team will contact you for this {listingType.toLowerCase()} listing.
+                  Share your details once. We will confirm availability, price and the next visit step.
                 </p>
               </div>
               <button
@@ -954,7 +954,7 @@ export function PropertyPage() {
 
             {leadSuccess ? (
               <div className="mt-6 rounded-2xl bg-green-50 p-5 text-green-700">
-                Property request received. Our team will contact you shortly with availability, visit options and next steps.
+                Request received. SocietyFlats will call you shortly with availability, visit options and next steps.
               </div>
             ) : (
               <form onSubmit={submitLead} className="mt-6 space-y-4">

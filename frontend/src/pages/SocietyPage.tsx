@@ -650,7 +650,7 @@ export function SocietyPage() {
                   onClick={() => openSocietyCallback()}
                   className="h-10 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700"
                 >
-                  <Phone className="mr-2 h-4 w-4" /> Callback
+                  <Phone className="mr-2 h-4 w-4" /> Request callback
                 </Button>
 
                 <Button
@@ -1241,7 +1241,7 @@ export function SocietyPage() {
             onClick={() => openSocietyCallback()}
             className="h-10 rounded-full bg-blue-600 px-2 text-xs font-bold hover:bg-blue-700"
           >
-            <Phone className="mr-1.5 h-4 w-4" /> Call
+            <Phone className="mr-1.5 h-4 w-4" /> Callback
           </Button>
           <a
             href={`https://wa.me/919999988888?text=${whatsappMessage}`}
@@ -1267,8 +1267,8 @@ export function SocietyPage() {
         open={callbackOpen}
         title={
           selectedLeadProperty
-            ? `Request callback for ${selectedLeadProperty.title}`
-            : `Request callback for ${society.name}`
+            ? `Check availability for ${selectedLeadProperty.title}`
+            : `Request shortlist for ${society.name}`
         }
         subtitle={
           selectedLeadProperty
