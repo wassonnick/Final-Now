@@ -188,10 +188,10 @@ export function PublicLeadModal({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[78vh] w-full max-w-[390px] flex-col overflow-hidden rounded-[1.35rem] bg-white shadow-2xl sm:max-h-[76vh] sm:max-w-[420px] sm:rounded-[1.5rem]"
+        className="flex max-h-[78vh] w-full max-w-[390px] flex-col overflow-hidden rounded-[1.25rem] bg-white shadow-2xl sm:max-h-[76vh] sm:max-w-[420px] sm:rounded-[1.4rem]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="relative border-b border-navy-100 px-4 py-3.5 sm:px-5 sm:py-4">
+        <div className="relative border-b border-navy-100 px-4 py-3 sm:px-5">
           <button
             type="button"
             onClick={onClose}
@@ -205,25 +205,25 @@ export function PublicLeadModal({
             SocietyFlats callback
           </p>
 
-          <h3 className="mt-1.5 max-w-[82%] text-xl font-extrabold leading-tight text-navy-900 sm:mt-2 sm:text-2xl">
+          <h3 className="mt-1 max-w-[82%] text-lg font-extrabold leading-tight text-navy-900 sm:text-xl">
             {displayTitle}
           </h3>
 
-          <p className="mt-1 max-w-[90%] text-sm leading-6 text-navy-500 sm:mt-1.5 sm:leading-relaxed">
+          <p className="mt-1 max-w-[90%] text-xs leading-5 text-navy-500 sm:text-sm">
             {displaySubtitle}
           </p>
 
           {!success ? (
-            <div className="mt-2.5 space-y-2 sm:mt-3">
+            <div className="mt-2 space-y-1.5">
               {societyName ? (
-                <div className="flex h-9 items-center gap-2 rounded-2xl bg-blue-50 px-4 text-sm font-bold text-navy-800">
+                <div className="flex h-8 items-center gap-2 rounded-2xl bg-blue-50 px-3 text-xs font-bold text-navy-800">
                   <Building2 className="h-4 w-4 text-blue-600" />
                   {societyName}
                 </div>
               ) : null}
 
               {propertyTitle ? (
-                <div className="flex h-9 items-center gap-2 rounded-2xl bg-[#F8FAFC] px-4 text-sm font-bold text-navy-800">
+                <div className="flex h-8 items-center gap-2 rounded-2xl bg-[#F8FAFC] px-3 text-xs font-bold text-navy-800">
                   <Home className="h-4 w-4 text-blue-600" />
                   {propertyTitle}
                 </div>
@@ -252,19 +252,19 @@ export function PublicLeadModal({
           </div>
         ) : (
           <form onSubmit={submitLead} className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2.5 sm:px-5 sm:py-3">
             {isPropertyLead ? (
-              <div className="mb-3">
-                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
+              <div className="mb-2.5">
+                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-navy-300">
                   Your requirement
                 </p>
-                <div className="inline-flex h-9 items-center rounded-full border border-blue-300 bg-blue-50 px-4 text-sm font-bold text-blue-700">
+                <div className="inline-flex h-8 items-center rounded-full border border-blue-300 bg-blue-50 px-3 text-xs font-bold text-blue-700">
                   {form.requirement.replace(/ requirement$/i, "") || "Callback"}
                 </div>
               </div>
             ) : (
-              <div className="mb-3">
-                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
+              <div className="mb-2.5">
+                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-navy-300">
                   I am looking for
                 </p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -277,7 +277,7 @@ export function PublicLeadModal({
                         key={chip}
                         type="button"
                         onClick={() => selectRequirement(chip)}
-                        className={`h-9 rounded-full border px-3 text-xs font-bold transition sm:text-sm ${
+                        className={`h-8 rounded-full border px-3 text-xs font-bold transition ${
                           active
                             ? "border-blue-300 bg-blue-50 text-blue-700"
                             : "border-navy-100 bg-white text-navy-500 hover:bg-navy-50"
@@ -291,13 +291,13 @@ export function PublicLeadModal({
               </div>
             )}
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               <input
                 required
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
                 placeholder="Your name"
-                className="h-10 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                className="h-9 w-full rounded-2xl border border-navy-100 px-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
               <div>
@@ -312,32 +312,32 @@ export function PublicLeadModal({
                     if (error) setError("");
                   }}
                   placeholder="10-digit mobile number"
-                  className="h-10 w-full rounded-2xl border border-blue-200 bg-blue-50/40 px-4 text-sm font-bold text-navy-900 outline-none focus:border-blue-500 focus:bg-white"
+                  className="h-9 w-full rounded-2xl border border-blue-200 bg-blue-50/40 px-3 text-sm font-bold text-navy-900 outline-none focus:border-blue-500 focus:bg-white"
                 />
                 <p className={`mt-1 text-[11px] ${phoneDigits.length && !phoneValid ? "text-red-600" : "text-navy-300"}`}>
                   {phoneDigits.length}/10 digits · India mobile number only
                 </p>
               </div>
 
-              <div className="grid gap-2.5 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 <input
                   type="email"
                   value={form.email}
                   onChange={(event) => setForm({ ...form, email: event.target.value })}
                   placeholder="Email optional"
-                  className="h-10 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                  className="h-9 w-full rounded-2xl border border-navy-100 px-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
                 />
 
                 <input
                   value={form.budget}
                   onChange={(event) => setForm({ ...form, budget: event.target.value })}
                   placeholder="Budget optional"
-                  className="h-10 w-full rounded-2xl border border-navy-100 px-4 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                  className="h-9 w-full rounded-2xl border border-navy-100 px-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
                 />
               </div>
 
               <div>
-                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-navy-300">
+                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-navy-300">
                   Best time to call
                 </p>
                 <div className="grid grid-cols-4 gap-2">
@@ -349,7 +349,7 @@ export function PublicLeadModal({
                         key={chip}
                         type="button"
                         onClick={() => setForm({ ...form, preferredTime: chip })}
-                        className={`h-9 rounded-full border px-2 text-[11px] font-bold transition ${
+                        className={`h-8 rounded-full border px-2 text-[11px] font-bold transition ${
                           active
                             ? "border-blue-300 bg-blue-50 text-blue-700"
                             : "border-navy-100 bg-white text-navy-500 hover:bg-navy-50"
@@ -367,7 +367,7 @@ export function PublicLeadModal({
                 onChange={(event) => setForm({ ...form, message: event.target.value })}
                 placeholder="Message optional"
                 rows={1}
-                className="w-full rounded-2xl border border-navy-100 px-4 py-2.5 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                className="w-full rounded-2xl border border-navy-100 px-3 py-2 text-xs font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
               {error ? (
@@ -378,10 +378,10 @@ export function PublicLeadModal({
             </div>
             </div>
 
-            <div className="shrink-0 border-t border-navy-100 bg-white px-4 py-3 sm:px-5">
+            <div className="shrink-0 border-t border-navy-100 bg-white px-4 py-2.5 sm:px-5">
               <Button
                 disabled={submitting}
-                className="h-10 w-full rounded-full bg-blue-600 font-bold text-white hover:bg-blue-700"
+                className="h-9 w-full rounded-full bg-blue-600 text-sm font-bold text-white hover:bg-blue-700"
               >
                 <Phone className="mr-2 h-4 w-4" />
                 {submitting ? "Submitting..." : submitLabel}
