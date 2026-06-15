@@ -1,0 +1,24 @@
+{
+  "name": "SocietyFlats",
+  "short_name": "SocietyFlats",
+  "description": "Verified Gurgaon society-first rentals, resale homes and property intelligence.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fbff",
+  "theme_color": "#0f2a44",
+  "icons": [
+    {
+      "src": "/societyflats-icon.svg",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/societyflats-icon.svg",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

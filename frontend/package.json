@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "seo:sitemap": "node scripts/generate-sitemap.mjs",
     "prebuild": "npm run seo:sitemap",
-    "seo:prerender": "node scripts/prerender-static-meta.mjs"
+    "seo:prerender": "node scripts/prerender-static-meta.mjs",
+    "seo:validate": "node scripts/validate-seo.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",

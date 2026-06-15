@@ -80,6 +80,10 @@ services:
         source: /properties
         destination: /properties/index.html
 
+      - type: rewrite
+        source: /404
+        destination: /404/index.html
+
       # SPA fallback for admin, dynamic society/property pages, search and other React routes.
       - type: rewrite
         source: /*

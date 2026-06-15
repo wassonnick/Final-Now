@@ -222,6 +222,14 @@ const routeMeta = [
     changefreq: "weekly",
     schemaType: "CollectionPage",
   },
+  {
+    path: "/404",
+    title: "Page Not Found | SocietyFlats",
+    description:
+      "This SocietyFlats page could not be found. Search verified Gurgaon societies and live homes instead.",
+    noindex: true,
+    schemaType: "WebPage",
+  },
 ];
 
 function escapeHtml(value) {
@@ -241,37 +249,126 @@ function canonicalFor(routePath) {
   return `${SITE_URL}${routePath === "/" ? "" : routePath}`;
 }
 
-function schemaFor(meta) {
-  const canonical = canonicalFor(meta.path);
+function breadcrumbItems(meta) {
+  const cleanParts = meta.path
+    .split("/")
+    .filter(Boolean)
+    .map((part) => {
+      if (/^\d+$/.test(part)) return part;
+      return part
+        .split("-")
+        .filter(Boolean)
+        .map((word) => {
+          if (["dlf", "m3m", "ats"].includes(word)) return word.toUpperCase();
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        })
+        .join(" ");
+    });
 
-  if (meta.path === "/") {
-    return {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "Organization",
-          name: "SocietyFlats",
-          url: SITE_URL,
-          areaServed: "Gurugram, Haryana, India",
-          description:
-            "SocietyFlats helps users discover verified Gurgaon societies, live homes and society-first property intelligence.",
-        },
-        {
-          "@type": "WebSite",
-          name: "SocietyFlats",
-          url: SITE_URL,
-          potentialAction: {
-            "@type": "SearchAction",
-            target: `${SITE_URL}/search?q={search_term_string}`,
-            "query-input": "required name=search_term_string",
-          },
-        },
-      ],
-    };
+  const items = [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: SITE_URL,
+    },
+  ];
+
+  let currentPath = "";
+
+  cleanParts.forEach((name, index) => {
+    currentPath += `/${meta.path.split("/").filter(Boolean)[index]}`;
+    items.push({
+      "@type": "ListItem",
+      position: index + 2,
+      name,
+      item: canonicalFor(currentPath),
+    });
+  });
+
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: items,
+  };
+}
+
+function faqFor(meta) {
+  if (meta.noindex) return null;
+
+  const isBuilder = meta.path.startsWith("/builder/");
+  const isLocality = meta.path.startsWith("/gurgaon/") && !["/gurgaon/societies", "/gurgaon/properties"].includes(meta.path);
+
+  const questions = [
+    {
+      "@type": "Question",
+      name: "What is SocietyFlats?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "SocietyFlats is a society-first Gurgaon property platform that helps users compare verified societies, live homes, owner listings and location intelligence before shortlisting a home.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Does SocietyFlats focus on Gurgaon?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. SocietyFlats is currently focused on Gurgaon with society-first search, verified inventory and callback support.",
+      },
+    },
+  ];
+
+  if (isLocality) {
+    questions.push({
+      "@type": "Question",
+      name: "Can I find societies and homes by Gurgaon sector?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. SocietyFlats provides locality and sector landing pages for important Gurgaon areas so users can explore verified societies and available homes by location.",
+      },
+    });
+  }
+
+  if (isBuilder) {
+    questions.push({
+      "@type": "Question",
+      name: "Can I explore Gurgaon societies by builder?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. SocietyFlats includes builder-focused Gurgaon pages for leading developers, helping users compare societies and available homes under each builder collection.",
+      },
+    });
   }
 
   return {
-    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: questions,
+  };
+}
+
+function schemaFor(meta) {
+  const canonical = canonicalFor(meta.path);
+
+  const organization = {
+    "@type": "Organization",
+    name: "SocietyFlats",
+    url: SITE_URL,
+    areaServed: "Gurugram, Haryana, India",
+    description:
+      "SocietyFlats helps users discover verified Gurgaon societies, live homes and society-first property intelligence.",
+  };
+
+  const website = {
+    "@type": "WebSite",
+    name: "SocietyFlats",
+    url: SITE_URL,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_URL}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  const page = {
     "@type": meta.schemaType || "CollectionPage",
     name: meta.title,
     description: meta.description,
@@ -285,6 +382,16 @@ function schemaFor(meta) {
       "@type": "Place",
       name: "Gurugram, Haryana, India",
     },
+  };
+
+  const graph = meta.path === "/" ? [organization, website] : [organization, website, page, breadcrumbItems(meta)];
+  const faq = faqFor(meta);
+
+  if (faq) graph.push(faq);
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": graph,
   };
 }
 
@@ -304,11 +411,14 @@ function seoTags(meta) {
   const title = escapeHtml(meta.title);
   const description = escapeHtml(meta.description);
   const schema = escapeJson(schemaFor(meta));
+  const robots = meta.noindex
+    ? "noindex, nofollow"
+    : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
 
   return [
     `    <title>${title}</title>`,
     `    <meta name="description" content="${description}" />`,
-    `    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />`,
+    `    <meta name="robots" content="${robots}" />`,
     `    <link rel="canonical" href="${escapeHtml(canonical)}" />`,
     `    <meta property="og:site_name" content="SocietyFlats" />`,
     `    <meta property="og:type" content="website" />`,

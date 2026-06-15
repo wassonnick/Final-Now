@@ -21,6 +21,7 @@ import { SellPage } from '@/pages/SellPage';
 import { SocietiesPage } from '@/pages/SocietiesPage';
 import { PropertiesPage } from '@/pages/PropertiesPage';
 import { SeoLandingPage } from '@/pages/SeoLandingPage';
+import { NotFoundPage } from '@/pages/NotFoundPage';
 
 import { AdminLoginPage } from '@/pages/admin/AdminLoginPage';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
@@ -160,6 +161,8 @@ function AppShell() {
           <Route path="/admin/advanced-search" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="advanced-search" /></ProtectedAdminRoute>} />
           <Route path="/admin/recommendations" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="recommendations" /></ProtectedAdminRoute>} />
           <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettingsPage /></ProtectedAdminRoute>} />
+
+          <Route path="*" element={<NotFoundPage />} />
 
         </Routes>
       </main>
