@@ -8,13 +8,41 @@ const SITEMAP_PATH = path.join(PUBLIC_DIR, "sitemap.xml");
 
 const staticRoutes = [
   { loc: "/", priority: "1.0", changefreq: "daily" },
+  { loc: "/gurgaon", priority: "0.95", changefreq: "daily" },
   { loc: "/search", priority: "0.9", changefreq: "daily" },
   { loc: "/societies", priority: "0.9", changefreq: "daily" },
   { loc: "/properties", priority: "0.9", changefreq: "daily" },
+  { loc: "/gurgaon/societies", priority: "0.9", changefreq: "daily" },
+  { loc: "/gurgaon/properties", priority: "0.9", changefreq: "daily" },
   { loc: "/sell", priority: "0.7", changefreq: "weekly" },
   { loc: "/ai-advisor", priority: "0.6", changefreq: "weekly" },
   { loc: "/recommendations", priority: "0.6", changefreq: "weekly" },
   { loc: "/insights", priority: "0.5", changefreq: "weekly" },
+];
+
+const preferredLocalityRoutes = [
+  "/gurgaon/sector-56",
+  "/gurgaon/sector-65",
+  "/gurgaon/sector-66",
+  "/gurgaon/sector-67",
+  "/gurgaon/sector-70",
+  "/gurgaon/sector-102",
+  "/gurgaon/golf-course-road",
+  "/gurgaon/golf-course-extension-road",
+  "/gurgaon/dwarka-expressway",
+  "/gurgaon/sohna-road",
+];
+
+const preferredBuilderRoutes = [
+  "/builder/dlf",
+  "/builder/m3m",
+  "/builder/emaar",
+  "/builder/ats",
+  "/builder/godrej",
+  "/builder/tata",
+  "/builder/adani",
+  "/builder/tulip",
+  "/builder/alpha-corp",
 ];
 
 function escapeXml(value) {
@@ -24,6 +52,14 @@ function escapeXml(value) {
     .replaceAll("'", "&apos;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
+}
+
+function slugify(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
 }
 
 function toAbsoluteUrl(route) {
@@ -43,6 +79,7 @@ function extractRows(payload) {
 
 async function fetchRows(endpoint) {
   const urls = [
+    `${API_BASE}${endpoint}?per_page=200`,
     `${API_BASE}${endpoint}?limit=200`,
     `${API_BASE}${endpoint}`,
   ];
@@ -78,6 +115,73 @@ function uniqueRoutes(routes) {
   });
 }
 
+function isPublicSociety(society) {
+  return ["Verified", "Premium"].includes(String(society?.status || ""));
+}
+
+function isHighQualityProperty(property) {
+  const slug = String(property?.slug || "").toLowerCase();
+  const title = String(property?.title || "").toLowerCase();
+  const status = String(property?.status || "");
+
+  if (status && status !== "Live") return false;
+  if (!slug || !title) return false;
+
+  const blockedPatterns = [
+    /owner-lead/,
+    /test/,
+    /dummy/,
+    /sample/,
+    /lead-\d+/,
+    /\d{10,}$/,
+    /^\d+-?bhk-?flat$/,
+    /^flat$/,
+    /^property$/,
+  ];
+
+  if (blockedPatterns.some((pattern) => pattern.test(slug) || pattern.test(title))) {
+    return false;
+  }
+
+  const hasContext = Boolean(
+    property?.society ||
+    property?.society?.name ||
+    property?.locality ||
+    property?.society_id
+  );
+
+  const hasCommercialSignal = Boolean(property?.price || property?.bedrooms || property?.area_sqft);
+
+  return hasContext && hasCommercialSignal;
+}
+
+function addDerivedLandingRoutes(routes, societies) {
+  const localitySlugs = new Set();
+  const builderSlugs = new Set();
+
+  for (const society of societies) {
+    const locality = society?.sector || society?.locality;
+    const builder = society?.builder;
+
+    const localitySlug = slugify(locality);
+    const builderSlug = slugify(builder);
+
+    if (localitySlug) localitySlugs.add(`/gurgaon/${localitySlug}`);
+    if (builderSlug) builderSlugs.add(`/builder/${builderSlug}`);
+  }
+
+  for (const route of preferredLocalityRoutes) localitySlugs.add(route);
+  for (const route of preferredBuilderRoutes) builderSlugs.add(route);
+
+  for (const loc of [...localitySlugs].slice(0, 40)) {
+    routes.push({ loc, priority: "0.72", changefreq: "weekly" });
+  }
+
+  for (const loc of [...builderSlugs].slice(0, 40)) {
+    routes.push({ loc, priority: "0.7", changefreq: "weekly" });
+  }
+}
+
 function buildXml(routes) {
   const today = new Date().toISOString().slice(0, 10);
 
@@ -105,8 +209,10 @@ async function main() {
 
   const routes = [...staticRoutes];
 
-  const societies = await fetchRows("/societies");
-  const properties = await fetchRows("/properties");
+  const societies = (await fetchRows("/societies")).filter(isPublicSociety);
+  const properties = (await fetchRows("/properties")).filter(isHighQualityProperty);
+
+  addDerivedLandingRoutes(routes, societies);
 
   for (const society of societies) {
     const slug = society?.slug || society?.id;
@@ -126,7 +232,7 @@ async function main() {
 
     routes.push({
       loc: `/property/${slug}`,
-      priority: "0.75",
+      priority: property?.featured || property?.verified ? "0.78" : "0.68",
       changefreq: "daily",
       lastmod: property?.updated_at?.slice?.(0, 10) || property?.published_at?.slice?.(0, 10),
     });
@@ -136,6 +242,7 @@ async function main() {
   await fs.writeFile(SITEMAP_PATH, xml, "utf8");
 
   console.log(`Generated sitemap with ${uniqueRoutes(routes).length} URLs at ${SITEMAP_PATH}`);
+  console.log(`Included ${societies.length} public societies and ${properties.length} high-quality public properties.`);
 }
 
 main().catch(async (error) => {
@@ -143,5 +250,5 @@ main().catch(async (error) => {
   console.warn(error?.message || error);
 
   await fs.mkdir(PUBLIC_DIR, { recursive: true });
-  await fs.writeFile(SITEMAP_PATH, buildXml(staticRoutes), "utf8");
+  await fs.writeFile(SITEMAP_PATH, buildXml([...staticRoutes, ...preferredLocalityRoutes.map((loc) => ({ loc, priority: "0.72", changefreq: "weekly" })), ...preferredBuilderRoutes.map((loc) => ({ loc, priority: "0.7", changefreq: "weekly" }))]), "utf8");
 });

@@ -20,6 +20,7 @@ import { SellPage } from '@/pages/SellPage';
 
 import { SocietiesPage } from '@/pages/SocietiesPage';
 import { PropertiesPage } from '@/pages/PropertiesPage';
+import { SeoLandingPage } from '@/pages/SeoLandingPage';
 
 import { AdminLoginPage } from '@/pages/admin/AdminLoginPage';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
@@ -90,6 +91,12 @@ function AppShell() {
 
           <Route path="/society/:slug" element={<SocietyPage />} />
           <Route path="/property/:slug" element={<PropertyPage />} />
+
+          <Route path="/gurgaon" element={<SeoLandingPage variant="gurgaon" />} />
+          <Route path="/gurgaon/societies" element={<SeoLandingPage variant="gurgaon-societies" />} />
+          <Route path="/gurgaon/properties" element={<SeoLandingPage variant="gurgaon-properties" />} />
+          <Route path="/gurgaon/:locality" element={<SeoLandingPage variant="locality" />} />
+          <Route path="/builder/:builderSlug" element={<SeoLandingPage variant="builder" />} />
 
           <Route path="/compare" element={<ComparePage />} />
           <Route path="/ai-advisor" element={<AIAdvisorPage />} />
