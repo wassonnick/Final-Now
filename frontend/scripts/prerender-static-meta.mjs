@@ -432,6 +432,47 @@ function seoTags(meta) {
   ].join("\n");
 }
 
+
+function staticCrawlLinks() {
+  const links = [
+    ["/gurgaon", "Gurgaon society guide"],
+    ["/gurgaon/societies", "Verified Gurgaon societies"],
+    ["/gurgaon/properties", "Verified Gurgaon properties"],
+    ["/gurgaon/sector-65", "Sector 65 Gurgaon societies"],
+    ["/gurgaon/sector-56", "Sector 56 Gurgaon societies"],
+    ["/gurgaon/sector-66", "Sector 66 Gurgaon societies"],
+    ["/gurgaon/sector-67", "Sector 67 Gurgaon societies"],
+    ["/gurgaon/sector-70", "Sector 70 Gurgaon societies"],
+    ["/gurgaon/sector-102", "Sector 102 Gurgaon societies"],
+    ["/gurgaon/golf-course-road", "Golf Course Road societies"],
+    ["/gurgaon/golf-course-extension-road", "Golf Course Extension Road societies"],
+    ["/gurgaon/dwarka-expressway", "Dwarka Expressway societies"],
+    ["/gurgaon/sohna-road", "Sohna Road societies"],
+    ["/builder/dlf", "DLF societies in Gurgaon"],
+    ["/builder/m3m", "M3M societies in Gurgaon"],
+    ["/builder/emaar", "Emaar societies in Gurgaon"],
+    ["/builder/ats", "ATS societies in Gurgaon"],
+    ["/builder/godrej", "Godrej societies in Gurgaon"],
+    ["/builder/adani", "Adani Realty societies in Gurgaon"],
+    ["/builder/tulip", "Tulip societies in Gurgaon"],
+    ["/builder/alpha-corp", "Alpha Corp societies in Gurgaon"],
+    ["/societies", "All verified societies"],
+    ["/properties", "All verified properties"],
+  ];
+
+  return [
+    '<nav id="sf-static-crawl-links" aria-label="Popular Gurgaon searches" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">',
+    '<h2>Popular Gurgaon society searches</h2>',
+    ...links.map(([href, label]) => `<a href="${href}">${label}</a>`),
+    '</nav>',
+  ].join("");
+}
+
+function injectStaticCrawlLinks(html) {
+  if (html.includes('id="sf-static-crawl-links"')) return html;
+  return html.replace('<div id="root"></div>', `<div id="root"></div>${staticCrawlLinks()}`);
+}
+
 function injectMeta(baseHtml, meta) {
   const headMatch = baseHtml.match(/<head>([\s\S]*?)<\/head>/i);
 
@@ -451,7 +492,7 @@ async function writeRouteHtml(baseHtml, meta) {
   const outputPath = path.join(routeDir, "index.html");
 
   await fs.mkdir(routeDir, { recursive: true });
-  await fs.writeFile(outputPath, html, "utf8");
+  await fs.writeFile(outputPath, injectStaticCrawlLinks(html), "utf8");
 
   return outputPath;
 }

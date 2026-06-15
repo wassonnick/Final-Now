@@ -56,6 +56,7 @@ async function validateStaticHtml() {
       `rel="canonical" href="${canonical}"`,
       'property="og:title"',
       'id="sf-static-jsonld"',
+      'id="sf-static-crawl-links"',
     ];
 
     if (route === "/404") {
