@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Building2, Mail, MapPin, Phone } from "lucide-react";
-import { InternalSeoLinks } from "@/components/seo/InternalSeoLinks";
 
 const quickLinks = [
   { label: "Societies", href: "/search?tab=societies" },
@@ -131,7 +130,6 @@ export function Footer() {
           </div>
         </div>
       </div>
-            <InternalSeoLinks variant="footer" />
-      </footer>
+          </footer>
   );
 }

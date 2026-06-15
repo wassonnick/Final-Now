@@ -2,500 +2,265 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
-  Bot,
   Building2,
   CheckCircle2,
-  Heart,
-  Loader2,
+  Home,
   MapPin,
-  MessageCircle,
-  Navigation,
   Search,
-  Send,
+  ShieldCheck,
   Sparkles,
   Star,
+  Users,
+  Zap,
 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 type Intent = "society" | "rent" | "buy" | "general";
 
-type AdvisorMatch = {
-  id: number;
-  society_name: string;
-  slug?: string;
-  sector?: string;
-  locality?: string;
-  score?: number;
-  rent_range?: string;
-  buy_range?: string;
-  available_homes?: number;
-  reason?: string;
-  tags?: string[];
-};
-
-type AdvisorMessage = {
-  id: string;
-  role: "assistant" | "user";
-  text: string;
-  matches?: AdvisorMatch[];
-};
-
-const demoMatches: AdvisorMatch[] = [
-  {
-    id: 1,
-    society_name: "DLF Crest",
-    slug: "dlf-crest",
-    sector: "DLF Phase V",
-    locality: "Golf Course Road",
-    score: 9.1,
-    rent_range: "₹1.1L – ₹2.5L",
-    buy_range: "₹6Cr – ₹12Cr",
-    available_homes: 12,
-    reason: "Premium society with strong connectivity, security and family-friendly amenities.",
-    tags: ["Luxury", "Family Friendly", "Near Metro"],
-  },
-  {
-    id: 2,
-    society_name: "DLF Park Place",
-    slug: "dlf-park-place",
-    sector: "DLF Phase V",
-    locality: "Golf Course Road",
-    score: 8.7,
-    rent_range: "₹95K – ₹1.6L",
-    buy_range: "₹4.5Cr – ₹8Cr",
-    available_homes: 9,
-    reason: "Good premium option with strong Cyber City access and established resident profile.",
-    tags: ["Premium", "Near Cyber Hub", "Family Friendly"],
-  },
-  {
-    id: 3,
-    society_name: "Ireo Skyon",
-    slug: "ireo-skyon",
-    sector: "Sector 60",
-    locality: "Golf Course Extension Road",
-    score: 8.4,
-    rent_range: "₹75K – ₹1.5L",
-    buy_range: "₹4Cr – ₹7Cr",
-    available_homes: 6,
-    reason: "Modern society with good layouts and better value around Golf Course Extension.",
-    tags: ["Modern", "Value", "Clubhouse"],
-  },
+const tabs: Array<{ key: Intent; label: string; button: string }> = [
+  { key: "society", label: "Society", button: "Search societies" },
+  { key: "rent", label: "Rent", button: "Find rentals" },
+  { key: "buy", label: "Buy", button: "Find resale" },
+  { key: "general", label: "AI match", button: "Ask AI" },
 ];
 
-function getApiBaseUrl() {
-  const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
+const quickSearches = [
+  "DLF Crest",
+  "Golf Course Road",
+  "Sector 65",
+  "3BHK under Rs 1L",
+  "Pet friendly",
+];
 
-  if (envUrl) {
-    return String(envUrl).replace(/\/$/, "");
+const aiReasons = [
+  { icon: ShieldCheck, label: "Verified societies" },
+  { icon: MapPin, label: "Commute fit" },
+  { icon: Users, label: "Family lifestyle" },
+];
+
+function buildSearchUrl(intent: Intent, query: string) {
+  const params = new URLSearchParams();
+  const cleanQuery = query.trim();
+
+  if (cleanQuery) params.set("q", cleanQuery);
+
+  if (intent === "rent") {
+    params.set("tab", "rent");
+  } else if (intent === "buy") {
+    params.set("tab", "buy");
+  } else {
+    params.set("tab", "societies");
+    params.set("intent", intent === "general" ? "general" : "society");
   }
 
-  return "/api";
-}
-
-function cn(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
-
-function AIAdvisorChatBox() {
-  const [input, setInput] = useState("");
-  const [intent] = useState<Intent>("rent");
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastQuery, setLastQuery] = useState("Best 3BHK near Cyber City under Rs 1L");
-
-  const [messages, setMessages] = useState<AdvisorMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      text: "Hi! I’m your SocietyFlats AI advisor for Gurgaon. Tell me your needs and I’ll help you find the right society.",
-    },
-    {
-      id: "demo-user",
-      role: "user",
-      text: "Best 3BHK near Cyber City under Rs 1L",
-    },
-    {
-      id: "demo-reply",
-      role: "assistant",
-      text: "Here are the top 3 societies that match your requirements near Cyber City for 3BHK homes.",
-      matches: demoMatches,
-    },
-  ]);
-
-  const submitMessage = async (messageText?: string) => {
-    const cleanMessage = (messageText || input).trim();
-    if (!cleanMessage || isLoading) return;
-
-    const userMessage: AdvisorMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      text: cleanMessage,
-    };
-
-    setLastQuery(cleanMessage);
-    setMessages((current) => [...current, userMessage]);
-    setInput("");
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(`${getApiBaseUrl()}/ai/advisor`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          message: cleanMessage,
-          intent,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("AI advisor API failed");
-      }
-
-      const data = await response.json();
-
-      const apiMatches: AdvisorMatch[] = Array.isArray(data?.matches)
-        ? data.matches
-        : [];
-
-      const assistantMessage: AdvisorMessage = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        text:
-          data?.reply ||
-          "I found the closest society matches from the live SocietyFlats database. Open a result to view details and available homes.",
-        matches: apiMatches.slice(0, 3),
-      };
-
-      setMessages((current) => [...current, assistantMessage]);
-    } catch {
-      setMessages((current) => [
-        ...current,
-        {
-          id: `fallback-${Date.now()}`,
-          role: "assistant",
-          text:
-            "I could not fetch live recommendations right now. Here are some strong Gurgaon society options based on your requirement.",
-          matches: demoMatches,
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const latestMatches = useMemo(() => {
-    const messageWithMatches = [...messages]
-      .reverse()
-      .find((message) => Array.isArray(message.matches));
-
-    return messageWithMatches?.matches?.slice(0, 3) || demoMatches;
-  }, [messages]);
-
-  const latestSearchUrl = `/search?q=${encodeURIComponent(lastQuery)}&intent=general`;
-
-  return (
-    <aside className="hidden w-full max-w-[340px] shrink-0 lg:block">
-      <div className="rounded-[22px] border border-blue-100/90 bg-white/88 p-2 shadow-[0_18px_52px_rgba(37,99,235,0.12)] backdrop-blur-2xl">
-        <div className="rounded-[20px] bg-gradient-to-br from-blue-50 via-white to-white p-3">
-          <div className="mb-2 flex items-center justify-between rounded-2xl bg-white/75 px-3 py-2.5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-600 text-sm font-black text-white shadow-md shadow-blue-200">
-                SF
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="text-[15px] font-extrabold tracking-tight text-slate-950">
-                    SocietyFlats AI
-                  </p>
-                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] text-blue-600">
-                    Advisor
-                  </span>
-                </div>
-                <p className="text-[11px] font-bold text-emerald-700">
-                  Gurgaon expert · Online
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1 text-blue-300">
-              <span className="h-1 w-1 rounded-full bg-current" />
-              <span className="h-1 w-1 rounded-full bg-current" />
-              <span className="h-1 w-1 rounded-full bg-current" />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="max-h-[96px] space-y-2 overflow-y-auto pr-1">
-              {messages.slice(-4).map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "max-w-[92%] rounded-2xl px-3.5 py-2.5 text-[12px] font-semibold leading-relaxed shadow-sm",
-                    message.role === "user"
-                      ? "ml-auto bg-blue-600 text-white shadow-md shadow-blue-200"
-                      : "bg-white text-slate-700"
-                  )}
-                >
-                  {message.text}
-                </div>
-              ))}
-
-              {isLoading ? (
-                <div className="inline-flex items-center gap-2 rounded-2xl bg-white px-3.5 py-2.5 text-[12px] font-bold text-blue-600 shadow-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Finding live matches...
-                </div>
-              ) : null}
-            </div>
-
-            <div className="rounded-[20px] border border-blue-100 bg-blue-50/70 p-2.5">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-blue-700">
-                  Top Matches
-                </p>
-                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
-                  <Navigation className="h-3 w-3" />
-                  Cyber City
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                {latestMatches.length > 0 ? latestMatches.map((match, index) => (
-                  <Link
-                    key={`${match.id}-${match.society_name}`}
-                    to={match.slug ? `/society/${match.slug}` : latestSearchUrl}
-                    className="flex items-center gap-2.5 rounded-2xl bg-white px-3 py-1.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                  >
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[12px] font-black text-white">
-                      {index + 1}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-extrabold leading-tight text-slate-950">
-                        {match.society_name}
-                      </p>
-                      <p className="truncate text-[11px] font-semibold text-blue-400">
-                        {match.sector || match.locality || "Gurgaon"}
-                      </p>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="text-[13px] font-black text-blue-600">
-                        {match.score || "8.5"}
-                      </p>
-                      <p className="text-[10px] font-bold text-blue-300">
-                        {Number(match.score || 0) >= 9
-                          ? "Excellent"
-                          : "Very Good"}
-                      </p>
-                    </div>
-                  </Link>
-                )) : (
-                  <div className="rounded-2xl bg-white px-3 py-2 text-[12px] font-bold leading-relaxed text-slate-500 shadow-sm">
-                    No exact AI match yet. Try a society name, sector, budget or request a callback.
-                  </div>
-                )}
-              </div>
-
-              {latestMatches.length > 0 ? (
-                <div className="mt-2 rounded-full bg-white/90 px-3 py-1.5">
-                  <div className="relative h-2 rounded-full bg-blue-100">
-                    <span className="absolute left-[18%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-emerald-500 shadow" />
-                    <span className="absolute left-[52%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-blue-600 shadow" />
-                    <span className="absolute left-[82%] top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-amber-700 shadow" />
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-
-              <Link
-                to={latestSearchUrl}
-                className="mt-2 flex items-center justify-center rounded-full border border-blue-100 bg-white px-3 py-1.5 text-[11px] font-black text-blue-600 transition hover:border-blue-300 hover:bg-blue-50"
-              >
-                Open AI shortlist <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-              </Link>
-
-            <div className="flex flex-wrap gap-1.5">
-              {["Family", "Metro", "Pets", "Under Rs 1L"].map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => submitMessage(chip)}
-                className="rounded-full border border-blue-100 bg-white px-2.5 py-1 text-[11px] font-bold text-blue-500 transition hover:border-blue-300 hover:bg-blue-50"
-                >
-                  {chip}
-                </button>
-              ))}
-            </div>
-
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                submitMessage();
-              }}
-              className="flex items-center gap-2 rounded-2xl border border-blue-100 bg-white px-3 py-1.5 shadow-sm"
-            >
-              <Bot className="h-4 w-4 shrink-0 text-blue-500" />
-
-              <input
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                placeholder="Ask about societies, locality, budget..."
-                className="min-w-0 flex-1 bg-transparent text-[12.5px] font-semibold text-slate-700 outline-none placeholder:text-blue-300"
-              />
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-200 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </aside>
-  );
+  return `/search?${params.toString()}`;
 }
 
 export default function SocietyFlatsHero() {
   const [activeTab, setActiveTab] = useState<Intent>("society");
   const [query, setQuery] = useState("");
 
-  const handleSearch = () => {
-    const params = new URLSearchParams();
-    const cleanQuery = query.trim();
+  const active = tabs.find((tab) => tab.key === activeTab) || tabs[0];
+  const aiUrl = useMemo(
+    () =>
+      `/ai-advisor?q=${encodeURIComponent(
+        query.trim() || "Help me shortlist the best Gurgaon societies by budget and location",
+      )}`,
+    [query],
+  );
 
-    if (cleanQuery) {
-      params.set("q", cleanQuery);
-    }
+  const submitSearch = () => {
+    window.location.href = buildSearchUrl(activeTab, query);
+  };
 
-    if (activeTab === "rent") {
-      params.set("tab", "rent");
-    } else if (activeTab === "buy") {
-      params.set("tab", "buy");
-    } else {
-      params.set("tab", "societies");
-      params.set("intent", "general");
-    }
-
-    window.location.href = `/search?${params.toString()}`;
+  const applyQuickSearch = (value: string) => {
+    setQuery(value);
+    window.location.href = buildSearchUrl("society", value);
   };
 
   return (
-    <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_72%_18%,rgba(37,99,235,0.10),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]">
-      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-2 px-4 pb-2 pt-2 sm:gap-5 sm:px-6 sm:pb-4 sm:pt-5 lg:grid-cols-[minmax(0,1.52fr)_minmax(320px,0.68fr)] lg:gap-6 lg:px-20 lg:pb-5 lg:pt-5">
-        <div className="max-w-[860px]">
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/80 px-3 py-1.5 shadow-sm sm:mb-3">
-            <span className="h-2 w-2 rounded-full bg-amber-500" />
-            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-700 sm:text-[11px] sm:tracking-[0.22em]">
-              Gurgaon Society Intelligence
+    <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_78%_18%,rgba(37,99,235,0.10),transparent_28%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]">
+      <div className="mx-auto grid max-w-[1440px] gap-8 px-4 py-7 sm:px-6 md:py-9 lg:grid-cols-[minmax(0,1.12fr)_minmax(340px,0.88fr)] lg:items-center lg:px-20 lg:py-10">
+        <div className="max-w-[760px]">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-700">
+              Gurgaon society intelligence
             </span>
           </div>
 
-          <h1 className="max-w-[720px] font-serif text-[30px] font-black leading-[1.02] tracking-[-0.035em] text-slate-950 sm:text-[42px] sm:leading-[0.98] lg:text-[46px] xl:text-[50px]">
-            Search smarter
+          <h1 className="font-serif text-[38px] font-black leading-[0.98] tracking-[-0.045em] text-slate-950 sm:text-[52px] lg:text-[64px]">
+            Find the right
             <br />
-            Gurgaon societies.
+            Gurgaon society first.
           </h1>
 
-          <p className="mt-2 hidden max-w-[520px] text-[14px] font-semibold leading-6 text-blue-500 sm:block">
-            Verified rentals, resale homes and society intelligence in one search-first experience.
+          <p className="mt-4 max-w-[560px] text-base font-semibold leading-7 text-blue-500 sm:text-lg">
+            Compare verified societies, rentals, resale homes and lifestyle fit before booking visits.
           </p>
 
-          <div className="mt-3 w-full rounded-[18px] border border-blue-100 bg-white/90 p-2 shadow-[0_12px_34px_rgba(37,99,235,0.09)] backdrop-blur-xl sm:mt-3 sm:p-2">
-            <div className="mb-1.5 grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
-              {[
-                { key: "society", label: "Society" },
-                { key: "rent", label: "Rent" },
-                { key: "buy", label: "Buy" },
-                { key: "general", label: "Ask AI" },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key as Intent)}
-                  className={cn(
-                    "whitespace-nowrap rounded-xl px-2 py-1.5 text-[12px] font-extrabold transition sm:px-4 sm:py-1.5 sm:text-sm",
-                    activeTab === tab.key
-                      ? "bg-blue-600 text-white shadow-md shadow-blue-200"
-                      : "text-blue-300 hover:bg-blue-50 hover:text-blue-600"
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
+          <div className="mt-6 rounded-[1.35rem] border border-blue-100 bg-white p-2.5 shadow-[0_18px_48px_rgba(37,99,235,0.10)]">
+            <div className="mb-2 grid grid-cols-4 gap-1.5">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`rounded-full px-3 py-2 text-sm font-black transition ${
+                      isActive
+                        ? "bg-blue-700 text-white shadow-md shadow-blue-100"
+                        : "text-blue-500 hover:bg-blue-50"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="flex flex-col gap-2 rounded-[16px] bg-slate-50/70 p-2 sm:flex-row sm:items-center sm:gap-2 sm:p-2">
-              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-white px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                submitSearch();
+              }}
+              className="flex flex-col gap-2 rounded-[1.1rem] bg-blue-50/55 p-2 sm:flex-row"
+            >
+              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-white px-4 py-3">
                 <Search className="h-5 w-5 shrink-0 text-blue-500" />
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      handleSearch();
-                    }
-                  }}
-                  placeholder="Search society, sector or landmark..."
-                  className="min-w-0 flex-1 bg-transparent text-[15px] font-semibold text-slate-700 outline-none placeholder:text-blue-500 sm:text-[16px]"
+                  placeholder="Search society, sector, landmark or budget..."
+                  className="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none placeholder:text-blue-300"
                 />
               </div>
 
-              <button
-                type="button"
-                onClick={handleSearch}
-                className="flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-[14px] font-black text-white shadow-md shadow-blue-200 transition hover:bg-blue-700 sm:h-[44px] sm:w-auto sm:min-w-[165px] sm:px-6 sm:text-[15px]"
+              <Button
+                type="submit"
+                className="h-12 rounded-2xl bg-blue-700 px-6 text-sm font-black text-white shadow-md shadow-blue-100 hover:bg-blue-800"
               >
-                Search Societies
-                <ArrowRight className="h-5 w-5" />
+                {active.button}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-sm font-black text-blue-600">
+              Popular:
+            </span>
+            {quickSearches.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => applyQuickSearch(item)}
+                className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50"
+              >
+                {item}
               </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="hidden lg:block">
+          <div className="relative rounded-[2rem] border border-blue-100 bg-white/90 p-5 shadow-[0_24px_80px_rgba(37,99,235,0.13)] backdrop-blur">
+            <div className="absolute -right-4 -top-4 rounded-full bg-blue-700 px-4 py-2 text-xs font-black text-white shadow-xl">
+              AI shortlist
+            </div>
+
+            <div className="flex items-start gap-3">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-700 text-white shadow-lg shadow-blue-100">
+                <Sparkles className="h-6 w-6" />
+              </span>
+              <div>
+                <p className="text-xl font-black text-navy-950">
+                  Not sure where to live?
+                </p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-navy-500">
+                  Tell AI your budget, office location and lifestyle. Get a ranked Gurgaon society shortlist.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-[1.35rem] border border-blue-100 bg-blue-50 p-4">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-500">
+                Example requirement
+              </p>
+              <div className="mt-2 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-2xl font-black text-navy-950">
+                    Family 3BHK
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-blue-600">
+                    Near Cyber City · under Rs 1L
+                  </p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-emerald-700">
+                  3 matches
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-2">
+                {[
+                  ["DLF The Crest", "92%"],
+                  ["M3M Golf Estate", "88%"],
+                  ["Ireo Skyon", "84%"],
+                ].map(([name, score], index) => (
+                  <Link
+                    key={name}
+                    to={`/search?q=${encodeURIComponent(name)}&tab=societies&intent=general`}
+                    className="flex items-center justify-between rounded-2xl border border-blue-100 bg-white px-3 py-2.5 transition hover:border-blue-200 hover:bg-blue-50"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-700 text-xs font-black text-white">
+                        {index + 1}
+                      </span>
+                      <span className="text-sm font-black text-navy-950">
+                        {name}
+                      </span>
+                    </span>
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700">
+                      {score}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {aiReasons.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.label}
+                    className="rounded-2xl border border-blue-100 bg-white p-3 text-center"
+                  >
+                    <Icon className="mx-auto h-4 w-4 text-blue-700" />
+                    <p className="mt-2 text-[11px] font-black leading-4 text-navy-600">
+                      {item.label}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <Link to={aiUrl}>
+              <Button className="mt-5 h-12 w-full rounded-full bg-blue-700 text-sm font-black text-white hover:bg-blue-800">
+                Start AI shortlist
+                <Zap className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+
+            <div className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-navy-400">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              No spam. One guided callback if needed.
             </div>
           </div>
-
-          <div className="mt-2 grid max-w-[880px] grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
-            <span className="col-span-2 text-[13px] font-bold text-blue-500 sm:mr-1 sm:text-[14px]">
-              Popular searches:
-            </span>
-
-            {[
-              { label: "DLF Crest", icon: Star },
-              { label: "Golf Course Road", icon: MapPin },
-              { label: "DLF Park Place", icon: Building2 },
-              { label: "Pet friendly", icon: Heart },
-            ].map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => setQuery(item.label)}
-                  className="inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-2 text-[13px] font-extrabold text-blue-500 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 sm:justify-start sm:px-4 sm:text-[14px]"
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="whitespace-nowrap">{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="hidden items-start justify-center lg:-mt-3 lg:flex lg:justify-end">
-          <AIAdvisorChatBox />
         </div>
       </div>
-
-      <div className="pointer-events-none absolute bottom-0 left-0 h-12 w-full sm:h-32 bg-gradient-to-t from-blue-50/70 to-transparent" />
     </section>
   );
 }

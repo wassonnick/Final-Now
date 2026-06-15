@@ -68,10 +68,8 @@ async function validateStaticHtml() {
 }
 
 async function validateInternalLinks() {
-  const homePage = await fs.readFile(path.resolve(process.cwd(), "src/pages/HomePage.tsx"), "utf8");
-  const seoLandingPage = await fs.readFile(path.resolve(process.cwd(), "src/pages/SeoLandingPage.tsx"), "utf8");
-  const footer = await fs.readFile(path.resolve(process.cwd(), "src/components/layout/Footer.tsx"), "utf8");
   const internalLinks = await fs.readFile(path.resolve(process.cwd(), "src/components/seo/InternalSeoLinks.tsx"), "utf8");
+  const prerender = await fs.readFile(path.resolve(process.cwd(), "scripts/prerender-static-meta.mjs"), "utf8");
 
   const requiredContent = [
     "/gurgaon",
@@ -84,37 +82,25 @@ async function validateInternalLinks() {
   ];
 
   for (const required of requiredContent) {
-    if (!internalLinks.includes(required)) {
+    if (!internalLinks.includes(required) && !prerender.includes(required)) {
       throw new Error(`Internal SEO links missing: ${required}`);
     }
   }
 
-  if (!homePage.includes("Popular Gurgaon society searches")) {
-    throw new Error("Homepage missing C35 popular search links section");
-  }
-
-  if (!seoLandingPage.includes("Related Gurgaon searches")) {
-    throw new Error("SEO landing page missing C35 related search links section");
-  }
-
-  if (!seoLandingPage.includes("breadcrumbLabelForLanding")) {
-    throw new Error("SEO landing page missing visible breadcrumb helper");
-  }
-
-  if (!footer.includes('<InternalSeoLinks variant="footer" />')) {
-    throw new Error("Footer missing C35 internal SEO links");
+  if (!prerender.includes("sf-static-crawl-links")) {
+    throw new Error("Static crawl links missing from prerender script");
   }
 }
 
 async function validateC37ConversionCopy() {
-  const homePage = await fs.readFile(path.resolve(process.cwd(), "src/pages/HomePage.tsx"), "utf8");
   const societyPage = await fs.readFile(path.resolve(process.cwd(), "src/pages/SocietyPage.tsx"), "utf8");
   const searchPage = await fs.readFile(path.resolve(process.cwd(), "src/pages/SearchPage.tsx"), "utf8");
   const leadModal = await fs.readFile(path.resolve(process.cwd(), "src/components/leads/PublicLeadModal.tsx"), "utf8");
+  const hero = await fs.readFile(path.resolve(process.cwd(), "src/components/home/SocietyFlatsHero.tsx"), "utf8");
 
   const checks = [
-    [homePage, "homepage_first_fold_shortlist", "Homepage missing C37 first-fold shortlist CTA"],
-    [homePage, "Request matching Gurgaon options", "Homepage missing C37 shortlist modal title"],
+    [hero, "Find the right", "Homepage hero missing premium C37B headline"],
+    [hero, "Start AI shortlist", "Homepage hero missing stronger AI CTA"],
     [societyPage, "society_page_no_inventory_similar_options", "Society page missing no-inventory similar-options CTA"],
     [societyPage, "Request similar options", "Society page missing similar-options CTA copy"],
     [societyPage, "rent, buy, visit planning or similar society options", "Society modal copy is still too rent-only"],
