@@ -194,6 +194,7 @@ export function PublicLeadModal({
         requirement: enrichedRequirement,
         budget: selectedBudget || null,
         message: enrichedMessage,
+        ...leadTrackingPayload,
       });
 
       trackLeadSubmitted({

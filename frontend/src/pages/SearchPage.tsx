@@ -1227,6 +1227,15 @@ export function SearchPage() {
         title={callbackTitle}
         subtitle={callbackSubtitle}
         source={callbackTarget?.source || "search_page"}
+        ctaLabel={callbackTarget?.source?.includes("no_results") ? "No results callback" : "Search page callback"}
+        leadIntent={activeTab}
+        trackingContext={{
+          cta_label: callbackTarget?.source?.includes("no_results") ? "No results callback" : "Search page callback",
+          lead_intent: activeTab,
+          search_query: query || "",
+          entity_type: callbackTarget?.propertySlug ? "property" : "society",
+          entity_slug: callbackTarget?.propertySlug || "",
+        }}
         societyName={callbackTarget?.societyName || ""}
         propertyTitle={callbackTarget?.propertyTitle || ""}
         propertySlug={callbackTarget?.propertySlug || ""}
