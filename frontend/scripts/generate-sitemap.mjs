@@ -39,7 +39,6 @@ const preferredBuilderRoutes = [
   "/builder/emaar",
   "/builder/ats",
   "/builder/godrej",
-  "/builder/tata",
   "/builder/adani",
   "/builder/tulip",
   "/builder/alpha-corp",
@@ -157,27 +156,21 @@ function isHighQualityProperty(property) {
 
 function addDerivedLandingRoutes(routes, societies) {
   const localitySlugs = new Set();
-  const builderSlugs = new Set();
 
   for (const society of societies) {
     const locality = society?.sector || society?.locality;
-    const builder = society?.builder;
-
     const localitySlug = slugify(locality);
-    const builderSlug = slugify(builder);
 
     if (localitySlug) localitySlugs.add(`/gurgaon/${localitySlug}`);
-    if (builderSlug) builderSlugs.add(`/builder/${builderSlug}`);
   }
 
   for (const route of preferredLocalityRoutes) localitySlugs.add(route);
-  for (const route of preferredBuilderRoutes) builderSlugs.add(route);
 
   for (const loc of [...localitySlugs].slice(0, 40)) {
     routes.push({ loc, priority: "0.72", changefreq: "weekly" });
   }
 
-  for (const loc of [...builderSlugs].slice(0, 40)) {
+  for (const loc of preferredBuilderRoutes) {
     routes.push({ loc, priority: "0.7", changefreq: "weekly" });
   }
 }

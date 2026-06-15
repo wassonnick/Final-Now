@@ -1,0 +1,366 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+
+const SITE_URL = "https://www.societyflats.com";
+const DIST_DIR = path.resolve(process.cwd(), "dist");
+const INDEX_PATH = path.join(DIST_DIR, "index.html");
+
+const routeMeta = [
+  {
+    path: "/",
+    title: "SocietyFlats Gurgaon | Verified Society-First Rentals & Resale",
+    description:
+      "Search verified Gurgaon societies, live homes, owner listings and society-first property intelligence on SocietyFlats.",
+    priority: "1.0",
+    changefreq: "daily",
+    schemaType: "WebSite",
+  },
+  {
+    path: "/gurgaon",
+    title: "Find the Right Society in Gurgaon Before Choosing the Home | SocietyFlats",
+    description:
+      "Discover verified Gurgaon societies, live properties, owner listings and society-first recommendations on SocietyFlats.",
+    priority: "0.95",
+    changefreq: "daily",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/gurgaon/societies",
+    title: "Verified Societies in Gurgaon | SocietyFlats",
+    description:
+      "Explore verified Gurgaon societies with society scores, rent ranges, sale ranges, live inventory and callback support.",
+    priority: "0.9",
+    changefreq: "daily",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/gurgaon/properties",
+    title: "Verified Properties in Gurgaon | SocietyFlats",
+    description:
+      "Browse live Gurgaon rental and resale homes from verified societies with SocietyFlats intelligence and callback support.",
+    priority: "0.9",
+    changefreq: "daily",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/societies",
+    title: "Explore Verified Societies in Gurgaon | SocietyFlats",
+    description:
+      "Compare Gurgaon society scores, rent ranges, sale ranges, amenities and available inventory before shortlisting your next home.",
+    priority: "0.9",
+    changefreq: "daily",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/properties",
+    title: "Discover Verified Gurgaon Properties | SocietyFlats",
+    description:
+      "Browse premium Gurgaon rental and resale inventory backed by verified societies and SocietyFlats intelligence.",
+    priority: "0.9",
+    changefreq: "daily",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/gurgaon/sector-65",
+    title: "Societies and Properties in Sector 65 Gurgaon | SocietyFlats",
+    description:
+      "Explore verified societies and live homes in Sector 65 Gurgaon with society-first intelligence, pricing context and callback support.",
+    priority: "0.72",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/gurgaon/sector-56",
+    title: "Societies and Properties in Sector 56 Gurgaon | SocietyFlats",
+    description:
+      "Explore verified societies and live homes in Sector 56 Gurgaon with society-first intelligence, pricing context and callback support.",
+    priority: "0.72",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/gurgaon/sector-66",
+    title: "Societies and Properties in Sector 66 Gurgaon | SocietyFlats",
+    description:
+      "Explore verified societies and live homes in Sector 66 Gurgaon with society-first intelligence, pricing context and callback support.",
+    priority: "0.72",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/gurgaon/sector-67",
+    title: "Societies and Properties in Sector 67 Gurgaon | SocietyFlats",
+    description:
+      "Explore verified societies and live homes in Sector 67 Gurgaon with society-first intelligence, pricing context and callback support.",
+    priority: "0.72",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/gurgaon/sector-70",
+    title: "Societies and Properties in Sector 70 Gurgaon | SocietyFlats",
+    description:
+      "Explore verified societies and live homes in Sector 70 Gurgaon with society-first intelligence, pricing context and callback support.",
+    priority: "0.72",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/gurgaon/sector-102",
+    title: "Societies and Properties in Sector 102 Gurgaon | SocietyFlats",
+    description:
+      "Explore verified societies and live homes in Sector 102 Gurgaon with society-first intelligence, pricing context and callback support.",
+    priority: "0.72",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/gurgaon/golf-course-road",
+    title: "Societies and Properties on Golf Course Road Gurgaon | SocietyFlats",
+    description:
+      "Explore verified societies and live homes on Golf Course Road Gurgaon with society-first intelligence and callback support.",
+    priority: "0.72",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/gurgaon/golf-course-extension-road",
+    title: "Societies and Properties on Golf Course Extension Road Gurgaon | SocietyFlats",
+    description:
+      "Explore verified societies and live homes on Golf Course Extension Road Gurgaon with pricing context and SocietyFlats intelligence.",
+    priority: "0.72",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/gurgaon/dwarka-expressway",
+    title: "Societies and Properties on Dwarka Expressway Gurgaon | SocietyFlats",
+    description:
+      "Explore verified societies and live homes on Dwarka Expressway Gurgaon with society-first intelligence and callback support.",
+    priority: "0.72",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/gurgaon/sohna-road",
+    title: "Societies and Properties on Sohna Road Gurgaon | SocietyFlats",
+    description:
+      "Explore verified societies and live homes on Sohna Road Gurgaon with pricing context and SocietyFlats intelligence.",
+    priority: "0.72",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/builder/dlf",
+    title: "DLF Societies and Properties in Gurgaon | SocietyFlats",
+    description:
+      "Explore DLF societies and available homes in Gurgaon with verified society intelligence, pricing context and callback support.",
+    priority: "0.7",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/builder/m3m",
+    title: "M3M Societies and Properties in Gurgaon | SocietyFlats",
+    description:
+      "Explore M3M societies and available homes in Gurgaon with verified society intelligence, pricing context and callback support.",
+    priority: "0.7",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/builder/emaar",
+    title: "Emaar Societies and Properties in Gurgaon | SocietyFlats",
+    description:
+      "Explore Emaar societies and available homes in Gurgaon with verified society intelligence, pricing context and callback support.",
+    priority: "0.7",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/builder/ats",
+    title: "ATS Societies and Properties in Gurgaon | SocietyFlats",
+    description:
+      "Explore ATS societies and available homes in Gurgaon with verified society intelligence, pricing context and callback support.",
+    priority: "0.7",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/builder/godrej",
+    title: "Godrej Societies and Properties in Gurgaon | SocietyFlats",
+    description:
+      "Explore Godrej societies and available homes in Gurgaon with verified society intelligence, pricing context and callback support.",
+    priority: "0.7",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/builder/adani",
+    title: "Adani Realty Societies and Properties in Gurgaon | SocietyFlats",
+    description:
+      "Explore Adani Realty societies and available homes in Gurgaon with verified society intelligence, pricing context and callback support.",
+    priority: "0.7",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/builder/tulip",
+    title: "Tulip Societies and Properties in Gurgaon | SocietyFlats",
+    description:
+      "Explore Tulip societies and available homes in Gurgaon with verified society intelligence, pricing context and callback support.",
+    priority: "0.7",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
+    path: "/builder/alpha-corp",
+    title: "Alpha Corp Societies and Properties in Gurgaon | SocietyFlats",
+    description:
+      "Explore Alpha Corp societies and available homes in Gurgaon with verified society intelligence, pricing context and callback support.",
+    priority: "0.7",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+];
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function escapeJson(value) {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
+function canonicalFor(routePath) {
+  return `${SITE_URL}${routePath === "/" ? "" : routePath}`;
+}
+
+function schemaFor(meta) {
+  const canonical = canonicalFor(meta.path);
+
+  if (meta.path === "/") {
+    return {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          name: "SocietyFlats",
+          url: SITE_URL,
+          areaServed: "Gurugram, Haryana, India",
+          description:
+            "SocietyFlats helps users discover verified Gurgaon societies, live homes and society-first property intelligence.",
+        },
+        {
+          "@type": "WebSite",
+          name: "SocietyFlats",
+          url: SITE_URL,
+          potentialAction: {
+            "@type": "SearchAction",
+            target: `${SITE_URL}/search?q={search_term_string}`,
+            "query-input": "required name=search_term_string",
+          },
+        },
+      ],
+    };
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@type": meta.schemaType || "CollectionPage",
+    name: meta.title,
+    description: meta.description,
+    url: canonical,
+    isPartOf: {
+      "@type": "WebSite",
+      name: "SocietyFlats",
+      url: SITE_URL,
+    },
+    about: {
+      "@type": "Place",
+      name: "Gurugram, Haryana, India",
+    },
+  };
+}
+
+function stripExistingSeo(head) {
+  return head
+    .replace(/<title>[\s\S]*?<\/title>/gi, "")
+    .replace(/\s*<meta\s+name=["']description["'][^>]*>\s*/gi, "\n")
+    .replace(/\s*<meta\s+name=["']robots["'][^>]*>\s*/gi, "\n")
+    .replace(/\s*<link\s+rel=["']canonical["'][^>]*>\s*/gi, "\n")
+    .replace(/\s*<meta\s+property=["']og:[^"']+["'][^>]*>\s*/gi, "\n")
+    .replace(/\s*<meta\s+name=["']twitter:[^"']+["'][^>]*>\s*/gi, "\n")
+    .replace(/\s*<script\s+id=["']sf-static-jsonld["'][\s\S]*?<\/script>\s*/gi, "\n");
+}
+
+function seoTags(meta) {
+  const canonical = canonicalFor(meta.path);
+  const title = escapeHtml(meta.title);
+  const description = escapeHtml(meta.description);
+  const schema = escapeJson(schemaFor(meta));
+
+  return [
+    `    <title>${title}</title>`,
+    `    <meta name="description" content="${description}" />`,
+    `    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />`,
+    `    <link rel="canonical" href="${escapeHtml(canonical)}" />`,
+    `    <meta property="og:site_name" content="SocietyFlats" />`,
+    `    <meta property="og:type" content="website" />`,
+    `    <meta property="og:url" content="${escapeHtml(canonical)}" />`,
+    `    <meta property="og:title" content="${title}" />`,
+    `    <meta property="og:description" content="${description}" />`,
+    `    <meta name="twitter:card" content="summary" />`,
+    `    <meta name="twitter:title" content="${title}" />`,
+    `    <meta name="twitter:description" content="${description}" />`,
+    `    <script id="sf-static-jsonld" type="application/ld+json">${schema}</script>`,
+  ].join("\n");
+}
+
+function injectMeta(baseHtml, meta) {
+  const headMatch = baseHtml.match(/<head>([\s\S]*?)<\/head>/i);
+
+  if (!headMatch) {
+    throw new Error("Could not find <head> in dist/index.html");
+  }
+
+  const cleanHead = stripExistingSeo(headMatch[1]).trimEnd();
+  const newHead = `<head>\n${cleanHead}\n${seoTags(meta)}\n  </head>`;
+
+  return baseHtml.replace(/<head>[\s\S]*?<\/head>/i, newHead);
+}
+
+async function writeRouteHtml(baseHtml, meta) {
+  const html = injectMeta(baseHtml, meta);
+  const routeDir = meta.path === "/" ? DIST_DIR : path.join(DIST_DIR, meta.path.replace(/^\//, ""));
+  const outputPath = path.join(routeDir, "index.html");
+
+  await fs.mkdir(routeDir, { recursive: true });
+  await fs.writeFile(outputPath, html, "utf8");
+
+  return outputPath;
+}
+
+async function main() {
+  const baseHtml = await fs.readFile(INDEX_PATH, "utf8");
+  const written = [];
+
+  for (const meta of routeMeta) {
+    written.push(await writeRouteHtml(baseHtml, meta));
+  }
+
+  console.log(`C33 static meta generated for ${written.length} routes.`);
+  for (const file of written) {
+    console.log(`- ${path.relative(DIST_DIR, file)}`);
+  }
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

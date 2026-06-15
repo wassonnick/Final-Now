@@ -151,30 +151,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/builder/adani-realty</loc>
-    <lastmod>2026-06-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/builder/alpha-corp-development-private-limited</loc>
-    <lastmod>2026-06-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/builder/mnb-build-fab-private-limited</loc>
-    <lastmod>2026-06-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/builder/tulip</loc>
-    <lastmod>2026-06-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://www.societyflats.com/builder/m3m</loc>
     <lastmod>2026-06-15</lastmod>
     <changefreq>weekly</changefreq>
@@ -199,13 +175,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/builder/tata</loc>
+    <loc>https://www.societyflats.com/builder/adani</loc>
     <lastmod>2026-06-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/builder/adani</loc>
+    <loc>https://www.societyflats.com/builder/tulip</loc>
     <lastmod>2026-06-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
