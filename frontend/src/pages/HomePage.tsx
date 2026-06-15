@@ -325,7 +325,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-8 md:py-10">
+      <section className="bg-white px-4 py-6 md:py-7">
         <div className="container mx-auto">
           <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
@@ -439,83 +439,98 @@ export function HomePage() {
       </section>
 
 
-      <section className="bg-white px-4 py-7 md:py-8">
+      <section className="bg-white px-4 py-6 md:py-7">
         <div className="container mx-auto">
-          <div className="grid gap-4 rounded-[1.35rem] border border-blue-100 bg-blue-50/35 p-4 shadow-sm lg:grid-cols-[0.85fr_1.15fr] lg:p-5">
+          <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
                 Popular Gurgaon searches
               </p>
               <h2 className="mt-2 font-display text-2xl font-black leading-tight text-navy-950 md:text-3xl">
-                Jump into the most searched Gurgaon society paths.
+                Start with the path buyers and tenants search most.
               </h2>
-              <p className="mt-2 text-sm leading-6 text-navy-500">
-                Quick routes for users who know the locality, builder or budget but not the exact society.
-              </p>
             </div>
+            <Link
+              to="/gurgaon"
+              className="inline-flex items-center text-sm font-black text-blue-700 hover:text-blue-800"
+            >
+              View Gurgaon guide
+              <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Link>
+          </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
-              {[
-                {
-                  title: "By locality",
-                  icon: MapPinned,
-                  links: [
-                    ["Sector 65", "/gurgaon/sector-65"],
-                    ["Golf Course Road", "/gurgaon/golf-course-road"],
-                    ["Dwarka Expressway", "/gurgaon/dwarka-expressway"],
-                  ],
-                },
-                {
-                  title: "By builder",
-                  icon: Building2,
-                  links: [
-                    ["DLF", "/builder/dlf"],
-                    ["M3M", "/builder/m3m"],
-                    ["Emaar", "/builder/emaar"],
-                  ],
-                },
-                {
-                  title: "By need",
-                  icon: Search,
-                  links: [
-                    ["Rentals", "/search?tab=rent"],
-                    ["Resale", "/search?tab=buy"],
-                    ["AI shortlist", "/ai-advisor"],
-                  ],
-                },
-              ].map((group) => {
-                const Icon = group.icon;
-                return (
-                  <div key={group.title} className="rounded-[1.1rem] border border-blue-100 bg-white p-4">
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <h3 className="text-sm font-black text-navy-950">
-                        {group.title}
-                      </h3>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
+          <div className="grid gap-3 md:grid-cols-3">
+            {[
+              {
+                title: "Prime localities",
+                subtitle: "Sector and road-based search",
+                icon: MapPinned,
+                links: [
+                  ["Sector 65", "/gurgaon/sector-65"],
+                  ["Golf Course Road", "/gurgaon/golf-course-road"],
+                  ["Dwarka Expressway", "/gurgaon/dwarka-expressway"],
+                ],
+              },
+              {
+                title: "Top builders",
+                subtitle: "Brand-led society discovery",
+                icon: Building2,
+                links: [
+                  ["DLF", "/builder/dlf"],
+                  ["M3M", "/builder/m3m"],
+                  ["Emaar", "/builder/emaar"],
+                ],
+              },
+              {
+                title: "User intent",
+                subtitle: "Rent, resale and AI matching",
+                icon: Search,
+                links: [
+                  ["Rentals", "/search?tab=rent"],
+                  ["Resale", "/search?tab=buy"],
+                  ["AI shortlist", "/ai-advisor"],
+                ],
+              },
+            ].map((group) => {
+              const Icon = group.icon;
+              return (
+                <div
+                  key={group.title}
+                  className="group relative overflow-hidden rounded-[1.35rem] border border-blue-100 bg-gradient-to-br from-white to-blue-50/65 p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-soft"
+                >
+                  <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-blue-100/60" />
+                  <div className="relative">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-700 text-white shadow-md shadow-blue-100">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <h3 className="mt-4 text-lg font-black text-navy-950">
+                      {group.title}
+                    </h3>
+                    <p className="mt-1 text-xs font-bold text-navy-400">
+                      {group.subtitle}
+                    </p>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
                       {group.links.map(([label, href]) => (
                         <Link
                           key={href}
                           to={href}
-                          className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-50"
+                          className="rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-700 hover:text-white"
                         >
                           {label}
                         </Link>
                       ))}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {featuredProperties.length > 0 ? (
-        <section className="bg-white px-4 py-8 md:py-10">
+        <section className="bg-white px-4 py-6 md:py-7">
           <div className="container mx-auto">
             <div className="mb-5 flex flex-col gap-4 md:mb-6 md:flex-row md:items-end md:justify-between">
               <div>
@@ -599,7 +614,7 @@ export function HomePage() {
           </div>
         </section>
       ) : (
-        <section className="bg-white px-4 py-10 md:py-12">
+        <section className="bg-white px-4 py-6 md:py-7">
           <div className="container mx-auto rounded-[1.5rem] border border-dashed border-navy-200 bg-ivory-100 p-5 shadow-sm md:p-7">
             <h2 className="font-display text-3xl font-black text-navy-950">
               Verified homes are being added.
@@ -813,88 +828,46 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="hidden bg-white px-4 py-8 md:block">
-        <div className="container mx-auto grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-          <div>
-            <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-              Market insights
-            </p>
-            <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
-              Pricing, demand and society signals in one view.
-            </h2>
-            <p className="mt-3 text-base leading-7 text-navy-500">
-              Intelligence turns society data into better conversations before
-              visits, callbacks and final decisions.
-            </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {whySocietyFlats.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={item.title}
-                    className="rounded-2xl border border-navy-100 bg-white p-4 shadow-sm"
-                  >
-                    <Icon className="h-5 w-5 text-blue-700" />
-                    <h3 className="mt-3 text-base font-black text-navy-950">
-                      {item.title}
-                    </h3>
-                    <p className="mt-1 text-sm leading-6 text-navy-500">
-                      {item.text}
-                    </p>
-                  </div>
-                );
-              })}
+      <section className="hidden bg-white px-4 py-5 md:block">
+        <div className="container mx-auto">
+          <div className="grid gap-4 rounded-[1.35rem] border border-blue-100 bg-gradient-to-br from-white to-blue-50/45 p-4 shadow-sm lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
+                Market insights
+              </p>
+              <h2 className="mt-2 font-display text-2xl font-black leading-tight text-navy-950">
+                Pricing, demand and society signals.
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-navy-500">
+                A quick market view before users shortlist societies or request callbacks.
+              </p>
+              <Link
+                to="/insights"
+                className="mt-3 inline-flex items-center text-sm font-black text-blue-700 hover:text-blue-800"
+              >
+                Open full insights
+                <ArrowRight className="ml-1.5 h-4 w-4" />
+              </Link>
             </div>
-          </div>
-          <div className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-soft">
-            <div className="mb-3 flex items-center justify-between">
-              <div>
-                <p className="text-lg font-black text-navy-950">
-                  Gurgaon rent velocity
-                </p>
-                <p className="text-sm font-semibold text-navy-400">
-                  Indicative trend layer for society decisions
-                </p>
-              </div>
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
-                +12% QoQ
-              </span>
-            </div>
-            <div className="flex h-28 items-end gap-2">
-              {[48, 62, 54, 76, 70, 88, 80, 95, 78, 92, 98, 90].map(
-                (height, index) => (
-                  <div
-                    key={index}
-                    className="flex flex-1 flex-col items-center gap-2"
-                  >
-                    <span
-                      className="w-full rounded-t-lg bg-blue-700"
-                      style={{ height: `${height}%` }}
-                    />
-                    <span className="text-[10px] font-bold text-navy-300">
-                      {index + 1}
-                    </span>
-                  </div>
-                ),
-              )}
-            </div>
-            <div className="mt-6 overflow-hidden rounded-2xl border border-navy-100">
+
+            <div className="grid gap-3 md:grid-cols-4">
               {[
-                "Golf Course Road",
-                "Golf Course Extension",
-                "Dwarka Expressway",
-                "Sohna Road",
-              ].map((locality, index) => (
+                ["Golf Course Road", "Rs 90K", "+12%", "High demand"],
+                ["Golf Course Ext.", "Rs 82K", "+11%", "Family demand"],
+                ["Dwarka Expressway", "Rs 74K", "+10%", "Rising supply"],
+                ["Sohna Road", "Rs 66K", "+9%", "Value picks"],
+              ].map(([locality, average, trend, signal]) => (
                 <div
                   key={locality}
-                  className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-b border-navy-50 px-4 py-3 last:border-b-0"
+                  className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm"
                 >
-                  <p className="text-sm font-black text-navy-950">{locality}</p>
-                  <p className="text-sm font-black text-navy-700">
-                    Rs {90 - index * 8}K avg
-                  </p>
-                  <p className="text-sm font-black text-emerald-700">
-                    +{12 - index}%
+                  <p className="text-xs font-black text-navy-950">{locality}</p>
+                  <div className="mt-3 flex items-end justify-between gap-2">
+                    <p className="text-xl font-black text-navy-950">{average}</p>
+                    <p className="text-sm font-black text-emerald-700">{trend}</p>
+                  </div>
+                  <p className="mt-2 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-black text-blue-700">
+                    {signal}
                   </p>
                 </div>
               ))}
@@ -947,7 +920,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-8 md:py-10">
+      <section className="bg-white px-4 py-6 md:py-7">
         <div className="container mx-auto grid gap-5 md:gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div>
             <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">

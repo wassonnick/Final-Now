@@ -138,7 +138,7 @@ export default function SocietyFlatsHero() {
 
   return (
     <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_78%_18%,rgba(37,99,235,0.10),transparent_28%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]">
-      <div className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 sm:px-6 md:py-9 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:items-center lg:px-20 lg:py-10">
+      <div className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 sm:px-6 md:py-9 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:items-center lg:px-20 lg:py-8">
         <div className="max-w-[760px]">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 shadow-sm">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -223,14 +223,14 @@ export default function SocietyFlatsHero() {
         </div>
 
         <div className="hidden lg:block">
-          <div className="relative rounded-[2rem] border border-blue-100 bg-white/95 p-4 shadow-[0_24px_80px_rgba(37,99,235,0.13)] backdrop-blur">
+          <div className="relative rounded-[1.55rem] border border-blue-100 bg-white/95 p-3.5 shadow-[0_24px_80px_rgba(37,99,235,0.13)] backdrop-blur">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-700 text-white shadow-lg shadow-blue-100">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-blue-700 text-white shadow-lg shadow-blue-100">
                   <Sparkles className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="text-lg font-black text-navy-950">
+                  <p className="text-base font-black text-navy-950">
                     Ask SocietyFlats AI
                   </p>
                   <p className="text-xs font-bold text-emerald-700">
@@ -243,7 +243,7 @@ export default function SocietyFlatsHero() {
               </span>
             </div>
 
-            <div className="rounded-[1.25rem] border border-blue-100 bg-blue-50 p-3">
+            <div className="rounded-[1rem] border border-blue-100 bg-blue-50 p-2.5">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-500">
                 Your question
               </p>
@@ -252,7 +252,7 @@ export default function SocietyFlatsHero() {
               </p>
             </div>
 
-            <div className="mt-3 rounded-[1.25rem] bg-white p-3 text-sm font-semibold leading-6 text-navy-600">
+            <div className="mt-3 rounded-[1rem] bg-white p-2.5 text-xs font-semibold leading-5 text-navy-600">
               {isAiLoading ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin text-blue-700" />
@@ -263,7 +263,7 @@ export default function SocietyFlatsHero() {
               )}
             </div>
 
-            <div className="mt-3 grid gap-2">
+            <div className="mt-2 grid gap-1.5">
               {aiMatches.length ? (
                 aiMatches.map((match, index) => {
                   const name = match.society_name || match.name || "Society match";
@@ -275,10 +275,10 @@ export default function SocietyFlatsHero() {
                     <Link
                       key={`${name}-${index}`}
                       to={href}
-                      className="flex items-center justify-between rounded-2xl border border-blue-100 bg-white px-3 py-2.5 transition hover:border-blue-200 hover:bg-blue-50"
+                      className="flex items-center justify-between rounded-xl border border-blue-100 bg-white px-3 py-2 transition hover:border-blue-200 hover:bg-blue-50"
                     >
                       <span className="flex min-w-0 items-center gap-3">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-700 text-xs font-black text-white">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-blue-700 text-xs font-black text-white">
                           {index + 1}
                         </span>
                         <span className="min-w-0">
@@ -303,13 +303,13 @@ export default function SocietyFlatsHero() {
               )}
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-1.5">
               {starterPrompts.map((prompt) => (
                 <button
                   key={prompt}
                   type="button"
                   onClick={() => submitHeroAi(prompt)}
-                  className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-[11px] font-black text-blue-700 transition hover:bg-blue-100"
+                  className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[10px] font-black text-blue-700 transition hover:bg-blue-100"
                 >
                   {prompt}
                 </button>
@@ -321,7 +321,7 @@ export default function SocietyFlatsHero() {
                 event.preventDefault();
                 submitHeroAi();
               }}
-              className="mt-3 flex items-center gap-2 rounded-full border border-blue-100 bg-white p-2 shadow-sm"
+              className="mt-2 flex items-center gap-2 rounded-full border border-blue-100 bg-white p-2 shadow-sm"
             >
               <input
                 value={aiInput}
@@ -332,14 +332,14 @@ export default function SocietyFlatsHero() {
               <button
                 type="submit"
                 disabled={isAiLoading || !aiInput.trim()}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-700 text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-700 text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Ask SocietyFlats AI"
               >
                 {isAiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>
             </form>
 
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="mt-2 grid grid-cols-3 gap-1.5">
               {[
                 { icon: ShieldCheck, label: "Verified" },
                 { icon: MapPin, label: "Commute" },
@@ -347,7 +347,7 @@ export default function SocietyFlatsHero() {
               ].map((item) => {
                 const Icon = item.icon;
                 return (
-                  <div key={item.label} className="rounded-2xl bg-blue-50/60 p-2 text-center">
+                  <div key={item.label} className="rounded-xl bg-blue-50/60 p-2 text-center">
                     <Icon className="mx-auto h-4 w-4 text-blue-700" />
                     <p className="mt-1 text-[10px] font-black text-navy-500">
                       {item.label}
@@ -357,7 +357,7 @@ export default function SocietyFlatsHero() {
               })}
             </div>
 
-            <div className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-navy-400">
+            <div className="mt-2 flex items-center justify-center gap-2 text-xs font-bold text-navy-400">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
               No forced AI page jump.
             </div>
