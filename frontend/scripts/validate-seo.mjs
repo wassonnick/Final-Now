@@ -106,6 +106,22 @@ async function validateInternalLinks() {
   }
 }
 
+async function validateBundleSplitting() {
+  const assetFiles = await fs.readdir(path.join(DIST_DIR, "assets"));
+  const jsFiles = assetFiles.filter((file) => file.endsWith(".js"));
+
+  if (jsFiles.length < 4) {
+    throw new Error(`Expected route/vendor JS splitting, found only ${jsFiles.length} JS files`);
+  }
+
+  const expectedChunks = ["react-vendor", "router-vendor", "icons-vendor"];
+  for (const chunkName of expectedChunks) {
+    if (!jsFiles.some((file) => file.includes(chunkName))) {
+      throw new Error(`Missing expected performance chunk: ${chunkName}`);
+    }
+  }
+}
+
 async function validatePublicFiles() {
   const robots = await fs.readFile(path.join(PUBLIC_DIR, "robots.txt"), "utf8");
   if (!robots.includes(`Sitemap: ${SITE_URL}/sitemap.xml`)) {
@@ -131,9 +147,10 @@ async function main() {
   await validateStaticHtml();
   await validatePublicFiles();
   await validateInternalLinks();
+  await validateBundleSplitting();
 
   console.log("SEO validation passed.");
-  console.log(`Checked ${requiredRoutes.length} static HTML routes, robots.txt, sitemap.xml, manifest and favicon.`);
+  console.log(`Checked ${requiredRoutes.length} static HTML routes, robots.txt, sitemap.xml, manifest, favicon and bundle splitting.`);
 }
 
 main().catch((error) => {
