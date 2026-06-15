@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowRight,
   BadgeIndianRupee,
+  Bot,
   BarChart3,
   Building2,
   CalendarCheck,
@@ -11,10 +12,12 @@ import {
   KeyRound,
   Loader2,
   MapPin,
+  MapPinned,
   MessageCircle,
   Phone,
   Route,
   Scale,
+  Search,
   Send,
   ShieldCheck,
   Sparkles,
@@ -435,164 +438,123 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-50/40 px-4 py-8 md:py-10">
-        <div className="absolute right-[-10rem] top-[-12rem] h-[36rem] w-[36rem] rounded-full bg-white/80 blur-3xl" />
-        <div className="absolute left-[-8rem] bottom-[-14rem] h-[32rem] w-[32rem] rounded-full bg-blue-100/35 blur-3xl" />
-        <div className="container relative mx-auto grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700 shadow-sm">
-              <Sparkles className="h-4 w-4" /> AI Advisor
-            </span>
 
-            <h2 className="mt-3 font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:mt-4 md:text-4xl">
-              Find your best-fit society faster.
-            </h2>
+      <section className="bg-white px-4 py-7 md:py-8">
+        <div className="container mx-auto">
+          <div className="grid gap-4 rounded-[1.35rem] border border-blue-100 bg-blue-50/35 p-4 shadow-sm lg:grid-cols-[0.85fr_1.15fr] lg:p-5">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
+                Popular Gurgaon searches
+              </p>
+              <h2 className="mt-2 font-display text-2xl font-black leading-tight text-navy-950 md:text-3xl">
+                Jump into the most searched Gurgaon society paths.
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-navy-500">
+                Quick routes for users who know the locality, builder or budget but not the exact society.
+              </p>
+            </div>
 
-            <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500 md:mt-3 md:text-[15px] md:leading-6">
-              Tell us your budget, commute and lifestyle preference. SocietyFlats AI turns it into a ranked Gurgaon shortlist.
-            </p>
-
-            <div className="mt-5 grid gap-2">
+            <div className="grid gap-3 md:grid-cols-3">
               {[
                 {
-                  icon: MessageCircle,
-                  title: "Ask in plain English",
-                  text: "Example: 3BHK near Cyber City under Rs 1L.",
-                  href: "/chat",
+                  title: "By locality",
+                  icon: MapPinned,
+                  links: [
+                    ["Sector 65", "/gurgaon/sector-65"],
+                    ["Golf Course Road", "/gurgaon/golf-course-road"],
+                    ["Dwarka Expressway", "/gurgaon/dwarka-expressway"],
+                  ],
                 },
                 {
-                  icon: Sparkles,
-                  title: "Get ranked matches",
-                  text: "Shortlist by budget, commute, security and family fit.",
-                  href: "/recommendations",
-                },
-                {
+                  title: "By builder",
                   icon: Building2,
-                  title: "Open society pages",
-                  text: "View score, rent range, resale signals and available homes.",
-                  href: "/ai-advisor",
+                  links: [
+                    ["DLF", "/builder/dlf"],
+                    ["M3M", "/builder/m3m"],
+                    ["Emaar", "/builder/emaar"],
+                  ],
                 },
-              ].map((feature) => {
-                const Icon = feature.icon;
+                {
+                  title: "By need",
+                  icon: Search,
+                  links: [
+                    ["Rentals", "/search?tab=rent"],
+                    ["Resale", "/search?tab=buy"],
+                    ["AI shortlist", "/ai-advisor"],
+                  ],
+                },
+              ].map((group) => {
+                const Icon = group.icon;
                 return (
-                  <Link
-                    key={feature.title}
-                    to={feature.href}
-                    className="flex items-center gap-3 rounded-[1.1rem] border border-blue-100 bg-white/90 p-3 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-soft"
-                  >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <div>
+                  <div key={group.title} className="rounded-[1.1rem] border border-blue-100 bg-white p-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                        <Icon className="h-4 w-4" />
+                      </span>
                       <h3 className="text-sm font-black text-navy-950">
-                        {feature.title}
+                        {group.title}
                       </h3>
-                      <p className="mt-0.5 text-xs leading-5 text-navy-500">
-                        {feature.text}
-                      </p>
                     </div>
-                  </Link>
+                    <div className="flex flex-wrap gap-2">
+                      {group.links.map(([label, href]) => (
+                        <Link
+                          key={href}
+                          to={href}
+                          className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-50"
+                        >
+                          {label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 );
               })}
             </div>
-
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link to="/ai-advisor">
-                <Button className="h-10 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
-                  Ask AI Advisor <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/search?tab=societies">
-                <Button
-                  variant="outline"
-                  className="h-10 rounded-full border-blue-100 bg-white px-5 text-sm font-bold text-blue-700 hover:bg-blue-50"
-                >
-                  Browse societies
-                </Button>
-              </Link>
-            </div>
           </div>
+        </div>
+      </section>
 
-          <div className="hidden rounded-[1.35rem] border border-blue-100 bg-white/95 p-4 shadow-soft md:block">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
-                  <Sparkles className="h-5 w-5" />
+      <section className="bg-white px-4 py-6 md:py-7">
+        <div className="container mx-auto">
+          <div className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="max-w-2xl">
+                <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700">
+                  <Bot className="h-4 w-4" />
+                  AI Advisor
                 </span>
-                <div>
-                  <p className="font-black text-navy-950">Live AI shortlist</p>
-                  <p className="text-xs font-semibold text-navy-400">
-                    Sample Gurgaon match flow
-                  </p>
-                </div>
-              </div>
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
-                Rent
-              </span>
-            </div>
-
-            <div className="rounded-[1.1rem] border border-blue-100 bg-blue-50 p-3">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.14em] text-navy-400">
-                    Requirement
-                  </p>
-                  <p className="mt-1 text-xl font-black text-navy-950">
-                    3BHK near Cyber City
-                  </p>
-                </div>
-                <p className="text-right text-sm font-black text-blue-700">
-                  Rs 85K/mo
+                <h2 className="mt-3 font-display text-2xl font-black leading-tight text-navy-950 md:text-3xl">
+                  Need help choosing between societies?
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-navy-500">
+                  Use AI when you want a quick shortlist by budget, commute, family fit or preferred builder.
                 </p>
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {["Security", "Commute", "Family", "Budget"].map((priority) => (
-                  <span
-                    key={priority}
-                    className="rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-black text-blue-700"
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Link to="/ai-advisor">
+                  <Button className="h-11 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
+                    Continue AI shortlist
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link to="/search?tab=societies&intent=general">
+                  <Button
+                    variant="outline"
+                    className="h-11 rounded-full border-blue-100 bg-white px-5 text-sm font-black text-blue-700 hover:bg-blue-50"
                   >
-                    {priority}
-                  </span>
-                ))}
+                    Browse societies
+                  </Button>
+                </Link>
               </div>
             </div>
 
-            <div className="mt-3 space-y-2">
-              {(featuredSocieties.length
-                ? featuredSocieties
-                : [
-                    { name: "DLF The Crest" },
-                    { name: "M3M Golf Estate" },
-                    { name: "Sobha City" },
-                  ]
-              )
-                .slice(0, 3)
-                .map((society, index) => (
-                  <Link
-                    key={society.name}
-                    to={society.slug ? `/society/${society.slug}` : "/search?tab=societies"}
-                    className="flex items-center gap-2 rounded-xl border border-blue-100 bg-white p-2.5 transition hover:bg-blue-50"
-                  >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-700 text-xs font-black text-white">
-                      {index + 1}
-                    </span>
-                    <p className="flex-1 text-sm font-black text-navy-950">
-                      {society.name}
-                    </p>
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700">
-                      {92 - index * 5}% match
-                    </span>
-                  </Link>
-                ))}
-            </div>
-
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {aiPrompts.slice(0, 2).map((prompt) => (
+            <div className="mt-4 grid gap-2 md:grid-cols-3">
+              {aiPrompts.slice(0, 3).map((prompt) => (
                 <Link
                   key={prompt}
                   to={`/ai-advisor?q=${encodeURIComponent(prompt)}`}
-                  className="rounded-xl border border-blue-100 bg-ivory-100 px-3 py-2.5 text-xs font-bold text-navy-600 transition hover:border-blue-200 hover:bg-blue-50"
+                  className="rounded-2xl border border-blue-100 bg-blue-50/45 px-4 py-3 text-sm font-bold leading-6 text-navy-700 transition hover:border-blue-200 hover:bg-blue-50"
                 >
                   {prompt}
                 </Link>
@@ -736,13 +698,13 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="hidden bg-white px-4 py-14 md:block">
+      <section className="hidden bg-white px-4 py-8 md:block">
         <div className="container mx-auto grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div>
             <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
               Market insights
             </p>
-            <h2 className="font-display text-4xl font-black leading-tight tracking-tight text-navy-950">
+            <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
               Pricing, demand and society signals in one view.
             </h2>
             <p className="mt-3 text-base leading-7 text-navy-500">
@@ -783,7 +745,7 @@ export function HomePage() {
                 +12% QoQ
               </span>
             </div>
-            <div className="flex h-44 items-end gap-2">
+            <div className="flex h-28 items-end gap-2">
               {[48, 62, 54, 76, 70, 88, 80, 95, 78, 92, 98, 90].map(
                 (height, index) => (
                   <div
@@ -984,71 +946,7 @@ export function HomePage() {
         </div>
       </section>
 
-            <section className="hidden bg-white px-4 py-8 md:block">
-        <div className="container mx-auto rounded-[1.35rem] border border-blue-100 bg-blue-50/45 p-5 shadow-sm">
-          <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
-            <div>
-              <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                Broker CRM
-              </p>
-              <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
-                Lead flow built around societies.
-              </h2>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500">
-                Every enquiry keeps the society, budget, intent and callback context together.
-              </p>
-            </div>
-
-            <div className="grid gap-3 lg:grid-cols-3">
-              {[
-                {
-                  icon: MessageCircle,
-                  title: "New enquiry",
-                  text: "Requirement captured",
-                  count: "12",
-                },
-                {
-                  icon: BarChart3,
-                  title: "Follow-up",
-                  text: "Broker action queue",
-                  count: "8",
-                },
-                {
-                  icon: ShieldCheck,
-                  title: "Visit ready",
-                  text: "Verified lead context",
-                  count: "5",
-                },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={item.title}
-                    className="rounded-[1.1rem] border border-blue-100 bg-white p-4 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <span className="text-2xl font-black text-navy-950">
-                        {item.count}
-                      </span>
-                    </div>
-                    <h3 className="mt-3 text-sm font-black text-navy-950">
-                      {item.title}
-                    </h3>
-                    <p className="mt-1 text-xs font-semibold text-navy-500">
-                      {item.text}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </section>
-
-<section className="bg-white px-4 py-8 md:py-10">
+      <section className="bg-white px-4 py-8 md:py-10">
         <div className="container mx-auto grid gap-5 md:gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div>
             <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
