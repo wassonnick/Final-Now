@@ -218,7 +218,7 @@ export function AdminDashboardPage() {
 
       const [propertyResponse, societyResponse] = await Promise.all([
         adminFetch("/admin/properties"),
-        adminFetch("/admin/societies?page=1&per_page=50"),
+        adminFetch("/admin/societies?page=1&per_page=200"),
       ]);
 
       const propertyJson = await propertyResponse.json().catch(() => ({}));
