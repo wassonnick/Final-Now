@@ -626,7 +626,7 @@ export function SocietyPage() {
                   onClick={() => openSocietyCallback()}
                   className="h-10 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700"
                 >
-                  <Phone className="mr-2 h-4 w-4" /> Request callback
+                  <Phone className="mr-2 h-4 w-4" /> Request homes
                 </Button>
 
                 <Button
@@ -635,7 +635,7 @@ export function SocietyPage() {
                   className="h-10 rounded-full border-navy-200 text-sm font-bold"
                 >
                   <Link
-                    to={`/search?tab=rent&q=${encodeURIComponent(society.name)}`}
+                    to={`/search?tab=societies&q=${encodeURIComponent(society.name)}&intent=general`}
                   >
                     View homes
                   </Link>
@@ -649,7 +649,7 @@ export function SocietyPage() {
                   <Link
                     to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}
                   >
-                    Explore matching homes
+                    Ask AI for options
                   </Link>
                 </Button>
 
@@ -907,7 +907,7 @@ export function SocietyPage() {
                         onClick={() => openSocietyCallback()}
                         className="rounded-full bg-blue-600 hover:bg-blue-700"
                       >
-                        <Phone className="mr-2 h-4 w-4" /> Request callback
+                        <Phone className="mr-2 h-4 w-4" /> Request homes
                       </Button>
                       <Button
                         asChild
@@ -1117,7 +1117,7 @@ export function SocietyPage() {
                 Next step
               </p>
               <h3 className="mt-2 text-lg font-bold leading-tight text-navy-900">
-                Get verified options in {society.name}
+                Get homes or similar options for {society.name}
               </h3>
 
               <div className="mt-4 rounded-2xl bg-blue-50 p-3">
@@ -1180,7 +1180,7 @@ export function SocietyPage() {
                 onClick={() => openSocietyCallback()}
                 className="mt-4 w-full rounded-full bg-blue-600 hover:bg-blue-700"
               >
-                <Phone className="mr-2 h-4 w-4" /> Request callback
+                <Phone className="mr-2 h-4 w-4" /> Request homes
               </Button>
 
               <Button
@@ -1189,9 +1189,9 @@ export function SocietyPage() {
                 className="mt-2 w-full rounded-full border-navy-200"
               >
                 <Link
-                  to={`/search?tab=rent&q=${encodeURIComponent(society.name)}`}
+                  to={`/search?tab=societies&q=${encodeURIComponent(society.name)}&intent=general`}
                 >
-                  View available homes
+                  View matching homes
                 </Link>
               </Button>
 
@@ -1203,7 +1203,7 @@ export function SocietyPage() {
                 <Link
                   to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}
                 >
-                  Explore matching homes
+                  Ask AI for options
                 </Link>
               </Button>
             </div>
@@ -1232,7 +1232,7 @@ export function SocietyPage() {
             variant="outline"
             className="h-10 rounded-full border-navy-200 px-2 text-xs font-bold"
           >
-            <Link to={`/search?tab=rent&q=${encodeURIComponent(society.name)}`}>
+            <Link to={`/search?tab=societies&q=${encodeURIComponent(society.name)}&intent=general`}>
               Homes
             </Link>
           </Button>
@@ -1249,7 +1249,7 @@ export function SocietyPage() {
         subtitle={
           selectedLeadProperty
             ? "Share your details and our team will help verify availability, pricing and visit timing for this home."
-            : "Share your details and our team will help with rentals, availability and visit planning for this society."
+            : "Share your requirement and our team will help with rent, buy, visit planning or similar society options."
         }
         source={callbackSource}
         societyName={society.name}
@@ -1272,8 +1272,8 @@ export function SocietyPage() {
                 : "Property callback"
             : "Society callback"
         }
-        submitLabel="Request callback"
-        successMessage="Society request received. Our team will call you shortly with matching homes, availability and visit options."
+        submitLabel="Request homes"
+        successMessage="Request received. Our team will call with matching homes, similar societies and visit-ready options."
         onClose={() => {
           setCallbackOpen(false);
           setSelectedLeadProperty(null);

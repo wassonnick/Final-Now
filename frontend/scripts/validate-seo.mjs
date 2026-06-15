@@ -106,6 +106,29 @@ async function validateInternalLinks() {
   }
 }
 
+async function validateC37ConversionCopy() {
+  const homePage = await fs.readFile(path.resolve(process.cwd(), "src/pages/HomePage.tsx"), "utf8");
+  const societyPage = await fs.readFile(path.resolve(process.cwd(), "src/pages/SocietyPage.tsx"), "utf8");
+  const searchPage = await fs.readFile(path.resolve(process.cwd(), "src/pages/SearchPage.tsx"), "utf8");
+  const leadModal = await fs.readFile(path.resolve(process.cwd(), "src/components/leads/PublicLeadModal.tsx"), "utf8");
+
+  const checks = [
+    [homePage, "homepage_first_fold_shortlist", "Homepage missing C37 first-fold shortlist CTA"],
+    [homePage, "Request matching Gurgaon options", "Homepage missing C37 shortlist modal title"],
+    [societyPage, "society_page_no_inventory_similar_options", "Society page missing no-inventory similar-options CTA"],
+    [societyPage, "Request similar options", "Society page missing similar-options CTA copy"],
+    [societyPage, "rent, buy, visit planning or similar society options", "Society modal copy is still too rent-only"],
+    [searchPage, "matching Gurgaon societies and homes", "Search empty-state success copy missing C37 wording"],
+    [leadModal, "matching homes, similar societies and visit-ready next steps", "Lead modal success copy missing C37 wording"],
+  ];
+
+  for (const [source, needle, message] of checks) {
+    if (!source.includes(needle)) {
+      throw new Error(message);
+    }
+  }
+}
+
 async function validateBundleSplitting() {
   const assetFiles = await fs.readdir(path.join(DIST_DIR, "assets"));
   const jsFiles = assetFiles.filter((file) => file.endsWith(".js"));
@@ -147,10 +170,11 @@ async function main() {
   await validateStaticHtml();
   await validatePublicFiles();
   await validateInternalLinks();
+  await validateC37ConversionCopy();
   await validateBundleSplitting();
 
   console.log("SEO validation passed.");
-  console.log(`Checked ${requiredRoutes.length} static HTML routes, robots.txt, sitemap.xml, manifest, favicon and bundle splitting.`);
+  console.log(`Checked ${requiredRoutes.length} static HTML routes, robots.txt, sitemap.xml, manifest, favicon, conversion copy and bundle splitting.`);
 }
 
 main().catch((error) => {

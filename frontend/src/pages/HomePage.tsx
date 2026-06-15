@@ -322,6 +322,57 @@ export function HomePage() {
         </div>
       </section>
 
+      <section className="bg-white px-4 py-4 md:py-5">
+        <div className="container mx-auto">
+          <div className="rounded-[1.25rem] border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-emerald-50/50 p-4 shadow-sm md:p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                  Need a shortlist?
+                </p>
+                <h2 className="mt-1 font-display text-2xl font-black leading-tight text-navy-950 md:text-3xl">
+                  Tell us your budget. We will find matching Gurgaon societies and homes.
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500">
+                  Best when you are unsure whether to rent, buy, visit, or compare societies first.
+                </p>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2 md:min-w-[23rem]">
+                <Button
+                  onClick={() =>
+                    openLead({
+                      source: "homepage_first_fold_shortlist",
+                      title: "Request matching Gurgaon options",
+                      subtitle:
+                        "Share your number and our team will help shortlist societies and homes by budget, location and intent.",
+                      message:
+                        "I want help shortlisting Gurgaon societies and homes from the homepage.",
+                      requirement:
+                        "Homepage first-fold shortlist request for rent, buy, visit or society comparison.",
+                    })
+                  }
+                  className="h-11 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800"
+                >
+                  <Phone className="mr-2 h-4 w-4" />
+                  Request shortlist
+                </Button>
+
+                <Link to="/search?intent=general">
+                  <Button
+                    variant="outline"
+                    className="h-11 w-full rounded-full border-blue-100 bg-white px-5 text-sm font-black text-blue-700 hover:bg-blue-50"
+                  >
+                    Browse options
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <InternalSeoLinks
         variant="home"
         title="Popular Gurgaon society searches"

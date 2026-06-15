@@ -103,10 +103,10 @@ export function PublicLeadModal({
       : "Request SocietyFlats callback";
 
   const displaySubtitle = success
-    ? "Your request is saved. Our team will call you with the next best step."
+    ? "Your request is saved. We will call with matching societies, homes or visit-ready options."
     : isPropertyLead
       ? "Share your number to confirm availability, price and visit timing."
-      : "Tell us what you need. We will shortlist the right society or home.";
+      : "Tell us your budget, location or intent. We will shortlist the right society or home.";
 
   const finalRequirement =
     normalizeRequirement(form.requirement) ||
@@ -238,7 +238,7 @@ export function PublicLeadModal({
               <CheckCircle2 className="h-7 w-7" />
               <h4 className="mt-3 text-lg font-bold">Request received</h4>
               <p className="mt-2 text-sm leading-relaxed">
-                {successMessage || "Thanks. SocietyFlats has received your request. Our team will call you shortly with verified next steps."}
+                {successMessage || "Thanks. SocietyFlats has received your request. Our team will call once with matching homes, similar societies and visit-ready next steps."}
               </p>
             </div>
 

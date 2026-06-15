@@ -203,12 +203,12 @@ function EmptyResults({
 
               {leadStatus === "success" ? (
                 <p className="mt-3 rounded-2xl bg-emerald-50 px-3 py-2 text-center text-sm font-bold text-emerald-700">
-                  Request received. Our team will contact you shortly.
+                  Request received. We will call with matching Gurgaon societies and homes.
                 </p>
               ) : null}
               {leadStatus === "error" ? (
                 <p className="mt-3 rounded-2xl bg-red-50 px-3 py-2 text-center text-sm font-bold text-red-600">
-                  Could not submit right now. Please try again.
+                  Could not submit right now. Please try again or request a callback from any society/property page.
                 </p>
               ) : null}
             </div>
