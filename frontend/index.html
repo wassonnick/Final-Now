@@ -21,7 +21,20 @@
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="SocietyFlats Gurgaon | Verified Society-First Rentals & Resale" />
     <meta name="twitter:description" content="Search verified Gurgaon societies, live homes, owner listings and society-first property intelligence on SocietyFlats." />
-  </head>
+    <script type="module">
+    const gaMeasurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
+    if (gaMeasurementId) {
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function gtag(){ window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      window.gtag('config', gaMeasurementId);
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`;
+      document.head.appendChild(script);
+    }
+  </script>
+</head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

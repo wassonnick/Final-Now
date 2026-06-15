@@ -1,3 +1,4 @@
+import { trackEvent, trackLeadIntent, trackResultClicked } from "@/lib/analytics";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -195,6 +196,14 @@ export function SocietyPage() {
   );
 
   const openSocietyCallback = (source = "society_page_callback") => {
+    trackLeadIntent({
+      source,
+      cta_label: source.includes("similar") ? "Request similar options" : "Request homes",
+      lead_intent: source.includes("similar") ? "similar_options" : "general",
+      entity_type: "society",
+      entity_slug: slug || "",
+      entity_name: society?.name || "",
+    });
     setSelectedLeadProperty(null);
     setCallbackSource(source);
     setCallbackOpen(true);
@@ -1252,6 +1261,21 @@ export function SocietyPage() {
             : "Share your requirement and our team will help with rent, buy, visit planning or similar society options."
         }
         source={callbackSource}
+        ctaLabel={selectedLeadProperty ? "Property callback" : callbackSource.includes("similar") ? "Request similar options" : "Request homes"}
+        leadIntent={
+          selectedLeadProperty
+            ? "property_callback"
+            : callbackSource.includes("similar")
+              ? "similar_options"
+              : "general"
+        }
+        trackingContext={{
+          entity_type: selectedLeadProperty ? "property" : "society",
+          entity_slug: selectedLeadProperty?.slug || slug || "",
+          entity_name: selectedLeadProperty?.title || society.name,
+          cta_label: selectedLeadProperty ? "Property callback" : "Request homes",
+          lead_intent: selectedLeadProperty ? "property_callback" : "general",
+        }}
         societyName={society.name}
         propertyTitle={selectedLeadProperty?.title}
         propertySlug={selectedLeadProperty?.slug}

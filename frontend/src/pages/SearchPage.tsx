@@ -1,3 +1,4 @@
+import { trackEvent, trackLeadIntent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -445,11 +446,22 @@ export function SearchPage() {
   };
 
   const updateTab = (tab: string) => {
+    trackEvent("search_tab_changed", {
+      tab,
+      search_query: query,
+      source: "search_page",
+    });
     setActiveTab(tab);
     updateUrl(tab, query);
   };
 
   const submitSearch = () => {
+    trackSearchPerformed({
+      source: "search_page",
+      tab: activeTab,
+      search_query: query,
+      lead_intent: activeTab,
+    });
     updateUrl(activeTab, query);
   };
 

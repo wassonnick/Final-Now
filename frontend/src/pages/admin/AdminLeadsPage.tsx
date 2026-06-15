@@ -546,6 +546,13 @@ export function AdminLeadsPage() {
             lead.budget,
             lead.assignedTo,
             lead.source,
+            (lead as any).source_page,
+            (lead as any).cta_label,
+            (lead as any).utm_campaign,
+            (lead as any).lead_intent,
+            (lead as any).search_query,
+            (lead as any).ai_query,
+            (lead as any).entity_slug,
             lead.requirement,
             sourceLabel(lead.source),
           ]
@@ -773,7 +780,7 @@ export function AdminLeadsPage() {
                         </div>
                       </div>
 
-                      <span className={`rounded-full border px-3 py-1 text-xs font-bold xl:mt-3 inline-flex ${sourceClass(lead.source)}`}>
+                      <span className={`rounded-full border px-3 py-1 text-xs font-bold xl:mt-3 inline-flex ${sourceClass(lead.source)}`} title={`Lead attribution: ${[(lead as any).source_page, (lead as any).cta_label, (lead as any).utm_campaign].filter(Boolean).join(' · ') || 'Not captured'}`}>
                         {sourceLabel(lead.source)}
                       </span>
                     </div>

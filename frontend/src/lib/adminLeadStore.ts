@@ -20,6 +20,20 @@ export interface AdminLead {
   budget: string;
   requirement: string;
   source: LeadSource;
+  source_page?: string;
+  page_url?: string;
+  referrer?: string;
+  cta_label?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  lead_intent?: string;
+  search_query?: string;
+  ai_query?: string;
+  entity_type?: string;
+  entity_slug?: string;
   status: LeadStatus;
   priority: LeadPriority;
   assignedTo: string;
@@ -195,6 +209,20 @@ function mapApiLead(apiLead: ApiLead): AdminLead {
     budget: apiLead.budget || 'Not specified',
     requirement: inferLeadRequirement(apiLead) || apiLead.message || '',
     source: apiLead.source || 'Website',
+    source_page: (apiLead as any).source_page || '',
+    page_url: (apiLead as any).page_url || '',
+    referrer: (apiLead as any).referrer || '',
+    cta_label: (apiLead as any).cta_label || '',
+    utm_source: (apiLead as any).utm_source || '',
+    utm_medium: (apiLead as any).utm_medium || '',
+    utm_campaign: (apiLead as any).utm_campaign || '',
+    utm_term: (apiLead as any).utm_term || '',
+    utm_content: (apiLead as any).utm_content || '',
+    lead_intent: (apiLead as any).lead_intent || '',
+    search_query: (apiLead as any).search_query || '',
+    ai_query: (apiLead as any).ai_query || '',
+    entity_type: (apiLead as any).entity_type || '',
+    entity_slug: (apiLead as any).entity_slug || '',
     status: normalizeStatus(apiLead.status),
     priority: normalizePriority(apiLead.priority),
     assignedTo: apiLead.assigned_to || 'Unassigned',

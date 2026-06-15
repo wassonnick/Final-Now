@@ -1,3 +1,4 @@
+import { trackAiPromptSubmitted, trackEvent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {

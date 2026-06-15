@@ -1586,6 +1586,25 @@ export function AdminLeadDetailPage() {
                   <span className="font-medium text-slate-950">Property:</span> {lead.property || "Not specified"}
                 </p>
               </div>
+
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">Lead attribution</p>
+                <div className="mt-3 grid gap-2 text-sm text-slate-700">
+                  <p><span className="font-semibold text-slate-950">Source page:</span> {(lead as any).source_page || "Not captured"}</p>
+                  <p><span className="font-semibold text-slate-950">CTA:</span> {(lead as any).cta_label || "Not captured"}</p>
+                  <p><span className="font-semibold text-slate-950">Intent:</span> {(lead as any).lead_intent || lead.requirement || "Not captured"}</p>
+                  <p><span className="font-semibold text-slate-950">Search query:</span> {(lead as any).search_query || "Not captured"}</p>
+                  <p><span className="font-semibold text-slate-950">AI query:</span> {(lead as any).ai_query || "Not captured"}</p>
+                  <p><span className="font-semibold text-slate-950">Entity:</span> {[(lead as any).entity_type, (lead as any).entity_slug].filter(Boolean).join(" · ") || "Not captured"}</p>
+                  <p><span className="font-semibold text-slate-950">UTM:</span> {[(lead as any).utm_source, (lead as any).utm_medium, (lead as any).utm_campaign].filter(Boolean).join(" / ") || "Not captured"}</p>
+                  {(lead as any).page_url ? (
+                    <a href={(lead as any).page_url} target="_blank" rel="noreferrer" className="font-bold text-blue-700 hover:underline">
+                      Open source page
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+
             </section>
           </aside>
         </div>

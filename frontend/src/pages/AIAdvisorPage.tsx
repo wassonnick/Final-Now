@@ -1,3 +1,4 @@
+import { trackAiPromptSubmitted, trackEvent, trackResultClicked } from "@/lib/analytics";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -60,6 +61,12 @@ export function AIAdvisorPage() {
   const searchUrl = `/search?q=${encodeURIComponent(question)}&tab=societies&intent=general`;
 
   const submitAdvisor = async (value?: string) => {
+    trackAiPromptSubmitted({
+      source: "ai_advisor_page",
+      ai_query: value || question,
+      cta_label: "AI Advisor prompt",
+    });
+
     const clean = (value || input).trim();
     if (!clean || loading) return;
 
@@ -195,7 +202,14 @@ export function AIAdvisorPage() {
                   <button
                     key={prompt}
                     type="button"
-                    onClick={() => submitAdvisor(prompt)}
+                    onClick={() => {
+                      trackEvent("ai_prompt_chip_clicked", {
+                        source: "ai_advisor_page",
+                        ai_query: prompt,
+                        cta_label: "Prompt chip",
+                      });
+                      submitAdvisor(prompt);
+                    }}
                     className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-50"
                   >
                     {prompt}
@@ -219,7 +233,16 @@ export function AIAdvisorPage() {
               </h2>
             </div>
 
-            <Link to={searchUrl}>
+            <Link
+              to={searchUrl}
+              onClick={() =>
+                trackEvent("ai_open_full_search_clicked", {
+                  source: "ai_advisor_page",
+                  ai_query: question,
+                  cta_label: "Open full search",
+                })
+              }
+            >
               <Button variant="outline" className="rounded-full border-blue-100 text-blue-700 hover:bg-blue-50">
                 Open full search
                 <ArrowRight className="ml-2 h-4 w-4" />

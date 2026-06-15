@@ -1,3 +1,5 @@
+import { trackLeadIntent, trackLeadSubmitted } from "@/lib/analytics";
+import { cleanLeadTrackingPayload, type LeadTrackingContext } from "@/lib/leadTracking";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Building2, CheckCircle2, Home, Phone, X } from "lucide-react";
@@ -10,6 +12,9 @@ type PublicLeadModalProps = {
   title: string;
   subtitle?: string;
   source: string;
+  trackingContext?: LeadTrackingContext;
+  ctaLabel?: string;
+  leadIntent?: string;
   defaultMessage?: string;
   defaultRequirement?: string;
   societyName?: string;
@@ -60,6 +65,9 @@ function isValidLeadPhone(value: string) {
 export function PublicLeadModal({
   open,
   source,
+  trackingContext,
+  ctaLabel,
+  leadIntent,
   defaultMessage = "",
   defaultRequirement = "",
   societyName,
@@ -138,6 +146,21 @@ export function PublicLeadModal({
       return;
     }
 
+    const leadTrackingPayload = cleanLeadTrackingPayload({
+      ...trackingContext,
+      cta_label: ctaLabel || trackingContext?.cta_label || source,
+      lead_intent: leadIntent || trackingContext?.lead_intent || finalRequirement || source,
+      entity_type: trackingContext?.entity_type || (propertySlug ? "property" : societyName ? "society" : "general"),
+      entity_slug: trackingContext?.entity_slug || propertySlug || "",
+    });
+
+    trackLeadIntent({
+      ...leadTrackingPayload,
+      source,
+      society_name: societyName,
+      property_slug: propertySlug,
+    });
+
     setSubmitting(true);
 
     const selectedBudget = form.budget.trim() || budget || "";
@@ -173,6 +196,12 @@ export function PublicLeadModal({
         message: enrichedMessage,
       });
 
+      trackLeadSubmitted({
+        ...leadTrackingPayload,
+        source,
+        society_name: societyName,
+        property_slug: propertySlug,
+      });
       setSuccess(true);
     } catch (leadError) {
       console.error("Lead submission failed:", leadError);

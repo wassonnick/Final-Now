@@ -26,6 +26,20 @@ class Lead extends Model
         'assigned_to',
         'follow_up_at',
         'notes',
+        'source_page',
+        'page_url',
+        'referrer',
+        'cta_label',
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'utm_term',
+        'utm_content',
+        'lead_intent',
+        'search_query',
+        'ai_query',
+        'entity_type',
+        'entity_slug',
     ];
 
     protected $casts = [

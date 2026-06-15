@@ -1,3 +1,5 @@
+import { trackEvent, trackLeadIntent, trackLeadSubmitted, trackResultClicked } from "@/lib/analytics";
+import { cleanLeadTrackingPayload } from "@/lib/leadTracking";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -394,6 +396,14 @@ export function PropertyPage() {
   );
 
   const openLead = (type: "callback" | "enquiry") => {
+    trackLeadIntent({
+      source: type === "callback" ? "property_page_callback" : "property_page_enquiry",
+      cta_label: type === "callback" ? "Check availability" : "Ask about this property",
+      lead_intent: leadRequirementFor(listingType, type),
+      entity_type: "property",
+      entity_slug: property?.slug || slug || "",
+      entity_name: title,
+    });
     setLeadType(type);
     setLeadOpen(true);
     setLeadSuccess(false);
@@ -426,6 +436,14 @@ export function PropertyPage() {
     const enrichedRequirement = selectedTime
       ? `${baseRequirement} · Preferred time: ${selectedTime}`
       : baseRequirement;
+    const trackingPayload = cleanLeadTrackingPayload({
+      cta_label: leadType === "callback" ? "Check availability" : "Ask about this property",
+      lead_intent: leadRequirementFor(listingType, leadType),
+      entity_type: "property",
+      entity_slug: property.slug || slug || "",
+      entity_name: title,
+    });
+
     const fallbackMessage = `${leadType === "callback" ? "Callback" : "Enquiry"} requested for ${title}. Society: ${societyName || "Not specified"}. Location: ${societyLocality || "Gurgaon"}. Listing type: ${listingType}. Price: ${price}.`;
     const enrichedMessage = [
       leadForm.message || fallbackMessage,
@@ -450,12 +468,18 @@ export function PropertyPage() {
           property_slug: property.slug || slug,
           society_name: societyName || property.locality || "Gurgaon",
           source: leadType === "callback" ? "property_page_callback" : "property_page_enquiry",
+          ...trackingPayload,
           requirement: enrichedRequirement,
         }),
       });
 
       if (!response.ok) throw new Error("Lead submission failed");
 
+      trackLeadSubmitted({
+        ...trackingPayload,
+        source: leadType === "callback" ? "property_page_callback" : "property_page_enquiry",
+        property_slug: property.slug || slug || "",
+      });
       setLeadSuccess(true);
       setLeadForm({ name: "", phone: "", email: "", message: "", preferredTime: "" });
     } catch {

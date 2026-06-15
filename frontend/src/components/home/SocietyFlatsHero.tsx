@@ -1,3 +1,4 @@
+import { trackAiPromptSubmitted, trackEvent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -98,6 +99,12 @@ export default function SocietyFlatsHero() {
   };
 
   const submitHeroAi = async (value?: string) => {
+    trackAiPromptSubmitted({
+      source: "homepage_ai",
+      ai_query: value || aiInput,
+      cta_label: "Ask SocietyFlats AI",
+    });
+
     const clean = (value || aiInput).trim();
     if (!clean || isAiLoading) return;
 
