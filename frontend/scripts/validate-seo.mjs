@@ -97,15 +97,21 @@ async function validateC37ConversionCopy() {
   const searchPage = await fs.readFile(path.resolve(process.cwd(), "src/pages/SearchPage.tsx"), "utf8");
   const leadModal = await fs.readFile(path.resolve(process.cwd(), "src/components/leads/PublicLeadModal.tsx"), "utf8");
   const hero = await fs.readFile(path.resolve(process.cwd(), "src/components/home/SocietyFlatsHero.tsx"), "utf8");
+  const homePage = await fs.readFile(path.resolve(process.cwd(), "src/pages/HomePage.tsx"), "utf8");
+  const aiAdvisor = await fs.readFile(path.resolve(process.cwd(), "src/pages/AIAdvisorPage.tsx"), "utf8");
 
   const checks = [
-    [hero, "Find the right", "Homepage hero missing premium C37B headline"],
-    [hero, "Start AI shortlist", "Homepage hero missing stronger AI CTA"],
+    [hero, "Ask SocietyFlats AI", "Hero missing real AI chat card"],
+    [hero, "submitHeroAi", "Hero AI is not wired to submit on-page"],
+    [hero, "No forced AI page jump.", "Hero missing no forced page jump copy"],
+    [homePage, "Jump into the most searched Gurgaon society paths.", "Homepage missing compact popular searches section"],
+    [homePage, "Need help choosing between societies?", "Homepage missing compact AI section"],
     [societyPage, "society_page_no_inventory_similar_options", "Society page missing no-inventory similar-options CTA"],
     [societyPage, "Request similar options", "Society page missing similar-options CTA copy"],
-    [societyPage, "rent, buy, visit planning or similar society options", "Society modal copy is still too rent-only"],
     [searchPage, "matching Gurgaon societies and homes", "Search empty-state success copy missing C37 wording"],
     [leadModal, "matching homes, similar societies and visit-ready next steps", "Lead modal success copy missing C37 wording"],
+    [aiAdvisor, "Continue your Gurgaon society shortlist.", "AI Advisor page does not feel like continuation flow"],
+    [aiAdvisor, "Open full search", "AI Advisor page missing return-to-search flow"],
   ];
 
   for (const [source, needle, message] of checks) {

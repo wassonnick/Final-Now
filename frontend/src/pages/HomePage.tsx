@@ -514,6 +514,121 @@ export function HomePage() {
         </div>
       </section>
 
+      {featuredProperties.length > 0 ? (
+        <section className="bg-white px-4 py-8 md:py-10">
+          <div className="container mx-auto">
+            <div className="mb-5 flex flex-col gap-4 md:mb-6 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
+                  Live Inventory
+                </p>
+                <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
+                  Latest live verified homes
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500 md:text-[15px] md:leading-6">
+                  <span className="md:hidden">
+                    Fresh live homes in verified Gurgaon societies.
+                  </span>
+                  <span className="hidden md:inline">
+                    Fresh rental and resale homes from Gurgaon societies,
+                    verified before they reach serious tenants and buyers.
+                  </span>
+                </p>
+              </div>
+              <Link to="/search?tab=rent">
+                <Button className="h-10 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
+                  View all homes <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
+              {featuredProperties.map((property) => (
+                <Link
+                  key={property.id}
+                  to={propertyUrl(property)}
+                  className="group w-[17rem] shrink-0 overflow-hidden rounded-[1.25rem] border border-navy-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium md:w-[19rem]"
+                >
+                  <div className="relative h-32 overflow-hidden bg-blue-50 md:h-36">
+                    <img
+                      src={propertyImage(property)}
+                      alt={property.title}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
+                    <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg bg-blue-700 px-2.5 py-1 text-[11px] font-black text-white">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Verified
+                    </span>
+                  </div>
+                  <div className="p-3.5 md:p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.08em] text-blue-700">
+                      {property.listingType || "Rent"}
+                    </p>
+                    <h3 className="mt-1.5 line-clamp-2 text-base font-black leading-snug text-navy-950 md:text-lg">
+                      {property.title}
+                    </h3>
+                    <p className="mt-1 line-clamp-1 text-xs font-semibold text-navy-500">
+                      {property.society} · {property.locality}
+                    </p>
+                    <div className="mt-4 flex items-end justify-between">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.08em] text-navy-300">
+                          Price
+                        </p>
+                        <p className="text-lg font-black text-navy-950">
+                          {property.price || "On request"}
+                        </p>
+                      </div>
+                      <p className="text-right text-xs font-semibold leading-5 text-navy-500">
+                        {property.bedrooms || "-"} BHK
+                        <br />
+                        {property.areaSqft || "-"} sq.ft
+                      </p>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2 text-center text-[11px] font-black">
+                      <span className="rounded-full bg-blue-50 px-2.5 py-1.5 text-blue-700">
+                        Request Callback
+                      </span>
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-1.5 text-emerald-700">
+                        Shortlist
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="bg-white px-4 py-10 md:py-12">
+          <div className="container mx-auto rounded-[1.5rem] border border-dashed border-navy-200 bg-ivory-100 p-5 shadow-sm md:p-7">
+            <h2 className="font-display text-3xl font-black text-navy-950">
+              Verified homes are being added.
+            </h2>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-navy-500">
+              We are updating live inventory for Gurgaon societies. Request a
+              callback and our team will help you find matching homes.
+            </p>
+            <Button
+              onClick={() =>
+                openLead({
+                  source: "homepage_empty_inventory",
+                  title: "Request a SocietyFlats callback",
+                  subtitle:
+                    "Share your requirement and our team will help you find matching Gurgaon homes.",
+                  message: "I want a callback for Gurgaon society rentals.",
+                  requirement:
+                    "Help me find matching homes from the homepage inventory section.",
+                })
+              }
+              className="mt-5 rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800"
+            >
+              Request Callback
+            </Button>
+          </div>
+        </section>
+      )}
+
+
       <section className="bg-white px-4 py-6 md:py-7">
         <div className="container mx-auto">
           <div className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
@@ -787,120 +902,6 @@ export function HomePage() {
           </div>
         </div>
       </section>
-
-      {featuredProperties.length > 0 ? (
-        <section className="bg-white px-4 py-8 md:py-10">
-          <div className="container mx-auto">
-            <div className="mb-5 flex flex-col gap-4 md:mb-6 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                  Live Inventory
-                </p>
-                <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
-                  Latest live verified homes
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500 md:text-[15px] md:leading-6">
-                  <span className="md:hidden">
-                    Fresh live homes in verified Gurgaon societies.
-                  </span>
-                  <span className="hidden md:inline">
-                    Fresh rental and resale homes from Gurgaon societies,
-                    verified before they reach serious tenants and buyers.
-                  </span>
-                </p>
-              </div>
-              <Link to="/search?tab=rent">
-                <Button className="h-10 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
-                  View all homes <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-
-            <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
-              {featuredProperties.map((property) => (
-                <Link
-                  key={property.id}
-                  to={propertyUrl(property)}
-                  className="group w-[17rem] shrink-0 overflow-hidden rounded-[1.25rem] border border-navy-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium md:w-[19rem]"
-                >
-                  <div className="relative h-32 overflow-hidden bg-blue-50 md:h-36">
-                    <img
-                      src={propertyImage(property)}
-                      alt={property.title}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
-                    <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg bg-blue-700 px-2.5 py-1 text-[11px] font-black text-white">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Verified
-                    </span>
-                  </div>
-                  <div className="p-3.5 md:p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.08em] text-blue-700">
-                      {property.listingType || "Rent"}
-                    </p>
-                    <h3 className="mt-1.5 line-clamp-2 text-base font-black leading-snug text-navy-950 md:text-lg">
-                      {property.title}
-                    </h3>
-                    <p className="mt-1 line-clamp-1 text-xs font-semibold text-navy-500">
-                      {property.society} · {property.locality}
-                    </p>
-                    <div className="mt-4 flex items-end justify-between">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.08em] text-navy-300">
-                          Price
-                        </p>
-                        <p className="text-lg font-black text-navy-950">
-                          {property.price || "On request"}
-                        </p>
-                      </div>
-                      <p className="text-right text-xs font-semibold leading-5 text-navy-500">
-                        {property.bedrooms || "-"} BHK
-                        <br />
-                        {property.areaSqft || "-"} sq.ft
-                      </p>
-                    </div>
-                    <div className="mt-4 grid grid-cols-2 gap-2 text-center text-[11px] font-black">
-                      <span className="rounded-full bg-blue-50 px-2.5 py-1.5 text-blue-700">
-                        Request Callback
-                      </span>
-                      <span className="rounded-full bg-emerald-50 px-2.5 py-1.5 text-emerald-700">
-                        Shortlist
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : (
-        <section className="bg-white px-4 py-10 md:py-12">
-          <div className="container mx-auto rounded-[1.5rem] border border-dashed border-navy-200 bg-ivory-100 p-5 shadow-sm md:p-7">
-            <h2 className="font-display text-3xl font-black text-navy-950">
-              Verified homes are being added.
-            </h2>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-navy-500">
-              We are updating live inventory for Gurgaon societies. Request a
-              callback and our team will help you find matching homes.
-            </p>
-            <Button
-              onClick={() =>
-                openLead({
-                  source: "homepage_empty_inventory",
-                  title: "Request a SocietyFlats callback",
-                  subtitle:
-                    "Share your requirement and our team will help you find matching Gurgaon homes.",
-                  message: "I want a callback for Gurgaon society rentals.",
-                  requirement:
-                    "Help me find matching homes from the homepage inventory section.",
-                })
-              }
-              className="mt-5 rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800"
-            >
-              Request Callback
-            </Button>
-          </div>
-        </section>
-      )}
 
       <section className="hidden bg-blue-50/35 px-4 py-10 md:block">
         <div className="container mx-auto">
