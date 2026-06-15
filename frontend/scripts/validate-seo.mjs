@@ -66,6 +66,45 @@ async function validateStaticHtml() {
   }
 }
 
+async function validateInternalLinks() {
+  const homePage = await fs.readFile(path.resolve(process.cwd(), "src/pages/HomePage.tsx"), "utf8");
+  const seoLandingPage = await fs.readFile(path.resolve(process.cwd(), "src/pages/SeoLandingPage.tsx"), "utf8");
+  const footer = await fs.readFile(path.resolve(process.cwd(), "src/components/layout/Footer.tsx"), "utf8");
+  const internalLinks = await fs.readFile(path.resolve(process.cwd(), "src/components/seo/InternalSeoLinks.tsx"), "utf8");
+
+  const requiredContent = [
+    "/gurgaon",
+    "/gurgaon/societies",
+    "/gurgaon/properties",
+    "/gurgaon/sector-65",
+    "/gurgaon/golf-course-extension-road",
+    "/builder/dlf",
+    "/builder/m3m",
+  ];
+
+  for (const required of requiredContent) {
+    if (!internalLinks.includes(required)) {
+      throw new Error(`Internal SEO links missing: ${required}`);
+    }
+  }
+
+  if (!homePage.includes("Popular Gurgaon society searches")) {
+    throw new Error("Homepage missing C35 popular search links section");
+  }
+
+  if (!seoLandingPage.includes("Related Gurgaon searches")) {
+    throw new Error("SEO landing page missing C35 related search links section");
+  }
+
+  if (!seoLandingPage.includes("breadcrumbLabelForLanding")) {
+    throw new Error("SEO landing page missing visible breadcrumb helper");
+  }
+
+  if (!footer.includes('<InternalSeoLinks variant="footer" />')) {
+    throw new Error("Footer missing C35 internal SEO links");
+  }
+}
+
 async function validatePublicFiles() {
   const robots = await fs.readFile(path.join(PUBLIC_DIR, "robots.txt"), "utf8");
   if (!robots.includes(`Sitemap: ${SITE_URL}/sitemap.xml`)) {
@@ -90,6 +129,7 @@ async function validatePublicFiles() {
 async function main() {
   await validateStaticHtml();
   await validatePublicFiles();
+  await validateInternalLinks();
 
   console.log("SEO validation passed.");
   console.log(`Checked ${requiredRoutes.length} static HTML routes, robots.txt, sitemap.xml, manifest and favicon.`);

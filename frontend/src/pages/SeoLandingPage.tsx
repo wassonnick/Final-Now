@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { setPublicSeo } from "@/lib/seo";
+import { InternalSeoLinks } from "@/components/seo/InternalSeoLinks";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
 
@@ -252,6 +253,38 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
   };
 }
 
+
+function breadcrumbLabelForLanding(variant: LandingVariant, localitySlug?: string, builderSlug?: string) {
+  if (variant === "gurgaon-societies") return "Societies";
+  if (variant === "gurgaon-properties") return "Properties";
+  if (variant === "locality") return localityLabels[localitySlug || ""] || readableFromSlug(localitySlug, "Locality");
+  if (variant === "builder") return builderLabels[builderSlug || ""] || readableFromSlug(builderSlug, "Builder");
+  return "Gurgaon";
+}
+
+function landingSeoText(variant: LandingVariant, localitySlug?: string, builderSlug?: string) {
+  const localityLabel = localityLabels[localitySlug || ""] || readableFromSlug(localitySlug, "Gurgaon");
+  const builderLabel = builderLabels[builderSlug || ""] || readableFromSlug(builderSlug, "Gurgaon builder");
+
+  if (variant === "builder") {
+    return `${builderLabel} pages help users compare society location, rent signals, resale context and live homes before booking visits in Gurgaon.`;
+  }
+
+  if (variant === "locality") {
+    return `${localityLabel} pages collect verified Gurgaon societies and available homes so users can compare location strength, pricing context and resident fit faster.`;
+  }
+
+  if (variant === "gurgaon-properties") {
+    return "The Gurgaon properties section connects live inventory with society context, helping users understand the building before choosing the flat.";
+  }
+
+  if (variant === "gurgaon-societies") {
+    return "The Gurgaon societies section is designed for users who want to compare societies first, then shortlist homes based on fit, budget and location.";
+  }
+
+  return "SocietyFlats is built around the Gurgaon society-first journey: compare the society, understand the location and then shortlist homes with better context.";
+}
+
 export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
   const { locality, builderSlug } = useParams();
   const [societies, setSocieties] = useState<Society[]>([]);
@@ -370,6 +403,14 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
       <section className="border-b border-navy-100 bg-white">
         <div className="container mx-auto px-4 py-12 md:py-16">
           <div className="max-w-4xl">
+            <div className="mb-4 flex flex-wrap items-center gap-2 text-xs font-bold text-navy-400">
+              <Link to="/" className="hover:text-blue-700">Home</Link>
+              <span>/</span>
+              <Link to="/gurgaon" className="hover:text-blue-700">Gurgaon</Link>
+              <span>/</span>
+              <span className="text-navy-700">{breadcrumbLabelForLanding(variant, locality, builderSlug)}</span>
+            </div>
+
             <Badge className="rounded-full border-blue-100 bg-blue-50 px-4 py-1 text-blue-700">
               <Sparkles className="mr-2 h-3.5 w-3.5" />
               {copy.eyebrow}
@@ -414,6 +455,20 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
           </div>
         </div>
       </section>
+
+      <section className="bg-white px-4 py-6">
+        <div className="container mx-auto">
+          <div className="rounded-[1.25rem] border border-blue-100 bg-blue-50/40 p-4 text-sm leading-6 text-navy-600 md:p-5">
+            {landingSeoText(variant, locality, builderSlug)}
+          </div>
+        </div>
+      </section>
+
+      <InternalSeoLinks
+        variant="landing"
+        title="Related Gurgaon searches"
+        description="Continue exploring Gurgaon by society, locality, builder and live inventory paths."
+      />
 
       <section className="container mx-auto px-4 py-10">
         {loading ? (

@@ -34,6 +34,7 @@ import {
 } from "@/lib/publicData";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { setPublicSeo } from "@/lib/seo";
+import { InternalSeoLinks } from "@/components/seo/InternalSeoLinks";
 
 const whySocietyFlats = [
   {
@@ -320,6 +321,12 @@ export function HomePage() {
           })}
         </div>
       </section>
+
+      <InternalSeoLinks
+        variant="home"
+        title="Popular Gurgaon society searches"
+        description="Jump directly to verified Gurgaon society pages, priority localities, builder collections and live inventory paths."
+      />
 
       <section className="bg-white px-4 py-8 md:py-10">
         <div className="container mx-auto">
