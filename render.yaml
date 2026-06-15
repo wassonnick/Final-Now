@@ -9,6 +9,78 @@ services:
       - key: VITE_API_URL
         value: https://societyflats-api.onrender.com/api/v1
     routes:
+      # C33 static SEO HTML rewrites. Keep these above the SPA fallback.
+      - type: rewrite
+        source: /gurgaon
+        destination: /gurgaon/index.html
+      - type: rewrite
+        source: /gurgaon/societies
+        destination: /gurgaon/societies/index.html
+      - type: rewrite
+        source: /gurgaon/properties
+        destination: /gurgaon/properties/index.html
+      - type: rewrite
+        source: /gurgaon/sector-56
+        destination: /gurgaon/sector-56/index.html
+      - type: rewrite
+        source: /gurgaon/sector-65
+        destination: /gurgaon/sector-65/index.html
+      - type: rewrite
+        source: /gurgaon/sector-66
+        destination: /gurgaon/sector-66/index.html
+      - type: rewrite
+        source: /gurgaon/sector-67
+        destination: /gurgaon/sector-67/index.html
+      - type: rewrite
+        source: /gurgaon/sector-70
+        destination: /gurgaon/sector-70/index.html
+      - type: rewrite
+        source: /gurgaon/sector-102
+        destination: /gurgaon/sector-102/index.html
+      - type: rewrite
+        source: /gurgaon/golf-course-road
+        destination: /gurgaon/golf-course-road/index.html
+      - type: rewrite
+        source: /gurgaon/golf-course-extension-road
+        destination: /gurgaon/golf-course-extension-road/index.html
+      - type: rewrite
+        source: /gurgaon/dwarka-expressway
+        destination: /gurgaon/dwarka-expressway/index.html
+      - type: rewrite
+        source: /gurgaon/sohna-road
+        destination: /gurgaon/sohna-road/index.html
+      - type: rewrite
+        source: /builder/dlf
+        destination: /builder/dlf/index.html
+      - type: rewrite
+        source: /builder/m3m
+        destination: /builder/m3m/index.html
+      - type: rewrite
+        source: /builder/emaar
+        destination: /builder/emaar/index.html
+      - type: rewrite
+        source: /builder/ats
+        destination: /builder/ats/index.html
+      - type: rewrite
+        source: /builder/godrej
+        destination: /builder/godrej/index.html
+      - type: rewrite
+        source: /builder/adani
+        destination: /builder/adani/index.html
+      - type: rewrite
+        source: /builder/tulip
+        destination: /builder/tulip/index.html
+      - type: rewrite
+        source: /builder/alpha-corp
+        destination: /builder/alpha-corp/index.html
+      - type: rewrite
+        source: /societies
+        destination: /societies/index.html
+      - type: rewrite
+        source: /properties
+        destination: /properties/index.html
+
+      # SPA fallback for admin, dynamic society/property pages, search and other React routes.
       - type: rewrite
         source: /*
         destination: /index.html
