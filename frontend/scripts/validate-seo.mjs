@@ -133,14 +133,14 @@ async function validateBundleSplitting() {
   const assetFiles = await fs.readdir(path.join(DIST_DIR, "assets"));
   const jsFiles = assetFiles.filter((file) => file.endsWith(".js"));
 
-  if (jsFiles.length < 4) {
-    throw new Error(`Expected route/vendor JS splitting, found only ${jsFiles.length} JS files`);
+  if (jsFiles.length < 8) {
+    throw new Error(`Expected lazy route JS splitting, found only ${jsFiles.length} JS files`);
   }
 
-  const expectedChunks = ["react-vendor", "router-vendor", "icons-vendor"];
-  for (const chunkName of expectedChunks) {
+  const expectedRouteChunks = ["SearchPage", "SocietyPage", "PropertyPage", "AdminDashboardPage"];
+  for (const chunkName of expectedRouteChunks) {
     if (!jsFiles.some((file) => file.includes(chunkName))) {
-      throw new Error(`Missing expected performance chunk: ${chunkName}`);
+      throw new Error(`Missing expected lazy route chunk: ${chunkName}`);
     }
   }
 }
