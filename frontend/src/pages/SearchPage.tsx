@@ -30,6 +30,7 @@ import {
   societyImage,
 } from "@/lib/publicData";
 import { cn } from "@/lib/utils";
+import { setPublicSeo } from "@/lib/seo";
 
 const tabs = [
   { key: "societies", label: "Societies", mobileLabel: "Society", icon: Building2 },
@@ -76,31 +77,6 @@ function getApiBaseUrl() {
 
 function safeJoin(value: unknown) {
   return Array.isArray(value) ? value.join(" ") : "";
-}
-
-function setPublicSeo(title: string, description: string, noindex = false) {
-  document.title = title;
-
-  let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
-  if (!meta) {
-    meta = document.createElement("meta");
-    meta.name = "description";
-    document.head.appendChild(meta);
-  }
-  meta.content = description;
-
-  let robots = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
-
-  if (noindex) {
-    if (!robots) {
-      robots = document.createElement("meta");
-      robots.name = "robots";
-      document.head.appendChild(robots);
-    }
-    robots.content = "noindex, nofollow";
-  } else if (robots) {
-    robots.remove();
-  }
 }
 
 function resultLabel(tab: string) {

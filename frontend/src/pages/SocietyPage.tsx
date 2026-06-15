@@ -23,6 +23,7 @@ import {
   propertyImage,
   societyImage,
 } from "@/lib/publicData";
+import { setPublicSeo } from "@/lib/seo";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
@@ -64,31 +65,6 @@ function isPublicLiveProperty(property: any) {
 
 function filterPublicLiveProperties(properties: any[]) {
   return Array.isArray(properties) ? properties.filter(isPublicLiveProperty) : [];
-}
-
-function setPublicSeo(title: string, description: string, noindex = false) {
-  document.title = title;
-
-  let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
-  if (!meta) {
-    meta = document.createElement("meta");
-    meta.name = "description";
-    document.head.appendChild(meta);
-  }
-  meta.content = description;
-
-  let robots = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
-
-  if (noindex) {
-    if (!robots) {
-      robots = document.createElement("meta");
-      robots.name = "robots";
-      document.head.appendChild(robots);
-    }
-    robots.content = "noindex, nofollow";
-  } else if (robots) {
-    robots.remove();
-  }
 }
 
 function field<T = any>(
