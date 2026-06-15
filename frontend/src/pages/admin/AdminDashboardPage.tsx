@@ -158,6 +158,10 @@ function statCardClass(tone: "blue" | "emerald" | "rose" | "slate" = "blue") {
   return `rounded-[24px] border ${toneClass} bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg md:rounded-[28px] md:p-5`;
 }
 
+function dashboardValue(value: number | string, isLoading: boolean) {
+  return isLoading ? "Loading..." : value;
+}
+
 export function AdminDashboardPage() {
   const [stats, setStats] = useState(emptyStats);
   const [leads, setLeads] = useState<AdminLead[]>([]);
@@ -214,7 +218,7 @@ export function AdminDashboardPage() {
 
       const [propertyResponse, societyResponse] = await Promise.all([
         adminFetch("/admin/properties"),
-        adminFetch("/admin/societies?page=1&per_page=100"),
+        adminFetch("/admin/societies?page=1&per_page=50"),
       ]);
 
       const propertyJson = await propertyResponse.json().catch(() => ({}));
@@ -360,7 +364,7 @@ export function AdminDashboardPage() {
           {[
             {
               label: "Today",
-              value: leadLoading ? "-" : leadSummary.today,
+              value: dashboardValue(leadSummary.today, leadLoading),
               helper: "New enquiries",
               href: "/admin/leads?view=today",
               icon: MessageSquareText,
@@ -368,7 +372,7 @@ export function AdminDashboardPage() {
             },
             {
               label: "Follow-ups",
-              value: leadLoading ? "-" : leadSummary.followUpsToday,
+              value: dashboardValue(leadSummary.followUpsToday, leadLoading),
               helper: "Due today",
               href: "/admin/leads?view=followups",
               icon: Clock,
@@ -376,7 +380,7 @@ export function AdminDashboardPage() {
             },
             {
               label: "Overdue",
-              value: leadLoading ? "-" : leadSummary.overdue,
+              value: dashboardValue(leadSummary.overdue, leadLoading),
               helper: "Needs action",
               href: "/admin/leads?view=overdue",
               icon: Target,
@@ -384,7 +388,7 @@ export function AdminDashboardPage() {
             },
             {
               label: "Hot Leads",
-              value: leadLoading ? "-" : leadSummary.hot,
+              value: dashboardValue(leadSummary.hot, leadLoading),
               helper: "Priority follow-up",
               href: "/admin/leads?view=hot",
               icon: Target,
@@ -398,7 +402,7 @@ export function AdminDashboardPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-slate-500">{item.label}</p>
-                    <p className="mt-2 text-3xl font-bold text-slate-950 md:mt-3 md:text-4xl">
+                    <p className="mt-2 text-2xl font-bold text-slate-950 md:mt-3 md:text-3xl">
                       {item.value}
                     </p>
                     <p className="mt-1 text-xs font-semibold text-blue-600 md:mt-2 md:text-sm">
@@ -446,7 +450,7 @@ export function AdminDashboardPage() {
                     {label}
                   </p>
                   <p className="mt-2 text-2xl font-bold text-slate-950 md:text-3xl">
-                    {inventoryLoading && !String(label).includes("leads") ? "-" : value}
+                    {dashboardValue(value as number | string, inventoryLoading && !String(label).includes("leads"))}
                   </p>
                   <p className="mt-1 text-xs text-slate-500 md:text-sm">{meta}</p>
                 </Link>
