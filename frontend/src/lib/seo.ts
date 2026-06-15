@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 const SITE_NAME = "SocietyFlats";
-const SITE_URL = "https://societyflats.com";
+const SITE_URL = "https://www.societyflats.com";
 const DEFAULT_DESCRIPTION =
   "SocietyFlats helps you discover verified Gurgaon societies, live homes, owner listings and society-first property intelligence.";
 

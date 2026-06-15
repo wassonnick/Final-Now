@@ -6,4 +6,4 @@ Disallow: /admin/
 Disallow: /owner/dashboard
 Disallow: /login
 
-Sitemap: https://societyflats.com/sitemap.xml
+Sitemap: https://www.societyflats.com/sitemap.xml
