@@ -166,6 +166,31 @@ function isValidLeadPhone(value: string) {
   return /^[6-9]\d{9}$/.test(value);
 }
 
+
+function publicPropertyDescription(value?: string | null) {
+  const clean = String(value || "")
+    .replace(/\\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => {
+      const lower = line.toLowerCase();
+      return (
+        line &&
+        !lower.startsWith("draft property created from owner crm lead") &&
+        !lower.startsWith("source lead id") &&
+        !lower.startsWith("owner:") &&
+        !lower.startsWith("phone:") &&
+        !lower.startsWith("next admin step") &&
+        !lower.includes("societyflats admin should verify")
+      );
+    })
+    .join("\n\n")
+    .trim();
+
+  return clean || "This property is part of SocietyFlats verified Gurgaon inventory. Request a callback to confirm latest price, availability, photos and visit timing.";
+}
+
 function searchTabForListingType(listingType: string) {
   const cleanType = String(listingType || "").toLowerCase();
 
@@ -698,7 +723,7 @@ export function PropertyPage() {
             <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
               <h2 className="text-2xl font-bold text-navy-900">Description</h2>
               <p className="mt-4 line-clamp-3 whitespace-pre-line leading-relaxed text-navy-600 md:line-clamp-none">
-                {property.description || "No description available."}
+                {publicPropertyDescription(property.description)}
               </p>
             </section>
 

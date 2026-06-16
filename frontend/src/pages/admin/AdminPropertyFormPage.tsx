@@ -310,6 +310,62 @@ function ownerDraftDescription(params: {
   return lines.join("\\n");
 }
 
+
+function isOwnerDraftSource(sourceLeadId: string) {
+  return Boolean(String(sourceLeadId || "").trim());
+}
+
+function ownerPublishQualityIssues(args: {
+  sourceLeadId: string;
+  verified: boolean;
+  images: string[];
+  description: string;
+  floor: string;
+  furnishedStatus: string;
+  securityDeposit: string;
+  rentalListing: boolean;
+}) {
+  if (!isOwnerDraftSource(args.sourceLeadId)) return [];
+
+  const issues: string[] = [];
+
+  if (!args.verified) issues.push("Mark as verified after confirming owner/property details.");
+  if (!args.images.length) issues.push("Add at least one real property photo before publishing.");
+  if (!String(args.description || "").trim()) issues.push("Generate or write a clean public description.");
+  if (!String(args.floor || "").trim()) issues.push("Confirm floor details before publishing.");
+  if (!String(args.furnishedStatus || "").trim()) issues.push("Confirm furnishing status before publishing.");
+  if (args.rentalListing && !String(args.securityDeposit || "").trim()) {
+    issues.push("Confirm security deposit before publishing this rental listing.");
+  }
+
+  return issues;
+}
+
+function cleanPublicDescription(value: string) {
+  const raw = String(value || "")
+    .replace(/\\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .trim();
+
+  return raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => {
+      const lower = line.toLowerCase();
+      return (
+        line &&
+        !lower.startsWith("draft property created from owner crm lead") &&
+        !lower.startsWith("source lead id") &&
+        !lower.startsWith("owner:") &&
+        !lower.startsWith("phone:") &&
+        !lower.startsWith("next admin step") &&
+        !lower.includes("societyflats admin should verify")
+      );
+    })
+    .join("\n\n")
+    .trim();
+}
+
 export function AdminPropertyFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -556,6 +612,28 @@ export function AdminPropertyFormPage() {
   ]);
 
 
+  const ownerQualityIssues = useMemo(() => ownerPublishQualityIssues({
+    sourceLeadId,
+    verified: Boolean(property.verified),
+    images: propertyImages,
+    description: property.description,
+    floor: property.floor,
+    furnishedStatus: property.furnishedStatus,
+    securityDeposit: property.securityDeposit,
+    rentalListing,
+  }), [
+    sourceLeadId,
+    property.verified,
+    propertyImages,
+    property.description,
+    property.floor,
+    property.furnishedStatus,
+    property.securityDeposit,
+    rentalListing,
+  ]);
+
+  const ownerPublishBlocked = sourceLeadId && ownerQualityIssues.length > 0;
+
   const updateField = (key: string, value: any) => {
     setProperty((current: any) => ({ ...current, [key]: value }));
     if (error) setError("");
@@ -690,6 +768,13 @@ export function AdminPropertyFormPage() {
       return;
     }
 
+    if (status === "Live" && ownerPublishBlocked) {
+      setError(`Owner draft publish blocked: ${ownerQualityIssues[0]}`);
+      setSuccess("");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     if (status === "Live" && validationError) {
       setError(validationError);
       setSuccess("");
@@ -744,7 +829,7 @@ export function AdminPropertyFormPage() {
         floor: property.floor,
         facing: property.facing,
         furnished_status: property.furnishedStatus,
-        description: property.description,
+        description: cleanPublicDescription(property.description),
         amenities: parseArray(property.amenities),
         images: parseArray(property.images),
         featured: Boolean(property.featured),
@@ -945,7 +1030,7 @@ export function AdminPropertyFormPage() {
             <Button
               type="button"
               onClick={() => handleSave("Live")}
-              disabled={saving || Boolean(publishValidationError)}
+              disabled={saving || Boolean(publishValidationError) || Boolean(ownerPublishBlocked)}
               className="rounded-full bg-blue-600 px-5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
@@ -996,6 +1081,29 @@ export function AdminPropertyFormPage() {
         {publishValidationError ? (
           <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-medium text-blue-700">
             Publish blocked: {publishValidationError}
+          </div>
+        ) : null}
+
+        {sourceLeadId ? (
+          <div className={`mb-5 rounded-2xl border px-5 py-4 text-sm shadow-sm ${
+            ownerQualityIssues.length
+              ? "border-amber-200 bg-amber-50 text-amber-800"
+              : "border-emerald-200 bg-emerald-50 text-emerald-800"
+          }`}>
+            <p className="font-black uppercase tracking-[0.14em]">
+              Owner draft quality check
+            </p>
+            {ownerQualityIssues.length ? (
+              <ul className="mt-3 list-disc space-y-1 pl-5 font-medium">
+                {ownerQualityIssues.map((issue) => (
+                  <li key={issue}>{issue}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 font-semibold">
+                Ready to publish after final admin review.
+              </p>
+            )}
           </div>
         ) : null}
 
@@ -1408,7 +1516,7 @@ export function AdminPropertyFormPage() {
 <Button
               type="button"
               onClick={() => handleSave("Live")}
-              disabled={saving || Boolean(publishValidationError)}
+              disabled={saving || Boolean(publishValidationError) || Boolean(ownerPublishBlocked)}
               className="h-11 rounded-full bg-blue-600 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />

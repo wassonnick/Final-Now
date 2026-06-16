@@ -143,6 +143,30 @@ function parseArray(value: any): string[] {
   return [];
 }
 
+
+function c42PropertyQualityIssues(item: any) {
+  const issues: string[] = [];
+  const ownerLinked = Boolean(c14SourceLeadId(item));
+  const images = parseArray(item?.images);
+  const description = String(item?.description || "").trim();
+  const listingType = String(getListingType(item) || "").toLowerCase();
+
+  if (!String(item?.title || "").trim()) issues.push("title missing");
+  if (!String(item?.locality || "").trim()) issues.push("locality missing");
+  if (!String(item?.price || "").trim()) issues.push("price missing");
+  if (listingType.includes("rent") && !String(item?.security_deposit || item?.securityDeposit || "").trim()) {
+    issues.push("security deposit missing");
+  }
+
+  if (ownerLinked) {
+    if (!images.length) issues.push("owner photo missing");
+    if (!description) issues.push("description missing");
+    if (!item?.verified) issues.push("owner verification missing");
+  }
+
+  return issues;
+}
+
 function getPropertyImage(item: any) {
   const images = parseArray(item?.images);
   if (images[0]) return images[0];
@@ -368,6 +392,14 @@ const [properties, setProperties] = useState<any[]>([]);
 
     const currentTitle = item?.title || "Untitled property";
     const nextPublicationStatus = nextStatus === "Live" ? "published" : "draft";
+
+    if (nextStatus === "Live") {
+      const qualityIssues = c42PropertyQualityIssues(item);
+      if (qualityIssues.length) {
+        setErrorMessage(`Cannot publish yet: ${qualityIssues[0]}. Open Edit to complete the listing.`);
+        return;
+      }
+    }
 
     try {
       setPublishingId(item.id);
@@ -609,6 +641,15 @@ const [properties, setProperties] = useState<any[]>([]);
                                   Verified
                                 </span>
                               ) : null}
+                              {c42PropertyQualityIssues(item).length ? (
+                                <span className="rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                                  Quality: {c42PropertyQualityIssues(item).length} issue{c42PropertyQualityIssues(item).length > 1 ? "s" : ""}
+                                </span>
+                              ) : (
+                                <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                                  Quality OK
+                                </span>
+                              )}
                             </div>
 
                             <h3 className="mt-2 line-clamp-2 text-lg font-bold text-slate-950 md:mt-3 md:text-xl">
