@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ExternalLink,
   FileText,
+  Heart,
   MapPin,
   MessageCircle,
   Phone,
