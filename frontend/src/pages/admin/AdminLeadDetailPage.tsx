@@ -295,28 +295,44 @@ function displayOwnerRequirement(lead: AdminLead) {
 
 function ownerDraftPropertyUrl(lead: AdminLead) {
   const params = new URLSearchParams();
+  const requirement = displayLeadRequirement(lead);
+  const rawProperty = String(lead.property || "").trim();
+  const cleanProperty =
+    rawProperty && !["General enquiry", "Owner listing enquiry", "Not specified"].includes(rawProperty)
+      ? rawProperty
+      : "";
+  const cleanSociety = String(lead.society || "").trim();
+  const isRent = /rent|rental/i.test(requirement) || /rent/i.test(lead.source || "");
+  const listingType = isRent ? "Rent" : "Sale";
+  const draftTitle =
+    cleanProperty ||
+    `${cleanSociety || lead.name || "Owner"} ${isRent ? "rental" : "sale"} listing draft`;
 
   if (lead.name) params.set("ownerName", lead.name);
   if (lead.phone) params.set("ownerPhone", lead.phone);
-  if (lead.society) params.set("society", lead.society);
-  if (lead.property) params.set("property", lead.property);
-  if (lead.budget) params.set("expectedPrice", lead.budget);
-  params.set("requirement", displayLeadRequirement(lead));
+  if (cleanSociety) params.set("society", cleanSociety);
+  if (cleanProperty) params.set("property", cleanProperty);
+  if (lead.budget && lead.budget !== "Not specified") params.set("expectedPrice", lead.budget);
+  params.set("requirement", requirement);
+  params.set("listingType", listingType);
+  params.set("title", draftTitle);
   params.set("sourceLeadId", String(lead.id));
 
   return `/admin/properties/new?${params.toString()}`;
 }
 
 function linkedDraftPropertyForLead(lead: AdminLead) {
-  return lead.linkedProperties?.find((property) =>
-    ["Draft", "Verification"].includes(String(property.status || ""))
-  );
+  return lead.linkedProperties?.find((property) => {
+    const status = String(property.status || "").toLowerCase();
+    return ["draft", "verification"].includes(status);
+  });
 }
 
 function linkedLivePropertyForLead(lead: AdminLead) {
-  return lead.linkedProperties?.find((property) =>
-    String(property.status || "") === "Live"
-  );
+  return lead.linkedProperties?.find((property) => {
+    const status = String(property.status || "").toLowerCase();
+    return ["live", "active", "published"].includes(status);
+  });
 }
 
 function ownerLeadNextStep(lead: AdminLead) {

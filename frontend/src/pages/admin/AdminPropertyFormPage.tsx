@@ -229,6 +229,68 @@ function requiredFieldHint(listingType: string) {
   return "For sale/resale listings, title, society, locality and sale price are required. Token amount is optional.";
 }
 
+
+function parseOwnerBhk(value: string) {
+  const match = String(value || "").match(/(\d+(?:\.\d+)?)\s*bhk/i);
+  return match ? match[1] : "";
+}
+
+function parseOwnerArea(value: string) {
+  const match = String(value || "").match(/(\d[\d,]*(?:\.\d+)?)\s*(?:sq\.?\s*ft|sqft|sq\.?\s*yd|sqyd|yds|yards)/i);
+  return match ? match[1].replace(/,/g, "") : "";
+}
+
+function inferOwnerListingType(requirement: string, listingTypeParam: string) {
+  const explicit = String(listingTypeParam || "").trim();
+  if (/rent/i.test(explicit)) return "Rent";
+  if (/sale|sell|buy|resale/i.test(explicit)) return "Sale";
+
+  const value = String(requirement || "").toLowerCase();
+  if (value.includes("rent") || value.includes("rental")) return "Rent";
+  if (value.includes("sale") || value.includes("sell") || value.includes("buy") || value.includes("resale")) return "Sale";
+
+  return "Rent";
+}
+
+function ownerDraftTitleFromParams(titleParam: string, propertyParam: string, society: string, listingType: string) {
+  const title = String(titleParam || "").trim();
+  if (title) return title;
+
+  const property = String(propertyParam || "").trim();
+  if (property && !["General enquiry", "Owner listing enquiry", "Not specified"].includes(property)) {
+    return property;
+  }
+
+  const societyName = String(society || "").trim();
+  return `${societyName || "Owner"} ${listingType === "Rent" ? "rental" : "sale"} listing draft`;
+}
+
+function ownerDraftDescription(params: {
+  ownerName: string;
+  ownerPhone: string;
+  society: string;
+  property: string;
+  expectedPrice: string;
+  requirement: string;
+  sourceLeadId: string;
+  listingType: string;
+}) {
+  return [
+    "Draft property created from Owner CRM lead.",
+    `Listing type: ${params.listingType}`,
+    params.ownerName ? `Owner: ${params.ownerName}` : "",
+    params.ownerPhone ? `Phone: ${params.ownerPhone}` : "",
+    params.society ? `Society: ${params.society}` : "",
+    params.property ? `Property details: ${params.property}` : "",
+    params.expectedPrice ? `Expected price/rent: ${params.expectedPrice}` : "",
+    params.requirement ? `Requirement: ${params.requirement}` : "",
+    params.sourceLeadId ? `Source lead ID: ${params.sourceLeadId}` : "",
+    "Next admin step: verify ownership, collect photos, confirm price and publish only after checking details.",
+  ]
+    .filter(Boolean)
+    .join("\\n");
+}
+
 export function AdminPropertyFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -745,38 +807,43 @@ export function AdminPropertyFormPage() {
     const ownerName = params.get("ownerName") || "";
     const ownerPhone = params.get("ownerPhone") || "";
     const society = params.get("society") || "";
-    const property = params.get("property") || "";
+    const propertyParam = params.get("property") || "";
     const expectedPrice = params.get("expectedPrice") || "";
     const requirement = params.get("requirement") || "";
     const sourceLeadId = params.get("sourceLeadId") || "";
+    const listingTypeParam = params.get("listingType") || "";
+    const titleParam = params.get("title") || "";
 
-    if (!ownerName && !ownerPhone && !society && !property && !expectedPrice && !sourceLeadId) return;
+    if (!ownerName && !ownerPhone && !society && !propertyParam && !expectedPrice && !sourceLeadId) return;
+
+    const inferredListingType = inferOwnerListingType(requirement, listingTypeParam);
+    const parsedBhk = parseOwnerBhk(propertyParam);
+    const parsedArea = parseOwnerArea(propertyParam);
+    const draftTitle = ownerDraftTitleFromParams(titleParam, propertyParam, society, inferredListingType);
 
     setProperty((current) => ({
       ...current,
-      title: current.title || property || `${society || "Owner"} property draft`,
-      listingType: requirement.toLowerCase().includes("rent") ? "Rent" : "Sale",
+      title: current.title || draftTitle,
+      listingType: inferredListingType,
       status: current.status || "Draft",
       society: current.society || society,
       locality: current.locality || "Gurgaon",
       price: current.price || expectedPrice,
-      bedrooms: current.bedrooms || "3",
-      bathrooms: current.bathrooms || "3",
-      areaSqft: current.areaSqft || "1000",
+      bedrooms: current.bedrooms || parsedBhk,
+      bathrooms: current.bathrooms || parsedBhk,
+      areaSqft: current.areaSqft || parsedArea,
       description:
         current.description ||
-        [
-          "Draft property created from Owner CRM lead.",
-          ownerName ? `Owner: ${ownerName}` : "",
-          ownerPhone ? `Phone: ${ownerPhone}` : "",
-          society ? `Society: ${society}` : "",
-          property ? `Property details: ${property}` : "",
-          expectedPrice ? `Expected price/rent: ${expectedPrice}` : "",
-          requirement ? `Requirement: ${requirement}` : "",
-          sourceLeadId ? `Source lead ID: ${sourceLeadId}` : "",
-        ]
-          .filter(Boolean)
-          .join("\n"),
+        ownerDraftDescription({
+          ownerName,
+          ownerPhone,
+          society,
+          property: propertyParam,
+          expectedPrice,
+          requirement,
+          sourceLeadId,
+          listingType: inferredListingType,
+        }),
     }));
   }, [isEdit, location.search]);
 
@@ -845,14 +912,20 @@ export function AdminPropertyFormPage() {
 
         {sourceLeadId ? (
           <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-blue-800 shadow-sm">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-500">
-                  Owner CRM source
+                  Owner draft pipeline
                 </p>
                 <p className="mt-1 font-semibold text-blue-950">
                   This draft property was started from owner lead #{sourceLeadId}.
                 </p>
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.12em]">
+                  <span className="rounded-full bg-white px-3 py-1 text-blue-700">1. Verify owner</span>
+                  <span className="rounded-full bg-white px-3 py-1 text-blue-700">2. Add photos</span>
+                  <span className="rounded-full bg-white px-3 py-1 text-blue-700">3. Save draft</span>
+                  <span className="rounded-full bg-white px-3 py-1 text-emerald-700">4. Publish when ready</span>
+                </div>
               </div>
               <Link
                 to={`/admin/leads/${sourceLeadId}`}
