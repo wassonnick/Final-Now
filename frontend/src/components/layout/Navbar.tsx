@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Menu, X, Heart, Scale, MapPin, Building2, Sparkles, BarChart3, User, Home, KeyRound, BadgeIndianRupee, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,35 @@ import { cn } from '@/lib/utils';
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [accountDashboardPath, setAccountDashboardPath] = useState("");
+
+  useEffect(() => {
+    const syncAccountPath = () => {
+      try {
+        const raw = window.localStorage.getItem("sf_account_session");
+        const parsed = raw ? JSON.parse(raw) : null;
+        const role = String(parsed?.role || "");
+        setAccountDashboardPath(
+          role === "broker"
+            ? "/broker/dashboard"
+            : role === "customer"
+              ? "/customer/dashboard"
+              : "",
+        );
+      } catch {
+        setAccountDashboardPath("");
+      }
+    };
+
+    syncAccountPath();
+    window.addEventListener("focus", syncAccountPath);
+    window.addEventListener("storage", syncAccountPath);
+
+    return () => {
+      window.removeEventListener("focus", syncAccountPath);
+      window.removeEventListener("storage", syncAccountPath);
+    };
+  }, []);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
@@ -94,7 +123,14 @@ export function Navbar() {
               <div className="w-9 h-9 bg-navy-100 rounded-full flex items-center justify-center"><User className="w-4 h-4 text-navy-600" /></div>
             </div>
           ) : (
-            <Button variant="ghost" size="sm" className="hidden sm:flex rounded-full text-navy-700 hover:bg-navy-50" onClick={() => navigate('/customer/dashboard')}>Dashboard</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden sm:flex rounded-full text-navy-700 hover:bg-navy-50"
+              onClick={() => navigate(accountDashboardPath || "/login")}
+            >
+              {accountDashboardPath ? "Dashboard" : "Sign In"}
+            </Button>
           )}
 
           <Link to="/sell" className="hidden lg:block"><Button size="sm" className="rounded-full bg-blue-700 hover:bg-blue-800 text-white px-5 shadow-sm">List Property</Button></Link>
@@ -107,7 +143,9 @@ export function Navbar() {
           <div className="container mx-auto px-4 py-4 space-y-2">
             <form onSubmit={handleSearch} className="mb-3"><div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-400" /><Input className="pl-9 rounded-full" placeholder="Search SocietyFlats" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div></form>
             {navLinks.map((link) => <Link key={link.href} to={link.href} className="flex items-center gap-3 px-4 py-3 rounded-2xl text-navy-700 hover:bg-navy-50 transition-colors" onClick={() => setIsMenuOpen(false)}><link.icon className="w-5 h-5" /><span className="font-medium">{link.label}</span>{link.badge && link.badge > 0 ? <span className="ml-auto text-xs bg-navy-100 rounded-full px-2 py-0.5">{link.badge}</span> : null}</Link>)}
-            <Button variant="outline" className="w-full rounded-full border-blue-100 bg-white text-blue-700" onClick={() => { navigate('/customer/dashboard'); setIsMenuOpen(false); }}>Dashboard</Button>
+            <Button variant="outline" className="w-full rounded-full border-blue-100 bg-white text-blue-700" onClick={() => { navigate(accountDashboardPath || '/login'); setIsMenuOpen(false); }}>
+              {accountDashboardPath ? "Dashboard" : "Login"}
+            </Button>
             <Button className="w-full rounded-full bg-navy-600 hover:bg-navy-700 text-white" onClick={() => { navigate('/sell'); setIsMenuOpen(false); }}>List Property</Button>
           </div>
         </div>
