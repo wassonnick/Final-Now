@@ -252,17 +252,34 @@ function inferOwnerListingType(requirement: string, listingTypeParam: string) {
   return "Rent";
 }
 
+function titleCaseWords(value: string) {
+  return String(value || "")
+    .trim()
+    .split(/\s+/)
+    .map((word) => word ? word.charAt(0).toUpperCase() + word.slice(1) : "")
+    .join(" ");
+}
+
+function cleanSocietyForTitle(value: string) {
+  return titleCaseWords(
+    String(value || "")
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
+  );
+}
+
 function ownerDraftTitleFromParams(titleParam: string, propertyParam: string, society: string, listingType: string) {
+  const bhk = parseOwnerBhk(propertyParam);
+  const societyName = cleanSocietyForTitle(society);
+  const flatType = listingType === "Rent" ? "Flat" : "Flat";
+
+  if (bhk && societyName) return `${bhk} BHK ${flatType} in ${societyName}`;
+  if (bhk) return `${bhk} BHK ${flatType} in Gurgaon`;
+  if (societyName) return `${listingType === "Rent" ? "Rental" : "Sale"} ${flatType} in ${societyName}`;
+
   const title = String(titleParam || "").trim();
-  if (title) return title;
-
-  const property = String(propertyParam || "").trim();
-  if (property && !["General enquiry", "Owner listing enquiry", "Not specified"].includes(property)) {
-    return property;
-  }
-
-  const societyName = String(society || "").trim();
-  return `${societyName || "Owner"} ${listingType === "Rent" ? "rental" : "sale"} listing draft`;
+  return title || `Owner ${listingType === "Rent" ? "rental" : "sale"} listing draft`;
 }
 
 function ownerDraftDescription(params: {
@@ -275,20 +292,22 @@ function ownerDraftDescription(params: {
   sourceLeadId: string;
   listingType: string;
 }) {
-  return [
-    "Draft property created from Owner CRM lead.",
-    `Listing type: ${params.listingType}`,
-    params.ownerName ? `Owner: ${params.ownerName}` : "",
-    params.ownerPhone ? `Phone: ${params.ownerPhone}` : "",
-    params.society ? `Society: ${params.society}` : "",
-    params.property ? `Property details: ${params.property}` : "",
-    params.expectedPrice ? `Expected price/rent: ${params.expectedPrice}` : "",
-    params.requirement ? `Requirement: ${params.requirement}` : "",
-    params.sourceLeadId ? `Source lead ID: ${params.sourceLeadId}` : "",
-    "Next admin step: verify ownership, collect photos, confirm price and publish only after checking details.",
-  ]
-    .filter(Boolean)
-    .join("\\n");
+  const societyName = cleanSocietyForTitle(params.society) || "the selected society";
+  const bhk = parseOwnerBhk(params.property);
+  const area = parseOwnerArea(params.property);
+  const listingWord = params.listingType === "Rent" ? "available for rent" : "available for sale";
+
+  const lines = [
+    `${bhk ? `${bhk} BHK flat` : "Flat"} in ${societyName}, Gurgaon, ${listingWord}.`,
+    area ? `Approx. super area: ${area} sq.ft.` : "",
+    params.expectedPrice
+      ? `${params.listingType === "Rent" ? "Expected monthly rent" : "Expected sale price"}: ${params.expectedPrice}.`
+      : "",
+    "Owner details and availability are pending verification by SocietyFlats admin.",
+    "Photos, furnishing, floor details and visit timing should be confirmed before publishing.",
+  ].filter(Boolean);
+
+  return lines.join("\\n");
 }
 
 export function AdminPropertyFormPage() {
@@ -823,7 +842,7 @@ export function AdminPropertyFormPage() {
 
     setProperty((current) => ({
       ...current,
-      title: current.title || draftTitle,
+      title: draftTitle,
       listingType: inferredListingType,
       status: current.status || "Draft",
       society: current.society || society,
@@ -831,19 +850,17 @@ export function AdminPropertyFormPage() {
       price: current.price || expectedPrice,
       bedrooms: current.bedrooms || parsedBhk,
       bathrooms: current.bathrooms || parsedBhk,
-      areaSqft: current.areaSqft || parsedArea,
-      description:
-        current.description ||
-        ownerDraftDescription({
-          ownerName,
-          ownerPhone,
-          society,
-          property: propertyParam,
-          expectedPrice,
-          requirement,
-          sourceLeadId,
-          listingType: inferredListingType,
-        }),
+      areaSqft: parsedArea || current.areaSqft,
+      description: ownerDraftDescription({
+        ownerName,
+        ownerPhone,
+        society,
+        property: propertyParam,
+        expectedPrice,
+        requirement,
+        sourceLeadId,
+        listingType: inferredListingType,
+      }).replace(/\\n/g, "\n"),
     }));
   }, [isEdit, location.search]);
 
