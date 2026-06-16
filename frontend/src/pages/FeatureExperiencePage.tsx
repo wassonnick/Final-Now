@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { fetchPublicProperties, fetchPublicSocieties, formatPublicLocation, searchableText, societyImage } from '@/lib/publicData';
 import { cn } from '@/lib/utils';
 import { createCustomerAccountSession, rememberBrokerActivitySubmission } from '@/lib/customerAccount';
+import { syncAccountToBackend } from '@/lib/accountApi';
 
 type FeatureExperienceKey = 'maps' | 'broker-crm' | 'chat' | 'recommendations';
 
@@ -373,6 +374,21 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
         });
 
         rememberBrokerActivitySubmission(payload, response as Record<string, unknown>);
+
+        void syncAccountToBackend({
+          role: 'broker',
+          phone: cleanPhone || form.phone,
+          name: form.name.trim() || 'Broker Partner',
+          email: form.email.trim() || undefined,
+          source: 'broker_crm_signup',
+          meta: {
+            companyName: form.companyName.trim(),
+            officeAddress: form.officeAddress.trim(),
+            workingAreas: form.workingAreas.trim(),
+            experience: form.experience.trim(),
+            reraNumber: form.reraNumber.trim(),
+          },
+        });
       }
 
       if (isBrokerCrm) {

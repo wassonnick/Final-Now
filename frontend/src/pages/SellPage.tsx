@@ -19,6 +19,7 @@ import { backendApi } from "@/services/backendApi";
 import { trackEvent, trackLeadIntent, trackLeadSubmitted } from "@/lib/analytics";
 import { cleanLeadTrackingPayload } from "@/lib/leadTracking";
 import { createCustomerAccountSession } from "@/lib/customerAccount";
+import { syncAccountToBackend } from "@/lib/accountApi";
 
 function cleanOwnerLeadPhone(value: string) {
   return String(value || "").replace(/\D/g, "").slice(0, 10);
@@ -181,6 +182,23 @@ export function SellPage() {
         name: form.name.trim(),
         phone: cleanPhone,
         role: "customer",
+      });
+
+      void syncAccountToBackend({
+        role: "customer",
+        phone: cleanPhone,
+        name: form.name.trim(),
+        source: "sell_page_owner_listing",
+        meta: {
+          ownerListingSignup: true,
+          society: form.society,
+          bhk: form.bhk,
+          size: form.size,
+          floor: form.floor,
+          furnishing: form.furnishing,
+          availability: form.availability,
+          expectation: form.expectation,
+        },
       });
 
       setAccountCreated(Boolean(createdSession));

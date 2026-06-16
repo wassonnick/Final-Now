@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createCustomerAccountSession } from "@/lib/customerAccount";
+import { syncAccountToBackend } from "@/lib/accountApi";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -55,15 +56,24 @@ export function LoginPage() {
       return;
     }
 
-    window.localStorage.setItem(
-      "sf_account_session",
-      JSON.stringify({
-        role,
-        phone: cleanPhone(phone),
-        name: name.trim() || (role === "broker" ? "Broker Partner" : "Customer"),
-        loginAt: new Date().toISOString(),
-      }),
-    );
+    const cleanMobile = cleanPhone(phone);
+    const accountName = name.trim() || (role === "broker" ? "Broker Partner" : "Customer");
+
+    createCustomerAccountSession({
+      role,
+      phone: cleanMobile,
+      name: accountName,
+    });
+
+    void syncAccountToBackend({
+      role,
+      phone: cleanMobile,
+      name: accountName,
+      source: "login_page",
+      meta: {
+        temporaryLocalSession: true,
+      },
+    });
 
     navigate(targetPath, { replace: true });
   };
@@ -115,7 +125,7 @@ export function LoginPage() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-slate-950">Account login</h2>
-                  <p className="text-sm text-slate-500">Temporary frontend login for C43 foundation.</p>
+                  <p className="text-sm text-slate-500">Temporary login synced to backend account foundation.</p>
                 </div>
               </div>
 
@@ -180,7 +190,7 @@ export function LoginPage() {
               </form>
 
               <p className="mt-4 text-xs leading-5 text-slate-500">
-                Full OTP/backend role authentication will come later. This C43A gate prevents public dashboard access and prepares account UX safely.
+                C47 syncs this account to the backend. Full OTP/SMS verification will be enabled after provider wiring.
               </p>
             </div>
           </div>

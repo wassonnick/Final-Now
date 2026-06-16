@@ -29,3 +29,12 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::apiResource('properties', PropertyController::class)->except(['create', 'edit']);
     Route::apiResource('leads', LeadController::class)->only(['index', 'show', 'update', 'destroy']);
 });
+
+
+Route::prefix('accounts')->group(function () {
+    Route::post('/upsert', [\App\Http\Controllers\Api\AccountController::class, 'upsert']);
+    Route::post('/request-otp', [\App\Http\Controllers\Api\AccountController::class, 'requestOtp']);
+    Route::post('/verify-otp', [\App\Http\Controllers\Api\AccountController::class, 'verifyOtp']);
+    Route::get('/me', [\App\Http\Controllers\Api\AccountController::class, 'me']);
+});
+
