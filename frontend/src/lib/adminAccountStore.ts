@@ -129,3 +129,22 @@ export async function updateAdminAccount(
 
   return json?.account as AdminAccount;
 }
+
+
+export async function findAdminAccountsByPhone(phone: string) {
+  const cleanPhone = String(phone || "").replace(/[^0-9]/g, "").slice(-10);
+
+  if (!cleanPhone) {
+    return [];
+  }
+
+  const result = await listAdminAccounts({
+    q: cleanPhone,
+    withRelated: true,
+  });
+
+  return result.accounts.filter((account) => {
+    const accountPhone = String(account.phone_normalized || account.phone || "").replace(/[^0-9]/g, "").slice(-10);
+    return accountPhone === cleanPhone;
+  });
+}
