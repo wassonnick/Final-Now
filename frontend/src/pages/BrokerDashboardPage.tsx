@@ -157,9 +157,9 @@ export function BrokerDashboardPage() {
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#fffaf4] pb-16">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#fffaf4] pb-16">
       <section className="border-b border-orange-100 bg-gradient-to-br from-white via-orange-50/70 to-slate-50">
-        <div className="container mx-auto px-4 py-8 md:py-12">
+        <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <Badge className="mb-4 rounded-full border-orange-200 bg-white px-4 py-1.5 text-orange-700 shadow-sm">
@@ -209,9 +209,9 @@ export function BrokerDashboardPage() {
         </div>
       </section>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto max-w-7xl px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <TabsList className="flex h-auto w-full max-w-full flex-wrap items-stretch justify-start gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
             {[
               ["overview", "Overview", BarChart3],
               ["listings", "My Listings", Home],
@@ -225,7 +225,7 @@ export function BrokerDashboardPage() {
                 <TabsTrigger
                   key={String(value)}
                   value={String(value)}
-                  className="min-w-0 rounded-2xl px-2 py-3 text-xs font-bold data-[state=active]:bg-orange-600 data-[state=active]:text-white"
+                  className="min-w-0 flex-1 basis-[calc(50%-0.25rem)] whitespace-normal rounded-2xl px-2 py-3 text-center text-xs font-bold leading-tight data-[state=active]:bg-orange-600 data-[state=active]:text-white sm:basis-[calc(33.333%-0.35rem)] xl:basis-0"
                 >
                   <IconComponent className="mr-2 h-4 w-4" />
                   {String(label)}
@@ -235,7 +235,7 @@ export function BrokerDashboardPage() {
           </TabsList>
 
           <TabsContent value="overview" className="mt-6 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-            <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="max-w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
                   <BriefcaseBusiness className="h-6 w-6" />
@@ -261,7 +261,7 @@ export function BrokerDashboardPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="max-w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
                   <ShieldCheck className="h-6 w-6" />
@@ -305,7 +305,7 @@ export function BrokerDashboardPage() {
           </TabsContent>
 
           <TabsContent value="profile" className="mt-6">
-            <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="max-w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-start gap-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
                   <UserCheck className="h-7 w-7" />
