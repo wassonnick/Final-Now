@@ -269,6 +269,64 @@ function attributionBadge(lead: AdminLead) {
   return "";
 }
 
+
+function workflowNextAction(lead: AdminLead) {
+  const status = lead.status;
+  const source = String(lead.source || "").toLowerCase();
+  const followUp = followUpState(lead);
+
+  if (status === "Booked") {
+    if (isOwnerLeadSource(source)) return "Keep owner inventory active";
+    if (isBrokerLeadSource(source)) return "Keep partner active";
+    return "Closed lead - monitor";
+  }
+
+  if (status === "Lost") return "No action - inactive";
+  if (followUp === "overdue") return "Call now - overdue";
+  if (followUp === "today") return "Follow up today";
+
+  if (isOwnerLeadSource(source)) {
+    if (status === "New") return "Verify ownership";
+    if (status === "Contacted") return "Ask photos + details";
+    if (status === "Negotiation") return "Confirm price and create draft";
+    return "Move owner lead forward";
+  }
+
+  if (isBrokerLeadSource(source)) {
+    if (status === "New") return "Verify broker profile";
+    if (status === "Contacted") return "Ask inventory areas";
+    if (status === "Negotiation") return "Finalize partner terms";
+    return "Move broker lead forward";
+  }
+
+  if (source.includes("property")) {
+    if (status === "New") return "Call and check requirement";
+    if (status === "Contacted") return "Share matching homes";
+    if (status === "Site Visit") return "Confirm visit timing";
+    return "Move property lead forward";
+  }
+
+  if (source.includes("society") || source.includes("search") || source.includes("ai")) {
+    if (status === "New") return "Call and qualify requirement";
+    if (status === "Contacted") return "Send shortlist";
+    if (status === "Site Visit") return "Schedule society visit";
+    return "Move enquiry forward";
+  }
+
+  return status === "New" ? "Contact lead" : "Review next step";
+}
+
+function workflowNextActionClass(lead: AdminLead) {
+  const next = workflowNextAction(lead).toLowerCase();
+
+  if (next.includes("overdue") || next.includes("call now")) return "bg-rose-50 text-rose-700 border-rose-100";
+  if (next.includes("today")) return "bg-amber-50 text-amber-700 border-amber-100";
+  if (next.includes("active") || next.includes("closed")) return "bg-emerald-50 text-emerald-700 border-emerald-100";
+  if (next.includes("inactive")) return "bg-slate-50 text-slate-500 border-slate-100";
+
+  return "bg-blue-50 text-blue-700 border-blue-100";
+}
+
 function sourceClass(source?: string) {
   const value = String(source || "").toLowerCase();
 
@@ -816,6 +874,9 @@ export function AdminLeadsPage() {
                     <p className="mt-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 xl:bg-transparent xl:px-0 xl:py-0 xl:text-sm">
                       {cleanLeadInterestRequirement(lead)}
                     </p>
+                    <p className={`mt-2 inline-flex rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.1em] xl:hidden ${workflowNextActionClass(lead)}`}>
+                      Next: {workflowNextAction(lead)}
+                    </p>
                   </div>
 
                   <div className="mt-3 grid grid-cols-3 gap-2 xl:contents">
@@ -852,6 +913,9 @@ export function AdminLeadsPage() {
                         {displayFollowUp(lead)}
                       </p>
                       <p className="mt-1 hidden text-xs xl:block">{lead.assignedTo || "Unassigned"}</p>
+                      <p className={`mt-1 hidden w-fit rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] xl:block ${workflowNextActionClass(lead)}`}>
+                        {workflowNextAction(lead)}
+                      </p>
                     </div>
                   </div>
 

@@ -389,6 +389,50 @@ function preferredCallbackTime(lead: AdminLead) {
 }
 
 
+
+function leadWorkflowNextAction(lead: AdminLead) {
+  const status = lead.status;
+  const source = String(lead.source || "").toLowerCase();
+
+  if (status === "Booked") {
+    if (isOwnerSource(source)) return "Owner inventory is active. Keep pricing, photos and availability updated.";
+    if (isBrokerSource(source)) return "Broker partner is active. Ask for fresh inventory and working areas.";
+    return "Lead is closed. Keep record updated.";
+  }
+
+  if (status === "Lost") return "Lead is inactive. Reopen only if the customer responds again.";
+
+  if (isOwnerSource(source)) {
+    if (status === "New") return "Verify ownership, society, tower, expected price/rent and availability.";
+    if (status === "Contacted") return "Ask for photos, floor, furnishing and permission to create the draft listing.";
+    if (status === "Negotiation") return "Confirm final price/rent and create or publish the draft property.";
+    return "Move owner lead toward verified inventory.";
+  }
+
+  if (isBrokerSource(source)) {
+    if (status === "New") return "Verify broker profile, active societies and working locations.";
+    if (status === "Contacted") return "Ask inventory format, commission terms and society focus.";
+    if (status === "Negotiation") return "Finalize partner terms and mark as active partner.";
+    return "Move broker lead toward active partner status.";
+  }
+
+  if (source.includes("property")) {
+    if (status === "New") return "Call the lead, qualify budget and confirm rent/buy intent.";
+    if (status === "Contacted") return "Share matching homes and push for visit timing.";
+    if (status === "Site Visit") return "Confirm visit slot, property availability and decision timeline.";
+    return "Move property lead toward visit or negotiation.";
+  }
+
+  if (source.includes("society") || source.includes("search") || source.includes("ai")) {
+    if (status === "New") return "Call and understand budget, preferred sectors, commute and family needs.";
+    if (status === "Contacted") return "Send a short society shortlist with available homes.";
+    if (status === "Site Visit") return "Schedule society or property visit.";
+    return "Move enquiry toward shortlist and visit.";
+  }
+
+  return "Contact the lead and add the next follow-up note.";
+}
+
 function leadTypeTitle(source?: string) {
   const value = String(source || "").toLowerCase();
 
@@ -1439,6 +1483,15 @@ export function AdminLeadDetailPage() {
                 <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusClass(lead.status)}`}>
                   {displayLeadStatus(lead)}
                 </span>
+              </div>
+
+              <div className="mt-4 rounded-3xl border border-blue-100 bg-blue-50 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">
+                  Recommended next step
+                </p>
+                <p className="mt-2 text-sm font-semibold leading-6 text-slate-800">
+                  {leadWorkflowNextAction(lead)}
+                </p>
               </div>
 
               <div className="mt-5 rounded-3xl bg-slate-50 p-4">
