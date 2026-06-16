@@ -44,4 +44,11 @@ return [
         'admin_base_url' => env('ADMIN_FRONTEND_URL', 'https://societyflats.com'),
     ],
 
+    'otp' => [
+        'enabled' => env('OTP_DELIVERY_ENABLED', false),
+        'provider' => env('OTP_PROVIDER', 'log'),
+        'webhook_url' => env('OTP_WEBHOOK_URL'),
+        'webhook_token' => env('OTP_WEBHOOK_TOKEN'),
+    ],
+
 ];

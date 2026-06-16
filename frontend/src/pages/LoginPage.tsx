@@ -107,12 +107,14 @@ export function LoginPage() {
       });
 
       setOtpRequested(true);
-      setProviderPending(!response.dev_otp);
+      setProviderPending(!response.delivery?.delivered && !response.dev_otp);
       setDevOtp(response.dev_otp || null);
       setMessage(
-        response.dev_otp
-          ? "OTP generated. Enter the code below."
-          : "OTP request created. SMS/WhatsApp provider will be connected next. Use fallback for now.",
+        response.delivery?.delivered
+          ? "OTP sent successfully. Enter the code below."
+          : response.dev_otp
+            ? "OTP generated. Enter the code below."
+            : "OTP created securely. Delivery provider is not connected yet, so fallback remains available for now.",
       );
       setStep("otp");
     } catch (err) {
@@ -324,7 +326,7 @@ export function LoginPage() {
                     className="h-12 w-full rounded-2xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                   >
                     {fallbackLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                    Continue while OTP provider is pending
+                    Continue securely while OTP delivery is pending
                   </Button>
                 </form>
               ) : (
@@ -346,7 +348,7 @@ export function LoginPage() {
 
                   {providerPending ? (
                     <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs font-semibold leading-5 text-amber-700">
-                      SMS/WhatsApp provider is not connected yet. Use the fallback button to continue during this foundation phase.
+                      OTP delivery provider is not connected yet. Use the fallback button to continue during this foundation phase.
                     </div>
                   ) : null}
 
@@ -370,7 +372,7 @@ export function LoginPage() {
                     className="h-12 w-full rounded-2xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                   >
                     {fallbackLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                    Continue while OTP provider is pending
+                    Continue securely while OTP delivery is pending
                   </Button>
 
                   <button
@@ -385,7 +387,7 @@ export function LoginPage() {
               )}
 
               <p className="mt-4 text-xs leading-5 text-slate-500">
-                C50 adds OTP request/verify UI using the backend account OTP foundation. SMS/WhatsApp delivery will be connected in the next provider phase.
+                C51A prepares OTP delivery through a provider layer. Fallback remains until SMS/WhatsApp delivery is fully connected.
               </p>
             </div>
           </div>

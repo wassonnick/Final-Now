@@ -26,9 +26,17 @@ export type BackendAccount = {
   updated_at?: string | null;
 };
 
+export type AccountDelivery = {
+  attempted?: boolean;
+  delivered?: boolean;
+  provider?: string;
+  channel?: "sms" | "whatsapp" | string;
+};
+
 export type AccountResponse = {
   message?: string;
   account?: BackendAccount;
+  delivery?: AccountDelivery;
   dev_otp?: string | null;
 };
 

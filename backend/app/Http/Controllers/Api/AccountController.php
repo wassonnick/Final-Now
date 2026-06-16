@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\AccountOtp;
+use App\Services\OtpDeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -126,18 +127,28 @@ class AccountController extends Controller
 
         $code = (string) random_int(100000, 999999);
 
+        $channel = $validated['channel'] ?? 'sms';
+
         AccountOtp::create([
             'account_id' => $account->id,
             'phone_normalized' => $phone,
             'role' => $validated['role'],
             'code_hash' => Hash::make($code),
-            'channel' => $validated['channel'] ?? 'sms',
+            'channel' => $channel,
             'expires_at' => now()->addMinutes(10),
         ]);
 
+        $delivery = app(OtpDeliveryService::class)->send($phone, $code, $channel);
+
         return response()->json([
-            'message' => 'OTP generated. SMS/WhatsApp provider will be connected later.',
+            'message' => $delivery['message'] ?? 'OTP generated.',
             'account' => $this->accountPayload($account),
+            'delivery' => [
+                'attempted' => (bool) ($delivery['attempted'] ?? false),
+                'delivered' => (bool) ($delivery['delivered'] ?? false),
+                'provider' => $delivery['provider'] ?? 'log',
+                'channel' => $delivery['channel'] ?? $channel,
+            ],
             'dev_otp' => app()->environment('production') ? null : $code,
         ]);
     }
