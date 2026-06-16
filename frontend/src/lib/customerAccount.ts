@@ -174,3 +174,147 @@ export function clearCustomerAccountSession() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(ACCOUNT_SESSION_KEY);
 }
+
+export type CustomerSavedItemType = "property" | "society";
+
+export type CustomerSavedItem = {
+  id: string;
+  phone: string;
+  type: CustomerSavedItemType;
+  title: string;
+  slug?: string;
+  href: string;
+  meta?: string;
+  image?: string;
+  action: "view" | "shortlist";
+  createdAt: string;
+  updatedAt: string;
+};
+
+const CUSTOMER_SAVED_ITEMS_KEY = "sf_customer_saved_items_v1";
+
+function readAllCustomerSavedItems(): CustomerSavedItem[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = window.localStorage.getItem(CUSTOMER_SAVED_ITEMS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAllCustomerSavedItems(items: CustomerSavedItem[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(CUSTOMER_SAVED_ITEMS_KEY, JSON.stringify(items.slice(0, 160)));
+}
+
+function savedItemKey(item: Pick<CustomerSavedItem, "type" | "href" | "action">) {
+  return `${item.action}:${item.type}:${item.href}`;
+}
+
+export function rememberCustomerSavedItem(
+  input: Omit<CustomerSavedItem, "id" | "phone" | "createdAt" | "updatedAt"> & {
+    phone?: string;
+  },
+) {
+  const session = getCustomerAccountSession();
+  const phone = cleanAccountPhone(input.phone || session?.phone);
+  if (!phone) return null;
+
+  const now = new Date().toISOString();
+  const allItems = readAllCustomerSavedItems();
+  const key = savedItemKey(input);
+
+  const existing = allItems.find((item) => item.phone === phone && savedItemKey(item) === key);
+
+  const nextItem: CustomerSavedItem = {
+    id: existing?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    phone,
+    type: input.type,
+    title: input.title,
+    slug: input.slug,
+    href: input.href,
+    meta: input.meta,
+    image: input.image,
+    action: input.action,
+    createdAt: existing?.createdAt || now,
+    updatedAt: now,
+  };
+
+  const nextItems = [
+    nextItem,
+    ...allItems.filter((item) => !(item.phone === phone && savedItemKey(item) === key)),
+  ];
+
+  writeAllCustomerSavedItems(nextItems);
+  return nextItem;
+}
+
+export function getCustomerSavedItemsForPhone(phone: unknown, action?: CustomerSavedItem["action"]) {
+  const cleanPhone = cleanAccountPhone(phone);
+  if (!cleanPhone) return [];
+
+  return readAllCustomerSavedItems()
+    .filter((item) => cleanAccountPhone(item.phone) === cleanPhone)
+    .filter((item) => (action ? item.action === action : true))
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+}
+
+export function isCustomerItemShortlisted(type: CustomerSavedItemType, href: string, phone?: string) {
+  const session = getCustomerAccountSession();
+  const cleanPhone = cleanAccountPhone(phone || session?.phone);
+  if (!cleanPhone) return false;
+
+  return readAllCustomerSavedItems().some(
+    (item) =>
+      cleanAccountPhone(item.phone) === cleanPhone &&
+      item.action === "shortlist" &&
+      item.type === type &&
+      item.href === href,
+  );
+}
+
+export function toggleCustomerShortlist(
+  input: Omit<CustomerSavedItem, "id" | "phone" | "createdAt" | "updatedAt" | "action"> & {
+    phone?: string;
+  },
+) {
+  const session = getCustomerAccountSession();
+  const phone = cleanAccountPhone(input.phone || session?.phone);
+  if (!phone) return { saved: false, item: null };
+
+  const allItems = readAllCustomerSavedItems();
+  const href = input.href;
+  const exists = allItems.some(
+    (item) =>
+      cleanAccountPhone(item.phone) === phone &&
+      item.action === "shortlist" &&
+      item.type === input.type &&
+      item.href === href,
+  );
+
+  if (exists) {
+    writeAllCustomerSavedItems(
+      allItems.filter(
+        (item) =>
+          !(
+            cleanAccountPhone(item.phone) === phone &&
+            item.action === "shortlist" &&
+            item.type === input.type &&
+            item.href === href
+          ),
+      ),
+    );
+    return { saved: false, item: null };
+  }
+
+  const item = rememberCustomerSavedItem({
+    ...input,
+    phone,
+    action: "shortlist",
+  });
+
+  return { saved: true, item };
+}

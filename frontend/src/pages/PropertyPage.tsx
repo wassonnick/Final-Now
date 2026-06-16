@@ -26,6 +26,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { setPublicSeo } from "@/lib/seo";
+import {
+  getCustomerAccountSession,
+  isCustomerItemShortlisted,
+  rememberCustomerSavedItem,
+  toggleCustomerShortlist,
+} from "@/lib/customerAccount";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
@@ -339,6 +345,48 @@ export function PropertyPage() {
   const furnishedStatus = getField(property, "furnishedStatus", "furnished_status", "-");
   const amenities = useMemo(() => parseList(property?.amenities), [property?.amenities]);
   const photos = useMemo(() => (property ? getPhotos(property) : []), [property]);
+  const customerSession = getCustomerAccountSession();
+  const propertyHref = property ? safePropertyPath(property) : `/property/${slug || ""}`;
+
+  // C45 property view tracking
+  useEffect(() => {
+    if (!property || !customerSession?.phone) return;
+
+    rememberCustomerSavedItem({
+      type: "property",
+      title,
+      slug: String(property.slug || slug || ""),
+      href: propertyHref,
+      meta: [societyName || "Gurgaon", listingType, String(price || "On request")].filter(Boolean).join(" · "),
+      image: photos[0],
+      action: "view",
+    });
+
+    setIsShortlisted(isCustomerItemShortlisted("property", propertyHref, customerSession.phone));
+  }, [property, customerSession?.phone, propertyHref, title, societyName, listingType, price, photos, slug]);
+
+  const handlePropertyShortlist = () => {
+    if (!property) return;
+
+    const result = toggleCustomerShortlist({
+      type: "property",
+      title,
+      slug: String(property.slug || slug || ""),
+      href: propertyHref,
+      meta: [societyName || "Gurgaon", listingType, String(price || "On request")].filter(Boolean).join(" · "),
+      image: photos[0],
+    });
+
+    setIsShortlisted(result.saved);
+
+    trackEvent("customer_property_shortlist_toggled", {
+      source: "property_page",
+      entity_type: "property",
+      entity_slug: property.slug || slug || "",
+      entity_name: title,
+      saved: result.saved,
+    });
+  };
 
   // C16 property SEO route effect
   useEffect(() => {

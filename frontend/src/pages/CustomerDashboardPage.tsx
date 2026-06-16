@@ -24,7 +24,9 @@ import {
   clearCustomerAccountSession,
   getCustomerAccountSession,
   getCustomerLeadsForPhone,
+  getCustomerSavedItemsForPhone,
   type CustomerActivityLead,
+  type CustomerSavedItem,
 } from "@/lib/customerAccount";
 
 type DashboardItem = {
@@ -61,6 +63,18 @@ function sourceLabel(source?: string) {
   if (value.includes("chat")) return "Chat request";
 
   return "SocietyFlats enquiry";
+}
+
+function mapSavedItemToDashboardItem(item: CustomerSavedItem): DashboardItem {
+  const label = item.type === "property" ? "Property" : "Society";
+  const action = item.action === "shortlist" ? "Shortlisted" : "Viewed";
+
+  return {
+    title: item.title,
+    meta: [label, item.meta || "", `${action} ${formatDate(item.updatedAt)}`].filter(Boolean).join(" · "),
+    status: action,
+    href: item.href,
+  };
 }
 
 function mapLeadToDashboardItem(lead: CustomerActivityLead): DashboardItem {
@@ -160,10 +174,14 @@ export function CustomerDashboardPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [activity, setActivity] = useState<CustomerActivityLead[]>([]);
+  const [viewedItems, setViewedItems] = useState<CustomerSavedItem[]>([]);
+  const [shortlistedItems, setShortlistedItems] = useState<CustomerSavedItem[]>([]);
   const session = getCustomerAccountSession();
 
   useEffect(() => {
     setActivity(getCustomerLeadsForPhone(session?.phone));
+    setViewedItems(getCustomerSavedItemsForPhone(session?.phone, "view"));
+    setShortlistedItems(getCustomerSavedItemsForPhone(session?.phone, "shortlist"));
   }, [session?.phone]);
 
   const customerName = session?.name || "Customer";
@@ -179,9 +197,23 @@ export function CustomerDashboardPage() {
     [activity],
   );
 
+  const recentViews = useMemo(
+    () => viewedItems.slice(0, 5).map(mapSavedItemToDashboardItem),
+    [viewedItems],
+  );
+
+  const shortlistItems = useMemo(
+    () => shortlistedItems.map(mapSavedItemToDashboardItem),
+    [shortlistedItems],
+  );
+
   const recentActivity = useMemo(
-    () => activity.slice(0, 5).map(mapLeadToDashboardItem),
-    [activity],
+    () =>
+      [
+        ...activity.slice(0, 5).map(mapLeadToDashboardItem),
+        ...viewedItems.slice(0, 5).map(mapSavedItemToDashboardItem),
+      ].slice(0, 6),
+    [activity, viewedItems],
   );
 
   const enquiryItems = useMemo(
@@ -200,8 +232,8 @@ export function CustomerDashboardPage() {
   );
 
   const customerStats = [
-    { label: "Activity", value: String(activity.length), helper: "Real submissions", icon: Eye },
-    { label: "Shortlisted", value: "0", helper: "Connect in C45", icon: Heart },
+    { label: "Viewed", value: String(viewedItems.length), helper: "Properties & societies", icon: Eye },
+    { label: "Shortlisted", value: String(shortlistedItems.length), helper: "Saved homes/societies", icon: Heart },
     { label: "Enquiries", value: String(enquiryLeads.length), helper: "Callback/detail requests", icon: Phone },
     { label: "My listings", value: String(listingLeads.length), helper: "Owner properties", icon: Home },
   ];
@@ -321,6 +353,23 @@ export function CustomerDashboardPage() {
             </section>
 
             <section className="max-w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-black text-slate-950">Recently viewed</h2>
+              <p className="mt-1 text-sm text-slate-500">Properties and societies opened from this account.</p>
+              <div className="mt-5 space-y-3">
+                {recentViews.length ? (
+                  recentViews.map((item) => <ActivityCard key={`${item.title}-${item.meta}`} {...item} />)
+                ) : (
+                  <EmptyState
+                    title="No viewed history yet"
+                    text="Open a property or society page after login. It will appear here."
+                    actionLabel="Browse properties"
+                    href="/properties"
+                  />
+                )}
+              </div>
+            </section>
+
+            <section className="max-w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
                   <ShieldCheck className="h-6 w-6" />
@@ -339,13 +388,17 @@ export function CustomerDashboardPage() {
             </section>
           </TabsContent>
 
-          <TabsContent value="shortlist" className="mt-6">
-            <EmptyState
-              title="Shortlist tracking comes next"
-              text="C45 will connect saved properties and societies to this account. Current C44 connects enquiries and listing submissions."
-              actionLabel="Browse societies"
-              href="/search?tab=societies"
-            />
+          <TabsContent value="shortlist" className="mt-6 space-y-3">
+            {shortlistItems.length ? (
+              shortlistItems.map((item) => <ActivityCard key={`${item.title}-${item.meta}`} {...item} />)
+            ) : (
+              <EmptyState
+                title="No shortlist yet"
+                text="Save a property or society from its detail page. Your saved items will appear here."
+                actionLabel="Browse societies"
+                href="/search?tab=societies"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="enquiries" className="mt-6 space-y-3">
@@ -448,10 +501,10 @@ export function CustomerDashboardPage() {
         <section className="mt-8 rounded-[28px] border border-blue-100 bg-blue-50 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">C44 real-data foundation</p>
-              <h2 className="mt-2 text-2xl font-black text-slate-950">Customer dashboard now reads real account submissions.</h2>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">C45 shortlist and view history</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">Customer dashboard now tracks views, shortlist and submissions.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Leads submitted through backendApi are mirrored into this customer account by phone, while admin remains the source of truth.
+                Viewed properties, viewed societies, shortlists and lead submissions are linked to the customer phone in this temporary account layer.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">

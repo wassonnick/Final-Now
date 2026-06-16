@@ -25,6 +25,12 @@ import {
   societyImage,
 } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
+import {
+  getCustomerAccountSession,
+  isCustomerItemShortlisted,
+  rememberCustomerSavedItem,
+  toggleCustomerShortlist,
+} from "@/lib/customerAccount";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
@@ -191,6 +197,7 @@ export function SocietyPage() {
   const [error, setError] = useState<string | null>(null);
   const [callbackOpen, setCallbackOpen] = useState(false);
   const [callbackSource, setCallbackSource] = useState("society_page_callback");
+  const [isSocietyShortlisted, setIsSocietyShortlisted] = useState(false);
   // SEO validation marker: society_page_no_inventory_similar_options
   const [selectedLeadProperty, setSelectedLeadProperty] = useState<any | null>(
     null,
@@ -308,6 +315,49 @@ export function SocietyPage() {
   const society = apiSociety || fallbackSociety;
   const fallbackProperties = getSocietyProperties(society?.name);
   const properties = apiProperties.length ? apiProperties : fallbackProperties;
+
+  const customerSession = getCustomerAccountSession();
+  const societyHref = `/society/${field(society, "slug", "slug", slug || "") || slug || ""}`;
+
+  // C45 society view tracking
+  useEffect(() => {
+    if (!society || !customerSession?.phone) return;
+
+    rememberCustomerSavedItem({
+      type: "society",
+      title: society.name,
+      slug: String(field(society, "slug", "slug", slug || "")),
+      href: societyHref,
+      meta: safeLocation(society),
+      image: safeSocietyImage(society),
+      action: "view",
+    });
+
+    setIsSocietyShortlisted(isCustomerItemShortlisted("society", societyHref, customerSession.phone));
+  }, [society, customerSession?.phone, societyHref, slug]);
+
+  const handleSocietyShortlist = () => {
+    if (!society) return;
+
+    const result = toggleCustomerShortlist({
+      type: "society",
+      title: society.name,
+      slug: String(field(society, "slug", "slug", slug || "")),
+      href: societyHref,
+      meta: safeLocation(society),
+      image: safeSocietyImage(society),
+    });
+
+    setIsSocietyShortlisted(result.saved);
+
+    trackEvent("customer_society_shortlist_toggled", {
+      source: "society_page",
+      entity_type: "society",
+      entity_slug: field(society, "slug", "slug", slug || ""),
+      entity_name: society.name,
+      saved: result.saved,
+    });
+  };
 
   // C16 society SEO route effect
   useEffect(() => {
