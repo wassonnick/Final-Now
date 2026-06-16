@@ -159,7 +159,7 @@ function c42PropertyQualityIssues(item: any) {
   }
 
   if (ownerLinked) {
-    if (!images.length) issues.push("owner photo missing");
+    if (!images.length) issues.push("photo or generic image missing");
     if (!description) issues.push("description missing");
     if (!item?.verified) issues.push("owner verification missing");
   }
