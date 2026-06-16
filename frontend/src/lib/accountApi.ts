@@ -11,6 +11,27 @@ export type AccountSyncPayload = {
   meta?: Record<string, unknown>;
 };
 
+export type BackendAccount = {
+  id: number;
+  role: CustomerAccountRole;
+  phone: string;
+  phone_normalized: string;
+  name?: string | null;
+  email?: string | null;
+  status?: string | null;
+  last_login_at?: string | null;
+  phone_verified_at?: string | null;
+  meta?: Record<string, unknown> | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type AccountResponse = {
+  message?: string;
+  account?: BackendAccount;
+  dev_otp?: string | null;
+};
+
 async function postJson<T>(path: string, payload: Record<string, unknown>): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     method: "POST",
@@ -35,7 +56,7 @@ export async function syncAccountToBackend(payload: AccountSyncPayload) {
   if (!phone) return null;
 
   try {
-    return await postJson("/accounts/upsert", {
+    return await postJson<AccountResponse>("/accounts/upsert", {
       ...payload,
       phone,
     });
@@ -48,7 +69,7 @@ export async function syncAccountToBackend(payload: AccountSyncPayload) {
 export async function requestAccountOtp(payload: AccountSyncPayload & { channel?: "sms" | "whatsapp" }) {
   const phone = cleanAccountPhone(payload.phone);
 
-  return postJson("/accounts/request-otp", {
+  return postJson<AccountResponse>("/accounts/request-otp", {
     ...payload,
     phone,
     channel: payload.channel || "sms",
@@ -64,7 +85,7 @@ export async function verifyAccountOtp({
   phone: string;
   otp: string;
 }) {
-  return postJson("/accounts/verify-otp", {
+  return postJson<AccountResponse>("/accounts/verify-otp", {
     role,
     phone: cleanAccountPhone(phone),
     otp,
