@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAppStore } from '@/store';
 import { cn } from '@/lib/utils';
+import { CUSTOMER_ACCOUNT_EVENT } from "@/lib/customerAccount";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -31,10 +32,12 @@ export function Navbar() {
     syncAccountPath();
     window.addEventListener("focus", syncAccountPath);
     window.addEventListener("storage", syncAccountPath);
+    window.addEventListener(CUSTOMER_ACCOUNT_EVENT, syncAccountPath);
 
     return () => {
       window.removeEventListener("focus", syncAccountPath);
       window.removeEventListener("storage", syncAccountPath);
+      window.removeEventListener(CUSTOMER_ACCOUNT_EVENT, syncAccountPath);
     };
   }, []);
   const [isSearchFocused, setIsSearchFocused] = useState(false);

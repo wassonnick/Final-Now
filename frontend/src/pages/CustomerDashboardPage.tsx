@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
+  CUSTOMER_ACCOUNT_EVENT,
   clearCustomerAccountSession,
   getCustomerAccountSession,
   getCustomerLeadsForPhone,

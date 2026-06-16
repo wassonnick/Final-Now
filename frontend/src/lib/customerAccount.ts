@@ -26,6 +26,13 @@ export type CustomerActivityLead = {
 const ACCOUNT_SESSION_KEY = "sf_account_session";
 const CUSTOMER_LEADS_KEY = "sf_customer_leads_v1";
 
+export const CUSTOMER_ACCOUNT_EVENT = "societyflats:customer-account-updated";
+
+export function notifyCustomerAccountChanged() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(CUSTOMER_ACCOUNT_EVENT));
+}
+
 export function cleanAccountPhone(value: unknown) {
   return String(value || "").replace(/\D/g, "").slice(-10);
 }
@@ -62,6 +69,7 @@ function readAllCustomerLeads(): CustomerActivityLead[] {
 function writeAllCustomerLeads(items: CustomerActivityLead[]) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(CUSTOMER_LEADS_KEY, JSON.stringify(items.slice(0, 80)));
+  notifyCustomerAccountChanged();
 }
 
 function isOwnerListingSource(source: unknown) {
@@ -167,12 +175,14 @@ export function createCustomerAccountSession({
   };
 
   window.localStorage.setItem(ACCOUNT_SESSION_KEY, JSON.stringify(session));
+  notifyCustomerAccountChanged();
   return session;
 }
 
 export function clearCustomerAccountSession() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(ACCOUNT_SESSION_KEY);
+  notifyCustomerAccountChanged();
 }
 
 export type CustomerSavedItemType = "property" | "society";
@@ -208,6 +218,7 @@ function readAllCustomerSavedItems(): CustomerSavedItem[] {
 function writeAllCustomerSavedItems(items: CustomerSavedItem[]) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(CUSTOMER_SAVED_ITEMS_KEY, JSON.stringify(items.slice(0, 160)));
+  notifyCustomerAccountChanged();
 }
 
 function savedItemKey(item: Pick<CustomerSavedItem, "type" | "href" | "action">) {
