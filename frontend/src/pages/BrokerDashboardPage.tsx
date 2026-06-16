@@ -157,7 +157,7 @@ export function BrokerDashboardPage() {
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
-    <div className="min-h-screen bg-[#fffaf4] pb-16">
+    <div className="min-h-screen overflow-x-hidden bg-[#fffaf4] pb-16">
       <section className="border-b border-orange-100 bg-gradient-to-br from-white via-orange-50/70 to-slate-50">
         <div className="container mx-auto px-4 py-8 md:py-12">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -211,7 +211,7 @@ export function BrokerDashboardPage() {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm md:grid-cols-6">
+          <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {[
               ["overview", "Overview", BarChart3],
               ["listings", "My Listings", Home],
@@ -225,7 +225,7 @@ export function BrokerDashboardPage() {
                 <TabsTrigger
                   key={String(value)}
                   value={String(value)}
-                  className="rounded-2xl py-3 text-xs font-bold data-[state=active]:bg-orange-600 data-[state=active]:text-white"
+                  className="min-w-0 rounded-2xl px-2 py-3 text-xs font-bold data-[state=active]:bg-orange-600 data-[state=active]:text-white"
                 >
                   <IconComponent className="mr-2 h-4 w-4" />
                   {String(label)}

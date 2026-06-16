@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { ProtectedAccountRoute } from "@/components/auth/ProtectedAccountRoute";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { Toaster } from '@/components/ui/toaster';
@@ -122,11 +123,11 @@ function AppShell() {
             <Route path="/chat" element={<FeatureExperiencePage feature="chat" />} />
             <Route path="/recommendations" element={<FeatureExperiencePage feature="recommendations" />} />
 
-            <Route path="/customer/dashboard" element={<CustomerDashboardPage />} />
-            <Route path="/customer" element={<CustomerDashboardPage />} />
-            <Route path="/owner/dashboard" element={<OwnerDashboard />} />
-            <Route path="/broker/dashboard" element={<BrokerDashboardPage />} />
-            <Route path="/broker" element={<BrokerDashboardPage />} />
+            <Route path="/customer/dashboard" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
+            <Route path="/customer" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
+            <Route path="/owner/dashboard" element={<ProtectedAccountRoute role="customer"><OwnerDashboard /></ProtectedAccountRoute>} />
+            <Route path="/broker/dashboard" element={<ProtectedAccountRoute role="broker"><BrokerDashboardPage /></ProtectedAccountRoute>} />
+            <Route path="/broker" element={<ProtectedAccountRoute role="broker"><BrokerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/sell" element={<SellPage />} />
             <Route path="/login" element={<LoginPage />} />
 

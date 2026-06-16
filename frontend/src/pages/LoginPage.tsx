@@ -1,158 +1,190 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Building2, Mail, Phone, ArrowRight, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
+import { FormEvent, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  ArrowLeft,
+  BriefcaseBusiness,
+  Building2,
+  CheckCircle2,
+  LockKeyhole,
+  Phone,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+type AccountRole = "customer" | "broker";
+
+function cleanPhone(value: string) {
+  return String(value || "").replace(/\D/g, "").slice(0, 10);
+}
+
+function isValidPhone(value: string) {
+  return /^[6-9]\d{9}$/.test(cleanPhone(value));
+}
 
 export function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [userType, setUserType] = useState('tenant');
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 1500);
+  const requestedRole = params.get("role") === "broker" ? "broker" : "customer";
+  const nextPath = params.get("next") || "";
+
+  const [role, setRole] = useState<AccountRole>(requestedRole);
+  const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+
+  const targetPath = useMemo(() => {
+    if (nextPath.startsWith("/broker") && role === "broker") return nextPath;
+    if ((nextPath.startsWith("/customer") || nextPath.startsWith("/owner")) && role === "customer") {
+      return nextPath;
+    }
+
+    return role === "broker" ? "/broker/dashboard" : "/customer/dashboard";
+  }, [nextPath, role]);
+
+  const submitLogin = (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!isValidPhone(phone)) {
+      setError("Enter a valid 10-digit Indian mobile number.");
+      return;
+    }
+
+    window.localStorage.setItem(
+      "sf_account_session",
+      JSON.stringify({
+        role,
+        phone: cleanPhone(phone),
+        name: name.trim() || (role === "broker" ? "Broker Partner" : "Customer"),
+        loginAt: new Date().toISOString(),
+      }),
+    );
+
+    navigate(targetPath, { replace: true });
   };
 
   return (
-    <div className="min-h-screen bg-ivory-100 flex items-center justify-center py-12">
-      <div className="w-full max-w-md mx-auto">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-navy-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Building2 className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-display font-bold text-navy-900">Welcome to SocietyFlats</h1>
-          <p className="text-navy-500 mt-1">Sign in to continue</p>
-        </div>
+    <div className="min-h-screen overflow-x-hidden bg-[#f7fbff]">
+      <section className="border-b border-blue-100 bg-gradient-to-br from-white via-blue-50/80 to-slate-50">
+        <div className="container mx-auto max-w-6xl px-4 py-8 md:py-12">
+          <Button asChild variant="ghost" className="mb-6 rounded-full text-slate-600">
+            <Link to="/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to SocietyFlats
+            </Link>
+          </Button>
 
-        {/* User Type Selector */}
-        <div className="bg-white rounded-xl border border-navy-100 p-1 mb-6 flex">
-          {['tenant', 'owner', 'broker'].map(type => (
-            <button
-              key={type}
-              onClick={() => setUserType(type)}
-              className={cn(
-                "flex-1 py-2.5 rounded-lg text-sm font-medium capitalize transition-all",
-                userType === type
-                  ? "bg-navy-500 text-white"
-                  : "text-navy-600 hover:bg-navy-50"
-              )}
-            >
-              {type}
-            </button>
-          ))}
-        </div>
+          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+            <div>
+              <Badge className="mb-4 rounded-full border-blue-200 bg-white px-4 py-1.5 text-blue-700 shadow-sm">
+                Secure account access
+              </Badge>
+              <h1 className="max-w-2xl text-4xl font-black tracking-[-0.045em] leading-[0.98] text-slate-950 md:text-6xl">
+                Login to continue your property journey.
+              </h1>
+              <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 md:text-lg">
+                Customer accounts can search, shortlist, list properties and track leads. Broker accounts can manage partner listings, requirements and commission pipeline.
+              </p>
 
-        {/* Login Form */}
-        <div className="bg-white rounded-2xl border border-navy-100 p-6 shadow-sm">
-          <Tabs defaultValue="phone" className="w-full">
-            <TabsList className="w-full bg-navy-50 p-1 rounded-lg mb-6">
-              <TabsTrigger value="phone" className="flex-1 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                <Phone className="w-4 h-4 mr-2" /> Phone
-              </TabsTrigger>
-              <TabsTrigger value="email" className="flex-1 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                <Mail className="w-4 h-4 mr-2" /> Email
-              </TabsTrigger>
-            </TabsList>
+              <div className="mt-7 grid gap-3 sm:grid-cols-3">
+                {[
+                  ["Private account", ShieldCheck],
+                  ["Lead tracking", Phone],
+                  ["Listing history", Building2],
+                ].map(([label, Icon]) => {
+                  const IconComponent = Icon as typeof ShieldCheck;
+                  return (
+                    <div key={String(label)} className="flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm">
+                      <IconComponent className="h-4 w-4 text-blue-600" />
+                      {String(label)}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
-            <TabsContent value="phone">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-navy-700 mb-1 block">Phone Number</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-navy-500 text-sm">+91</span>
-                    <Input 
-                      type="tel" 
-                      placeholder="99999 88888" 
-                      className="pl-12 border-navy-200"
-                    />
-                  </div>
+            <div className="w-full rounded-[2rem] border border-blue-100 bg-white p-5 shadow-xl shadow-blue-100/60 md:p-7">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                  <LockKeyhole className="h-5 w-5" />
                 </div>
-                <Button 
-                  type="submit" 
-                  className="w-full bg-navy-500 hover:bg-navy-600 h-12"
-                  disabled={isLoading}
+                <div>
+                  <h2 className="text-2xl font-black text-slate-950">Account login</h2>
+                  <p className="text-sm text-slate-500">Temporary frontend login for C43 foundation.</p>
+                </div>
+              </div>
+
+              <div className="mb-5 grid grid-cols-2 gap-2 rounded-2xl bg-slate-50 p-1">
+                <button
+                  type="button"
+                  onClick={() => setRole("customer")}
+                  className={cn(
+                    "rounded-xl px-4 py-3 text-sm font-bold transition",
+                    role === "customer" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500",
+                  )}
                 >
-                  {isLoading ? 'Sending OTP...' : 'Send OTP'}
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <UserRound className="mr-2 inline h-4 w-4" />
+                  Customer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole("broker")}
+                  className={cn(
+                    "rounded-xl px-4 py-3 text-sm font-bold transition",
+                    role === "broker" ? "bg-white text-orange-700 shadow-sm" : "text-slate-500",
+                  )}
+                >
+                  <BriefcaseBusiness className="mr-2 inline h-4 w-4" />
+                  Broker
+                </button>
+              </div>
+
+              {error ? (
+                <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+                  {error}
+                </div>
+              ) : null}
+
+              <form onSubmit={submitLogin} className="space-y-4">
+                <Input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  className="h-12 rounded-2xl"
+                  placeholder="Your name"
+                />
+
+                <Input
+                  required
+                  value={phone}
+                  onChange={(event) => setPhone(cleanPhone(event.target.value))}
+                  className="h-12 rounded-2xl"
+                  placeholder="10-digit mobile number"
+                  inputMode="numeric"
+                />
+
+                <Button
+                  type="submit"
+                  className={cn(
+                    "h-12 w-full rounded-2xl text-white",
+                    role === "broker" ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-700 hover:bg-blue-800",
+                  )}
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Continue to {role === "broker" ? "Broker Dashboard" : "Customer Dashboard"}
                 </Button>
               </form>
-            </TabsContent>
 
-            <TabsContent value="email">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-navy-700 mb-1 block">Email</label>
-                  <Input 
-                    type="email" 
-                    placeholder="you@example.com" 
-                    className="border-navy-200"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-navy-700 mb-1 block">Password</label>
-                  <div className="relative">
-                    <Input 
-                      type={showPassword ? 'text' : 'password'} 
-                      placeholder="Enter password" 
-                      className="border-navy-200 pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-navy-400"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="rounded border-navy-300" />
-                    <span className="text-navy-600">Remember me</span>
-                  </label>
-                  <Link to="/" className="text-navy-600 hover:text-navy-800">Forgot password?</Link>
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full bg-navy-500 hover:bg-navy-600 h-12"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Signing in...' : 'Sign In'}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-
-          <div className="mt-6 pt-6 border-t border-navy-100">
-            <p className="text-center text-sm text-navy-500">
-              Don't have an account?{' '}
-              <Link to="/" className="text-navy-700 font-medium hover:text-navy-900">Register</Link>
-            </p>
+              <p className="mt-4 text-xs leading-5 text-slate-500">
+                Full OTP/backend role authentication will come later. This C43A gate prevents public dashboard access and prepares account UX safely.
+              </p>
+            </div>
           </div>
         </div>
-
-        {/* Trust Badges */}
-        <div className="mt-8 flex items-center justify-center gap-6 text-sm text-navy-500">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-green-500" />
-            <span>Secure Login</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-green-500" />
-            <span>Verified Users</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-green-500" />
-            <span>No Spam</span>
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }
