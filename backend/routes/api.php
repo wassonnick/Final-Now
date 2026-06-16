@@ -1,6 +1,7 @@
 <?php
 use App\Http\Controllers\Api\Admin\ImageUploadController;
 use App\Http\Controllers\Api\Admin\AdminStatsController;
+use App\Http\Controllers\Api\Admin\AdminAccountController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\SocietyController;
@@ -28,6 +29,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::apiResource('societies', SocietyController::class)->except(['create', 'edit']);
     Route::apiResource('properties', PropertyController::class)->except(['create', 'edit']);
     Route::apiResource('leads', LeadController::class)->only(['index', 'show', 'update', 'destroy']);
+    Route::apiResource('accounts', AdminAccountController::class)->only(['index', 'show', 'update']);
 });
 
 
