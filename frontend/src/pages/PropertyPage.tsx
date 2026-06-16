@@ -697,7 +697,7 @@ export function PropertyPage() {
                 <Button
                   variant="outline"
                   className={cn("hidden rounded-full sm:inline-flex", isShortlisted && "border-red-200 bg-red-50 text-red-600")}
-                  onClick={() => setIsShortlisted(!isShortlisted)}
+                  onClick={handlePropertyShortlist}
                 >
                   <Heart className={cn("mr-2 h-4 w-4", isShortlisted && "fill-current")} />
                   {isShortlisted ? "Saved" : "Save"}
