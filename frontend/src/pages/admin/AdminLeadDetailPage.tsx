@@ -26,6 +26,7 @@ import {
   getAdminLead,
   saveAdminLead,
 } from "@/lib/adminLeadStore";
+import { findAdminAccountsByPhone, type AdminAccount } from "@/lib/adminAccountStore";
 
 const statuses: LeadStatus[] = [
   "New",
@@ -642,6 +643,106 @@ const quickFollowUps = [
   ["2 days later", "two_days"],
   ["Next week", "next_week"],
 ] as const;
+
+
+function C49ALinkedAccountPanel({ phone }: { phone?: string }) {
+  const [accounts, setAccounts] = useState<AdminAccount[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAccount() {
+      if (!phone) {
+        setAccounts([]);
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const result = await findAdminAccountsByPhone(phone);
+        if (!cancelled) setAccounts(result);
+      } catch {
+        if (!cancelled) setAccounts([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void loadAccount();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [phone]);
+
+  const account = accounts[0] || null;
+
+  return (
+    <div className="rounded-[28px] border border-blue-100 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-black text-slate-950">Linked account</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Matched from this lead phone number.
+          </p>
+        </div>
+        <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+          C49A
+        </span>
+      </div>
+
+      {loading ? (
+        <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+          Checking account match...
+        </div>
+      ) : account ? (
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+              {account.role === "broker" ? "Broker account" : "Customer account"}
+            </span>
+            <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+              {account.status}
+            </span>
+          </div>
+
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <p className="font-bold text-slate-950">{account.name || "Unnamed account"}</p>
+            <p className="mt-1 text-sm text-slate-500">{account.phone || account.phone_normalized}</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Source: {String(account.meta?.source || "Website account")}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3">
+              <p className="text-2xl font-black text-blue-700">{account.related_counts?.leads || 0}</p>
+              <p className="text-xs font-bold text-blue-700">Related leads</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
+              <p className="text-2xl font-black text-emerald-700">{account.related_counts?.properties || 0}</p>
+              <p className="text-xs font-bold text-emerald-700">Listings</p>
+            </div>
+          </div>
+
+          <Link
+            to={`/admin/users?account=${encodeURIComponent(account.phone_normalized || account.phone || phone || "")}`}
+            className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+          >
+            Open in Users
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+          No matching account found yet. When this phone logs in or signs up, it will appear here.
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export function AdminLeadDetailPage() {
   const { id } = useParams();
@@ -1618,6 +1719,8 @@ export function AdminLeadDetailPage() {
 
             <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold tracking-tight text-slate-950">
+              <C49ALinkedAccountPanel phone={lead?.phone} />
+
                 Lead snapshot
               </h2>
 
