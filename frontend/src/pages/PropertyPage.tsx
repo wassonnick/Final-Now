@@ -442,6 +442,7 @@ export function PropertyPage() {
       entity_type: "property",
       entity_slug: property.slug || slug || "",
       entity_name: title,
+      search_query: societyName || societyLocality || "",
     });
 
     const fallbackMessage = `${leadType === "callback" ? "Callback" : "Enquiry"} requested for ${title}. Society: ${societyName || "Not specified"}. Location: ${societyLocality || "Gurgaon"}. Listing type: ${listingType}. Price: ${price}.`;

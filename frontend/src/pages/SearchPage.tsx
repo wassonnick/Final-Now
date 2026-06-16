@@ -1,4 +1,4 @@
-import { trackEvent, trackLeadIntent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
+import { trackEvent, trackLeadIntent, trackLeadSubmitted, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
+import { cleanLeadTrackingPayload } from "@/lib/leadTracking";
 import { Input } from "@/components/ui/input";
 import {
   fetchPublicProperties,
@@ -478,6 +479,14 @@ export function SearchPage() {
       return;
     }
 
+    const noResultTrackingPayload = cleanLeadTrackingPayload({
+      cta_label: "No results callback",
+      lead_intent: activeTab,
+      search_query: query || "",
+      entity_type: activeTab === "societies" ? "society" : "property",
+      entity_slug: "",
+    });
+
     setIsSubmittingLead(true);
     setLeadStatus("idle");
 
@@ -504,11 +513,16 @@ export function SearchPage() {
             `Intent: ${resultLabel(activeTab)}`,
             `Requested help: Find matching ${activeTab === "societies" ? "societies/homes" : "homes"}`,
           ].join(" | "),
+          ...noResultTrackingPayload,
         }),
       });
 
       if (!response.ok) throw new Error("Lead submit failed");
 
+      trackLeadSubmitted({
+        ...noResultTrackingPayload,
+        source: `search_no_results_${activeTab}`,
+      });
       setLeadStatus("success");
       setLeadName("");
       setLeadPhone("");

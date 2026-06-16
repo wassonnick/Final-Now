@@ -58,6 +58,20 @@ type ApiLead = {
   email?: string | null;
   budget?: string | null;
   source?: string | null;
+  source_page?: string | null;
+  page_url?: string | null;
+  referrer?: string | null;
+  cta_label?: string | null;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_term?: string | null;
+  utm_content?: string | null;
+  lead_intent?: string | null;
+  search_query?: string | null;
+  ai_query?: string | null;
+  entity_type?: string | null;
+  entity_slug?: string | null;
   status?: string | null;
   assigned_to?: string | null;
   notes?: string | null;
@@ -209,20 +223,20 @@ function mapApiLead(apiLead: ApiLead): AdminLead {
     budget: apiLead.budget || 'Not specified',
     requirement: inferLeadRequirement(apiLead) || apiLead.message || '',
     source: apiLead.source || 'Website',
-    source_page: (apiLead as any).source_page || '',
-    page_url: (apiLead as any).page_url || '',
-    referrer: (apiLead as any).referrer || '',
-    cta_label: (apiLead as any).cta_label || '',
-    utm_source: (apiLead as any).utm_source || '',
-    utm_medium: (apiLead as any).utm_medium || '',
-    utm_campaign: (apiLead as any).utm_campaign || '',
-    utm_term: (apiLead as any).utm_term || '',
-    utm_content: (apiLead as any).utm_content || '',
-    lead_intent: (apiLead as any).lead_intent || '',
-    search_query: (apiLead as any).search_query || '',
-    ai_query: (apiLead as any).ai_query || '',
-    entity_type: (apiLead as any).entity_type || '',
-    entity_slug: (apiLead as any).entity_slug || '',
+    source_page: apiLead.source_page || '',
+    page_url: apiLead.page_url || '',
+    referrer: apiLead.referrer || '',
+    cta_label: apiLead.cta_label || '',
+    utm_source: apiLead.utm_source || '',
+    utm_medium: apiLead.utm_medium || '',
+    utm_campaign: apiLead.utm_campaign || '',
+    utm_term: apiLead.utm_term || '',
+    utm_content: apiLead.utm_content || '',
+    lead_intent: apiLead.lead_intent || '',
+    search_query: apiLead.search_query || '',
+    ai_query: apiLead.ai_query || '',
+    entity_type: apiLead.entity_type || '',
+    entity_slug: apiLead.entity_slug || '',
     status: normalizeStatus(apiLead.status),
     priority: normalizePriority(apiLead.priority),
     assignedTo: apiLead.assigned_to || 'Unassigned',

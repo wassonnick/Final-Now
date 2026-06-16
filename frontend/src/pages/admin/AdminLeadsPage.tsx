@@ -252,6 +252,23 @@ function sourceLabel(source?: string) {
   return source || "Website";
 }
 
+
+function attributionBadge(lead: AdminLead) {
+  const campaign = String(lead.utm_campaign || "").trim();
+  const medium = String(lead.utm_medium || "").trim();
+  const sourcePage = String(lead.source_page || "").trim();
+  const aiQuery = String(lead.ai_query || "").trim();
+  const searchQuery = String(lead.search_query || "").trim();
+
+  if (campaign || medium) return "UTM";
+  if (aiQuery || String(lead.source || "").toLowerCase().includes("ai")) return "AI";
+  if (searchQuery || sourcePage.includes("/search")) return "Search";
+  if (sourcePage.includes("/sell") || String(lead.source || "").toLowerCase().includes("owner")) return "Owner";
+  if (sourcePage.includes("/property") || String(lead.source || "").toLowerCase().includes("property")) return "Property";
+  if (sourcePage.includes("/society") || String(lead.source || "").toLowerCase().includes("society")) return "Society";
+  return "";
+}
+
 function sourceClass(source?: string) {
   const value = String(source || "").toLowerCase();
 
@@ -780,9 +797,16 @@ export function AdminLeadsPage() {
                         </div>
                       </div>
 
-                      <span className={`rounded-full border px-3 py-1 text-xs font-bold xl:mt-3 inline-flex ${sourceClass(lead.source)}`} title={`Lead attribution: ${[(lead as any).source_page, (lead as any).cta_label, (lead as any).utm_campaign].filter(Boolean).join(' · ') || 'Not captured'}`}>
-                        {sourceLabel(lead.source)}
-                      </span>
+                      <div className="flex flex-col items-end gap-1 xl:items-start">
+                        <span className={`rounded-full border px-3 py-1 text-xs font-bold xl:mt-3 inline-flex ${sourceClass(lead.source)}`} title={`Lead attribution: ${[lead.source_page, lead.cta_label, lead.utm_campaign].filter(Boolean).join(' · ') || 'Not captured'}`}>
+                          {sourceLabel(lead.source)}
+                        </span>
+                        {attributionBadge(lead) ? (
+                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-blue-700">
+                            {attributionBadge(lead)}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
 

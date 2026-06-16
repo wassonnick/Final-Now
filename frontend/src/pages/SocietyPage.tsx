@@ -215,17 +215,26 @@ export function SocietyPage() {
       field(property, "listingType", "listing_type", "property"),
     ).toLowerCase();
 
+    const nextSource = listingType.includes("rent")
+      ? "society_page_property_rent_callback"
+      : listingType.includes("sale") ||
+          listingType.includes("buy") ||
+          listingType.includes("resale") ||
+          listingType.includes("builder")
+        ? "society_page_property_buy_callback"
+        : "society_page_property_callback";
+
+    trackLeadIntent({
+      source: nextSource,
+      cta_label: "Property callback",
+      lead_intent: "property_callback",
+      entity_type: "property",
+      entity_slug: field(property, "slug", "slug", ""),
+      entity_name: field(property, "title", "title", ""),
+    });
+
     setSelectedLeadProperty(property);
-    setCallbackSource(
-      listingType.includes("rent")
-        ? "society_page_property_rent_callback"
-        : listingType.includes("sale") ||
-            listingType.includes("buy") ||
-            listingType.includes("resale") ||
-            listingType.includes("builder")
-          ? "society_page_property_buy_callback"
-          : "society_page_property_callback",
-    );
+    setCallbackSource(nextSource);
     setCallbackOpen(true);
   };
 
@@ -914,10 +923,10 @@ export function SocietyPage() {
                     </p>
                     <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                       <Button
-                        onClick={() => openSocietyCallback()}
+                        onClick={() => openSocietyCallback("society_page_no_inventory_similar_options")}
                         className="rounded-full bg-blue-600 hover:bg-blue-700"
                       >
-                        <Phone className="mr-2 h-4 w-4" /> Request homes
+                        <Phone className="mr-2 h-4 w-4" /> Request similar options
                       </Button>
                       <Button
                         asChild
@@ -1071,10 +1080,10 @@ export function SocietyPage() {
                     matching Gurgaon societies for you.
                   </p>
                   <Button
-                    onClick={() => openSocietyCallback()}
+                    onClick={() => openSocietyCallback("society_page_similar_societies_shortlist")}
                     className="mt-4 w-full rounded-full bg-blue-600 hover:bg-blue-700"
                   >
-                    <Phone className="mr-2 h-4 w-4" /> Request shortlist
+                    <Phone className="mr-2 h-4 w-4" /> Request similar options
                   </Button>
                 </div>
               )}
@@ -1274,8 +1283,8 @@ export function SocietyPage() {
           entity_type: selectedLeadProperty ? "property" : "society",
           entity_slug: selectedLeadProperty?.slug || slug || "",
           entity_name: selectedLeadProperty?.title || society.name,
-          cta_label: selectedLeadProperty ? "Property callback" : "Request homes",
-          lead_intent: selectedLeadProperty ? "property_callback" : "general",
+          cta_label: selectedLeadProperty ? "Property callback" : callbackSource.includes("similar") ? "Request similar options" : "Request homes",
+          lead_intent: selectedLeadProperty ? "property_callback" : callbackSource.includes("similar") ? "similar_options" : "general",
         }}
         societyName={society.name}
         propertyTitle={selectedLeadProperty?.title}

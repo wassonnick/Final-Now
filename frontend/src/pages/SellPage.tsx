@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { backendApi } from "@/services/backendApi";
+import { trackEvent, trackLeadIntent, trackLeadSubmitted } from "@/lib/analytics";
+import { cleanLeadTrackingPayload } from "@/lib/leadTracking";
 
 function cleanOwnerLeadPhone(value: string) {
   return String(value || "").replace(/\D/g, "").slice(0, 10);
@@ -117,6 +119,23 @@ export function SellPage() {
       [propertySummary || propertyDetails, societyName].filter(Boolean).join(" · ") ||
       `Owner ${listingIntent} Listing`;
 
+    const ownerTrackingPayload = cleanLeadTrackingPayload({
+      cta_label: purpose === "rent" ? "Owner listing rent form" : "Owner listing sale form",
+      lead_intent: purpose === "rent" ? "owner_listing_rent" : "owner_listing_sale",
+      entity_type: "owner_listing",
+      entity_slug: societyName
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, ""),
+    });
+
+    trackLeadIntent({
+      ...ownerTrackingPayload,
+      source: purpose === "rent" ? "owner_listing_rent" : "owner_listing_sale",
+      society_name: societyName,
+    });
+
     const ownerMessage = [
       "Owner listing submission from Sell page",
       `Intent: ${listingIntent}`,
@@ -148,6 +167,11 @@ export function SellPage() {
             ? `Owner listing - Rent${preferredTime ? ` · Preferred time: ${preferredTime}` : ""}`
             : `Owner listing - Sale${preferredTime ? ` · Preferred time: ${preferredTime}` : ""}`,
         budget: expectation || null,
+      });
+      trackLeadSubmitted({
+        ...ownerTrackingPayload,
+        source: purpose === "rent" ? "owner_listing_rent" : "owner_listing_sale",
+        society_name: societyName,
       });
       setSuccess(true);
     } catch (leadError) {
@@ -203,7 +227,14 @@ export function SellPage() {
               </div>
               <div className="grid grid-cols-2 gap-2 mb-5 rounded-2xl bg-navy-50 p-1">
                 <button
-                  onClick={() => setPurpose("rent")}
+                  onClick={() => {
+                    trackEvent("owner_listing_purpose_changed", {
+                      source: "sell_page",
+                      lead_intent: "owner_listing_rent",
+                      cta_label: "For Rent",
+                    });
+                    setPurpose("rent");
+                  }}
                   className={cn(
                     "rounded-xl px-4 py-3 text-sm font-semibold transition-all",
                     purpose === "rent"
@@ -214,7 +245,14 @@ export function SellPage() {
                   For Rent
                 </button>
                 <button
-                  onClick={() => setPurpose("sell")}
+                  onClick={() => {
+                    trackEvent("owner_listing_purpose_changed", {
+                      source: "sell_page",
+                      lead_intent: "owner_listing_sale",
+                      cta_label: "For Sale",
+                    });
+                    setPurpose("sell");
+                  }}
                   className={cn(
                     "rounded-xl px-4 py-3 text-sm font-semibold transition-all",
                     purpose === "sell"
