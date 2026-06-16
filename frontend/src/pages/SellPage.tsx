@@ -167,6 +167,7 @@ export function SellPage() {
             ? `Owner listing - Rent${preferredTime ? ` · Preferred time: ${preferredTime}` : ""}`
             : `Owner listing - Sale${preferredTime ? ` · Preferred time: ${preferredTime}` : ""}`,
         budget: expectation || null,
+        ...ownerTrackingPayload,
       });
       trackLeadSubmitted({
         ...ownerTrackingPayload,
