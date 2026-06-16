@@ -136,6 +136,11 @@ export function Navbar() {
             </Button>
           )}
 
+          <Link to="/broker-crm" className="hidden lg:block">
+            <Button size="sm" variant="outline" className="rounded-full border-orange-100 bg-white px-5 text-orange-700 shadow-sm hover:bg-orange-50">
+              For Brokers
+            </Button>
+          </Link>
           <Link to="/sell" className="hidden lg:block"><Button size="sm" className="rounded-full bg-blue-700 hover:bg-blue-800 text-white px-5 shadow-sm">List Property</Button></Link>
           <button className="xl:hidden p-2 rounded-full hover:bg-navy-50 transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}</button>
         </div>
@@ -149,6 +154,7 @@ export function Navbar() {
             <Button variant="outline" className="w-full rounded-full border-blue-100 bg-white text-blue-700" onClick={() => { navigate(accountDashboardPath || '/login'); setIsMenuOpen(false); }}>
               {accountDashboardPath ? "Dashboard" : "Login"}
             </Button>
+            <Button variant="outline" className="w-full rounded-full border-orange-100 bg-white text-orange-700" onClick={() => { navigate('/broker-crm'); setIsMenuOpen(false); }}>Join as Broker</Button>
             <Button className="w-full rounded-full bg-navy-600 hover:bg-navy-700 text-white" onClick={() => { navigate('/sell'); setIsMenuOpen(false); }}>List Property</Button>
           </div>
         </div>

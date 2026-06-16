@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   BadgeIndianRupee,
   BarChart3,
@@ -16,6 +16,7 @@ import {
   Sparkles,
   TrendingUp,
   UserCheck,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -150,7 +151,9 @@ function BrokerEmptyState({
 
 export function BrokerDashboardPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("overview");
+  const [showSignupWelcome, setShowSignupWelcome] = useState(searchParams.get("signup") === "success");
   const [activity, setActivity] = useState<BrokerActivityItem[]>([]);
   const session = getCustomerAccountSession();
 
@@ -212,6 +215,12 @@ export function BrokerDashboardPage() {
     { label: "Commission", value: "TBD", helper: "Admin-controlled", icon: BadgeIndianRupee },
   ];
 
+  const closeSignupWelcome = () => {
+    setShowSignupWelcome(false);
+    searchParams.delete("signup");
+    setSearchParams(searchParams, { replace: true });
+  };
+
   const logout = () => {
     clearCustomerAccountSession();
     navigate("/login?role=broker", { replace: true });
@@ -219,6 +228,33 @@ export function BrokerDashboardPage() {
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#fffaf4] pb-16">
+      {showSignupWelcome ? (
+        <div className="fixed inset-x-4 top-24 z-50 mx-auto max-w-xl rounded-[28px] border border-emerald-100 bg-white p-5 shadow-2xl">
+          {/* C46B broker signup welcome popup */}
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <Badge className="rounded-full border-emerald-100 bg-emerald-50 text-emerald-700">
+                Broker signup received
+              </Badge>
+              <h2 className="mt-3 text-2xl font-black text-slate-950">Welcome to SocietyFlats Broker Partner Program.</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Your broker account has been created. SocietyFlats admin will verify your profile, working areas, inventory quality and commission understanding before marking you active.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={closeSignupWelcome}
+              className="rounded-full bg-slate-100 p-2 text-slate-500 hover:bg-slate-200"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <Button onClick={closeSignupWelcome} className="mt-4 w-full rounded-full bg-orange-600 hover:bg-orange-700">
+            Continue to Broker Dashboard
+          </Button>
+        </div>
+      ) : null}
       <section className="border-b border-orange-100 bg-gradient-to-br from-white via-orange-50/70 to-slate-50">
         <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">

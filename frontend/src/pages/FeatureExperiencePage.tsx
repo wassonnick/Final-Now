@@ -290,6 +290,7 @@ function RecommendationsTool({ societies }: { societies: PublicSociety[] }) {
 }
 
 function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
+  const brokerNavigate = useNavigate();
   const isBrokerCrm = feature === 'broker-crm';
   const [form, setForm] = useState({
     name: '',
@@ -374,12 +375,13 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
         rememberBrokerActivitySubmission(payload, response as Record<string, unknown>);
       }
 
+      if (isBrokerCrm) {
+        brokerNavigate('/broker/dashboard?signup=success', { replace: true });
+        return;
+      }
+
       setState('success');
-      setNotice(
-        isBrokerCrm
-          ? 'Broker partner signup received. Your broker account has been created and SocietyFlats admin will verify your profile.'
-          : 'Callback request sent. Admin can see it in Leads.',
-      );
+      setNotice('Callback request sent. Admin can see it in Leads.');
     } catch (error) {
       setState('error');
       setNotice(error instanceof Error ? error.message : 'Unable to submit. Please try again.');
