@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   BriefcaseBusiness,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Home,
   Loader2,
   Phone,
   Search,
@@ -57,15 +61,21 @@ function statusBadgeClass(status: string) {
 
 function AccountCard({
   account,
+  expanded,
+  onToggleExpand,
   onUpdate,
   updatingId,
 }: {
   account: AdminAccount;
+  expanded: boolean;
+  onToggleExpand: () => void;
   onUpdate: (id: number, payload: Partial<Pick<AdminAccount, "role" | "status">>) => void;
   updatingId: number | null;
 }) {
   const isUpdating = updatingId === account.id;
   const RoleIcon = account.role === "broker" ? BriefcaseBusiness : UserRound;
+  const leadCount = account.related_counts?.leads || account.related_leads?.length || 0;
+  const listingCount = account.related_counts?.properties || account.related_properties?.length || 0;
 
   return (
     <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-100 hover:shadow-md">
@@ -78,6 +88,12 @@ function AccountCard({
             </Badge>
             <Badge className={cn("rounded-full border px-3 py-1 text-xs font-bold", statusBadgeClass(account.status))}>
               {account.status}
+            </Badge>
+            <Badge className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
+              {leadCount} leads
+            </Badge>
+            <Badge className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
+              {listingCount} listings
             </Badge>
           </div>
 
@@ -97,7 +113,17 @@ function AccountCard({
           </div>
         </div>
 
-        <div className="flex min-w-[240px] flex-wrap gap-2 xl:justify-end">
+        <div className="flex min-w-[260px] flex-wrap gap-2 xl:justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onToggleExpand}
+            className="rounded-full border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+          >
+            {expanded ? <ChevronUp className="mr-2 h-4 w-4" /> : <ChevronDown className="mr-2 h-4 w-4" />}
+            {expanded ? "Hide links" : "View links"}
+          </Button>
+
           <Button
             size="sm"
             disabled={isUpdating || account.status === "active"}
@@ -140,6 +166,97 @@ function AccountCard({
           </Button>
         </div>
       </div>
+
+      {expanded ? (
+        <div className="mt-5 grid gap-4 xl:grid-cols-2">
+          <div className="rounded-[24px] border border-slate-100 bg-slate-50 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-black text-slate-950">Related leads</p>
+              <Badge className="rounded-full bg-white text-slate-600">{leadCount}</Badge>
+            </div>
+
+            {account.related_leads?.length ? (
+              <div className="space-y-3">
+                {account.related_leads.map((lead) => (
+                  <Link
+                    key={lead.id}
+                    to={`/admin/leads/${lead.id}`}
+                    className="block rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:bg-blue-50/40"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className="rounded-full bg-blue-50 text-blue-700">
+                        {lead.status || "Lead"}
+                      </Badge>
+                      {lead.priority ? (
+                        <Badge className="rounded-full bg-rose-50 text-rose-700">
+                          {lead.priority}
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <p className="mt-2 text-sm font-black text-slate-950">
+                      {lead.name || "Unknown lead"}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {lead.source || "Website"} · {lead.society_name || "No society"} · {lead.property_title || "General enquiry"}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {formatDate(lead.created_at)}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
+                No leads found for this account phone yet.
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-[24px] border border-slate-100 bg-slate-50 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-black text-slate-950">Related owner listings</p>
+              <Badge className="rounded-full bg-white text-slate-600">{listingCount}</Badge>
+            </div>
+
+            {account.related_properties?.length ? (
+              <div className="space-y-3">
+                {account.related_properties.map((property) => (
+                  <Link
+                    key={property.id}
+                    to={`/admin/properties/${property.id}/edit`}
+                    className="block rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:bg-blue-50/40"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className="rounded-full bg-emerald-50 text-emerald-700">
+                        {property.status || "Draft"}
+                      </Badge>
+                      {property.listing_type ? (
+                        <Badge className="rounded-full bg-slate-50 text-slate-600">
+                          {property.listing_type}
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <p className="mt-2 flex items-center gap-2 text-sm font-black text-slate-950">
+                      <Home className="h-4 w-4 text-slate-400" />
+                      {property.title || "Untitled property"}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {property.society_name || "No society"} · Owner: {property.owner_name || account.name || "Not provided"}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Source lead: {property.source_lead_id || "Not linked"} · {formatDate(property.created_at)}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
+                No owner listings found for this account phone yet.
+              </p>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -151,6 +268,7 @@ export function AdminUsersPage() {
   const [status, setStatus] = useState<"" | AdminAccountStatus>("");
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
@@ -159,7 +277,7 @@ export function AdminUsersPage() {
     setError("");
 
     try {
-      const result = await listAdminAccounts({ q: search, role, status });
+      const result = await listAdminAccounts({ q: search, role, status, withRelated: true });
       setAccounts(result.accounts);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load accounts.");
@@ -178,7 +296,14 @@ export function AdminUsersPage() {
       total: accounts.length,
       customers: accounts.filter((account) => account.role === "customer").length,
       brokers: accounts.filter((account) => account.role === "broker").length,
-      blocked: accounts.filter((account) => account.status === "blocked").length,
+      linked:
+        accounts.reduce(
+          (sum, account) =>
+            sum +
+            (account.related_counts?.leads || 0) +
+            (account.related_counts?.properties || 0),
+          0,
+        ),
     };
   }, [accounts]);
 
@@ -206,14 +331,14 @@ export function AdminUsersPage() {
   };
 
   return (
-    <AdminLayout title="Users" subtitle="Manage real customer and broker accounts from C47">
+    <AdminLayout title="Users" subtitle="Manage accounts with linked leads and owner listings">
       <div className="space-y-6">
         <section className="grid gap-3 md:grid-cols-4">
           {[
             ["Total accounts", metrics.total, Users, "bg-slate-50 text-slate-700"],
             ["Customers", metrics.customers, UserRound, "bg-blue-50 text-blue-700"],
             ["Brokers", metrics.brokers, BriefcaseBusiness, "bg-orange-50 text-orange-700"],
-            ["Blocked", metrics.blocked, ShieldAlert, "bg-red-50 text-red-700"],
+            ["Linked records", metrics.linked, CheckCircle2, "bg-emerald-50 text-emerald-700"],
           ].map(([label, value, Icon, tone]) => {
             const IconComponent = Icon as typeof Users;
             return (
@@ -295,6 +420,8 @@ export function AdminUsersPage() {
               <AccountCard
                 key={account.id}
                 account={account}
+                expanded={expandedId === account.id}
+                onToggleExpand={() => setExpandedId(expandedId === account.id ? null : account.id)}
                 onUpdate={handleUpdate}
                 updatingId={updatingId}
               />

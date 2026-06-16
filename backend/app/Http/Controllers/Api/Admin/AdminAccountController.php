@@ -4,15 +4,24 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Models\Lead;
+use App\Models\Property;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class AdminAccountController extends Controller
 {
-    private function accountPayload(Account $account): array
+    private function normalizePhone($value): string
     {
-        return [
+        return substr(preg_replace('/\D+/', '', (string) $value), -10);
+    }
+
+    private function accountPayload(Account $account, bool $withRelated = false): array
+    {
+        $phone = $this->normalizePhone($account->phone_normalized ?: $account->phone);
+
+        $payload = [
             'id' => $account->id,
             'role' => $account->role,
             'phone' => $account->phone,
@@ -25,6 +34,84 @@ class AdminAccountController extends Controller
             'meta' => $account->meta,
             'created_at' => optional($account->created_at)->toISOString(),
             'updated_at' => optional($account->updated_at)->toISOString(),
+        ];
+
+        $payload['related_counts'] = [
+            'leads' => $this->relatedLeadsQuery($phone)->count(),
+            'properties' => $this->relatedPropertiesQuery($phone)->count(),
+        ];
+
+        if ($withRelated) {
+            $payload['related_leads'] = $this->relatedLeadsQuery($phone)
+                ->limit(20)
+                ->get()
+                ->map(fn (Lead $lead) => $this->leadPayload($lead))
+                ->values();
+
+            $payload['related_properties'] = $this->relatedPropertiesQuery($phone)
+                ->limit(20)
+                ->get()
+                ->map(fn (Property $property) => $this->propertyPayload($property))
+                ->values();
+        }
+
+        return $payload;
+    }
+
+    private function relatedLeadsQuery(string $phone)
+    {
+        return Lead::query()
+            ->with(['property.society', 'society', 'linkedProperties'])
+            ->whereRaw("regexp_replace(phone, '[^0-9]', '', 'g') LIKE ?", ['%' . $phone])
+            ->latest();
+    }
+
+    private function relatedPropertiesQuery(string $phone)
+    {
+        return Property::query()
+            ->with(['society', 'sourceLead'])
+            ->where(function ($query) use ($phone) {
+                $query->whereRaw("regexp_replace(owner_phone, '[^0-9]', '', 'g') LIKE ?", ['%' . $phone])
+                    ->orWhereHas('sourceLead', function ($leadQuery) use ($phone) {
+                        $leadQuery->whereRaw("regexp_replace(phone, '[^0-9]', '', 'g') LIKE ?", ['%' . $phone]);
+                    });
+            })
+            ->latest();
+    }
+
+    private function leadPayload(Lead $lead): array
+    {
+        return [
+            'id' => $lead->id,
+            'name' => $lead->name,
+            'phone' => $lead->phone,
+            'email' => $lead->email,
+            'source' => $lead->source,
+            'status' => $lead->status,
+            'priority' => $lead->priority,
+            'requirement' => $lead->requirement,
+            'budget' => $lead->budget,
+            'society_name' => $lead->society_name ?: optional($lead->society)->name ?: optional(optional($lead->property)->society)->name,
+            'property_title' => $lead->property_title ?: optional($lead->property)->title,
+            'created_at' => optional($lead->created_at)->toISOString(),
+            'linked_properties_count' => $lead->linkedProperties ? $lead->linkedProperties->count() : 0,
+        ];
+    }
+
+    private function propertyPayload(Property $property): array
+    {
+        return [
+            'id' => $property->id,
+            'title' => $property->title,
+            'slug' => $property->slug,
+            'status' => $property->status,
+            'listing_type' => $property->listing_type,
+            'society_name' => optional($property->society)->name ?: $property->society,
+            'owner_name' => $property->owner_name,
+            'owner_phone' => $property->owner_phone,
+            'source_lead_id' => $property->source_lead_id,
+            'created_at' => optional($property->created_at)->toISOString(),
+            'updated_at' => optional($property->updated_at)->toISOString(),
         ];
     }
 
@@ -55,12 +142,13 @@ class AdminAccountController extends Controller
         }
 
         $perPage = max(1, min((int) $request->query('per_page', 50), 100));
+        $withRelated = filter_var($request->query('with_related', false), FILTER_VALIDATE_BOOLEAN);
 
         $accounts = $query->paginate($perPage);
 
         return response()->json([
             'data' => $accounts->getCollection()
-                ->map(fn (Account $account) => $this->accountPayload($account))
+                ->map(fn (Account $account) => $this->accountPayload($account, $withRelated))
                 ->values(),
             'meta' => [
                 'current_page' => $accounts->currentPage(),
@@ -74,7 +162,7 @@ class AdminAccountController extends Controller
     public function show(Account $account): JsonResponse
     {
         return response()->json([
-            'account' => $this->accountPayload($account),
+            'account' => $this->accountPayload($account, true),
         ]);
     }
 
@@ -104,7 +192,7 @@ class AdminAccountController extends Controller
 
         return response()->json([
             'message' => 'Account updated.',
-            'account' => $this->accountPayload($account->fresh()),
+            'account' => $this->accountPayload($account->fresh(), true),
         ]);
     }
 }
