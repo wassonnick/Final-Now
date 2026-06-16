@@ -954,7 +954,7 @@ export function PropertyPage() {
 
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <a
-                  href={`https://wa.me/919999988888?text=${whatsappMessage}`}
+                  href={`https://wa.me/919911886222?text=${whatsappMessage}`}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex h-9 items-center justify-center rounded-full border border-green-200 bg-green-50 px-3 text-xs font-semibold text-green-700 hover:bg-green-100"
@@ -992,7 +992,7 @@ export function PropertyPage() {
             <Phone className="mr-1.5 h-4 w-4" /> Callback
           </Button>
           <a
-            href={`https://wa.me/919999988888?text=${whatsappMessage}`}
+            href={`https://wa.me/919911886222?text=${whatsappMessage}`}
             target="_blank"
             rel="noreferrer"
             className="inline-flex h-10 items-center justify-center rounded-full border border-green-200 bg-green-50 px-2 text-xs font-bold text-green-700 hover:bg-green-100"

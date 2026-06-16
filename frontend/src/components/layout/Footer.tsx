@@ -42,7 +42,7 @@ export function Footer() {
 
             <div className="mt-4 grid gap-2 text-sm text-navy-200 md:mt-6">
               <a
-                href="tel:+919999988888"
+                href="tel:+919911886222"
                 className="inline-flex items-center gap-2 hover:text-white"
               >
                 <Phone className="h-4 w-4 text-blue-300" />

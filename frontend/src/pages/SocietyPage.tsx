@@ -753,7 +753,7 @@ export function SocietyPage() {
                 </Button>
 
                 <a
-                  href={`https://wa.me/919999988888?text=${whatsappMessage}`}
+                  href={`https://wa.me/919911886222?text=${whatsappMessage}`}
                   target="_blank"
                   rel="noreferrer"
                   className="hidden items-center justify-center rounded-full border border-green-200 bg-green-50 px-5 py-2.5 text-sm font-semibold text-green-700 hover:bg-green-100 sm:inline-flex"
@@ -1307,7 +1307,7 @@ export function SocietyPage() {
             <Phone className="mr-1.5 h-4 w-4" /> Callback
           </Button>
           <a
-            href={`https://wa.me/919999988888?text=${whatsappMessage}`}
+            href={`https://wa.me/919911886222?text=${whatsappMessage}`}
             target="_blank"
             rel="noreferrer"
             className="inline-flex h-10 items-center justify-center rounded-full border border-green-200 bg-green-50 px-2 text-xs font-bold text-green-700 hover:bg-green-100"
