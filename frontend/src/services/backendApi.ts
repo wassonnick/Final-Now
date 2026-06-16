@@ -1,4 +1,5 @@
 import { getAdminToken } from '@/hooks/useAdminAuth';
+import { rememberCustomerLeadSubmission } from '@/lib/customerAccount';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -34,10 +35,22 @@ async function request(path: string, options: RequestInit = {}) {
 export const backendApi = {
   request,
 
-  createLead(payload: Record<string, unknown>) {
-    return request('/leads', {
+  async createLead(payload: Record<string, unknown>) {
+    const response = await request('/leads', {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+
+    rememberCustomerLeadSubmission(payload, response as Record<string, unknown>);
+
+    return response;
+  },
+
+  listPublicProperties(params = '') {
+    const query = params ? `?${params}` : '';
+
+    return request(`/properties${query}`, {
+      method: 'GET',
     });
   },
 

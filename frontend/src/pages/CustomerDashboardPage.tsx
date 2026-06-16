@@ -1,14 +1,13 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   BarChart3,
-  Bell,
   Building2,
-  CalendarCheck,
   ChevronRight,
   Eye,
   Heart,
   Home,
+  LogOut,
   MessageCircle,
   Phone,
   Plus,
@@ -21,89 +20,76 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import {
+  clearCustomerAccountSession,
+  getCustomerAccountSession,
+  getCustomerLeadsForPhone,
+  type CustomerActivityLead,
+} from "@/lib/customerAccount";
 
-const customerStats = [
-  { label: "Viewed", value: "12", helper: "Properties & societies", icon: Eye },
-  { label: "Shortlisted", value: "4", helper: "Saved homes", icon: Heart },
-  { label: "Enquiries", value: "3", helper: "Callback/detail requests", icon: Phone },
-  { label: "My listings", value: "2", helper: "Owner properties", icon: Home },
-];
+type DashboardItem = {
+  title: string;
+  meta: string;
+  status: string;
+  href?: string;
+};
 
-const searchActivity = [
-  {
-    title: "5 BHK Flat in Tulip",
-    meta: "Viewed today · Sector 69, Gurgaon",
-    status: "Viewed",
-    href: "/search?tab=properties&q=Tulip",
-  },
-  {
-    title: "DLF Crest",
-    meta: "Society page viewed · Golf Course Road",
-    status: "Society",
-    href: "/search?tab=societies&q=DLF%20Crest",
-  },
-  {
-    title: "Golf Course Extension shortlist",
-    meta: "AI recommendation started",
-    status: "AI",
-    href: "/ai-advisor",
-  },
-];
+function formatDate(value?: string) {
+  if (!value) return "Recently";
 
-const enquiries = [
-  {
-    title: "Requested details for 5 BHK Flat in Tulip",
-    meta: "Budget: ₹1L/month · Status: Admin contacted",
-    status: "Contacted",
-  },
-  {
-    title: "Callback requested for DLF Crest",
-    meta: "Requirement: Family rental shortlist",
-    status: "New",
-  },
-  {
-    title: "Site visit interest",
-    meta: "Next step: SocietyFlats to confirm availability",
-    status: "Visit pending",
-  },
-];
+  try {
+    return new Intl.DateTimeFormat("en-IN", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(value));
+  } catch {
+    return "Recently";
+  }
+}
 
-const listedProperties = [
-  {
-    title: "5 BHK Flat in Tulip",
-    meta: "Rent · 3090 sq.ft. · Sector 69, Gurgaon",
-    status: "Live",
-    leads: 6,
-    views: 128,
-    checklist: "Verified · Generic image added",
-  },
-  {
-    title: "3 BHK Flat in DLF Park Place",
-    meta: "Rent · Draft property",
-    status: "Draft",
-    leads: 0,
-    views: 0,
-    checklist: "Photos pending · Verification pending",
-  },
-];
+function sourceLabel(source?: string) {
+  const value = String(source || "").toLowerCase();
 
-const propertyLeads = [
-  {
-    title: "Family looking for 5 BHK rental",
-    meta: "Budget: ₹1L/month · Admin contacted",
-    status: "Warm",
-  },
-  {
-    title: "NRI tenant enquiry",
-    meta: "Visit timing being confirmed by SocietyFlats",
-    status: "Visit",
-  },
-  {
-    title: "Corporate lease enquiry",
-    meta: "Lead details controlled by admin",
-    status: "New",
-  },
-];
+  if (value.includes("owner_listing_rent")) return "Owner rental listing";
+  if (value.includes("owner_listing_sale")) return "Owner sale listing";
+  if (value.includes("property")) return "Property enquiry";
+  if (value.includes("society")) return "Society enquiry";
+  if (value.includes("search")) return "Search enquiry";
+  if (value.includes("ai")) return "AI shortlist";
+  if (value.includes("chat")) return "Chat request";
+
+  return "SocietyFlats enquiry";
+}
+
+function mapLeadToDashboardItem(lead: CustomerActivityLead): DashboardItem {
+  const metaParts = [
+    sourceLabel(lead.source),
+    lead.society ? `Society: ${lead.society}` : "",
+    lead.requirement || "",
+    lead.budget ? `Budget: ${lead.budget}` : "",
+    `Submitted ${formatDate(lead.createdAt)}`,
+  ].filter(Boolean);
+
+  return {
+    title: lead.title,
+    meta: metaParts.join(" · "),
+    status: lead.status || "Submitted",
+    href: lead.kind === "listing" ? "/customer/dashboard" : "/search",
+  };
+}
+
+function listingMeta(lead: CustomerActivityLead) {
+  return [
+    sourceLabel(lead.source),
+    lead.society ? `Society: ${lead.society}` : "",
+    lead.budget ? `Expected: ${lead.budget}` : "",
+    `Submitted ${formatDate(lead.createdAt)}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
 
 function StatusBadge({ value }: { value: string }) {
   const tone = value.toLowerCase();
@@ -112,7 +98,7 @@ function StatusBadge({ value }: { value: string }) {
     <Badge
       className={cn(
         "rounded-full border px-3 py-1 text-xs font-bold",
-        tone.includes("live") || tone.includes("contacted") || tone.includes("warm")
+        tone.includes("live") || tone.includes("contacted") || tone.includes("warm") || tone.includes("submitted")
           ? "border-emerald-100 bg-emerald-50 text-emerald-700"
           : tone.includes("draft") || tone.includes("pending")
             ? "border-amber-100 bg-amber-50 text-amber-700"
@@ -131,17 +117,12 @@ function ActivityCard({
   meta,
   status,
   href,
-}: {
-  title: string;
-  meta: string;
-  status: string;
-  href?: string;
-}) {
+}: DashboardItem) {
   const content = (
-    <div className="flex items-start justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-100 hover:shadow-md">
-      <div>
-        <p className="font-bold text-slate-950">{title}</p>
-        <p className="mt-1 text-sm leading-5 text-slate-500">{meta}</p>
+    <div className="flex max-w-full flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-100 hover:shadow-md sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
+        <p className="break-words font-bold text-slate-950">{title}</p>
+        <p className="mt-1 break-words text-sm leading-5 text-slate-500">{meta}</p>
       </div>
       <StatusBadge value={status} />
     </div>
@@ -150,8 +131,85 @@ function ActivityCard({
   return href ? <Link to={href}>{content}</Link> : content;
 }
 
+function EmptyState({
+  title,
+  text,
+  actionLabel,
+  href,
+}: {
+  title: string;
+  text: string;
+  actionLabel: string;
+  href: string;
+}) {
+  return (
+    <div className="rounded-[28px] border border-dashed border-blue-200 bg-white p-8 text-center">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+        <Sparkles className="h-6 w-6" />
+      </div>
+      <h3 className="mt-4 text-lg font-black text-slate-950">{title}</h3>
+      <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">{text}</p>
+      <Button asChild className="mt-5 rounded-full bg-blue-700 hover:bg-blue-800">
+        <Link to={href}>{actionLabel}</Link>
+      </Button>
+    </div>
+  );
+}
+
 export function CustomerDashboardPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
+  const [activity, setActivity] = useState<CustomerActivityLead[]>([]);
+  const session = getCustomerAccountSession();
+
+  useEffect(() => {
+    setActivity(getCustomerLeadsForPhone(session?.phone));
+  }, [session?.phone]);
+
+  const customerName = session?.name || "Customer";
+  const customerPhone = session?.phone || "";
+
+  const listingLeads = useMemo(
+    () => activity.filter((lead) => lead.kind === "listing"),
+    [activity],
+  );
+
+  const enquiryLeads = useMemo(
+    () => activity.filter((lead) => lead.kind === "enquiry"),
+    [activity],
+  );
+
+  const recentActivity = useMemo(
+    () => activity.slice(0, 5).map(mapLeadToDashboardItem),
+    [activity],
+  );
+
+  const enquiryItems = useMemo(
+    () => enquiryLeads.map(mapLeadToDashboardItem),
+    [enquiryLeads],
+  );
+
+  const propertyLeadItems = useMemo(
+    () =>
+      listingLeads.map((lead) => ({
+        title: `Lead tracking for ${lead.title}`,
+        meta: "Admin will verify, publish and share privacy-safe enquiry updates here.",
+        status: "Admin controlled",
+      })),
+    [listingLeads],
+  );
+
+  const customerStats = [
+    { label: "Activity", value: String(activity.length), helper: "Real submissions", icon: Eye },
+    { label: "Shortlisted", value: "0", helper: "Connect in C45", icon: Heart },
+    { label: "Enquiries", value: String(enquiryLeads.length), helper: "Callback/detail requests", icon: Phone },
+    { label: "My listings", value: String(listingLeads.length), helper: "Owner properties", icon: Home },
+  ];
+
+  const logout = () => {
+    clearCustomerAccountSession();
+    navigate("/login?role=customer", { replace: true });
+  };
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#f7fbff] pb-16">
@@ -163,10 +221,10 @@ export function CustomerDashboardPage() {
                 Customer account
               </Badge>
               <h1 className="text-3xl font-black tracking-[-0.04em] text-slate-950 md:text-5xl">
-                Search, shortlist, list and track everything.
+                Welcome, {customerName}.
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-                One SocietyFlats customer account for both journeys: finding the right home and listing your own flat.
+                Your SocietyFlats activity is now connected to this account phone: {customerPhone || "login phone"}.
               </p>
             </div>
 
@@ -182,6 +240,10 @@ export function CustomerDashboardPage() {
                   <Search className="mr-2 h-4 w-4" />
                   Continue search
                 </Link>
+              </Button>
+              <Button variant="outline" onClick={logout} className="rounded-full border-slate-200 bg-white px-5 text-slate-600">
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
               </Button>
             </div>
           </div>
@@ -233,10 +295,10 @@ export function CustomerDashboardPage() {
 
           <TabsContent value="overview" className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <section className="max-w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-xl font-black text-slate-950">Recent activity</h2>
-                  <p className="mt-1 text-sm text-slate-500">Your search and enquiry journey.</p>
+                  <p className="mt-1 text-sm text-slate-500">Real submissions made from this browser/account.</p>
                 </div>
                 <Button asChild variant="ghost" className="rounded-full text-blue-700">
                   <Link to="/search">
@@ -245,9 +307,16 @@ export function CustomerDashboardPage() {
                 </Button>
               </div>
               <div className="mt-5 space-y-3">
-                {searchActivity.map((item) => (
-                  <ActivityCard key={item.title} {...item} />
-                ))}
+                {recentActivity.length ? (
+                  recentActivity.map((item) => <ActivityCard key={`${item.title}-${item.meta}`} {...item} />)
+                ) : (
+                  <EmptyState
+                    title="No customer activity yet"
+                    text="Submit a property enquiry or list your flat. It will appear here immediately after backend submission."
+                    actionLabel="Start search"
+                    href="/search"
+                  />
+                )}
               </div>
             </section>
 
@@ -258,11 +327,11 @@ export function CustomerDashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-950">Privacy-safe lead tracking</h2>
-                  <p className="mt-1 text-sm text-slate-500">Owner/broker visibility remains controlled by admin.</p>
+                  <p className="mt-1 text-sm text-slate-500">Admin remains the control layer.</p>
                 </div>
               </div>
               <div className="mt-5 rounded-3xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-                Customers can see status, requirement, budget and admin updates on their listed-property leads. Buyer phone/email stays protected until SocietyFlats unlocks the next stage.
+                Customers see their own submissions, listing history and privacy-safe lead status. Buyer phone/email stays protected until SocietyFlats unlocks the next stage.
               </div>
               <Button asChild className="mt-5 w-full rounded-full bg-blue-700 hover:bg-blue-800">
                 <Link to="/sell">List a property</Link>
@@ -270,62 +339,90 @@ export function CustomerDashboardPage() {
             </section>
           </TabsContent>
 
-          <TabsContent value="shortlist" className="mt-6 space-y-3">
-            {searchActivity.map((item) => (
-              <ActivityCard key={item.title} {...item} />
-            ))}
+          <TabsContent value="shortlist" className="mt-6">
+            <EmptyState
+              title="Shortlist tracking comes next"
+              text="C45 will connect saved properties and societies to this account. Current C44 connects enquiries and listing submissions."
+              actionLabel="Browse societies"
+              href="/search?tab=societies"
+            />
           </TabsContent>
 
           <TabsContent value="enquiries" className="mt-6 space-y-3">
-            {enquiries.map((item) => (
-              <ActivityCard key={item.title} {...item} />
-            ))}
+            {enquiryItems.length ? (
+              enquiryItems.map((item) => <ActivityCard key={`${item.title}-${item.meta}`} {...item} />)
+            ) : (
+              <EmptyState
+                title="No enquiries yet"
+                text="Property, society, AI and callback enquiries created after login will appear here."
+                actionLabel="Find homes"
+                href="/search"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="listings" className="mt-6 space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-black text-slate-950">My listed properties</h2>
-                <p className="mt-1 text-sm text-slate-500">Track draft, verification and live listings.</p>
+                <p className="mt-1 text-sm text-slate-500">Owner listing submissions from this account.</p>
               </div>
               <Button asChild className="rounded-full bg-blue-700 hover:bg-blue-800">
                 <Link to="/sell">Add listing</Link>
               </Button>
             </div>
 
-            {listedProperties.map((item) => (
-              <div key={item.title} className="max-w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <div className="flex flex-wrap gap-2">
-                      <StatusBadge value={item.status} />
-                      <Badge className="rounded-full border-blue-100 bg-blue-50 text-blue-700">
-                        {item.leads} leads
-                      </Badge>
+            {listingLeads.length ? (
+              listingLeads.map((lead) => (
+                <div key={lead.id} className="max-w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap gap-2">
+                        <StatusBadge value={lead.status || "Submitted"} />
+                        <Badge className="rounded-full border-blue-100 bg-blue-50 text-blue-700">
+                          Admin verification
+                        </Badge>
+                      </div>
+                      <h3 className="mt-3 break-words text-xl font-black text-slate-950">{lead.title}</h3>
+                      <p className="mt-1 break-words text-sm text-slate-500">{listingMeta(lead)}</p>
+                      <p className="mt-3 text-sm font-semibold text-slate-600">
+                        SocietyFlats admin will verify details, ask for photos and publish when ready.
+                      </p>
                     </div>
-                    <h3 className="mt-3 text-xl font-black text-slate-950">{item.title}</h3>
-                    <p className="mt-1 text-sm text-slate-500">{item.meta}</p>
-                    <p className="mt-3 text-sm font-semibold text-slate-600">{item.checklist}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 text-center sm:min-w-48">
-                    <div className="rounded-2xl bg-slate-50 p-4">
-                      <p className="text-2xl font-black text-slate-950">{item.views}</p>
-                      <p className="text-xs font-semibold text-slate-500">views</p>
-                    </div>
-                    <div className="rounded-2xl bg-slate-50 p-4">
-                      <p className="text-2xl font-black text-slate-950">{item.leads}</p>
-                      <p className="text-xs font-semibold text-slate-500">leads</p>
+                    <div className="grid grid-cols-2 gap-3 text-center sm:min-w-48">
+                      <div className="rounded-2xl bg-slate-50 p-4">
+                        <p className="text-2xl font-black text-slate-950">0</p>
+                        <p className="text-xs font-semibold text-slate-500">views</p>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 p-4">
+                        <p className="text-2xl font-black text-slate-950">0</p>
+                        <p className="text-xs font-semibold text-slate-500">leads</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <EmptyState
+                title="No listed properties yet"
+                text="List a flat for rent or sale. Once submitted, it will appear here as your owner listing request."
+                actionLabel="List property"
+                href="/sell"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="leads" className="mt-6 space-y-3">
-            {propertyLeads.map((item) => (
-              <ActivityCard key={item.title} {...item} />
-            ))}
+            {propertyLeadItems.length ? (
+              propertyLeadItems.map((item) => <ActivityCard key={`${item.title}-${item.meta}`} {...item} />)
+            ) : (
+              <EmptyState
+                title="No property lead updates yet"
+                text="After your property is verified and published, privacy-safe lead updates will appear here."
+                actionLabel="List property"
+                href="/sell"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="profile" className="mt-6">
@@ -335,9 +432,12 @@ export function CustomerDashboardPage() {
                   <UserRound className="h-7 w-7" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-950">Customer profile foundation</h2>
+                  <h2 className="text-xl font-black text-slate-950">{customerName}</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                    C43 keeps this as a safe UX shell. C44/C45 will connect real viewed history, enquiries and listed-property leads after account/auth wiring.
+                    Phone: {customerPhone || "Not available"} · Role: Customer
+                  </p>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                    Full backend OTP/auth and cross-device history will come after this local account foundation.
                   </p>
                 </div>
               </div>
@@ -348,10 +448,10 @@ export function CustomerDashboardPage() {
         <section className="mt-8 rounded-[28px] border border-blue-100 bg-blue-50 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Next account layer</p>
-              <h2 className="mt-2 text-2xl font-black text-slate-950">Customer can search and list from one account.</h2>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">C44 real-data foundation</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">Customer dashboard now reads real account submissions.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Buyer/tenant activity and owner/seller listing activity are combined into one customer dashboard.
+                Leads submitted through backendApi are mirrored into this customer account by phone, while admin remains the source of truth.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
