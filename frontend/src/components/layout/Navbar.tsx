@@ -97,16 +97,6 @@ export function Navbar() {
             <Button variant="ghost" size="sm" className="hidden sm:flex rounded-full text-navy-700 hover:bg-navy-50" onClick={() => navigate('/login')}>Sign In</Button>
           )}
 
-          <Link to="/customer/dashboard" className="hidden lg:block">
-            <Button size="sm" variant="outline" className="rounded-full border-blue-100 bg-white px-5 text-blue-700 shadow-sm hover:bg-blue-50">
-              Customer
-            </Button>
-          </Link>
-          <Link to="/broker/dashboard" className="hidden lg:block">
-            <Button size="sm" variant="outline" className="rounded-full border-orange-100 bg-white px-5 text-orange-700 shadow-sm hover:bg-orange-50">
-              Broker
-            </Button>
-          </Link>
           <Link to="/sell" className="hidden lg:block"><Button size="sm" className="rounded-full bg-blue-700 hover:bg-blue-800 text-white px-5 shadow-sm">List Property</Button></Link>
           <button className="xl:hidden p-2 rounded-full hover:bg-navy-50 transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}</button>
         </div>
