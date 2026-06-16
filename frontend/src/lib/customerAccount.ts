@@ -329,3 +329,125 @@ export function toggleCustomerShortlist(
 
   return { saved: true, item };
 }
+
+export type BrokerActivityKind = "partner" | "listing" | "requirement";
+
+export type BrokerActivityItem = {
+  id: string;
+  phone: string;
+  name?: string;
+  source?: string;
+  role?: string;
+  society?: string;
+  title: string;
+  message?: string;
+  status: string;
+  kind: BrokerActivityKind;
+  createdAt: string;
+  backendLeadId?: string | number | null;
+};
+
+const BROKER_ACTIVITY_KEY = "sf_broker_activity_v1";
+
+function readAllBrokerActivity(): BrokerActivityItem[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = window.localStorage.getItem(BROKER_ACTIVITY_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAllBrokerActivity(items: BrokerActivityItem[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(BROKER_ACTIVITY_KEY, JSON.stringify(items.slice(0, 120)));
+  notifyCustomerAccountChanged();
+}
+
+function brokerKindFromPayload(payload: Record<string, unknown>): BrokerActivityKind {
+  const role = String(payload.role || payload.partner_role || payload.message || "").toLowerCase();
+  const source = String(payload.source || "").toLowerCase();
+
+  if (source.includes("broker") || role.includes("broker")) return "partner";
+  if (role.includes("owner") || role.includes("listing") || role.includes("inventory")) return "listing";
+
+  return "requirement";
+}
+
+function brokerTitleFromPayload(payload: Record<string, unknown>) {
+  const role = String(payload.role || payload.partner_role || "").trim();
+  const society = String(payload.society_name || payload.society || "").trim();
+  const message = String(payload.message || "").trim();
+
+  if (role && society) return `${role} · ${society}`;
+  if (society) return `Broker submission for ${society}`;
+  if (role) return `${role} broker submission`;
+  if (message) return message.split("\n").find(Boolean)?.slice(0, 80) || "Broker partner submission";
+
+  return "Broker partner submission";
+}
+
+export function rememberBrokerActivitySubmission(
+  payload: Record<string, unknown>,
+  response?: Record<string, unknown>,
+) {
+  const payloadPhone = cleanAccountPhone(payload.phone);
+  const session = getCustomerAccountSession();
+  const sessionPhone = cleanAccountPhone(session?.phone);
+
+  const phone = payloadPhone || sessionPhone;
+  if (!phone) return;
+
+  const backendLead =
+    (response?.lead as Record<string, unknown> | undefined) ||
+    (response?.data as Record<string, unknown> | undefined) ||
+    response ||
+    {};
+
+  const item: BrokerActivityItem = {
+    id: String(
+      backendLead?.id ||
+        response?.id ||
+        `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    ),
+    backendLeadId: (backendLead?.id as string | number | undefined) || (response?.id as string | number | undefined) || null,
+    phone,
+    name: String(payload.name || session?.name || "").trim(),
+    source: String(payload.source || "").trim(),
+    role: String(payload.role || payload.partner_role || "").trim(),
+    society: String(payload.society_name || payload.society || "").trim(),
+    title: brokerTitleFromPayload(payload),
+    message: String(payload.message || "").trim(),
+    status: "Submitted",
+    kind: brokerKindFromPayload(payload),
+    createdAt: new Date().toISOString(),
+  };
+
+  const existing = readAllBrokerActivity();
+  const withoutDuplicate = existing.filter((lead) => {
+    if (item.backendLeadId && lead.backendLeadId) {
+      return String(lead.backendLeadId) !== String(item.backendLeadId);
+    }
+
+    return !(
+      lead.phone === item.phone &&
+      lead.title === item.title &&
+      lead.kind === item.kind &&
+      Math.abs(new Date(lead.createdAt).getTime() - new Date(item.createdAt).getTime()) < 5000
+    );
+  });
+
+  writeAllBrokerActivity([item, ...withoutDuplicate]);
+}
+
+export function getBrokerActivityForPhone(phone: unknown) {
+  const cleanPhone = cleanAccountPhone(phone);
+  if (!cleanPhone) return [];
+
+  return readAllBrokerActivity()
+    .filter((item) => cleanAccountPhone(item.phone) === cleanPhone)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}

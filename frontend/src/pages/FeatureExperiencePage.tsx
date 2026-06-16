@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { fetchPublicProperties, fetchPublicSocieties, formatPublicLocation, searchableText, societyImage } from '@/lib/publicData';
 import { cn } from '@/lib/utils';
+import { createCustomerAccountSession, rememberBrokerActivitySubmission } from '@/lib/customerAccount';
 
 type FeatureExperienceKey = 'maps' | 'broker-crm' | 'chat' | 'recommendations';
 
@@ -58,7 +59,7 @@ const featureIntro = {
 const localityPresets = ['Golf Course Road', 'Dwarka Expressway', 'Sohna Road', 'Sector 70', 'Sector 102', 'DLF'];
 const priorityOptions = ['Clubhouse', 'Swimming Pool', 'Gym', '24x7 Security', 'Power Backup', 'Landscaped Greens'];
 
-function submitLead(payload: { name: string; phone: string; email?: string; message: string; society_name?: string; source: string }) {
+function submitLead(payload: { name: string; phone: string; email?: string; message: string; society_name?: string; source: string; role?: string }) {
   return fetch(`${API_BASE}/leads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -308,18 +309,32 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
         'Suggested next action: Call partner, verify area coverage, discuss lead sharing and commission structure.',
       ].join('\n');
 
-      await submitLead({
+      const payload = {
         name: form.name.trim(),
         phone: cleanPhone || form.phone,
         email: form.email.trim() || undefined,
         society_name: society || undefined,
         source: isBrokerCrm ? 'public_broker_crm' : 'public_chat_callback',
+        role,
         message: isBrokerCrm
           ? brokerMessage
           : `${role}: ${userMessage || 'Callback requested from SocietyFlats feature page.'}`,
-      });
+      };
+
+      const response = await submitLead(payload);
+
+      if (isBrokerCrm) {
+        createCustomerAccountSession({
+          role: 'broker',
+          phone: cleanPhone || form.phone,
+          name: form.name.trim() || 'Broker Partner',
+        });
+
+        rememberBrokerActivitySubmission(payload, response as Record<string, unknown>);
+      }
+
       setState('success');
-      setNotice(isBrokerCrm ? 'Broker partner lead added to Broker CRM. Admin can follow up from the broker queue.' : 'Callback request sent. Admin can see it in Leads.');
+      setNotice(isBrokerCrm ? 'Broker partner account created. Admin can follow up from the broker queue and you can track this from Broker Dashboard.' : 'Callback request sent. Admin can see it in Leads.');
     } catch (error) {
       setState('error');
       setNotice(error instanceof Error ? error.message : 'Unable to submit. Please try again.');
@@ -367,6 +382,11 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
           </Button>
           {notice ? (
             <span className={cn('text-sm font-semibold', state === 'success' ? 'text-emerald-700' : 'text-red-600')}>{notice}</span>
+          ) : null}
+          {state === 'success' && feature === 'broker-crm' ? (
+            <Button asChild variant="outline" className="rounded-full border-orange-100 bg-white text-orange-700">
+              <Link to="/broker/dashboard">Open Broker Dashboard</Link>
+            </Button>
           ) : null}
         </div>
       </section>

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   BadgeIndianRupee,
   BarChart3,
@@ -8,10 +8,12 @@ import {
   CheckCircle2,
   ClipboardList,
   Home,
+  LogOut,
   MessageCircle,
   Phone,
   Plus,
   ShieldCheck,
+  Sparkles,
   TrendingUp,
   UserCheck,
 } from "lucide-react";
@@ -19,91 +21,64 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import {
+  CUSTOMER_ACCOUNT_EVENT,
+  clearCustomerAccountSession,
+  getBrokerActivityForPhone,
+  getCustomerAccountSession,
+  type BrokerActivityItem,
+} from "@/lib/customerAccount";
 
-const brokerStats = [
-  { label: "Listings", value: "8", helper: "Submitted inventory", icon: Home },
-  { label: "Listing leads", value: "21", helper: "Admin-controlled enquiries", icon: Phone },
-  { label: "Submitted req.", value: "14", helper: "Buyer/tenant leads", icon: ClipboardList },
-  { label: "Commission", value: "₹2.4L", helper: "Pipeline value", icon: BadgeIndianRupee },
-];
+type BrokerDashboardItem = {
+  title: string;
+  meta: string;
+  status: string;
+  value?: string | number;
+};
 
-const listings = [
-  {
-    title: "4 BHK in M3M Golf Estate",
-    meta: "Rent · Admin verification pending",
-    status: "Verification",
-    leads: 4,
-  },
-  {
-    title: "3 BHK in DLF Crest",
-    meta: "Live listing · Golf Course Road",
-    status: "Live",
-    leads: 9,
-  },
-  {
-    title: "Builder floor in DLF Phase 2",
-    meta: "Draft · Photos pending",
-    status: "Draft",
-    leads: 0,
-  },
-];
+function formatDate(value?: string) {
+  if (!value) return "Recently";
 
-const listingLeads = [
-  {
-    title: "Tenant enquiry for DLF Crest",
-    meta: "Budget: ₹1.6L/month · Admin contacted",
-    status: "Warm",
-  },
-  {
-    title: "NRI buyer for Golf Course Road",
-    meta: "Requirement shared · Phone hidden by admin",
-    status: "New",
-  },
-  {
-    title: "Family visit request",
-    meta: "Visit timing under coordination",
-    status: "Visit",
-  },
-];
+  try {
+    return new Intl.DateTimeFormat("en-IN", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(value));
+  } catch {
+    return "Recently";
+  }
+}
 
-const submittedRequirements = [
-  {
-    title: "Buyer looking for 3 BHK on Golf Course Road",
-    meta: "Budget: ₹4Cr · Submitted to admin",
-    status: "Qualified",
-  },
-  {
-    title: "Tenant looking for pet-friendly 4 BHK",
-    meta: "Budget: ₹1.4L/month · Matching required",
-    status: "Matching",
-  },
-  {
-    title: "Owner wants resale valuation",
-    meta: "Sector 65 · Admin review pending",
-    status: "Pending",
-  },
-];
+function brokerSourceLabel(source?: string) {
+  const value = String(source || "").toLowerCase();
 
-const commissions = [
-  {
-    title: "DLF Crest rental closure",
-    meta: "Stage: Site visit done · Commission eligible",
-    status: "Pipeline",
-    value: "₹45,000",
-  },
-  {
-    title: "M3M resale buyer",
-    meta: "Stage: Negotiation · Admin verification required",
-    status: "Negotiation",
-    value: "₹1.5L",
-  },
-  {
-    title: "Partner onboarding",
-    meta: "Commission terms pending admin approval",
-    status: "Pending",
-    value: "TBD",
-  },
-];
+  if (value.includes("public_broker_crm")) return "Public Broker CRM";
+  if (value.includes("broker")) return "Broker partner";
+  if (value.includes("chat")) return "Chat request";
+
+  return "Broker submission";
+}
+
+function brokerItemMeta(item: BrokerActivityItem) {
+  return [
+    brokerSourceLabel(item.source),
+    item.role ? `Role: ${item.role}` : "",
+    item.society ? `Area/Society: ${item.society}` : "",
+    `Submitted ${formatDate(item.createdAt)}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function toDashboardItem(item: BrokerActivityItem): BrokerDashboardItem {
+  return {
+    title: item.title,
+    meta: brokerItemMeta(item),
+    status: item.status || "Submitted",
+  };
+}
 
 function BrokerStatusBadge({ value }: { value: string }) {
   const tone = value.toLowerCase();
@@ -112,7 +87,7 @@ function BrokerStatusBadge({ value }: { value: string }) {
     <Badge
       className={cn(
         "rounded-full border px-3 py-1 text-xs font-bold",
-        tone.includes("live") || tone.includes("qualified")
+        tone.includes("live") || tone.includes("qualified") || tone.includes("submitted")
           ? "border-emerald-100 bg-emerald-50 text-emerald-700"
           : tone.includes("pending") || tone.includes("draft") || tone.includes("verification")
             ? "border-amber-100 bg-amber-50 text-amber-700"
@@ -131,19 +106,14 @@ function BrokerItemCard({
   meta,
   status,
   value,
-}: {
-  title: string;
-  meta: string;
-  status: string;
-  value?: string | number;
-}) {
+}: BrokerDashboardItem) {
   return (
     <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-orange-100 hover:shadow-md">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <BrokerStatusBadge value={status} />
-          <h3 className="mt-3 text-lg font-black text-slate-950">{title}</h3>
-          <p className="mt-1 text-sm leading-5 text-slate-500">{meta}</p>
+          <h3 className="mt-3 break-words text-lg font-black text-slate-950">{title}</h3>
+          <p className="mt-1 break-words text-sm leading-5 text-slate-500">{meta}</p>
         </div>
         {value !== undefined ? (
           <p className="rounded-2xl bg-slate-50 px-4 py-2 text-sm font-black text-slate-950">{value}</p>
@@ -153,8 +123,99 @@ function BrokerItemCard({
   );
 }
 
+function BrokerEmptyState({
+  title,
+  text,
+  actionLabel,
+  href,
+}: {
+  title: string;
+  text: string;
+  actionLabel: string;
+  href: string;
+}) {
+  return (
+    <div className="rounded-[28px] border border-dashed border-orange-200 bg-white p-8 text-center">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
+        <Sparkles className="h-6 w-6" />
+      </div>
+      <h3 className="mt-4 text-lg font-black text-slate-950">{title}</h3>
+      <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">{text}</p>
+      <Button asChild className="mt-5 rounded-full bg-orange-600 hover:bg-orange-700">
+        <Link to={href}>{actionLabel}</Link>
+      </Button>
+    </div>
+  );
+}
+
 export function BrokerDashboardPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
+  const [activity, setActivity] = useState<BrokerActivityItem[]>([]);
+  const session = getCustomerAccountSession();
+
+  const refreshBrokerData = () => {
+    setActivity(getBrokerActivityForPhone(session?.phone));
+  };
+
+  useEffect(() => {
+    refreshBrokerData();
+
+    const handleRefresh = () => refreshBrokerData();
+
+    window.addEventListener("focus", handleRefresh);
+    window.addEventListener(CUSTOMER_ACCOUNT_EVENT, handleRefresh);
+
+    return () => {
+      window.removeEventListener("focus", handleRefresh);
+      window.removeEventListener(CUSTOMER_ACCOUNT_EVENT, handleRefresh);
+    };
+  }, [session?.phone]);
+
+  const brokerName = session?.name || "Broker Partner";
+  const brokerPhone = session?.phone || "";
+
+  const partnerSubmissions = useMemo(
+    () => activity.filter((item) => item.kind === "partner"),
+    [activity],
+  );
+
+  const listingSubmissions = useMemo(
+    () => activity.filter((item) => item.kind === "listing"),
+    [activity],
+  );
+
+  const requirementSubmissions = useMemo(
+    () => activity.filter((item) => item.kind === "requirement"),
+    [activity],
+  );
+
+  const recentItems = useMemo(
+    () => activity.slice(0, 6).map(toDashboardItem),
+    [activity],
+  );
+
+  const listingItems = useMemo(
+    () => listingSubmissions.map(toDashboardItem),
+    [listingSubmissions],
+  );
+
+  const requirementItems = useMemo(
+    () => requirementSubmissions.map(toDashboardItem),
+    [requirementSubmissions],
+  );
+
+  const brokerStats = [
+    { label: "Submissions", value: String(activity.length), helper: "Real broker activity", icon: ClipboardList },
+    { label: "Partner profile", value: String(partnerSubmissions.length), helper: "Broker onboarding", icon: BriefcaseBusiness },
+    { label: "Listings", value: String(listingSubmissions.length), helper: "Inventory submitted", icon: Home },
+    { label: "Commission", value: "TBD", helper: "Admin-controlled", icon: BadgeIndianRupee },
+  ];
+
+  const logout = () => {
+    clearCustomerAccountSession();
+    navigate("/login?role=broker", { replace: true });
+  };
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#fffaf4] pb-16">
@@ -166,10 +227,10 @@ export function BrokerDashboardPage() {
                 Broker / partner account
               </Badge>
               <h1 className="text-3xl font-black tracking-[-0.04em] text-slate-950 md:text-5xl">
-                Manage listings, leads and commission pipeline.
+                Welcome, {brokerName}.
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-                A partner dashboard for verified brokers to submit inventory, send buyer requirements and track deal stages with SocietyFlats.
+                Broker activity is linked to this account phone: {brokerPhone || "login phone"}.
               </p>
             </div>
 
@@ -181,10 +242,14 @@ export function BrokerDashboardPage() {
                 </Link>
               </Button>
               <Button asChild variant="outline" className="rounded-full border-orange-100 bg-white px-5">
-                <Link to="/sell">
+                <Link to="/broker-crm">
                   <Building2 className="mr-2 h-4 w-4" />
-                  Add listing
+                  Add inventory
                 </Link>
+              </Button>
+              <Button variant="outline" onClick={logout} className="rounded-full border-slate-200 bg-white px-5 text-slate-600">
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
               </Button>
             </div>
           </div>
@@ -241,23 +306,22 @@ export function BrokerDashboardPage() {
                   <BriefcaseBusiness className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-950">Partner workflow</h2>
-                  <p className="mt-1 text-sm text-slate-500">Inventory, requirements and commission are tracked separately.</p>
+                  <h2 className="text-xl font-black text-slate-950">Recent broker activity</h2>
+                  <p className="mt-1 text-sm text-slate-500">Real partner submissions from this account.</p>
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3">
-                {[
-                  "Submit inventory or buyer requirements",
-                  "Admin verifies listing and lead quality",
-                  "SocietyFlats controls customer contact visibility",
-                  "Commission stage updates after verified deal progress",
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700">
-                    <CheckCircle2 className="h-5 w-5 text-orange-600" />
-                    {item}
-                  </div>
-                ))}
+              <div className="mt-5 space-y-3">
+                {recentItems.length ? (
+                  recentItems.map((item) => <BrokerItemCard key={`${item.title}-${item.meta}`} {...item} />)
+                ) : (
+                  <BrokerEmptyState
+                    title="No broker activity yet"
+                    text="Submit a partner enquiry or inventory requirement from Broker CRM. It will appear here immediately."
+                    actionLabel="Open Broker CRM"
+                    href="/broker-crm"
+                  />
+                )}
               </div>
             </section>
 
@@ -272,36 +336,66 @@ export function BrokerDashboardPage() {
                 </div>
               </div>
               <p className="mt-5 rounded-3xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-                Brokers can see lead stage, requirement, budget and admin comments. Buyer phone/email is unlocked only by admin when the deal stage requires it.
+                Brokers can see their submissions and pipeline foundation. Buyer phone/email, commission status and deal visibility remain controlled by admin.
               </p>
-              <Button asChild className="mt-5 w-full rounded-full bg-orange-600 hover:bg-orange-700">
-                <Link to="/broker-crm">Open partner intake</Link>
-              </Button>
+              <div className="mt-5 grid gap-3">
+                {[
+                  "Submit inventory or buyer requirements",
+                  "Admin verifies broker profile and area coverage",
+                  "SocietyFlats controls customer contact visibility",
+                  "Commission stage updates after verified deal progress",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700">
+                    <CheckCircle2 className="h-5 w-5 text-orange-600" />
+                    {item}
+                  </div>
+                ))}
+              </div>
             </section>
           </TabsContent>
 
           <TabsContent value="listings" className="mt-6 space-y-3">
-            {listings.map((item) => (
-              <BrokerItemCard key={item.title} {...item} value={`${item.leads} leads`} />
-            ))}
+            {listingItems.length ? (
+              listingItems.map((item) => <BrokerItemCard key={`${item.title}-${item.meta}`} {...item} />)
+            ) : (
+              <BrokerEmptyState
+                title="No inventory submissions yet"
+                text="Use Broker CRM to submit owner inventory, areas and property details for admin verification."
+                actionLabel="Submit inventory"
+                href="/broker-crm"
+              />
+            )}
           </TabsContent>
 
-          <TabsContent value="leads" className="mt-6 space-y-3">
-            {listingLeads.map((item) => (
-              <BrokerItemCard key={item.title} {...item} />
-            ))}
+          <TabsContent value="leads" className="mt-6">
+            <BrokerEmptyState
+              title="Listing leads are admin-controlled"
+              text="Once your inventory is verified and SocietyFlats routes matching enquiries, privacy-safe lead updates will appear here."
+              actionLabel="Submit more inventory"
+              href="/broker-crm"
+            />
           </TabsContent>
 
           <TabsContent value="requirements" className="mt-6 space-y-3">
-            {submittedRequirements.map((item) => (
-              <BrokerItemCard key={item.title} {...item} />
-            ))}
+            {requirementItems.length ? (
+              requirementItems.map((item) => <BrokerItemCard key={`${item.title}-${item.meta}`} {...item} />)
+            ) : (
+              <BrokerEmptyState
+                title="No buyer/tenant requirements yet"
+                text="Submit buyer, tenant or society requirements from Broker CRM to start a requirement pipeline."
+                actionLabel="Submit requirement"
+                href="/broker-crm"
+              />
+            )}
           </TabsContent>
 
-          <TabsContent value="commissions" className="mt-6 space-y-3">
-            {commissions.map((item) => (
-              <BrokerItemCard key={item.title} {...item} value={item.value} />
-            ))}
+          <TabsContent value="commissions" className="mt-6">
+            <BrokerEmptyState
+              title="Commission tracker comes after admin verification"
+              text="Commission stages will remain admin-controlled until a verified deal moves into site visit, negotiation or closure stage."
+              actionLabel="Open partner intake"
+              href="/broker-crm"
+            />
           </TabsContent>
 
           <TabsContent value="profile" className="mt-6">
@@ -311,9 +405,12 @@ export function BrokerDashboardPage() {
                   <UserCheck className="h-7 w-7" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-950">Broker profile foundation</h2>
+                  <h2 className="text-xl font-black text-slate-950">{brokerName}</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                    C43 keeps this as a safe UX shell. C46 will connect real partner leads, inventory and commission stages after backend role wiring.
+                    Phone: {brokerPhone || "Not available"} · Role: Broker Partner
+                  </p>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                    Backend broker verification, commission terms and cross-device history will come after real OTP/auth wiring.
                   </p>
                 </div>
               </div>
@@ -324,10 +421,10 @@ export function BrokerDashboardPage() {
         <section className="mt-8 rounded-[28px] border border-orange-100 bg-orange-50 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">Partner growth</p>
-              <h2 className="mt-2 text-2xl font-black text-slate-950">Broker account stays separate from customer account.</h2>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">C46 broker foundation</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">Broker dashboard now reads real account submissions.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Brokers can list, submit leads and track commission, while admin controls verification and buyer contact visibility.
+                Broker CRM submissions are linked to the broker phone in this temporary account layer while admin remains the source of truth.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
