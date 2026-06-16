@@ -1195,7 +1195,15 @@ export function AdminLeadDetailPage() {
                     </div>
                   ) : null}
 
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  {isOwnerSource(lead.source) ? (
+                  <div className="mt-5 grid gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-xs font-semibold leading-5 text-emerald-800 sm:grid-cols-3">
+                    <span>1. Verify owner</span>
+                    <span>2. Ask photos</span>
+                    <span>3. Create draft</span>
+                  </div>
+                ) : null}
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <Button
                     type="button"
                     variant="outline"
