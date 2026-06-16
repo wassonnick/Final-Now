@@ -125,6 +125,7 @@ function AppShell() {
 
             <Route path="/customer/dashboard" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/customer" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
+            <Route path="/shortlist" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/owner/dashboard" element={<ProtectedAccountRoute role="customer"><OwnerDashboard /></ProtectedAccountRoute>} />
             <Route path="/broker/dashboard" element={<ProtectedAccountRoute role="broker"><BrokerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/broker" element={<ProtectedAccountRoute role="broker"><BrokerDashboardPage /></ProtectedAccountRoute>} />

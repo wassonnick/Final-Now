@@ -584,7 +584,7 @@ export function SocietyPage() {
           )}
         >
           <Heart className={cn("mr-2 h-4 w-4", isSocietyShortlisted && "fill-current")} />
-          {isSocietyShortlisted ? "Saved society" : "Save society"}
+          {isSocietyShortlisted ? "Saved" : "Save society"}
         </Button>
       </div>
       <section className="bg-white">

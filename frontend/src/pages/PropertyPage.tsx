@@ -597,6 +597,23 @@ export function PropertyPage() {
 
   return (
     <div className="min-h-screen bg-ivory-100 pb-20 md:pb-0">
+      {/* C46D mobile property save CTA */}
+      <div className="fixed bottom-24 right-4 z-40 md:hidden">
+        <Button
+          type="button"
+          onClick={handlePropertyShortlist}
+          className={cn(
+            "rounded-full px-5 shadow-xl",
+            isShortlisted
+              ? "bg-rose-600 text-white hover:bg-rose-700"
+              : "bg-blue-700 text-white hover:bg-blue-800",
+          )}
+        >
+          <Heart className={cn("mr-2 h-4 w-4", isShortlisted && "fill-current")} />
+          {isShortlisted ? "Saved" : "Save"}
+        </Button>
+      </div>
+
       <section className="bg-white">
         <div className="container mx-auto px-4 py-5 md:py-6">
           <Button asChild variant="ghost" className="mb-4 rounded-full text-navy-600">

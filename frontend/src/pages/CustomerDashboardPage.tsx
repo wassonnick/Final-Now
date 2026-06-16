@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Building2,
@@ -173,7 +173,8 @@ function EmptyState({
 
 export function CustomerDashboardPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("overview");
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.pathname === "/shortlist" ? "shortlist" : "overview");
   const [activity, setActivity] = useState<CustomerActivityLead[]>([]);
   const [viewedItems, setViewedItems] = useState<CustomerSavedItem[]>([]);
   const [shortlistedItems, setShortlistedItems] = useState<CustomerSavedItem[]>([]);
