@@ -37,9 +37,9 @@ const featureIntro = {
     icon: MapPinned,
   },
   'broker-crm': {
-    title: 'Broker CRM',
-    eyebrow: 'Lead pipeline',
-    text: 'Capture owner, tenant and buyer requirements directly into the SocietyFlats lead flow.',
+    title: 'Join SocietyFlats as a Broker Partner',
+    eyebrow: 'Broker partner program',
+    text: 'Submit your working areas, inventory strength and client requirements. SocietyFlats helps verified brokers access serious Gurgaon buyers, tenants and owner listing opportunities.',
     icon: BriefcaseBusiness,
   },
   chat: {
@@ -88,12 +88,25 @@ function FeatureHero({ feature }: { feature: FeatureExperienceKey }) {
             <p className="mt-4 max-w-3xl text-lg leading-8 text-navy-500">{intro.text}</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button asChild variant="outline" className="rounded-full border-navy-200 text-navy-700">
-              <Link to="/search">Advanced search</Link>
-            </Button>
-            <Button asChild className="rounded-full bg-navy-600 hover:bg-navy-700">
-              <Link to="/ai-advisor">AI advisor <ArrowRight className="ml-2 h-4 w-4" /></Link>
-            </Button>
+            {feature === 'broker-crm' ? (
+              <>
+                <Button asChild className="rounded-full bg-orange-600 hover:bg-orange-700">
+                  <a href="#broker-signup">Sign up as broker <ArrowRight className="ml-2 h-4 w-4" /></a>
+                </Button>
+                <Button asChild variant="outline" className="rounded-full border-orange-200 bg-white text-orange-700">
+                  <Link to="/broker/dashboard">Broker dashboard</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="outline" className="rounded-full border-navy-200 text-navy-700">
+                  <Link to="/search">Advanced search</Link>
+                </Button>
+                <Button asChild className="rounded-full bg-navy-600 hover:bg-navy-700">
+                  <Link to="/ai-advisor">AI advisor <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -277,14 +290,41 @@ function RecommendationsTool({ societies }: { societies: PublicSociety[] }) {
 }
 
 function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
-  const [form, setForm] = useState({ name: '', phone: '', email: '', role: feature === 'broker-crm' ? 'Owner' : 'Buyer/Tenant', society: '', message: '' });
+  const isBrokerCrm = feature === 'broker-crm';
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    role: isBrokerCrm ? 'Broker partner' : 'Buyer/Tenant',
+    society: '',
+    message: '',
+    companyName: '',
+    officeAddress: '',
+    workingAreas: '',
+    experience: '',
+    reraNumber: '',
+  });
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [notice, setNotice] = useState('');
 
   const submit = async () => {
-    if (!form.name.trim() || !form.phone.trim()) {
+    const cleanPhone = form.phone.replace(/[^0-9]/g, '').slice(-10);
+
+    if (!form.name.trim() || !cleanPhone) {
       setState('error');
-      setNotice('Please add your name and phone number first.');
+      setNotice('Please add your name and valid phone number first.');
+      return;
+    }
+
+    if (isBrokerCrm && !form.workingAreas.trim()) {
+      setState('error');
+      setNotice('Please add your working areas or societies.');
+      return;
+    }
+
+    if (isBrokerCrm && !/^[6-9]\d{9}$/.test(cleanPhone)) {
+      setState('error');
+      setNotice('Enter a valid 10-digit Indian mobile number starting with 6, 7, 8 or 9.');
       return;
     }
 
@@ -292,28 +332,29 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
     setNotice('');
 
     try {
-      const isBrokerCrm = feature === 'broker-crm';
-      const cleanPhone = form.phone.replace(/[^0-9]/g, '').slice(-10);
-      const role = form.role.trim();
+      const role = isBrokerCrm ? 'Broker partner' : form.role.trim();
       const society = form.society.trim();
       const userMessage = form.message.trim();
 
       const brokerMessage = [
-        'Broker partner enquiry from public Broker CRM page',
-        `Role: ${role || 'Not provided'}`,
+        'Broker partner signup from SocietyFlats public Broker CRM page',
         `Name: ${form.name.trim() || 'Not provided'}`,
         `Phone: ${cleanPhone || form.phone || 'Not provided'}`,
         `Email: ${form.email.trim() || 'Not provided'}`,
-        `Area / Society: ${society || 'Not provided'}`,
-        `Message: ${userMessage || 'Not provided'}`,
-        'Suggested next action: Call partner, verify area coverage, discuss lead sharing and commission structure.',
+        `Company / Brand: ${form.companyName.trim() || 'Not provided'}`,
+        `Office Address: ${form.officeAddress.trim() || 'Not provided'}`,
+        `Working Areas / Societies: ${form.workingAreas.trim() || society || 'Not provided'}`,
+        `Experience: ${form.experience.trim() || 'Not provided'}`,
+        `RERA / License No.: ${form.reraNumber.trim() || 'Not provided'}`,
+        `Inventory / Client Details: ${userMessage || 'Not provided'}`,
+        'Suggested next action: Verify broker profile, working areas, inventory quality and commission terms.',
       ].join('\n');
 
       const payload = {
         name: form.name.trim(),
         phone: cleanPhone || form.phone,
         email: form.email.trim() || undefined,
-        society_name: society || undefined,
+        society_name: form.workingAreas.trim() || society || undefined,
         source: isBrokerCrm ? 'public_broker_crm' : 'public_chat_callback',
         role,
         message: isBrokerCrm
@@ -334,12 +375,125 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
       }
 
       setState('success');
-      setNotice(isBrokerCrm ? 'Broker partner account created. Admin can follow up from the broker queue and you can track this from Broker Dashboard.' : 'Callback request sent. Admin can see it in Leads.');
+      setNotice(
+        isBrokerCrm
+          ? 'Broker partner signup received. Your broker account has been created and SocietyFlats admin will verify your profile.'
+          : 'Callback request sent. Admin can see it in Leads.',
+      );
     } catch (error) {
       setState('error');
       setNotice(error instanceof Error ? error.message : 'Unable to submit. Please try again.');
     }
   };
+
+  if (isBrokerCrm) {
+    return (
+      <div id="broker-signup" className="grid gap-6 lg:grid-cols-[1fr_420px]">
+        <section className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft">
+          <div className="mb-6">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">Broker signup</p>
+            <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-navy-950">
+              Sign up as a SocietyFlats broker partner.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-navy-500">
+              Share your working areas, office details and inventory strength. Verified partners can receive matching buyer, tenant and owner opportunities through SocietyFlats.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label>
+              <span className="text-sm font-semibold text-navy-700">Full name</span>
+              <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Broker name" />
+            </label>
+
+            <label>
+              <span className="text-sm font-semibold text-navy-700">Mobile number</span>
+              <Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="9911886222" />
+            </label>
+
+            <label>
+              <span className="text-sm font-semibold text-navy-700">Email</span>
+              <Input value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Optional but recommended" />
+            </label>
+
+            <label>
+              <span className="text-sm font-semibold text-navy-700">Company / brand name</span>
+              <Input value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Your firm name" />
+            </label>
+
+            <label className="md:col-span-2">
+              <span className="text-sm font-semibold text-navy-700">Office address</span>
+              <Input value={form.officeAddress} onChange={(event) => setForm({ ...form, officeAddress: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Office address / locality" />
+            </label>
+
+            <label className="md:col-span-2">
+              <span className="text-sm font-semibold text-navy-700">Working areas / societies</span>
+              <Input value={form.workingAreas} onChange={(event) => setForm({ ...form, workingAreas: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Golf Course Road, DLF Crest, M3M Golf Estate, Sector 65..." />
+            </label>
+
+            <label>
+              <span className="text-sm font-semibold text-navy-700">Experience</span>
+              <Input value={form.experience} onChange={(event) => setForm({ ...form, experience: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Example: 8 years" />
+            </label>
+
+            <label>
+              <span className="text-sm font-semibold text-navy-700">RERA / license no.</span>
+              <Input value={form.reraNumber} onChange={(event) => setForm({ ...form, reraNumber: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Optional" />
+            </label>
+
+            <label className="md:col-span-2">
+              <span className="text-sm font-semibold text-navy-700">Inventory / client requirements</span>
+              <textarea value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} className="mt-2 min-h-[130px] w-full rounded-[1.5rem] border border-navy-100 bg-white p-4 text-navy-800 outline-none focus:border-orange-300 focus:ring-4 focus:ring-orange-100" placeholder="Tell us about your active listings, buyer/tenant leads, preferred commission terms or working societies..." />
+            </label>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Button disabled={state === 'loading'} onClick={submit} className="rounded-full bg-orange-600 px-6 hover:bg-orange-700">
+              {state === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BriefcaseBusiness className="mr-2 h-4 w-4" />}
+              Sign up as broker
+            </Button>
+
+            {state === 'success' ? (
+              <Button asChild variant="outline" className="rounded-full border-orange-100 bg-white text-orange-700">
+                <Link to="/broker/dashboard">Open Broker Dashboard</Link>
+              </Button>
+            ) : null}
+
+            {notice ? (
+              <span className={cn('text-sm font-semibold', state === 'success' ? 'text-emerald-700' : 'text-red-600')}>{notice}</span>
+            ) : null}
+          </div>
+        </section>
+
+        <aside className="rounded-[2rem] border border-orange-100 bg-orange-50 p-6">
+          <BriefcaseBusiness className="h-9 w-9 text-orange-700" />
+          <h2 className="mt-5 text-2xl font-black text-navy-950">Why join SocietyFlats?</h2>
+
+          <div className="mt-5 space-y-4">
+            {[
+              'Work with society-first Gurgaon leads, not random portal noise.',
+              'Submit your active areas and inventory once, then track follow-up from Broker Dashboard.',
+              'Admin verifies brokers, inventory quality and lead stages before customer contact is unlocked.',
+              'Get access to owner listing, buyer and tenant opportunities as the platform grows.',
+              'Commission pipeline will be tracked transparently after verified deal stages.',
+            ].map((item) => (
+              <div key={item} className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold leading-6 text-navy-700">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-orange-600" />
+                {item}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 rounded-3xl bg-white p-5 text-sm leading-6 text-navy-600">
+            <p className="font-black text-navy-950">After signup</p>
+            <p className="mt-2">
+              SocietyFlats admin will call to verify your profile, working societies and commission understanding before marking you as an active broker partner.
+            </p>
+          </div>
+        </aside>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
@@ -360,9 +514,8 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
           <label>
             <span className="text-sm font-semibold text-navy-700">I am a</span>
             <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} className="mt-2 h-12 w-full rounded-full border border-navy-100 bg-white px-4 text-navy-800">
-              <option>Owner</option>
               <option>Buyer/Tenant</option>
-              <option>Broker partner</option>
+              <option>Owner</option>
               <option>Society/RWA contact</option>
             </select>
           </label>
@@ -377,29 +530,24 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <Button disabled={state === 'loading'} onClick={submit} className="rounded-full bg-navy-600 px-6 hover:bg-navy-700">
-            {state === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : feature === 'chat' ? <Send className="mr-2 h-4 w-4" /> : <BriefcaseBusiness className="mr-2 h-4 w-4" />}
-            {feature === 'chat' ? 'Send request' : 'Add to CRM'}
+            {state === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+            Send request
           </Button>
           {notice ? (
             <span className={cn('text-sm font-semibold', state === 'success' ? 'text-emerald-700' : 'text-red-600')}>{notice}</span>
-          ) : null}
-          {state === 'success' && feature === 'broker-crm' ? (
-            <Button asChild variant="outline" className="rounded-full border-orange-100 bg-white text-orange-700">
-              <Link to="/broker/dashboard">Open Broker Dashboard</Link>
-            </Button>
           ) : null}
         </div>
       </section>
 
       <aside className="rounded-[2rem] border border-navy-100 bg-ivory-100 p-6">
         <Phone className="h-8 w-8 text-navy-600" />
-        <h2 className="mt-5 text-2xl font-bold text-navy-900">{feature === 'chat' ? 'What happens next?' : 'CRM flow'}</h2>
+        <h2 className="mt-5 text-2xl font-bold text-navy-900">What happens next?</h2>
         <div className="mt-5 space-y-4">
           {[
             'Your request is saved as a lead.',
             'Admin reviews source and society context.',
             'The team follows up by phone or WhatsApp.',
-            'Qualified leads can be assigned to a broker.',
+            'Qualified leads can be assigned internally.',
           ].map((item) => (
             <div key={item} className="flex gap-3 text-sm text-navy-600">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
@@ -427,20 +575,37 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
       <FeatureHero feature={feature} />
 
       <section className="container mx-auto px-4 py-8">
-        <div className="mb-6 grid gap-4 md:grid-cols-3">
-          <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-navy-400">Live societies</p>
-            <p className="mt-3 text-3xl font-bold text-navy-900">{societies.length}</p>
+        {feature === 'broker-crm' ? (
+          <div className="mb-6 grid gap-4 md:grid-cols-3">
+            <div className="rounded-[1.5rem] border border-orange-100 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">Broker signup</p>
+              <p className="mt-3 text-lg font-bold text-navy-900">Join as verified partner</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-orange-100 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">Coverage</p>
+              <p className="mt-3 text-lg font-bold text-navy-900">Gurgaon societies first</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-orange-100 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">Admin verified</p>
+              <p className="mt-3 text-lg font-bold text-navy-900">Leads + commission pipeline</p>
+            </div>
           </div>
-          <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-navy-400">Live homes</p>
-            <p className="mt-3 text-3xl font-bold text-navy-900">{properties.length}</p>
+        ) : (
+          <div className="mb-6 grid gap-4 md:grid-cols-3">
+            <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-navy-400">Live societies</p>
+              <p className="mt-3 text-3xl font-bold text-navy-900">{societies.length}</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-navy-400">Live homes</p>
+              <p className="mt-3 text-3xl font-bold text-navy-900">{properties.length}</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-navy-400">Workflow</p>
+              <p className="mt-3 text-lg font-bold text-navy-900">{feature === 'maps' ? 'Location search' : feature === 'recommendations' ? 'Ranked matches' : 'Lead capture'}</p>
+            </div>
           </div>
-          <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-navy-400">Workflow</p>
-            <p className="mt-3 text-lg font-bold text-navy-900">{feature === 'maps' ? 'Location search' : feature === 'recommendations' ? 'Ranked matches' : 'Lead capture'}</p>
-          </div>
-        </div>
+        )}
 
         {feature === 'maps' ? <MapsTool societies={societies} /> : null}
         {feature === 'recommendations' ? <RecommendationsTool societies={societies} /> : null}
