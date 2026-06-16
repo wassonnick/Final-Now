@@ -648,6 +648,8 @@ const quickFollowUps = [
 function C49ALinkedAccountPanel({ phone }: { phone?: string }) {
   const [accounts, setAccounts] = useState<AdminAccount[]>([]);
   const [loading, setLoading] = useState(false);
+  const phoneDigits = cleanPhone(phone).slice(-10);
+  const canCall = phoneDigits.length === 10;
 
   useEffect(() => {
     let cancelled = false;
@@ -678,6 +680,15 @@ function C49ALinkedAccountPanel({ phone }: { phone?: string }) {
   }, [phone]);
 
   const account = accounts[0] || null;
+  const userSearchPhone = account?.phone_normalized || account?.phone || phone || "";
+  const accountPhoneDigits = cleanPhone(userSearchPhone).slice(-10);
+  const whatsappMessage = encodeURIComponent(
+    [
+      `Hi ${account?.name || ""}, this is SocietyFlats.`,
+      "We are following up on your account and enquiry.",
+      "Please let us know a good time to connect.",
+    ].join("\n"),
+  );
 
   return (
     <div className="rounded-[28px] border border-blue-100 bg-white p-5 shadow-sm">
@@ -689,7 +700,7 @@ function C49ALinkedAccountPanel({ phone }: { phone?: string }) {
           </p>
         </div>
         <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-          C49A
+          C52
         </span>
       </div>
 
@@ -706,13 +717,25 @@ function C49ALinkedAccountPanel({ phone }: { phone?: string }) {
             <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
               {account.status}
             </span>
+            {account.phone_verified_at ? (
+              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                Phone verified
+              </span>
+            ) : (
+              <span className="rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                Phone not verified
+              </span>
+            )}
           </div>
 
           <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
             <p className="font-bold text-slate-950">{account.name || "Unnamed account"}</p>
             <p className="mt-1 text-sm text-slate-500">{account.phone || account.phone_normalized}</p>
             <p className="mt-1 text-sm text-slate-500">
-              Source: {String(account.meta?.source || "Website account")}
+              Source: {String(account.meta?.source || "Website account").replace(/_/g, " ")}
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              Last login: {formatDate(account.last_login_at || undefined)}
             </p>
           </div>
 
@@ -727,8 +750,32 @@ function C49ALinkedAccountPanel({ phone }: { phone?: string }) {
             </div>
           </div>
 
+          <div className="grid gap-2 sm:grid-cols-2">
+            {canCall ? (
+              <a
+                href={`tel:${accountPhoneDigits}`}
+                className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              >
+                <Phone className="mr-2 h-4 w-4" />
+                Call account
+              </a>
+            ) : null}
+
+            {canCall ? (
+              <a
+                href={`https://wa.me/91${accountPhoneDigits}?text=${whatsappMessage}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-sm font-bold text-emerald-700 hover:bg-emerald-50"
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                WhatsApp
+              </a>
+            ) : null}
+          </div>
+
           <Link
-            to={`/admin/users?account=${encodeURIComponent(account.phone_normalized || account.phone || phone || "")}`}
+            to={`/admin/users?account=${encodeURIComponent(userSearchPhone)}`}
             className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
           >
             Open in Users
@@ -742,7 +789,6 @@ function C49ALinkedAccountPanel({ phone }: { phone?: string }) {
     </div>
   );
 }
-
 
 export function AdminLeadDetailPage() {
   const { id } = useParams();

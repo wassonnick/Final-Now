@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
+  ArrowRight,
   BriefcaseBusiness,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
   Home,
   Loader2,
   Phone,
@@ -13,6 +15,7 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
+
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +28,10 @@ import {
   type AdminAccountStatus,
 } from "@/lib/adminAccountStore";
 import { cn } from "@/lib/utils";
+
+function cleanPhone(value?: string | null) {
+  return String(value || "").replace(/[^0-9]/g, "").slice(-10);
+}
 
 function formatDate(value?: string | null) {
   if (!value) return "Not yet";
@@ -42,9 +49,32 @@ function formatDate(value?: string | null) {
   }
 }
 
+function humanize(value?: string | null) {
+  if (!value) return "Website account";
+
+  const labels: Record<string, string> = {
+    login_page: "Login page",
+    login_page_otp_fallback: "OTP fallback login",
+    broker_crm_signup: "Broker CRM signup",
+    sell_page_owner_listing: "Owner listing form",
+    owner_listing_submission: "Owner listing form",
+    public_broker_crm: "Broker partner form",
+  };
+
+  return labels[value] || value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 function sourceLabel(account: AdminAccount) {
   const meta = account.meta || {};
-  return String(meta.source || meta.ownerListingSignup || meta.workingAreas || "Website account");
+  const rawSource =
+    meta.source ||
+    meta.signupSource ||
+    meta.ownerListingSignup ||
+    meta.brokerSignupSource ||
+    meta.workingAreas ||
+    "Website account";
+
+  return humanize(String(rawSource));
 }
 
 function roleBadgeClass(role: string) {
@@ -57,6 +87,17 @@ function statusBadgeClass(status: string) {
   if (status === "blocked") return "border-red-100 bg-red-50 text-red-700";
   if (status === "otp_pending") return "border-amber-100 bg-amber-50 text-amber-700";
   return "border-emerald-100 bg-emerald-50 text-emerald-700";
+}
+
+function latestByDate<T extends { created_at?: string | null; updated_at?: string | null }>(items?: T[]) {
+  if (!items?.length) return null;
+
+  return [...items].sort((first, second) => {
+    const firstDate = new Date(first.updated_at || first.created_at || 0).getTime();
+    const secondDate = new Date(second.updated_at || second.created_at || 0).getTime();
+
+    return secondDate - firstDate;
+  })[0];
 }
 
 function AccountCard({
@@ -76,9 +117,12 @@ function AccountCard({
   const RoleIcon = account.role === "broker" ? BriefcaseBusiness : UserRound;
   const leadCount = account.related_counts?.leads || account.related_leads?.length || 0;
   const listingCount = account.related_counts?.properties || account.related_properties?.length || 0;
+  const latestLead = latestByDate(account.related_leads);
+  const latestListing = latestByDate(account.related_properties);
+  const phone = account.phone || account.phone_normalized;
 
   return (
-    <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-100 hover:shadow-md">
+    <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-100 hover:shadow-md sm:p-5">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -86,15 +130,20 @@ function AccountCard({
               <RoleIcon className="mr-1 h-3.5 w-3.5" />
               {account.role === "broker" ? "Broker" : "Customer"}
             </Badge>
+
             <Badge className={cn("rounded-full border px-3 py-1 text-xs font-bold", statusBadgeClass(account.status))}>
-              {account.status}
+              {humanize(account.status)}
             </Badge>
-            <Badge className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
-              {leadCount} leads
-            </Badge>
-            <Badge className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
-              {listingCount} listings
-            </Badge>
+
+            {account.phone_verified_at ? (
+              <Badge className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                Phone verified
+              </Badge>
+            ) : (
+              <Badge className="rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                Phone not verified
+              </Badge>
+            )}
           </div>
 
           <h3 className="mt-3 break-words text-lg font-black text-slate-950">
@@ -104,16 +153,28 @@ function AccountCard({
           <div className="mt-2 grid gap-1 text-sm leading-6 text-slate-500">
             <p className="flex flex-wrap items-center gap-2">
               <Phone className="h-4 w-4 text-slate-400" />
-              {account.phone || account.phone_normalized}
+              {phone || "No phone"}
             </p>
             <p>Email: {account.email || "Not provided"}</p>
             <p>Source: {sourceLabel(account)}</p>
             <p>Last login: {formatDate(account.last_login_at)}</p>
+            <p>Verified phone: {formatDate(account.phone_verified_at)}</p>
             <p>Created: {formatDate(account.created_at)}</p>
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3">
+              <p className="text-2xl font-black text-blue-700">{leadCount}</p>
+              <p className="text-xs font-bold text-blue-700">Linked leads</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
+              <p className="text-2xl font-black text-emerald-700">{listingCount}</p>
+              <p className="text-xs font-bold text-emerald-700">Linked listings</p>
+            </div>
           </div>
         </div>
 
-        <div className="flex min-w-[260px] flex-wrap gap-2 xl:justify-end">
+        <div className="flex min-w-0 flex-wrap gap-2 xl:max-w-[390px] xl:justify-end">
           <Button
             size="sm"
             variant="outline"
@@ -121,8 +182,26 @@ function AccountCard({
             className="rounded-full border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
           >
             {expanded ? <ChevronUp className="mr-2 h-4 w-4" /> : <ChevronDown className="mr-2 h-4 w-4" />}
-            {expanded ? "Hide links" : "View links"}
+            {expanded ? "Hide records" : "View records"}
           </Button>
+
+          {latestLead ? (
+            <Button asChild size="sm" variant="outline" className="rounded-full border-blue-100 text-blue-700 hover:bg-blue-50">
+              <Link to={`/admin/leads/${latestLead.id}`}>
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Latest lead
+              </Link>
+            </Button>
+          ) : null}
+
+          {latestListing ? (
+            <Button asChild size="sm" variant="outline" className="rounded-full border-emerald-100 text-emerald-700 hover:bg-emerald-50">
+              <Link to={`/admin/properties/${latestListing.id}/edit`}>
+                <Home className="mr-2 h-4 w-4" />
+                Latest listing
+              </Link>
+            </Button>
+          ) : null}
 
           <Button
             size="sm"
@@ -131,7 +210,7 @@ function AccountCard({
             className="rounded-full bg-emerald-600 hover:bg-emerald-700"
           >
             {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-            Active
+            Mark active
           </Button>
 
           <Button
@@ -170,8 +249,11 @@ function AccountCard({
       {expanded ? (
         <div className="mt-5 grid gap-4 xl:grid-cols-2">
           <div className="rounded-[24px] border border-slate-100 bg-slate-50 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-black text-slate-950">Related leads</p>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-black text-slate-950">Related leads</p>
+                <p className="text-xs text-slate-500">All enquiries matched by {cleanPhone(phone) || "phone"}.</p>
+              </div>
               <Badge className="rounded-full bg-white text-slate-600">{leadCount}</Badge>
             </div>
 
@@ -192,12 +274,17 @@ function AccountCard({
                           {lead.priority}
                         </Badge>
                       ) : null}
+                      {lead.requirement ? (
+                        <Badge className="rounded-full bg-slate-50 text-slate-600">
+                          {lead.requirement}
+                        </Badge>
+                      ) : null}
                     </div>
                     <p className="mt-2 text-sm font-black text-slate-950">
                       {lead.name || "Unknown lead"}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {lead.source || "Website"} · {lead.society_name || "No society"} · {lead.property_title || "General enquiry"}
+                      {humanize(lead.source || "Website")} · {lead.society_name || "No society"} · {lead.property_title || "General enquiry"}
                     </p>
                     <p className="mt-1 text-xs text-slate-400">
                       {formatDate(lead.created_at)}
@@ -207,14 +294,17 @@ function AccountCard({
               </div>
             ) : (
               <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
-                No leads found for this account phone yet.
+                No lead is linked to this account phone yet.
               </p>
             )}
           </div>
 
           <div className="rounded-[24px] border border-slate-100 bg-slate-50 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-black text-slate-950">Related owner listings</p>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-black text-slate-950">Related owner listings</p>
+                <p className="text-xs text-slate-500">Drafts or properties matched by owner phone.</p>
+              </div>
               <Badge className="rounded-full bg-white text-slate-600">{listingCount}</Badge>
             </div>
 
@@ -251,7 +341,7 @@ function AccountCard({
               </div>
             ) : (
               <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
-                No owner listings found for this account phone yet.
+                No owner listing or draft is linked to this account phone yet.
               </p>
             )}
           </div>
@@ -262,8 +352,11 @@ function AccountCard({
 }
 
 export function AdminUsersPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepLinkedAccount = searchParams.get("account") || "";
+
   const [accounts, setAccounts] = useState<AdminAccount[]>([]);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => cleanPhone(deepLinkedAccount) || deepLinkedAccount);
   const [role, setRole] = useState<"" | AdminAccountRole>("");
   const [status, setStatus] = useState<"" | AdminAccountStatus>("");
   const [loading, setLoading] = useState(true);
@@ -272,13 +365,17 @@ export function AdminUsersPage() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
-  const loadAccounts = async () => {
+  const loadAccounts = async (nextSearch = search) => {
     setLoading(true);
     setError("");
 
     try {
-      const result = await listAdminAccounts({ q: search, role, status, withRelated: true });
+      const result = await listAdminAccounts({ q: nextSearch, role, status, withRelated: true });
       setAccounts(result.accounts);
+
+      if (deepLinkedAccount && result.accounts.length === 1) {
+        setExpandedId(result.accounts[0].id);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load accounts.");
     } finally {
@@ -287,28 +384,58 @@ export function AdminUsersPage() {
   };
 
   useEffect(() => {
-    loadAccounts();
+    const queryAccount = searchParams.get("account") || "";
+    const normalized = cleanPhone(queryAccount) || queryAccount;
+
+    if (normalized && normalized !== search) {
+      setSearch(normalized);
+      setExpandedId(null);
+      void loadAccounts(normalized);
+      return;
+    }
+
+    void loadAccounts(normalized || search);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [role, status]);
+  }, [role, status, searchParams]);
 
   const metrics = useMemo(() => {
     return {
       total: accounts.length,
       customers: accounts.filter((account) => account.role === "customer").length,
       brokers: accounts.filter((account) => account.role === "broker").length,
-      linked:
-        accounts.reduce(
-          (sum, account) =>
-            sum +
-            (account.related_counts?.leads || 0) +
-            (account.related_counts?.properties || 0),
-          0,
-        ),
+      linked: accounts.reduce(
+        (sum, account) =>
+          sum +
+          (account.related_counts?.leads || 0) +
+          (account.related_counts?.properties || 0),
+        0,
+      ),
     };
   }, [accounts]);
 
   const handleSearch = () => {
-    loadAccounts();
+    const params = new URLSearchParams(searchParams);
+    const value = search.trim();
+
+    if (value) {
+      params.set("account", value);
+    } else {
+      params.delete("account");
+    }
+
+    setSearchParams(params);
+    void loadAccounts(value);
+  };
+
+  const clearSearch = () => {
+    setSearch("");
+    setExpandedId(null);
+
+    const params = new URLSearchParams(searchParams);
+    params.delete("account");
+    setSearchParams(params);
+
+    void loadAccounts("");
   };
 
   const handleUpdate = async (
@@ -321,7 +448,19 @@ export function AdminUsersPage() {
 
     try {
       const updated = await updateAdminAccount(id, payload);
-      setAccounts((items) => items.map((item) => (item.id === id ? updated : item)));
+      setAccounts((items) =>
+        items.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                ...updated,
+                related_counts: item.related_counts,
+                related_leads: item.related_leads,
+                related_properties: item.related_properties,
+              }
+            : item,
+        ),
+      );
       setNotice("Account updated.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update account.");
@@ -341,6 +480,7 @@ export function AdminUsersPage() {
             ["Linked records", metrics.linked, CheckCircle2, "bg-emerald-50 text-emerald-700"],
           ].map(([label, value, Icon, tone]) => {
             const IconComponent = Icon as typeof Users;
+
             return (
               <div key={String(label)} className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between">
@@ -356,7 +496,16 @@ export function AdminUsersPage() {
         </section>
 
         <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="grid gap-3 lg:grid-cols-[1fr_180px_180px_auto]">
+          {deepLinkedAccount ? (
+            <div className="mb-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
+              <p className="font-black">Deep-linked account search</p>
+              <p className="mt-1">
+                Showing accounts matched from lead phone: <span className="font-bold">{cleanPhone(deepLinkedAccount) || deepLinkedAccount}</span>
+              </p>
+            </div>
+          ) : null}
+
+          <div className="grid gap-3 lg:grid-cols-[1fr_180px_180px_auto_auto]">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
@@ -366,7 +515,7 @@ export function AdminUsersPage() {
                   if (event.key === "Enter") handleSearch();
                 }}
                 className="h-12 rounded-2xl pl-11"
-                placeholder="Search name, phone, email, role or status"
+                placeholder="Search name, phone, email, source, role or status"
               />
             </div>
 
@@ -393,6 +542,10 @@ export function AdminUsersPage() {
 
             <Button onClick={handleSearch} className="h-12 rounded-2xl bg-blue-700 px-6 hover:bg-blue-800">
               Search
+            </Button>
+
+            <Button onClick={clearSearch} variant="outline" className="h-12 rounded-2xl border-slate-200 px-6">
+              Clear
             </Button>
           </div>
 
@@ -428,12 +581,32 @@ export function AdminUsersPage() {
             ))
           ) : (
             <div className="rounded-[28px] border border-dashed border-slate-200 bg-white p-10 text-center shadow-sm">
-              <p className="text-lg font-semibold text-slate-950">No accounts found</p>
-              <p className="mx-auto mt-2 max-w-xl text-sm text-slate-500">
-                Customer and broker accounts will appear here after login, owner listing or broker signup.
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-50 text-slate-500">
+                <Users className="h-7 w-7" />
+              </div>
+              <p className="mt-4 text-lg font-black text-slate-950">No accounts found</p>
+              <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">
+                Try another phone, clear the filters, or wait until the customer/broker logs in, submits an owner listing, or completes broker signup.
               </p>
+              <Button onClick={clearSearch} variant="outline" className="mt-5 rounded-full border-slate-200">
+                Clear search and show all accounts
+              </Button>
             </div>
           )}
+        </section>
+
+        <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+              <ArrowRight className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-black text-slate-950">C52 account workflow</p>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                Open a lead, use Linked account → Open in Users, then review all related leads/listings and update account role or status without leaving the admin workflow.
+              </p>
+            </div>
+          </div>
         </section>
       </div>
     </AdminLayout>
