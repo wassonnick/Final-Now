@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { backendApi } from "@/services/backendApi";
 import { trackEvent, trackLeadIntent, trackLeadSubmitted } from "@/lib/analytics";
 import { cleanLeadTrackingPayload } from "@/lib/leadTracking";
+import { createCustomerAccountSession } from "@/lib/customerAccount";
 
 function cleanOwnerLeadPhone(value: string) {
   return String(value || "").replace(/\D/g, "").slice(0, 10);
@@ -69,6 +70,7 @@ export function SellPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [accountCreated, setAccountCreated] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => window.scrollTo(0, 0), []);
@@ -174,6 +176,14 @@ export function SellPage() {
         source: purpose === "rent" ? "owner_listing_rent" : "owner_listing_sale",
         society_name: societyName,
       });
+
+      const createdSession = createCustomerAccountSession({
+        name: form.name.trim(),
+        phone: cleanPhone,
+        role: "customer",
+      });
+
+      setAccountCreated(Boolean(createdSession));
       setSuccess(true);
     } catch (leadError) {
       console.error("Owner lead submission failed:", leadError);
@@ -265,8 +275,19 @@ export function SellPage() {
                 </button>
               </div>
               {success ? (
-                <div className="rounded-2xl bg-emerald-50 p-5 text-sm font-semibold leading-6 text-emerald-700">
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-sm font-semibold leading-6 text-emerald-700">
                   <p>Listing request received. Our team will call you shortly to verify details and create the right draft.</p>
+                  {accountCreated ? (
+                    <div className="mt-4 rounded-2xl bg-white/80 p-4 text-emerald-800">
+                      <p className="font-black">Customer account created automatically.</p>
+                      <p className="mt-1 text-sm font-semibold">
+                        Your phone number is now linked to this listing. You can track it from your Customer Dashboard.
+                      </p>
+                      <p className="mt-2 text-xs font-semibold text-emerald-700">
+                        Backend OTP / WhatsApp welcome message will be connected in the next auth phase.
+                      </p>
+                    </div>
+                  ) : null}
                   <Button asChild className="mt-4 rounded-full bg-emerald-600 text-white hover:bg-emerald-700">
                     <Link to="/customer/dashboard">Open Customer Dashboard</Link>
                   </Button>

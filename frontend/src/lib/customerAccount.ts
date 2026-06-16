@@ -145,6 +145,31 @@ export function getCustomerLeadsForPhone(phone: unknown) {
   return readAllCustomerLeads().filter((lead) => cleanAccountPhone(lead.phone) === cleanPhone);
 }
 
+export function createCustomerAccountSession({
+  name,
+  phone,
+  role = "customer",
+}: {
+  name?: string;
+  phone: string;
+  role?: CustomerAccountRole;
+}) {
+  if (typeof window === "undefined") return null;
+
+  const cleanPhone = cleanAccountPhone(phone);
+  if (!cleanPhone) return null;
+
+  const session: CustomerAccountSession = {
+    role,
+    phone: cleanPhone,
+    name: String(name || "").trim() || "Customer",
+    loginAt: new Date().toISOString(),
+  };
+
+  window.localStorage.setItem(ACCOUNT_SESSION_KEY, JSON.stringify(session));
+  return session;
+}
+
 export function clearCustomerAccountSession() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(ACCOUNT_SESSION_KEY);
