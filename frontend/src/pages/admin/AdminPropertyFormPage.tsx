@@ -802,22 +802,61 @@ export function AdminPropertyFormPage() {
 
   const generateDescription = () => {
     const listingKind = rentalListing
-      ? "rental home"
+      ? "available for rent"
       : saleListing
-        ? "resale home"
-        : "property";
+        ? "available for sale"
+        : "available in Gurgaon";
 
-    const audience = rentalListing
-      ? "tenants and families looking for verified rental options"
-      : "buyers and investors looking for verified resale options";
+    const societyName = String(property.society || "").trim();
+    const localityName = String(property.locality || "").trim();
+    const bhk = String(property.bedrooms || "").trim();
+    const area = String(property.areaSqft || "").trim();
+    const priceValue = String(property.price || "").trim();
+    const furnishing = String(property.furnishedStatus || "").trim();
+    const floor = String(property.floor || "").trim();
 
-    const text = `${property.bedrooms || "Spacious"} BHK ${listingKind} in ${property.society || "this society"}, ${
-      property.locality || "Gurgaon"
-    }. Suitable for ${audience}, with strong society context, connectivity, security and lifestyle amenities.`;
+    const titleLine = [
+      bhk ? `${bhk} BHK flat` : "Flat",
+      societyName ? `in ${societyName}` : localityName ? `in ${localityName}` : "in Gurgaon",
+      listingKind,
+    ].join(" ");
 
-    updateField("description", text);
+    const sizeLine = area
+      ? `Spread across approx. ${area} sq.ft., this society-first listing is suitable for families looking for verified homes in Gurgaon.`
+      : "This society-first listing is suitable for families looking for verified homes in Gurgaon.";
+
+    const priceLine = priceValue
+      ? rentalListing
+        ? `Expected monthly rent is ${priceValue}.`
+        : `Expected sale price is ${priceValue}.`
+      : "";
+
+    const detailLine = [
+      furnishing ? `${furnishing} furnishing` : "",
+      floor ? `floor: ${floor}` : "",
+      property.maintenance ? `maintenance: ${property.maintenance}` : "",
+      property.securityDeposit && rentalListing ? `security deposit: ${property.securityDeposit}` : "",
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    const amenityLine = parseArray(property.amenities).length
+      ? `Key amenities include ${parseArray(property.amenities).slice(0, 5).join(", ")}.`
+      : "Society amenities, photos and final availability should be verified before publishing.";
+
+    const seoDescription = [
+      `${titleLine}.`,
+      sizeLine,
+      priceLine,
+      detailLine ? `Additional details: ${detailLine}.` : "",
+      amenityLine,
+      "SocietyFlats admin should verify ownership, photos, furnishing, price and visit availability before making this listing live.",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    updateField("description", seoDescription);
   };
-
 
   useEffect(() => {
     if (isEdit) return;
