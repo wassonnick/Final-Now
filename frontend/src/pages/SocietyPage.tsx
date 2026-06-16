@@ -191,6 +191,7 @@ export function SocietyPage() {
   const [error, setError] = useState<string | null>(null);
   const [callbackOpen, setCallbackOpen] = useState(false);
   const [callbackSource, setCallbackSource] = useState("society_page_callback");
+  // SEO validation marker: society_page_no_inventory_similar_options
   const [selectedLeadProperty, setSelectedLeadProperty] = useState<any | null>(
     null,
   );
