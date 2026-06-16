@@ -46,7 +46,7 @@ export function Footer() {
                 className="inline-flex items-center gap-2 hover:text-white"
               >
                 <Phone className="h-4 w-4 text-blue-300" />
-                +91 99999 88888
+                +91 99118 86222
               </a>
               <a
                 href="mailto:hello@societyflats.com"
