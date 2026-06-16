@@ -94,7 +94,7 @@ export function Navbar() {
               <div className="w-9 h-9 bg-navy-100 rounded-full flex items-center justify-center"><User className="w-4 h-4 text-navy-600" /></div>
             </div>
           ) : (
-            <Button variant="ghost" size="sm" className="hidden sm:flex rounded-full text-navy-700 hover:bg-navy-50" onClick={() => navigate('/login')}>Sign In</Button>
+            <Button variant="ghost" size="sm" className="hidden sm:flex rounded-full text-navy-700 hover:bg-navy-50" onClick={() => navigate('/customer/dashboard')}>Dashboard</Button>
           )}
 
           <Link to="/sell" className="hidden lg:block"><Button size="sm" className="rounded-full bg-blue-700 hover:bg-blue-800 text-white px-5 shadow-sm">List Property</Button></Link>
@@ -107,8 +107,7 @@ export function Navbar() {
           <div className="container mx-auto px-4 py-4 space-y-2">
             <form onSubmit={handleSearch} className="mb-3"><div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-400" /><Input className="pl-9 rounded-full" placeholder="Search SocietyFlats" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div></form>
             {navLinks.map((link) => <Link key={link.href} to={link.href} className="flex items-center gap-3 px-4 py-3 rounded-2xl text-navy-700 hover:bg-navy-50 transition-colors" onClick={() => setIsMenuOpen(false)}><link.icon className="w-5 h-5" /><span className="font-medium">{link.label}</span>{link.badge && link.badge > 0 ? <span className="ml-auto text-xs bg-navy-100 rounded-full px-2 py-0.5">{link.badge}</span> : null}</Link>)}
-            <Button variant="outline" className="w-full rounded-full border-blue-100 bg-white text-blue-700" onClick={() => { navigate('/customer/dashboard'); setIsMenuOpen(false); }}>Customer Dashboard</Button>
-            <Button variant="outline" className="w-full rounded-full border-orange-100 bg-white text-orange-700" onClick={() => { navigate('/broker/dashboard'); setIsMenuOpen(false); }}>Broker Dashboard</Button>
+            <Button variant="outline" className="w-full rounded-full border-blue-100 bg-white text-blue-700" onClick={() => { navigate('/customer/dashboard'); setIsMenuOpen(false); }}>Dashboard</Button>
             <Button className="w-full rounded-full bg-navy-600 hover:bg-navy-700 text-white" onClick={() => { navigate('/sell'); setIsMenuOpen(false); }}>List Property</Button>
           </div>
         </div>

@@ -15,6 +15,7 @@ import {
   Train,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -569,6 +570,22 @@ export function SocietyPage() {
 
   return (
     <div className="min-h-screen bg-ivory-100 pb-24 md:pb-0">
+      {/* C45B visible society save CTA */}
+      <div className="fixed bottom-24 right-4 z-40 md:bottom-6">
+        <Button
+          type="button"
+          onClick={handleSocietyShortlist}
+          className={cn(
+            "rounded-full px-5 shadow-xl",
+            isSocietyShortlisted
+              ? "bg-rose-600 text-white hover:bg-rose-700"
+              : "bg-blue-700 text-white hover:bg-blue-800",
+          )}
+        >
+          <Heart className={cn("mr-2 h-4 w-4", isSocietyShortlisted && "fill-current")} />
+          {isSocietyShortlisted ? "Saved society" : "Save society"}
+        </Button>
+      </div>
       <section className="bg-white">
         <div className="container mx-auto px-4 py-6">
           <Button
