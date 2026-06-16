@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils';
 import { CUSTOMER_ACCOUNT_EVENT } from "@/lib/customerAccount";
 
 export function Navbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [accountDashboardPath, setAccountDashboardPath] = useState("");
 
@@ -39,11 +41,9 @@ export function Navbar() {
       window.removeEventListener("storage", syncAccountPath);
       window.removeEventListener(CUSTOMER_ACCOUNT_EVENT, syncAccountPath);
     };
-  }, []);
+  }, [location.pathname]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
-  const location = useLocation();
   const { compareList, shortlist, isAuthenticated, user } = useAppStore();
   const isHomePage = location.pathname === '/';
   const isPropertyOrSocietyPage = location.pathname.startsWith('/property/') || location.pathname.startsWith('/society/');
