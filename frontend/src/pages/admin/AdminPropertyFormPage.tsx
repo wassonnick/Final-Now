@@ -33,6 +33,9 @@ import { adminFetch, adminHeaders, uploadAdminImage } from "@/lib/adminApi";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
 
+const SOCIETYFLATS_GENERIC_PROPERTY_IMAGE =
+  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1400&q=80";
+
 const localities = [
   "Sector 54, Gurgaon",
   "Golf Course Road, Gurgaon",
@@ -330,7 +333,7 @@ function ownerPublishQualityIssues(args: {
   const issues: string[] = [];
 
   if (!args.verified) issues.push("Mark as verified after confirming owner/property details.");
-  if (!args.images.length) issues.push("Add at least one real property photo before publishing.");
+  if (!args.images.length) issues.push("Add real photos or use the SocietyFlats generic image before publishing.");
   if (!String(args.description || "").trim()) issues.push("Generate or write a clean public description.");
   if (!String(args.floor || "").trim()) issues.push("Confirm floor details before publishing.");
   if (!String(args.furnishedStatus || "").trim()) issues.push("Confirm furnishing status before publishing.");
@@ -690,6 +693,26 @@ export function AdminPropertyFormPage() {
       ...current,
       images: parseArray(current.images).filter((item) => item !== image),
     }));
+  };
+
+  const useGenericPropertyImage = () => {
+    setProperty((current: any) => {
+      const currentImages = parseArray(current.images);
+      if (currentImages.includes(SOCIETYFLATS_GENERIC_PROPERTY_IMAGE)) return current;
+
+      return {
+        ...current,
+        images: [SOCIETYFLATS_GENERIC_PROPERTY_IMAGE, ...currentImages].slice(0, 8),
+      };
+    });
+
+    setSuccess("SocietyFlats generic property image added. Replace with real photos whenever available.");
+    setError("");
+  };
+
+  const continueWithoutPhotos = () => {
+    setSuccess("Continuing without photos. Save Draft is allowed. Add real photos or generic image before publishing.");
+    setError("");
   };
 
   const validate = () => {
@@ -1410,8 +1433,27 @@ export function AdminPropertyFormPage() {
             <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
               <h2 className="text-lg font-semibold tracking-tight text-slate-950">Media</h2>
               <p className="mt-1 text-sm text-slate-500">
-                Upload cover and gallery images. Use real society/property images.
+                Upload real photos, use a SocietyFlats generic image, or continue as draft without photos.
               </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={useGenericPropertyImage}
+                    className="rounded-full border-blue-100 bg-blue-50 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    Use SocietyFlats generic image
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={continueWithoutPhotos}
+                    className="rounded-full border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Continue without photos
+                  </Button>
+                </div>
 
               <div
                 onDragOver={(event) => event.preventDefault()}
