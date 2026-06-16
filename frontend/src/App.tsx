@@ -19,6 +19,8 @@ const AIAdvisorPage = lazy(() => import('@/pages/AIAdvisorPage').then((module) =
 const InsightsPage = lazy(() => import('@/pages/InsightsPage').then((module) => ({ default: module.InsightsPage })));
 const FeatureExperiencePage = lazy(() => import('@/pages/FeatureExperiencePage').then((module) => ({ default: module.FeatureExperiencePage })));
 const OwnerDashboard = lazy(() => import('@/pages/OwnerDashboard').then((module) => ({ default: module.OwnerDashboard })));
+const CustomerDashboardPage = lazy(() => import('@/pages/CustomerDashboardPage').then((module) => ({ default: module.CustomerDashboardPage })));
+const BrokerDashboardPage = lazy(() => import('@/pages/BrokerDashboardPage').then((module) => ({ default: module.BrokerDashboardPage })));
 const LoginPage = lazy(() => import('@/pages/LoginPage').then((module) => ({ default: module.LoginPage })));
 const SellPage = lazy(() => import('@/pages/SellPage').then((module) => ({ default: module.SellPage })));
 const SocietiesPage = lazy(() => import('@/pages/SocietiesPage').then((module) => ({ default: module.SocietiesPage })));
@@ -120,7 +122,11 @@ function AppShell() {
             <Route path="/chat" element={<FeatureExperiencePage feature="chat" />} />
             <Route path="/recommendations" element={<FeatureExperiencePage feature="recommendations" />} />
 
+            <Route path="/customer/dashboard" element={<CustomerDashboardPage />} />
+            <Route path="/customer" element={<CustomerDashboardPage />} />
             <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+            <Route path="/broker/dashboard" element={<BrokerDashboardPage />} />
+            <Route path="/broker" element={<BrokerDashboardPage />} />
             <Route path="/sell" element={<SellPage />} />
             <Route path="/login" element={<LoginPage />} />
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
   BadgeIndianRupee,
@@ -266,7 +266,10 @@ export function SellPage() {
               </div>
               {success ? (
                 <div className="rounded-2xl bg-emerald-50 p-5 text-sm font-semibold leading-6 text-emerald-700">
-                  Listing request received. Our team will call you shortly to verify details and create the right draft.
+                  <p>Listing request received. Our team will call you shortly to verify details and create the right draft.</p>
+                  <Button asChild className="mt-4 rounded-full bg-emerald-600 text-white hover:bg-emerald-700">
+                    <Link to="/customer/dashboard">Open Customer Dashboard</Link>
+                  </Button>
                 </div>
               ) : (
                 <form onSubmit={submitOwnerLead} className="space-y-4">
