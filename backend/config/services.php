@@ -49,6 +49,11 @@ return [
         'provider' => env('OTP_PROVIDER', 'log'),
         'webhook_url' => env('OTP_WEBHOOK_URL'),
         'webhook_token' => env('OTP_WEBHOOK_TOKEN'),
+
+        'msg91_authkey' => env('MSG91_AUTHKEY'),
+        'msg91_template_id' => env('MSG91_OTP_TEMPLATE_ID'),
+        'msg91_base_url' => env('MSG91_BASE_URL', 'https://control.msg91.com/api/v5'),
+        'msg91_country_code' => env('MSG91_COUNTRY_CODE', '91'),
     ],
 
 ];
