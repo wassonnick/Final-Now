@@ -1,3 +1,4 @@
+// C74J hero alignment + map density polish: top-align hero, compact panel, denser visible map.
 // C74I first fold + map visibility polish: compact hero, stronger grid, clearer pins and routes.
 // C74H continuous hero surface: map panel blended into same light hero palette.
 // C74FG soft map-style AI hero panel: unified map canvas, softened colors, empty input.
@@ -155,7 +156,7 @@ export default function SocietyFlatsHero() {
 
   return (
     <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_78%_18%,rgba(37,99,235,0.10),transparent_28%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]">
-      <div className="mx-auto grid max-w-[1440px] gap-4 px-4 py-4 sm:px-6 md:py-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)] lg:items-center lg:px-20 lg:py-4">
+      <div className="mx-auto grid max-w-[1440px] gap-4 px-4 py-4 sm:px-6 md:py-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)] lg:items-start lg:px-20 lg:py-4">
         <div className="max-w-[760px]">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 shadow-sm">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -164,7 +165,7 @@ export default function SocietyFlatsHero() {
             </span>
           </div>
 
-          <h1 className="font-serif text-[34px] font-black leading-[0.96] tracking-[-0.045em] text-slate-950 sm:text-[44px] lg:text-[52px]">
+          <h1 className="font-serif text-[34px] font-black leading-[0.96] tracking-[-0.045em] text-slate-950 sm:text-[44px] lg:text-[50px]">
             Find the right
             <br />
             Gurgaon society first.
@@ -240,8 +241,8 @@ export default function SocietyFlatsHero() {
         </div>
 
         <div className="hidden lg:block lg:origin-center lg:scale-[0.98]">
-          <div className="relative min-h-[470px] overflow-hidden rounded-[2rem] border border-blue-100 bg-[linear-gradient(135deg,#fbfdff_0%,#f4f8ff_28%,#edf4ff_62%,#e7f0ff_100%)] p-4 text-navy-950 shadow-[0_16px_38px_rgba(37,99,235,0.10)]">
-            <div className="absolute inset-0 opacity-55 [background-image:linear-gradient(rgba(37,99,235,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(37,99,235,0.12)_1px,transparent_1px)] [background-size:64px_64px]" />
+          <div className="relative min-h-[430px] overflow-hidden rounded-[1.75rem] border border-blue-100 bg-[linear-gradient(135deg,#fbfdff_0%,#f4f8ff_28%,#edf4ff_62%,#e7f0ff_100%)] p-4 text-navy-950 shadow-[0_14px_34px_rgba(37,99,235,0.10)]">
+            <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(rgba(37,99,235,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(37,99,235,0.12)_1px,transparent_1px)] [background-size:58px_58px]" />
             <div className="absolute -left-16 top-0 h-72 w-72 rounded-full bg-white/90 blur-3xl" />
             <div className="absolute bottom-0 right-0 h-64 w-64 rounded-full bg-blue-100/75 blur-3xl" />
 
@@ -270,7 +271,7 @@ export default function SocietyFlatsHero() {
                   const clean = aiInput.trim() || aiQuestion;
                   window.location.href = `/ai-advisor?q=${encodeURIComponent(clean)}`;
                 }}
-                className="mt-4 rounded-[1.25rem] border border-blue-100 bg-white p-2 shadow-[0_10px_24px_rgba(37,99,235,0.09)]"
+                className="mt-3 rounded-[1.25rem] border border-blue-100 bg-white p-2 shadow-[0_10px_24px_rgba(37,99,235,0.09)]"
               >
                 <div className="flex items-center gap-2">
                   <Search className="ml-2 h-4 w-4 shrink-0 text-blue-400" />
@@ -295,7 +296,7 @@ export default function SocietyFlatsHero() {
                 </div>
               </form>
 
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap gap-2">
                 {[
                   "3BHK under ₹1L",
                   "Near Cyber City",
@@ -315,38 +316,38 @@ export default function SocietyFlatsHero() {
                 ))}
               </div>
 
-              <div className="relative mt-5 h-[190px]">
-                <div className="absolute left-[14%] top-[30%] h-[2px] w-[52%] bg-blue-200/80" />
-                <div className="absolute left-[34%] top-[58%] h-[2px] w-[48%] bg-blue-200/75" />
-                <div className="absolute left-[66%] top-[10%] h-[58%] w-[2px] bg-blue-200/80" />
+              <div className="relative mt-3 h-[150px]">
+                <div className="absolute left-[14%] top-[28%] h-[2px] w-[52%] bg-blue-300/80" />
+                <div className="absolute left-[30%] top-[58%] h-[2px] w-[50%] bg-blue-300/75" />
+                <div className="absolute left-[66%] top-[10%] h-[60%] w-[2px] bg-blue-300/80" />
                 <div className="absolute left-[54%] top-[76%] h-3.5 w-3.5 rounded-full border border-blue-100 bg-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]" />
                 <div className="absolute left-[12%] top-[18%] h-3.5 w-3.5 rounded-full border border-blue-100 bg-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]" />
                 <div className="absolute right-[22%] top-[8%] h-3.5 w-3.5 rounded-full border border-blue-100 bg-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]" />
                 <div className="absolute bottom-[22%] left-[38%] h-3.5 w-3.5 rounded-full border border-blue-100 bg-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]" />
                 <div className="absolute bottom-[12%] right-[14%] h-3.5 w-3.5 rounded-full border border-blue-100 bg-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]" />
 
-                <div className="absolute left-[58%] top-[36%]">
+                <div className="absolute left-[56%] top-[30%]">
                   <div className="flex items-center gap-2 rounded-full bg-blue-600 px-3 py-1 text-xs font-black text-white shadow-sm">
                     <span className="h-2 w-2 rounded-full bg-white" />
                     DLF Crest · 94 fit
                   </div>
-                  <div className="mx-auto mt-2 h-9 w-[2px] bg-blue-300/70" />
+                  <div className="mx-auto mt-1.5 h-7 w-[2px] bg-blue-300/70" />
                   <div className="mx-auto h-7 w-7 rounded-full border-4 border-blue-500 bg-white shadow-[0_0_0_8px_rgba(37,99,235,0.18)]" />
                 </div>
 
-                <p className="absolute right-4 top-[40%] text-xs font-bold text-navy-500">
+                <p className="absolute right-4 top-[36%] text-xs font-bold text-navy-500">
                   Cyber City
                 </p>
               </div>
 
-              <div className="mt-1 flex items-center justify-between text-[11px] font-black uppercase tracking-[0.18em] text-navy-500">
+              <div className="mt-0 flex items-center justify-between text-[11px] font-black uppercase tracking-[0.18em] text-navy-500">
                 <span>Matched on map</span>
                 <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 ring-1 ring-emerald-100">
                   3 within range
                 </span>
               </div>
 
-              <div className="mt-3 grid grid-cols-3 gap-1.5">
+              <div className="mt-2 grid grid-cols-3 gap-1.5">
                 {[
                   ["DLF Crest", "Sector 54 · 1.8 km", "94 fit"],
                   ["Alpha Corp Sky1", "Sector 15 · 4.6 km", "87 fit"],
@@ -355,7 +356,7 @@ export default function SocietyFlatsHero() {
                   <Link
                     key={name}
                     to={`/ai-advisor?q=${encodeURIComponent(aiInput || aiQuestion)}`}
-                    className="rounded-2xl border border-blue-100 bg-white p-3 text-navy-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50"
+                    className="rounded-2xl border border-blue-100 bg-white p-2.5 text-navy-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
@@ -365,7 +366,7 @@ export default function SocietyFlatsHero() {
                         {fit}
                       </span>
                     </div>
-                    <p className="mt-2 truncate text-sm font-black">{name}</p>
+                    <p className="mt-1.5 truncate text-sm font-black">{name}</p>
                     <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-500">{meta}</p>
                   </Link>
                 ))}
@@ -385,7 +386,7 @@ export default function SocietyFlatsHero() {
                 </Link>
               </div>
 
-              <div className="mt-2 flex items-center justify-center gap-2 text-xs font-bold text-navy-400">
+              <div className="mt-2 flex items-center justify-center gap-2 text-[11px] font-bold text-navy-400">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 No forced AI page jump.
               </div>
