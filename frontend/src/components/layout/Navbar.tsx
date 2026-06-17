@@ -122,7 +122,7 @@ export function Navbar() {
 
           <Link to="/broker-crm" className="hidden lg:block">
             <Button size="sm" variant="outline" className="rounded-full border-orange-100 bg-white px-4 text-orange-700 shadow-sm hover:bg-orange-50">
-              Join as Broker Partner Partner
+              Join as Broker Partner
             </Button>
           </Link>
           <Link to="/sell" className="hidden lg:block"><Button size="sm" className="rounded-full bg-blue-700 hover:bg-blue-800 text-white px-5 shadow-sm">List Property</Button></Link>
