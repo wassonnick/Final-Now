@@ -1190,10 +1190,11 @@ export function AdminLeadsPage() {
   const selectedLeads = useMemo(() => {
     const selected = new Set(selectedLeadIds);
 
-    return filteredLeads.filter((lead) => selected.has(lead.id));
-  }, [filteredLeads, selectedLeadIds]);
+    return leads.filter((lead) => selected.has(lead.id));
+  }, [leads, selectedLeadIds]);
 
-  const selectedVisibleCount = selectedLeads.length;
+  const selectedVisibleCount = selectedLeadIds.filter((id) => visibleLeadIds.includes(id)).length;
+  const selectedTotalCount = selectedLeadIds.length;
   const allVisibleSelected = Boolean(visibleLeadIds.length) && visibleLeadIds.every((id) => selectedLeadIds.includes(id));
 
   const todayLeads = leads.filter((lead) => isToday(lead.createdAt)).length;
@@ -1313,10 +1314,15 @@ export function AdminLeadsPage() {
     updates: Partial<Pick<AdminLead, "status" | "priority" | "followUpAt" | "assignedTo">>,
     actionLabel: string,
   ) => {
-    if (!selectedLeads.length) return;
+    const selectedIds = new Set(selectedLeadIds);
+    const leadsToUpdate = leads.filter((lead) => selectedIds.has(lead.id));
+
+    if (!leadsToUpdate.length) {
+      setError("Please select at least one lead first.");
+      return;
+    }
 
     const previousLeads = leads;
-    const selectedIds = new Set(selectedLeads.map((lead) => lead.id));
 
     setBulkSaving(true);
     setError("");
@@ -1327,7 +1333,7 @@ export function AdminLeadsPage() {
     try {
       const updatedLeads: AdminLead[] = [];
 
-      for (const lead of selectedLeads) {
+      for (const lead of leadsToUpdate) {
         const optimisticLead = { ...lead, ...updates };
         const saved = await saveAdminLead(optimisticLead);
         const noted = await addLeadNoteRemote(
@@ -1341,6 +1347,7 @@ export function AdminLeadsPage() {
         current.map((lead) => updatedLeads.find((item) => item.id === lead.id) || lead),
       );
       setSelectedLeadIds([]);
+      setError(`${actionLabel} completed for ${updatedLeads.length} selected lead${updatedLeads.length === 1 ? "" : "s"}.`);
     } catch (err) {
       console.error(err);
       setLeads(previousLeads);
