@@ -2149,12 +2149,28 @@ export function AdminLeadDetailPage() {
               </div>
 
               {samePhoneCount > 1 ? (
-                <Link
-                  to="/admin/leads?view=duplicates"
-                  className="mt-4 inline-flex w-full items-center justify-center rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm font-bold text-amber-700 hover:bg-amber-50"
-                >
-                  Review duplicate phone leads
-                </Link>
+                <div className="mt-4 grid gap-2">
+                  <Link
+                    to="/admin/leads?view=duplicates"
+                    className="inline-flex w-full items-center justify-center rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm font-bold text-amber-700 hover:bg-amber-50"
+                  >
+                    Review duplicate phone leads
+                  </Link>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={saving || lead.status === "Lost"}
+                    onClick={() =>
+                      void applyQuickConversion(
+                        { status: "Lost", priority: "Cold" },
+                        "Duplicate lead reviewed from lead detail quality panel",
+                      )
+                    }
+                    className="rounded-2xl border-rose-200 bg-white text-rose-700 hover:bg-rose-50"
+                  >
+                    Mark this as duplicate
+                  </Button>
+                </div>
               ) : null}
             </section>
 

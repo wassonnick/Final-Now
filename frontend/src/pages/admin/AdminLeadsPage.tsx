@@ -882,6 +882,10 @@ function c57QuickActionNote(
   updates: Partial<Pick<AdminLead, "status" | "priority" | "followUpAt">>,
   actionLabel: string,
 ) {
+  if (actionLabel.toLowerCase().includes("duplicate")) {
+    return "Admin note: Duplicate lead reviewed from duplicate resolution workflow";
+  }
+
   if (updates.followUpAt) {
     return `Follow-up reminder set from lead list: ${updates.followUpAt}`;
   }
@@ -1152,6 +1156,12 @@ export function AdminLeadsPage() {
             </div>
           ) : null}
 
+          {dashboardView === "duplicates" ? (
+            <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+              <strong>C60 duplicate resolution:</strong> Review same-phone enquiries, keep the best/primary lead active, and mark repeated entries as duplicate. The duplicate action sets Lost + Cold and writes a CRM timeline note.
+            </div>
+          ) : null}
+
 
           <div className="sticky top-0 z-20 -mx-4 mt-5 border-y border-slate-100 bg-white/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
             <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0">
@@ -1274,6 +1284,11 @@ export function AdminLeadsPage() {
                             </span>
                           ))}
                         </div>
+                        {dashboardView === "duplicates" ? (
+                          <p className="mt-1 text-[11px] font-bold text-amber-700">
+                            Same phone leads: {samePhoneLeadCount(lead, leads)}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                   </div>
