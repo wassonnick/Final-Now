@@ -1192,6 +1192,7 @@ export function AdminLeadsPage() {
   }, [leads, selectedLeadIds]);
 
   const selectedTotalCount = selectedLeadIds.length;
+  const selectedSingleLead = selectedTotalCount === 1 ? selectedLeads[0] : undefined;
   const allVisibleSelected = Boolean(visibleLeadIds.length) && visibleLeadIds.every((id) => selectedLeadIds.includes(id));
 
   const todayLeads = leads.filter((lead) => isToday(lead.createdAt)).length;
@@ -1314,6 +1315,21 @@ export function AdminLeadsPage() {
     }
 
     exportLeadsCsv(selectedLeads);
+  };
+
+  const handleSelectedTomorrow = async () => {
+    if (!selectedSingleLead) {
+      setError("Please select exactly one lead for Tomorrow selected.");
+      return;
+    }
+
+    await handleQuickLeadUpdate(
+      selectedSingleLead,
+      { followUpAt: tomorrowFollowUpValue() },
+      "Set tomorrow follow-up",
+    );
+
+    setSelectedLeadIds([]);
   };
 
   const handleDelete = async (lead: AdminLead) => {
@@ -1515,14 +1531,14 @@ export function AdminLeadsPage() {
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">
-                  C64A selection foundation
+                  C64B-lite selection foundation
                 </p>
                 <p className="mt-1 text-sm font-semibold text-blue-900">
-                  {selectedTotalCount ? `${selectedTotalCount} selected` : "Select leads, then export the selected list."}
+                  {selectedTotalCount ? `${selectedTotalCount} selected` : "Select leads to export, or select exactly one lead to set tomorrow follow-up."}
                 </p>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-3 md:flex md:flex-wrap">
+              <div className="grid gap-2 sm:grid-cols-4 md:flex md:flex-wrap">
                 <button
                   type="button"
                   disabled={!visibleLeadIds.length}
