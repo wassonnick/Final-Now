@@ -768,6 +768,36 @@ function followUpPanelText(lead: AdminLead) {
   return "No follow-up is set. Add a reminder before leaving this lead.";
 }
 
+function c67aLastContactedLabel(lead: AdminLead) {
+  const contactItem = adminTimelineItems(lead).find((item) => {
+    const type = timelineActivityType(item.text);
+    return ["Call", "WhatsApp", "No answer"].includes(type);
+  });
+
+  if (!contactItem) return "No contact logged yet";
+
+  return `${timelineActivityType(contactItem.text)} · ${contactItem.meta || "Timeline note"}`;
+}
+
+function c67aLastContactedText(lead: AdminLead) {
+  const contactItem = adminTimelineItems(lead).find((item) => {
+    const type = timelineActivityType(item.text);
+    return ["Call", "WhatsApp", "No answer"].includes(type);
+  });
+
+  if (!contactItem) return "Use Call or WhatsApp once, then this card will show the latest contact record.";
+
+  return cleanTimelineText(contactItem.text);
+}
+
+function c67aNextFollowUpLabel(lead: AdminLead) {
+  return lead.followUpAt ? `${followUpLabel(lead)} · ${formatDate(lead.followUpAt)}` : "No follow-up set";
+}
+
+function c67aNextFollowUpText(lead: AdminLead) {
+  return lead.followUpAt ? followUpPanelText(lead) : "Set Tomorrow or choose a follow-up time before leaving this lead.";
+}
+
 function detailSamePhoneLeadCount(lead: AdminLead, allLeads: AdminLead[]) {
   const key = cleanPhone(lead.phone).slice(-10);
   if (!key || key.length < 10) return 0;
@@ -1495,6 +1525,32 @@ export function AdminLeadDetailPage() {
               <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Follow-up</p>
                 <p className="mt-1 text-sm font-black text-slate-950">{formatDate(lead.followUpAt)}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                  C67A last contacted
+                </p>
+                <p className="mt-1 text-sm font-black text-slate-950">
+                  {c67aLastContactedLabel(lead)}
+                </p>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                  {c67aLastContactedText(lead)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                  C67A next follow-up
+                </p>
+                <p className="mt-1 text-sm font-black text-slate-950">
+                  {c67aNextFollowUpLabel(lead)}
+                </p>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                  {c67aNextFollowUpText(lead)}
+                </p>
               </div>
             </div>
 
