@@ -1,3 +1,5 @@
+
+// C69 SEO copy foundation: SocietyFlats is Gurgaon-first, society-first real estate intelligence for verified societies, available homes, owner listings, broker partners, AI recommendations, market insights, commute context and WhatsApp/callback conversion.
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";

@@ -269,8 +269,8 @@ function TimelineGroup({
   items: ReturnType<typeof adminTimelineItems>;
 }) {
   return (
-    <div className="rounded-[24px] border border-slate-100 bg-slate-50 p-4">
-      <div className="mb-3 flex items-start justify-between gap-3">
+    <div className="rounded-[22px] border border-slate-100 bg-slate-50 p-3 md:rounded-[24px] md:p-4">
+      <div className="mb-2 flex items-start justify-between gap-2 md:mb-3 md:gap-3">
         <div>
           <p className="text-sm font-black text-slate-950">{title}</p>
           <p className="mt-1 text-xs leading-5 text-slate-500">{helper}</p>
@@ -286,14 +286,14 @@ function TimelineGroup({
             const type = timelineActivityType(item.text);
 
             return (
-              <div key={item.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+              <div key={item.id} className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={`rounded-full border px-2.5 py-1 text-[11px] font-black ${timelineActivityClass(type)}`}>
                     {type}
                   </span>
                   {item.meta ? <span className="text-xs text-slate-400">{item.meta}</span> : null}
                 </div>
-                <p className="mt-2 text-sm leading-6 text-slate-800">{cleanTimelineText(item.text)}</p>
+                <p className="mt-2 text-sm leading-5 text-slate-800 md:leading-6">{cleanTimelineText(item.text)}</p>
               </div>
             );
           })}
@@ -1637,9 +1637,9 @@ export function AdminLeadDetailPage() {
           </div>
         </section>
 
-        <div className="grid gap-4 xl:grid-cols-[1fr_360px] xl:gap-6">
-          <div className="space-y-6">
-            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-5 2xl:grid-cols-[minmax(0,1fr)_360px] 2xl:gap-6">
+          <div className="space-y-4 xl:space-y-5">
+            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="h-5 w-5 text-blue-600" />
                 <div>
@@ -2187,7 +2187,7 @@ export function AdminLeadDetailPage() {
                 </Button>
               </div>
 
-              <div className="mt-6 grid gap-4">
+              <div className="mt-5 grid gap-3 md:gap-4">
                 <TimelineGroup
                   title="Contact activity"
                   helper="Calls, WhatsApp opens and no-answer attempts."
@@ -2212,8 +2212,8 @@ export function AdminLeadDetailPage() {
             </section>
           </div>
 
-          <aside className="space-y-4 xl:space-y-6">
-            <section className="rounded-[24px] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
+          <aside className="space-y-3 xl:space-y-4">
+            <section className="c69-desktop-action-panel rounded-[24px] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[28px] md:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
@@ -2335,7 +2335,7 @@ export function AdminLeadDetailPage() {
               </div>
             </section>
 
-            <section className="rounded-[32px] border border-amber-100 bg-amber-50 p-6 shadow-sm">
+            <section className="rounded-[28px] border border-amber-100 bg-amber-50 p-5 shadow-sm">
               <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
                 C59A lead quality
               </p>
