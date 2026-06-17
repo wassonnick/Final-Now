@@ -1371,7 +1371,7 @@ export function AdminLeadDetailPage() {
         ) : null}
 
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-          <section className="rounded-[24px] border border-blue-100 bg-blue-50 p-4 shadow-sm md:rounded-[32px] md:p-5">
+          <section className="col-span-full rounded-[24px] border border-blue-100 bg-blue-50 p-4 shadow-sm md:rounded-[32px] md:p-5">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
@@ -1385,7 +1385,7 @@ export function AdminLeadDetailPage() {
                 </p>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap">
                 <button
                   type="button"
                   disabled={saving}
@@ -1395,7 +1395,7 @@ export function AdminLeadDetailPage() {
                       "Tomorrow follow-up set from lead detail command panel",
                     )
                   }
-                  className="rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-black text-amber-700 transition hover:bg-amber-50 disabled:opacity-50"
+                  className="min-w-[150px] rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-black text-amber-700 transition hover:bg-amber-50 disabled:opacity-50"
                 >
                   Set Tomorrow
                 </button>
@@ -1409,7 +1409,7 @@ export function AdminLeadDetailPage() {
                       "Lead marked Contacted from lead detail command panel",
                     )
                   }
-                  className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-black text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                  className="min-w-[150px] rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-black text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                 >
                   Mark Contacted
                 </button>
@@ -1423,7 +1423,7 @@ export function AdminLeadDetailPage() {
                       "Lead marked Hot from lead detail command panel",
                     )
                   }
-                  className="rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-black text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
+                  className="min-w-[130px] rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-black text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
                 >
                   Mark Hot
                 </button>
@@ -1437,7 +1437,7 @@ export function AdminLeadDetailPage() {
                       `Lead assigned to ${event.target.value} from lead detail command panel`,
                     )
                   }
-                  className="h-10 rounded-full border border-blue-200 bg-white px-4 text-sm font-black text-blue-700 outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 disabled:opacity-50"
+                  className="h-10 min-w-[170px] rounded-full border border-blue-200 bg-white px-4 text-sm font-black text-blue-700 outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 disabled:opacity-50"
                 >
                   {agents.map((item) => (
                     <option key={item} value={item}>{item}</option>
