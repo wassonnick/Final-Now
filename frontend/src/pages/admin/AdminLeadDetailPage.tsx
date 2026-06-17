@@ -1069,6 +1069,7 @@ export function AdminLeadDetailPage() {
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [lastCommandAt, setLastCommandAt] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -1226,6 +1227,27 @@ export function AdminLeadDetailPage() {
     noteText: string,
   ) => {
     await applyQuickConversion(updates, `C65 command: ${noteText}`);
+    setLastCommandAt(new Date().toLocaleString("en-IN"));
+  };
+
+  const applyC66QuickNote = async (text: string) => {
+    if (!lead) return;
+
+    setSaving(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const updated = await addLeadNoteRemote(lead, `C66 quick note: ${text}`);
+      setLead(updated);
+      setLastCommandAt(new Date().toLocaleString("en-IN"));
+      setMessage(`Quick note saved: ${text}`);
+    } catch (err) {
+      console.error("Could not save C66 quick note:", err);
+      setError("Could not save quick note. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -1395,7 +1417,7 @@ export function AdminLeadDetailPage() {
                       "Tomorrow follow-up set from lead detail command panel",
                     )
                   }
-                  className="min-w-[150px] rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-black text-amber-700 transition hover:bg-amber-50 disabled:opacity-50"
+                  className="w-full min-w-[150px] rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-black text-amber-700 transition hover:bg-amber-50 disabled:opacity-50 lg:w-auto"
                 >
                   Set Tomorrow
                 </button>
@@ -1409,7 +1431,7 @@ export function AdminLeadDetailPage() {
                       "Lead marked Contacted from lead detail command panel",
                     )
                   }
-                  className="min-w-[150px] rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-black text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                  className="w-full min-w-[150px] rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-black text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 lg:w-auto"
                 >
                   Mark Contacted
                 </button>
@@ -1423,7 +1445,7 @@ export function AdminLeadDetailPage() {
                       "Lead marked Hot from lead detail command panel",
                     )
                   }
-                  className="min-w-[130px] rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-black text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
+                  className="w-full min-w-[130px] rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-black text-rose-700 transition hover:bg-rose-50 disabled:opacity-50 lg:w-auto"
                 >
                   Mark Hot
                 </button>
@@ -1437,7 +1459,7 @@ export function AdminLeadDetailPage() {
                       `Lead assigned to ${event.target.value} from lead detail command panel`,
                     )
                   }
-                  className="h-10 min-w-[170px] rounded-full border border-blue-200 bg-white px-4 text-sm font-black text-blue-700 outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 disabled:opacity-50"
+                  className="h-10 w-full min-w-[170px] rounded-full border border-blue-200 bg-white px-4 text-sm font-black text-blue-700 outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 disabled:opacity-50 lg:w-auto"
                 >
                   {agents.map((item) => (
                     <option key={item} value={item}>{item}</option>
@@ -1445,6 +1467,21 @@ export function AdminLeadDetailPage() {
                 </select>
               </div>
             </div>
+
+            {(message || error || lastCommandAt) ? (
+              <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm font-semibold ${
+                error
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-800"
+              }`}>
+                {error || message || "Command panel ready."}
+                {lastCommandAt ? (
+                  <span className="ml-2 text-xs font-bold opacity-70">
+                    Last action: {lastCommandAt}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
@@ -1458,6 +1495,32 @@ export function AdminLeadDetailPage() {
               <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Follow-up</p>
                 <p className="mt-1 text-sm font-black text-slate-950">{formatDate(lead.followUpAt)}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-white/80 bg-white/70 p-3">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">
+                    C66 quick notes
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-blue-900/70">
+                    Save common timeline notes without scrolling to the CRM timeline section.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {leadTypeQuickNotes(lead).slice(0, 4).map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      disabled={saving}
+                      onClick={() => void applyC66QuickNote(item)}
+                      className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-50 disabled:opacity-50"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
