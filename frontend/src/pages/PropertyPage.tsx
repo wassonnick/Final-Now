@@ -1,3 +1,4 @@
+// C71 property detail copy: legal verification, society intelligence and stronger enquiry CTAs.
 import { trackEvent, trackLeadIntent, trackLeadSubmitted, trackResultClicked } from "@/lib/analytics";
 import { cleanLeadTrackingPayload } from "@/lib/leadTracking";
 import { useEffect, useMemo, useState } from "react";
@@ -518,7 +519,7 @@ export function PropertyPage() {
       search_query: societyName || societyLocality || "",
     });
 
-    const fallbackMessage = `${leadType === "callback" ? "Callback" : "Enquiry"} requested for ${title}. Society: ${societyName || "Not specified"}. Location: ${societyLocality || "Gurgaon"}. Listing type: ${listingType}. Price: ${price}.`;
+    const fallbackMessage = `${leadType === "callback" ? "Callback" : "Verified enquiry"} requested for ${title}. Society: ${societyName || "Not specified"}. Location: ${societyLocality || "Gurgaon"}. Listing type: ${listingType}. Price: ${price}.`;
     const enrichedMessage = [
       leadForm.message || fallbackMessage,
       selectedTime ? `Preferred callback time: ${selectedTime}.` : "",

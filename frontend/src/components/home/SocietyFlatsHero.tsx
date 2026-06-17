@@ -1,3 +1,4 @@
+// C71 public content: restore no forced AI page jump SEO marker and sharpen hero trust copy.
 // C70C hero copy: society-first search, verified homes and AI guidance.
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
 import { useState } from "react";
@@ -79,7 +80,7 @@ export default function SocietyFlatsHero() {
   const [aiInput, setAiInput] = useState("Best family societies near Cyber City under Rs 1L");
   const [aiQuestion, setAiQuestion] = useState("Best family societies near Cyber City under Rs 1L");
   const [aiReply, setAiReply] = useState(
-    "Ask here. I will shortlist Gurgaon societies by budget, commute, family fit and live inventory.",
+    "Ask here. I will shortlist Gurgaon societies by budget, commute, family fit, verified inventory and lifestyle match.",
   );
   const [aiMatches, setAiMatches] = useState<AdvisorMatch[]>([
     { society_name: "DLF The Crest", sector: "Golf Course Road", score: 92 },
@@ -162,7 +163,7 @@ export default function SocietyFlatsHero() {
           </h1>
 
           <p className="mt-4 max-w-[560px] text-base font-semibold leading-7 text-blue-500 sm:text-lg">
-            Compare verified societies, rentals, resale homes and lifestyle fit before booking visits.
+            Compare verified societies, rentals, resale homes, commute strength and lifestyle fit before booking visits.
           </p>
 
           <div className="mt-6 rounded-[1.35rem] border border-blue-100 bg-white p-2.5 shadow-[0_18px_48px_rgba(37,99,235,0.10)]">
@@ -367,7 +368,7 @@ export default function SocietyFlatsHero() {
 
             <div className="mt-2 flex items-center justify-center gap-2 text-xs font-bold text-navy-400">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              Society-first search.
+              No forced AI page jump.
             </div>
           </div>
         </div>

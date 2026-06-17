@@ -1,3 +1,4 @@
+// C71 broker page copy: verified broker partner, RERA/license, inventory and commission trust language.
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -40,7 +41,7 @@ const featureIntro = {
   'broker-crm': {
     title: 'Join SocietyFlats as a Broker Partner',
     eyebrow: 'Broker partner program',
-    text: 'Submit your working areas, inventory strength and client requirements. SocietyFlats helps verified brokers access serious Gurgaon buyers, tenants and owner listing opportunities.',
+    text: 'Submit your working areas, RERA/license details and inventory strength. SocietyFlats helps verified broker partners access serious Gurgaon buyers, tenants and owner listing opportunities.',
     icon: BriefcaseBusiness,
   },
   chat: {
@@ -92,7 +93,7 @@ function FeatureHero({ feature }: { feature: FeatureExperienceKey }) {
             {feature === 'broker-crm' ? (
               <>
                 <Button asChild className="rounded-full bg-orange-600 hover:bg-orange-700">
-                  <a href="#broker-signup">Sign up as broker <ArrowRight className="ml-2 h-4 w-4" /></a>
+                  <a href="#broker-signup">Submit broker application <ArrowRight className="ml-2 h-4 w-4" /></a>
                 </Button>
                 <Button asChild variant="outline" className="rounded-full border-orange-200 bg-white text-orange-700">
                   <Link to="/broker/dashboard">Broker dashboard</Link>
@@ -411,10 +412,10 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
           <div className="mb-6">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">Broker signup</p>
             <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-navy-950">
-              Sign up as a SocietyFlats broker partner.
+              Grow your broker business with SocietyFlats.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-navy-500">
-              Share your working areas, office details and inventory strength. Verified partners can receive matching buyer, tenant and owner opportunities through SocietyFlats.
+              Share working areas, office details, inventory strength and RERA/license information. Verified partners can receive matched buyer, tenant and owner opportunities through SocietyFlats.
             </p>
           </div>
 
@@ -461,14 +462,14 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
 
             <label className="md:col-span-2">
               <span className="text-sm font-semibold text-navy-700">Inventory / client requirements</span>
-              <textarea value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} className="mt-2 min-h-[130px] w-full rounded-[1.5rem] border border-navy-100 bg-white p-4 text-navy-800 outline-none focus:border-orange-300 focus:ring-4 focus:ring-orange-100" placeholder="Tell us about your active listings, buyer/tenant leads, preferred commission terms or working societies..." />
+              <textarea value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} className="mt-2 min-h-[130px] w-full rounded-[1.5rem] border border-navy-100 bg-white p-4 text-navy-800 outline-none focus:border-orange-300 focus:ring-4 focus:ring-orange-100" placeholder="Tell us your active listings, buyer/tenant leads, preferred commission terms and top working societies..." />
             </label>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Button disabled={state === 'loading'} onClick={submit} className="rounded-full bg-orange-600 px-6 hover:bg-orange-700">
               {state === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BriefcaseBusiness className="mr-2 h-4 w-4" />}
-              Sign up as broker
+              Submit broker application
             </Button>
 
             {state === 'success' ? (
@@ -485,14 +486,14 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
 
         <aside className="rounded-[2rem] border border-orange-100 bg-orange-50 p-6">
           <BriefcaseBusiness className="h-9 w-9 text-orange-700" />
-          <h2 className="mt-5 text-2xl font-black text-navy-950">Why join SocietyFlats?</h2>
+          <h2 className="mt-5 text-2xl font-black text-navy-950">Why join as a SocietyFlats broker partner?</h2>
 
           <div className="mt-5 space-y-4">
             {[
-              'Work with society-first Gurgaon leads, not random portal noise.',
-              'Submit your active areas and inventory once, then track follow-up from Broker Dashboard.',
-              'Admin verifies brokers, inventory quality and lead stages before customer contact is unlocked.',
-              'Get access to owner listing, buyer and tenant opportunities as the platform grows.',
+              'Access society-first Gurgaon buyer and renter leads instead of random portal noise.',
+              'Submit your active areas and inventory once, then track partner follow-up from the Broker Dashboard.',
+              'Admin verifies broker profile, inventory quality, working societies and lead stages before deeper customer routing.',
+              'Get access to owner listing, buyer and tenant opportunities as SocietyFlats grows.',
               'Commission pipeline will be tracked transparently after verified deal stages.',
             ].map((item) => (
               <div key={item} className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold leading-6 text-navy-700">
@@ -505,7 +506,7 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
           <div className="mt-6 rounded-3xl bg-white p-5 text-sm leading-6 text-navy-600">
             <p className="font-black text-navy-950">After signup</p>
             <p className="mt-2">
-              SocietyFlats admin will call to verify your profile, working societies and commission understanding before marking you as an active broker partner.
+              SocietyFlats admin will call to verify your profile, working societies, inventory strength and commission understanding before marking you active.
             </p>
           </div>
         </aside>
@@ -597,7 +598,7 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
           <div className="mb-6 grid gap-4 md:grid-cols-3">
             <div className="rounded-[1.5rem] border border-orange-100 bg-white p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">Broker signup</p>
-              <p className="mt-3 text-lg font-bold text-navy-900">Join as verified partner</p>
+              <p className="mt-3 text-lg font-bold text-navy-900">Join as verified broker partner</p>
             </div>
             <div className="rounded-[1.5rem] border border-orange-100 bg-white p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">Coverage</p>
@@ -605,7 +606,7 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
             </div>
             <div className="rounded-[1.5rem] border border-orange-100 bg-white p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">Admin verified</p>
-              <p className="mt-3 text-lg font-bold text-navy-900">Leads + commission pipeline</p>
+              <p className="mt-3 text-lg font-bold text-navy-900">Leads + commission tracking</p>
             </div>
           </div>
         ) : (

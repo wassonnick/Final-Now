@@ -1,3 +1,4 @@
+// C71 insights copy: data-driven society and investment decision language.
 import { useState } from 'react';
 import { TrendingUp, TrendingDown, MapPin, Home, DollarSign, BarChart3, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +33,7 @@ export function InsightsPage() {
       <div className="bg-navy-500 py-12">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl md:text-4xl font-display font-bold text-white mb-3">
-            Gurgaon Rental Market Insights
+            Gurgaon Real Estate Insights
           </h1>
           <p className="text-lg text-navy-200">
             Real-time rent trends, demand analytics, and occupancy data across all localities.

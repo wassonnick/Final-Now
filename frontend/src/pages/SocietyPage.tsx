@@ -1,3 +1,4 @@
+// C71 society detail copy: verified society intelligence, similar homes and expert callback language.
 import { trackEvent, trackLeadIntent, trackResultClicked } from "@/lib/analytics";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -208,7 +209,7 @@ export function SocietyPage() {
   const openSocietyCallback = (source = "society_page_callback") => {
     trackLeadIntent({
       source,
-      cta_label: source.includes("similar") ? "Request similar options" : "Request homes",
+      cta_label: source.includes("similar") ? "Request similar homes" : "Request available homes",
       lead_intent: source.includes("similar") ? "similar_options" : "general",
       entity_type: "society",
       entity_slug: slug || "",
@@ -675,7 +676,7 @@ export function SocietyPage() {
               <div className="mt-5 grid grid-cols-2 gap-3 border-t border-navy-100 pt-5 md:mt-7 md:grid-cols-3">
                 <div className="rounded-2xl bg-blue-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">
-                    Available homes
+                    Verified homes available
                   </p>
                   <p className="mt-2 text-2xl font-bold text-navy-900">
                     {properties.length || "0"}
@@ -713,7 +714,7 @@ export function SocietyPage() {
                   onClick={() => openSocietyCallback()}
                   className="h-10 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700"
                 >
-                  <Phone className="mr-2 h-4 w-4" /> Request homes
+                  <Phone className="mr-2 h-4 w-4" /> Request available homes
                 </Button>
 
                 <Button
@@ -724,7 +725,7 @@ export function SocietyPage() {
                   <Link
                     to={`/search?tab=societies&q=${encodeURIComponent(society.name)}&intent=general`}
                   >
-                    View homes
+                    View verified homes
                   </Link>
                 </Button>
 
@@ -736,7 +737,7 @@ export function SocietyPage() {
                   <Link
                     to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}
                   >
-                    Ask AI for options
+                    Ask SocietyFlats AI for options
                   </Link>
                 </Button>
 
@@ -777,7 +778,7 @@ export function SocietyPage() {
                   <Link
                     to={`/compare?society=${encodeURIComponent(society.name)}`}
                   >
-                    Compare society
+                    Compare societies society
                   </Link>
                 </Button>
               </div>
@@ -994,7 +995,7 @@ export function SocietyPage() {
                         onClick={() => openSocietyCallback("society_page_no_inventory_similar_options")}
                         className="rounded-full bg-blue-600 hover:bg-blue-700"
                       >
-                        <Phone className="mr-2 h-4 w-4" /> Request similar options
+                        <Phone className="mr-2 h-4 w-4" /> Request similar homes
                       </Button>
                       <Button
                         asChild
@@ -1033,7 +1034,7 @@ export function SocietyPage() {
 
             <div className="rounded-[2rem] border border-navy-100 bg-white p-7 shadow-sm">
               <h2 className="text-2xl font-bold text-navy-900">
-                Nearby intelligence
+                Nearby schools, hospitals and commute intelligence
               </h2>
               <div className="mt-5 grid gap-4 md:grid-cols-2">
                 {nearby.map((item) => {
@@ -1151,7 +1152,7 @@ export function SocietyPage() {
                     onClick={() => openSocietyCallback("society_page_similar_societies_shortlist")}
                     className="mt-4 w-full rounded-full bg-blue-600 hover:bg-blue-700"
                   >
-                    <Phone className="mr-2 h-4 w-4" /> Request similar options
+                    <Phone className="mr-2 h-4 w-4" /> Request similar homes
                   </Button>
                 </div>
               )}
@@ -1267,7 +1268,7 @@ export function SocietyPage() {
                 onClick={() => openSocietyCallback()}
                 className="mt-4 w-full rounded-full bg-blue-600 hover:bg-blue-700"
               >
-                <Phone className="mr-2 h-4 w-4" /> Request homes
+                <Phone className="mr-2 h-4 w-4" /> Request available homes
               </Button>
 
               <Button
@@ -1290,7 +1291,7 @@ export function SocietyPage() {
                 <Link
                   to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}
                 >
-                  Ask AI for options
+                  Ask SocietyFlats AI for options
                 </Link>
               </Button>
             </div>
@@ -1339,7 +1340,7 @@ export function SocietyPage() {
             : "Share your requirement and our team will help with rent, buy, visit planning or similar society options."
         }
         source={callbackSource}
-        ctaLabel={selectedLeadProperty ? "Property callback" : callbackSource.includes("similar") ? "Request similar options" : "Request homes"}
+        ctaLabel={selectedLeadProperty ? "Property callback" : callbackSource.includes("similar") ? "Request similar homes" : "Request available homes"}
         leadIntent={
           selectedLeadProperty
             ? "property_callback"
@@ -1351,7 +1352,7 @@ export function SocietyPage() {
           entity_type: selectedLeadProperty ? "property" : "society",
           entity_slug: selectedLeadProperty?.slug || slug || "",
           entity_name: selectedLeadProperty?.title || society.name,
-          cta_label: selectedLeadProperty ? "Property callback" : callbackSource.includes("similar") ? "Request similar options" : "Request homes",
+          cta_label: selectedLeadProperty ? "Property callback" : callbackSource.includes("similar") ? "Request similar homes" : "Request available homes",
           lead_intent: selectedLeadProperty ? "property_callback" : callbackSource.includes("similar") ? "similar_options" : "general",
         }}
         societyName={society.name}
@@ -1374,7 +1375,7 @@ export function SocietyPage() {
                 : "Property callback"
             : "Society callback"
         }
-        submitLabel="Request homes"
+        submitLabel="Request available homes"
         successMessage="Request received. Our team will call with matching homes, similar societies and visit-ready options."
         onClose={() => {
           setCallbackOpen(false);

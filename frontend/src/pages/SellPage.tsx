@@ -1,3 +1,4 @@
+// C71 owner listing copy: stronger verified buyer, no broker hassle and verification flow language.
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -32,23 +33,23 @@ function isValidOwnerLeadPhone(value: string) {
 const steps = [
   {
     icon: Building2,
-    title: "Choose Society",
-    text: "Start with society name, tower and sector.",
+    title: "Submit your details",
+    text: "Share society, tower, BHK, size, price/rent expectation and best callback time.",
   },
   {
     icon: Home,
-    title: "Add Property Details",
-    text: "Rent, resale, BHK, size and availability.",
+    title: "We verify and create draft",
+    text: "Our team verifies ownership context, asks for photos and prepares a CRM-ready property draft.",
   },
   {
     icon: Camera,
-    title: "Upload Photos",
-    text: "Photos become listing highlights.",
+    title: "Get matched enquiries",
+    text: "Receive serious buyer or tenant enquiries with clear society, budget and visit context.",
   },
   {
     icon: Sparkles,
-    title: "AI Creates Listing",
-    text: "Title, description, tags and lead-ready page.",
+    title: "Publish after verification",
+    text: "The listing goes live only after details, pricing and availability are verified.",
   },
 ];
 
@@ -220,21 +221,19 @@ export function SellPage() {
           <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
             <div>
               <Badge className="mb-5 rounded-full border-blue-200 bg-white px-4 py-1.5 text-blue-700 shadow-sm">
-                Owner listing engine
+                Owner listing
               </Badge>
               <h1 className="max-w-2xl text-4xl font-black tracking-[-0.045em] leading-[0.98] text-slate-950 md:text-6xl">
-                List your flat with verified society context.
+                List your Gurgaon flat. Get verified buyers. No broker hassle.
               </h1>
               <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 md:text-lg">
-                Share basic property details once. SocietyFlats routes it into
-                the lead CRM with rent/sale intent, society name and owner
-                follow-up context.
+                Share your society, BHK, price expectation and callback time once. SocietyFlats verifies the owner lead, captures society context and routes serious buyer/tenant enquiries to the CRM.
               </p>
               <div className="mt-7 grid gap-3 sm:grid-cols-3">
                 {[
-                  "Verified society page",
-                  "CRM-ready owner lead",
-                  "Tenant/buyer matching",
+                  "Verified enquiries",
+                  "No listing fee",
+                  "Buyer/tenant matching",
                 ].map((item) => (
                   <div
                     key={item}
@@ -251,7 +250,7 @@ export function SellPage() {
               <div className="flex items-center gap-2 mb-5">
                 <BadgeIndianRupee className="w-5 h-5 text-blue-700" />
                 <h2 className="text-2xl font-display font-bold">
-                  Start listing
+                  List your flat
                 </h2>
               </div>
               <div className="grid grid-cols-2 gap-2 mb-5 rounded-2xl bg-navy-50 p-1">
@@ -294,7 +293,7 @@ export function SellPage() {
               </div>
               {success ? (
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-sm font-semibold leading-6 text-emerald-700">
-                  <p>Listing request received. Our team will call you shortly to verify details and create the right draft.</p>
+                  <p>Listing submitted successfully. Our team will call to verify ownership, photos, pricing and availability before creating the right draft.</p>
                   {accountCreated ? (
                     <div className="mt-4 rounded-2xl bg-white/80 p-4 text-emerald-800">
                       <p className="font-black">Customer account created automatically.</p>
@@ -447,8 +446,7 @@ export function SellPage() {
                 </form>
               )}
               <p className="text-xs text-navy-400 mt-4 text-center">
-                Your request now goes to the SocietyFlats lead CRM with society
-                and owner-listing context.
+                By submitting, you agree to be contacted once by SocietyFlats for verification, pricing guidance and matching buyer/tenant enquiries.
               </p>
             </div>
           </div>
@@ -459,10 +457,10 @@ export function SellPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-white text-navy-700 border-navy-200">
-              How owner listing works
+              How listing with SocietyFlats works
             </Badge>
             <h2 className="text-3xl md:text-5xl font-display font-bold text-navy-900">
-              Designed to create inventory, not just pages.
+              Three simple steps to turn your flat into verified inventory.
             </h2>
           </div>
           <div className="grid md:grid-cols-4 gap-6">
@@ -496,11 +494,10 @@ export function SellPage() {
             <div>
               <UserRound className="w-10 h-10 text-gold-400 mb-4" />
               <h2 className="text-3xl font-display font-bold">
-                Broker and owner dashboards come next.
+                Owner dashboard and verified listing tools are next.
               </h2>
               <p className="text-navy-100 mt-3">
-                Bulk upload, verification, lead routing and package monetization
-                should be wired after the UI foundation is stable.
+                Track listing requests, verification status and buyer/tenant enquiries as the owner dashboard expands.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3">

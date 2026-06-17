@@ -1,3 +1,4 @@
+// C71 AI Advisor copy: personalized home advisor, verified shortlist and expert callback language.
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked } from "@/lib/analytics";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -65,8 +66,8 @@ export function AIAdvisorPage() {
 
   useEffect(() => {
     setPublicSeo(
-      "AI Society Advisor for Gurgaon | SocietyFlats",
-      "Use SocietyFlats AI to shortlist Gurgaon societies and homes by budget, commute, lifestyle and verified inventory.",
+      "SocietyFlats AI Advisor | Smart Gurgaon Home Search",
+      "Answer in plain English and get personalized Gurgaon society and home recommendations by budget, commute, lifestyle and verified inventory.",
     );
     window.scrollTo(0, 0);
   }, []);
@@ -144,12 +145,12 @@ export function AIAdvisorPage() {
               </span>
 
               <h1 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">
-                Ask once. Get a Gurgaon society shortlist.
+                SocietyFlats AI: your personal Gurgaon home advisor.
               </h1>
               <p className="sr-only">Continue your Gurgaon society shortlist.</p>
 
               <p className="mt-3 max-w-xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
-                Tell us your budget, office or school location, family needs, pets, preferred builder or lifestyle.
+                Tell us your budget, office or school location, family needs, pets, preferred builder, lifestyle or investment goal.
               </p>
 
               <div className="mt-5 grid grid-cols-3 gap-2 rounded-[1.25rem] border border-blue-100 bg-white p-2 shadow-sm">
@@ -185,7 +186,7 @@ export function AIAdvisorPage() {
                   </span>
                   <div>
                     <p className="font-black text-navy-950">Start here</p>
-                    <p className="text-xs font-bold text-emerald-700">Live Gurgaon AI shortlist</p>
+                    <p className="text-xs font-bold text-emerald-700">Personalized Gurgaon shortlist</p>
                   </div>
                 </div>
 
@@ -202,7 +203,7 @@ export function AIAdvisorPage() {
                 className="rounded-[1.35rem] border border-blue-100 bg-blue-50/70 p-3"
               >
                 <label className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">
-                  Your requirement
+                  Tell us what you need
                 </label>
 
                 <div className="mt-2 flex items-center gap-2 rounded-2xl bg-white px-3 py-3 shadow-sm">
@@ -269,12 +270,12 @@ export function AIAdvisorPage() {
                     trackEvent("ai_open_full_search_clicked", {
                       source: "ai_advisor_page",
                       ai_query: activeQuestion,
-                      cta_label: "Open full search",
+                      cta_label: "View all matching results",
                     })
                   }
                 >
                   <Button variant="outline" className="w-full rounded-full border-blue-100 text-blue-700 hover:bg-blue-50">
-                    Open full search
+                    View all matching results
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -284,14 +285,14 @@ export function AIAdvisorPage() {
                     trackEvent("ai_callback_opened", {
                       source: "ai_advisor_page",
                       ai_query: activeQuestion,
-                      cta_label: "Request callback",
+                      cta_label: "Schedule expert callback",
                     });
                     setCallbackOpen(true);
                   }}
                   className="rounded-full bg-blue-700 hover:bg-blue-800"
                 >
                   <MessageCircle className="mr-2 h-4 w-4" />
-                  Request callback
+                  Schedule expert callback
                 </Button>
               </div>
             </div>
@@ -304,13 +305,13 @@ export function AIAdvisorPage() {
           <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                AI shortlist results
+                Your society recommendations
               </p>
               <h2 className="mt-2 font-display text-3xl font-black text-navy-950">
-                {matches.length ? "Recommended societies" : "Type above or tap a prompt"}
+                {matches.length ? "Your perfect society matches" : "Answer once to get a shortlist"}
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500">
-                Results open into society pages where users can check location context, live homes and callback options.
+                Results open into society pages where you can check location context, verified homes, society fit and callback options.
               </p>
             </div>
           </div>
@@ -333,7 +334,7 @@ export function AIAdvisorPage() {
                           entity_type: "society",
                           entity_slug: match.slug || "",
                           entity_name: name,
-                          cta_label: "View society",
+                          cta_label: "View society intelligence",
                           result_position: index + 1,
                         })
                       }
@@ -367,7 +368,7 @@ export function AIAdvisorPage() {
                       <div className="mt-4 flex items-center justify-between border-t border-blue-50 pt-4">
                         <span className="inline-flex items-center gap-2 text-xs font-black text-blue-700">
                           <Building2 className="h-4 w-4" />
-                          View society
+                          View society intelligence
                         </span>
                         <ArrowRight className="h-4 w-4 text-blue-700 transition group-hover:translate-x-1" />
                       </div>
@@ -378,9 +379,9 @@ export function AIAdvisorPage() {
 
               <div className="mt-5 rounded-[1.35rem] border border-blue-100 bg-blue-50/60 p-4 md:flex md:items-center md:justify-between">
                 <div>
-                  <p className="text-sm font-black text-navy-950">Want us to shortlist for you?</p>
+                  <p className="text-sm font-black text-navy-950">Want expert help shortlisting?</p>
                   <p className="mt-1 text-sm leading-6 text-navy-500">
-                    Share your requirement and SocietyFlats will call with matching societies and homes.
+                    Share your requirement and SocietyFlats will call with matching societies, verified homes and visit-ready next steps.
                   </p>
                 </div>
                 <Button
@@ -388,7 +389,7 @@ export function AIAdvisorPage() {
                   className="mt-3 rounded-full bg-blue-700 hover:bg-blue-800 md:mt-0"
                 >
                   <CalendarCheck className="mr-2 h-4 w-4" />
-                  Request callback
+                  Schedule expert callback
                 </Button>
               </div>
             </>
@@ -401,13 +402,13 @@ export function AIAdvisorPage() {
                   Icon: Search,
                 },
                 {
-                  title: "Get live shortlist",
-                  text: "AI checks available society matches and fit.",
+                  title: "Get verified shortlist",
+                  text: "AI checks society fit, live inventory and commute context.",
                   Icon: Target,
                 },
                 {
-                  title: "Open or request callback",
-                  text: "View society pages or ask us to shortlist.",
+                  title: "Open or schedule callback",
+                  text: "View society intelligence pages or ask us to shortlist.",
                   Icon: Home,
                 },
               ].map(({ title, text, Icon }) => (
@@ -425,20 +426,20 @@ export function AIAdvisorPage() {
       <PublicLeadModal
         open={callbackOpen}
         title="Request AI shortlist callback"
-        subtitle="Share your number and we will help shortlist societies from your AI requirement."
+        subtitle="Share your number and we will help shortlist societies and homes from your AI requirement."
         source="ai_advisor_callback"
-        ctaLabel="Request callback"
+        ctaLabel="Schedule expert callback"
         leadIntent="ai_shortlist"
         trackingContext={{
-          cta_label: "Request callback",
+          cta_label: "Schedule expert callback",
           lead_intent: "ai_shortlist",
           ai_query: activeQuestion,
           entity_type: "ai_advisor",
         }}
         defaultMessage={`I want help with this AI shortlist requirement: ${activeQuestion}`}
         defaultRequirement="AI shortlist callback"
-        submitLabel="Request callback"
-        successMessage="Request received. SocietyFlats will call with matching Gurgaon societies and homes."
+        submitLabel="Schedule expert callback"
+        successMessage="Request received. SocietyFlats will call with matching Gurgaon societies, verified homes and next steps."
         onClose={() => setCallbackOpen(false)}
       />
     </div>
