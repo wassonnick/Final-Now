@@ -1,3 +1,4 @@
+// C74E clean AI concierge card: no hero result dashboard, just guided prompts and AI Advisor handoff.
 // C74B hero AI card polish: right-side AI box is more inviting, search-first and visually highlighted.
 // C74 hero tabs fix: Society default button is Explore Societies; tabs are Society, Rent, Buy, Ask AI.
 // C74 homepage UX polish: compact hero, clearer first fold search, lighter desktop AI card.
@@ -235,143 +236,97 @@ export default function SocietyFlatsHero() {
         </div>
 
         <div className="hidden lg:block lg:origin-center lg:scale-[0.96]">
-          <div className="relative rounded-[1.55rem] border border-blue-100 bg-white/95 p-3.5 shadow-[0_24px_80px_rgba(37,99,235,0.13)] backdrop-blur">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-blue-700 text-white shadow-lg shadow-blue-100">
-                  <Sparkles className="h-5 w-5" />
+          <div className="relative overflow-hidden rounded-[1.75rem] border border-blue-100 bg-white/95 p-5 shadow-[0_24px_80px_rgba(37,99,235,0.13)] backdrop-blur">
+            <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-blue-100/80 blur-3xl" />
+            <div className="absolute -bottom-16 left-8 h-32 w-32 rounded-full bg-sky-100/70 blur-3xl" />
+
+            <div className="relative">
+              <div className="flex items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700">
+                  <Sparkles className="h-4 w-4" />
+                  AI Concierge
                 </span>
-                <div>
-                  <p className="text-base font-black text-navy-950">
-                    Ask SocietyFlats AI
-                  </p>
-                  <p className="text-xs font-bold text-emerald-700">
-                    Works inside this page
-                  </p>
-                </div>
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-black text-emerald-700">
+                  Live
+                </span>
               </div>
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-black text-blue-700">
-                Live
-              </span>
-            </div>
 
-            <div className="rounded-[1rem] border border-blue-100 bg-blue-50 p-2.5">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-500">
-                Your question
+              <h2 className="mt-5 max-w-sm font-serif text-4xl font-black leading-[0.95] tracking-[-0.04em] text-navy-950">
+                Not sure where to live?
+              </h2>
+
+              <p className="mt-3 max-w-sm text-sm font-semibold leading-6 text-navy-500">
+                Tell AI your budget, office, school or lifestyle. It will open a focused shortlist instead of making you browse blindly.
               </p>
-              <p className="mt-1 text-base font-black leading-6 text-navy-950">
-                {aiQuestion}
-              </p>
-            </div>
 
-            <div className="mt-3 rounded-[1rem] bg-white p-2.5 text-xs font-semibold leading-5 text-navy-600">
-              {isAiLoading ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-blue-700" />
-                  Finding live society matches...
-                </span>
-              ) : (
-                aiReply
-              )}
-            </div>
+              <div className="mt-5 grid gap-2">
+                {[
+                  "Family near Cyber City",
+                  "Pet friendly on Golf Course Extension",
+                  "Compare DLF vs M3M",
+                ].map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => {
+                      setAiInput(prompt);
+                      window.location.href = `/ai-advisor?q=${encodeURIComponent(prompt)}`;
+                    }}
+                    className="flex items-center justify-between rounded-2xl border border-blue-100 bg-white px-4 py-3 text-left text-sm font-black text-navy-800 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-md"
+                  >
+                    <span>{prompt}</span>
+                    <ArrowRight className="h-4 w-4 text-blue-700" />
+                  </button>
+                ))}
+              </div>
 
-            <div className="mt-3 grid gap-2">
-              {aiMatches.length ? (
-                aiMatches.map((match, index) => {
-                  const name = match.society_name || match.name || "Society match";
-                  const href = match.slug
-                    ? `/society/${match.slug}`
-                    : buildSearchUrl("general", name);
-
-                  return (
-                    <Link
-                      key={`${name}-${index}`}
-                      to={href}
-                      className="flex items-center justify-between rounded-xl border border-blue-100 bg-white px-3 py-2 transition hover:border-blue-200 hover:bg-blue-50"
-                    >
-                      <span className="flex min-w-0 items-center gap-3">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-blue-700 text-xs font-black text-white">
-                          {index + 1}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-black text-navy-950">
-                            {name}
-                          </span>
-                          <span className="block truncate text-xs font-bold text-blue-400">
-                            {match.sector || match.locality || "Gurgaon"}
-                          </span>
-                        </span>
-                      </span>
-                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700">
-                        {match.score ? `${match.score}%` : "Match"}
-                      </span>
-                    </Link>
-                  );
-                })
-              ) : (
-                <div className="rounded-2xl border border-dashed border-blue-100 bg-white p-3 text-sm font-semibold text-navy-500">
-                  No exact live match yet. Try another requirement.
-                </div>
-              )}
-            </div>
-
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {starterPrompts.map((prompt) => (
-                <button
-                  key={prompt}
-                  type="button"
-                  onClick={() => submitHeroAi(prompt)}
-                  className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[10px] font-black text-blue-700 transition hover:bg-blue-100"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                submitHeroAi();
-              }}
-              className="mt-2 flex items-center gap-2 rounded-full border border-blue-100 bg-white p-2 shadow-sm"
-            >
-              <input
-                value={aiInput}
-                onChange={(event) => setAiInput(event.target.value)}
-                className="min-w-0 flex-1 bg-transparent px-3 text-sm font-semibold text-navy-700 outline-none placeholder:text-blue-300"
-                placeholder="Ask budget, sector, office, school..."
-              />
-              <button
-                type="submit"
-                disabled={isAiLoading || !aiInput.trim()}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-700 text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
-                aria-label="Ask SocietyFlats AI"
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const clean = aiInput.trim() || aiQuestion;
+                  window.location.href = `/ai-advisor?q=${encodeURIComponent(clean)}`;
+                }}
+                className="mt-5 rounded-[1.25rem] border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-sky-50 p-2.5 shadow-[0_14px_40px_rgba(37,99,235,0.12)]"
               >
-                {isAiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </button>
-            </form>
+                <div className="flex items-center gap-2">
+                  <input
+                    value={aiInput}
+                    onChange={(event) => setAiInput(event.target.value)}
+                    className="h-11 min-w-0 flex-1 rounded-2xl bg-white px-4 text-sm font-black text-navy-900 outline-none placeholder:text-blue-400"
+                    placeholder="Type your requirement..."
+                  />
+                  <button
+                    type="submit"
+                    className="flex h-11 shrink-0 items-center justify-center rounded-2xl bg-blue-700 px-4 text-xs font-black text-white shadow-lg shadow-blue-200 transition hover:scale-105 hover:bg-blue-800"
+                    aria-label="Ask SocietyFlats AI"
+                  >
+                    Ask AI
+                  </button>
+                </div>
+              </form>
 
-            <div className="mt-2 grid grid-cols-3 gap-1.5">
-              {[
-                { icon: ShieldCheck, label: "Verified" },
-                { icon: MapPin, label: "Commute" },
-                { icon: Users, label: "Family fit" },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.label} className="rounded-xl bg-blue-50/60 p-2 text-center">
-                    <Icon className="mx-auto h-4 w-4 text-blue-700" />
-                    <p className="mt-1 text-[10px] font-black text-navy-500">
-                      {item.label}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
+              <div className="mt-5 grid grid-cols-3 gap-2">
+                {[
+                  { icon: ShieldCheck, label: "Verified" },
+                  { icon: MapPin, label: "Commute" },
+                  { icon: Users, label: "Family fit" },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className="rounded-2xl bg-blue-50/70 p-3 text-center">
+                      <Icon className="mx-auto h-4 w-4 text-blue-700" />
+                      <p className="mt-1 text-[10px] font-black text-navy-500">
+                        {item.label}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
 
-            <div className="mt-2 flex items-center justify-center gap-2 text-xs font-bold text-navy-400">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              No forced AI page jump.
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-navy-400">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                No forced AI page jump from normal search.
+              </div>
             </div>
           </div>
         </div>
