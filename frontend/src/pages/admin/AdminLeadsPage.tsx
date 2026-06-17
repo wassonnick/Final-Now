@@ -1403,17 +1403,23 @@ export function AdminLeadsPage() {
 
                       <button
                         type="button"
-                        disabled={savingLeadId === lead.id || lead.status === "Lost"}
+                        disabled={savingLeadId === lead.id}
                         onClick={() =>
                           void handleQuickLeadUpdate(
                             lead,
                             { status: "Lost", priority: "Cold" },
-                            "Mark Lost",
+                            dashboardView === "duplicates" && samePhoneLeadCount(lead, leads) > 1
+                              ? "Duplicate lead reviewed"
+                              : "Mark Lost",
                           )
                         }
-                        className={`rounded-full border px-2 py-1.5 text-[11px] font-black disabled:opacity-50 ${workflowButtonClass("slate")}`}
+                        className={`rounded-full border px-2 py-1.5 text-[11px] font-black disabled:opacity-50 ${
+                          dashboardView === "duplicates" && samePhoneLeadCount(lead, leads) > 1
+                            ? workflowButtonClass("amber")
+                            : workflowButtonClass("slate")
+                        }`}
                       >
-                        Lost
+                        {dashboardView === "duplicates" && samePhoneLeadCount(lead, leads) > 1 ? "Duplicate" : "Lost"}
                       </button>
                     </div>
 
