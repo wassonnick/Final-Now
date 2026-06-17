@@ -1080,6 +1080,7 @@ export function AdminLeadsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [savingLeadId, setSavingLeadId] = useState<number | null>(null);
+  const [selectedLeadIds, setSelectedLeadIds] = useState<number[]>([]);
 
   const dashboardView = useMemo(() => {
     return new URLSearchParams(location.search).get("view") || "all";
@@ -1182,6 +1183,17 @@ export function AdminLeadsPage() {
       });
   }, [dashboardView, effectiveAssignee, leads, priority, query, status]);
 
+  const visibleLeadIds = useMemo(() => filteredLeads.map((lead) => lead.id), [filteredLeads]);
+
+  const selectedLeads = useMemo(() => {
+    const selected = new Set(selectedLeadIds);
+
+    return leads.filter((lead) => selected.has(lead.id));
+  }, [leads, selectedLeadIds]);
+
+  const selectedTotalCount = selectedLeadIds.length;
+  const allVisibleSelected = Boolean(visibleLeadIds.length) && visibleLeadIds.every((id) => selectedLeadIds.includes(id));
+
   const todayLeads = leads.filter((lead) => isToday(lead.createdAt)).length;
   const activeLeads = leads.filter((lead) => !["Booked", "Lost"].includes(lead.status)).length;
   const bookedLeads = leads.filter((lead) => lead.status === "Booked").length;
@@ -1274,6 +1286,34 @@ export function AdminLeadsPage() {
     } finally {
       setSavingLeadId(null);
     }
+  };
+
+  const toggleLeadSelection = (leadId: number) => {
+    setSelectedLeadIds((current) =>
+      current.includes(leadId)
+        ? current.filter((id) => id !== leadId)
+        : [...current, leadId],
+    );
+  };
+
+  const selectAllVisibleLeads = () => {
+    setSelectedLeadIds((current) => {
+      const merged = new Set([...current, ...visibleLeadIds]);
+      return Array.from(merged);
+    });
+  };
+
+  const clearSelectedLeads = () => {
+    setSelectedLeadIds([]);
+  };
+
+  const handleExportSelectedLeads = () => {
+    if (!selectedLeads.length) {
+      setError("Please select at least one lead to export.");
+      return;
+    }
+
+    exportLeadsCsv(selectedLeads);
   };
 
   const handleDelete = async (lead: AdminLead) => {
@@ -1471,6 +1511,48 @@ export function AdminLeadsPage() {
             </select>
           </div>
 
+          <div className="mt-4 rounded-[24px] border border-blue-100 bg-blue-50 p-4 shadow-sm">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">
+                  C64A selection foundation
+                </p>
+                <p className="mt-1 text-sm font-semibold text-blue-900">
+                  {selectedTotalCount ? `${selectedTotalCount} selected` : "Select leads, then export the selected list."}
+                </p>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-3 md:flex md:flex-wrap">
+                <button
+                  type="button"
+                  disabled={!visibleLeadIds.length}
+                  onClick={allVisibleSelected ? clearSelectedLeads : selectAllVisibleLeads}
+                  className="rounded-full border border-blue-200 bg-white px-4 py-2 text-sm font-black text-blue-700 disabled:opacity-50"
+                >
+                  {allVisibleSelected ? "Clear selection" : "Select visible"}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!selectedTotalCount}
+                  onClick={handleExportSelectedLeads}
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 disabled:opacity-50"
+                >
+                  Export selected
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!selectedTotalCount}
+                  onClick={clearSelectedLeads}
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-500 disabled:opacity-50"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200 md:mt-6 md:rounded-[24px]">
             <div className="hidden grid-cols-[1.3fr_1.6fr_150px_110px_150px_230px] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 xl:grid">
               <span>Lead</span>
@@ -1496,6 +1578,15 @@ export function AdminLeadsPage() {
                   <div>
                     <div className="flex items-start justify-between gap-3 xl:block">
                       <div>
+                        <label className="mb-2 inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">
+                          <input
+                            type="checkbox"
+                            checked={selectedLeadIds.includes(lead.id)}
+                            onChange={() => toggleLeadSelection(lead.id)}
+                            className="h-3.5 w-3.5 rounded border-slate-300"
+                          />
+                          Select
+                        </label>
                         <p className="text-base font-bold text-slate-950">{lead.name}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                           {lead.phone ? (
