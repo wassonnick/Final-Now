@@ -192,6 +192,64 @@ function isUntouchedLead(lead: AdminLead) {
   return isOpenLead(lead) && lead.status === "New" && followUpState(lead) === "not_set";
 }
 
+function isCallSheetLead(lead: AdminLead) {
+  return (
+    isOpenLead(lead) &&
+    (
+      followUpState(lead) === "overdue" ||
+      isHotSlaLead(lead) ||
+      followUpState(lead) === "today" ||
+      isUntouchedLead(lead) ||
+      isStaleLead(lead)
+    )
+  );
+}
+
+function callSheetSortWeight(lead: AdminLead) {
+  if (followUpState(lead) === "overdue") return 0;
+  if (isHotSlaLead(lead)) return 1;
+  if (followUpState(lead) === "today") return 2;
+  if (isUntouchedLead(lead)) return 3;
+  if (isStaleLead(lead)) return 4;
+  if (lead.priority === "Hot") return 5;
+  if (followUpState(lead) === "not_set") return 6;
+
+  return 9;
+}
+
+function callSheetReason(lead: AdminLead) {
+  if (followUpState(lead) === "overdue") return "Overdue";
+  if (isHotSlaLead(lead)) return "Hot SLA";
+  if (followUpState(lead) === "today") return "Due today";
+  if (isUntouchedLead(lead)) return "Untouched";
+  if (isStaleLead(lead)) return "Stale";
+
+  return "Follow-up";
+}
+
+function callSheetReasonClass(lead: AdminLead) {
+  if (followUpState(lead) === "overdue") return "border-rose-100 bg-rose-50 text-rose-700";
+  if (isHotSlaLead(lead)) return "border-orange-100 bg-orange-50 text-orange-700";
+  if (followUpState(lead) === "today") return "border-blue-100 bg-blue-50 text-blue-700";
+  if (isUntouchedLead(lead)) return "border-slate-200 bg-slate-50 text-slate-700";
+  if (isStaleLead(lead)) return "border-amber-100 bg-amber-50 text-amber-700";
+
+  return "border-slate-200 bg-white text-slate-600";
+}
+
+function callSheetWhatsAppUrl(lead: AdminLead) {
+  const digits = String(lead.phone || "").replace(/[^0-9]/g, "").slice(-10);
+  const message = encodeURIComponent(
+    [
+      `Hi ${lead.name || ""}, this is SocietyFlats.`,
+      `Following up on your enquiry for ${lead.property || lead.society || "your requirement"}.`,
+      "Please let us know a good time to connect today.",
+    ].join("\n")
+  );
+
+  return `https://wa.me/91${digits}?text=${message}`;
+}
+
 function sourceBucket(lead: AdminLead) {
   const source = String(lead.source || "").toLowerCase();
   const page = String(lead.source_page || "").toLowerCase();
@@ -521,6 +579,18 @@ export function AdminDashboardPage() {
       .slice(0, 5);
   }, [leads]);
 
+  const callSheetLeads = useMemo(() => {
+    return leads
+      .filter(isCallSheetLead)
+      .sort((first, second) => {
+        const weightDelta = callSheetSortWeight(first) - callSheetSortWeight(second);
+        if (weightDelta !== 0) return weightDelta;
+
+        return new Date(second.createdAt || 0).getTime() - new Date(first.createdAt || 0).getTime();
+      })
+      .slice(0, 6);
+  }, [leads]);
+
   const sourceSummary = useMemo(() => {
     const buckets = [
       { bucket: "ai", label: "AI", helper: "Advisor intent", href: "/admin/leads?view=ai" },
@@ -792,6 +862,9 @@ export function AdminDashboardPage() {
               <Button asChild variant="outline" className="rounded-full border-slate-200">
                 <Link to="/admin/leads">Lead Inbox</Link>
               </Button>
+              <Button asChild variant="outline" className="rounded-full border-blue-200 text-blue-700">
+                <Link to="/admin/leads?view=call_sheet">Call Sheet</Link>
+              </Button>
               <Button asChild variant="outline" className="rounded-full border-rose-200 text-rose-700">
                 <Link to="/admin/leads?view=overdue">Overdue</Link>
               </Button>
@@ -890,6 +963,85 @@ export function AdminDashboardPage() {
                 )}
               </Link>
             ))}
+          </div>
+        </section>
+
+        <section className="rounded-[24px] border border-blue-100 bg-blue-50 p-4 shadow-sm md:rounded-[32px] md:p-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
+                C63 daily call sheet
+              </p>
+              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
+                Today’s priority follow-up queue
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-blue-900/70">
+                Work in order: overdue, hot SLA, due today, untouched, then stale. Use call, WhatsApp, open lead or set tomorrow.
+              </p>
+            </div>
+            <Button asChild variant="outline" className="rounded-full border-blue-200 bg-white text-blue-700">
+              <Link to="/admin/leads?view=call_sheet">Open full call sheet</Link>
+            </Button>
+          </div>
+
+          <div className="mt-5 grid gap-3 xl:grid-cols-3">
+            {callSheetLeads.length ? (
+              callSheetLeads.map((lead) => {
+                const phoneDigits = String(lead.phone || "").replace(/[^0-9]/g, "").slice(-10);
+                const canCallLead = phoneDigits.length >= 10;
+
+                return (
+                  <div key={lead.id} className="rounded-[22px] border border-blue-100 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className={`rounded-full border px-3 py-1 text-[11px] font-black ${callSheetReasonClass(lead)}`}>
+                        {callSheetReason(lead)}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-400">
+                        {formatLeadDate(lead.followUpAt || lead.createdAt)}
+                      </span>
+                    </div>
+
+                    <p className="mt-3 text-sm font-black text-slate-950">{lead.name || "Unnamed lead"}</p>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                      {lead.property || lead.society || lead.requirement || "Lead follow-up"}
+                    </p>
+                    <p className="mt-2 text-xs font-bold text-blue-700">
+                      Owner: {lead.assignedTo || "Unassigned"}
+                    </p>
+
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200">
+                        <Link to={`/admin/leads/${lead.id}`}>Open</Link>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={savingLeadId === lead.id}
+                        onClick={() => void handleDashboardTomorrow(lead)}
+                        className="rounded-full border-amber-200 text-amber-700"
+                      >
+                        Tomorrow
+                      </Button>
+                      {canCallLead ? (
+                        <Button asChild variant="outline" size="sm" className="rounded-full border-blue-200 text-blue-700">
+                          <a href={`tel:${phoneDigits}`}>Call</a>
+                        </Button>
+                      ) : null}
+                      {canCallLead ? (
+                        <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 text-emerald-700">
+                          <a href={callSheetWhatsAppUrl(lead)} target="_blank" rel="noreferrer">WhatsApp</a>
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="rounded-[22px] border border-dashed border-blue-200 bg-white p-6 text-sm font-semibold text-blue-700 xl:col-span-3">
+                No leads in today’s call sheet.
+              </div>
+            )}
           </div>
         </section>
 

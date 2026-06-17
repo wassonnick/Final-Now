@@ -41,6 +41,7 @@ const pipelineViews = [
   { label: "All", view: "all" },
   { label: "Today", view: "today" },
   { label: "Active", view: "active" },
+  { label: "Call Sheet", view: "call_sheet" },
   { label: "Due Today", view: "followups" },
   { label: "Overdue", view: "overdue" },
   { label: "Upcoming", view: "upcoming" },
@@ -709,6 +710,51 @@ function isUntouchedLead(lead: AdminLead) {
   return isOpenSlaLead(lead) && lead.status === "New" && followUpState(lead) === "not_set";
 }
 
+function isCallSheetLead(lead: AdminLead) {
+  return (
+    isOpenSlaLead(lead) &&
+    (
+      followUpState(lead) === "overdue" ||
+      isHotSlaLead(lead) ||
+      followUpState(lead) === "today" ||
+      isUntouchedLead(lead) ||
+      isStaleLead(lead)
+    )
+  );
+}
+
+function callSheetSortWeight(lead: AdminLead) {
+  if (followUpState(lead) === "overdue") return 0;
+  if (isHotSlaLead(lead)) return 1;
+  if (followUpState(lead) === "today") return 2;
+  if (isUntouchedLead(lead)) return 3;
+  if (isStaleLead(lead)) return 4;
+  if (lead.priority === "Hot") return 5;
+  if (followUpState(lead) === "not_set") return 6;
+
+  return 9;
+}
+
+function callSheetReason(lead: AdminLead) {
+  if (followUpState(lead) === "overdue") return "Overdue";
+  if (isHotSlaLead(lead)) return "Hot SLA";
+  if (followUpState(lead) === "today") return "Due today";
+  if (isUntouchedLead(lead)) return "Untouched";
+  if (isStaleLead(lead)) return "Stale";
+
+  return "Follow-up";
+}
+
+function callSheetReasonClass(lead: AdminLead) {
+  if (followUpState(lead) === "overdue") return "border-rose-100 bg-rose-50 text-rose-700";
+  if (isHotSlaLead(lead)) return "border-orange-100 bg-orange-50 text-orange-700";
+  if (followUpState(lead) === "today") return "border-blue-100 bg-blue-50 text-blue-700";
+  if (isUntouchedLead(lead)) return "border-slate-200 bg-slate-50 text-slate-700";
+  if (isStaleLead(lead)) return "border-amber-100 bg-amber-50 text-amber-700";
+
+  return "border-slate-200 bg-white text-slate-600";
+}
+
 function leadAgeLabel(lead: AdminLead) {
   const age = leadAgeDays(lead);
 
@@ -761,6 +807,10 @@ function dashboardLeadViewMatches(lead: AdminLead, view: string, allLeads: Admin
 
   if (view === "active") {
     return !["Booked", "Lost"].includes(lead.status);
+  }
+
+  if (view === "call_sheet") {
+    return isCallSheetLead(lead);
   }
 
   if (view === "followups") {
@@ -866,6 +916,7 @@ function dashboardLeadViewMatches(lead: AdminLead, view: string, allLeads: Admin
 function dashboardLeadViewLabel(view: string) {
   if (view === "today") return "Today’s leads";
   if (view === "active") return "Active leads";
+  if (view === "call_sheet") return "Today’s call sheet";
   if (view === "followups") return "Follow-ups due today";
   if (view === "overdue") return "Overdue follow-ups";
   if (view === "upcoming") return "Upcoming follow-ups";
@@ -898,6 +949,7 @@ function pipelineViewCount(leads: AdminLead[], view: string) {
 function pipelineEmptyMessage(view: string) {
   if (view === "today") return "No new leads today.";
   if (view === "active") return "No active leads in the pipeline.";
+  if (view === "call_sheet") return "No leads in today’s call sheet.";
   if (view === "followups") return "No follow-ups due today.";
   if (view === "overdue") return "No overdue follow-ups. You’re clear for now.";
   if (view === "upcoming") return "No upcoming follow-ups scheduled.";
@@ -1067,7 +1119,10 @@ export function AdminLeadsPage() {
     return leads
       .filter((lead) => dashboardLeadViewMatches(lead, dashboardView, leads))
       .sort((first, second) => {
-        const weightDelta = followUpSortWeight(first) - followUpSortWeight(second);
+        const weightDelta =
+          dashboardView === "call_sheet"
+            ? callSheetSortWeight(first) - callSheetSortWeight(second)
+            : followUpSortWeight(first) - followUpSortWeight(second);
         if (weightDelta !== 0) return weightDelta;
 
         const timeDelta = followUpTimeValue(first) - followUpTimeValue(second);
@@ -1092,6 +1147,7 @@ export function AdminLeadsPage() {
             workflowNextAction(lead),
             leadQualitySearchText(lead, leads),
             leadSlaSearchText(lead),
+            isCallSheetLead(lead) ? `call sheet today queue ${callSheetReason(lead)}` : "",
             attributionSearchText(lead),
             lead.source,
             lead.source_page,
@@ -1143,6 +1199,7 @@ export function AdminLeadsPage() {
   const staleLeads = leads.filter(isStaleLead).length;
   const hotSlaLeads = leads.filter(isHotSlaLead).length;
   const untouchedLeads = leads.filter(isUntouchedLead).length;
+  const callSheetLeads = leads.filter(isCallSheetLead).length;
 
   const handleStatusChange = async (lead: AdminLead, nextStatus: LeadStatus) => {
     const previousLeads = leads;
@@ -1247,6 +1304,7 @@ export function AdminLeadsPage() {
           {[
             ["Today", todayLeads, "New enquiries"],
             ["Active Leads", activeLeads, "In pipeline"],
+            ["Call Sheet", callSheetLeads, "Priority queue"],
             ["Follow-ups", followUpsToday, "Due today"],
             ["Overdue", overdueFollowUps, "Needs action"],
             ["Upcoming", upcomingFollowUps, "Scheduled"],
@@ -1314,6 +1372,12 @@ export function AdminLeadsPage() {
               </Link>
             </div>
           ) : null}
+          {dashboardView === "call_sheet" ? (
+            <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-800">
+              <strong>C63 daily call sheet:</strong> Work this queue in order — Overdue, Hot SLA, Due Today, Untouched, then Stale. Use Call, WhatsApp, Contacted and Tomorrow from each row.
+            </div>
+          ) : null}
+
           {dashboardView === "no_followup" ? (
             <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
               <strong>C57 workflow:</strong> “Tomorrow”, “Hot”, “Contacted” and “Lost” now also write CRM timeline notes.
@@ -1472,6 +1536,11 @@ export function AdminLeadsPage() {
                             </span>
                           ))}
                         </div>
+                        {dashboardView === "call_sheet" ? (
+                          <span className={`mt-1 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${callSheetReasonClass(lead)}`}>
+                            Call sheet: {callSheetReason(lead)}
+                          </span>
+                        ) : null}
                         {dashboardView === "duplicates" ? (
                           <p className="mt-1 text-[11px] font-bold text-amber-700">
                             Same phone leads: {samePhoneLeadCount(lead, leads)}
