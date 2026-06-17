@@ -1080,6 +1080,9 @@ export function AdminLeadsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [savingLeadId, setSavingLeadId] = useState<number | null>(null);
+  const [selectedLeadIds, setSelectedLeadIds] = useState<number[]>([]);
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkAssignee, setBulkAssignee] = useState("Nitin");
 
   const dashboardView = useMemo(() => {
     return new URLSearchParams(location.search).get("view") || "all";
@@ -1182,6 +1185,17 @@ export function AdminLeadsPage() {
       });
   }, [dashboardView, effectiveAssignee, leads, priority, query, status]);
 
+  const visibleLeadIds = useMemo(() => filteredLeads.map((lead) => lead.id), [filteredLeads]);
+
+  const selectedLeads = useMemo(() => {
+    const selected = new Set(selectedLeadIds);
+
+    return filteredLeads.filter((lead) => selected.has(lead.id));
+  }, [filteredLeads, selectedLeadIds]);
+
+  const selectedVisibleCount = selectedLeads.length;
+  const allVisibleSelected = Boolean(visibleLeadIds.length) && visibleLeadIds.every((id) => selectedLeadIds.includes(id));
+
   const todayLeads = leads.filter((lead) => isToday(lead.createdAt)).length;
   const activeLeads = leads.filter((lead) => !["Booked", "Lost"].includes(lead.status)).length;
   const bookedLeads = leads.filter((lead) => lead.status === "Booked").length;
@@ -1274,6 +1288,73 @@ export function AdminLeadsPage() {
     } finally {
       setSavingLeadId(null);
     }
+  };
+
+  const toggleLeadSelection = (leadId: number) => {
+    setSelectedLeadIds((current) =>
+      current.includes(leadId)
+        ? current.filter((id) => id !== leadId)
+        : [...current, leadId],
+    );
+  };
+
+  const selectAllVisibleLeads = () => {
+    setSelectedLeadIds((current) => {
+      const merged = new Set([...current, ...visibleLeadIds]);
+      return Array.from(merged);
+    });
+  };
+
+  const clearSelectedLeads = () => {
+    setSelectedLeadIds([]);
+  };
+
+  const handleBulkLeadUpdate = async (
+    updates: Partial<Pick<AdminLead, "status" | "priority" | "followUpAt" | "assignedTo">>,
+    actionLabel: string,
+  ) => {
+    if (!selectedLeads.length) return;
+
+    const previousLeads = leads;
+    const selectedIds = new Set(selectedLeads.map((lead) => lead.id));
+
+    setBulkSaving(true);
+    setError("");
+    setLeads((current) =>
+      current.map((lead) => selectedIds.has(lead.id) ? { ...lead, ...updates } : lead),
+    );
+
+    try {
+      const updatedLeads: AdminLead[] = [];
+
+      for (const lead of selectedLeads) {
+        const optimisticLead = { ...lead, ...updates };
+        const saved = await saveAdminLead(optimisticLead);
+        const noted = await addLeadNoteRemote(
+          saved,
+          `Admin note: ${actionLabel} from C64 bulk action bar`,
+        );
+        updatedLeads.push(noted);
+      }
+
+      setLeads((current) =>
+        current.map((lead) => updatedLeads.find((item) => item.id === lead.id) || lead),
+      );
+      setSelectedLeadIds([]);
+    } catch (err) {
+      console.error(err);
+      setLeads(previousLeads);
+      setError(`${actionLabel} failed for selected leads. Please try again.`);
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
+  const handleBulkAssign = async () => {
+    await handleBulkLeadUpdate(
+      { assignedTo: bulkAssignee },
+      `Selected leads assigned to ${bulkAssignee}`,
+    );
   };
 
   const handleDelete = async (lead: AdminLead) => {
@@ -1496,6 +1577,15 @@ export function AdminLeadsPage() {
                   <div>
                     <div className="flex items-start justify-between gap-3 xl:block">
                       <div>
+                        <label className="mb-2 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">
+                          <input
+                            type="checkbox"
+                            checked={selectedLeadIds.includes(lead.id)}
+                            onChange={() => toggleLeadSelection(lead.id)}
+                            className="h-3.5 w-3.5 rounded border-slate-300"
+                          />
+                          Select
+                        </label>
                         <p className="text-base font-bold text-slate-950">{lead.name}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                           {lead.phone ? (
