@@ -25,7 +25,9 @@ import {
   LeadStatus,
   addLeadNoteRemote,
   fetchAdminLead,
+  fetchAdminLeads,
   getAdminLead,
+  listAdminLeads,
   saveAdminLead,
 } from "@/lib/adminLeadStore";
 import { findAdminAccountsByPhone, type AdminAccount } from "@/lib/adminAccountStore";
@@ -766,6 +768,68 @@ function followUpPanelText(lead: AdminLead) {
   return "No follow-up is set. Add a reminder before leaving this lead.";
 }
 
+function detailSamePhoneLeadCount(lead: AdminLead, allLeads: AdminLead[]) {
+  const key = cleanPhone(lead.phone).slice(-10);
+  if (!key || key.length < 10) return 0;
+
+  return allLeads.filter((item) => cleanPhone(item.phone).slice(-10) === key).length;
+}
+
+function detailHasMeaningfulRequirement(lead: AdminLead) {
+  const value = String(lead.requirement || "").trim().toLowerCase();
+
+  return Boolean(value) && !["not specified", "general enquiry", "general inquiry", "requirement pending"].includes(value);
+}
+
+function detailIsMissingPhoneLead(lead: AdminLead) {
+  return cleanPhone(lead.phone).slice(-10).length < 10;
+}
+
+function detailIsMissingRequirementLead(lead: AdminLead) {
+  return !detailHasMeaningfulRequirement(lead);
+}
+
+function detailIsHighIntentLead(lead: AdminLead) {
+  const source = String(lead.source || "").toLowerCase();
+  const cta = String(lead.cta_label || "").toLowerCase();
+  const intent = String(lead.lead_intent || "").toLowerCase();
+  const requirement = String(lead.requirement || "").toLowerCase();
+  const combined = [source, cta, intent, requirement].join(" ");
+
+  return (
+    lead.priority === "Hot" ||
+    combined.includes("callback") ||
+    combined.includes("visit") ||
+    combined.includes("owner") ||
+    combined.includes("broker") ||
+    combined.includes("property")
+  );
+}
+
+function detailLeadQualityBadges(lead: AdminLead, allLeads: AdminLead[]) {
+  const badges: string[] = [];
+  const duplicateCount = detailSamePhoneLeadCount(lead, allLeads);
+
+  if (duplicateCount > 1) badges.push(`Duplicate x${duplicateCount}`);
+  if (detailIsMissingPhoneLead(lead)) badges.push("Missing phone");
+  if (detailIsMissingRequirementLead(lead)) badges.push("Missing requirement");
+  if (detailIsHighIntentLead(lead)) badges.push("High intent");
+  if (!badges.length) badges.push("Complete");
+
+  return badges;
+}
+
+function detailLeadQualityBadgeClass(label: string) {
+  const value = label.toLowerCase();
+
+  if (value.includes("duplicate")) return "border-amber-100 bg-amber-50 text-amber-700";
+  if (value.includes("missing")) return "border-rose-100 bg-rose-50 text-rose-700";
+  if (value.includes("high")) return "border-emerald-100 bg-emerald-50 text-emerald-700";
+  if (value.includes("complete")) return "border-blue-100 bg-blue-50 text-blue-700";
+
+  return "border-slate-200 bg-slate-50 text-slate-600";
+}
+
 function normalizeFollowUpInput(value?: string) {
   if (!value) return "";
   const raw = String(value).trim();
@@ -1001,6 +1065,7 @@ export function AdminLeadDetailPage() {
   const { id } = useParams();
 
   const [lead, setLead] = useState<AdminLead | undefined>();
+  const [allLeads, setAllLeads] = useState<AdminLead[]>([]);
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -1015,6 +1080,8 @@ export function AdminLeadDetailPage() {
   const submittedCards = useMemo(() => (lead ? submittedDetailCards(lead) : []), [lead]);
   const timelineGroups = useMemo(() => groupedTimelineItems(lead), [lead]);
   const timelineStats = useMemo(() => timelineSummary(lead), [lead]);
+  const samePhoneCount = useMemo(() => (lead ? detailSamePhoneLeadCount(lead, allLeads) : 0), [allLeads, lead]);
+  const qualityBadges = useMemo(() => (lead ? detailLeadQualityBadges(lead, allLeads) : []), [allLeads, lead]);
 
   const loadLead = async () => {
     setLoading(true);
@@ -1023,9 +1090,13 @@ export function AdminLeadDetailPage() {
     try {
       const apiLead = await fetchAdminLead(id);
       setLead(apiLead);
+
+      const apiLeads = await fetchAdminLeads();
+      setAllLeads(apiLeads);
     } catch (err) {
       console.error(err);
       setLead(getAdminLead(id));
+      setAllLeads(listAdminLeads());
       setError("Could not load this lead from backend. Showing local fallback if available.");
     } finally {
       setLoading(false);
@@ -2045,6 +2116,46 @@ export function AdminLeadDetailPage() {
                   Negotiation
                 </Button>
               </div>
+            </section>
+
+            <section className="rounded-[32px] border border-amber-100 bg-amber-50 p-6 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
+                C59A lead quality
+              </p>
+              <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                Quality and duplicate check
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-amber-900">
+                Same-phone, missing-field and high-intent signals for this lead.
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {qualityBadges.map((badge) => (
+                  <span key={badge} className={`rounded-full border px-3 py-1 text-xs font-black ${detailLeadQualityBadgeClass(badge)}`}>
+                    {badge}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <div className="rounded-2xl bg-white px-4 py-3">
+                  <p className="text-2xl font-black text-amber-700">{samePhoneCount}</p>
+                  <p className="text-xs font-bold text-slate-500">Same phone leads</p>
+                </div>
+                <div className="rounded-2xl bg-white px-4 py-3">
+                  <p className="text-2xl font-black text-slate-950">{detailIsHighIntentLead(lead) ? "Yes" : "No"}</p>
+                  <p className="text-xs font-bold text-slate-500">High intent</p>
+                </div>
+              </div>
+
+              {samePhoneCount > 1 ? (
+                <Link
+                  to="/admin/leads?view=duplicates"
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm font-bold text-amber-700 hover:bg-amber-50"
+                >
+                  Review duplicate phone leads
+                </Link>
+              ) : null}
             </section>
 
             <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
