@@ -18,6 +18,7 @@ import {
   AdminLead,
   LeadPriority,
   LeadStatus,
+  addLeadNoteRemote,
   deleteAdminLeadRemote,
   exportLeadsCsv,
   fetchAdminLeads,
@@ -678,6 +679,29 @@ function workflowButtonClass(tone: "blue" | "rose" | "amber" | "slate" | "emeral
   return "border-blue-100 bg-white text-blue-700 hover:bg-blue-50";
 }
 
+function c57QuickActionNote(
+  updates: Partial<Pick<AdminLead, "status" | "priority" | "followUpAt">>,
+  actionLabel: string,
+) {
+  if (updates.followUpAt) {
+    return `Follow-up reminder set from lead list: ${updates.followUpAt}`;
+  }
+
+  if (updates.status === "Contacted") {
+    return "Contact action: Lead marked Contacted from lead list quick action";
+  }
+
+  if (updates.status === "Lost") {
+    return "Admin note: Lead marked Lost from lead list quick action";
+  }
+
+  if (updates.priority === "Hot") {
+    return "Admin note: Lead marked Hot from lead list quick action";
+  }
+
+  return `Admin note: ${actionLabel} from lead list quick action`;
+}
+
 export function AdminLeadsPage() {
   const location = useLocation();
   const [leads, setLeads] = useState<AdminLead[]>([]);
@@ -812,7 +836,8 @@ export function AdminLeadsPage() {
 
     try {
       const updated = await saveAdminLead(optimisticLead);
-      setLeads((current) => current.map((item) => (item.id === lead.id ? updated : item)));
+      const noted = await addLeadNoteRemote(updated, c57QuickActionNote(updates, successMessage));
+      setLeads((current) => current.map((item) => (item.id === lead.id ? noted : item)));
     } catch (err) {
       console.error(err);
       setLeads(previousLeads);
@@ -907,7 +932,7 @@ export function AdminLeadsPage() {
           ) : null}
           {dashboardView === "no_followup" ? (
             <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-              <strong>C55 workflow:</strong> use “Tomorrow” on each lead to quickly clear no-follow-up records from the inbox.
+              <strong>C57 workflow:</strong> “Tomorrow”, “Hot”, “Contacted” and “Lost” now also write CRM timeline notes.
             </div>
           ) : null}
 

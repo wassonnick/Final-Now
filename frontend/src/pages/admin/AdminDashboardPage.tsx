@@ -22,7 +22,13 @@ import {
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { adminFetch } from "@/lib/adminApi";
-import { AdminLead, fetchAdminLeads, listAdminLeads } from "@/lib/adminLeadStore";
+import {
+  AdminLead,
+  addLeadNoteRemote,
+  fetchAdminLeads,
+  listAdminLeads,
+  saveAdminLead,
+} from "@/lib/adminLeadStore";
 
 type AdminStats = {
   societies: number;
@@ -212,6 +218,20 @@ function dashboardValue(value: number | string, isLoading: boolean) {
   return isLoading ? "Loading..." : value;
 }
 
+function formatLeadDateTime(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function tomorrowFollowUpValue() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  date.setHours(10, 30, 0, 0);
+
+  return formatLeadDateTime(date);
+}
+
 export function AdminDashboardPage() {
   const [stats, setStats] = useState(emptyStats);
   const [leads, setLeads] = useState<AdminLead[]>([]);
@@ -220,6 +240,7 @@ export function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [leadLoading, setLeadLoading] = useState(true);
   const [inventoryLoading, setInventoryLoading] = useState(true);
+  const [savingLeadId, setSavingLeadId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [leadError, setLeadError] = useState("");
   const [inventoryError, setInventoryError] = useState("");
@@ -297,6 +318,35 @@ export function AdminDashboardPage() {
     void loadLeads();
     void loadInventory();
   };
+
+  const handleDashboardTomorrow = async (lead: AdminLead) => {
+    const previousLeads = leads;
+    const followUpAt = tomorrowFollowUpValue();
+    const optimisticLead = { ...lead, followUpAt };
+
+    setSavingLeadId(lead.id);
+    setLeadError("");
+    setLeads((current) =>
+      current.map((item) => (item.id === lead.id ? optimisticLead : item)),
+    );
+
+    try {
+      const updated = await saveAdminLead(optimisticLead);
+      const noted = await addLeadNoteRemote(
+        updated,
+        `Follow-up reminder set from dashboard command center: ${followUpAt}`,
+      );
+
+      setLeads((current) => current.map((item) => (item.id === lead.id ? noted : item)));
+    } catch (err) {
+      console.error(err);
+      setLeads(previousLeads);
+      setLeadError("Unable to set dashboard follow-up reminder. Please open the lead and try again.");
+    } finally {
+      setSavingLeadId(null);
+    }
+  };
+
 
   useEffect(() => {
     refreshAll();
@@ -503,7 +553,7 @@ export function AdminDashboardPage() {
                 Start here for today’s admin work
               </h2>
               <p className="mt-1 text-sm leading-6 text-slate-500">
-                Overdue, due today, hot and no-follow-up leads are surfaced before general dashboard stats.
+                Overdue, due today, hot and no-follow-up leads are surfaced first. Use “Set tomorrow + note” to create a CRM trail.
               </p>
             </div>
 
@@ -526,33 +576,43 @@ export function AdminDashboardPage() {
           <div className="mt-5 grid gap-3 xl:grid-cols-5">
             {commandLeads.length ? (
               commandLeads.map((lead) => (
-                <Link
+                <div
                   key={lead.id}
-                  to={`/admin/leads/${lead.id}`}
                   className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-md"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className={`rounded-full border px-3 py-1 text-[11px] font-black ${leadCommandClass(lead)}`}>
-                      {leadCommandLabel(lead)}
-                    </span>
-                    <ArrowRight className="h-4 w-4 text-slate-300" />
-                  </div>
-                  <p className="mt-3 truncate text-sm font-black text-slate-950">
-                    {lead.name || "Unnamed lead"}
-                  </p>
-                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
-                    {lead.property || lead.society || lead.requirement || "Lead follow-up"}
-                  </p>
-                  <p className="mt-3 text-xs font-bold text-blue-700">
-                    {leadCommandMeta(lead)}
-                  </p>
-                  {lead.phone ? (
-                    <p className="mt-2 inline-flex items-center text-[11px] text-slate-400">
-                      <Phone className="mr-1 h-3.5 w-3.5" />
-                      {lead.phone}
+                  <Link to={`/admin/leads/${lead.id}`} className="block">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className={`rounded-full border px-3 py-1 text-[11px] font-black ${leadCommandClass(lead)}`}>
+                        {leadCommandLabel(lead)}
+                      </span>
+                      <ArrowRight className="h-4 w-4 text-slate-300" />
+                    </div>
+                    <p className="mt-3 truncate text-sm font-black text-slate-950">
+                      {lead.name || "Unnamed lead"}
                     </p>
-                  ) : null}
-                </Link>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                      {lead.property || lead.society || lead.requirement || "Lead follow-up"}
+                    </p>
+                    <p className="mt-3 text-xs font-bold text-blue-700">
+                      {leadCommandMeta(lead)}
+                    </p>
+                    {lead.phone ? (
+                      <p className="mt-2 inline-flex items-center text-[11px] text-slate-400">
+                        <Phone className="mr-1 h-3.5 w-3.5" />
+                        {lead.phone}
+                      </p>
+                    ) : null}
+                  </Link>
+
+                  <button
+                    type="button"
+                    disabled={savingLeadId === lead.id}
+                    onClick={() => void handleDashboardTomorrow(lead)}
+                    className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-amber-100 bg-white px-3 py-2 text-xs font-black text-amber-700 transition hover:bg-amber-50 disabled:opacity-50"
+                  >
+                    {savingLeadId === lead.id ? "Saving..." : "Set tomorrow + note"}
+                  </button>
+                </div>
               ))
             ) : (
               <div className="rounded-[22px] border border-dashed border-slate-200 p-5 text-sm text-slate-500 xl:col-span-5">
