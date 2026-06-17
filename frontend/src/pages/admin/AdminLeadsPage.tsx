@@ -39,8 +39,10 @@ const pipelineViews = [
   { label: "All", view: "all" },
   { label: "Today", view: "today" },
   { label: "Active", view: "active" },
-  { label: "Follow-ups", view: "followups" },
+  { label: "Due Today", view: "followups" },
   { label: "Overdue", view: "overdue" },
+  { label: "Upcoming", view: "upcoming" },
+  { label: "No Follow-up", view: "no_followup" },
   { label: "Hot", view: "hot" },
   { label: "Booked", view: "booked" },
   { label: "Owner Leads", view: "owner" },
@@ -476,6 +478,42 @@ function followUpLabel(lead: AdminLead) {
   return "Not set";
 }
 
+function followUpUrgencyLabel(lead: AdminLead) {
+  const state = followUpState(lead);
+
+  if (state === "overdue") return "Needs action";
+  if (state === "today") return "Due today";
+  if (state === "upcoming") return "Scheduled";
+  return "No reminder";
+}
+
+function followUpSortWeight(lead: AdminLead) {
+  const state = followUpState(lead);
+
+  if (state === "overdue") return 0;
+  if (state === "today") return 1;
+  if (lead.priority === "Hot") return 2;
+  if (state === "upcoming") return 3;
+  if (lead.status === "New") return 4;
+
+  return 5;
+}
+
+function followUpTimeValue(lead: AdminLead) {
+  const date = new Date(lead.followUpAt || "");
+  return Number.isNaN(date.getTime()) ? Number.MAX_SAFE_INTEGER : date.getTime();
+}
+
+function followUpHelperText(lead: AdminLead) {
+  const state = followUpState(lead);
+
+  if (state === "overdue") return `Overdue since ${displayFollowUp(lead)}`;
+  if (state === "today") return `Due ${displayFollowUp(lead)}`;
+  if (state === "upcoming") return `Scheduled ${displayFollowUp(lead)}`;
+
+  return "Set a follow-up from lead detail";
+}
+
 function dashboardLeadViewMatches(lead: AdminLead, view: string) {
   if (!view || view === "all") return true;
 
@@ -495,6 +533,14 @@ function dashboardLeadViewMatches(lead: AdminLead, view: string) {
 
   if (view === "overdue") {
     return followUpState(lead) === "overdue";
+  }
+
+  if (view === "upcoming") {
+    return followUpState(lead) === "upcoming";
+  }
+
+  if (view === "no_followup") {
+    return followUpState(lead) === "not_set";
   }
 
   if (view === "hot") {
@@ -534,6 +580,8 @@ function dashboardLeadViewLabel(view: string) {
   if (view === "active") return "Active leads";
   if (view === "followups") return "Follow-ups due today";
   if (view === "overdue") return "Overdue follow-ups";
+  if (view === "upcoming") return "Upcoming follow-ups";
+  if (view === "no_followup") return "Leads without follow-up";
   if (view === "hot") return "Hot leads";
   if (view === "booked") return "Booked leads";
   if (view === "owner") return "Owner listing leads";
@@ -551,6 +599,8 @@ function pipelineEmptyMessage(view: string) {
   if (view === "active") return "No active leads in the pipeline.";
   if (view === "followups") return "No follow-ups due today.";
   if (view === "overdue") return "No overdue follow-ups. You’re clear for now.";
+  if (view === "upcoming") return "No upcoming follow-ups scheduled.";
+  if (view === "no_followup") return "Every visible lead already has a follow-up set.";
   if (view === "hot") return "No hot leads right now.";
   if (view === "booked") return "No booked leads yet.";
   if (view === "owner") return "No owner listing leads yet.";
@@ -609,6 +659,15 @@ export function AdminLeadsPage() {
 
     return leads
       .filter((lead) => dashboardLeadViewMatches(lead, dashboardView))
+      .sort((first, second) => {
+        const weightDelta = followUpSortWeight(first) - followUpSortWeight(second);
+        if (weightDelta !== 0) return weightDelta;
+
+        const timeDelta = followUpTimeValue(first) - followUpTimeValue(second);
+        if (timeDelta !== 0) return timeDelta;
+
+        return new Date(second.createdAt || 0).getTime() - new Date(first.createdAt || 0).getTime();
+      })
       .filter((lead) => {
         const matchesSearch =
           !search ||
@@ -620,6 +679,10 @@ export function AdminLeadsPage() {
             lead.property,
             lead.budget,
             lead.assignedTo,
+            lead.followUpAt,
+            followUpLabel(lead),
+            followUpUrgencyLabel(lead),
+            workflowNextAction(lead),
             lead.source,
             (lead as any).source_page,
             (lead as any).cta_label,
@@ -648,6 +711,8 @@ export function AdminLeadsPage() {
   const hotLeads = leads.filter((lead) => lead.priority === "Hot").length;
   const followUpsToday = leads.filter((lead) => followUpState(lead) === "today").length;
   const overdueFollowUps = leads.filter((lead) => followUpState(lead) === "overdue").length;
+  const upcomingFollowUps = leads.filter((lead) => followUpState(lead) === "upcoming").length;
+  const noFollowUps = leads.filter((lead) => followUpState(lead) === "not_set").length;
 
   const handleStatusChange = async (lead: AdminLead, nextStatus: LeadStatus) => {
     const previousLeads = leads;
@@ -701,6 +766,8 @@ export function AdminLeadsPage() {
             ["Active Leads", activeLeads, "In pipeline"],
             ["Follow-ups", followUpsToday, "Due today"],
             ["Overdue", overdueFollowUps, "Needs action"],
+            ["Upcoming", upcomingFollowUps, "Scheduled"],
+            ["No Follow-up", noFollowUps, "Needs reminder"],
             ["Hot Leads", hotLeads, "Priority follow-ups"],
             ["Booked", bookedLeads, "Closed wins"],
           ].map(([label, value, helper]) => (
@@ -910,11 +977,16 @@ export function AdminLeadsPage() {
                       </span>
                       <p className="mt-1 hidden items-center gap-1 text-xs xl:flex">
                         <CalendarDays className="h-3.5 w-3.5" />
-                        {displayFollowUp(lead)}
+                        {followUpHelperText(lead)}
                       </p>
-                      <p className="mt-1 hidden text-xs xl:block">{lead.assignedTo || "Unassigned"}</p>
+                      <p className="mt-1 hidden text-xs xl:block">
+                        Owner: {lead.assignedTo || "Unassigned"}
+                      </p>
                       <p className={`mt-1 hidden w-fit rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] xl:block ${workflowNextActionClass(lead)}`}>
-                        {workflowNextAction(lead)}
+                        {followUpUrgencyLabel(lead)}
+                      </p>
+                      <p className="mt-1 hidden text-xs font-semibold text-slate-500 xl:block">
+                        Next: {workflowNextAction(lead)}
                       </p>
                     </div>
                   </div>

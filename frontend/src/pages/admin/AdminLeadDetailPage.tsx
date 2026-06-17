@@ -565,6 +565,48 @@ function formatDate(value?: string) {
   });
 }
 
+function followUpState(lead: AdminLead) {
+  if (!lead.followUpAt) return "not_set";
+
+  const date = new Date(lead.followUpAt);
+  if (Number.isNaN(date.getTime())) return "not_set";
+
+  const now = new Date();
+  const sameDay = date.toDateString() === now.toDateString();
+
+  if (date.getTime() < now.getTime() && !sameDay) return "overdue";
+  if (sameDay) return "today";
+  return "upcoming";
+}
+
+function followUpLabel(lead: AdminLead) {
+  const state = followUpState(lead);
+
+  if (state === "overdue") return "Overdue";
+  if (state === "today") return "Due today";
+  if (state === "upcoming") return "Upcoming";
+  return "Not set";
+}
+
+function followUpPanelClass(lead: AdminLead) {
+  const state = followUpState(lead);
+
+  if (state === "overdue") return "border-rose-100 bg-rose-50 text-rose-900";
+  if (state === "today") return "border-amber-100 bg-amber-50 text-amber-900";
+  if (state === "upcoming") return "border-emerald-100 bg-emerald-50 text-emerald-900";
+  return "border-slate-100 bg-slate-50 text-slate-900";
+}
+
+function followUpPanelText(lead: AdminLead) {
+  const state = followUpState(lead);
+  const value = formatDate(lead.followUpAt);
+
+  if (state === "overdue") return `Follow-up is overdue since ${value}. Call or WhatsApp now and add a note.`;
+  if (state === "today") return `Follow-up is due today at ${value}. Prioritize this lead.`;
+  if (state === "upcoming") return `Next follow-up is scheduled for ${value}.`;
+  return "No follow-up is set. Add a reminder before leaving this lead.";
+}
+
 function normalizeFollowUpInput(value?: string) {
   if (!value) return "";
   const raw = String(value).trim();
@@ -630,10 +672,13 @@ function getQuickFollowUpValue(type: "today_evening" | "tomorrow_morning" | "two
 }
 
 const quickNoteTemplates = [
+  "Call done - requirement verified",
   "Called, no answer",
-  "WhatsApp sent",
-  "Visit scheduled",
+  "WhatsApp sent with matching options",
+  "Visit timing discussed",
   "Budget mismatch",
+  "Owner details/photos requested",
+  "Broker inventory requested",
   "Not interested",
 ];
 
@@ -907,7 +952,7 @@ export function AdminLeadDetailPage() {
     if (!lead) return;
 
     try {
-      const updated = await addLeadNoteRemote(lead, text);
+      const updated = await addLeadNoteRemote(lead, `Contact action: ${text}`);
       setLead(updated);
       setMessage(`${text} noted in timeline.`);
     } catch (err) {
@@ -996,7 +1041,7 @@ export function AdminLeadDetailPage() {
           <div className="grid grid-cols-3 gap-2 lg:flex lg:flex-wrap lg:gap-3">
             {canCall ? (
               <Button asChild variant="outline" className="h-10 rounded-full border-slate-200 px-3 text-xs lg:text-sm">
-                <a href={`tel:${phoneDigits}`} onClick={() => void recordContactAction("Call action opened from lead detail")}>
+                <a href={`tel:${phoneDigits}`} onClick={() => void recordContactAction("Call opened from lead detail")}>
                   <Phone className="mr-2 h-4 w-4" />
                   Call
                 </a>
@@ -1022,6 +1067,31 @@ export function AdminLeadDetailPage() {
             </Button>
           </div>
         </div>
+
+        {lead ? (
+          <section className={`rounded-[28px] border p-5 shadow-sm ${followUpPanelClass(lead)}`}>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em] opacity-70">C53 follow-up command</p>
+                <h2 className="mt-2 text-lg font-black">{followUpLabel(lead)}</h2>
+                <p className="mt-1 text-sm leading-6 opacity-80">{followUpPanelText(lead)}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {quickFollowUps.map(([label, value]) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    variant="outline"
+                    onClick={() => applyQuickFollowUp(value)}
+                    className="rounded-full border-white/60 bg-white/80 text-slate-700 hover:bg-white"
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         {message ? (
           <div className="rounded-2xl bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-700">
@@ -1690,7 +1760,7 @@ export function AdminLeadDetailPage() {
                 {canCall ? (
                   <a
                     href={`tel:${phoneDigits}`}
-                    onClick={() => void recordContactAction("Call action opened from lead detail")}
+                    onClick={() => void recordContactAction("Call opened from lead detail")}
                     className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
                     <span className="inline-flex items-center gap-3">
