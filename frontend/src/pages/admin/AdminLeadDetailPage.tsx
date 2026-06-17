@@ -1316,7 +1316,7 @@ export function AdminLeadDetailPage() {
 
   return (
     <AdminLayout title="Lead Details">
-      <div className="space-y-4 pb-24 lg:space-y-6">
+      <div className="space-y-3 pb-36 lg:space-y-6 lg:pb-24">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <Button asChild variant="ghost" className="mb-3 rounded-full text-slate-600">
@@ -1333,7 +1333,7 @@ export function AdminLeadDetailPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 lg:flex lg:flex-wrap lg:gap-3">
+          <div className="grid grid-cols-3 gap-1.5 lg:flex lg:flex-wrap lg:gap-3">
             {canCall ? (
               <Button asChild variant="outline" className="h-10 rounded-full border-slate-200 px-3 text-xs lg:text-sm">
                 <a href={`tel:${phoneDigits}`} onClick={() => void recordContactAction("Call opened from lead detail")}>
@@ -1396,7 +1396,7 @@ export function AdminLeadDetailPage() {
 
         {/* C18 mobile admin lead sticky actions */}
         {canCall ? (
-          <div className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-[0_-10px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
+          <div className="fixed inset-x-3 bottom-4 z-50 grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-[0_-10px_24px_rgba(15,23,42,0.12)] backdrop-blur supports-[padding:max(0px)]:bottom-[max(1rem,env(safe-area-inset-bottom))] lg:hidden">
             <a
               href={`tel:${phoneDigits}`}
               onClick={() => void recordContactAction("Mobile sticky call opened from lead detail")}
@@ -1422,7 +1422,7 @@ export function AdminLeadDetailPage() {
           </div>
         ) : null}
 
-        <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <section className="c68-mobile-summary-grid grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
           <section className="col-span-full rounded-[24px] border border-blue-100 bg-blue-50 p-4 shadow-sm md:rounded-[32px] md:p-5">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
@@ -1437,7 +1437,7 @@ export function AdminLeadDetailPage() {
                 </p>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap">
                 <button
                   type="button"
                   disabled={saving}
@@ -1513,7 +1513,7 @@ export function AdminLeadDetailPage() {
               </div>
             ) : null}
 
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="mt-3 grid gap-2 md:mt-4 md:grid-cols-3 md:gap-3">
               <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Status</p>
                 <p className="mt-1 text-sm font-black text-slate-950">{displayLeadStatus(lead)}</p>
@@ -1528,7 +1528,7 @@ export function AdminLeadDetailPage() {
               </div>
             </div>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="mt-3 grid gap-2 md:mt-4 md:grid-cols-2 md:gap-3">
               <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
                   C67A last contacted
