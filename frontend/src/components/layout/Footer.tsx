@@ -1,3 +1,4 @@
+// C70C footer copy: society-first trust, owner/broker paths and updated copyright.
 import { Link } from "react-router-dom";
 import { Building2, Mail, MapPin, Phone } from "lucide-react";
 
@@ -9,7 +10,7 @@ const quickLinks = [
 ];
 
 const ownerLinks = [
-  { label: "List Property", href: "/sell" },
+  { label: "List Your Flat", href: "/sell" },
   { label: "Compare", href: "/compare" },
   { label: "Insights", href: "/insights" },
   { label: "Map", href: "/map" },
@@ -114,7 +115,7 @@ export function Footer() {
 
         <div className="mt-7 border-t border-white/10 pt-4 md:mt-10 md:pt-6">
           <div className="flex flex-col gap-3 text-xs text-navy-300 md:flex-row md:items-center md:justify-between">
-            <p>© 2025 SocietyFlats. All rights reserved.</p>
+            <p>© 2026 SocietyFlats. All rights reserved.</p>
 
             <div className="flex flex-wrap gap-3">
               <Link to="/" className="transition hover:text-white">

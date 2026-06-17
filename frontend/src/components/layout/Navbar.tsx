@@ -1,3 +1,4 @@
+// C70C nav copy: clearer public CTAs for broker partnership and dashboard access.
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Menu, X, Heart, Scale, MapPin, Building2, Sparkles, BarChart3, User, Home, KeyRound, BadgeIndianRupee, MessageCircle } from 'lucide-react';
@@ -121,7 +122,7 @@ export function Navbar() {
 
           <Link to="/broker-crm" className="hidden lg:block">
             <Button size="sm" variant="outline" className="rounded-full border-orange-100 bg-white px-4 text-orange-700 shadow-sm hover:bg-orange-50">
-              For Brokers
+              Join as Broker Partner Partner
             </Button>
           </Link>
           <Link to="/sell" className="hidden lg:block"><Button size="sm" className="rounded-full bg-blue-700 hover:bg-blue-800 text-white px-5 shadow-sm">List Property</Button></Link>
@@ -136,7 +137,7 @@ export function Navbar() {
             <Button variant="outline" className="w-full rounded-full border-blue-100 bg-white text-blue-700" onClick={() => { navigate(accountDashboardPath || '/login'); setIsMenuOpen(false); }}>
               {accountDashboardPath ? "Dashboard" : "Login"}
             </Button>
-            <Button variant="outline" className="w-full rounded-full border-orange-100 bg-white text-orange-700" onClick={() => { navigate('/broker-crm'); setIsMenuOpen(false); }}>Join as Broker</Button>
+            <Button variant="outline" className="w-full rounded-full border-orange-100 bg-white text-orange-700" onClick={() => { navigate('/broker-crm'); setIsMenuOpen(false); }}>Join as Broker Partner</Button>
             <Button className="w-full rounded-full bg-navy-600 hover:bg-navy-700 text-white" onClick={() => { navigate('/sell'); setIsMenuOpen(false); }}>List Property</Button>
           </div>
         </div>

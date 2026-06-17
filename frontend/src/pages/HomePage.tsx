@@ -1,5 +1,5 @@
 
-// C69 SEO copy foundation: SocietyFlats is Gurgaon-first, society-first real estate intelligence for verified societies, available homes, owner listings, broker partners, AI recommendations, market insights, commute context and WhatsApp/callback conversion.
+// C70C public content rewrite phase 1: Choose the right society before the home. Trust, verification, market insight and expert callback CTAs are now reinforced.\n// C69 SEO copy foundation: SocietyFlats is Gurgaon-first, society-first real estate intelligence for verified societies, available homes, owner listings, broker partners, AI recommendations, market insights, commute context and WhatsApp/callback conversion.
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -192,8 +192,8 @@ export function HomePage() {
 
   useEffect(() => {
     setPublicSeo(
-      "SocietyFlats Gurgaon | Verified Society-First Rentals & Resale",
-      "Search verified Gurgaon society homes, compare society intelligence and request callbacks for rent, buy and owner listings.",
+      "Verified Gurgaon Societies & Flats | SocietyFlats",
+      "Choose the right Gurgaon society before the home. Compare verified societies, legal-ready homes, market insights and request expert callbacks.",
     );
     window.scrollTo(0, 0);
     fetchPublicSocieties()
@@ -273,31 +273,31 @@ export function HomePage() {
             {
               icon: Building2,
               value: "150+",
-              label: "Gurgaon societies",
+              label: "Verified societies",
               tone: "bg-blue-50 text-blue-700",
             },
             {
               icon: Home,
               value: `${properties.length || "2,500+"}`,
-              label: "Homes reviewed",
+              label: "Verified homes",
               tone: "bg-emerald-50 text-emerald-700",
             },
             {
               icon: MessageCircle,
               value: "24 hrs",
-              label: "Callback support",
+              label: "Expert callbacks",
               tone: "bg-violet-50 text-violet-700",
             },
             {
               icon: Star,
               value: averageScore,
-              label: "Avg society score",
+              label: "Society rating",
               tone: "bg-gold-100 text-gold-700",
             },
             {
               icon: Sparkles,
               value: "AI Advisor",
-              label: "Smart shortlists",
+              label: "AI shortlists",
               tone: "bg-blue-50 text-blue-700",
             },
           ].map((stat) => {
@@ -333,18 +333,17 @@ export function HomePage() {
           <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                Curated for Gurgaon
+                25-point society intelligence
               </p>
               <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
-                Featured societies in Gurgaon
+                Choose the right society first
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500 md:text-[15px] md:leading-6">
                 <span className="md:hidden">
-                  Compare Gurgaon societies by rent, resale and lifestyle fit.
+                  Compare verified Gurgaon societies by security, governance, commute, pricing and lifestyle fit.
                 </span>
                 <span className="hidden md:inline">
-                  Explore premium Gurgaon societies with rent ranges, resale
-                  trends, lifestyle fit, location strengths and available homes.
+                  Explore verified Gurgaon societies with rent ranges, resale trends, lifestyle fit, commute strength, governance signals and available homes.
                 </span>
               </p>
             </div>
@@ -353,7 +352,7 @@ export function HomePage() {
                 variant="outline"
                 className="h-10 rounded-full border-blue-100 bg-white px-4 text-sm font-extrabold text-blue-700 hover:bg-blue-50"
               >
-                View all societies <ArrowRight className="ml-2 h-4 w-4" />
+                Explore verified societies <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -425,7 +424,7 @@ export function HomePage() {
                       )}
                     </div>
                     <span className="mt-3 inline-flex items-center text-sm font-black text-blue-700">
-                      View Society{" "}
+                      View society intelligence{" "}
                       <ArrowRight className="ml-1 h-4 w-4 transition group-hover:translate-x-1" />
                     </span>
                   </div>
@@ -447,10 +446,10 @@ export function HomePage() {
           <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                Popular Gurgaon searches
+                Start with trusted Gurgaon searches
               </p>
               <h2 className="mt-2 font-display text-2xl font-black leading-tight text-navy-950 md:text-3xl">
-                Start with the path buyers and tenants search most.
+                Search by sector, builder or intent — then compare societies before choosing a home.
               </h2>
             </div>
             <Link
@@ -541,21 +540,20 @@ export function HomePage() {
                   Live Inventory
                 </p>
                 <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
-                  Latest live verified homes
+                  Verified homes in trusted societies
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500 md:text-[15px] md:leading-6">
                   <span className="md:hidden">
-                    Fresh live homes in verified Gurgaon societies.
+                    Fresh homes inside verified Gurgaon societies.
                   </span>
                   <span className="hidden md:inline">
-                    Fresh rental and resale homes from Gurgaon societies,
-                    verified before they reach serious tenants and buyers.
+                    Fresh rental and resale homes from Gurgaon societies, reviewed for society context, pricing clarity and serious buyer/tenant enquiries.
                   </span>
                 </p>
               </div>
               <Link to="/search?tab=rent">
                 <Button className="h-10 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
-                  View all homes <ArrowRight className="ml-2 h-4 w-4" />
+                  View verified homes <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>
@@ -604,7 +602,7 @@ export function HomePage() {
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-2 text-center text-[11px] font-black">
                       <span className="rounded-full bg-blue-50 px-2.5 py-1.5 text-blue-700">
-                        Request Callback
+                        Request expert callback
                       </span>
                       <span className="rounded-full bg-emerald-50 px-2.5 py-1.5 text-emerald-700">
                         Shortlist
@@ -657,17 +655,17 @@ export function HomePage() {
                   AI Advisor
                 </span>
                 <h2 className="mt-3 font-display text-2xl font-black leading-tight text-navy-950 md:text-3xl">
-                  Need help choosing between societies?
+                  Not sure which society fits you?
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-navy-500">
-                  Use AI when you want a quick shortlist by budget, commute, family fit or preferred builder.
+                  Use SocietyFlats AI to shortlist societies by budget, commute, family needs, lifestyle fit and investment potential.
                 </p>
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Link to="/ai-advisor">
                   <Button className="h-11 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
-                    Continue AI shortlist
+                    Ask SocietyFlats AI
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -676,7 +674,7 @@ export function HomePage() {
                     variant="outline"
                     className="h-11 rounded-full border-blue-100 bg-white px-5 text-sm font-black text-blue-700 hover:bg-blue-50"
                   >
-                    Browse societies
+                    Browse verified societies
                   </Button>
                 </Link>
               </div>
@@ -700,13 +698,13 @@ export function HomePage() {
       <section className="bg-blue-50/40 px-4 py-8 md:hidden">
         <div className="container mx-auto rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm">
           <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">
-            Maps and lifestyle
+            Location intelligence
           </p>
           <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950">
-            See society location strength.
+            Check commute before you visit.
           </h2>
           <p className="mt-1.5 text-sm leading-6 text-navy-500">
-            Check metro, schools, hospitals and office access before visiting.
+            Compare metro access, schools, hospitals, office hubs and daily convenience before booking a visit.
           </p>
           <Link to="/maps" className="mt-4 inline-flex">
             <Button className="h-10 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
@@ -723,11 +721,10 @@ export function HomePage() {
               Maps and lifestyle
             </p>
             <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
-              See societies by location strength.
+              See societies by commute strength.
             </h2>
             <p className="mt-1.5 text-xs leading-5 text-navy-500">
-              Map intelligence turns nearby metro, schools, hospitals and office
-              hubs into a shortlist you can actually act on.
+              Map intelligence turns metro access, schools, hospitals and office hubs into a practical shortlist before you visit.
             </p>
             <div className="mt-5 space-y-2">
               {(mapSocieties.length
@@ -839,16 +836,16 @@ export function HomePage() {
                 Market insights
               </p>
               <h2 className="mt-2 font-display text-2xl font-black leading-tight text-navy-950">
-                Pricing, demand and society signals.
+                Pricing, demand and investment signals.
               </h2>
               <p className="mt-2 text-sm leading-6 text-navy-500">
-                A quick market view before users shortlist societies or request callbacks.
+                A quick market view to compare rent trends, demand signals and society-level investment strength.
               </p>
               <Link
                 to="/insights"
                 className="mt-3 inline-flex items-center text-sm font-black text-blue-700 hover:text-blue-800"
               >
-                Open full insights
+                Open market insights
                 <ArrowRight className="ml-1.5 h-4 w-4" />
               </Link>
             </div>
@@ -883,10 +880,10 @@ export function HomePage() {
         <div className="container mx-auto">
           <div className="mb-6 max-w-3xl">
             <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">
-              Reviews and confidence
+              Trust and verified enquiries
             </p>
             <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
-              Trust signals stay inside the journey.
+              Society-first decisions need proof, not guesswork.
             </h2>
           </div>
           <div className="grid gap-4 lg:grid-cols-3">
@@ -927,29 +924,26 @@ export function HomePage() {
         <div className="container mx-auto grid gap-5 md:gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div>
             <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-              For Property Owners
+              For owners
             </p>
             <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-3xl">
-              <span className="md:hidden">List your Gurgaon flat.</span>
+              <span className="md:hidden">List your flat with verified buyers.</span>
               <span className="hidden md:inline">
-                Own a flat in Gurgaon? List it with SocietyFlats.
+                Own a Gurgaon flat? Reach verified society-first buyers.
               </span>
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500 md:text-[15px] md:leading-6">
               <span className="md:hidden">
-                Get verified tenant and buyer enquiries from society-focused
-                users.
+                Get verified tenant and buyer enquiries from users already comparing societies.
               </span>
               <span className="hidden md:inline">
-                Reach serious tenants and buyers looking specifically inside
-                verified Gurgaon societies. Add your property once and receive
-                qualified enquiries through a cleaner, society-first flow.
+                Reach serious tenants and buyers looking specifically inside verified Gurgaon societies. Add your property once and receive qualified enquiries with clearer requirement, budget and society context.
               </span>
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link to="/sell">
                 <Button className="h-10 w-full rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800 md:w-auto">
-                  List Property
+                  List your flat
                 </Button>
               </Link>
               <Button
@@ -968,7 +962,7 @@ export function HomePage() {
                 variant="outline"
                 className="h-10 w-full rounded-full border-blue-100 bg-white px-5 text-sm font-black text-blue-700 hover:bg-blue-50 md:w-auto"
               >
-                Talk to Us
+                Talk to an expert
               </Button>
             </div>
           </div>

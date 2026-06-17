@@ -1,3 +1,4 @@
+// C70C hero copy: society-first search, verified homes and AI guidance.
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -32,7 +33,7 @@ const tabs: Array<{ key: Intent; label: string; button: string }> = [
   { key: "society", label: "Society", button: "Search" },
   { key: "rent", label: "Rent", button: "Rentals" },
   { key: "buy", label: "Buy", button: "Resale" },
-  { key: "general", label: "AI match", button: "Ask AI" },
+  { key: "general", label: "Explore societies", button: "Ask SocietyFlats AI" },
 ];
 
 const quickSearches = [
@@ -131,7 +132,7 @@ export default function SocietyFlatsHero() {
       setAiReply(
         payload?.reply ||
           (matches.length
-            ? "These are the closest live SocietyFlats matches. Open a result or continue to search."
+            ? "These are the closest live SocietyFlats matches. Open a result to compare society fit, location strength and available homes."
             : "No exact live match yet. Try a society name, sector, builder, budget or commute requirement."),
       );
     } catch (error) {
@@ -366,7 +367,7 @@ export default function SocietyFlatsHero() {
 
             <div className="mt-2 flex items-center justify-center gap-2 text-xs font-bold text-navy-400">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              No forced AI page jump.
+              Society-first search.
             </div>
           </div>
         </div>
