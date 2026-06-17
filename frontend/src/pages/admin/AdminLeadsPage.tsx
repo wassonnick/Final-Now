@@ -49,6 +49,11 @@ const pipelineViews = [
   { label: "Missing Phone", view: "missing_phone" },
   { label: "Missing Requirement", view: "missing_requirement" },
   { label: "High Intent", view: "high_intent" },
+  { label: "Fresh", view: "fresh" },
+  { label: "Aging", view: "aging" },
+  { label: "Stale", view: "stale" },
+  { label: "Hot SLA", view: "hot_sla" },
+  { label: "Untouched", view: "untouched" },
   { label: "AI", view: "ai" },
   { label: "Search", view: "search" },
   { label: "Property", view: "property" },
@@ -668,6 +673,83 @@ function followUpHelperText(lead: AdminLead) {
   return "Set a follow-up from lead detail";
 }
 
+function leadAgeDays(lead: AdminLead) {
+  const date = new Date(lead.createdAt || "");
+  if (Number.isNaN(date.getTime())) return 0;
+
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+  return Math.max(0, Math.floor((today - start) / 86400000));
+}
+
+function isOpenSlaLead(lead: AdminLead) {
+  return !["Booked", "Lost"].includes(lead.status);
+}
+
+function isFreshLead(lead: AdminLead) {
+  return isOpenSlaLead(lead) && leadAgeDays(lead) === 0;
+}
+
+function isAgingLead(lead: AdminLead) {
+  const age = leadAgeDays(lead);
+  return isOpenSlaLead(lead) && age >= 1 && age <= 2;
+}
+
+function isStaleLead(lead: AdminLead) {
+  return isOpenSlaLead(lead) && leadAgeDays(lead) >= 3;
+}
+
+function isHotSlaLead(lead: AdminLead) {
+  return isOpenSlaLead(lead) && lead.priority === "Hot" && lead.status === "New";
+}
+
+function isUntouchedLead(lead: AdminLead) {
+  return isOpenSlaLead(lead) && lead.status === "New" && followUpState(lead) === "not_set";
+}
+
+function leadAgeLabel(lead: AdminLead) {
+  const age = leadAgeDays(lead);
+
+  if (age === 0) return "New today";
+  if (age <= 2) return `${age} day${age === 1 ? "" : "s"} old`;
+  if (age < 7) return `${age} days old`;
+
+  return "Stale 7d+";
+}
+
+function leadAgeBadgeClass(lead: AdminLead) {
+  if (!isOpenSlaLead(lead)) return "border-slate-200 bg-slate-50 text-slate-500";
+  if (isFreshLead(lead)) return "border-emerald-100 bg-emerald-50 text-emerald-700";
+  if (isAgingLead(lead)) return "border-amber-100 bg-amber-50 text-amber-700";
+  if (isStaleLead(lead)) return "border-rose-100 bg-rose-50 text-rose-700";
+
+  return "border-slate-200 bg-slate-50 text-slate-600";
+}
+
+function leadSlaBadges(lead: AdminLead) {
+  const badges: string[] = [leadAgeLabel(lead)];
+
+  if (isHotSlaLead(lead)) badges.push("Hot not contacted");
+  if (followUpState(lead) === "not_set" && isOpenSlaLead(lead)) badges.push("No follow-up");
+  if (isStaleLead(lead)) badges.push("Needs reactivation");
+  if (followUpState(lead) === "overdue") badges.push("SLA overdue");
+
+  return badges;
+}
+
+function leadSlaSearchText(lead: AdminLead) {
+  return [
+    ...leadSlaBadges(lead),
+    isFreshLead(lead) ? "fresh new today lead age sla" : "",
+    isAgingLead(lead) ? "aging 1 day 2 days old lead age sla" : "",
+    isStaleLead(lead) ? "stale 3 days old reactivation aged lead age sla" : "",
+    isHotSlaLead(lead) ? "hot sla hot not contacted priority new" : "",
+    isUntouchedLead(lead) ? "untouched new no follow up no activity" : "",
+  ].filter(Boolean).join(" ");
+}
+
 function dashboardLeadViewMatches(lead: AdminLead, view: string, allLeads: AdminLead[] = []) {
   if (!view || view === "all") return true;
 
@@ -711,6 +793,26 @@ function dashboardLeadViewMatches(lead: AdminLead, view: string, allLeads: Admin
 
   if (view === "high_intent") {
     return isHighIntentLead(lead);
+  }
+
+  if (view === "fresh") {
+    return isFreshLead(lead);
+  }
+
+  if (view === "aging") {
+    return isAgingLead(lead);
+  }
+
+  if (view === "stale") {
+    return isStaleLead(lead);
+  }
+
+  if (view === "hot_sla") {
+    return isHotSlaLead(lead);
+  }
+
+  if (view === "untouched") {
+    return isUntouchedLead(lead);
   }
 
   if (view === "ai") {
@@ -772,6 +874,11 @@ function dashboardLeadViewLabel(view: string) {
   if (view === "missing_phone") return "Leads missing phone";
   if (view === "missing_requirement") return "Leads missing requirement";
   if (view === "high_intent") return "High-intent leads";
+  if (view === "fresh") return "Fresh leads";
+  if (view === "aging") return "Aging leads";
+  if (view === "stale") return "Stale leads";
+  if (view === "hot_sla") return "Hot SLA leads";
+  if (view === "untouched") return "Untouched leads";
   if (view === "ai") return "AI advisor leads";
   if (view === "search") return "Search journey leads";
   if (view === "property") return "Property page leads";
@@ -799,6 +906,11 @@ function pipelineEmptyMessage(view: string) {
   if (view === "missing_phone") return "No leads missing phone.";
   if (view === "missing_requirement") return "No leads missing requirement.";
   if (view === "high_intent") return "No high-intent leads found.";
+  if (view === "fresh") return "No fresh leads right now.";
+  if (view === "aging") return "No 1–2 day aging leads right now.";
+  if (view === "stale") return "No stale leads found.";
+  if (view === "hot_sla") return "No hot SLA leads pending.";
+  if (view === "untouched") return "No untouched leads found.";
   if (view === "ai") return "No AI advisor leads found.";
   if (view === "search") return "No search journey leads found.";
   if (view === "property") return "No property page leads found.";
@@ -979,6 +1091,7 @@ export function AdminLeadsPage() {
             followUpUrgencyLabel(lead),
             workflowNextAction(lead),
             leadQualitySearchText(lead, leads),
+            leadSlaSearchText(lead),
             attributionSearchText(lead),
             lead.source,
             lead.source_page,
@@ -1025,6 +1138,11 @@ export function AdminLeadsPage() {
   const missingPhoneLeads = leads.filter(isMissingPhoneLead).length;
   const missingRequirementLeads = leads.filter(isMissingRequirementLead).length;
   const highIntentLeads = leads.filter(isHighIntentLead).length;
+  const freshLeads = leads.filter(isFreshLead).length;
+  const agingLeads = leads.filter(isAgingLead).length;
+  const staleLeads = leads.filter(isStaleLead).length;
+  const hotSlaLeads = leads.filter(isHotSlaLead).length;
+  const untouchedLeads = leads.filter(isUntouchedLead).length;
 
   const handleStatusChange = async (lead: AdminLead, nextStatus: LeadStatus) => {
     const previousLeads = leads;
@@ -1137,6 +1255,11 @@ export function AdminLeadsPage() {
             ["Missing Phone", missingPhoneLeads, "Incomplete"],
             ["Missing Req.", missingRequirementLeads, "Incomplete"],
             ["High Intent", highIntentLeads, "Priority quality"],
+            ["Fresh", freshLeads, "New today"],
+            ["Aging", agingLeads, "1–2 days"],
+            ["Stale", staleLeads, "3+ days"],
+            ["Hot SLA", hotSlaLeads, "Hot + New"],
+            ["Untouched", untouchedLeads, "No follow-up"],
             ["Hot Leads", hotLeads, "Priority follow-ups"],
             ["Booked", bookedLeads, "Closed wins"],
           ].map(([label, value, helper]) => (
@@ -1200,6 +1323,12 @@ export function AdminLeadsPage() {
           {dashboardView === "duplicates" ? (
             <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
               <strong>C60 duplicate resolution:</strong> Review same-phone enquiries, keep the best/primary lead active, and mark repeated entries as duplicate. The duplicate action sets Lost + Cold and writes a CRM timeline note.
+            </div>
+          ) : null}
+
+          {["fresh", "aging", "stale", "hot_sla", "untouched"].includes(dashboardView) ? (
+            <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800">
+              <strong>C62 SLA control:</strong> Review lead age, hot-not-contacted leads, stale records and untouched enquiries. Use Contacted or Tomorrow to reactivate the pipeline.
             </div>
           ) : null}
 
@@ -1332,6 +1461,13 @@ export function AdminLeadsPage() {
                         <div className="mt-1 flex flex-wrap justify-end gap-1 xl:justify-start">
                           {leadQualityBadges(lead, leads).map((badge) => (
                             <span key={badge} className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${leadQualityBadgeClass(badge)}`}>
+                              {badge}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="mt-1 flex flex-wrap justify-end gap-1 xl:justify-start">
+                          {leadSlaBadges(lead).map((badge) => (
+                            <span key={badge} className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${leadAgeBadgeClass(lead)}`}>
                               {badge}
                             </span>
                           ))}

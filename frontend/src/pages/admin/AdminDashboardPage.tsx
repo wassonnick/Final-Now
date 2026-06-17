@@ -160,6 +160,38 @@ function sortCommandLeads(first: AdminLead, second: AdminLead) {
   return new Date(second.createdAt || 0).getTime() - new Date(first.createdAt || 0).getTime();
 }
 
+function leadAgeDays(lead: AdminLead) {
+  const date = new Date(lead.createdAt || "");
+  if (Number.isNaN(date.getTime())) return 0;
+
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+  return Math.max(0, Math.floor((today - start) / 86400000));
+}
+
+function isFreshLead(lead: AdminLead) {
+  return isOpenLead(lead) && leadAgeDays(lead) === 0;
+}
+
+function isAgingLead(lead: AdminLead) {
+  const age = leadAgeDays(lead);
+  return isOpenLead(lead) && age >= 1 && age <= 2;
+}
+
+function isStaleLead(lead: AdminLead) {
+  return isOpenLead(lead) && leadAgeDays(lead) >= 3;
+}
+
+function isHotSlaLead(lead: AdminLead) {
+  return isOpenLead(lead) && lead.priority === "Hot" && lead.status === "New";
+}
+
+function isUntouchedLead(lead: AdminLead) {
+  return isOpenLead(lead) && lead.status === "New" && followUpState(lead) === "not_set";
+}
+
 function sourceBucket(lead: AdminLead) {
   const source = String(lead.source || "").toLowerCase();
   const page = String(lead.source_page || "").toLowerCase();
@@ -284,6 +316,14 @@ function actionCardClass(featured = false) {
   return featured
     ? "group rounded-[22px] border border-blue-100 bg-blue-600 p-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg sm:rounded-[28px] sm:p-5"
     : "group rounded-[22px] border border-slate-200 bg-white p-4 text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg sm:rounded-[28px] sm:p-5";
+}
+
+function slaCardClass(tone: "emerald" | "amber" | "rose" | "orange" | "slate") {
+  if (tone === "emerald") return "border-emerald-100 bg-emerald-50 text-emerald-900";
+  if (tone === "amber") return "border-amber-100 bg-amber-50 text-amber-900";
+  if (tone === "rose") return "border-rose-100 bg-rose-50 text-rose-900";
+  if (tone === "orange") return "border-orange-100 bg-orange-50 text-orange-900";
+  return "border-slate-200 bg-slate-50 text-slate-900";
 }
 
 function statCardClass(tone: "blue" | "emerald" | "rose" | "slate" = "blue") {
@@ -549,6 +589,46 @@ export function AdminDashboardPage() {
     });
   }, [leads]);
 
+  const slaSummary = useMemo(() => {
+    return [
+      {
+        label: "Fresh",
+        value: leads.filter(isFreshLead).length,
+        helper: "New today",
+        href: "/admin/leads?view=fresh",
+        tone: "emerald" as const,
+      },
+      {
+        label: "Aging",
+        value: leads.filter(isAgingLead).length,
+        helper: "1–2 days old",
+        href: "/admin/leads?view=aging",
+        tone: "amber" as const,
+      },
+      {
+        label: "Stale",
+        value: leads.filter(isStaleLead).length,
+        helper: "3+ days open",
+        href: "/admin/leads?view=stale",
+        tone: "rose" as const,
+      },
+      {
+        label: "Hot SLA",
+        value: leads.filter(isHotSlaLead).length,
+        helper: "Hot but new",
+        href: "/admin/leads?view=hot_sla",
+        tone: "orange" as const,
+      },
+      {
+        label: "Untouched",
+        value: leads.filter(isUntouchedLead).length,
+        helper: "No follow-up",
+        href: "/admin/leads?view=untouched",
+        tone: "slate" as const,
+      },
+    ];
+  }, [leads]);
+
   const actionQueue = useMemo(() => {
     const urgentLeads = leads
       .filter((lead) => followUpState(lead) === "overdue" || followUpState(lead) === "today" || followUpState(lead) === "not_set" || lead.priority === "Hot")
@@ -808,6 +888,39 @@ export function AdminDashboardPage() {
                 ) : (
                   <p className="mt-3 text-[11px] opacity-60">No leads yet.</p>
                 )}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                C62 SLA / aging control
+              </p>
+              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
+                Lead aging and response risk
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                Track fresh enquiries, aging leads, stale records and hot leads that still need first contact.
+              </p>
+            </div>
+            <Button asChild variant="outline" className="rounded-full border-slate-200">
+              <Link to="/admin/leads?view=stale">Review stale leads</Link>
+            </Button>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {slaSummary.map((item) => (
+              <Link
+                key={item.label}
+                to={item.href}
+                className={`rounded-[22px] border p-4 transition hover:-translate-y-0.5 hover:shadow-md ${slaCardClass(item.tone)}`}
+              >
+                <p className="text-xs font-black uppercase tracking-[0.14em] opacity-70">{item.label}</p>
+                <p className="mt-3 text-3xl font-black">{dashboardValue(item.value, leadLoading)}</p>
+                <p className="mt-1 text-xs font-semibold opacity-75">{item.helper}</p>
               </Link>
             ))}
           </div>
