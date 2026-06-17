@@ -1,3 +1,4 @@
+// C74C real hero AI card layout: full right-side AI card replaced with search-first matchmaker layout.
 // C74B hero AI card polish: right-side AI box is more inviting, search-first and visually highlighted.
 // C74 hero tabs fix: Society default button is Explore Societies; tabs are Society, Rent, Buy, Ask AI.
 // C74 homepage UX polish: compact hero, clearer first fold search, lighter desktop AI card.
@@ -234,144 +235,179 @@ export default function SocietyFlatsHero() {
           </div>
         </div>
 
-        <div className="hidden lg:block lg:origin-center lg:scale-[0.96]">
-          <div className="relative rounded-[1.55rem] border border-blue-100 bg-white/95 p-3.5 shadow-[0_24px_80px_rgba(37,99,235,0.13)] backdrop-blur">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-blue-700 text-white shadow-lg shadow-blue-100">
-                  <Sparkles className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-base font-black text-navy-950">
-                    Ask SocietyFlats AI
-                  </p>
-                  <p className="text-xs font-bold text-emerald-700">
-                    Works inside this page
-                  </p>
-                </div>
-              </div>
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-black text-blue-700">
-                Live
-              </span>
-            </div>
+        <div className="hidden lg:block lg:origin-center lg:scale-[0.98]">
+          <div className="relative overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-[0_28px_90px_rgba(37,99,235,0.18)]">
+            <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-blue-200/50 blur-3xl" />
+            <div className="absolute -bottom-20 left-8 h-44 w-44 rounded-full bg-sky-200/45 blur-3xl" />
 
-            <div className="rounded-[1rem] border border-blue-100 bg-blue-50 p-2.5">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-500">
-                Your question
-              </p>
-              <p className="mt-1 text-base font-black leading-6 text-navy-950">
-                {aiQuestion}
-              </p>
-            </div>
-
-            <div className="mt-3 rounded-[1rem] bg-white p-2.5 text-xs font-semibold leading-5 text-navy-600">
-              {isAiLoading ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-blue-700" />
-                  Finding live society matches...
-                </span>
-              ) : (
-                aiReply
-              )}
-            </div>
-
-            <div className="mt-3 grid gap-2">
-              {aiMatches.length ? (
-                aiMatches.map((match, index) => {
-                  const name = match.society_name || match.name || "Society match";
-                  const href = match.slug
-                    ? `/society/${match.slug}`
-                    : buildSearchUrl("general", name);
-
-                  return (
-                    <Link
-                      key={`${name}-${index}`}
-                      to={href}
-                      className="flex items-center justify-between rounded-xl border border-blue-100 bg-white px-3 py-2 transition hover:border-blue-200 hover:bg-blue-50"
-                    >
-                      <span className="flex min-w-0 items-center gap-3">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-blue-700 text-xs font-black text-white">
-                          {index + 1}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-black text-navy-950">
-                            {name}
-                          </span>
-                          <span className="block truncate text-xs font-bold text-blue-400">
-                            {match.sector || match.locality || "Gurgaon"}
-                          </span>
-                        </span>
-                      </span>
-                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700">
-                        {match.score ? `${match.score}%` : "Match"}
-                      </span>
-                    </Link>
-                  );
-                })
-              ) : (
-                <div className="rounded-2xl border border-dashed border-blue-100 bg-white p-3 text-sm font-semibold text-navy-500">
-                  No exact live match yet. Try another requirement.
-                </div>
-              )}
-            </div>
-
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {starterPrompts.map((prompt) => (
-                <button
-                  key={prompt}
-                  type="button"
-                  onClick={() => submitHeroAi(prompt)}
-                  className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[10px] font-black text-blue-700 transition hover:bg-blue-100"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                submitHeroAi();
-              }}
-              className="mt-2 flex items-center gap-2 rounded-full border border-blue-100 bg-white p-2 shadow-sm"
-            >
-              <input
-                value={aiInput}
-                onChange={(event) => setAiInput(event.target.value)}
-                className="min-w-0 flex-1 bg-transparent px-3 text-sm font-semibold text-navy-700 outline-none placeholder:text-blue-300"
-                placeholder="Ask budget, sector, office, school..."
-              />
-              <button
-                type="submit"
-                disabled={isAiLoading || !aiInput.trim()}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-700 text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
-                aria-label="Ask SocietyFlats AI"
-              >
-                {isAiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </button>
-            </form>
-
-            <div className="mt-2 grid grid-cols-3 gap-1.5">
-              {[
-                { icon: ShieldCheck, label: "Verified" },
-                { icon: MapPin, label: "Commute" },
-                { icon: Users, label: "Family fit" },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.label} className="rounded-xl bg-blue-50/60 p-2 text-center">
-                    <Icon className="mx-auto h-4 w-4 text-blue-700" />
-                    <p className="mt-1 text-[10px] font-black text-navy-500">
-                      {item.label}
+            <div className="relative border-b border-blue-100 bg-gradient-to-br from-blue-700 via-blue-800 to-navy-950 p-5 text-white">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white shadow-lg ring-1 ring-white/20">
+                    <Sparkles className="h-6 w-6" />
+                  </span>
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-100">
+                      AI Society Matchmaker
+                    </p>
+                    <h2 className="mt-1 text-2xl font-black leading-tight">
+                      Ask SocietyFlats AI
+                    </h2>
+                    <p className="mt-1 max-w-[20rem] text-xs font-semibold leading-5 text-blue-100">
+                      Tell us budget, office, school or lifestyle. Get society matches instantly.
                     </p>
                   </div>
-                );
-              })}
+                </div>
+
+                <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-black text-white ring-1 ring-white/20">
+                  Live
+                </span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                {[
+                  { icon: ShieldCheck, label: "Verified" },
+                  { icon: MapPin, label: "Commute" },
+                  { icon: Users, label: "Family fit" },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className="rounded-2xl bg-white/12 p-2 text-center ring-1 ring-white/15">
+                      <Icon className="mx-auto h-4 w-4 text-white" />
+                      <p className="mt-1 text-[10px] font-black text-blue-50">
+                        {item.label}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="mt-2 flex items-center justify-center gap-2 text-xs font-bold text-navy-400">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              No forced AI page jump.
+            <div className="relative bg-gradient-to-b from-blue-50/80 via-white to-white p-4">
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submitHeroAi();
+                }}
+                className="rounded-[1.35rem] border border-blue-200 bg-white p-2.5 shadow-[0_16px_45px_rgba(37,99,235,0.16)] ring-4 ring-blue-100/70"
+              >
+                <p className="px-2 pb-2 text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">
+                  Ask in plain English
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    value={aiInput}
+                    onChange={(event) => setAiInput(event.target.value)}
+                    className="h-12 min-w-0 flex-1 rounded-2xl bg-blue-50/70 px-4 text-sm font-black text-navy-900 outline-none placeholder:text-blue-400"
+                    placeholder="Try: 3BHK near Cyber City under ₹1L"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isAiLoading || !aiInput.trim()}
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-700 text-white shadow-lg shadow-blue-200 transition hover:scale-105 hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    aria-label="Ask SocietyFlats AI"
+                  >
+                    {isAiLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                  </button>
+                </div>
+              </form>
+
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {starterPrompts.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => submitHeroAi(prompt)}
+                    className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-[10px] font-black text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-md"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-3 rounded-[1.25rem] border border-blue-100 bg-white p-3 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
+                    AI shortlist preview
+                  </p>
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">
+                    {aiMatches.length ? `${aiMatches.length} matches` : "Ready"}
+                  </span>
+                </div>
+
+                <p className="mt-2 line-clamp-2 text-sm font-black leading-5 text-navy-950">
+                  {aiQuestion}
+                </p>
+
+                <div className="mt-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 text-xs font-bold leading-5 text-navy-600">
+                  {isAiLoading ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-blue-700" />
+                      Finding live society matches...
+                    </span>
+                  ) : (
+                    aiReply
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-3 grid gap-2">
+                {aiMatches.length ? (
+                  aiMatches.map((match, index) => {
+                    const name = match.society_name || match.name || "Society match";
+                    const href = match.slug
+                      ? `/society/${match.slug}`
+                      : buildSearchUrl("general", name);
+
+                    return (
+                      <Link
+                        key={`${name}-${index}`}
+                        to={href}
+                        className="group flex items-center justify-between rounded-2xl border border-blue-100 bg-white px-3 py-2.5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-md"
+                      >
+                        <span className="flex min-w-0 items-center gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-blue-700 text-xs font-black text-white">
+                            {index + 1}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-black text-navy-950 group-hover:text-blue-700">
+                              {name}
+                            </span>
+                            <span className="block truncate text-xs font-bold text-blue-400">
+                              {match.sector || match.locality || "Gurgaon"}
+                            </span>
+                          </span>
+                        </span>
+                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700">
+                          {match.score ? `${match.score}%` : "Match"}
+                        </span>
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-blue-100 bg-white p-3 text-sm font-semibold text-navy-500">
+                    No exact live match yet. Try another requirement.
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <Link to={buildSearchUrl("general", aiQuestion)}>
+                  <Button variant="outline" className="h-10 w-full rounded-full border-blue-100 bg-white text-xs font-black text-blue-700 hover:bg-blue-50">
+                    View matches
+                  </Button>
+                </Link>
+                <Link to={`/ai-advisor?q=${encodeURIComponent(aiQuestion)}`}>
+                  <Button className="h-10 w-full rounded-full bg-blue-700 text-xs font-black text-white hover:bg-blue-800">
+                    Expert AI help
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-navy-400">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                No forced AI page jump. Search normally anytime.
+              </div>
             </div>
           </div>
         </div>
