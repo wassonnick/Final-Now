@@ -45,6 +45,10 @@ const pipelineViews = [
   { label: "Overdue", view: "overdue" },
   { label: "Upcoming", view: "upcoming" },
   { label: "No Follow-up", view: "no_followup" },
+  { label: "AI", view: "ai" },
+  { label: "Search", view: "search" },
+  { label: "Property", view: "property" },
+  { label: "Society", view: "society" },
   { label: "Hot", view: "hot" },
   { label: "Booked", view: "booked" },
   { label: "Owner Leads", view: "owner" },
@@ -233,6 +237,8 @@ function sourceLabel(source?: string) {
     return "Broker partner";
   }
 
+  if (value.includes("ai")) return "AI advisor";
+
   if (value.includes("property_page_callback") || value.includes("property_callback")) {
     return "Property callback";
   }
@@ -271,6 +277,59 @@ function attributionBadge(lead: AdminLead) {
   if (sourcePage.includes("/property") || String(lead.source || "").toLowerCase().includes("property")) return "Property";
   if (sourcePage.includes("/society") || String(lead.source || "").toLowerCase().includes("society")) return "Society";
   return "";
+}
+
+function sourceBucket(lead: AdminLead) {
+  const source = String(lead.source || "").toLowerCase();
+  const page = String(lead.source_page || "").toLowerCase();
+  const aiQuery = String(lead.ai_query || "").trim();
+  const searchQuery = String(lead.search_query || "").trim();
+
+  if (aiQuery || source.includes("ai")) return "ai";
+  if (searchQuery || page.includes("/search") || source.includes("search")) return "search";
+  if (isOwnerLeadSource(source) || page.includes("/sell")) return "owner";
+  if (isBrokerLeadSource(source)) return "broker";
+  if (page.includes("/property") || source.includes("property")) return "property";
+  if (page.includes("/society") || source.includes("society")) return "society";
+
+  return "website";
+}
+
+function attributionSearchText(lead: AdminLead) {
+  return [
+    lead.source,
+    lead.source_page,
+    lead.page_url,
+    lead.referrer,
+    lead.cta_label,
+    lead.utm_source,
+    lead.utm_medium,
+    lead.utm_campaign,
+    lead.utm_term,
+    lead.utm_content,
+    lead.lead_intent,
+    lead.search_query,
+    lead.ai_query,
+    lead.entity_type,
+    lead.entity_slug,
+    sourceLabel(lead.source),
+    attributionBadge(lead),
+    sourceBucket(lead),
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function attributionTitle(lead: AdminLead) {
+  return [
+    `Source: ${lead.source || "Website"}`,
+    lead.source_page ? `Page: ${lead.source_page}` : "",
+    lead.cta_label ? `CTA: ${lead.cta_label}` : "",
+    lead.lead_intent ? `Intent: ${lead.lead_intent}` : "",
+    lead.search_query ? `Search: ${lead.search_query}` : "",
+    lead.ai_query ? `AI: ${lead.ai_query}` : "",
+    lead.utm_campaign ? `Campaign: ${lead.utm_campaign}` : "",
+  ].filter(Boolean).join(" · ");
 }
 
 
@@ -353,6 +412,8 @@ function sourceClass(source?: string) {
     return "bg-orange-50 text-orange-700 border-orange-100";
   }
 
+  if (value.includes("ai")) return "bg-indigo-50 text-indigo-700 border-indigo-100";
+  if (value.includes("search")) return "bg-sky-50 text-sky-700 border-sky-100";
   if (value.includes("property")) return "bg-violet-50 text-violet-700 border-violet-100";
   if (value.includes("society")) return "bg-blue-50 text-blue-700 border-blue-100";
   if (value.includes("floating") || value.includes("chat") || value.includes("callback")) {
@@ -545,6 +606,22 @@ function dashboardLeadViewMatches(lead: AdminLead, view: string) {
     return followUpState(lead) === "not_set";
   }
 
+  if (view === "ai") {
+    return sourceBucket(lead) === "ai";
+  }
+
+  if (view === "search") {
+    return sourceBucket(lead) === "search";
+  }
+
+  if (view === "property") {
+    return sourceBucket(lead) === "property";
+  }
+
+  if (view === "society") {
+    return sourceBucket(lead) === "society";
+  }
+
   if (view === "hot") {
     return lead.priority === "Hot";
   }
@@ -584,6 +661,10 @@ function dashboardLeadViewLabel(view: string) {
   if (view === "overdue") return "Overdue follow-ups";
   if (view === "upcoming") return "Upcoming follow-ups";
   if (view === "no_followup") return "Leads without follow-up";
+  if (view === "ai") return "AI advisor leads";
+  if (view === "search") return "Search journey leads";
+  if (view === "property") return "Property page leads";
+  if (view === "society") return "Society page leads";
   if (view === "hot") return "Hot leads";
   if (view === "booked") return "Booked leads";
   if (view === "owner") return "Owner listing leads";
@@ -603,6 +684,10 @@ function pipelineEmptyMessage(view: string) {
   if (view === "overdue") return "No overdue follow-ups. You’re clear for now.";
   if (view === "upcoming") return "No upcoming follow-ups scheduled.";
   if (view === "no_followup") return "Every visible lead already has a follow-up set.";
+  if (view === "ai") return "No AI advisor leads found.";
+  if (view === "search") return "No search journey leads found.";
+  if (view === "property") return "No property page leads found.";
+  if (view === "society") return "No society page leads found.";
   if (view === "hot") return "No hot leads right now.";
   if (view === "booked") return "No booked leads yet.";
   if (view === "owner") return "No owner listing leads yet.";
@@ -767,14 +852,22 @@ export function AdminLeadsPage() {
             followUpLabel(lead),
             followUpUrgencyLabel(lead),
             workflowNextAction(lead),
+            attributionSearchText(lead),
             lead.source,
-            (lead as any).source_page,
-            (lead as any).cta_label,
-            (lead as any).utm_campaign,
-            (lead as any).lead_intent,
-            (lead as any).search_query,
-            (lead as any).ai_query,
-            (lead as any).entity_slug,
+            lead.source_page,
+            lead.page_url,
+            lead.referrer,
+            lead.cta_label,
+            lead.utm_source,
+            lead.utm_medium,
+            lead.utm_campaign,
+            lead.utm_term,
+            lead.utm_content,
+            lead.lead_intent,
+            lead.search_query,
+            lead.ai_query,
+            lead.entity_type,
+            lead.entity_slug,
             lead.requirement,
             sourceLabel(lead.source),
           ]
@@ -974,7 +1067,7 @@ export function AdminLeadsPage() {
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search by name, phone, society, source, budget or requirement..."
+                placeholder="Search name, phone, source, CTA, campaign, AI/search query, intent or society..."
                 className="h-12 rounded-2xl border-slate-200 pl-11"
               />
             </div>
@@ -1040,7 +1133,7 @@ export function AdminLeadsPage() {
                       </div>
 
                       <div className="flex flex-col items-end gap-1 xl:items-start">
-                        <span className={`rounded-full border px-3 py-1 text-xs font-bold xl:mt-3 inline-flex ${sourceClass(lead.source)}`} title={`Lead attribution: ${[lead.source_page, lead.cta_label, lead.utm_campaign].filter(Boolean).join(' · ') || 'Not captured'}`}>
+                        <span className={`rounded-full border px-3 py-1 text-xs font-bold xl:mt-3 inline-flex ${sourceClass(lead.source)}`} title={attributionTitle(lead)}>
                           {sourceLabel(lead.source)}
                         </span>
                         <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
@@ -1064,6 +1157,11 @@ export function AdminLeadsPage() {
                     <p className={`mt-2 inline-flex rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.1em] xl:hidden ${workflowNextActionClass(lead)}`}>
                       Next: {workflowNextAction(lead)}
                     </p>
+                    {(lead.search_query || lead.ai_query || lead.cta_label || lead.utm_campaign) ? (
+                      <p className="mt-2 line-clamp-2 text-[11px] font-semibold text-slate-400">
+                        Source detail: {[lead.ai_query ? `AI: ${lead.ai_query}` : "", lead.search_query ? `Search: ${lead.search_query}` : "", lead.cta_label ? `CTA: ${lead.cta_label}` : "", lead.utm_campaign ? `Campaign: ${lead.utm_campaign}` : ""].filter(Boolean).join(" · ")}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="mt-3 grid grid-cols-3 gap-2 xl:contents">

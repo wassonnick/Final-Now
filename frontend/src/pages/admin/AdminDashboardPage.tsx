@@ -158,6 +158,33 @@ function sortCommandLeads(first: AdminLead, second: AdminLead) {
   return new Date(second.createdAt || 0).getTime() - new Date(first.createdAt || 0).getTime();
 }
 
+function sourceBucket(lead: AdminLead) {
+  const source = String(lead.source || "").toLowerCase();
+  const page = String(lead.source_page || "").toLowerCase();
+  const aiQuery = String(lead.ai_query || "").trim();
+  const searchQuery = String(lead.search_query || "").trim();
+
+  if (aiQuery || source.includes("ai")) return "ai";
+  if (searchQuery || page.includes("/search") || source.includes("search")) return "search";
+  if (isOwnerLeadSource(source) || page.includes("/sell")) return "owner";
+  if (isBrokerLeadSource(source)) return "broker";
+  if (page.includes("/property") || source.includes("property")) return "property";
+  if (page.includes("/society") || source.includes("society")) return "society";
+
+  return "website";
+}
+
+function sourceCardClass(bucket: string) {
+  if (bucket === "ai") return "border-indigo-100 bg-indigo-50 text-indigo-900";
+  if (bucket === "search") return "border-sky-100 bg-sky-50 text-sky-900";
+  if (bucket === "property") return "border-violet-100 bg-violet-50 text-violet-900";
+  if (bucket === "society") return "border-blue-100 bg-blue-50 text-blue-900";
+  if (bucket === "owner") return "border-emerald-100 bg-emerald-50 text-emerald-900";
+  if (bucket === "broker") return "border-orange-100 bg-orange-50 text-orange-900";
+
+  return "border-slate-100 bg-slate-50 text-slate-900";
+}
+
 function parseApiList(json: any) {
   if (Array.isArray(json)) return json;
   if (Array.isArray(json?.data)) return json.data;
@@ -398,6 +425,23 @@ export function AdminDashboardPage() {
       .slice(0, 5);
   }, [leads]);
 
+  const sourceSummary = useMemo(() => {
+    const buckets = [
+      { bucket: "ai", label: "AI", helper: "Advisor intent", href: "/admin/leads?view=ai" },
+      { bucket: "search", label: "Search", helper: "Search journeys", href: "/admin/leads?view=search" },
+      { bucket: "property", label: "Property", helper: "Property pages", href: "/admin/leads?view=property" },
+      { bucket: "society", label: "Society", helper: "Society pages", href: "/admin/leads?view=society" },
+      { bucket: "owner", label: "Owner", helper: "Inventory source", href: "/admin/leads?view=owner" },
+      { bucket: "broker", label: "Broker", helper: "Partner source", href: "/admin/leads?view=broker" },
+    ];
+
+    return buckets.map((item) => ({
+      ...item,
+      count: leads.filter((lead) => sourceBucket(lead) === item.bucket).length,
+      latest: leads.find((lead) => sourceBucket(lead) === item.bucket),
+    }));
+  }, [leads]);
+
   const actionQueue = useMemo(() => {
     const urgentLeads = leads
       .filter((lead) => followUpState(lead) === "overdue" || followUpState(lead) === "today" || followUpState(lead) === "not_set" || lead.priority === "Hot")
@@ -619,6 +663,46 @@ export function AdminDashboardPage() {
                 No open command leads right now.
               </div>
             )}
+          </div>
+        </section>
+
+        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                C58 attribution command
+              </p>
+              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
+                Lead source intelligence
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                Jump into leads by public journey: AI, search, property, society, owner or broker.
+              </p>
+            </div>
+            <Button asChild variant="outline" className="rounded-full border-slate-200">
+              <Link to="/admin/leads">All leads</Link>
+            </Button>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+            {sourceSummary.map((item) => (
+              <Link
+                key={item.bucket}
+                to={item.href}
+                className={`rounded-[22px] border p-4 transition hover:-translate-y-0.5 hover:shadow-md ${sourceCardClass(item.bucket)}`}
+              >
+                <p className="text-xs font-black uppercase tracking-[0.14em] opacity-70">{item.label}</p>
+                <p className="mt-3 text-3xl font-black">{dashboardValue(item.count, leadLoading)}</p>
+                <p className="mt-1 text-xs font-semibold opacity-75">{item.helper}</p>
+                {item.latest ? (
+                  <p className="mt-3 line-clamp-2 text-[11px] leading-5 opacity-70">
+                    Latest: {item.latest.name || "Unnamed"} · {item.latest.cta_label || item.latest.search_query || item.latest.ai_query || item.latest.requirement || item.latest.source || "Website"}
+                  </p>
+                ) : (
+                  <p className="mt-3 text-[11px] opacity-60">No leads yet.</p>
+                )}
+              </Link>
+            ))}
           </div>
         </section>
 

@@ -2116,7 +2116,7 @@ export function AdminLeadDetailPage() {
                   {[
                     ["Source page", (lead as any).source_page],
                     ["CTA", (lead as any).cta_label],
-                    ["Intent", (lead as any).lead_intent || lead.requirement],
+                    ["Business intent", (lead as any).lead_intent || lead.requirement],
                     ["Search query", (lead as any).search_query],
                     ["AI query", (lead as any).ai_query],
                     ["Entity", [(lead as any).entity_type, (lead as any).entity_slug].filter(Boolean).join(" · ")],
@@ -2136,7 +2136,7 @@ export function AdminLeadDetailPage() {
                 </div>
 
                 <div className="mt-3 rounded-xl bg-white/80 p-3 text-xs font-semibold leading-5 text-slate-600">
-                  Attribution summary: {[(lead as any).source_page || lead.source, (lead as any).cta_label, (lead as any).lead_intent, (lead as any).utm_campaign].filter(Boolean).join(" · ") || "Not captured"}
+                  Attribution summary: {[(lead as any).source_page || lead.source, (lead as any).cta_label, (lead as any).lead_intent, (lead as any).search_query, (lead as any).ai_query, (lead as any).utm_campaign].filter(Boolean).join(" · ") || "Not captured"}
                 </div>
               </div>
 
