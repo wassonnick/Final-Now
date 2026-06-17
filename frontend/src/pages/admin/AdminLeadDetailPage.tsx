@@ -153,7 +153,6 @@ function formatSubmittedDetails(text: string) {
 function timelineActivityType(text: string) {
   const value = text.toLowerCase();
 
-  if (value.includes("c65 command") || value.includes("c66 quick note")) return "Command";
   if (value.includes("whatsapp")) return "WhatsApp";
   if (value.includes("call") || value.includes("called")) return "Call";
   if (value.includes("visit")) return "Visit";
@@ -167,7 +166,6 @@ function timelineActivityType(text: string) {
 }
 
 function timelineActivityClass(type: string) {
-  if (type === "Command") return "border-blue-100 bg-blue-50 text-blue-700";
   if (type === "WhatsApp") return "border-emerald-100 bg-emerald-50 text-emerald-700";
   if (type === "Call") return "border-blue-100 bg-blue-50 text-blue-700";
   if (type === "Visit") return "border-violet-100 bg-violet-50 text-violet-700";
@@ -184,9 +182,6 @@ function cleanTimelineText(text: string) {
   return text
     .replace(/^Contact action:\s*/i, "")
     .replace(/^Admin note:\s*/i, "")
-    .replace(/^C65 command:\s*/i, "")
-    .replace(/^C66 quick note:\s*/i, "")
-    .replace(/^C67 follow-up reason:\s*/i, "")
     .trim();
 }
 
@@ -195,11 +190,11 @@ function groupedTimelineItems(lead?: AdminLead | null) {
 
   return {
     contact: items.filter((item) => ["Call", "WhatsApp", "No answer"].includes(timelineActivityType(item.text))),
-    followUp: items.filter((item) => ["Follow-up", "Command"].includes(timelineActivityType(item.text))),
+    followUp: items.filter((item) => timelineActivityType(item.text) === "Follow-up"),
     conversion: items.filter((item) => ["Visit", "Owner", "Broker", "Conversion"].includes(timelineActivityType(item.text))),
     notes: items.filter((item) => {
       const type = timelineActivityType(item.text);
-      return !["Call", "WhatsApp", "No answer", "Follow-up", "Command", "Visit", "Owner", "Broker", "Conversion"].includes(type);
+      return !["Call", "WhatsApp", "No answer", "Follow-up", "Visit", "Owner", "Broker", "Conversion"].includes(type);
     }),
   };
 }
@@ -773,35 +768,6 @@ function followUpPanelText(lead: AdminLead) {
   return "No follow-up is set. Add a reminder before leaving this lead.";
 }
 
-function lastContactedTimelineItem(lead?: AdminLead | null) {
-  return adminTimelineItems(lead).find((item) =>
-    ["Call", "WhatsApp", "No answer"].includes(timelineActivityType(item.text)),
-  );
-}
-
-function lastContactedLabel(lead?: AdminLead | null) {
-  const item = lastContactedTimelineItem(lead);
-  if (!item) return "No contact logged yet";
-  return `${timelineActivityType(item.text)} · ${item.meta || "Timeline note"}`;
-}
-
-function nextActionDueLabel(lead: AdminLead) {
-  if (!lead.followUpAt) return "Set follow-up before leaving";
-  return `${followUpLabel(lead)} · ${formatDate(lead.followUpAt)}`;
-}
-
-function followUpReasonChips(lead: AdminLead) {
-  if (isOwnerSource(lead.source)) {
-    return ["Photos pending", "Price confirmation", "Ownership verification", "Availability check"];
-  }
-
-  if (isBrokerSource(lead.source)) {
-    return ["Inventory pending", "Area confirmation", "Partner terms", "Commission discussion"];
-  }
-
-  return ["Call back", "Share options", "Visit timing", "Budget clarification"];
-}
-
 function detailSamePhoneLeadCount(lead: AdminLead, allLeads: AdminLead[]) {
   const key = cleanPhone(lead.phone).slice(-10);
   if (!key || key.length < 10) return 0;
@@ -1279,26 +1245,6 @@ export function AdminLeadDetailPage() {
     } catch (err) {
       console.error("Could not save C66 quick note:", err);
       setError("Could not save quick note. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const applyC67FollowUpReason = async (reason: string) => {
-    if (!lead) return;
-
-    setSaving(true);
-    setMessage("");
-    setError("");
-
-    try {
-      const updated = await addLeadNoteRemote(lead, `C67 follow-up reason: ${reason}`);
-      setLead(updated);
-      setLastCommandAt(new Date().toLocaleString("en-IN"));
-      setMessage(`Follow-up reason saved: ${reason}`);
-    } catch (err) {
-      console.error("Could not save C67 follow-up reason:", err);
-      setError("Could not save follow-up reason. Please try again.");
     } finally {
       setSaving(false);
     }
