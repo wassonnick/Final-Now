@@ -1,3 +1,4 @@
+// C74 homepage UX polish: compact hero, clearer first fold search, lighter desktop AI card.
 // C71 public content: restore no forced AI page jump SEO marker and sharpen hero trust copy.
 // C70C hero copy: society-first search, verified homes and AI guidance.
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
@@ -147,7 +148,7 @@ export default function SocietyFlatsHero() {
 
   return (
     <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_78%_18%,rgba(37,99,235,0.10),transparent_28%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]">
-      <div className="mx-auto grid max-w-[1440px] gap-7 px-4 py-7 sm:px-6 md:py-9 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:items-center lg:px-20 lg:py-8">
+      <div className="mx-auto grid max-w-[1440px] gap-5 px-4 py-5 sm:px-6 md:py-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)] lg:items-center lg:px-20 lg:py-6">
         <div className="max-w-[760px]">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 shadow-sm">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -156,7 +157,7 @@ export default function SocietyFlatsHero() {
             </span>
           </div>
 
-          <h1 className="font-serif text-[38px] font-black leading-[0.98] tracking-[-0.045em] text-slate-950 sm:text-[52px] lg:text-[62px]">
+          <h1 className="font-serif text-[34px] font-black leading-[0.98] tracking-[-0.045em] text-slate-950 sm:text-[46px] lg:text-[56px]">
             Find the right
             <br />
             Gurgaon society first.
@@ -167,7 +168,7 @@ export default function SocietyFlatsHero() {
           </p>
 
           <div className="mt-6 rounded-[1.35rem] border border-blue-100 bg-white p-2.5 shadow-[0_18px_48px_rgba(37,99,235,0.10)]">
-            <div className="mb-2 grid grid-cols-4 gap-1.5">
+            <div className="mb-2 grid grid-cols-4 gap-1">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.key;
                 return (
@@ -231,7 +232,7 @@ export default function SocietyFlatsHero() {
           </div>
         </div>
 
-        <div className="hidden lg:block">
+        <div className="hidden lg:block lg:scale-[0.96] lg:origin-center">
           <div className="relative rounded-[1.55rem] border border-blue-100 bg-white/95 p-3.5 shadow-[0_24px_80px_rgba(37,99,235,0.13)] backdrop-blur">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">

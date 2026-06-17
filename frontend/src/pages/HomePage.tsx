@@ -1,3 +1,4 @@
+// C74 homepage UX polish: tighter homepage rhythm and safer mobile floating AI placement.
 
 // C70C public content rewrite phase 1: Choose the right society before the home. Trust, verification, market insight and expert callback CTAs are now reinforced.\n// C69 SEO copy foundation: SocietyFlats is Gurgaon-first, society-first real estate intelligence for verified societies, available homes, owner listings, broker partners, AI recommendations, market insights, commute context and WhatsApp/callback conversion.
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
@@ -268,7 +269,7 @@ export function HomePage() {
       <SocietyFlatsHero />
 
       <section className="border-y border-navy-100 bg-white/95">
-        <div className="container mx-auto grid grid-cols-2 gap-2 px-4 py-2.5 md:grid-cols-5 md:gap-0 md:divide-x md:divide-navy-100 md:px-4 md:py-0">
+        <div className="container mx-auto grid grid-cols-2 gap-2 px-4 py-2 md:grid-cols-5 md:gap-0 md:divide-x md:divide-navy-100 md:px-4 md:py-0">
           {[
             {
               icon: Building2,
@@ -616,7 +617,7 @@ export function HomePage() {
         </section>
       ) : (
         <section className="bg-white px-4 py-6 md:py-7">
-          <div className="container mx-auto rounded-[1.5rem] border border-dashed border-navy-200 bg-ivory-100 p-5 shadow-sm md:p-7">
+          <div className="container mx-auto rounded-[1.35rem] border border-dashed border-navy-200 bg-ivory-100 p-4 shadow-sm md:p-6">
             <h2 className="font-display text-3xl font-black text-navy-950">
               Verified homes are being added.
             </h2>
@@ -696,7 +697,7 @@ export function HomePage() {
       </section>
 
       <section className="bg-blue-50/40 px-4 py-8 md:hidden">
-        <div className="container mx-auto rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm">
+        <div className="container mx-auto rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:p-4">
           <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">
             Location intelligence
           </p>
@@ -1001,7 +1002,7 @@ export function HomePage() {
       />
 
       {chatOpen ? (
-        <div className="fixed bottom-[5.5rem] right-5 z-40 w-[21rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-premium md:bottom-6 md:right-6 md:w-[22rem]">
+        <div className="fixed bottom-[6.7rem] right-3 z-40 w-[20rem] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-[1.35rem] border border-blue-100 bg-white shadow-premium sm:right-5 md:bottom-6 md:right-6 md:w-[22rem]">
           <div className="flex items-center gap-3 border-b border-blue-100 bg-blue-50 px-4 py-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-700 text-sm font-black text-white">
               AI
@@ -1115,7 +1116,7 @@ export function HomePage() {
       ) : (
         <button
           onClick={() => setChatOpen(true)}
-          className="fixed bottom-5 right-5 z-40 flex h-[58px] w-[58px] items-center justify-center rounded-full bg-blue-700 text-white shadow-premium transition hover:scale-105 hover:bg-blue-800 md:bottom-6 md:right-6 md:h-14 md:w-14"
+          className="fixed bottom-[5.35rem] right-4 z-40 flex h-[54px] w-[54px] items-center justify-center rounded-full bg-blue-700 text-white shadow-premium transition hover:scale-105 hover:bg-blue-800 md:bottom-6 md:right-6 md:h-14 md:w-14"
           aria-label="Open SocietyFlats AI chat"
         >
           <MessageCircle className="h-6 w-6" />
