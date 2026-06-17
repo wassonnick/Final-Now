@@ -22,6 +22,7 @@ import {
   exportLeadsCsv,
   fetchAdminLeads,
   listAdminLeads,
+  saveAdminLead,
   updateLeadStatusRemote,
 } from "@/lib/adminLeadStore";
 
@@ -618,6 +619,65 @@ function followUpClass(lead: AdminLead) {
   return "bg-slate-50 text-slate-500 border-slate-100";
 }
 
+function formatLeadDateTime(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function tomorrowFollowUpValue() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  date.setHours(10, 30, 0, 0);
+
+  return formatLeadDateTime(date);
+}
+
+function leadTypeWorkflowLabel(lead: AdminLead) {
+  if (isOwnerLeadSource(lead.source)) return "Owner";
+  if (isBrokerLeadSource(lead.source)) return "Broker";
+
+  const value = String(lead.source || "").toLowerCase();
+  if (value.includes("property")) return "Property";
+  if (value.includes("society")) return "Society";
+  if (value.includes("search") || value.includes("ai")) return "Search";
+
+  return "Website";
+}
+
+function leadRowAccentClass(lead: AdminLead) {
+  if (isOwnerLeadSource(lead.source)) return "border-l-4 border-l-emerald-400";
+  if (isBrokerLeadSource(lead.source)) return "border-l-4 border-l-orange-400";
+
+  const value = String(lead.source || "").toLowerCase();
+  if (value.includes("property")) return "border-l-4 border-l-violet-400";
+  if (value.includes("society")) return "border-l-4 border-l-blue-400";
+  if (value.includes("search") || value.includes("ai")) return "border-l-4 border-l-sky-400";
+  if (followUpState(lead) === "overdue") return "border-l-4 border-l-rose-400";
+  if (followUpState(lead) === "not_set") return "border-l-4 border-l-slate-300";
+
+  return "border-l-4 border-l-transparent";
+}
+
+function workflowStripClass(lead: AdminLead) {
+  if (followUpState(lead) === "overdue") return "border-rose-100 bg-rose-50";
+  if (followUpState(lead) === "not_set") return "border-slate-200 bg-slate-50";
+  if (lead.priority === "Hot") return "border-amber-100 bg-amber-50";
+  if (isOwnerLeadSource(lead.source)) return "border-emerald-100 bg-emerald-50";
+  if (isBrokerLeadSource(lead.source)) return "border-orange-100 bg-orange-50";
+
+  return "border-blue-100 bg-blue-50";
+}
+
+function workflowButtonClass(tone: "blue" | "rose" | "amber" | "slate" | "emerald") {
+  if (tone === "rose") return "border-rose-100 bg-white text-rose-700 hover:bg-rose-50";
+  if (tone === "amber") return "border-amber-100 bg-white text-amber-700 hover:bg-amber-50";
+  if (tone === "emerald") return "border-emerald-100 bg-white text-emerald-700 hover:bg-emerald-50";
+  if (tone === "slate") return "border-slate-200 bg-white text-slate-600 hover:bg-slate-50";
+
+  return "border-blue-100 bg-white text-blue-700 hover:bg-blue-50";
+}
+
 export function AdminLeadsPage() {
   const location = useLocation();
   const [leads, setLeads] = useState<AdminLead[]>([]);
@@ -736,6 +796,32 @@ export function AdminLeadsPage() {
     }
   };
 
+  const handleQuickLeadUpdate = async (
+    lead: AdminLead,
+    updates: Partial<Pick<AdminLead, "status" | "priority" | "followUpAt">>,
+    successMessage: string,
+  ) => {
+    const previousLeads = leads;
+    const optimisticLead = { ...lead, ...updates };
+
+    setSavingLeadId(lead.id);
+    setError("");
+    setLeads((current) =>
+      current.map((item) => (item.id === lead.id ? optimisticLead : item)),
+    );
+
+    try {
+      const updated = await saveAdminLead(optimisticLead);
+      setLeads((current) => current.map((item) => (item.id === lead.id ? updated : item)));
+    } catch (err) {
+      console.error(err);
+      setLeads(previousLeads);
+      setError(`${successMessage} failed. Please open the lead and try again.`);
+    } finally {
+      setSavingLeadId(null);
+    }
+  };
+
   const handleDelete = async (lead: AdminLead) => {
     if (!window.confirm(`Delete lead for ${lead.name}?`)) return;
 
@@ -819,6 +905,12 @@ export function AdminLeadsPage() {
               </Link>
             </div>
           ) : null}
+          {dashboardView === "no_followup" ? (
+            <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+              <strong>C55 workflow:</strong> use “Tomorrow” on each lead to quickly clear no-follow-up records from the inbox.
+            </div>
+          ) : null}
+
 
           <div className="sticky top-0 z-20 -mx-4 mt-5 border-y border-slate-100 bg-white/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
             <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0">
@@ -884,7 +976,7 @@ export function AdminLeadsPage() {
           </div>
 
           <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200 md:mt-6 md:rounded-[24px]">
-            <div className="hidden grid-cols-[1.3fr_1.6fr_150px_110px_150px_210px] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 xl:grid">
+            <div className="hidden grid-cols-[1.3fr_1.6fr_150px_110px_150px_230px] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 xl:grid">
               <span>Lead</span>
               <span>Interest</span>
               <span>Status</span>
@@ -903,7 +995,7 @@ export function AdminLeadsPage() {
               return (
                 <div
                   key={lead.id}
-                  className="border-b border-slate-200 bg-white px-3 py-4 last:border-0 xl:grid xl:grid-cols-[1.3fr_1.6fr_150px_110px_150px_210px] xl:items-center xl:gap-4 xl:px-5 xl:py-5"
+                  className={`border-b border-slate-200 bg-white px-3 py-4 last:border-0 xl:grid xl:grid-cols-[1.3fr_1.6fr_150px_110px_150px_230px] xl:items-center xl:gap-4 xl:px-5 xl:py-5 ${leadRowAccentClass(lead)}`}
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3 xl:block">
@@ -925,6 +1017,9 @@ export function AdminLeadsPage() {
                       <div className="flex flex-col items-end gap-1 xl:items-start">
                         <span className={`rounded-full border px-3 py-1 text-xs font-bold xl:mt-3 inline-flex ${sourceClass(lead.source)}`} title={`Lead attribution: ${[lead.source_page, lead.cta_label, lead.utm_campaign].filter(Boolean).join(' · ') || 'Not captured'}`}>
                           {sourceLabel(lead.source)}
+                        </span>
+                        <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                          {leadTypeWorkflowLabel(lead)}
                         </span>
                         {attributionBadge(lead) ? (
                           <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-blue-700">
@@ -992,6 +1087,68 @@ export function AdminLeadsPage() {
                   </div>
 
                   <div className="mt-3 grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 border-t border-slate-100 pt-3 xl:mt-0 xl:flex xl:flex-wrap xl:border-t-0 xl:pt-0">
+                    <div className={`col-span-4 grid grid-cols-4 gap-1.5 rounded-2xl border p-2 xl:w-full xl:grid-cols-2 ${workflowStripClass(lead)}`}>
+                      <button
+                        type="button"
+                        disabled={savingLeadId === lead.id}
+                        onClick={() =>
+                          void handleQuickLeadUpdate(
+                            lead,
+                            { followUpAt: tomorrowFollowUpValue() },
+                            "Set tomorrow follow-up",
+                          )
+                        }
+                        className={`rounded-full border px-2 py-1.5 text-[11px] font-black disabled:opacity-50 ${workflowButtonClass(followUpState(lead) === "not_set" ? "amber" : "blue")}`}
+                      >
+                        Tomorrow
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={savingLeadId === lead.id || lead.priority === "Hot"}
+                        onClick={() =>
+                          void handleQuickLeadUpdate(
+                            lead,
+                            { priority: "Hot" },
+                            "Mark Hot",
+                          )
+                        }
+                        className={`rounded-full border px-2 py-1.5 text-[11px] font-black disabled:opacity-50 ${workflowButtonClass("rose")}`}
+                      >
+                        Hot
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={savingLeadId === lead.id || lead.status === "Contacted"}
+                        onClick={() =>
+                          void handleQuickLeadUpdate(
+                            lead,
+                            { status: "Contacted" },
+                            "Mark Contacted",
+                          )
+                        }
+                        className={`rounded-full border px-2 py-1.5 text-[11px] font-black disabled:opacity-50 ${workflowButtonClass("emerald")}`}
+                      >
+                        Contacted
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={savingLeadId === lead.id || lead.status === "Lost"}
+                        onClick={() =>
+                          void handleQuickLeadUpdate(
+                            lead,
+                            { status: "Lost", priority: "Cold" },
+                            "Mark Lost",
+                          )
+                        }
+                        className={`rounded-full border px-2 py-1.5 text-[11px] font-black disabled:opacity-50 ${workflowButtonClass("slate")}`}
+                      >
+                        Lost
+                      </button>
+                    </div>
+
                     <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200 px-3">
                       <Link to={`/admin/leads/${lead.id}`}>
                         <Eye className="mr-1.5 h-4 w-4" />
