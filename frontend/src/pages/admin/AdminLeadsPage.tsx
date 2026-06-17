@@ -1338,7 +1338,7 @@ export function AdminLeadsPage() {
         const saved = await saveAdminLead(optimisticLead);
         const noted = await addLeadNoteRemote(
           saved,
-          `Admin note: ${actionLabel} from C64 bulk action bar`,
+          `Admin note: ${actionLabel} from C64 bulk action bar · live`,
         );
         updatedLeads.push(noted);
       }
