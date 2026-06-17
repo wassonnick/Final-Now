@@ -1221,6 +1221,13 @@ export function AdminLeadDetailPage() {
     }
   };
 
+  const applyC65Command = async (
+    updates: Partial<AdminLead>,
+    noteText: string,
+  ) => {
+    await applyQuickConversion(updates, `C65 command: ${noteText}`);
+  };
+
   if (loading) {
     return (
       <AdminLayout title="Lead Details">
@@ -1364,6 +1371,97 @@ export function AdminLeadDetailPage() {
         ) : null}
 
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+          <section className="rounded-[24px] border border-blue-100 bg-blue-50 p-4 shadow-sm md:rounded-[32px] md:p-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
+                  C65 safe command panel
+                </p>
+                <h2 className="mt-2 text-lg font-black text-slate-950">
+                  Single-lead actions
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-blue-900/75">
+                  Use these only from the lead detail page. Each action saves this lead, writes a CRM timeline note and shows a success/error message here.
+                </p>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() =>
+                    void applyC65Command(
+                      { followUpAt: getQuickFollowUpValue("tomorrow_morning") },
+                      "Tomorrow follow-up set from lead detail command panel",
+                    )
+                  }
+                  className="rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-black text-amber-700 transition hover:bg-amber-50 disabled:opacity-50"
+                >
+                  Set Tomorrow
+                </button>
+
+                <button
+                  type="button"
+                  disabled={saving || lead.status === "Contacted"}
+                  onClick={() =>
+                    void applyC65Command(
+                      { status: "Contacted", priority: lead.priority === "Cold" ? "Warm" : lead.priority },
+                      "Lead marked Contacted from lead detail command panel",
+                    )
+                  }
+                  className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-black text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                >
+                  Mark Contacted
+                </button>
+
+                <button
+                  type="button"
+                  disabled={saving || lead.priority === "Hot"}
+                  onClick={() =>
+                    void applyC65Command(
+                      { priority: "Hot" },
+                      "Lead marked Hot from lead detail command panel",
+                    )
+                  }
+                  className="rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-black text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
+                >
+                  Mark Hot
+                </button>
+
+                <select
+                  value={lead.assignedTo || "Unassigned"}
+                  disabled={saving}
+                  onChange={(event) =>
+                    void applyC65Command(
+                      { assignedTo: event.target.value },
+                      `Lead assigned to ${event.target.value} from lead detail command panel`,
+                    )
+                  }
+                  className="h-10 rounded-full border border-blue-200 bg-white px-4 text-sm font-black text-blue-700 outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100 disabled:opacity-50"
+                >
+                  {agents.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Status</p>
+                <p className="mt-1 text-sm font-black text-slate-950">{displayLeadStatus(lead)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Priority</p>
+                <p className="mt-1 text-sm font-black text-slate-950">{lead.priority}</p>
+              </div>
+              <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Follow-up</p>
+                <p className="mt-1 text-sm font-black text-slate-950">{formatDate(lead.followUpAt)}</p>
+              </div>
+            </div>
+          </section>
+
           <div className={`rounded-[20px] border p-4 md:p-5 ${statusClass(lead.status)}`}>
             <p className="text-xs font-bold uppercase tracking-[0.14em] opacity-70">Status</p>
             <p className="mt-2 text-xl font-bold">{displayLeadStatus(lead)}</p>
