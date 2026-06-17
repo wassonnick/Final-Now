@@ -44,6 +44,8 @@ const emptyStats: AdminStats = {
   live_properties: 0,
 };
 
+const agents = ["Nitin", "Amit", "Rohit", "Priya", "Unassigned"];
+
 function isToday(value?: string) {
   if (!value) return false;
   const date = new Date(value);
@@ -529,6 +531,24 @@ export function AdminDashboardPage() {
     ];
   }, [leads]);
 
+  const teamSummary = useMemo(() => {
+    return agents.map((agent) => {
+      const assigned = leads.filter((lead) => String(lead.assignedTo || "Unassigned") === agent);
+      const open = assigned.filter(isOpenLead);
+      const dueToday = assigned.filter((lead) => followUpState(lead) === "today");
+      const overdue = assigned.filter((lead) => followUpState(lead) === "overdue");
+
+      return {
+        agent,
+        total: assigned.length,
+        open: open.length,
+        dueToday: dueToday.length,
+        overdue: overdue.length,
+        href: `/admin/leads?assignee=${encodeURIComponent(agent)}`,
+      };
+    });
+  }, [leads]);
+
   const actionQueue = useMemo(() => {
     const urgentLeads = leads
       .filter((lead) => followUpState(lead) === "overdue" || followUpState(lead) === "today" || followUpState(lead) === "not_set" || lead.priority === "Hot")
@@ -788,6 +808,43 @@ export function AdminDashboardPage() {
                 ) : (
                   <p className="mt-3 text-[11px] opacity-60">No leads yet.</p>
                 )}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                C61 team follow-up control
+              </p>
+              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
+                Lead owner workload
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                See who owns the current lead pipeline and jump directly into each team member’s queue.
+              </p>
+            </div>
+            <Button asChild variant="outline" className="rounded-full border-slate-200">
+              <Link to="/admin/leads?assignee=Unassigned">Review unassigned</Link>
+            </Button>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {teamSummary.map((item) => (
+              <Link
+                key={item.agent}
+                to={item.href}
+                className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-md"
+              >
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{item.agent}</p>
+                <p className="mt-3 text-3xl font-black text-slate-950">{dashboardValue(item.open, leadLoading)}</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">Open leads</p>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-bold">
+                  <span className="rounded-full bg-white px-2 py-1 text-amber-700">Due {dashboardValue(item.dueToday, leadLoading)}</span>
+                  <span className="rounded-full bg-white px-2 py-1 text-rose-700">Late {dashboardValue(item.overdue, leadLoading)}</span>
+                </div>
               </Link>
             ))}
           </div>

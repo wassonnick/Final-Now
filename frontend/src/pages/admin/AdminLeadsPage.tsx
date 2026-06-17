@@ -60,6 +60,7 @@ const pipelineViews = [
 ];
 
 const priorities: Array<"All" | LeadPriority> = ["All", "Hot", "Warm", "Cold"];
+const agents = ["Nitin", "Amit", "Rohit", "Priya", "Unassigned"];
 
 
 function isBrokerLeadSource(source?: string) {
@@ -911,6 +912,7 @@ export function AdminLeadsPage() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"All" | LeadStatus>("All");
   const [priority, setPriority] = useState<"All" | LeadPriority>("All");
+  const [assignee, setAssignee] = useState<"All" | string>("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [savingLeadId, setSavingLeadId] = useState<number | null>(null);
@@ -918,6 +920,12 @@ export function AdminLeadsPage() {
   const dashboardView = useMemo(() => {
     return new URLSearchParams(location.search).get("view") || "all";
   }, [location.search]);
+
+  const urlAssignee = useMemo(() => {
+    return new URLSearchParams(location.search).get("assignee") || "";
+  }, [location.search]);
+
+  const effectiveAssignee = urlAssignee || assignee;
 
   const dashboardViewLabel = dashboardLeadViewLabel(dashboardView);
 
@@ -996,10 +1004,14 @@ export function AdminLeadsPage() {
 
         const matchesStatus = status === "All" || lead.status === status;
         const matchesPriority = priority === "All" || lead.priority === priority;
+        const matchesAssignee =
+          !effectiveAssignee ||
+          effectiveAssignee === "All" ||
+          String(lead.assignedTo || "Unassigned") === effectiveAssignee;
 
-        return matchesSearch && matchesStatus && matchesPriority;
+        return matchesSearch && matchesStatus && matchesPriority && matchesAssignee;
       });
-  }, [dashboardView, leads, priority, query, status]);
+  }, [dashboardView, effectiveAssignee, leads, priority, query, status]);
 
   const todayLeads = leads.filter((lead) => isToday(lead.createdAt)).length;
   const activeLeads = leads.filter((lead) => !["Booked", "Lost"].includes(lead.status)).length;
@@ -1058,6 +1070,32 @@ export function AdminLeadsPage() {
       console.error(err);
       setLeads(previousLeads);
       setError(`${successMessage} failed. Please open the lead and try again.`);
+    } finally {
+      setSavingLeadId(null);
+    }
+  };
+
+  const handleAssignLead = async (lead: AdminLead, nextAssignee: string) => {
+    const previousLeads = leads;
+    const optimisticLead = { ...lead, assignedTo: nextAssignee };
+
+    setSavingLeadId(lead.id);
+    setError("");
+    setLeads((current) =>
+      current.map((item) => (item.id === lead.id ? optimisticLead : item)),
+    );
+
+    try {
+      const updated = await saveAdminLead(optimisticLead);
+      const noted = await addLeadNoteRemote(
+        updated,
+        `Admin note: Lead assigned to ${nextAssignee} from C61 team control`,
+      );
+      setLeads((current) => current.map((item) => (item.id === lead.id ? noted : item)));
+    } catch (err) {
+      console.error(err);
+      setLeads(previousLeads);
+      setError("Could not update lead owner. Please try again.");
     } finally {
       setSavingLeadId(null);
     }
@@ -1140,10 +1178,13 @@ export function AdminLeadsPage() {
             </div>
           </div>
 
-          {dashboardViewLabel ? (
+          {dashboardViewLabel || (effectiveAssignee && effectiveAssignee !== "All") ? (
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
               <span>
-                Showing: <strong>{dashboardViewLabel}</strong>
+                Showing: <strong>{dashboardViewLabel || "Assigned leads"}</strong>
+                {effectiveAssignee && effectiveAssignee !== "All" ? (
+                  <> · Owner: <strong>{effectiveAssignee}</strong></>
+                ) : null}
               </span>
               <Link to="/admin/leads" className="font-semibold hover:underline">
                 Clear filter
@@ -1194,7 +1235,7 @@ export function AdminLeadsPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2.5 lg:mt-6 lg:grid-cols-[1fr_190px_190px] lg:gap-3">
+          <div className="mt-4 grid gap-2.5 lg:mt-6 lg:grid-cols-[1fr_180px_180px_190px] lg:gap-3">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
@@ -1222,6 +1263,17 @@ export function AdminLeadsPage() {
             >
               {priorities.map((item) => (
                 <option key={item}>{item}</option>
+              ))}
+            </select>
+
+            <select
+              value={effectiveAssignee || "All"}
+              onChange={(event) => setAssignee(event.target.value)}
+              className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+            >
+              <option value="All">All owners</option>
+              {agents.map((item) => (
+                <option key={item} value={item}>{item}</option>
               ))}
             </select>
           </div>
@@ -1345,6 +1397,16 @@ export function AdminLeadsPage() {
                       <p className="mt-1 hidden text-xs xl:block">
                         Owner: {lead.assignedTo || "Unassigned"}
                       </p>
+                      <select
+                        value={lead.assignedTo || "Unassigned"}
+                        disabled={savingLeadId === lead.id}
+                        onChange={(event) => void handleAssignLead(lead, event.target.value)}
+                        className="mt-2 hidden h-8 w-full rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 outline-none disabled:opacity-50 xl:block"
+                      >
+                        {agents.map((item) => (
+                          <option key={item} value={item}>{item}</option>
+                        ))}
+                      </select>
                       <p className={`mt-1 hidden w-fit rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] xl:block ${workflowNextActionClass(lead)}`}>
                         {followUpUrgencyLabel(lead)}
                       </p>
