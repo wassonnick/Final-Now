@@ -5,13 +5,16 @@ import {
   BarChart3,
   Bot,
   Building2,
+  CalendarDays,
   Clock,
   Home,
   MessageSquareText,
+  Phone,
   Plus,
   RefreshCw,
   Search,
   ShieldCheck,
+  TrendingUp,
   Target,
   Users,
 } from "lucide-react";
@@ -100,6 +103,53 @@ function formatLeadDate(value?: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function leadCommandLabel(lead: AdminLead) {
+  if (followUpState(lead) === "overdue") return "Overdue";
+  if (followUpState(lead) === "today") return "Due today";
+  if (!lead.followUpAt) return "No follow-up";
+  if (lead.priority === "Hot") return "Hot";
+  if (isOwnerLeadSource(lead.source)) return "Owner";
+  if (isBrokerLeadSource(lead.source)) return "Broker";
+
+  return lead.status;
+}
+
+function leadCommandClass(lead: AdminLead) {
+  if (followUpState(lead) === "overdue") return "border-rose-100 bg-rose-50 text-rose-700";
+  if (followUpState(lead) === "today") return "border-amber-100 bg-amber-50 text-amber-700";
+  if (!lead.followUpAt) return "border-slate-200 bg-slate-50 text-slate-600";
+  if (lead.priority === "Hot") return "border-orange-100 bg-orange-50 text-orange-700";
+  if (isOwnerLeadSource(lead.source)) return "border-emerald-100 bg-emerald-50 text-emerald-700";
+  if (isBrokerLeadSource(lead.source)) return "border-violet-100 bg-violet-50 text-violet-700";
+
+  return "border-blue-100 bg-blue-50 text-blue-700";
+}
+
+function leadCommandMeta(lead: AdminLead) {
+  if (followUpState(lead) === "overdue") return `Overdue since ${formatLeadDate(lead.followUpAt)}`;
+  if (followUpState(lead) === "today") return `Due ${formatLeadDate(lead.followUpAt)}`;
+  if (!lead.followUpAt) return "Needs follow-up time";
+  if (lead.priority === "Hot") return "Priority lead";
+  return lead.requirement || lead.property || lead.society || "Lead follow-up";
+}
+
+function sortCommandLeads(first: AdminLead, second: AdminLead) {
+  const weight = (lead: AdminLead) => {
+    if (followUpState(lead) === "overdue") return 0;
+    if (followUpState(lead) === "today") return 1;
+    if (lead.priority === "Hot") return 2;
+    if (!lead.followUpAt) return 3;
+    if (isOwnerLeadSource(lead.source)) return 4;
+    if (isBrokerLeadSource(lead.source)) return 5;
+    return 6;
+  };
+
+  const weightDelta = weight(first) - weight(second);
+  if (weightDelta !== 0) return weightDelta;
+
+  return new Date(second.createdAt || 0).getTime() - new Date(first.createdAt || 0).getTime();
 }
 
 function parseApiList(json: any) {
@@ -258,10 +308,12 @@ export function AdminDashboardPage() {
       today: leads.filter((lead) => isToday(lead.createdAt)).length,
       open: leads.filter(isOpenLead).length,
       hot: leads.filter(isHotLead).length,
+      hotActive: leads.filter((lead) => isHotLead(lead) && isOpenLead(lead)).length,
       booked: leads.filter((lead) => lead.status === "Booked").length,
       followUps: leads.filter((lead) => Boolean(lead.followUpAt)).length,
       followUpsToday: leads.filter((lead) => followUpState(lead) === "today").length,
       overdue: leads.filter((lead) => followUpState(lead) === "overdue").length,
+      noFollowUp: leads.filter((lead) => followUpState(lead) === "not_set").length,
       owner: leads.filter((lead) => isOwnerLeadSource(lead.source)).length,
       broker: leads.filter((lead) => isBrokerLeadSource(lead.source)).length,
     };
@@ -289,16 +341,23 @@ export function AdminDashboardPage() {
 
   const recentLeads = useMemo(() => leads.slice(0, 5), [leads]);
 
+  const commandLeads = useMemo(() => {
+    return leads
+      .filter((lead) => isOpenLead(lead))
+      .sort(sortCommandLeads)
+      .slice(0, 5);
+  }, [leads]);
+
   const actionQueue = useMemo(() => {
     const urgentLeads = leads
-      .filter((lead) => followUpState(lead) === "overdue" || followUpState(lead) === "today" || lead.priority === "Hot")
+      .filter((lead) => followUpState(lead) === "overdue" || followUpState(lead) === "today" || followUpState(lead) === "not_set" || lead.priority === "Hot")
       .slice(0, 4)
       .map((lead) => ({
         key: `lead-${lead.id}`,
         title: lead.name || "Unnamed lead",
         meta: lead.requirement || lead.property || lead.society || "Lead follow-up",
         href: `/admin/leads/${lead.id}`,
-        label: followUpState(lead) === "overdue" ? "Overdue" : lead.priority === "Hot" ? "Hot" : "Today",
+        label: followUpState(lead) === "overdue" ? "Overdue" : followUpState(lead) === "not_set" ? "No Follow-up" : lead.priority === "Hot" ? "Hot" : "Today",
       }));
 
     const ownerDrafts = properties
@@ -360,39 +419,55 @@ export function AdminDashboardPage() {
           </Button>
         </div>
 
-        <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <section className="grid grid-cols-2 gap-3 xl:grid-cols-6">
           {[
-            {
-              label: "Today",
-              value: dashboardValue(leadSummary.today, leadLoading),
-              helper: "New enquiries",
-              href: "/admin/leads?view=today",
-              icon: MessageSquareText,
-              tone: "blue" as const,
-            },
-            {
-              label: "Follow-ups",
-              value: dashboardValue(leadSummary.followUpsToday, leadLoading),
-              helper: "Due today",
-              href: "/admin/leads?view=followups",
-              icon: Clock,
-              tone: "emerald" as const,
-            },
             {
               label: "Overdue",
               value: dashboardValue(leadSummary.overdue, leadLoading),
-              helper: "Needs action",
+              helper: "Call first",
               href: "/admin/leads?view=overdue",
               icon: Target,
               tone: "rose" as const,
             },
             {
-              label: "Hot Leads",
-              value: dashboardValue(leadSummary.hot, leadLoading),
-              helper: "Priority follow-up",
+              label: "Due Today",
+              value: dashboardValue(leadSummary.followUpsToday, leadLoading),
+              helper: "Follow-ups",
+              href: "/admin/leads?view=followups",
+              icon: Clock,
+              tone: "emerald" as const,
+            },
+            {
+              label: "No Follow-up",
+              value: dashboardValue(leadSummary.noFollowUp, leadLoading),
+              helper: "Set reminder",
+              href: "/admin/leads?view=no_followup",
+              icon: CalendarDays,
+              tone: "slate" as const,
+            },
+            {
+              label: "Hot Active",
+              value: dashboardValue(leadSummary.hotActive, leadLoading),
+              helper: "Priority open",
               href: "/admin/leads?view=hot",
-              icon: Target,
+              icon: TrendingUp,
               tone: "rose" as const,
+            },
+            {
+              label: "Owner Leads",
+              value: dashboardValue(leadSummary.owner, leadLoading),
+              helper: "Inventory source",
+              href: "/admin/leads?view=owner",
+              icon: Home,
+              tone: "emerald" as const,
+            },
+            {
+              label: "Broker Leads",
+              value: dashboardValue(leadSummary.broker, leadLoading),
+              helper: "Partner source",
+              href: "/admin/leads?view=broker",
+              icon: Users,
+              tone: "blue" as const,
             },
           ].map((item) => {
             const Icon = item.icon;
@@ -416,6 +491,75 @@ export function AdminDashboardPage() {
               </Link>
             );
           })}
+        </section>
+
+        <section className="rounded-[24px] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
+                C56 lead command center
+              </p>
+              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
+                Start here for today’s admin work
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                Overdue, due today, hot and no-follow-up leads are surfaced before general dashboard stats.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+              <Button asChild variant="outline" className="rounded-full border-slate-200">
+                <Link to="/admin/leads">Lead Inbox</Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-full border-rose-200 text-rose-700">
+                <Link to="/admin/leads?view=overdue">Overdue</Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-full border-amber-200 text-amber-700">
+                <Link to="/admin/leads?view=no_followup">No Follow-up</Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-full border-emerald-200 text-emerald-700">
+                <Link to="/admin/leads?view=owner">Owner Leads</Link>
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 xl:grid-cols-5">
+            {commandLeads.length ? (
+              commandLeads.map((lead) => (
+                <Link
+                  key={lead.id}
+                  to={`/admin/leads/${lead.id}`}
+                  className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-md"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className={`rounded-full border px-3 py-1 text-[11px] font-black ${leadCommandClass(lead)}`}>
+                      {leadCommandLabel(lead)}
+                    </span>
+                    <ArrowRight className="h-4 w-4 text-slate-300" />
+                  </div>
+                  <p className="mt-3 truncate text-sm font-black text-slate-950">
+                    {lead.name || "Unnamed lead"}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                    {lead.property || lead.society || lead.requirement || "Lead follow-up"}
+                  </p>
+                  <p className="mt-3 text-xs font-bold text-blue-700">
+                    {leadCommandMeta(lead)}
+                  </p>
+                  {lead.phone ? (
+                    <p className="mt-2 inline-flex items-center text-[11px] text-slate-400">
+                      <Phone className="mr-1 h-3.5 w-3.5" />
+                      {lead.phone}
+                    </p>
+                  ) : null}
+                </Link>
+              ))
+            ) : (
+              <div className="rounded-[22px] border border-dashed border-slate-200 p-5 text-sm text-slate-500 xl:col-span-5">
+                No open command leads right now.
+              </div>
+            )}
+          </div>
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
@@ -479,10 +623,10 @@ export function AdminDashboardPage() {
                 <p className="mt-1 text-sm text-slate-500">List inventory</p>
               </Link>
 
-              <Link to="/admin/leads" className={actionCardClass(false)}>
+              <Link to="/admin/leads?view=overdue" className={actionCardClass(false)}>
                 <MessageSquareText className="h-5 w-5 text-blue-600" />
-                <p className="mt-3 font-bold">View Leads</p>
-                <p className="mt-1 text-sm text-slate-500">Follow-up CRM</p>
+                <p className="mt-3 font-bold">Overdue Leads</p>
+                <p className="mt-1 text-sm text-slate-500">Call first</p>
               </Link>
 
               <Link to="/admin/properties" className={actionCardClass(false)}>
