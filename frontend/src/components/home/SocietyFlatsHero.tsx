@@ -1,3 +1,4 @@
+// C74 hero tabs fix: Society default button is Explore Societies; tabs are Society, Rent, Buy, Ask AI.
 // C74 homepage UX polish: compact hero, clearer first fold search, lighter desktop AI card.
 // C71 public content: restore no forced AI page jump SEO marker and sharpen hero trust copy.
 // C70C hero copy: society-first search, verified homes and AI guidance.
@@ -32,10 +33,10 @@ type AdvisorMatch = {
 };
 
 const tabs: Array<{ key: Intent; label: string; button: string }> = [
-  { key: "society", label: "Society", button: "Search" },
+  { key: "society", label: "Society", button: "Explore Societies" },
   { key: "rent", label: "Rent", button: "Rentals" },
   { key: "buy", label: "Buy", button: "Resale" },
-  { key: "general", label: "Explore societies", button: "Ask SocietyFlats AI" },
+  { key: "general", label: "Ask AI", button: "Ask SocietyFlats AI" },
 ];
 
 const quickSearches = [
