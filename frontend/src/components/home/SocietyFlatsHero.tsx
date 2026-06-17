@@ -1,3 +1,4 @@
+// C74B hero AI card polish: right-side AI box is more inviting, search-first and visually highlighted.
 // C74 hero tabs fix: Society default button is Explore Societies; tabs are Society, Rent, Buy, Ask AI.
 // C74 homepage UX polish: compact hero, clearer first fold search, lighter desktop AI card.
 // C71 public content: restore no forced AI page jump SEO marker and sharpen hero trust copy.
@@ -233,7 +234,7 @@ export default function SocietyFlatsHero() {
           </div>
         </div>
 
-        <div className="hidden lg:block lg:scale-[0.96] lg:origin-center">
+        <div className="hidden lg:block lg:origin-center lg:scale-[0.96]">
           <div className="relative rounded-[1.55rem] border border-blue-100 bg-white/95 p-3.5 shadow-[0_24px_80px_rgba(37,99,235,0.13)] backdrop-blur">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -274,7 +275,7 @@ export default function SocietyFlatsHero() {
               )}
             </div>
 
-            <div className="mt-2 grid gap-1.5">
+            <div className="mt-3 grid gap-2">
               {aiMatches.length ? (
                 aiMatches.map((match, index) => {
                   const name = match.society_name || match.name || "Society match";
