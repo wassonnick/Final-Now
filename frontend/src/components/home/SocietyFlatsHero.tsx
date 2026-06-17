@@ -1,3 +1,4 @@
+// C74E input fix: AI concierge input starts empty with blinking cursor cue.
 // C74E clean AI concierge card: no hero result dashboard, just guided prompts and AI Advisor handoff.
 // C74B hero AI card polish: right-side AI box is more inviting, search-first and visually highlighted.
 // C74 hero tabs fix: Society default button is Explore Societies; tabs are Society, Rent, Buy, Ask AI.
@@ -81,7 +82,7 @@ function buildSearchUrl(intent: Intent, query: string) {
 export default function SocietyFlatsHero() {
   const [activeTab, setActiveTab] = useState<Intent>("society");
   const [query, setQuery] = useState("");
-  const [aiInput, setAiInput] = useState("Best family societies near Cyber City under Rs 1L");
+  const [aiInput, setAiInput] = useState("");
   const [aiQuestion, setAiQuestion] = useState("Best family societies near Cyber City under Rs 1L");
   const [aiReply, setAiReply] = useState(
     "Ask here. I will shortlist Gurgaon societies by budget, commute, family fit, verified inventory and lifestyle match.",
@@ -289,12 +290,17 @@ export default function SocietyFlatsHero() {
                 className="mt-5 rounded-[1.25rem] border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-sky-50 p-2.5 shadow-[0_14px_40px_rgba(37,99,235,0.12)]"
               >
                 <div className="flex items-center gap-2">
-                  <input
-                    value={aiInput}
-                    onChange={(event) => setAiInput(event.target.value)}
-                    className="h-11 min-w-0 flex-1 rounded-2xl bg-white px-4 text-sm font-black text-navy-900 outline-none placeholder:text-blue-400"
-                    placeholder="Type your requirement..."
-                  />
+                  <div className="relative min-w-0 flex-1">
+                    <input
+                      value={aiInput}
+                      onChange={(event) => setAiInput(event.target.value)}
+                      className="peer h-11 w-full rounded-2xl bg-white px-4 pr-7 text-sm font-black text-navy-900 outline-none placeholder:text-blue-400"
+                      placeholder="Type your requirement..."
+                    />
+                    {!aiInput ? (
+                      <span className="pointer-events-none absolute right-4 top-1/2 h-5 w-[2px] -translate-y-1/2 animate-pulse rounded-full bg-blue-600" />
+                    ) : null}
+                  </div>
                   <button
                     type="submit"
                     className="flex h-11 shrink-0 items-center justify-center rounded-2xl bg-blue-700 px-4 text-xs font-black text-white shadow-lg shadow-blue-200 transition hover:scale-105 hover:bg-blue-800"
