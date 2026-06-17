@@ -93,7 +93,7 @@ function FeatureHero({ feature }: { feature: FeatureExperienceKey }) {
             {feature === 'broker-crm' ? (
               <>
                 <Button asChild className="rounded-full bg-orange-600 hover:bg-orange-700">
-                  <a href="#broker-signup">Submit broker application <ArrowRight className="ml-2 h-4 w-4" /></a>
+                  <a href="#broker-signup">Submit Application <ArrowRight className="ml-2 h-4 w-4" /></a>
                 </Button>
                 <Button asChild variant="outline" className="rounded-full border-orange-200 bg-white text-orange-700">
                   <Link to="/broker/dashboard">Broker dashboard</Link>
@@ -412,10 +412,10 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
           <div className="mb-6">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">Broker signup</p>
             <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-navy-950">
-              Grow your broker business with SocietyFlats.
+              Grow Your Broker Business with SocietyFlats.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-navy-500">
-              Share working areas, office details, inventory strength and RERA/license information. Verified partners can receive matched buyer, tenant and owner opportunities through SocietyFlats.
+              Access verified buyers, curated renter leads and owner listing opportunities. Share your working areas, RERA/license details, inventory strength and preferred commission terms.
             </p>
           </div>
 
@@ -469,7 +469,7 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Button disabled={state === 'loading'} onClick={submit} className="rounded-full bg-orange-600 px-6 hover:bg-orange-700">
               {state === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BriefcaseBusiness className="mr-2 h-4 w-4" />}
-              Submit broker application
+              Submit Application
             </Button>
 
             {state === 'success' ? (
@@ -486,15 +486,15 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
 
         <aside className="rounded-[2rem] border border-orange-100 bg-orange-50 p-6">
           <BriefcaseBusiness className="h-9 w-9 text-orange-700" />
-          <h2 className="mt-5 text-2xl font-black text-navy-950">Why join as a SocietyFlats broker partner?</h2>
+          <h2 className="mt-5 text-2xl font-black text-navy-950">Why Partner with SocietyFlats?</h2>
 
           <div className="mt-5 space-y-4">
             {[
-              'Access society-first Gurgaon buyer and renter leads instead of random portal noise.',
-              'Submit your active areas and inventory once, then track partner follow-up from the Broker Dashboard.',
+              'Access verified buyers and renters. No time-wasters. Just serious society-first requirements.',
+              'List unlimited inventory and track views, enquiries, follow-up and partner activity from your dashboard.',
               'Admin verifies broker profile, inventory quality, working societies and lead stages before deeper customer routing.',
               'Get access to owner listing, buyer and tenant opportunities as SocietyFlats grows.',
-              'Commission pipeline will be tracked transparently after verified deal stages.',
+              'Earn transparent commissions after verified deal stages. No upfront cost to apply.',
             ].map((item) => (
               <div key={item} className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold leading-6 text-navy-700">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-orange-600" />

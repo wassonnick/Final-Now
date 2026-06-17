@@ -855,7 +855,7 @@ export function SocietyPage() {
                 </p>
               ) : (
                 <p className="mt-3 text-sm leading-relaxed text-navy-600">
-                  This society profile is being verified. Request a callback to
+                  This society profile is being checked through SocietyFlats society intelligence. Request a callback to
                   check live availability, rent fit and visit guidance before
                   shortlisting.
                 </p>
@@ -1205,7 +1205,7 @@ export function SocietyPage() {
                 Next step
               </p>
               <h3 className="mt-2 text-lg font-bold leading-tight text-navy-900">
-                Get homes or similar options for {society.name}
+                View verified homes or request similar options for {society.name}
               </h3>
 
               <div className="mt-4 rounded-2xl bg-blue-50 p-3">
@@ -1376,7 +1376,7 @@ export function SocietyPage() {
             : "Society callback"
         }
         submitLabel="Request available homes"
-        successMessage="Request received. Our team will call with matching homes, similar societies and visit-ready options."
+        successMessage="Request received. SocietyFlats will call with matching homes, similar societies, legal-clearance context and visit-ready next steps."
         onClose={() => {
           setCallbackOpen(false);
           setSelectedLeadProperty(null);

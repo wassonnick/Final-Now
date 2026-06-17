@@ -1,5 +1,5 @@
 
-// C70C public content rewrite phase 1: Choose the right society before the home. Trust, verification, market insight and expert callback CTAs are now reinforced.\n// C69 SEO copy foundation: SocietyFlats is Gurgaon-first, society-first real estate intelligence for verified societies, available homes, owner listings, broker partners, AI recommendations, market insights, commute context and WhatsApp/callback conversion.
+// C72 strict public content implementation: visible sections now follow the content guide page-by-page.\n// C70C public content rewrite phase 1: Choose the right society before the home. Trust, verification, market insight and expert callback CTAs are now reinforced.\n// C69 SEO copy foundation: SocietyFlats is Gurgaon-first, society-first real estate intelligence for verified societies, available homes, owner listings, broker partners, AI recommendations, market insights, commute context and WhatsApp/callback conversion.
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -266,6 +266,104 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       <SocietyFlatsHero />
+
+      <section className="bg-white px-4 py-8 md:py-10">
+        <div className="container mx-auto">
+          <div className="rounded-[1.6rem] border border-blue-100 bg-gradient-to-br from-white via-blue-50/60 to-white p-5 shadow-sm md:p-7">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">
+              Choose the Right Society. Find the Right Home.
+            </p>
+            <div className="mt-4 grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+              <div>
+                <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">
+                  Society-first search for verified Gurgaon homes.
+                </h2>
+                <p className="mt-4 max-w-2xl text-sm leading-6 text-navy-600 md:text-base md:leading-7">
+                  SocietyFlats helps you choose the right gated society before choosing the flat. Compare governance, security, maintenance, commute strength, investment signals and available homes in one clean journey.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {[
+                    "25-point society audit",
+                    "Legal-clearance focused listings",
+                    "Real market and rental signals",
+                    "Expert callback before visits",
+                  ].map((item) => (
+                    <span key={item} className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700 shadow-sm">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  ["25-Point Society Audit", "Security, governance, maintenance, RWA quality and resident fit checked before recommendation."],
+                  ["100% Legal Clearance Focus", "Title, ownership, NOC, dispute and document context captured before serious enquiries."],
+                  ["Data-Driven Decisions", "Compare indicative rent, resale, appreciation, yield and locality strength before visiting."],
+                  ["Community Living Fit", "Understand schools, hospitals, commute, families, professionals, pets and lifestyle match."],
+                ].map(([title, copy]) => (
+                  <div key={title} className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
+                    <p className="text-sm font-black text-navy-950">{title}</p>
+                    <p className="mt-2 text-xs font-semibold leading-5 text-navy-500">{copy}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-blue-50/45 px-4 py-8 md:py-10">
+        <div className="container mx-auto">
+          <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">
+                Premium popular searches
+              </p>
+              <h2 className="mt-2 font-display text-3xl font-black leading-tight text-navy-950 md:text-4xl">
+                Trending Gurgaon societies this month.
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-600">
+                Start where serious buyers and tenants search first: proven sectors, premium corridors, verified societies and available homes.
+              </p>
+            </div>
+            <Link to="/search?tab=societies">
+              <Button className="rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
+                View Verified Homes <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              ["Sector 65, Golf Course Extension", "DLF / M3M corridor", "Avg: ₹2.1 Cr", "Yield: 3.2%", "Premium golf course extension, strong governance and consistent appreciation.", "/gurgaon/sector-65"],
+              ["Sector 56, Established Community", "Family-first location", "Avg: ₹1.8 Cr", "Yield: 3.5%", "Metro connectivity, schools, mature infrastructure and dependable rental demand.", "/gurgaon/sector-56"],
+              ["Golf Course Road", "Luxury corridor", "Avg: ₹3.2 Cr", "Yield: 2.8%", "Ultra-premium address, corporate demand, top amenities and fast resale liquidity.", "/gurgaon/golf-course-road"],
+            ].map(([title, meta, avg, yieldText, copy, href]) => (
+              <Link key={title} to={href} className="group rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-soft">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-black text-navy-950 group-hover:text-blue-700">{title}</h3>
+                    <p className="mt-1 text-xs font-bold text-navy-400">{meta}</p>
+                  </div>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">Verified</span>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <span className="rounded-2xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-700">{avg}</span>
+                  <span className="rounded-2xl bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700">{yieldText}</span>
+                </div>
+                <p className="mt-4 text-sm font-semibold leading-6 text-navy-500">{copy}</p>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs font-black">
+                  <span className="rounded-full bg-blue-700 px-3 py-1.5 text-white">View Homes</span>
+                  <span className="rounded-full border border-blue-100 px-3 py-1.5 text-blue-700">Compare</span>
+                  <span className="rounded-full border border-blue-100 px-3 py-1.5 text-blue-700">Ask AI</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
 
       <section className="border-y border-navy-100 bg-white/95">
         <div className="container mx-auto grid grid-cols-2 gap-2 px-4 py-2.5 md:grid-cols-5 md:gap-0 md:divide-x md:divide-navy-100 md:px-4 md:py-0">

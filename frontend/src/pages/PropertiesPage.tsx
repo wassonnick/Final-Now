@@ -46,7 +46,7 @@ type ApiResponse = {
 const fallbackImage =
   'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1400&q=80';
 
-function extractProperties(payload: ApiResponse): Property[] {
+function extractVerified Properties in Gurgaon Societies(payload: ApiResponse): Property[] {
   if (Array.isArray(payload.data)) return payload.data;
   if (Array.isArray(payload.data?.data)) return payload.data.data;
   return [];
@@ -60,8 +60,8 @@ function propertyImage(property: Property) {
   return fallbackImage;
 }
 
-export function PropertiesPage() {
-  const [properties, setProperties] = useState<Property[]>([]);
+export function Verified Properties in Gurgaon SocietiesPage() {
+  const [properties, setVerified Properties in Gurgaon Societies] = useState<Property[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(Boolean(API_BASE_URL));
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +69,7 @@ export function PropertiesPage() {
   useEffect(() => {
     let mounted = true;
 
-    async function loadProperties() {
+    async function loadVerified Properties in Gurgaon Societies() {
       if (!API_BASE_URL) {
         setLoading(false);
         setError('API URL missing.');
@@ -86,7 +86,7 @@ export function PropertiesPage() {
         const json: ApiResponse = await response.json();
 
         if (mounted) {
-          setProperties(extractProperties(json));
+          setVerified Properties in Gurgaon Societies(extractVerified Properties in Gurgaon Societies(json));
           setError(null);
         }
       } catch {
@@ -100,14 +100,14 @@ export function PropertiesPage() {
       }
     }
 
-    loadProperties();
+    loadVerified Properties in Gurgaon Societies();
 
     return () => {
       mounted = false;
     };
   }, []);
 
-  const filteredProperties = useMemo(() => {
+  const filteredVerified Properties in Gurgaon Societies = useMemo(() => {
     const value = query.trim().toLowerCase();
 
     if (!value) return properties;
@@ -170,9 +170,9 @@ export function PropertiesPage() {
           <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-8 text-amber-800">
             {error}
           </div>
-        ) : filteredProperties.length ? (
+        ) : filteredVerified Properties in Gurgaon Societies.length ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {filteredProperties.map((property) => (
+            {filteredVerified Properties in Gurgaon Societies.map((property) => (
               <Link
                 key={property.id}
                 to={`/property/${property.slug}`}

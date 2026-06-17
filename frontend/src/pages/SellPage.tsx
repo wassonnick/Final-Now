@@ -224,15 +224,15 @@ export function SellPage() {
                 Owner listing
               </Badge>
               <h1 className="max-w-2xl text-4xl font-black tracking-[-0.045em] leading-[0.98] text-slate-950 md:text-6xl">
-                List your Gurgaon flat. Get verified buyers. No broker hassle.
+                List Your Gurgaon Flat. Get Real Buyers. No Broker Hassle.
               </h1>
               <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 md:text-lg">
-                Share your society, BHK, price expectation and callback time once. SocietyFlats verifies the owner lead, captures society context and routes serious buyer/tenant enquiries to the CRM.
+                Thousands of verified buyers and tenants are searching right now. Share your society, BHK, price expectation and callback time once. SocietyFlats verifies the details, prepares the listing context and connects you with serious enquiries.
               </p>
               <div className="mt-7 grid gap-3 sm:grid-cols-3">
                 {[
                   "Verified enquiries",
-                  "No listing fee",
+                  "No listing fees",
                   "Buyer/tenant matching",
                 ].map((item) => (
                   <div
@@ -446,7 +446,7 @@ export function SellPage() {
                 </form>
               )}
               <p className="text-xs text-navy-400 mt-4 text-center">
-                By submitting, you agree to be contacted once by SocietyFlats for verification, pricing guidance and matching buyer/tenant enquiries.
+                By submitting, you agree to be contacted by SocietyFlats for property verification, pricing guidance and matching buyer or tenant enquiries. Your details are secure.
               </p>
             </div>
           </div>
@@ -457,10 +457,10 @@ export function SellPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-white text-navy-700 border-navy-200">
-              How listing with SocietyFlats works
+              How It Works
             </Badge>
             <h2 className="text-3xl md:text-5xl font-display font-bold text-navy-900">
-              Three simple steps to turn your flat into verified inventory.
+              Submit your details, let us verify, then connect with real buyers and tenants.
             </h2>
           </div>
           <div className="grid md:grid-cols-4 gap-6">

@@ -33,10 +33,10 @@ export function InsightsPage() {
       <div className="bg-navy-500 py-12">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl md:text-4xl font-display font-bold text-white mb-3">
-            Gurgaon Real Estate Insights
+            Gurgaon Real Estate Insights: Data-Driven Decisions
           </h1>
           <p className="text-lg text-navy-200">
-            Real-time rent trends, demand analytics, and occupancy data across all localities.
+            Understand market trends, price movement, rental yields and investment returns before shortlisting a Gurgaon society.
           </p>
         </div>
       </div>
@@ -46,7 +46,7 @@ export function InsightsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: 'Avg Rent (2BHK)', value: '₹42,500', trend: '+8%', up: true },
-            { label: 'Market Growth', value: '12.5%', trend: 'YoY', up: true },
+            { label: 'Avg. Property Growth', value: '12.5%', trend: 'YoY', up: true },
             { label: 'Avg Occupancy', value: '91.5%', trend: '+2%', up: true },
             { label: 'Active Listings', value: '2,450', trend: '+15%', up: true },
           ].map((metric, i) => (

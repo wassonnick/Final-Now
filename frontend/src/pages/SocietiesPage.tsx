@@ -37,7 +37,7 @@ type ApiResponse = {
 const fallbackImage =
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1400&q=80';
 
-function extractSocieties(payload: ApiResponse): Society[] {
+function extractVerified Gurgaon Societies(payload: ApiResponse): Society[] {
   if (Array.isArray(payload.data)) return payload.data;
   if (Array.isArray(payload.data?.data)) return payload.data.data;
   return [];
@@ -56,8 +56,8 @@ function societyLocation(society: Society) {
   return [society.sector, society.locality].filter(Boolean).join(', ') || 'Gurgaon';
 }
 
-export function SocietiesPage() {
-  const [societies, setSocieties] = useState<Society[]>([]);
+export function Verified Gurgaon SocietiesPage() {
+  const [societies, setVerified Gurgaon Societies] = useState<Society[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(Boolean(API_BASE_URL));
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +65,7 @@ export function SocietiesPage() {
   useEffect(() => {
     let mounted = true;
 
-    async function loadSocieties() {
+    async function loadVerified Gurgaon Societies() {
       if (!API_BASE_URL) {
         setLoading(false);
         setError('Live API URL is not configured.');
@@ -79,7 +79,7 @@ export function SocietiesPage() {
         const json: ApiResponse = await response.json();
 
         if (mounted) {
-          setSocieties(extractSocieties(json));
+          setVerified Gurgaon Societies(extractVerified Gurgaon Societies(json));
           setError(null);
         }
       } catch {
@@ -91,14 +91,14 @@ export function SocietiesPage() {
       }
     }
 
-    loadSocieties();
+    loadVerified Gurgaon Societies();
 
     return () => {
       mounted = false;
     };
   }, []);
 
-  const filteredSocieties = useMemo(() => {
+  const filteredVerified Gurgaon Societies = useMemo(() => {
     const value = query.trim().toLowerCase();
     if (!value) return societies;
 
@@ -126,7 +126,7 @@ export function SocietiesPage() {
               Gurgaon Society Intelligence
             </Badge>
             <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-navy-900 md:text-6xl">
-              Explore verified societies in Gurgaon
+              Explore Verified Societies verified societies in Gurgaon
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-navy-500">
               Compare society scores, rent ranges, sale ranges, amenities and available inventory before shortlisting your next home.
@@ -157,9 +157,9 @@ export function SocietiesPage() {
           <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-8 text-amber-800">
             {error}
           </div>
-        ) : filteredSocieties.length ? (
+        ) : filteredVerified Gurgaon Societies.length ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {filteredSocieties.map((society) => (
+            {filteredVerified Gurgaon Societies.map((society) => (
               <Link
                 key={society.id || society.slug}
                 to={`/society/${society.slug}`}

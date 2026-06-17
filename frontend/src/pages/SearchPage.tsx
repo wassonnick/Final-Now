@@ -221,7 +221,7 @@ function EmptyResults({
               to={advisorUrl}
               className="inline-flex h-11 items-center justify-center rounded-full border border-blue-100 bg-white px-4 text-sm font-black text-blue-700 hover:bg-blue-50"
             >
-              <Sparkles className="mr-2 h-4 w-4" /> Ask AI Advisor
+              <Sparkles className="mr-2 h-4 w-4" /> Ask SocietyFlats AI Advisor
             </Link>
             <Link
               to={browseUrl}
@@ -1145,7 +1145,7 @@ export function SearchPage() {
                   <Link
                     to={`/ai-advisor?q=${encodeURIComponent(query || resultLabel(activeTab))}`}
                   >
-                    Ask AI Advisor
+                    Ask SocietyFlats AI Advisor
                   </Link>
                 </Button>
               </div>

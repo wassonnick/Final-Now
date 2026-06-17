@@ -145,12 +145,12 @@ export function AIAdvisorPage() {
               </span>
 
               <h1 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">
-                SocietyFlats AI: your personal Gurgaon home advisor.
+                SocietyFlats AI: Your Personal Home Advisor
               </h1>
               <p className="sr-only">Continue your Gurgaon society shortlist.</p>
 
               <p className="mt-3 max-w-xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
-                Tell us your budget, office or school location, family needs, pets, preferred builder, lifestyle or investment goal.
+                Answer a few simple questions or type freely. SocietyFlats AI matches your budget, commute, lifestyle and investment goal with Gurgaon societies and homes.
               </p>
 
               <div className="mt-5 grid grid-cols-3 gap-2 rounded-[1.25rem] border border-blue-100 bg-white p-2 shadow-sm">
@@ -270,12 +270,12 @@ export function AIAdvisorPage() {
                     trackEvent("ai_open_full_search_clicked", {
                       source: "ai_advisor_page",
                       ai_query: activeQuestion,
-                      cta_label: "View all matching results",
+                      cta_label: "View All Matching Homes",
                     })
                   }
                 >
                   <Button variant="outline" className="w-full rounded-full border-blue-100 text-blue-700 hover:bg-blue-50">
-                    View all matching results
+                    View All Matching Homes
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -285,14 +285,14 @@ export function AIAdvisorPage() {
                     trackEvent("ai_callback_opened", {
                       source: "ai_advisor_page",
                       ai_query: activeQuestion,
-                      cta_label: "Schedule expert callback",
+                      cta_label: "Schedule a Consultation",
                     });
                     setCallbackOpen(true);
                   }}
                   className="rounded-full bg-blue-700 hover:bg-blue-800"
                 >
                   <MessageCircle className="mr-2 h-4 w-4" />
-                  Schedule expert callback
+                  Schedule a Consultation
                 </Button>
               </div>
             </div>
@@ -305,10 +305,10 @@ export function AIAdvisorPage() {
           <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                Your society recommendations
+                Your Perfect Match
               </p>
               <h2 className="mt-2 font-display text-3xl font-black text-navy-950">
-                {matches.length ? "Your perfect society matches" : "Answer once to get a shortlist"}
+                {matches.length ? "Top Recommendations" : "Answer once to get personalized society recommendations"}
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500">
                 Results open into society pages where you can check location context, verified homes, society fit and callback options.
@@ -389,7 +389,7 @@ export function AIAdvisorPage() {
                   className="mt-3 rounded-full bg-blue-700 hover:bg-blue-800 md:mt-0"
                 >
                   <CalendarCheck className="mr-2 h-4 w-4" />
-                  Schedule expert callback
+                  Schedule a Consultation
                 </Button>
               </div>
             </>
@@ -428,17 +428,17 @@ export function AIAdvisorPage() {
         title="Request AI shortlist callback"
         subtitle="Share your number and we will help shortlist societies and homes from your AI requirement."
         source="ai_advisor_callback"
-        ctaLabel="Schedule expert callback"
+        ctaLabel="Schedule a Consultation"
         leadIntent="ai_shortlist"
         trackingContext={{
-          cta_label: "Schedule expert callback",
+          cta_label: "Schedule a Consultation",
           lead_intent: "ai_shortlist",
           ai_query: activeQuestion,
           entity_type: "ai_advisor",
         }}
         defaultMessage={`I want help with this AI shortlist requirement: ${activeQuestion}`}
         defaultRequirement="AI shortlist callback"
-        submitLabel="Schedule expert callback"
+        submitLabel="Schedule a Consultation"
         successMessage="Request received. SocietyFlats will call with matching Gurgaon societies, verified homes and next steps."
         onClose={() => setCallbackOpen(false)}
       />

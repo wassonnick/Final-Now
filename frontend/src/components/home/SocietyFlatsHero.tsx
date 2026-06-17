@@ -152,7 +152,7 @@ export default function SocietyFlatsHero() {
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 shadow-sm">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             <span className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-700">
-              Gurgaon society intelligence
+              Gurgaon society-first intelligence
             </span>
           </div>
 
@@ -199,7 +199,7 @@ export default function SocietyFlatsHero() {
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search society, sector, landmark or budget..."
+                  placeholder="Sector 65... Golf Course Road... DLF..."
                   className="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none placeholder:text-blue-300"
                 />
               </div>
@@ -243,7 +243,7 @@ export default function SocietyFlatsHero() {
                     Ask SocietyFlats AI
                   </p>
                   <p className="text-xs font-bold text-emerald-700">
-                    Works inside this page
+                    No forced AI page jump
                   </p>
                 </div>
               </div>
@@ -368,7 +368,7 @@ export default function SocietyFlatsHero() {
 
             <div className="mt-2 flex items-center justify-center gap-2 text-xs font-bold text-navy-400">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              No forced AI page jump.
+              No forced AI page jump. Search stays simple: choose intent, enter society/location and view verified homes.
             </div>
           </div>
         </div>

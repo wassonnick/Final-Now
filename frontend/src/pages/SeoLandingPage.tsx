@@ -1,4 +1,4 @@
-// C71 SEO landing copy: verified Verified Gurgaon societies, sector pages, builder pages and society-first internal linking.
+// C71 SEO landing copy: verified Gurgaon societies, sector pages, builder pages and society-first internal linking.
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -207,7 +207,7 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
       eyebrow: "Gurgaon Society Directory",
       title: "Verified societies in Gurgaon",
       description:
-        "Explore verified Verified Gurgaon societies with society scores, rent ranges, sale ranges, live inventory and callback support.",
+        "Explore verified Gurgaon societies with society scores, rent ranges, sale ranges, live inventory and callback support.",
       canonical: "/gurgaon/societies",
       searchQuery: "Verified Gurgaon societies",
     };
@@ -245,10 +245,10 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
   }
 
   return {
-    eyebrow: "Gurgaon Society-First Search",
+    eyebrow: "Gurgaon Society Guide",
     title: "Find the right society before choosing the home",
     description:
-      "Discover verified Verified Gurgaon societies, live properties, owner listings and society-first recommendations on SocietyFlats.",
+      "Discover verified Gurgaon societies, live properties, owner listings and society-first recommendations on SocietyFlats.",
     canonical: "/gurgaon",
     searchQuery: "Gurgaon",
   };
@@ -272,7 +272,7 @@ function landingSeoText(variant: LandingVariant, localitySlug?: string, builderS
   }
 
   if (variant === "locality") {
-    return `${localityLabel} pages collect verified Verified Gurgaon societies and available homes so users can compare location strength, pricing context and resident fit faster.`;
+    return `${localityLabel} pages collect verified Gurgaon societies and available homes so users can compare location strength, pricing context and resident fit faster.`;
   }
 
   if (variant === "gurgaon-properties") {
@@ -280,10 +280,10 @@ function landingSeoText(variant: LandingVariant, localitySlug?: string, builderS
   }
 
   if (variant === "gurgaon-societies") {
-    return "The Verified Gurgaon societies section is designed for users who want to compare societies first, then shortlist homes based on fit, budget and location.";
+    return "Every verified society profile is built around a 25-point audit: legal clearance, governance quality, maintenance standards, market comparables and community health.";
   }
 
-  return "SocietyFlats is built around the Gurgaon society-first journey: compare the society, understand the location and then shortlist homes with better context.";
+  return "Why society matters more than the flat: the right Gurgaon society improves security, resale speed, financing confidence, lifestyle quality and long-term appreciation.";
 }
 
 export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
