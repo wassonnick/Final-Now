@@ -185,6 +185,60 @@ function sourceCardClass(bucket: string) {
   return "border-slate-100 bg-slate-50 text-slate-900";
 }
 
+function cleanLeadPhone(phone?: string) {
+  return String(phone || "").replace(/[^0-9]/g, "").slice(-10);
+}
+
+function samePhoneLeadCount(lead: AdminLead, allLeads: AdminLead[]) {
+  const key = cleanLeadPhone(lead.phone);
+  if (!key || key.length < 10) return 0;
+
+  return allLeads.filter((item) => cleanLeadPhone(item.phone) === key).length;
+}
+
+function hasMeaningfulRequirement(lead: AdminLead) {
+  const value = String(lead.requirement || "").trim().toLowerCase();
+
+  return Boolean(value) && !["not specified", "general enquiry", "general inquiry", "requirement pending"].includes(value);
+}
+
+function isMissingPhoneLead(lead: AdminLead) {
+  return cleanLeadPhone(lead.phone).length < 10;
+}
+
+function isMissingRequirementLead(lead: AdminLead) {
+  return !hasMeaningfulRequirement(lead);
+}
+
+function isDuplicateLead(lead: AdminLead, allLeads: AdminLead[]) {
+  return samePhoneLeadCount(lead, allLeads) > 1;
+}
+
+function isHighIntentLead(lead: AdminLead) {
+  const source = String(lead.source || "").toLowerCase();
+  const cta = String(lead.cta_label || "").toLowerCase();
+  const intent = String(lead.lead_intent || "").toLowerCase();
+  const requirement = String(lead.requirement || "").toLowerCase();
+  const combined = [source, cta, intent, requirement].join(" ");
+
+  return (
+    lead.priority === "Hot" ||
+    combined.includes("callback") ||
+    combined.includes("visit") ||
+    combined.includes("owner") ||
+    combined.includes("broker") ||
+    sourceBucket(lead) === "property"
+  );
+}
+
+function qualityCardClass(tone: "amber" | "rose" | "emerald" | "blue") {
+  if (tone === "amber") return "border-amber-100 bg-amber-50 text-amber-900";
+  if (tone === "rose") return "border-rose-100 bg-rose-50 text-rose-900";
+  if (tone === "emerald") return "border-emerald-100 bg-emerald-50 text-emerald-900";
+
+  return "border-blue-100 bg-blue-50 text-blue-900";
+}
+
 function parseApiList(json: any) {
   if (Array.isArray(json)) return json;
   if (Array.isArray(json?.data)) return json.data;
@@ -440,6 +494,39 @@ export function AdminDashboardPage() {
       count: leads.filter((lead) => sourceBucket(lead) === item.bucket).length,
       latest: leads.find((lead) => sourceBucket(lead) === item.bucket),
     }));
+  }, [leads]);
+
+  const qualitySummary = useMemo(() => {
+    return [
+      {
+        label: "Duplicates",
+        value: leads.filter((lead) => isDuplicateLead(lead, leads)).length,
+        helper: "Same phone leads",
+        href: "/admin/leads?view=duplicates",
+        tone: "amber" as const,
+      },
+      {
+        label: "Missing phone",
+        value: leads.filter(isMissingPhoneLead).length,
+        helper: "Cannot call",
+        href: "/admin/leads?view=missing_phone",
+        tone: "rose" as const,
+      },
+      {
+        label: "Missing requirement",
+        value: leads.filter(isMissingRequirementLead).length,
+        helper: "Needs qualification",
+        href: "/admin/leads?view=missing_requirement",
+        tone: "rose" as const,
+      },
+      {
+        label: "High intent",
+        value: leads.filter(isHighIntentLead).length,
+        helper: "Prioritize",
+        href: "/admin/leads?view=high_intent",
+        tone: "emerald" as const,
+      },
+    ];
   }, [leads]);
 
   const actionQueue = useMemo(() => {
@@ -701,6 +788,39 @@ export function AdminDashboardPage() {
                 ) : (
                   <p className="mt-3 text-[11px] opacity-60">No leads yet.</p>
                 )}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                C59 lead quality command
+              </p>
+              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
+                Quality and duplicate detection
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                Spot duplicate phones, missing fields and high-intent leads before follow-up.
+              </p>
+            </div>
+            <Button asChild variant="outline" className="rounded-full border-slate-200">
+              <Link to="/admin/leads?view=duplicates">Review duplicates</Link>
+            </Button>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {qualitySummary.map((item) => (
+              <Link
+                key={item.label}
+                to={item.href}
+                className={`rounded-[22px] border p-4 transition hover:-translate-y-0.5 hover:shadow-md ${qualityCardClass(item.tone)}`}
+              >
+                <p className="text-xs font-black uppercase tracking-[0.14em] opacity-70">{item.label}</p>
+                <p className="mt-3 text-3xl font-black">{dashboardValue(item.value, leadLoading)}</p>
+                <p className="mt-1 text-xs font-semibold opacity-75">{item.helper}</p>
               </Link>
             ))}
           </div>

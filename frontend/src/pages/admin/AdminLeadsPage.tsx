@@ -45,6 +45,10 @@ const pipelineViews = [
   { label: "Overdue", view: "overdue" },
   { label: "Upcoming", view: "upcoming" },
   { label: "No Follow-up", view: "no_followup" },
+  { label: "Duplicates", view: "duplicates" },
+  { label: "Missing Phone", view: "missing_phone" },
+  { label: "Missing Requirement", view: "missing_requirement" },
+  { label: "High Intent", view: "high_intent" },
   { label: "AI", view: "ai" },
   { label: "Search", view: "search" },
   { label: "Property", view: "property" },
@@ -475,6 +479,92 @@ function canUsePhone(phone?: string) {
   return cleanPhone(phone).length >= 10;
 }
 
+function leadPhoneKey(lead: AdminLead) {
+  return cleanPhone(lead.phone).slice(-10);
+}
+
+function samePhoneLeadCount(lead: AdminLead, allLeads: AdminLead[]) {
+  const key = leadPhoneKey(lead);
+  if (!key || key.length < 10) return 0;
+
+  return allLeads.filter((item) => leadPhoneKey(item) === key).length;
+}
+
+function hasMeaningfulRequirement(lead: AdminLead) {
+  const value = String(lead.requirement || "").trim().toLowerCase();
+
+  return Boolean(value) && !["not specified", "general enquiry", "general inquiry", "requirement pending"].includes(value);
+}
+
+function isMissingPhoneLead(lead: AdminLead) {
+  return !canUsePhone(lead.phone);
+}
+
+function isMissingRequirementLead(lead: AdminLead) {
+  return !hasMeaningfulRequirement(lead);
+}
+
+function isDuplicateLead(lead: AdminLead, allLeads: AdminLead[]) {
+  return samePhoneLeadCount(lead, allLeads) > 1;
+}
+
+function isHighIntentLead(lead: AdminLead) {
+  const source = String(lead.source || "").toLowerCase();
+  const cta = String(lead.cta_label || "").toLowerCase();
+  const intent = String(lead.lead_intent || "").toLowerCase();
+  const requirement = String(lead.requirement || "").toLowerCase();
+  const combined = [source, cta, intent, requirement].join(" ");
+
+  return (
+    lead.priority === "Hot" ||
+    combined.includes("callback") ||
+    combined.includes("visit") ||
+    combined.includes("buy") ||
+    combined.includes("rent") ||
+    combined.includes("owner") ||
+    combined.includes("broker") ||
+    sourceBucket(lead) === "property"
+  );
+}
+
+function isCompleteLead(lead: AdminLead) {
+  return canUsePhone(lead.phone) && hasMeaningfulRequirement(lead) && Boolean(String(lead.name || "").trim());
+}
+
+function leadQualityBadges(lead: AdminLead, allLeads: AdminLead[]) {
+  const badges: string[] = [];
+
+  if (isDuplicateLead(lead, allLeads)) badges.push(`Duplicate x${samePhoneLeadCount(lead, allLeads)}`);
+  if (isMissingPhoneLead(lead)) badges.push("Missing phone");
+  if (isMissingRequirementLead(lead)) badges.push("Missing requirement");
+  if (isHighIntentLead(lead)) badges.push("High intent");
+  if (isCompleteLead(lead) && !isDuplicateLead(lead, allLeads)) badges.push("Complete");
+
+  return badges;
+}
+
+function leadQualityBadgeClass(label: string) {
+  const value = label.toLowerCase();
+
+  if (value.includes("duplicate")) return "border-amber-100 bg-amber-50 text-amber-700";
+  if (value.includes("missing")) return "border-rose-100 bg-rose-50 text-rose-700";
+  if (value.includes("high")) return "border-emerald-100 bg-emerald-50 text-emerald-700";
+  if (value.includes("complete")) return "border-blue-100 bg-blue-50 text-blue-700";
+
+  return "border-slate-200 bg-slate-50 text-slate-600";
+}
+
+function leadQualitySearchText(lead: AdminLead, allLeads: AdminLead[]) {
+  return [
+    ...leadQualityBadges(lead, allLeads),
+    isDuplicateLead(lead, allLeads) ? "duplicate duplicate phone same phone repeated lead" : "",
+    isMissingPhoneLead(lead) ? "missing phone no phone incomplete" : "",
+    isMissingRequirementLead(lead) ? "missing requirement no requirement incomplete" : "",
+    isHighIntentLead(lead) ? "high intent hot callback visit property owner broker" : "",
+    isCompleteLead(lead) ? "complete quality complete" : "",
+  ].filter(Boolean).join(" ");
+}
+
 function whatsappUrl(lead: AdminLead) {
   const digits = cleanPhone(lead.phone).slice(-10);
   const interest = lead.property || lead.society || "your property requirement";
@@ -577,7 +667,7 @@ function followUpHelperText(lead: AdminLead) {
   return "Set a follow-up from lead detail";
 }
 
-function dashboardLeadViewMatches(lead: AdminLead, view: string) {
+function dashboardLeadViewMatches(lead: AdminLead, view: string, allLeads: AdminLead[] = []) {
   if (!view || view === "all") return true;
 
   if (view === "today") {
@@ -604,6 +694,22 @@ function dashboardLeadViewMatches(lead: AdminLead, view: string) {
 
   if (view === "no_followup") {
     return followUpState(lead) === "not_set";
+  }
+
+  if (view === "duplicates") {
+    return isDuplicateLead(lead, allLeads);
+  }
+
+  if (view === "missing_phone") {
+    return isMissingPhoneLead(lead);
+  }
+
+  if (view === "missing_requirement") {
+    return isMissingRequirementLead(lead);
+  }
+
+  if (view === "high_intent") {
+    return isHighIntentLead(lead);
   }
 
   if (view === "ai") {
@@ -661,6 +767,10 @@ function dashboardLeadViewLabel(view: string) {
   if (view === "overdue") return "Overdue follow-ups";
   if (view === "upcoming") return "Upcoming follow-ups";
   if (view === "no_followup") return "Leads without follow-up";
+  if (view === "duplicates") return "Duplicate phone leads";
+  if (view === "missing_phone") return "Leads missing phone";
+  if (view === "missing_requirement") return "Leads missing requirement";
+  if (view === "high_intent") return "High-intent leads";
   if (view === "ai") return "AI advisor leads";
   if (view === "search") return "Search journey leads";
   if (view === "property") return "Property page leads";
@@ -674,7 +784,7 @@ function dashboardLeadViewLabel(view: string) {
 
 function pipelineViewCount(leads: AdminLead[], view: string) {
   if (view === "all") return leads.length;
-  return leads.filter((lead) => dashboardLeadViewMatches(lead, view)).length;
+  return leads.filter((lead) => dashboardLeadViewMatches(lead, view, leads)).length;
 }
 
 function pipelineEmptyMessage(view: string) {
@@ -684,6 +794,10 @@ function pipelineEmptyMessage(view: string) {
   if (view === "overdue") return "No overdue follow-ups. You’re clear for now.";
   if (view === "upcoming") return "No upcoming follow-ups scheduled.";
   if (view === "no_followup") return "Every visible lead already has a follow-up set.";
+  if (view === "duplicates") return "No duplicate phone leads found.";
+  if (view === "missing_phone") return "No leads missing phone.";
+  if (view === "missing_requirement") return "No leads missing requirement.";
+  if (view === "high_intent") return "No high-intent leads found.";
   if (view === "ai") return "No AI advisor leads found.";
   if (view === "search") return "No search journey leads found.";
   if (view === "property") return "No property page leads found.";
@@ -827,7 +941,7 @@ export function AdminLeadsPage() {
     const search = query.trim().toLowerCase();
 
     return leads
-      .filter((lead) => dashboardLeadViewMatches(lead, dashboardView))
+      .filter((lead) => dashboardLeadViewMatches(lead, dashboardView, leads))
       .sort((first, second) => {
         const weightDelta = followUpSortWeight(first) - followUpSortWeight(second);
         if (weightDelta !== 0) return weightDelta;
@@ -852,6 +966,7 @@ export function AdminLeadsPage() {
             followUpLabel(lead),
             followUpUrgencyLabel(lead),
             workflowNextAction(lead),
+            leadQualitySearchText(lead, leads),
             attributionSearchText(lead),
             lead.source,
             lead.source_page,
@@ -890,6 +1005,10 @@ export function AdminLeadsPage() {
   const overdueFollowUps = leads.filter((lead) => followUpState(lead) === "overdue").length;
   const upcomingFollowUps = leads.filter((lead) => followUpState(lead) === "upcoming").length;
   const noFollowUps = leads.filter((lead) => followUpState(lead) === "not_set").length;
+  const duplicateLeads = leads.filter((lead) => isDuplicateLead(lead, leads)).length;
+  const missingPhoneLeads = leads.filter(isMissingPhoneLead).length;
+  const missingRequirementLeads = leads.filter(isMissingRequirementLead).length;
+  const highIntentLeads = leads.filter(isHighIntentLead).length;
 
   const handleStatusChange = async (lead: AdminLead, nextStatus: LeadStatus) => {
     const previousLeads = leads;
@@ -972,6 +1091,10 @@ export function AdminLeadsPage() {
             ["Overdue", overdueFollowUps, "Needs action"],
             ["Upcoming", upcomingFollowUps, "Scheduled"],
             ["No Follow-up", noFollowUps, "Needs reminder"],
+            ["Duplicates", duplicateLeads, "Same phone"],
+            ["Missing Phone", missingPhoneLeads, "Incomplete"],
+            ["Missing Req.", missingRequirementLeads, "Incomplete"],
+            ["High Intent", highIntentLeads, "Priority quality"],
             ["Hot Leads", hotLeads, "Priority follow-ups"],
             ["Booked", bookedLeads, "Closed wins"],
           ].map(([label, value, helper]) => (
@@ -1144,6 +1267,13 @@ export function AdminLeadsPage() {
                             {attributionBadge(lead)}
                           </span>
                         ) : null}
+                        <div className="mt-1 flex flex-wrap justify-end gap-1 xl:justify-start">
+                          {leadQualityBadges(lead, leads).map((badge) => (
+                            <span key={badge} className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${leadQualityBadgeClass(badge)}`}>
+                              {badge}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
