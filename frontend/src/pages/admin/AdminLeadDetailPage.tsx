@@ -5,6 +5,8 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
+  FileText,
+  History,
   Flame,
   Mail,
   MessageCircle,
@@ -144,6 +146,163 @@ function formatSubmittedDetails(text: string) {
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
+}
+
+function timelineActivityType(text: string) {
+  const value = text.toLowerCase();
+
+  if (value.includes("whatsapp")) return "WhatsApp";
+  if (value.includes("call") || value.includes("called")) return "Call";
+  if (value.includes("visit")) return "Visit";
+  if (value.includes("no answer")) return "No answer";
+  if (value.includes("follow-up") || value.includes("follow up") || value.includes("reminder")) return "Follow-up";
+  if (value.includes("owner")) return "Owner";
+  if (value.includes("broker")) return "Broker";
+  if (value.includes("booked") || value.includes("active")) return "Conversion";
+
+  return "Note";
+}
+
+function timelineActivityClass(type: string) {
+  if (type === "WhatsApp") return "border-emerald-100 bg-emerald-50 text-emerald-700";
+  if (type === "Call") return "border-blue-100 bg-blue-50 text-blue-700";
+  if (type === "Visit") return "border-violet-100 bg-violet-50 text-violet-700";
+  if (type === "No answer") return "border-amber-100 bg-amber-50 text-amber-700";
+  if (type === "Follow-up") return "border-sky-100 bg-sky-50 text-sky-700";
+  if (type === "Owner") return "border-emerald-100 bg-emerald-50 text-emerald-700";
+  if (type === "Broker") return "border-orange-100 bg-orange-50 text-orange-700";
+  if (type === "Conversion") return "border-rose-100 bg-rose-50 text-rose-700";
+
+  return "border-slate-200 bg-slate-50 text-slate-600";
+}
+
+function cleanTimelineText(text: string) {
+  return text
+    .replace(/^Contact action:\s*/i, "")
+    .replace(/^Admin note:\s*/i, "")
+    .trim();
+}
+
+function groupedTimelineItems(lead?: AdminLead | null) {
+  const items = adminTimelineItems(lead);
+
+  return {
+    contact: items.filter((item) => ["Call", "WhatsApp", "No answer"].includes(timelineActivityType(item.text))),
+    followUp: items.filter((item) => timelineActivityType(item.text) === "Follow-up"),
+    conversion: items.filter((item) => ["Visit", "Owner", "Broker", "Conversion"].includes(timelineActivityType(item.text))),
+    notes: items.filter((item) => {
+      const type = timelineActivityType(item.text);
+      return !["Call", "WhatsApp", "No answer", "Follow-up", "Visit", "Owner", "Broker", "Conversion"].includes(type);
+    }),
+  };
+}
+
+function timelineSummary(lead?: AdminLead | null) {
+  const grouped = groupedTimelineItems(lead);
+  const items = adminTimelineItems(lead);
+
+  return {
+    total: items.length,
+    contact: grouped.contact.length,
+    followUp: grouped.followUp.length,
+    conversion: grouped.conversion.length,
+    notes: grouped.notes.length,
+  };
+}
+
+function leadTypeQuickNotes(lead: AdminLead) {
+  if (isOwnerSource(lead.source)) {
+    return [
+      "Owner verified on call",
+      "Owner photos requested",
+      "Owner photos received",
+      "Price/rent confirmed with owner",
+      "Availability confirmed",
+      "Create draft after details",
+      "Owner not reachable",
+    ];
+  }
+
+  if (isBrokerSource(lead.source)) {
+    return [
+      "Broker profile verified",
+      "Broker inventory requested",
+      "Commission terms discussed",
+      "Working areas confirmed",
+      "Broker partner active",
+      "Broker not suitable",
+      "Broker not reachable",
+    ];
+  }
+
+  return quickNoteTemplates;
+}
+
+function submittedDetailCards(lead: AdminLead) {
+  const submitted = submittedDetailItems(lead);
+
+  if (submitted.length) {
+    return submitted.flatMap((item) => formatSubmittedDetails(item.text));
+  }
+
+  const fallback = [
+    lead.requirement ? `Requirement: ${lead.requirement}` : "",
+    lead.budget ? `Budget: ${lead.budget}` : "",
+    lead.society ? `Society: ${lead.society}` : "",
+    lead.property ? `Property: ${lead.property}` : "",
+    preferredCallbackTime(lead) ? `Preferred time: ${preferredCallbackTime(lead)}` : "",
+    lead.source ? `Source: ${sourceLabel(lead.source)}` : "",
+  ].filter(Boolean);
+
+  return fallback;
+}
+
+function TimelineGroup({
+  title,
+  helper,
+  items,
+}: {
+  title: string;
+  helper: string;
+  items: ReturnType<typeof adminTimelineItems>;
+}) {
+  return (
+    <div className="rounded-[24px] border border-slate-100 bg-slate-50 p-4">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-black text-slate-950">{title}</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">{helper}</p>
+        </div>
+        <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600">
+          {items.length}
+        </span>
+      </div>
+
+      {items.length ? (
+        <div className="space-y-3">
+          {items.map((item) => {
+            const type = timelineActivityType(item.text);
+
+            return (
+              <div key={item.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-black ${timelineActivityClass(type)}`}>
+                    {type}
+                  </span>
+                  {item.meta ? <span className="text-xs text-slate-400">{item.meta}</span> : null}
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-800">{cleanTimelineText(item.text)}</p>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+          No records in this group yet.
+        </p>
+      )}
+    </div>
+  );
 }
 
 function statusClass(status: LeadStatus) {
@@ -675,9 +834,12 @@ const quickNoteTemplates = [
   "Call done - requirement verified",
   "Called, no answer",
   "WhatsApp sent with matching options",
+  "Follow-up reminder set",
   "Visit timing discussed",
+  "Customer asked for more options",
   "Budget mismatch",
   "Owner details/photos requested",
+  "Owner photos received",
   "Broker inventory requested",
   "Not interested",
 ];
@@ -850,6 +1012,9 @@ export function AdminLeadDetailPage() {
   const linkedLiveProperty = lead ? linkedLivePropertyForLead(lead) : undefined;
   const linkedOwnerProperty = linkedDraftProperty || linkedLiveProperty;
   const canCall = phoneDigits.length >= 10;
+  const submittedCards = useMemo(() => (lead ? submittedDetailCards(lead) : []), [lead]);
+  const timelineGroups = useMemo(() => groupedTimelineItems(lead), [lead]);
+  const timelineStats = useMemo(() => timelineSummary(lead), [lead]);
 
   const loadLead = async () => {
     setLoading(true);
@@ -927,7 +1092,7 @@ export function AdminLeadDetailPage() {
     setError("");
 
     try {
-      const updated = await addLeadNoteRemote(lead, text);
+      const updated = await addLeadNoteRemote(lead, `Admin note: ${text}`);
       setLead(updated);
       setNote("");
       setMessage("Note added to lead timeline.");
@@ -1072,7 +1237,7 @@ export function AdminLeadDetailPage() {
           <section className={`rounded-[28px] border p-5 shadow-sm ${followUpPanelClass(lead)}`}>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.16em] opacity-70">C53 follow-up command</p>
+                <p className="text-xs font-black uppercase tracking-[0.16em] opacity-70">C54 follow-up command</p>
                 <h2 className="mt-2 text-lg font-black">{followUpLabel(lead)}</h2>
                 <p className="mt-1 text-sm leading-6 opacity-80">{followUpPanelText(lead)}</p>
               </div>
@@ -1589,60 +1754,97 @@ export function AdminLeadDetailPage() {
               )}
             </section>
 
-            {submittedDetailItems(lead).length ? (
-              <section className="rounded-[32px] border border-amber-100 bg-amber-50 p-6 shadow-sm">
+            {submittedCards.length ? (
+              <section className="rounded-[32px] border border-amber-100 bg-amber-50 p-5 shadow-sm md:p-6">
                 <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600">
-                      Submitted details
+                      Submitted public details
                     </p>
                     <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
                       Original enquiry context
                     </h2>
                     <p className="mt-1 text-sm text-amber-800/80">
-                      Captured from the public form before admin follow-up started.
+                      Customer/owner/broker details captured before admin follow-up started.
                     </p>
                   </div>
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-amber-700">
-                    Form submission
+                  <span className="inline-flex w-fit items-center rounded-full bg-white px-3 py-1 text-xs font-bold text-amber-700">
+                    <FileText className="mr-1.5 h-3.5 w-3.5" />
+                    Public form
                   </span>
                 </div>
 
-                <div className="mt-5 space-y-2">
-                  {formatSubmittedDetails(submittedDetailItems(lead)[0].text).map((line, index) => (
-                    <div
-                      key={`${line}-${index}`}
-                      className="rounded-2xl border border-amber-100 bg-white px-4 py-3 text-sm leading-6 text-slate-700"
-                    >
-                      {line.includes(":") ? (
-                        <>
-                          <span className="font-bold text-slate-950">{line.split(":")[0]}:</span>
-                          <span>{line.slice(line.indexOf(":") + 1)}</span>
-                        </>
-                      ) : (
-                        <span className="font-semibold text-slate-800">{line}</span>
-                      )}
-                    </div>
-                  ))}
+                <div className="mt-5 grid gap-2 md:grid-cols-2">
+                  {submittedCards.map((line, index) => {
+                    const hasLabel = line.includes(":");
+                    const label = hasLabel ? line.split(":")[0] : "";
+                    const value = hasLabel ? line.slice(line.indexOf(":") + 1).trim() : line;
+
+                    return (
+                      <div
+                        key={`${line}-${index}`}
+                        className="rounded-2xl border border-amber-100 bg-white px-4 py-3 text-sm leading-6 text-slate-700"
+                      >
+                        {hasLabel ? (
+                          <>
+                            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-amber-600">
+                              {label}
+                            </p>
+                            <p className="mt-1 font-semibold text-slate-900">{value || "Not provided"}</p>
+                          </>
+                        ) : (
+                          <p className="font-semibold text-slate-800">{line}</p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             ) : null}
 
-            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold tracking-tight text-slate-950">
-                Notes & Timeline
-              </h2>
+            <section className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
+                    C54 CRM timeline
+                  </p>
+                  <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                    Notes, contact history and follow-up trail
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    Public form details are separated above. This section is only admin activity.
+                  </p>
+                </div>
+                <span className="inline-flex w-fit items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                  <History className="mr-1.5 h-3.5 w-3.5" />
+                  {timelineStats.total} admin notes
+                </span>
+              </div>
 
-              <div className="mt-4 rounded-3xl border border-blue-100 bg-blue-50 p-4">
+              <div className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4">
+                {[
+                  ["Contact", timelineStats.contact],
+                  ["Follow-up", timelineStats.followUp],
+                  ["Conversion", timelineStats.conversion],
+                  ["Notes", timelineStats.notes],
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                    <p className="text-2xl font-black text-slate-950">{String(value)}</p>
+                    <p className="mt-1 text-xs font-bold text-slate-500">{String(label)}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 rounded-3xl border border-blue-100 bg-blue-50 p-4">
                 <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
-                      Latest activity
+                      Latest admin activity
                     </p>
                     {adminTimelineItems(lead).length ? (
                       <>
-                        <p className="mt-2 text-sm font-semibold text-slate-950">
-                          {adminTimelineItems(lead)[0].text}
+                        <p className="mt-2 text-sm font-semibold leading-6 text-slate-950">
+                          {cleanTimelineText(adminTimelineItems(lead)[0].text)}
                         </p>
                         <p className="mt-1 text-xs text-slate-500">
                           {adminTimelineItems(lead)[0].meta}
@@ -1654,23 +1856,30 @@ export function AdminLeadDetailPage() {
                       </p>
                     )}
                   </div>
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-blue-700">
-                    {adminTimelineItems(lead).length} notes
-                  </span>
+                  {adminTimelineItems(lead)[0] ? (
+                    <span className={`rounded-full border px-3 py-1 text-xs font-bold ${timelineActivityClass(timelineActivityType(adminTimelineItems(lead)[0].text))}`}>
+                      {timelineActivityType(adminTimelineItems(lead)[0].text)}
+                    </span>
+                  ) : null}
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {quickNoteTemplates.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => applyQuickNote(item)}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-                  >
-                    {item}
-                  </button>
-                ))}
+              <div className="mt-5">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                  Quick notes for this lead type
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {leadTypeQuickNotes(lead).map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => applyQuickNote(item)}
+                      className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="mt-4 flex flex-col gap-3 md:flex-row">
@@ -1690,22 +1899,27 @@ export function AdminLeadDetailPage() {
                 </Button>
               </div>
 
-              <div className="mt-5 space-y-3">
-                {adminTimelineItems(lead).map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
-                  >
-                    <p className="text-sm text-slate-800">{item.text}</p>
-                    {item.meta ? (
-                      <p className="mt-1 text-xs text-slate-400">{item.meta}</p>
-                    ) : null}
-                  </div>
-                ))}
-
-                {!adminTimelineItems(lead).length ? (
-                  <p className="text-sm text-slate-500">No admin timeline notes yet.</p>
-                ) : null}
+              <div className="mt-6 grid gap-4">
+                <TimelineGroup
+                  title="Contact activity"
+                  helper="Calls, WhatsApp opens and no-answer attempts."
+                  items={timelineGroups.contact}
+                />
+                <TimelineGroup
+                  title="Follow-up history"
+                  helper="Reminder, next follow-up and scheduled action notes."
+                  items={timelineGroups.followUp}
+                />
+                <TimelineGroup
+                  title="Conversion and business actions"
+                  helper="Visits, owner/broker milestones and closing actions."
+                  items={timelineGroups.conversion}
+                />
+                <TimelineGroup
+                  title="General admin notes"
+                  helper="Qualification details, preferences and other internal notes."
+                  items={timelineGroups.notes}
+                />
               </div>
             </section>
           </div>
