@@ -1081,6 +1081,7 @@ export function AdminLeadsPage() {
   const [error, setError] = useState("");
   const [savingLeadId, setSavingLeadId] = useState<number | null>(null);
   const [selectedLeadIds, setSelectedLeadIds] = useState<number[]>([]);
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   const dashboardView = useMemo(() => {
     return new URLSearchParams(location.search).get("view") || "all";
@@ -1316,6 +1317,51 @@ export function AdminLeadsPage() {
     exportLeadsCsv(selectedLeads);
   };
 
+  const handleBulkSetTomorrow = async () => {
+    if (!selectedLeads.length) {
+      setError("Please select at least one lead first.");
+      return;
+    }
+
+    const previousLeads = leads;
+    const followUpAt = tomorrowFollowUpValue();
+    const selectedIds = new Set(selectedLeads.map((lead) => lead.id));
+
+    setBulkSaving(true);
+    setError("");
+    setLeads((current) =>
+      current.map((lead) =>
+        selectedIds.has(lead.id) ? { ...lead, followUpAt } : lead,
+      ),
+    );
+
+    try {
+      const updatedLeads: AdminLead[] = [];
+
+      for (const lead of selectedLeads) {
+        const optimisticLead = { ...lead, followUpAt };
+        const saved = await saveAdminLead(optimisticLead);
+        const noted = await addLeadNoteRemote(
+          saved,
+          `Follow-up reminder set from C64B bulk tomorrow action: ${followUpAt}`,
+        );
+        updatedLeads.push(noted);
+      }
+
+      setLeads((current) =>
+        current.map((lead) => updatedLeads.find((item) => item.id === lead.id) || lead),
+      );
+      setSelectedLeadIds([]);
+      setError(`C64B bulk tomorrow completed for ${updatedLeads.length} selected lead${updatedLeads.length === 1 ? "" : "s"}.`);
+    } catch (err) {
+      console.error(err);
+      setLeads(previousLeads);
+      setError("C64B bulk tomorrow failed. Please try again or use row-level Tomorrow.");
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
   const handleDelete = async (lead: AdminLead) => {
     if (!window.confirm(`Delete lead for ${lead.name}?`)) return;
 
@@ -1515,10 +1561,10 @@ export function AdminLeadsPage() {
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">
-                  C64A selection foundation
+                  C64B selection + tomorrow
                 </p>
                 <p className="mt-1 text-sm font-semibold text-blue-900">
-                  {selectedTotalCount ? `${selectedTotalCount} selected` : "Select leads, then export the selected list."}
+                  {selectedTotalCount ? `${selectedTotalCount} selected` : "Select leads, then export or set tomorrow follow-up."}
                 </p>
               </div>
 
@@ -1534,7 +1580,7 @@ export function AdminLeadsPage() {
 
                 <button
                   type="button"
-                  disabled={!selectedTotalCount}
+                  disabled={!selectedTotalCount || bulkSaving}
                   onClick={handleExportSelectedLeads}
                   className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 disabled:opacity-50"
                 >
@@ -1543,7 +1589,16 @@ export function AdminLeadsPage() {
 
                 <button
                   type="button"
-                  disabled={!selectedTotalCount}
+                  disabled={!selectedTotalCount || bulkSaving}
+                  onClick={() => void handleBulkSetTomorrow()}
+                  className="rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-black text-amber-700 disabled:opacity-50"
+                >
+                  {bulkSaving ? "Saving..." : "Set Tomorrow"}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!selectedTotalCount || bulkSaving}
                   onClick={clearSelectedLeads}
                   className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-500 disabled:opacity-50"
                 >
