@@ -1,3 +1,4 @@
+// C81 admin lead detail lite polish: tighter command panel, detail cards and timeline readability.
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -1316,7 +1317,7 @@ export function AdminLeadDetailPage() {
 
   return (
     <AdminLayout title="Lead Details">
-      <div className="space-y-3 pb-36 lg:space-y-6 lg:pb-24">
+      <div className="space-y-3 pb-36 lg:space-y-4 lg:pb-20">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <Button asChild variant="ghost" className="mb-3 rounded-full text-slate-600">
@@ -1422,8 +1423,8 @@ export function AdminLeadDetailPage() {
           </div>
         ) : null}
 
-        <section className="c68-mobile-summary-grid grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
-          <section className="col-span-full rounded-[24px] border border-blue-100 bg-blue-50 p-4 shadow-sm md:rounded-[32px] md:p-5">
+        <section className="c68-mobile-summary-grid grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+          <section className="col-span-full rounded-[20px] border border-blue-100 bg-blue-50 p-3.5 shadow-sm md:rounded-[24px] md:p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
@@ -1447,7 +1448,7 @@ export function AdminLeadDetailPage() {
                       "Tomorrow follow-up set from lead detail command panel",
                     )
                   }
-                  className="w-full min-w-[150px] rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-black text-amber-700 transition hover:bg-amber-50 disabled:opacity-50 lg:w-auto"
+                  className="w-full min-w-[140px] rounded-full border border-amber-200 bg-white px-3 py-2 text-xs font-black text-amber-700 transition hover:bg-amber-50 disabled:opacity-50 lg:w-auto"
                 >
                   Set Tomorrow
                 </button>
@@ -1461,7 +1462,7 @@ export function AdminLeadDetailPage() {
                       "Lead marked Contacted from lead detail command panel",
                     )
                   }
-                  className="w-full min-w-[150px] rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-black text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 lg:w-auto"
+                  className="w-full min-w-[140px] rounded-full border border-emerald-200 bg-white px-3 py-2 text-xs font-black text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 lg:w-auto"
                 >
                   Mark Contacted
                 </button>
@@ -1513,23 +1514,23 @@ export function AdminLeadDetailPage() {
               </div>
             ) : null}
 
-            <div className="mt-3 grid gap-2 md:mt-4 md:grid-cols-3 md:gap-3">
-              <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
+            <div className="mt-3 grid gap-2 md:grid-cols-3">
+              <div className="rounded-xl border border-white/80 bg-white/80 p-3">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Status</p>
                 <p className="mt-1 text-sm font-black text-slate-950">{displayLeadStatus(lead)}</p>
               </div>
-              <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
+              <div className="rounded-xl border border-white/80 bg-white/80 p-3">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Priority</p>
                 <p className="mt-1 text-sm font-black text-slate-950">{lead.priority}</p>
               </div>
-              <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
+              <div className="rounded-xl border border-white/80 bg-white/80 p-3">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Follow-up</p>
                 <p className="mt-1 text-sm font-black text-slate-950">{formatDate(lead.followUpAt)}</p>
               </div>
             </div>
 
-            <div className="mt-3 grid gap-2 md:mt-4 md:grid-cols-2 md:gap-3">
-              <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              <div className="rounded-xl border border-white/80 bg-white/80 p-3">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
                   C67A last contacted
                 </p>
@@ -1541,7 +1542,7 @@ export function AdminLeadDetailPage() {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-white/80 bg-white/80 p-3">
+              <div className="rounded-xl border border-white/80 bg-white/80 p-3">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
                   C67A next follow-up
                 </p>
@@ -1598,7 +1599,7 @@ export function AdminLeadDetailPage() {
               {displayLeadRequirement(lead)}
             </p>
           </div>
-          <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Follow-up</p>
             <p className="mt-2 flex items-center gap-2 text-lg font-bold text-slate-950">
               <Clock className="h-5 w-5 text-blue-600" />
@@ -1607,7 +1608,7 @@ export function AdminLeadDetailPage() {
           </div>
         </section>
 
-        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
+        <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[24px] md:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-lg font-semibold tracking-tight text-slate-950">
@@ -1639,7 +1640,7 @@ export function AdminLeadDetailPage() {
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-5 2xl:grid-cols-[minmax(0,1fr)_360px] 2xl:gap-6">
           <div className="space-y-4 xl:space-y-5">
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="h-5 w-5 text-blue-600" />
                 <div>
@@ -1712,7 +1713,7 @@ export function AdminLeadDetailPage() {
                   <select
                     value={lead.status}
                     onChange={(event) => updateField("status", event.target.value as LeadStatus)}
-                    className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     {statuses.map((item) => (
                       <option key={item} value={item}>{item}</option>
@@ -1725,7 +1726,7 @@ export function AdminLeadDetailPage() {
                   <select
                     value={lead.priority}
                     onChange={(event) => updateField("priority", event.target.value as LeadPriority)}
-                    className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     {priorities.map((item) => (
                       <option key={item} value={item}>{item}</option>
@@ -1738,7 +1739,7 @@ export function AdminLeadDetailPage() {
                   <select
                     value={lead.assignedTo}
                     onChange={(event) => updateField("assignedTo", event.target.value)}
-                    className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     {agents.map((item) => (
                       <option key={item} value={item}>{item}</option>
@@ -1780,7 +1781,7 @@ export function AdminLeadDetailPage() {
               </div>
             </section>
 
-            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold tracking-tight text-slate-950">
@@ -2175,7 +2176,7 @@ export function AdminLeadDetailPage() {
                   value={note}
                   onChange={(event) => setNote(event.target.value)}
                   placeholder="Add call note, follow-up detail or buyer preference..."
-                  className="h-12 rounded-2xl border-slate-200"
+                  className="h-10 rounded-xl border-slate-200"
                 />
                 <Button
                   onClick={saveNote}
@@ -2391,7 +2392,7 @@ export function AdminLeadDetailPage() {
               ) : null}
             </section>
 
-            <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
               <h2 className="text-lg font-semibold tracking-tight text-slate-950">
               <C49ALinkedAccountPanel phone={lead?.phone} />
 

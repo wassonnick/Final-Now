@@ -1,3 +1,4 @@
+// C81 admin leads lite polish: compact scan layout, tighter filters/cards, no bulk write actions.
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -1333,7 +1334,7 @@ export function AdminLeadsPage() {
 
   return (
     <AdminLayout title="Leads CRM">
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-5">
         {error ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-700">
             {error}
@@ -1361,7 +1362,7 @@ export function AdminLeadsPage() {
             ["Hot Leads", hotLeads, "Priority follow-ups"],
             ["Booked", bookedLeads, "Closed wins"],
           ].map(([label, value, helper]) => (
-            <div key={String(label)} className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+            <div key={String(label)} className="rounded-[20px] border border-slate-200 bg-white p-3.5 shadow-sm">
               <p className="text-3xl font-bold text-slate-950">{value}</p>
               <p className="mt-2 text-sm font-medium text-blue-600">{label}</p>
               <p className="mt-1 text-xs text-slate-400">{helper}</p>
