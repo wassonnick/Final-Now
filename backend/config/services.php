@@ -56,4 +56,11 @@ return [
         'msg91_country_code' => env('MSG91_COUNTRY_CODE', '91'),
     ],
 
+    'ai_import_provider' => env('AI_IMPORT_PROVIDER', 'gemini'),
+
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.0-flash'),
+    ],
+
 ];

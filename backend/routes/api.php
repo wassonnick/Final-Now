@@ -2,6 +2,7 @@
 use App\Http\Controllers\Api\Admin\ImageUploadController;
 use App\Http\Controllers\Api\Admin\AdminStatsController;
 use App\Http\Controllers\Api\Admin\AdminAccountController;
+use App\Http\Controllers\Api\Admin\SocietyImportController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\SocietyController;
@@ -26,6 +27,15 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/societies/fetch-from-brochure', [SocietyController::class, 'fetchFromBrochure']);
     Route::post('/societies/create-from-fetched-data', [SocietyController::class, 'createFromFetchedData']);
     Route::post('/societies/{society}/enrich', [SocietyController::class, 'enrich']);
+    Route::get('/import/jobs', [SocietyImportController::class, 'jobs']);
+    Route::get('/import/jobs/{job}', [SocietyImportController::class, 'show']);
+    Route::delete('/import/jobs/{job}', [SocietyImportController::class, 'destroy']);
+    Route::get('/import/suggestions', [SocietyImportController::class, 'suggestions']);
+    Route::get('/import/ai-status', [SocietyImportController::class, 'aiStatus']);
+    Route::post('/import/by-name', [SocietyImportController::class, 'byName']);
+    Route::post('/import/by-url', [SocietyImportController::class, 'byUrl']);
+    Route::post('/import/bulk', [SocietyImportController::class, 'bulk']);
+    Route::post('/import/bulk-names', [SocietyImportController::class, 'bulkNames']);
     Route::apiResource('societies', SocietyController::class)->except(['create', 'edit']);
     Route::apiResource('properties', PropertyController::class)->except(['create', 'edit']);
     Route::apiResource('leads', LeadController::class)->only(['index', 'show', 'update', 'destroy']);
