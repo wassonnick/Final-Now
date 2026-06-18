@@ -1,3 +1,4 @@
+// C83 admin society form UX polish: compact sections, shorter inputs, reduced scrolling, logic unchanged.
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -403,7 +404,7 @@ export function AdminSocietyFormPage() {
       subtitle="Create society-first intelligence profiles for public discovery"
     >
       <form onSubmit={handleSubmit} className="pb-24 lg:pb-0">
-        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <Button asChild variant="ghost" className="w-fit rounded-full text-slate-600">
             <Link to="/admin/societies">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -430,7 +431,7 @@ export function AdminSocietyFormPage() {
               onClick={() => handleSave("draft")}
               disabled={saving}
               variant="outline"
-              className="rounded-full border-slate-200"
+              className="h-10 rounded-full border-slate-200 text-sm font-bold"
             >
               <Save className="mr-2 h-4 w-4" />
               {saving && saveMode === "draft"
@@ -444,7 +445,7 @@ export function AdminSocietyFormPage() {
               type="button"
               onClick={() => handleSave("publish")}
               disabled={saving}
-              className="rounded-full bg-blue-600 px-5 hover:bg-blue-700"
+              className="h-10 rounded-full bg-blue-600 px-4 text-sm font-bold hover:bg-blue-700"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
               {saving && saveMode === "publish"
@@ -457,28 +458,28 @@ export function AdminSocietyFormPage() {
         </div>
 
         {error ? (
-          <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-700">
+          <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-700">
             {error}
           </div>
         ) : null}
 
         {saved ? (
-          <div className="mb-5 rounded-2xl bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-700">
+          <div className="mb-3 rounded-xl bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-700">
             Society saved to the live backend.
           </div>
         ) : null}
 
         {message ? (
-          <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-medium text-blue-700">
+          <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-medium text-blue-700">
             {message}
           </div>
         ) : null}
 
-        <section className="mb-6 grid gap-4 md:grid-cols-4">
-          <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm md:col-span-2">
+        <section className="mb-4 grid gap-3 md:grid-cols-4">
+          <div className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:col-span-2">
             <p className="text-sm font-medium text-slate-500">Profile readiness</p>
             <div className="mt-3 flex items-end justify-between">
-              <p className="text-4xl font-bold text-slate-950">{readiness.percent}%</p>
+              <p className="text-3xl font-bold text-slate-950">{readiness.percent}%</p>
               <p className="text-sm text-blue-600">
                 {readiness.done}/{readiness.total} fields
               </p>
@@ -490,35 +491,35 @@ export function AdminSocietyFormPage() {
 
           <div className={`rounded-[24px] border p-5 shadow-sm ${statusTone(society.status)}`}>
             <p className="text-sm font-medium opacity-80">Status</p>
-            <p className="mt-3 text-2xl font-bold">{society.status}</p>
+            <p className="mt-2 text-xl font-bold">{society.status}</p>
             <p className="mt-2 text-sm opacity-80">{society.isPublished ? "Published" : "Not published"}</p>
           </div>
 
-          <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-medium text-slate-500">Score</p>
-            <p className="mt-3 text-2xl font-bold text-slate-950">{society.score || "-"}</p>
-            <p className="mt-2 text-sm text-blue-600">Society intelligence</p>
+            <p className="mt-2 text-xl font-bold text-slate-950">{society.score || "-"}</p>
+            <p className="mt-1.5 text-xs font-semibold text-blue-600">Society intelligence</p>
           </div>
         </section>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-          <div className="space-y-6">
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+          <div className="space-y-4 md:space-y-5">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
               <div className="flex items-start gap-3">
                 <Building2 className="mt-1 h-5 w-5 text-blue-600" />
                 <div>
-                  <h2 className="text-xl font-bold tracking-tight text-slate-950">Basic information</h2>
-                  <p className="mt-1 text-sm text-slate-500">These details appear on the public society profile.</p>
+                  <h2 className="text-lg font-bold tracking-tight text-slate-950">Basic information</h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">These details appear on the public society profile.</p>
                 </div>
               </div>
 
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <label className="md:col-span-2 text-sm font-medium text-slate-700">
                   Society Name <span className="text-rose-500">*</span>
                   <Input
                     value={society.name}
                     onChange={(event) => updateField("name", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="DLF Crest"
                   />
                 </label>
@@ -528,7 +529,7 @@ export function AdminSocietyFormPage() {
                   <Input
                     value={society.slug}
                     onChange={(event) => updateField("slug", slugifySociety(event.target.value))}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="dlf-crest"
                   />
                 </label>
@@ -538,7 +539,7 @@ export function AdminSocietyFormPage() {
                   <Input
                     value={society.builder}
                     onChange={(event) => updateField("builder", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="DLF"
                   />
                 </label>
@@ -548,7 +549,7 @@ export function AdminSocietyFormPage() {
                   <select
                     value={society.status}
                     onChange={(event) => updateField("status", event.target.value as SocietyStatus)}
-                    className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     {statusOptions.map((item) => (
                       <option key={item}>{item}</option>
@@ -561,7 +562,7 @@ export function AdminSocietyFormPage() {
                   <Input
                     value={society.verificationStatus}
                     onChange={(event) => updateField("verificationStatus", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="needs_verification"
                   />
                 </label>
@@ -572,14 +573,14 @@ export function AdminSocietyFormPage() {
                     <textarea
                       value={society.description}
                       onChange={(event) => updateField("description", event.target.value)}
-                      className="min-h-32 flex-1 rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                      className="min-h-24 flex-1 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                       placeholder="Short society overview for public users."
                     />
                     <Button
                       type="button"
                       onClick={generateDescription}
                       variant="outline"
-                      className="h-12 rounded-full border-blue-200 text-blue-700"
+                      className="h-10 rounded-full border-blue-200 text-sm font-bold text-blue-700"
                     >
                       <Sparkles className="mr-2 h-4 w-4" />
                       Generate
@@ -589,22 +590,22 @@ export function AdminSocietyFormPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
               <div className="flex items-start gap-3">
                 <MapPin className="mt-1 h-5 w-5 text-blue-600" />
                 <div>
-                  <h2 className="text-xl font-bold tracking-tight text-slate-950">Location</h2>
-                  <p className="mt-1 text-sm text-slate-500">At least sector or locality is required.</p>
+                  <h2 className="text-lg font-bold tracking-tight text-slate-950">Location</h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">At least sector or locality is required.</p>
                 </div>
               </div>
 
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <label className="text-sm font-medium text-slate-700">
                   Sector
                   <Input
                     value={society.sector}
                     onChange={(event) => updateField("sector", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="Sector 54"
                   />
                 </label>
@@ -614,7 +615,7 @@ export function AdminSocietyFormPage() {
                   <Input
                     value={society.locality}
                     onChange={(event) => updateField("locality", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="Golf Course Road"
                   />
                 </label>
@@ -624,7 +625,7 @@ export function AdminSocietyFormPage() {
                   <Input
                     value={society.city}
                     onChange={(event) => updateField("city", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                   />
                 </label>
 
@@ -633,7 +634,7 @@ export function AdminSocietyFormPage() {
                   <Input
                     value={society.state}
                     onChange={(event) => updateField("state", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                   />
                 </label>
 
@@ -642,7 +643,7 @@ export function AdminSocietyFormPage() {
                   <Input
                     value={society.address}
                     onChange={(event) => updateField("address", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="Full address"
                   />
                 </label>
@@ -652,7 +653,7 @@ export function AdminSocietyFormPage() {
                   <Input
                     value={society.googleMapsUrl}
                     onChange={(event) => updateField("googleMapsUrl", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="https://maps.google.com/..."
                   />
                 </label>
@@ -663,13 +664,13 @@ export function AdminSocietyFormPage() {
                     <Input
                       value={society.latitude}
                       onChange={(event) => updateField("latitude", event.target.value)}
-                      className="h-12 rounded-2xl border-slate-200"
+                      className="h-10 rounded-xl border-slate-200"
                       placeholder="Lat"
                     />
                     <Input
                       value={society.longitude}
                       onChange={(event) => updateField("longitude", event.target.value)}
-                      className="h-12 rounded-2xl border-slate-200"
+                      className="h-10 rounded-xl border-slate-200"
                       placeholder="Long"
                     />
                   </div>
@@ -677,14 +678,14 @@ export function AdminSocietyFormPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-xl font-bold tracking-tight text-slate-950">Scores & Market Ranges</h2>
-              <p className="mt-1 text-sm text-slate-500">Keep this practical and useful for users.</p>
-              <p className="mt-2 rounded-2xl bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">Scores & Market Ranges</h2>
+              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">Keep this practical and useful for users.</p>
+              <p className="mt-2 rounded-xl bg-blue-50 px-3 py-2.5 text-xs font-semibold leading-5 text-blue-700 md:text-sm">
                 Score is required before publishing because the live database requires a non-empty society score. Use values like 7.5, 8.0 or 9.2.
               </p>
 
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
                 {[
                   ["Score *", "score"],
                   ["Security Score", "securityScore"],
@@ -704,20 +705,20 @@ export function AdminSocietyFormPage() {
                     <Input
                       value={String(society[key as keyof AdminSociety] || "")}
                       onChange={(event) => updateField(key as keyof AdminSociety, event.target.value as never)}
-                      className="mt-2 h-12 rounded-2xl border-slate-200"
+                      className="mt-2 h-10 rounded-xl border-slate-200"
                     />
                   </label>
                 ))}
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-xl font-bold tracking-tight text-slate-950">Amenities</h2>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">Amenities</h2>
+              <div className="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
                 {societyAmenityOptions.map((amenity) => (
                   <label
                     key={amenity}
-                    className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                    className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700"
                   >
                     <Checkbox
                       checked={society.amenities.includes(amenity)}
@@ -729,9 +730,9 @@ export function AdminSocietyFormPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-xl font-bold tracking-tight text-slate-950">Nearby Intelligence</h2>
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">Nearby Intelligence</h2>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {[
                   ["Nearby Schools", "nearbySchools"],
                   ["Nearby Metro", "nearbyMetro"],
@@ -743,7 +744,7 @@ export function AdminSocietyFormPage() {
                     <textarea
                       value={String(society[key as keyof AdminSociety] || "")}
                       onChange={(event) => updateField(key as keyof AdminSociety, event.target.value as never)}
-                      className="mt-2 min-h-28 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                      className="mt-2 min-h-24 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                       placeholder="One item per line"
                     />
                   </label>
@@ -751,10 +752,10 @@ export function AdminSocietyFormPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-xl font-bold tracking-tight text-slate-950">Official Links & SEO</h2>
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">Official Links & SEO</h2>
 
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {[
                   ["Official Project URL", "officialProjectUrl"],
                   ["Developer URL", "officialDeveloperUrl"],
@@ -771,7 +772,7 @@ export function AdminSocietyFormPage() {
                     <Input
                       value={String(society[key as keyof AdminSociety] || "")}
                       onChange={(event) => updateField(key as keyof AdminSociety, event.target.value as never)}
-                      className="mt-2 h-12 rounded-2xl border-slate-200"
+                      className="mt-2 h-10 rounded-xl border-slate-200"
                     />
                   </label>
                 ))}
@@ -781,7 +782,7 @@ export function AdminSocietyFormPage() {
                   <textarea
                     value={society.faq}
                     onChange={(event) => updateField("faq", event.target.value)}
-                    className="mt-2 min-h-28 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                    className="mt-2 min-h-24 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                     placeholder="Add public FAQ text"
                   />
                 </label>
@@ -789,16 +790,16 @@ export function AdminSocietyFormPage() {
             </section>
           </div>
 
-          <aside className="space-y-6">
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-lg font-semibold tracking-tight text-slate-950">Media</h2>
-              <p className="mt-1 text-sm text-slate-500">Upload safe images or approve a reference URL.</p>
+          <aside className="space-y-4 md:space-y-5">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+              <h2 className="text-base font-bold tracking-tight text-slate-950">Media</h2>
+              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">Upload safe images or approve a reference URL.</p>
 
               <div className="mt-5 rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
                 <ImagePlus className="mx-auto h-8 w-8 text-blue-600" />
                 <p className="mt-3 font-medium text-slate-950">Cover image</p>
-                <p className="mt-1 text-sm text-slate-500">Upload admin-approved society image.</p>
-                <label className="mt-4 inline-flex cursor-pointer items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">Upload admin-approved society image.</p>
+                <label className="mt-3 inline-flex cursor-pointer items-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
                   <UploadCloud className="mr-2 h-4 w-4" />
                   Upload Cover
                   <input
@@ -815,18 +816,18 @@ export function AdminSocietyFormPage() {
                   <img
                     src={society.coverImage || society.imageUrl}
                     alt={society.name || "Society cover"}
-                    className="h-40 w-full object-cover"
+                    className="h-32 w-full object-cover"
                   />
                 </div>
               ) : null}
 
-              <div className="mt-5">
+              <div className="mt-4">
                 <label className="text-sm font-medium text-slate-700">
                   Image reference URL
                   <Input
                     value={society.imageReferenceUrl}
                     onChange={(event) => updateField("imageReferenceUrl", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="Developer / official image URL"
                   />
                 </label>
@@ -844,15 +845,15 @@ export function AdminSocietyFormPage() {
                     type="button"
                     variant="outline"
                     onClick={keepImageAsReferenceOnly}
-                    className="rounded-full border-slate-200"
+                    className="h-10 rounded-full border-slate-200 text-sm font-bold"
                   >
                     Reference only
                   </Button>
                 </div>
               </div>
 
-              <div className="mt-5">
-                <label className="inline-flex cursor-pointer items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              <div className="mt-4">
+                <label className="inline-flex cursor-pointer items-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
                   <UploadCloud className="mr-2 h-4 w-4" />
                   Upload Gallery
                   <input
@@ -865,10 +866,10 @@ export function AdminSocietyFormPage() {
                 </label>
 
                 {society.galleryImages.length ? (
-                  <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="mt-3 grid grid-cols-2 gap-2.5">
                     {society.galleryImages.map((image) => (
-                      <div key={image} className="group relative overflow-hidden rounded-2xl border border-slate-200">
-                        <img src={image} alt="Gallery preview" className="h-24 w-full object-cover" />
+                      <div key={image} className="group relative overflow-hidden rounded-xl border border-slate-200">
+                        <img src={image} alt="Gallery preview" className="h-20 w-full object-cover" />
                         <button
                           type="button"
                           aria-label="Remove image"
@@ -884,10 +885,10 @@ export function AdminSocietyFormPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-lg font-semibold tracking-tight text-slate-950">Brochure extraction</h2>
-              <p className="mt-1 text-sm text-slate-500">Upload text-based PDF under 20 MB.</p>
-              <label className="mt-4 inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700 hover:bg-blue-100">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+              <h2 className="text-base font-bold tracking-tight text-slate-950">Brochure extraction</h2>
+              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">Upload text-based PDF under 20 MB.</p>
+              <label className="mt-3 inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-100">
                 <FileText className="mr-2 h-4 w-4" />
                 {brochureExtracting ? "Extracting..." : "Upload brochure PDF"}
                 <input
@@ -900,16 +901,16 @@ export function AdminSocietyFormPage() {
               </label>
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-lg font-semibold tracking-tight text-slate-950">Publishing Controls</h2>
-              <div className="mt-4 space-y-3">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+              <h2 className="text-base font-bold tracking-tight text-slate-950">Publishing Controls</h2>
+              <div className="mt-3 space-y-2.5">
                 {[
                   ["Published", "isPublished"],
                   ["Featured", "featured"],
                   ["Show in Hero", "showInHero"],
                   ["Search Boost", "searchBoost"],
                 ].map(([label, key]) => (
-                  <label key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4">
+                  <label key={key} className="flex items-start gap-3 rounded-xl border border-slate-200 p-3">
                     <Checkbox
                       checked={Boolean(society[key as keyof AdminSociety])}
                       onCheckedChange={(checked) => updateField(key as keyof AdminSociety, (checked === true) as never)}
@@ -923,7 +924,7 @@ export function AdminSocietyFormPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
+            <section className="rounded-[20px] border border-blue-100 bg-blue-50 p-4">
               <h2 className="font-bold text-slate-950">Profile checklist</h2>
               <div className="mt-3 space-y-2 text-sm text-slate-600">
                 <p>{fieldSummary("Name", society.name)}</p>
@@ -946,7 +947,7 @@ export function AdminSocietyFormPage() {
               ) : null}
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
               <div className="flex items-start gap-3">
                 <ShieldCheck className="mt-1 h-5 w-5 text-blue-600" />
                 <div>
@@ -967,7 +968,7 @@ export function AdminSocietyFormPage() {
               onClick={() => handleSave("draft")}
               disabled={saving}
               variant="outline"
-              className="h-11 rounded-full border-slate-200"
+              className="h-10 rounded-full border-slate-200 text-sm font-bold"
             >
               <Save className="mr-2 h-4 w-4" />
               {saving && saveMode === "draft"
@@ -981,7 +982,7 @@ export function AdminSocietyFormPage() {
               type="button"
               onClick={() => handleSave("publish")}
               disabled={saving}
-              className="h-11 rounded-full bg-blue-600 hover:bg-blue-700"
+              className="h-10 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
               {saving && saveMode === "publish"

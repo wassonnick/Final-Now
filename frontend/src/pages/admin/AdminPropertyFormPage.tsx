@@ -1,3 +1,4 @@
+// C83 admin property form UX polish: compact sections, shorter inputs, reduced scrolling, owner/publish logic unchanged.
 import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
@@ -1030,7 +1031,7 @@ export function AdminPropertyFormPage() {
       subtitle="Create society-first listings with clean details, media and publishing controls"
     >
       <div className="pb-24 lg:pb-0">
-        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <Button asChild variant="ghost" className="w-fit rounded-full text-slate-600">
             <Link to="/admin/properties">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -1044,7 +1045,7 @@ export function AdminPropertyFormPage() {
               onClick={() => handleSave("Draft")}
               disabled={saving}
               variant="outline"
-              className="rounded-full border-slate-200"
+              className="h-10 rounded-full border-slate-200 text-sm font-bold"
             >
               <Save className="mr-2 h-4 w-4" />
               {saving && saveMode === "Draft" ? "Saving..." : "Save Draft"}
@@ -1063,19 +1064,19 @@ export function AdminPropertyFormPage() {
         </div>
 
         {error ? (
-          <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-700">
+          <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-700">
             {error}
           </div>
         ) : null}
 
         {success ? (
-          <div className="mb-5 rounded-2xl bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-700">
+          <div className="mb-3 rounded-xl bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-700">
             {success}
           </div>
         ) : null}
 
         {sourceLeadId ? (
-          <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-blue-800 shadow-sm">
+          <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-blue-800 shadow-sm">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-500">
@@ -1102,7 +1103,7 @@ export function AdminPropertyFormPage() {
         ) : null}
 
         {publishValidationError ? (
-          <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-medium text-blue-700">
+          <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-medium text-blue-700">
             Publish blocked: {publishValidationError}
           </div>
         ) : null}
@@ -1130,11 +1131,11 @@ export function AdminPropertyFormPage() {
           </div>
         ) : null}
 
-        <section className="mb-6 grid gap-4 md:grid-cols-4">
-          <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm md:col-span-2">
+        <section className="mb-4 grid gap-3 md:grid-cols-4">
+          <div className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:col-span-2">
             <p className="text-sm font-medium text-slate-500">Listing readiness</p>
             <div className="mt-3 flex items-end justify-between">
-              <p className="text-4xl font-bold text-slate-950">{completion.percent}%</p>
+              <p className="text-3xl font-bold text-slate-950">{completion.percent}%</p>
               <p className="text-sm text-blue-600">
                 {completion.done}/{completion.total} fields
               </p>
@@ -1147,41 +1148,41 @@ export function AdminPropertyFormPage() {
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-medium text-slate-500">Mode</p>
-            <p className="mt-3 text-2xl font-bold text-slate-950">{property.listingType}</p>
-            <p className="mt-2 text-sm text-blue-600">
+            <p className="mt-2 text-xl font-bold text-slate-950">{property.listingType}</p>
+            <p className="mt-1.5 text-xs font-semibold text-blue-600">
               {rentalListing ? "Rental listing" : saleListing ? "Sale / resale listing" : property.status}
             </p>
           </div>
 
-          <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-medium text-slate-500">Images</p>
-            <p className="mt-3 text-2xl font-bold text-slate-950">{propertyImages.length}</p>
-            <p className="mt-2 text-sm text-blue-600">Max 8 images</p>
+            <p className="mt-2 text-xl font-bold text-slate-950">{propertyImages.length}</p>
+            <p className="mt-1.5 text-xs font-semibold text-blue-600">Max 8 images</p>
           </div>
         </section>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-          <div className="space-y-6">
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+          <div className="space-y-4 md:space-y-5">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
               <div className="flex items-start gap-3">
                 <Home className="mt-1 h-5 w-5 text-blue-600" />
                 <div>
-                  <h2 className="text-xl font-bold tracking-tight text-slate-950">Basic Details</h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <h2 className="text-lg font-bold tracking-tight text-slate-950">Basic Details</h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
                     Keep the title clear and society-first for better enquiry quality.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <label className="md:col-span-2 text-sm font-medium text-slate-700">
                   Property Title <span className="text-rose-500">*</span>
                   <Input
                     value={property.title}
                     onChange={(event) => updateField("title", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="3 BHK in DLF Crest with park view"
                   />
                 </label>
@@ -1191,7 +1192,7 @@ export function AdminPropertyFormPage() {
                   <select
                     value={property.listingType}
                     onChange={(event) => updateField("listingType", event.target.value)}
-                    className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     <option>Rent</option>
                     <option>Sale</option>
@@ -1206,7 +1207,7 @@ export function AdminPropertyFormPage() {
                   <select
                     value={property.status}
                     onChange={(event) => updateField("status", event.target.value)}
-                    className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     <option>Live</option>
                     <option>Verification</option>
@@ -1230,7 +1231,7 @@ export function AdminPropertyFormPage() {
                       if (error) setError("");
                       if (success) setSuccess("");
                     }}
-                    className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     <option value="">
                       {societiesLoading ? "Loading societies..." : "Select Society"}
@@ -1255,7 +1256,7 @@ export function AdminPropertyFormPage() {
                   <select
                     value={property.locality}
                     onChange={(event) => updateField("locality", event.target.value)}
-                    className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     <option value="">Select Locality</option>
                     {localities.map((item) => (
@@ -1266,26 +1267,26 @@ export function AdminPropertyFormPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-xl font-bold tracking-tight text-slate-950">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">
                 {rentalListing ? "Rent & Configuration" : "Sale Price & Configuration"}
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
                 {rentalListing
                   ? "Add rent, deposit and configuration details for rental inventory."
                   : "Add asking price, booking/token amount and configuration details for sale inventory."}
               </p>
-              <p className="mt-2 rounded-2xl bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
+              <p className="mt-2 rounded-xl bg-blue-50 px-3 py-2.5 text-xs font-semibold leading-5 text-blue-700 md:text-sm">
                 {validationHint}
               </p>
 
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
                 <label className="text-sm font-medium text-slate-700">
                   {labels.price} <span className="text-rose-500">*</span>
                   <Input
                     value={property.price}
                     onChange={(event) => updateField("price", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder={labels.pricePlaceholder}
                   />
                 </label>
@@ -1295,7 +1296,7 @@ export function AdminPropertyFormPage() {
                   <Input
                     value={property.securityDeposit}
                     onChange={(event) => updateField("securityDeposit", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder={labels.depositPlaceholder}
                   />
                 </label>
@@ -1305,7 +1306,7 @@ export function AdminPropertyFormPage() {
                   <Input
                     value={property.maintenance}
                     onChange={(event) => updateField("maintenance", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder={labels.maintenancePlaceholder}
                   />
                 </label>
@@ -1315,7 +1316,7 @@ export function AdminPropertyFormPage() {
                   <Input
                     value={property.bedrooms}
                     onChange={(event) => updateField("bedrooms", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="3"
                   />
                 </label>
@@ -1325,7 +1326,7 @@ export function AdminPropertyFormPage() {
                   <Input
                     value={property.bathrooms}
                     onChange={(event) => updateField("bathrooms", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="3"
                   />
                 </label>
@@ -1335,7 +1336,7 @@ export function AdminPropertyFormPage() {
                   <Input
                     value={property.areaSqft}
                     onChange={(event) => updateField("areaSqft", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="2200"
                   />
                 </label>
@@ -1345,7 +1346,7 @@ export function AdminPropertyFormPage() {
                   <Input
                     value={property.floor}
                     onChange={(event) => updateField("floor", event.target.value)}
-                    className="mt-2 h-12 rounded-2xl border-slate-200"
+                    className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="12 of 28"
                   />
                 </label>
@@ -1355,7 +1356,7 @@ export function AdminPropertyFormPage() {
                   <select
                     value={property.facing}
                     onChange={(event) => updateField("facing", event.target.value)}
-                    className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     <option>North-East</option>
                     <option>East</option>
@@ -1370,7 +1371,7 @@ export function AdminPropertyFormPage() {
                   <select
                     value={property.furnishedStatus}
                     onChange={(event) => updateField("furnishedStatus", event.target.value)}
-                    className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
                   >
                     <option>Semi Furnished</option>
                     <option>Fully Furnished</option>
@@ -1380,11 +1381,11 @@ export function AdminPropertyFormPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <h2 className="text-xl font-bold tracking-tight text-slate-950">Description & Amenities</h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <h2 className="text-lg font-bold tracking-tight text-slate-950">Description & Amenities</h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
                     Write a clean, society-first description for buyers and tenants.
                   </p>
                 </div>
@@ -1409,13 +1410,13 @@ export function AdminPropertyFormPage() {
                 />
               </label>
 
-              <div className="mt-6">
+              <div className="mt-4">
                 <p className="text-sm font-medium text-slate-700">Amenities</p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {amenitiesList.map((item) => (
                     <label
                       key={item}
-                      className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                      className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700"
                     >
                       <Checkbox
                         checked={propertyAmenities.includes(item)}
@@ -1429,10 +1430,10 @@ export function AdminPropertyFormPage() {
             </section>
           </div>
 
-          <aside className="space-y-6">
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-lg font-semibold tracking-tight text-slate-950">Media</h2>
-              <p className="mt-1 text-sm text-slate-500">
+          <aside className="space-y-4 md:space-y-5">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+              <h2 className="text-base font-bold tracking-tight text-slate-950">Media</h2>
+              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
                 Upload real photos, use a SocietyFlats generic image, or continue as draft without photos.
               </p>
 
@@ -1464,7 +1465,7 @@ export function AdminPropertyFormPage() {
                   <ImagePlus className="h-6 w-6" />
                 </div>
                 <p className="mt-3 font-medium text-slate-950">Drop property photos here</p>
-                <p className="mt-1 text-sm text-slate-500">JPG, PNG or WebP.</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">JPG, PNG or WebP.</p>
                 <Button
                   type="button"
                   variant="outline"
@@ -1485,9 +1486,9 @@ export function AdminPropertyFormPage() {
               </div>
 
               {propertyImages.length ? (
-                <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="mt-3 grid grid-cols-2 gap-2.5">
                   {propertyImages.map((image) => (
-                    <div key={image} className="group relative overflow-hidden rounded-2xl border border-slate-200">
+                    <div key={image} className="group relative overflow-hidden rounded-xl border border-slate-200">
                       <img src={image} alt="Property preview" className="h-28 w-full object-cover" />
                       <button
                         type="button"
@@ -1503,10 +1504,10 @@ export function AdminPropertyFormPage() {
               ) : null}
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-              <h2 className="text-lg font-semibold tracking-tight text-slate-950">Publishing</h2>
-              <div className="mt-4 space-y-3">
-                <label className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4">
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+              <h2 className="text-base font-bold tracking-tight text-slate-950">Publishing</h2>
+              <div className="mt-3 space-y-2.5">
+                <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-3">
                   <Checkbox
                     checked={property.featured}
                     onCheckedChange={(checked) => updateField("featured", checked === true)}
@@ -1517,7 +1518,7 @@ export function AdminPropertyFormPage() {
                   </span>
                 </label>
 
-                <label className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4">
+                <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-3">
                   <Checkbox
                     checked={property.verified}
                     onCheckedChange={(checked) => updateField("verified", checked === true)}
@@ -1530,7 +1531,7 @@ export function AdminPropertyFormPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
+            <section className="rounded-[20px] border border-blue-100 bg-blue-50 p-4">
               <h2 className="font-bold text-slate-950">Listing checklist</h2>
               <p className="mt-2 text-sm text-blue-700">{validationHint}</p>
               <div className="mt-3 space-y-2 text-sm text-slate-600">
@@ -1550,7 +1551,7 @@ export function AdminPropertyFormPage() {
               onClick={() => handleSave("Draft")}
               disabled={saving}
               variant="outline"
-              className="h-11 rounded-full border-slate-200"
+              className="h-10 rounded-full border-slate-200 text-sm font-bold"
             >
               <Save className="mr-2 h-4 w-4" />
               {saving && saveMode === "Draft" ? "Saving..." : "Draft"}
