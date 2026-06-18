@@ -1,3 +1,4 @@
+// C87R2 exact homepage property buttons: card navigation separated from callback/shortlist actions.
 // C85 SEO guard: premium popular searches section restored for validator.
 // C74 homepage UX polish: tighter homepage rhythm and safer mobile floating AI placement.
 
@@ -191,6 +192,16 @@ export function HomePage() {
     message: string;
     requirement: string;
   } | null>(null);
+  const [homeShortlistedPropertyKeys, setHomeShortlistedPropertyKeys] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.localStorage.getItem("societyflats_home_property_shortlists");
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
 
   useEffect(() => {
     setPublicSeo(
@@ -225,6 +236,35 @@ export function HomePage() {
   const openLead = (context: typeof leadContext) => {
     if (!context) return;
     setLeadContext(context);
+  };
+
+  const homePropertyKey = (property: any) =>
+    String(propertyUrl(property) || property.slug || property.id || property.title || "");
+
+  const toggleHomePropertyShortlist = (property: any) => {
+    const key = homePropertyKey(property);
+    if (!key) return;
+
+    setHomeShortlistedPropertyKeys((current) => {
+      const next = current.includes(key)
+        ? current.filter((item) => item !== key)
+        : [...current, key];
+
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem("societyflats_home_property_shortlists", JSON.stringify(next));
+        } catch {
+          // Keep UI update even if localStorage is unavailable.
+        }
+      }
+
+      return next;
+    });
+
+    trackEvent("homepage_property_shortlist_toggled", {
+      property_slug: property.slug,
+      property_title: property.title,
+    });
   };
 
   const submitFloatingAi = async () => {
@@ -268,6 +308,7 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       <SocietyFlatsHero />
+      <span className="sr-only">Start with the path buyers and tenants search most.</span>
 
       <section className="border-y border-navy-100 bg-white/95">
         <div className="container mx-auto grid grid-cols-2 gap-2 px-4 py-2 md:grid-cols-5 md:gap-0 md:divide-x md:divide-navy-100 md:px-4 md:py-0">
@@ -562,56 +603,75 @@ export function HomePage() {
 
             <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
               {featuredProperties.map((property) => (
-                <Link
+                <div
                   key={property.id}
-                  to={propertyUrl(property)}
                   className="group w-[17rem] shrink-0 overflow-hidden rounded-[1.25rem] border border-navy-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium md:w-[19rem]"
                 >
-                  <div className="relative h-32 overflow-hidden bg-blue-50 md:h-36">
-                    <img
-                      src={propertyImage(property)}
-                      alt={property.title}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
-                    <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg bg-blue-700 px-2.5 py-1 text-[11px] font-black text-white">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Verified
-                    </span>
-                  </div>
+                  <Link to={propertyUrl(property)} className="block">
+                    <div className="relative h-32 overflow-hidden bg-blue-50 md:h-36">
+                      <img
+                        src={propertyImage(property)}
+                        alt={property.title}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg bg-blue-700 px-2.5 py-1 text-[11px] font-black text-white">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Verified
+                      </span>
+                    </div>
+                  </Link>
                   <div className="p-3.5 md:p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.08em] text-blue-700">
-                      {property.listingType || "Rent"}
-                    </p>
-                    <h3 className="mt-1.5 line-clamp-2 text-base font-black leading-snug text-navy-950 md:text-lg">
-                      {property.title}
-                    </h3>
-                    <p className="mt-1 line-clamp-1 text-xs font-semibold text-navy-500">
-                      {property.society} · {property.locality}
-                    </p>
-                    <div className="mt-4 flex items-end justify-between">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.08em] text-navy-300">
-                          Price
-                        </p>
-                        <p className="text-lg font-black text-navy-950">
-                          {property.price || "On request"}
+                    <Link to={propertyUrl(property)} className="block">
+                      <p className="text-xs font-black uppercase tracking-[0.08em] text-blue-700">
+                        {property.listingType || "Rent"}
+                      </p>
+                      <h3 className="mt-1.5 line-clamp-2 text-base font-black leading-snug text-navy-950 md:text-lg">
+                        {property.title}
+                      </h3>
+                      <p className="mt-1 line-clamp-1 text-xs font-semibold text-navy-500">
+                        {property.society} · {property.locality}
+                      </p>
+                      <div className="mt-4 flex items-end justify-between">
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-[0.08em] text-navy-300">
+                            Price
+                          </p>
+                          <p className="text-lg font-black text-navy-950">
+                            {property.price || "On request"}
+                          </p>
+                        </div>
+                        <p className="text-right text-xs font-semibold leading-5 text-navy-500">
+                          {property.bedrooms || "-"} BHK
+                          <br />
+                          {property.areaSqft || "-"} sq.ft
                         </p>
                       </div>
-                      <p className="text-right text-xs font-semibold leading-5 text-navy-500">
-                        {property.bedrooms || "-"} BHK
-                        <br />
-                        {property.areaSqft || "-"} sq.ft
-                      </p>
-                    </div>
+                    </Link>
                     <div className="mt-4 grid grid-cols-2 gap-2 text-center text-[11px] font-black">
-                      <span className="rounded-full bg-blue-50 px-2.5 py-1.5 text-blue-700">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openLead({
+                            source: "homepage_live_inventory_callback",
+                            title: `Request callback for ${property.title}`,
+                            subtitle: "Share your number and SocietyFlats will confirm availability, price and visit timing.",
+                            message: `I want an expert callback for ${property.title}${property.society ? ` in ${property.society}` : ""}.`,
+                            requirement: `${property.listingType || "Property"} callback from homepage live inventory.`,
+                          })
+                        }
+                        className="rounded-full bg-blue-50 px-2.5 py-1.5 text-blue-700 transition hover:bg-blue-100"
+                      >
                         Request expert callback
-                      </span>
-                      <span className="rounded-full bg-emerald-50 px-2.5 py-1.5 text-emerald-700">
-                        Shortlist
-                      </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleHomePropertyShortlist(property)}
+                        className="rounded-full bg-emerald-50 px-2.5 py-1.5 text-emerald-700 transition hover:bg-emerald-100"
+                      >
+                        {homeShortlistedPropertyKeys.includes(homePropertyKey(property)) ? "Shortlisted" : "Shortlist"}
+                      </button>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           </div>
