@@ -1,3 +1,4 @@
+// C76C society lower structural fix: collapse empty nearby cards into one verification strip.
 // C76B society lower density polish: compact homes, amenities, nearby intelligence and sidebar.
 // C76 society page UX polish: compact hero/gallery, higher facts, tighter inventory, sidebar and sticky CTA.
 // C71 society detail copy: verified society intelligence, similar homes and expert callback language.
@@ -836,7 +837,7 @@ export function SocietyPage() {
               ].map(([label, value]) => (
                 <div
                   key={label}
-                  className="rounded-[1.15rem] border border-blue-100 bg-white p-3.5"
+                  className="rounded-[1.1rem] border border-blue-100 bg-white p-3"
                 >
                   <p className="text-sm text-navy-400">{label}</p>
                   <p className="mt-2 font-semibold text-navy-900">
@@ -900,7 +901,7 @@ export function SocietyPage() {
                 </p>
               </div>
 
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {properties.length ? (
                   properties.map((property) => {
                     const propertyUrl = safePropertyUrl(property);
@@ -924,7 +925,7 @@ export function SocietyPage() {
                         className="overflow-hidden rounded-[1.15rem] border border-blue-100 bg-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
                       >
                         <Link to={propertyUrl} className="block">
-                          <div className="h-24 bg-navy-50 md:h-[120px]">
+                          <div className="h-24 bg-navy-50 md:h-[112px]">
                             <img
                               src={safePropertyImage(property)}
                               alt={property.title}
@@ -933,7 +934,7 @@ export function SocietyPage() {
                           </div>
                         </Link>
 
-                        <div className="p-3 md:p-3.5">
+                        <div className="p-3">
                           <div className="flex items-center justify-between gap-3">
                             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
                               {listingType}
@@ -953,7 +954,7 @@ export function SocietyPage() {
                             {bedrooms} BHK • {area} sq.ft
                           </p>
 
-                          <div className="mt-2.5 flex items-center justify-between gap-3">
+                          <div className="mt-2 flex items-center justify-between gap-3">
                             <p className="text-lg font-bold text-navy-900">
                               {property.price || "On request"}
                             </p>
@@ -962,7 +963,7 @@ export function SocietyPage() {
                             </p>
                           </div>
 
-                          <div className="mt-2.5 grid grid-cols-2 gap-2">
+                          <div className="mt-2 grid grid-cols-2 gap-2">
                             <Button
                               asChild
                               variant="outline"
@@ -1017,9 +1018,12 @@ export function SocietyPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm">
-              <h2 className="text-xl font-bold text-navy-900">Amenities</h2>
-              <div className="mt-3 flex flex-wrap gap-2">
+            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <h2 className="text-xl font-bold text-navy-900">Amenities</h2>
+                <span className="text-xs font-bold text-navy-400">{amenities.length || 0} listed</span>
+              </div>
+              <div className="mt-2.5 flex flex-wrap gap-2">
                 {amenities.length ? (
                   amenities.map((item) => (
                     <span
@@ -1035,7 +1039,7 @@ export function SocietyPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm">
+            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm">
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">
@@ -1045,40 +1049,65 @@ export function SocietyPage() {
                     Nearby schools, hospitals and commute
                   </h2>
                 </div>
-                {!hasNearbyData ? (
-                  <span className="w-fit rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-                    Admin verification pending
-                  </span>
-                ) : null}
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="w-fit rounded-full border-blue-100 text-blue-700"
+                >
+                  <Link to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}>
+                    Ask AI for commute fit
+                  </Link>
+                </Button>
               </div>
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
-                {nearby.map((item) => {
-                  const Icon = item.icon;
-                  const lines = splitLines(item.value);
-                  return (
-                    <div
-                      key={item.title}
-                      className="rounded-[1.1rem] bg-blue-50/70 p-3.5"
-                    >
-                      <Icon className="h-4 w-4 text-blue-600" />
-                      <h3 className="mt-2 font-bold text-navy-900">
-                        {item.title}
-                      </h3>
-                      {lines.length ? (
+
+              {!hasNearbyData ? (
+                <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-amber-100 bg-amber-50/80 p-3.5 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white text-amber-700 shadow-sm">
+                      <Shield className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-black text-navy-900">
+                        Location details are under admin verification.
+                      </p>
+                      <p className="mt-1 text-sm leading-5 text-navy-600">
+                        Request a callback and the team will confirm schools, metro, hospitals and office-hub context for {society.name}.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => openSocietyCallback("society_page_location_verification_callback")}
+                    size="sm"
+                    className="shrink-0 rounded-full bg-blue-600 px-4 font-bold hover:bg-blue-700"
+                  >
+                    Verify on call
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-3 grid gap-2.5 md:grid-cols-2">
+                  {nearby.map((item) => {
+                    const Icon = item.icon;
+                    const lines = splitLines(item.value);
+                    return lines.length ? (
+                      <div
+                        key={item.title}
+                        className="rounded-[1.1rem] bg-blue-50/70 p-3.5"
+                      >
+                        <Icon className="h-4 w-4 text-blue-600" />
+                        <h3 className="mt-2 font-bold text-navy-900">
+                          {item.title}
+                        </h3>
                         <ul className="mt-2 space-y-1 text-sm text-navy-600">
                           {lines.map((line) => (
                             <li key={line}>• {line}</li>
                           ))}
                         </ul>
-                      ) : (
-                        <p className="mt-2 text-sm font-semibold text-blue-500">
-                          Verification pending
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:hidden">
