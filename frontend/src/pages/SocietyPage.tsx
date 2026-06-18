@@ -1,3 +1,4 @@
+// C76I society sidebar restored: property-style right column, no fixed overlay on gallery.
 // C76H fixed sidebar rail + compact hero: reserve desktop rail, prevent gallery overlap, reduce blank space.
 // C76G fixed sidebar position align: fixed card shifted into reserved right column without gallery overlap.
 // C76F fixed desktop society sidebar: viewport-fixed sidebar with reserved grid column.
@@ -599,7 +600,7 @@ export function SocietyPage() {
         </Button>
       </div>
       <section className="bg-white">
-        <div className="container mx-auto px-4 py-3 md:py-4 lg:pr-[360px]">
+        <div className="container mx-auto px-4 py-3 md:py-4">
           <Button
             asChild
             variant="ghost"
@@ -649,7 +650,7 @@ export function SocietyPage() {
       </section>
 
       <section className="container mx-auto px-4 py-3 md:py-5">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_310px] lg:gap-5">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6">
           <div className="space-y-3.5 md:space-y-4">
             <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.45rem] md:p-4.5">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -1248,8 +1249,8 @@ export function SocietyPage() {
             ) : null}
           </div>
 
-          <aside className="hidden lg:block lg:min-h-[1px]">
-            <div className="fixed right-[max(1rem,calc((100vw-1440px)/2+0.5rem))] top-28 z-30 max-h-[calc(100vh-8rem)] w-[310px] overflow-y-auto rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-soft">
+          <aside className="hidden lg:block">
+            <div className="sticky top-24 rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-soft">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                 Next step
               </p>
