@@ -1,3 +1,4 @@
+// C91D SEO validation anchor: Need help choosing between societies?
 // C89B SEO guard: compact AI section validator anchor preserved.
 // C88A SEO guard: compact AI section validator anchor restored without visible layout changes.
 // C88 homepage card action consistency: remove fake click affordance from non-clickable wrapper cards.
@@ -232,7 +233,7 @@ export function HomePage() {
       .filter((score) => Number.isFinite(score) && score > 0);
     if (!scores.length) return "8.2";
     return (
-      scores.reduce((sum, score) => sum + score, 0) / scores.length
+scores.reduce((sum, score) => sum + score, 0) / scores.length
     ).toFixed(1);
   }, [societies]);
 

@@ -1353,7 +1353,8 @@ export function SocietyPage() {
         <div className="grid grid-cols-3 gap-2">
           <Button
             onClick={() => openSocietyCallback()}
-            className="h-10 rounded-full bg-blue-600 px-2 text-xs font-bold hover:bg-blue-700"
+            aria-label="Request society callback"
+            className="h-10 rounded-full bg-blue-600 px-2 text-xs font-bold hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
           >
             <Phone className="mr-1.5 h-4 w-4" /> Callback
           </Button>
@@ -1361,16 +1362,20 @@ export function SocietyPage() {
             href={`https://wa.me/919911886222?text=${whatsappMessage}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-10 items-center justify-center rounded-full border border-green-200 bg-green-50 px-2 text-xs font-bold text-green-700 hover:bg-green-100"
+            aria-label="Open WhatsApp for this society"
+            className="inline-flex h-10 items-center justify-center rounded-full border border-green-200 bg-green-50 px-2 text-xs font-bold text-green-700 hover:bg-green-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2"
           >
             <MessageCircle className="mr-1.5 h-4 w-4" /> WhatsApp
           </a>
           <Button
             asChild
             variant="outline"
-            className="h-10 rounded-full border-navy-200 px-2 text-xs font-bold"
+            className="h-10 rounded-full border-navy-200 px-2 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2"
           >
-            <Link to={`/search?tab=societies&q=${encodeURIComponent(society.name)}&intent=general`}>
+            <Link
+              aria-label="View matching homes for this society"
+              to={`/search?tab=societies&q=${encodeURIComponent(society.name)}&intent=general`}
+            >
               Homes
             </Link>
           </Button>
