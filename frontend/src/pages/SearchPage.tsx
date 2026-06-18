@@ -1,3 +1,4 @@
+// C75 search UX compact polish: sticky compact search, higher mobile results, tighter cards and helper AI block.
 import { trackEvent, trackLeadIntent, trackLeadSubmitted, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -135,26 +136,26 @@ function EmptyResults({
   const browseLabel = isSocietySearch ? "Browse all societies" : "Browse available homes";
 
   return (
-    <div className="overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-sm md:rounded-[1.75rem]">
-      <div className="bg-gradient-to-br from-blue-50 via-white to-ivory-100 p-4 md:p-8">
+    <div className="overflow-hidden rounded-[1.35rem] border border-blue-100 bg-white shadow-sm md:rounded-[1.5rem]">
+      <div className="bg-gradient-to-br from-blue-50 via-white to-ivory-100 p-4 md:p-5">
         <div className="mx-auto max-w-3xl">
-          <div className="grid gap-5 md:grid-cols-[1fr_0.9fr] md:items-center">
+          <div className="grid gap-4 md:grid-cols-[1fr_0.82fr] md:items-center">
             <div className="text-center md:text-left">
               <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-100 md:mx-0 md:h-12 md:w-12">
                 <Search className="h-5 w-5" />
               </span>
 
-              <p className="mt-4 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700 md:mt-5 md:text-xs md:tracking-[0.18em]">
+              <p className="mt-3 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700 md:mt-4 md:text-xs md:tracking-[0.18em]">
                 No exact live match found
               </p>
 
-              <h3 className="mt-2 text-xl font-black tracking-tight text-navy-950 md:text-3xl">
+              <h3 className="mt-2 text-xl font-black tracking-tight text-navy-950 md:text-2xl">
                 {isSocietySearch
                   ? "We can still find the right society."
                   : "We can still find matching homes."}
               </h3>
 
-              <p className="mt-2 text-sm leading-6 text-navy-500 md:mt-3 md:text-base">
+              <p className="mt-2 text-sm leading-6 text-navy-500 md:text-sm">
                 {query
                   ? `No live result is currently matching “${query}”. Share your number and our Gurgaon team will check offline inventory, fresh owner listings and similar options.`
                   : `Tell us your requirement and our Gurgaon team will shortlist verified ${isSocietySearch ? "societies" : "homes"} for you.`}
@@ -216,7 +217,7 @@ function EmptyResults({
             </div>
           </div>
 
-          <div className="mt-5 grid gap-2 sm:grid-cols-3">
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
             <Link
               to={advisorUrl}
               className="inline-flex h-11 items-center justify-center rounded-full border border-blue-100 bg-white px-4 text-sm font-black text-blue-700 hover:bg-blue-50"
@@ -615,13 +616,13 @@ export function SearchPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <section className="border-b border-navy-100 bg-white/95 backdrop-blur">
-        <div className="container mx-auto px-3 py-2 md:px-4 md:py-3">
+      <section className="sticky top-0 z-30 border-b border-navy-100 bg-white/95 backdrop-blur">
+        <div className="container mx-auto px-3 py-2 md:px-4 md:py-2.5">
           <h1 className="sr-only">Search Gurgaon societies and homes</h1>
 
-          <div className="rounded-[1.35rem] border border-navy-100 bg-white p-2.5 shadow-sm md:p-3">
-            <div className="flex flex-col gap-2 md:grid md:grid-cols-[auto_1fr_auto_auto] md:items-center md:gap-3">
-              <div className="grid w-full grid-cols-[1.12fr_0.94fr_0.94fr] gap-2 md:flex md:w-auto md:flex-wrap">
+          <div className="rounded-[1.25rem] border border-blue-100 bg-white p-2 shadow-sm md:p-2.5">
+            <div className="flex flex-col gap-2 md:grid md:grid-cols-[auto_1fr_auto_auto] md:items-center md:gap-2">
+              <div className="grid w-full grid-cols-3 gap-1.5 md:flex md:w-auto md:flex-wrap md:gap-2">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
@@ -629,10 +630,10 @@ export function SearchPage() {
                       key={tab.key}
                       onClick={() => updateTab(tab.key)}
                       className={cn(
-                        "inline-flex h-10 min-w-0 items-center justify-center gap-1 rounded-full px-1.5 text-[12px] font-black transition md:h-11 md:justify-start md:gap-2 md:px-4 md:text-sm md:font-bold",
+                        "inline-flex h-9 min-w-0 items-center justify-center gap-1 rounded-full px-1.5 text-[12px] font-black transition md:h-10 md:justify-start md:gap-2 md:px-4 md:text-sm md:font-bold",
                         activeTab === tab.key
-                          ? "bg-navy-700 text-white"
-                          : "bg-ivory-200 text-navy-600 hover:bg-navy-100",
+                          ? "bg-blue-700 text-white shadow-sm shadow-blue-100"
+                          : "bg-blue-50 text-navy-600 hover:bg-blue-100",
                       )}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
@@ -651,12 +652,12 @@ export function SearchPage() {
                     onChange={(event) => setQuery(event.target.value)}
                     onKeyDown={(event) => event.key === "Enter" && submitSearch()}
                     placeholder="Search society, sector or landmark..."
-                    className="h-11 rounded-full border-navy-100 pl-10 text-sm md:h-11 md:pl-12 md:text-base"
+                    className="h-10 rounded-full border-blue-100 bg-blue-50/45 pl-10 text-sm font-semibold md:h-10 md:pl-12 md:text-base"
                   />
                 </div>
                 <Button
                   onClick={submitSearch}
-                  className="h-11 w-11 shrink-0 rounded-full bg-blue-600 px-0 font-black hover:bg-blue-700 md:w-auto md:px-7"
+                  className="h-10 w-10 shrink-0 rounded-full bg-blue-700 px-0 font-black hover:bg-blue-800 md:w-auto md:px-6"
                   aria-label="Search"
                 >
                   <Search className="h-5 w-5 md:hidden" />
@@ -668,7 +669,7 @@ export function SearchPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-11 rounded-full"
+                  className="h-10 rounded-full"
                   onClick={() => setShowMap((value) => !value)}
                 >
                   <MapPinned className="mr-2 h-4 w-4" />{" "}
@@ -705,9 +706,9 @@ export function SearchPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-3 pb-52 pt-2 md:px-4 md:pb-10 md:pt-3">
-        <div className="grid gap-3 lg:grid-cols-[240px_1fr] lg:gap-4">
-          <aside className="hidden space-y-3 lg:sticky lg:top-24 lg:block lg:self-start">
+      <section className="container mx-auto px-3 pb-36 pt-2 md:px-4 md:pb-10 md:pt-3">
+        <div className="grid gap-3 lg:grid-cols-[220px_1fr] lg:gap-3">
+          <aside className="hidden space-y-3 lg:sticky lg:top-[5.75rem] lg:block lg:self-start">
             <div className="rounded-[1.25rem] border border-navy-100 bg-white p-3.5 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-black text-navy-900">Filters</h2>
@@ -794,16 +795,16 @@ export function SearchPage() {
             </div>
           </aside>
 
-          <div className="min-w-0 space-y-5 md:space-y-6">
-            <div className="rounded-[1.25rem] border border-navy-100 bg-white p-3 shadow-sm md:rounded-[1.35rem] md:p-3">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0 space-y-3 md:space-y-4">
+            <div className="rounded-[1.2rem] border border-blue-100 bg-white p-2.5 shadow-sm md:rounded-[1.35rem] md:p-3">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-600 md:text-sm md:normal-case md:tracking-normal md:text-navy-500">
                     {isAiLoading && activeTab === "societies"
                       ? "Finding AI matches..."
                       : `${visibleCount} ${resultLabel(activeTab).toLowerCase()} result${visibleCount === 1 ? "" : "s"} found`}
                   </p>
-                  <h2 className="mt-1 line-clamp-2 text-base font-black text-navy-950 md:mt-0 md:text-xl">
+                  <h2 className="mt-0.5 line-clamp-2 text-base font-black text-navy-950 md:mt-0 md:text-xl">
                     {query
                       ? `Matches for “${query}”`
                       : "Published SocietyFlats inventory"}
@@ -841,7 +842,7 @@ export function SearchPage() {
                 </div>
               </div>
 
-              <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+              <div className="mt-2 flex gap-2 overflow-x-auto pb-1 lg:hidden">
                 {quickLocalities.map((item) => (
                   <button
                     key={item}
@@ -931,34 +932,34 @@ export function SearchPage() {
                 onSubmitLead={submitLead}
               />
             ) : activeTab === "societies" ? (
-              <div className="grid gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 md:gap-3 xl:grid-cols-3">
                 {societyResults.map((society) => (
                   <article
                     key={society.id}
-                    className="group overflow-hidden rounded-[1.25rem] border border-navy-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-apple"
+                    className="group overflow-hidden rounded-[1.2rem] border border-blue-100 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-apple"
                   >
                     <Link
                       to={society.slug ? `/society/${society.slug}` : "/societies"}
                       className="block"
                     >
-                      <div className="relative h-32 overflow-hidden bg-navy-50 md:h-36">
+                      <div className="relative h-24 overflow-hidden bg-navy-50 md:h-32">
                         <img
                           src={societyImage(society)}
                           alt={society.name}
                           className="h-full w-full object-cover transition group-hover:scale-[1.03]"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-navy-950/30 via-transparent to-transparent" />
-                        <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-black text-blue-700">
+                        <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-black text-blue-700">
                           Society
                         </span>
-                        <span className="absolute right-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-black text-navy-900">
+                        <span className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-black text-navy-900">
                           Score {society.score || "New"}
                         </span>
                       </div>
                     </Link>
 
-                    <div className="p-3.5 md:p-4">
-                      <h2 className="line-clamp-1 text-lg font-black text-navy-950 md:text-xl">
+                    <div className="p-3 md:p-3.5">
+                      <h2 className="line-clamp-1 text-base font-black text-navy-950 md:text-lg">
                         {society.name}
                       </h2>
 
@@ -973,7 +974,7 @@ export function SearchPage() {
                         </p>
                       ) : null}
 
-                      <div className="mt-2.5 grid grid-cols-2 gap-2 rounded-2xl bg-ivory-100 p-2.5 text-sm">
+                      <div className="mt-2 grid grid-cols-2 gap-2 rounded-2xl bg-blue-50/55 p-2.5 text-sm">
                         <div>
                           <p className="text-navy-400">Rent</p>
                           <p className="line-clamp-1 font-black text-navy-900">
@@ -1038,7 +1039,7 @@ export function SearchPage() {
                       <div
                         className={cn(
                           "relative overflow-hidden bg-navy-50",
-                          viewMode === "grid" ? "h-28 md:h-36" : "h-28 md:h-full",
+                          viewMode === "grid" ? "h-24 md:h-32" : "h-28 md:h-full",
                         )}
                       >
                         <img
@@ -1046,13 +1047,13 @@ export function SearchPage() {
                           alt={property.title}
                           className="h-full w-full object-cover transition group-hover:scale-[1.03]"
                         />
-                        <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-black text-blue-700">
+                        <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-black text-blue-700">
                           {activeTab === "rent" ? "Rent" : "Buy / Resale"}
                         </span>
                       </div>
                     </Link>
 
-                    <div className="p-3.5 md:p-4">
+                    <div className="p-3 md:p-3.5">
                       <div className="flex items-center justify-between gap-3">
                         <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
                           {property.listingType}
@@ -1064,15 +1065,15 @@ export function SearchPage() {
                         ) : null}
                       </div>
 
-                      <h2 className="mt-4 line-clamp-2 text-xl font-black text-navy-950 md:text-2xl">
+                      <h2 className="mt-3 line-clamp-2 text-lg font-black text-navy-950 md:text-xl">
                         {property.title}
                       </h2>
 
-                      <p className="mt-2 line-clamp-1 text-sm font-semibold text-navy-500">
+                      <p className="mt-1.5 line-clamp-1 text-sm font-semibold text-navy-500">
                         {property.society || "Gurgaon"} • {property.locality || "Verified listing"}
                       </p>
 
-                      <div className="mt-3 grid grid-cols-3 gap-2 rounded-2xl bg-ivory-100 p-2.5 md:mt-5 md:p-3">
+                      <div className="mt-2.5 grid grid-cols-3 gap-2 rounded-2xl bg-blue-50/55 p-2.5 md:mt-3 md:p-3">
                         <div>
                           <p className="text-xs text-navy-400">Price</p>
                           <p className="line-clamp-1 font-black text-navy-900">
@@ -1121,13 +1122,13 @@ export function SearchPage() {
               </div>
             )}
 
-            <div className="rounded-[1.25rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-ivory-100 p-3 shadow-sm md:rounded-[1.5rem] md:p-5">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="rounded-[1.2rem] border border-blue-100 bg-white p-3 shadow-sm md:rounded-[1.35rem] md:p-4">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-blue-700 md:text-xs md:tracking-[0.16em]">
-                    <Sparkles className="h-4 w-4" /> AI powered recommendations
+                    <Sparkles className="h-4 w-4" /> Smart recommendations
                   </p>
-                  <h3 className="mt-1 font-display text-lg font-black tracking-tight text-navy-950 md:mt-2 md:text-2xl">
+                  <h3 className="mt-1 text-lg font-black tracking-tight text-navy-950 md:text-xl">
                     Similar matches for{" "}
                     {query ? `“${query}”` : "your Gurgaon search"}
                   </h3>
@@ -1150,7 +1151,7 @@ export function SearchPage() {
                 </Button>
               </div>
 
-              <div className="mt-3 grid gap-2 md:mt-4 md:grid-cols-3 md:gap-3">
+              <div className="mt-3 grid gap-2 md:grid-cols-3 md:gap-2">
                 {(activeTab === "societies"
                   ? aiRecommendedSocieties
                   : aiRecommendedProperties
