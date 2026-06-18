@@ -4,6 +4,7 @@ import { ArrowRight, Loader2, MapPin, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SocietyMapView } from "@/components/maps/SocietyMapView";
+import { GoogleSocietyMapView } from "@/components/maps/GoogleSocietyMapView";
 import { fetchPublicSocieties, formatPublicLocation, searchableText } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
 import { type AdminSociety } from "@/lib/adminSocietyStore";
@@ -15,6 +16,7 @@ export function MapsPage() {
   const [societies, setSocieties] = useState<AdminSociety[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const googleMapsApiKey = String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();
 
   useEffect(() => {
     setPublicSeo(
@@ -126,7 +128,11 @@ export function MapsPage() {
             </Button>
           </div>
         ) : (
-          <SocietyMapView societies={filteredSocieties} query={query} />
+          googleMapsApiKey ? (
+            <GoogleSocietyMapView societies={filteredSocieties} query={query} apiKey={googleMapsApiKey} />
+          ) : (
+            <SocietyMapView societies={filteredSocieties} query={query} />
+          )
         )}
       </section>
     </main>
