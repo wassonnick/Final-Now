@@ -1,3 +1,4 @@
+// C80 AI advisor UX polish: compact prompt, clearer shortlist cards and tighter callback actions.
 // C71 AI Advisor copy: personalized home advisor, verified shortlist and expert callback language.
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked } from "@/lib/analytics";
 import { useEffect, useState } from "react";
@@ -137,29 +138,29 @@ export function AIAdvisorPage() {
             <span className="text-navy-700">AI shortlist</span>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
+          <div className="grid gap-4 lg:grid-cols-[0.68fr_1.32fr] lg:items-start">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700 shadow-sm">
                 <Sparkles className="h-4 w-4" />
                 Continued from homepage
               </span>
 
-              <h1 className="mt-4 font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-5xl">
+              <h1 className="mt-3 font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
                 SocietyFlats AI: your personal Gurgaon home advisor.
               </h1>
               <p className="sr-only">Continue your Gurgaon society shortlist.</p>
 
-              <p className="mt-3 max-w-xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
+              <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
                 Tell us your budget, office or school location, family needs, pets, preferred builder, lifestyle or investment goal.
               </p>
 
-              <div className="mt-5 grid grid-cols-3 gap-2 rounded-[1.25rem] border border-blue-100 bg-white p-2 shadow-sm">
+              <div className="mt-4 grid grid-cols-3 gap-2 rounded-[1.25rem] border border-blue-100 bg-white p-2 shadow-sm">
                 {[
                   ["1", "Ask"],
                   ["2", "Shortlist"],
                   ["3", "Open / callback"],
                 ].map(([step, label]) => (
-                  <div key={step} className="rounded-2xl bg-blue-50 px-2 py-3 text-center">
+                  <div key={step} className="rounded-2xl bg-blue-50 px-2 py-2.5 text-center">
                     <span className="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-blue-700 text-xs font-black text-white">
                       {step}
                     </span>
@@ -168,7 +169,7 @@ export function AIAdvisorPage() {
                 ))}
               </div>
 
-              <div className="mt-4 grid gap-2">
+              <div className="mt-3 grid gap-2">
                 {examplePrompts.map((item) => (
                   <div key={item} className="flex items-center gap-2 text-sm font-bold text-navy-600">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -178,7 +179,7 @@ export function AIAdvisorPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.6rem] border border-blue-100 bg-white p-3 shadow-soft md:p-5">
+            <div className="rounded-[1.35rem] border border-blue-100 bg-white p-3 shadow-soft md:p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-700 text-white">
@@ -200,7 +201,7 @@ export function AIAdvisorPage() {
                   event.preventDefault();
                   submitAdvisor();
                 }}
-                className="rounded-[1.35rem] border border-blue-100 bg-blue-50/70 p-3"
+                className="rounded-[1.25rem] border border-blue-100 bg-blue-50/70 p-3"
               >
                 <label className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">
                   Tell us what you need
@@ -224,7 +225,7 @@ export function AIAdvisorPage() {
                   </button>
                 </div>
 
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
                   {promptChips.map((prompt) => (
                     <button
                       key={prompt}
@@ -245,7 +246,7 @@ export function AIAdvisorPage() {
                 </div>
               </form>
 
-              <div className="mt-3 rounded-[1.25rem] border border-blue-100 bg-white p-4 text-sm font-semibold leading-6 text-navy-600">
+              <div className="mt-3 rounded-[1.15rem] border border-blue-100 bg-white p-3.5 text-sm font-semibold leading-6 text-navy-600">
                 <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-blue-600">
                   <ClipboardList className="h-4 w-4" />
                   Current shortlist brief
@@ -263,7 +264,7 @@ export function AIAdvisorPage() {
                 </div>
               </div>
 
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
                 <Link
                   to={searchUrl}
                   onClick={() =>
@@ -300,14 +301,14 @@ export function AIAdvisorPage() {
         </div>
       </section>
 
-      <section className="px-4 py-7 md:py-10">
+      <section className="px-4 py-5 md:py-7">
         <div className="container mx-auto">
-          <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
                 Your society recommendations
               </p>
-              <h2 className="mt-2 font-display text-3xl font-black text-navy-950">
+              <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950 md:text-3xl">
                 {matches.length ? "Your perfect society matches" : "Answer once to get a shortlist"}
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500">
@@ -318,7 +319,7 @@ export function AIAdvisorPage() {
 
           {matches.length ? (
             <>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {matches.map((match, index) => {
                   const name = match.society_name || match.name || "Society match";
                   const resultUrl = match.slug ? `/society/${match.slug}` : searchUrl;
@@ -338,7 +339,7 @@ export function AIAdvisorPage() {
                           result_position: index + 1,
                         })
                       }
-                      className="group rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-soft"
+                      className="group rounded-[1.2rem] border border-blue-100 bg-white p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
@@ -361,11 +362,11 @@ export function AIAdvisorPage() {
                         </span>
                       </div>
 
-                      <p className="mt-4 line-clamp-3 text-sm leading-6 text-navy-500">
+                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-navy-500">
                         {match.reason || "Open the society page to view score, location strengths, live homes and callback options."}
                       </p>
 
-                      <div className="mt-4 flex items-center justify-between border-t border-blue-50 pt-4">
+                      <div className="mt-3 flex items-center justify-between border-t border-blue-50 pt-3">
                         <span className="inline-flex items-center gap-2 text-xs font-black text-blue-700">
                           <Building2 className="h-4 w-4" />
                           View society intelligence
@@ -377,7 +378,7 @@ export function AIAdvisorPage() {
                 })}
               </div>
 
-              <div className="mt-5 rounded-[1.35rem] border border-blue-100 bg-blue-50/60 p-4 md:flex md:items-center md:justify-between">
+              <div className="mt-4 rounded-[1.25rem] border border-blue-100 bg-blue-50/60 p-3.5 md:flex md:items-center md:justify-between">
                 <div>
                   <p className="text-sm font-black text-navy-950">Want expert help shortlisting?</p>
                   <p className="mt-1 text-sm leading-6 text-navy-500">
@@ -394,7 +395,7 @@ export function AIAdvisorPage() {
               </div>
             </>
           ) : (
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-3">
               {[
                 {
                   title: "Ask in plain English",

@@ -1,3 +1,4 @@
+// C79 broker signup UX polish: tighter broker form, clearer partner flow and compact trust content.
 // C71 broker page copy: verified broker partner, RERA/license, inventory and commission trust language.
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -87,7 +88,7 @@ function FeatureHero({ feature }: { feature: FeatureExperienceKey }) {
             </div>
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-navy-600">{intro.eyebrow}</p>
             <h1 className="text-4xl font-extrabold tracking-tight text-navy-900 md:text-6xl">{intro.title}</h1>
-            <p className="mt-4 max-w-3xl text-lg leading-8 text-navy-500">{intro.text}</p>
+            <p className="mt-3 max-w-3xl text-base leading-7 text-navy-500">{intro.text}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             {feature === 'broker-crm' ? (
@@ -261,7 +262,7 @@ function RecommendationsTool({ societies }: { societies: PublicSociety[] }) {
           </label>
           <label className="block">
             <span className="text-sm font-semibold text-navy-700">Preferred locality</span>
-            <Input value={locality} onChange={(event) => setLocality(event.target.value)} placeholder="Golf Course Road, Sector 70..." className="mt-2 h-12 rounded-full" />
+            <Input value={locality} onChange={(event) => setLocality(event.target.value)} placeholder="Golf Course Road, Sector 70..." className="mt-2 h-11 rounded-full" />
           </label>
           <div>
             <p className="text-sm font-semibold text-navy-700">Priorities</p>
@@ -407,14 +408,14 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
 
   if (isBrokerCrm) {
     return (
-      <div id="broker-signup" className="grid gap-6 lg:grid-cols-[1fr_420px]">
+      <div id="broker-signup" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px]">
         <section className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft">
           <div className="mb-6">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">Broker signup</p>
             <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-navy-950">
               Grow your broker business with SocietyFlats.
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-navy-500">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500">
               Share working areas, office details, inventory strength and RERA/license information. Verified partners can receive matched buyer, tenant and owner opportunities through SocietyFlats.
             </p>
           </div>
@@ -422,52 +423,52 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
           <div className="grid gap-4 md:grid-cols-2">
             <label>
               <span className="text-sm font-semibold text-navy-700">Full name</span>
-              <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Broker name" />
+              <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Broker name" />
             </label>
 
             <label>
               <span className="text-sm font-semibold text-navy-700">Mobile number</span>
-              <Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="9911886222" />
+              <Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="9911886222" />
             </label>
 
             <label>
               <span className="text-sm font-semibold text-navy-700">Email</span>
-              <Input value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Optional but recommended" />
+              <Input value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Optional but recommended" />
             </label>
 
             <label>
               <span className="text-sm font-semibold text-navy-700">Company / brand name</span>
-              <Input value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Your firm name" />
+              <Input value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Your firm name" />
             </label>
 
             <label className="md:col-span-2">
               <span className="text-sm font-semibold text-navy-700">Office address</span>
-              <Input value={form.officeAddress} onChange={(event) => setForm({ ...form, officeAddress: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Office address / locality" />
+              <Input value={form.officeAddress} onChange={(event) => setForm({ ...form, officeAddress: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Office address / locality" />
             </label>
 
             <label className="md:col-span-2">
               <span className="text-sm font-semibold text-navy-700">Working areas / societies</span>
-              <Input value={form.workingAreas} onChange={(event) => setForm({ ...form, workingAreas: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Golf Course Road, DLF Crest, M3M Golf Estate, Sector 65..." />
+              <Input value={form.workingAreas} onChange={(event) => setForm({ ...form, workingAreas: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Golf Course Road, DLF Crest, M3M Golf Estate, Sector 65..." />
             </label>
 
             <label>
               <span className="text-sm font-semibold text-navy-700">Experience</span>
-              <Input value={form.experience} onChange={(event) => setForm({ ...form, experience: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Example: 8 years" />
+              <Input value={form.experience} onChange={(event) => setForm({ ...form, experience: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Example: 8 years" />
             </label>
 
             <label>
               <span className="text-sm font-semibold text-navy-700">RERA / license no.</span>
-              <Input value={form.reraNumber} onChange={(event) => setForm({ ...form, reraNumber: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Optional" />
+              <Input value={form.reraNumber} onChange={(event) => setForm({ ...form, reraNumber: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Optional" />
             </label>
 
             <label className="md:col-span-2">
               <span className="text-sm font-semibold text-navy-700">Inventory / client requirements</span>
-              <textarea value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} className="mt-2 min-h-[130px] w-full rounded-[1.5rem] border border-navy-100 bg-white p-4 text-navy-800 outline-none focus:border-orange-300 focus:ring-4 focus:ring-orange-100" placeholder="Tell us your active listings, buyer/tenant leads, preferred commission terms and top working societies..." />
+              <textarea value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} className="mt-2 min-h-[105px] w-full rounded-[1.25rem] border border-navy-100 bg-white p-3.5 text-navy-800 outline-none focus:border-orange-300 focus:ring-4 focus:ring-orange-100" placeholder="Tell us your active listings, buyer/tenant leads, preferred commission terms and top working societies..." />
             </label>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
-            <Button disabled={state === 'loading'} onClick={submit} className="rounded-full bg-orange-600 px-6 hover:bg-orange-700">
+            <Button disabled={state === 'loading'} onClick={submit} className="h-10 rounded-full bg-orange-600 px-5 text-sm font-bold hover:bg-orange-700">
               {state === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BriefcaseBusiness className="mr-2 h-4 w-4" />}
               Submit broker application
             </Button>
@@ -486,7 +487,7 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
 
         <aside className="rounded-[2rem] border border-orange-100 bg-orange-50 p-6">
           <BriefcaseBusiness className="h-9 w-9 text-orange-700" />
-          <h2 className="mt-5 text-2xl font-black text-navy-950">Why join as a SocietyFlats broker partner?</h2>
+          <h2 className="mt-4 text-xl font-black text-navy-950">Why join as a SocietyFlats broker partner?</h2>
 
           <div className="mt-5 space-y-4">
             {[
@@ -496,14 +497,14 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
               'Get access to owner listing, buyer and tenant opportunities as SocietyFlats grows.',
               'Commission pipeline will be tracked transparently after verified deal stages.',
             ].map((item) => (
-              <div key={item} className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold leading-6 text-navy-700">
+              <div key={item} className="flex gap-3 rounded-2xl bg-white p-3.5 text-sm font-semibold leading-6 text-navy-700">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-orange-600" />
                 {item}
               </div>
             ))}
           </div>
 
-          <div className="mt-6 rounded-3xl bg-white p-5 text-sm leading-6 text-navy-600">
+          <div className="mt-4 rounded-2xl bg-white p-4 text-sm leading-6 text-navy-600">
             <p className="font-black text-navy-950">After signup</p>
             <p className="mt-2">
               SocietyFlats admin will call to verify your profile, working societies, inventory strength and commission understanding before marking you active.
@@ -515,20 +516,20 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px]">
       <section className="rounded-[2rem] border border-navy-100 bg-white p-6 shadow-soft">
         <div className="grid gap-4 md:grid-cols-2">
           <label>
             <span className="text-sm font-semibold text-navy-700">Name</span>
-            <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Your name" />
+            <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Your name" />
           </label>
           <label>
             <span className="text-sm font-semibold text-navy-700">Phone</span>
-            <Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="+91..." />
+            <Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="+91..." />
           </label>
           <label>
             <span className="text-sm font-semibold text-navy-700">Email</span>
-            <Input value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Optional" />
+            <Input value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Optional" />
           </label>
           <label>
             <span className="text-sm font-semibold text-navy-700">I am a</span>
@@ -540,7 +541,7 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
           </label>
           <label className="md:col-span-2">
             <span className="text-sm font-semibold text-navy-700">Society or locality</span>
-            <Input value={form.society} onChange={(event) => setForm({ ...form, society: event.target.value })} className="mt-2 h-12 rounded-full" placeholder="Tulip Crimson, DLF, Sector 70..." />
+            <Input value={form.society} onChange={(event) => setForm({ ...form, society: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Tulip Crimson, DLF, Sector 70..." />
           </label>
           <label className="md:col-span-2">
             <span className="text-sm font-semibold text-navy-700">Requirement</span>
@@ -548,7 +549,7 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
           </label>
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-3">
-          <Button disabled={state === 'loading'} onClick={submit} className="rounded-full bg-navy-600 px-6 hover:bg-navy-700">
+          <Button disabled={state === 'loading'} onClick={submit} className="h-10 rounded-full bg-navy-600 px-5 text-sm font-bold hover:bg-navy-700">
             {state === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
             Send request
           </Button>
@@ -597,16 +598,16 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
         {feature === 'broker-crm' ? (
           <div className="mb-6 grid gap-4 md:grid-cols-3">
             <div className="rounded-[1.5rem] border border-orange-100 bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">Broker signup</p>
-              <p className="mt-3 text-lg font-bold text-navy-900">Join as verified broker partner</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">Broker signup</p>
+              <p className="mt-2 text-lg font-bold text-navy-900">Join as verified broker partner</p>
             </div>
             <div className="rounded-[1.5rem] border border-orange-100 bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">Coverage</p>
-              <p className="mt-3 text-lg font-bold text-navy-900">Gurgaon societies first</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">Coverage</p>
+              <p className="mt-2 text-lg font-bold text-navy-900">Gurgaon societies first</p>
             </div>
             <div className="rounded-[1.5rem] border border-orange-100 bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">Admin verified</p>
-              <p className="mt-3 text-lg font-bold text-navy-900">Leads + commission tracking</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">Admin verified</p>
+              <p className="mt-2 text-lg font-bold text-navy-900">Leads + commission tracking</p>
             </div>
           </div>
         ) : (
@@ -621,7 +622,7 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
             </div>
             <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-navy-400">Workflow</p>
-              <p className="mt-3 text-lg font-bold text-navy-900">{feature === 'maps' ? 'Location search' : feature === 'recommendations' ? 'Ranked matches' : 'Lead capture'}</p>
+              <p className="mt-2 text-lg font-bold text-navy-900">{feature === 'maps' ? 'Location search' : feature === 'recommendations' ? 'Ranked matches' : 'Lead capture'}</p>
             </div>
           </div>
         )}

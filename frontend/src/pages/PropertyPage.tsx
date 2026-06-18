@@ -1,3 +1,4 @@
+// C77 property page UX polish: compact hero, tighter details, preserved property-style sidebar.
 // C71 property detail copy: legal verification, society intelligence and stronger enquiry CTAs.
 import { trackEvent, trackLeadIntent, trackLeadSubmitted, trackResultClicked } from "@/lib/analytics";
 import { cleanLeadTrackingPayload } from "@/lib/leadTracking";
@@ -616,7 +617,7 @@ export function PropertyPage() {
       </div>
 
       <section className="bg-white">
-        <div className="container mx-auto px-4 py-5 md:py-6">
+        <div className="container mx-auto px-4 py-4 md:py-5">
           <Button asChild variant="ghost" className="mb-4 rounded-full text-navy-600">
             <Link to={societySlug ? `/society/${societySlug}` : "/properties"}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -625,7 +626,7 @@ export function PropertyPage() {
           </Button>
 
           <div className={photos.length > 1 ? "grid gap-4 lg:grid-cols-[1fr_240px]" : "grid gap-4"}>
-            <div className="relative h-[190px] overflow-hidden rounded-[1.25rem] bg-navy-50 sm:h-[260px] md:h-[440px] md:rounded-[2rem]">
+            <div className="relative h-[175px] overflow-hidden rounded-[1.2rem] bg-navy-50 sm:h-[240px] md:h-[360px] md:rounded-[1.75rem]">
               <img src={photos[activeImage] || photos[0]} alt={title} className="h-full w-full object-cover" />
               <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                 {property.verified ? (
@@ -651,7 +652,7 @@ export function PropertyPage() {
                       activeImage === index ? "border-blue-500" : "border-transparent",
                     )}
                   >
-                    <img src={photo} alt={title} className="h-full min-h-[135px] w-full object-cover" />
+                    <img src={photo} alt={title} className="h-full min-h-[110px] w-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -660,10 +661,10 @@ export function PropertyPage() {
         </div>
       </section>
 
-      <main className="container mx-auto px-4 py-6 md:py-8">
-        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-          <div className="space-y-6">
-            <section className="rounded-[1.5rem] border border-navy-100 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-7">
+      <main className="container mx-auto px-4 py-4 md:py-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6">
+          <div className="space-y-4 md:space-y-5">
+            <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.65rem] md:p-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="mb-3 flex flex-wrap gap-2">
@@ -671,7 +672,7 @@ export function PropertyPage() {
                     {property.status ? <Badge variant="outline">{property.status}</Badge> : null}
                   </div>
 
-                  <h1 className="text-3xl font-extrabold tracking-tight text-navy-900 md:text-5xl">
+                  <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 md:text-4xl">
                     {title}
                   </h1>
 
@@ -687,7 +688,7 @@ export function PropertyPage() {
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+              <div className="mt-4 grid grid-cols-2 gap-2.5 md:grid-cols-4">
                 {[
                   { label: "Type", value: propertyType, icon: Home },
                   { label: "Bedrooms", value: `${property.bedrooms || "-"} BHK`, icon: Bed },
@@ -696,7 +697,7 @@ export function PropertyPage() {
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
-                    <div key={item.label} className="rounded-2xl bg-[#F8FAFC] p-4">
+                    <div key={item.label} className="rounded-2xl bg-blue-50/55 p-3.5">
                       <Icon className="h-4 w-4 text-blue-600" />
                       <p className="mt-2 text-xs text-navy-400">{item.label}</p>
                       <p className="mt-1 font-semibold text-navy-900">{item.value}</p>
@@ -705,7 +706,7 @@ export function PropertyPage() {
                 })}
               </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap md:mt-6">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap md:mt-5">
                 <Button onClick={() => openLead("callback")} className="h-10 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700">
                   <Phone className="mr-2 h-4 w-4" /> Check availability
                 </Button>
@@ -745,9 +746,9 @@ export function PropertyPage() {
               </section>
             ) : null}
 
-            <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+            <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
               <h2 className="text-xl font-bold text-navy-900 md:text-2xl">Property details</h2>
-              <div className="mt-4 grid grid-cols-2 gap-3 md:mt-5 md:grid-cols-3 md:gap-4">
+              <div className="mt-3 grid grid-cols-2 gap-3 md:mt-4 md:grid-cols-3 md:gap-3">
                 {[
                   ["Listing type", listingType],
                   ["Price", price],
@@ -767,8 +768,8 @@ export function PropertyPage() {
               </div>
             </section>
 
-            <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
-              <div className="grid gap-4 md:grid-cols-3">
+            <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
+              <div className="grid gap-3 md:grid-cols-3">
                 {[
                   { label: "Verified society", value: societyName || "Gurgaon inventory", icon: Shield },
                   { label: "Location context", value: societyLocality, icon: MapPin },
@@ -776,7 +777,7 @@ export function PropertyPage() {
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
-                    <div key={item.label} className="rounded-[1.25rem] bg-[#F8FAFC] p-4">
+                    <div key={item.label} className="rounded-[1.15rem] bg-blue-50/55 p-3.5">
                       <Icon className="h-5 w-5 text-blue-600" />
                       <p className="mt-3 text-sm text-navy-400">{item.label}</p>
                       <p className="mt-1 font-semibold text-navy-900">{item.value}</p>
@@ -786,19 +787,19 @@ export function PropertyPage() {
               </div>
             </section>
 
-            <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+            <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
               <h2 className="text-2xl font-bold text-navy-900">Description</h2>
-              <p className="mt-4 line-clamp-3 whitespace-pre-line leading-relaxed text-navy-600 md:line-clamp-none">
+              <p className="mt-3 line-clamp-3 whitespace-pre-line text-sm leading-6 text-navy-600 md:line-clamp-5">
                 {publicPropertyDescription(property.description)}
               </p>
             </section>
 
-            <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+            <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
               <h2 className="text-2xl font-bold text-navy-900">Amenities</h2>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {amenities.length ? (
                   amenities.map((item) => (
-                    <span key={item} className="rounded-full bg-ivory-200 px-4 py-2 text-sm text-navy-700">
+                    <span key={item} className="rounded-full bg-blue-50 px-3.5 py-1.5 text-sm font-semibold text-blue-700">
                       {item}
                     </span>
                   ))
@@ -809,13 +810,13 @@ export function PropertyPage() {
             </section>
 
             {societyName ? (
-              <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+              <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">Society context</p>
                 <h2 className="mt-2 text-2xl font-bold text-navy-900">About {societyName}</h2>
                 <p className="mt-3 text-navy-500">
                   Review the society profile before requesting a visit so the property decision includes location, amenities and inventory context.
                 </p>
-                <div className="mt-5 flex flex-wrap gap-3">
+                <div className="mt-4 flex flex-wrap gap-2">
                   {societySlug ? (
                     <Button asChild variant="outline" className="rounded-full">
                       <Link to={`/society/${societySlug}`}>View society profile</Link>
@@ -828,7 +829,7 @@ export function PropertyPage() {
               </section>
             ) : null}
 
-            <section className="rounded-[1.75rem] border border-navy-100 bg-white p-5 shadow-sm md:rounded-[2rem] md:p-7">
+            <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
@@ -849,7 +850,7 @@ export function PropertyPage() {
               </div>
 
               {similarProperties.length > 0 ? (
-                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
                   {similarProperties.map((item) => {
                     const itemTitle = item.title || "Similar home";
                     const itemPrice = item.price || item.rent || "On request";
@@ -862,12 +863,12 @@ export function PropertyPage() {
                       <Link
                         key={String(item.id || item.slug || itemTitle)}
                         to={itemPath}
-                        className="group overflow-hidden rounded-[1.5rem] border border-navy-100 bg-white transition-all hover:shadow-soft"
+                        className="group overflow-hidden rounded-[1.2rem] border border-blue-100 bg-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
                       >
-                        <div className="h-32 bg-navy-50 md:h-36">
+                        <div className="h-24 bg-navy-50 md:h-28">
                           <img src={itemPhoto} alt={itemTitle} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                         </div>
-                        <div className="p-4">
+                        <div className="p-3.5">
                           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
                             {getField(item, "listingType", "listing_type", "Property")}
                           </p>
@@ -913,7 +914,7 @@ export function PropertyPage() {
           </div>
 
           <aside className="hidden lg:block">
-            <div className="sticky top-20 rounded-[1.25rem] border border-navy-100 bg-white p-4 shadow-soft">
+            <div className="sticky top-24 rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-soft">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">

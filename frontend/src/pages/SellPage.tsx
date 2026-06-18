@@ -1,3 +1,4 @@
+// C78 owner listing UX polish: compact first fold, tighter form and clearer conversion sections.
 // C71 owner listing copy: stronger verified buyer, no broker hassle and verification flow language.
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
@@ -217,19 +218,19 @@ export function SellPage() {
       <section className="relative overflow-hidden border-b border-blue-100 bg-gradient-to-br from-white via-blue-50/80 to-slate-50">
         <div className="absolute left-[-12rem] top-[-10rem] h-96 w-96 rounded-full bg-blue-200/30 blur-3xl" />
         <div className="absolute right-[-10rem] top-24 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl" />
-        <div className="relative container mx-auto px-4 py-14 md:py-20">
-          <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+        <div className="relative container mx-auto px-4 py-8 md:py-12">
+          <div className="grid gap-7 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
             <div>
-              <Badge className="mb-5 rounded-full border-blue-200 bg-white px-4 py-1.5 text-blue-700 shadow-sm">
+              <Badge className="mb-3 rounded-full border-blue-200 bg-white px-4 py-1.5 text-blue-700 shadow-sm">
                 Owner listing
               </Badge>
-              <h1 className="max-w-2xl text-4xl font-black tracking-[-0.045em] leading-[0.98] text-slate-950 md:text-6xl">
+              <h1 className="max-w-2xl text-3xl font-black tracking-[-0.045em] leading-[0.98] text-slate-950 md:text-5xl">
                 List your Gurgaon flat. Get verified buyers. No broker hassle.
               </h1>
-              <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 md:text-lg">
+              <p className="mt-4 max-w-xl text-sm leading-6 text-slate-600 md:text-base md:leading-7">
                 Share your society, BHK, price expectation and callback time once. SocietyFlats verifies the owner lead, captures society context and routes serious buyer/tenant enquiries to the CRM.
               </p>
-              <div className="mt-7 grid gap-3 sm:grid-cols-3">
+              <div className="mt-5 grid gap-2 sm:grid-cols-3">
                 {[
                   "Verified enquiries",
                   "No listing fee",
@@ -246,14 +247,14 @@ export function SellPage() {
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-blue-100 bg-white p-5 text-navy-900 shadow-xl shadow-blue-100/60 md:p-7">
-              <div className="flex items-center gap-2 mb-5">
+            <div className="rounded-[1.5rem] border border-blue-100 bg-white p-4 text-navy-900 shadow-xl shadow-blue-100/60 md:p-5">
+              <div className="mb-4 flex items-center gap-2">
                 <BadgeIndianRupee className="w-5 h-5 text-blue-700" />
-                <h2 className="text-2xl font-display font-bold">
+                <h2 className="text-xl font-display font-bold">
                   List your flat
                 </h2>
               </div>
-              <div className="grid grid-cols-2 gap-2 mb-5 rounded-2xl bg-navy-50 p-1">
+              <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl bg-blue-50 p-1">
                 <button
                   onClick={() => {
                     trackEvent("owner_listing_purpose_changed", {
@@ -264,7 +265,7 @@ export function SellPage() {
                     setPurpose("rent");
                   }}
                   className={cn(
-                    "rounded-xl px-4 py-3 text-sm font-semibold transition-all",
+                    "rounded-xl px-4 py-2.5 text-sm font-semibold transition-all",
                     purpose === "rent"
                       ? "bg-white shadow-sm text-navy-900"
                       : "text-navy-500",
@@ -282,7 +283,7 @@ export function SellPage() {
                     setPurpose("sell");
                   }}
                   className={cn(
-                    "rounded-xl px-4 py-3 text-sm font-semibold transition-all",
+                    "rounded-xl px-4 py-2.5 text-sm font-semibold transition-all",
                     purpose === "sell"
                       ? "bg-white shadow-sm text-navy-900"
                       : "text-navy-500",
@@ -310,12 +311,12 @@ export function SellPage() {
                   </Button>
                 </div>
               ) : (
-                <form onSubmit={submitOwnerLead} className="space-y-4">
+                <form onSubmit={submitOwnerLead} className="space-y-3">
                   <Input
                     required
                     value={form.name}
                     onChange={(event) => updateForm("name", event.target.value)}
-                    className="h-12 rounded-xl"
+                    className="h-11 rounded-xl"
                     placeholder="Your name"
                   />
                   <Input
@@ -324,7 +325,7 @@ export function SellPage() {
                     onChange={(event) =>
                       updateForm("society", event.target.value)
                     }
-                    className="h-12 rounded-xl"
+                    className="h-11 rounded-xl"
                     placeholder="Society name e.g. DLF Park Place"
                   />
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -333,7 +334,7 @@ export function SellPage() {
                       onChange={(event) =>
                         updateForm("tower", event.target.value)
                       }
-                      className="h-12 rounded-xl"
+                      className="h-11 rounded-xl"
                       placeholder="Tower / block"
                     />
                     <Input
@@ -342,7 +343,7 @@ export function SellPage() {
                       onChange={(event) =>
                         updateForm("bhk", event.target.value)
                       }
-                      className="h-12 rounded-xl"
+                      className="h-11 rounded-xl"
                       placeholder="BHK e.g. 3 BHK"
                     />
                   </div>
@@ -353,7 +354,7 @@ export function SellPage() {
                       onChange={(event) =>
                         updateForm("size", event.target.value)
                       }
-                      className="h-12 rounded-xl"
+                      className="h-11 rounded-xl"
                       placeholder="Size e.g. 1983 sq.ft."
                     />
                     <Input
@@ -361,7 +362,7 @@ export function SellPage() {
                       onChange={(event) =>
                         updateForm("floor", event.target.value)
                       }
-                      className="h-12 rounded-xl"
+                      className="h-11 rounded-xl"
                       placeholder="Floor e.g. 12th"
                     />
                   </div>
@@ -372,7 +373,7 @@ export function SellPage() {
                       onChange={(event) =>
                         updateForm("furnishing", event.target.value)
                       }
-                      className="h-12 rounded-xl"
+                      className="h-11 rounded-xl"
                       placeholder="Furnishing e.g. Semi furnished"
                     />
                     <Input
@@ -380,7 +381,7 @@ export function SellPage() {
                       onChange={(event) =>
                         updateForm("availability", event.target.value)
                       }
-                      className="h-12 rounded-xl"
+                      className="h-11 rounded-xl"
                       placeholder="Availability e.g. Immediate"
                     />
                   </div>
@@ -390,7 +391,7 @@ export function SellPage() {
                     onChange={(event) =>
                       updateForm("details", event.target.value)
                     }
-                    className="h-12 rounded-xl"
+                    className="h-11 rounded-xl"
                     placeholder="Extra details optional"
                   />
 
@@ -400,7 +401,7 @@ export function SellPage() {
                       onChange={(event) =>
                         updateForm("expectation", event.target.value)
                       }
-                      className="h-12 rounded-xl"
+                      className="h-11 rounded-xl"
                       placeholder={
                         purpose === "rent"
                           ? "Expected rent e.g. ₹85,000/month"
@@ -412,7 +413,7 @@ export function SellPage() {
                       onChange={(event) =>
                         updateForm("preferredTime", event.target.value)
                       }
-                      className="h-12 rounded-xl"
+                      className="h-11 rounded-xl"
                       placeholder="Best time to call e.g. Today evening"
                     />
                   </div>
@@ -425,7 +426,7 @@ export function SellPage() {
                     inputMode="numeric"
                     pattern="[6-9][0-9]{9}"
                     maxLength={10}
-                    className="h-12 rounded-xl"
+                    className="h-11 rounded-xl"
                     placeholder="10-digit mobile number"
                   />
                   <p className="text-xs text-navy-400">
@@ -438,14 +439,14 @@ export function SellPage() {
                   ) : null}
                   <Button
                     disabled={submitting}
-                    className="w-full h-12 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold shadow-lg shadow-blue-100"
+                    className="h-11 w-full rounded-xl bg-blue-700 font-semibold text-white shadow-lg shadow-blue-100 hover:bg-blue-800"
                   >
                     {submitting ? "Submitting..." : "Continue"}{" "}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </form>
               )}
-              <p className="text-xs text-navy-400 mt-4 text-center">
+              <p className="mt-3 text-center text-xs text-navy-400">
                 By submitting, you agree to be contacted once by SocietyFlats for verification, pricing guidance and matching buyer/tenant enquiries.
               </p>
             </div>
@@ -453,25 +454,25 @@ export function SellPage() {
         </div>
       </section>
 
-      <section className="py-20">
+      <section className="py-12">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+          <div className="mb-8 text-center">
             <Badge className="mb-4 bg-white text-navy-700 border-navy-200">
               How listing with SocietyFlats works
             </Badge>
-            <h2 className="text-3xl md:text-5xl font-display font-bold text-navy-900">
+            <h2 className="text-2xl md:text-4xl font-display font-bold text-navy-900">
               Three simple steps to turn your flat into verified inventory.
             </h2>
           </div>
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="grid gap-4 md:grid-cols-4">
             {steps.map((step, index) => {
               const Icon = step.icon;
               return (
                 <div
                   key={step.title}
-                  className="rounded-[2rem] bg-white border border-navy-100 p-6 shadow-sm"
+                  className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-navy-900 text-white flex items-center justify-center mb-5">
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-navy-900 text-white">
                     <Icon className="w-6 h-6" />
                   </div>
                   <p className="text-sm text-gold-600 font-bold mb-2">
@@ -488,9 +489,9 @@ export function SellPage() {
         </div>
       </section>
 
-      <section className="py-16 bg-white">
+      <section className="bg-white py-12">
         <div className="container mx-auto px-4">
-          <div className="rounded-[2rem] bg-navy-900 p-8 md:p-10 text-white grid md:grid-cols-2 gap-8 items-center">
+          <div className="grid gap-6 rounded-[1.5rem] bg-navy-900 p-6 text-white md:grid-cols-2 md:items-center md:p-8">
             <div>
               <UserRound className="w-10 h-10 text-gold-400 mb-4" />
               <h2 className="text-3xl font-display font-bold">
