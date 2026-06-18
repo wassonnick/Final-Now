@@ -1,3 +1,4 @@
+// C86 internal SEO links polish: clearer Gurgaon locality/builder discovery blocks.
 import { Link } from "react-router-dom";
 import { ArrowRight, Building2, Home, MapPin, Search, Sparkles } from "lucide-react";
 
@@ -5,19 +6,19 @@ const primaryLinks = [
   {
     label: "Gurgaon society guide",
     href: "/gurgaon",
-    description: "Start with society-first Gurgaon discovery.",
+    description: "Start with society-first Gurgaon discovery and shortlisting.",
     icon: Sparkles,
   },
   {
     label: "Verified Gurgaon societies",
     href: "/gurgaon/societies",
-    description: "Compare society scores, locations and live inventory.",
+    description: "Compare society scores, location context and live inventory.",
     icon: Building2,
   },
   {
     label: "Verified Gurgaon properties",
     href: "/gurgaon/properties",
-    description: "Browse live homes inside verified societies.",
+    description: "Browse live homes inside verified Gurgaon societies.",
     icon: Home,
   },
 ];
@@ -73,20 +74,20 @@ export function InternalSeoLinks({
   }
 
   return (
-    <section className={isLanding ? "bg-white px-4 py-8" : "bg-blue-50/30 px-4 py-8 md:py-10"}>
+    <section className={isLanding ? "bg-white px-4 py-6 md:py-8" : "bg-blue-50/30 px-4 py-8 md:py-10"}>
       <div className="container mx-auto">
-        <div className="rounded-[1.5rem] border border-blue-100 bg-white p-4 shadow-sm md:p-6">
+        <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                Popular Gurgaon searches
+                Popular Gurgaon society searches
               </p>
               <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-3xl">
-                {title || "Explore SocietyFlats by locality, builder and inventory"}
+                {title || "Explore Gurgaon by locality, builder and live inventory"}
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-navy-500">
                 {description ||
-                  "Use these quick links to compare verified Gurgaon societies, priority sectors, builder collections and available homes without starting from a blank search."}
+                  "Use these quick links to compare verified Gurgaon societies, priority sectors, builder collections and available homes faster."}
               </p>
             </div>
 
@@ -94,19 +95,19 @@ export function InternalSeoLinks({
               to="/search?tab=societies"
               className="inline-flex items-center text-sm font-black text-blue-700 hover:text-blue-800"
             >
-              Search all Gurgaon
+              Search Gurgaon societies
               <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </div>
 
-          <div className="mt-5 grid gap-3 lg:grid-cols-3">
+          <div className="mt-4 grid gap-3 lg:grid-cols-3">
             {primaryLinks.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   to={item.href}
-                  className="group rounded-[1.1rem] border border-blue-100 bg-blue-50/45 p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50"
+                  className="group rounded-[1rem] border border-blue-100 bg-blue-50/45 p-3.5 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50"
                 >
                   <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-blue-700 shadow-sm">
                     <Icon className="h-5 w-5" />
@@ -122,7 +123,7 @@ export function InternalSeoLinks({
             })}
           </div>
 
-          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
             <LinkGroup
               icon={<MapPin className="h-4 w-4" />}
               title="Search by Gurgaon locality"
@@ -150,7 +151,7 @@ function LinkGroup({
   links: { label: string; href: string }[];
 }) {
   return (
-    <div className="rounded-[1.1rem] border border-navy-100 bg-white p-4">
+    <div className="rounded-[1rem] border border-navy-100 bg-white p-3.5">
       <div className="mb-3 flex items-center gap-2 text-sm font-black text-navy-950">
         <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
           {icon}

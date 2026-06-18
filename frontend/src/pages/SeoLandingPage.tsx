@@ -1,4 +1,5 @@
-// C71 SEO landing copy: verified Verified Gurgaon societies, sector pages, builder pages and society-first internal linking.
+// C86 SEO landing page polish: sharper Gurgaon/builder/locality copy, tighter cards and conversion CTAs.
+// C71 SEO landing copy: verified Gurgaon societies, sector pages, builder pages and society-first internal linking.
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -204,10 +205,10 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
 
   if (variant === "gurgaon-societies") {
     return {
-      eyebrow: "Gurgaon Society Directory",
+      eyebrow: "Gurgaon Society Intelligence",
       title: "Verified societies in Gurgaon",
       description:
-        "Explore verified Verified Gurgaon societies with society scores, rent ranges, sale ranges, live inventory and callback support.",
+        "Explore verified Gurgaon societies with society scores, rent ranges, resale context, live inventory and callback support.",
       canonical: "/gurgaon/societies",
       searchQuery: "Verified Gurgaon societies",
     };
@@ -215,10 +216,10 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
 
   if (variant === "gurgaon-properties") {
     return {
-      eyebrow: "Gurgaon Live Inventory",
+      eyebrow: "Gurgaon Verified Homes",
       title: "Verified properties in Gurgaon",
       description:
-        "Browse live Gurgaon rental and resale homes from verified societies with SocietyFlats intelligence and callback support.",
+        "Browse live Gurgaon rental and resale homes inside verified societies with pricing context, society intelligence and callback support.",
       canonical: "/gurgaon/properties",
       searchQuery: "Gurgaon properties",
     };
@@ -226,9 +227,9 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
 
   if (variant === "locality") {
     return {
-      eyebrow: "Gurgaon Locality Guide",
+      eyebrow: "Gurgaon Locality Intelligence",
       title: `Societies and properties in ${localityLabel}, Gurgaon`,
-      description: `Explore verified societies and live homes in ${localityLabel}, Gurgaon with society-first intelligence, pricing context and callback support.`,
+      description: `Compare verified societies and live homes in ${localityLabel}, Gurgaon with location strength, pricing context and callback support.`,
       canonical: `/gurgaon/${localitySlug}`,
       searchQuery: `${localityLabel} Gurgaon`,
     };
@@ -236,9 +237,9 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
 
   if (variant === "builder") {
     return {
-      eyebrow: "Builder Collection",
+      eyebrow: "Builder Society Collection",
       title: `${builderLabel} societies and properties in Gurgaon`,
-      description: `Explore ${builderLabel} societies and available homes in Gurgaon with verified society intelligence, pricing context and callback support.`,
+      description: `Compare ${builderLabel} societies and available homes in Gurgaon with society intelligence, pricing context and callback support.`,
       canonical: `/builder/${builderSlug}`,
       searchQuery: `${builderLabel} Gurgaon`,
     };
@@ -246,9 +247,9 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
 
   return {
     eyebrow: "Gurgaon Society-First Search",
-    title: "Find the right society before choosing the home",
+    title: "Find the right Gurgaon society before choosing the home",
     description:
-      "Discover verified Verified Gurgaon societies, live properties, owner listings and society-first recommendations on SocietyFlats.",
+      "Discover verified Gurgaon societies, live properties, owner listings and society-first recommendations on SocietyFlats.",
     canonical: "/gurgaon",
     searchQuery: "Gurgaon",
   };
@@ -272,7 +273,7 @@ function landingSeoText(variant: LandingVariant, localitySlug?: string, builderS
   }
 
   if (variant === "locality") {
-    return `${localityLabel} pages collect verified Verified Gurgaon societies and available homes so users can compare location strength, pricing context and resident fit faster.`;
+    return `${localityLabel} pages collect verified Gurgaon societies and available homes so users can compare location strength, pricing context and resident fit faster.`;
   }
 
   if (variant === "gurgaon-properties") {
@@ -402,7 +403,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
   return (
     <div className="min-h-screen bg-ivory-100">
       <section className="border-b border-navy-100 bg-white">
-        <div className="container mx-auto px-4 py-12 md:py-16">
+        <div className="container mx-auto px-4 py-10 md:py-14">
           <div className="max-w-4xl">
             <div className="mb-4 flex flex-wrap items-center gap-2 text-xs font-bold text-navy-400">
               <Link to="/" className="hover:text-blue-700">Home</Link>
@@ -417,49 +418,49 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
               {copy.eyebrow}
             </Badge>
 
-            <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-navy-950 md:text-6xl">
+            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-navy-950 md:text-5xl">
               {copy.title}
             </h1>
 
-            <p className="mt-5 max-w-3xl text-base leading-7 text-navy-500 md:text-lg md:leading-8">
+            <p className="mt-4 max-w-3xl text-base leading-7 text-navy-500 md:text-lg md:leading-8">
               {copy.description}
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link to={`/search?q=${encodeURIComponent(copy.searchQuery)}`}>
                 <Button className="w-full rounded-full bg-blue-700 px-6 text-white hover:bg-blue-800 sm:w-auto">
-                  Search live matches
+                  Search matching societies
                   <Search className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
 
               <Link to="/sell">
                 <Button variant="outline" className="w-full rounded-full border-navy-200 bg-white px-6 text-navy-800 sm:w-auto">
-                  List your property
+                  List owner property
                   <Home className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>
           </div>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
+          <div className="mt-8 grid gap-3 md:grid-cols-3">
             {[
               ["Verified societies", `${societies.length || "Live"} profiles`],
               ["Live inventory", `${properties.length || "Fresh"} homes`],
-              ["Society-first guidance", "Callback + WhatsApp"],
+              ["Society-first shortlist", "Callback + WhatsApp help"],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-[1.5rem] border border-navy-100 bg-ivory-100 p-5">
+              <div key={label} className="rounded-[1.25rem] border border-navy-100 bg-ivory-100 p-4">
                 <p className="text-sm text-navy-500">{label}</p>
-                <p className="mt-1 text-2xl font-black text-navy-950">{value}</p>
+                <p className="mt-1 text-xl font-black text-navy-950">{value}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-white px-4 py-6">
+      <section className="bg-white px-4 py-5">
         <div className="container mx-auto">
-          <div className="rounded-[1.25rem] border border-blue-100 bg-blue-50/40 p-4 text-sm leading-6 text-navy-600 md:p-5">
+          <div className="rounded-[1rem] border border-blue-100 bg-blue-50/40 p-4 text-sm leading-6 text-navy-600">
             {landingSeoText(variant, locality, builderSlug)}
           </div>
         </div>
@@ -471,7 +472,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
         description="Continue exploring Gurgaon by society, locality, builder and live inventory paths."
       />
 
-      <section className="container mx-auto px-4 py-10">
+      <section className="container mx-auto px-4 py-8 md:py-10">
         {loading ? (
           <div className="flex min-h-[280px] items-center justify-center rounded-[2rem] border border-navy-100 bg-white">
             <div className="text-center">
@@ -484,7 +485,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
             {error}
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-9 md:space-y-10">
             {hasScopedResults ? null : (
               <div className="rounded-[2rem] border border-blue-100 bg-blue-50 p-8">
                 <h2 className="text-2xl font-black text-navy-950">No exact live match yet</h2>
@@ -511,23 +512,23 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                 <div className="mb-5 flex items-end justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-700">Societies</p>
-                    <h2 className="mt-2 text-3xl font-black text-navy-950">Verified society profiles</h2>
+                    <h2 className="mt-2 text-2xl font-black text-navy-950 md:text-3xl">Verified society profiles</h2>
                   </div>
                   <Link to="/societies" className="hidden text-sm font-bold text-blue-700 md:inline-flex">
                     View all societies <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </div>
 
-                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {filteredSocieties.map((society) => (
                     <Link
                       key={society.id || society.slug}
                       to={`/society/${society.slug}`}
-                      className="group rounded-[1.75rem] border border-navy-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-soft"
+                      className="group rounded-[1.35rem] border border-navy-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft md:p-5"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h3 className="text-xl font-black text-navy-950 group-hover:text-blue-700">
+                          <h3 className="text-lg font-black text-navy-950 group-hover:text-blue-700">
                             {society.name}
                           </h3>
                           <p className="mt-2 flex items-center gap-2 text-sm text-navy-500">
@@ -542,16 +543,16 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                         </div>
                       </div>
 
-                      <p className="mt-4 line-clamp-2 text-sm leading-6 text-navy-500">
+                      <p className="mt-3 line-clamp-2 text-sm leading-6 text-navy-500">
                         {society.description || "Verified Gurgaon society with location context, amenities and live inventory."}
                       </p>
 
-                      <div className="mt-5 grid grid-cols-2 gap-3">
-                        <div className="rounded-2xl bg-ivory-200 p-3">
+                      <div className="mt-4 grid grid-cols-2 gap-2.5">
+                        <div className="rounded-xl bg-ivory-200 p-3">
                           <p className="text-xs text-navy-400">Rent</p>
                           <p className="mt-1 font-bold text-navy-900">{society.rent_range || "On request"}</p>
                         </div>
-                        <div className="rounded-2xl bg-ivory-200 p-3">
+                        <div className="rounded-xl bg-ivory-200 p-3">
                           <p className="text-xs text-navy-400">Buy</p>
                           <p className="mt-1 font-bold text-navy-900">{society.buy_range || "On request"}</p>
                         </div>
@@ -567,26 +568,26 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                 <div className="mb-5 flex items-end justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-700">Inventory</p>
-                    <h2 className="mt-2 text-3xl font-black text-navy-950">Live verified properties</h2>
+                    <h2 className="mt-2 text-2xl font-black text-navy-950 md:text-3xl">Live verified properties</h2>
                   </div>
                   <Link to="/properties" className="hidden text-sm font-bold text-blue-700 md:inline-flex">
                     View all properties <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </div>
 
-                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {filteredProperties.map((property) => (
                     <Link
                       key={property.id || property.slug}
                       to={`/property/${property.slug}`}
-                      className="group rounded-[1.75rem] border border-navy-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-soft"
+                      className="group rounded-[1.35rem] border border-navy-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft md:p-5"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <Badge className="rounded-full bg-blue-50 text-blue-700">
                             {property.listing_type || "Rent"}
                           </Badge>
-                          <h3 className="mt-3 line-clamp-2 text-xl font-black text-navy-950 group-hover:text-blue-700">
+                          <h3 className="mt-3 line-clamp-2 text-lg font-black text-navy-950 group-hover:text-blue-700">
                             {property.title}
                           </h3>
                           <p className="mt-2 flex items-center gap-2 text-sm text-navy-500">
@@ -596,25 +597,25 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                         </div>
                       </div>
 
-                      <div className="mt-5 grid grid-cols-3 gap-3">
-                        <div className="rounded-2xl bg-ivory-200 p-3 text-center">
+                      <div className="mt-4 grid grid-cols-3 gap-2.5">
+                        <div className="rounded-xl bg-ivory-200 p-2.5 text-center">
                           <BedDouble className="mx-auto h-4 w-4 text-navy-500" />
                           <p className="mt-2 text-xs text-navy-400">BHK</p>
                           <p className="font-bold text-navy-900">{property.bedrooms || "-"}</p>
                         </div>
-                        <div className="rounded-2xl bg-ivory-200 p-3 text-center">
+                        <div className="rounded-xl bg-ivory-200 p-2.5 text-center">
                           <Building2 className="mx-auto h-4 w-4 text-navy-500" />
                           <p className="mt-2 text-xs text-navy-400">Type</p>
                           <p className="font-bold text-navy-900">{property.property_type || "Flat"}</p>
                         </div>
-                        <div className="rounded-2xl bg-ivory-200 p-3 text-center">
+                        <div className="rounded-xl bg-ivory-200 p-2.5 text-center">
                           <ShieldCheck className="mx-auto h-4 w-4 text-navy-500" />
                           <p className="mt-2 text-xs text-navy-400">Area</p>
                           <p className="font-bold text-navy-900">{property.area_sqft || "-"}</p>
                         </div>
                       </div>
 
-                      <div className="mt-5 flex items-center justify-between border-t border-navy-100 pt-4">
+                      <div className="mt-4 flex items-center justify-between border-t border-navy-100 pt-3">
                         <span className="text-sm text-navy-500">{property.furnished_status || "Verified"}</span>
                         <span className="rounded-full bg-navy-700 px-4 py-2 text-sm font-bold text-white">
                           {property.price || "On request"}
@@ -626,21 +627,21 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
               </div>
             ) : null}
 
-            <div className="rounded-[2rem] border border-blue-100 bg-white p-8 md:p-10">
+            <div className="rounded-[1.5rem] border border-blue-100 bg-white p-5 md:p-7">
               <div className="grid gap-8 md:grid-cols-[1.3fr_0.7fr] md:items-center">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-700">Need help?</p>
-                  <h2 className="mt-2 text-3xl font-black text-navy-950">
-                    Tell us your budget and preferred society
+                  <h2 className="mt-2 text-2xl font-black text-navy-950 md:text-3xl">
+                    Tell us your budget and preferred Gurgaon society
                   </h2>
                   <p className="mt-3 max-w-2xl text-navy-500">
-                    SocietyFlats can shortlist matching homes, arrange callbacks and help you compare societies before a visit.
+                    SocietyFlats can shortlist matching homes, arrange callbacks and help you compare Gurgaon societies before a visit.
                   </p>
                 </div>
                 <div className="flex flex-col gap-3">
                   <Link to={`/search?q=${encodeURIComponent(copy.searchQuery)}`}>
                     <Button className="w-full rounded-full bg-blue-700 text-white hover:bg-blue-800">
-                      Find matching homes
+                      Find matching societies
                     </Button>
                   </Link>
                   <Link to="/sell">
