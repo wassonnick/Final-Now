@@ -86,6 +86,73 @@ function statusTone(status: SocietyStatus) {
   }
 }
 
+
+function normalizeCoordinate(value: string) {
+  const parsed = Number(value.trim());
+  if (!Number.isFinite(parsed)) return "";
+
+  return String(Number(parsed.toFixed(7)));
+}
+
+function isValidLatLng(latitude: string, longitude: string) {
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  if (lat === 0 && lng === 0) return false;
+
+  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+function extractGoogleMapsCoordinates(url: string) {
+  const raw = url.trim();
+  if (!raw) return null;
+
+  const decoded = decodeURIComponent(raw);
+
+  const patterns = [
+    {
+      pattern: /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+      source: "Google place pin",
+      confidence: "exact",
+      warning: "",
+    },
+    {
+      pattern: /[?&](?:q|query|ll|center)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+      source: "coordinate search",
+      confidence: "approximate",
+      warning: "This looks like a coordinate search result, not the society's official Google place pin.",
+    },
+    {
+      pattern: /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+      source: "map view center",
+      confidence: "approximate",
+      warning: "This is the Google Maps camera/view center and may be near the society, not exactly on the society pin.",
+    },
+  ] as const;
+
+  for (const item of patterns) {
+    const match = decoded.match(item.pattern);
+    if (!match) continue;
+
+    const latitude = normalizeCoordinate(match[1] || "");
+    const longitude = normalizeCoordinate(match[2] || "");
+
+    if (isValidLatLng(latitude, longitude)) {
+      return {
+        latitude,
+        longitude,
+        source: item.source,
+        confidence: item.confidence,
+        warning: item.warning,
+      };
+    }
+  }
+
+  return null;
+}
+
+
 export function AdminSocietyFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -99,6 +166,7 @@ export function AdminSocietyFormPage() {
   const [brochureExtracting, setBrochureExtracting] = useState(false);
   const [loadedSourceUrl, setLoadedSourceUrl] = useState("");
   const [error, setError] = useState("");
+  const [coordinateExtractMessage, setCoordinateExtractMessage] = useState("");
   const [message, setMessage] = useState("");
   const [saved, setSaved] = useState(false);
 
@@ -334,6 +402,30 @@ export function AdminSocietyFormPage() {
       setSaveMode(null);
     }
   };
+
+
+  const handleExtractCoordinatesFromGoogleMaps = () => {
+    const coordinates = extractGoogleMapsCoordinates(society.googleMapsUrl || "");
+
+    if (!coordinates) {
+      setCoordinateExtractMessage(
+        "Could not find coordinates in this Google Maps URL. Open the exact Google Maps place page, copy its URL, or paste coordinates manually.",
+      );
+      return;
+    }
+
+    updateField("latitude", coordinates.latitude);
+    updateField("longitude", coordinates.longitude);
+
+    const trustLabel =
+      coordinates.confidence === "exact"
+        ? "Trusted exact Google place pin"
+        : "Approximate coordinate - verify manually";
+
+    setCoordinateExtractMessage(
+      `${trustLabel}. Source: ${coordinates.source}. Coordinates: ${coordinates.latitude}, ${coordinates.longitude}.${coordinates.warning ? ` ${coordinates.warning}` : ""}`,
+    );
+  };;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -675,7 +767,52 @@ export function AdminSocietyFormPage() {
                     />
                   </div>
                 </label>
-              </div>
+              
+                <div className="md:col-span-2 rounded-2xl border border-blue-100 bg-blue-50/60 p-3">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <p className="text-sm font-black text-slate-900">Map coordinate tools</p>
+                      <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+                        Best result is Google place pin. If result says approximate, verify manually before saving.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleExtractCoordinatesFromGoogleMaps}
+                        className="rounded-full border-blue-100 text-blue-700 hover:bg-blue-50"
+                      >
+                        Extract coordinates
+                      </Button>
+
+                      {society.latitude && society.longitude ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="rounded-full text-blue-700 hover:bg-blue-50"
+                          onClick={() => {
+                            window.open(
+                              `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${society.latitude},${society.longitude}`)}`,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
+                          }}
+                        >
+                          Open extracted pin
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {coordinateExtractMessage ? (
+                    <p className={`mt-3 rounded-2xl border px-3 py-2 text-xs font-semibold ${coordinateExtractMessage.includes("Approximate") ? "border-amber-200 bg-amber-50 text-amber-800" : "border-blue-100 bg-white text-blue-700"}`}>
+                      {coordinateExtractMessage}
+                    </p>
+                  ) : null}
+                </div>
+</div>
             </section>
 
             <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
