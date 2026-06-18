@@ -1,3 +1,4 @@
+// C76H fixed sidebar rail + compact hero: reserve desktop rail, prevent gallery overlap, reduce blank space.
 // C76G fixed sidebar position align: fixed card shifted into reserved right column without gallery overlap.
 // C76F fixed desktop society sidebar: viewport-fixed sidebar with reserved grid column.
 // C76E society sidebar sticky grid fix: grid stretches, inner sidebar card is sticky.
@@ -598,7 +599,7 @@ export function SocietyPage() {
         </Button>
       </div>
       <section className="bg-white">
-        <div className="container mx-auto px-4 py-4 md:py-5">
+        <div className="container mx-auto px-4 py-3 md:py-4 lg:pr-[360px]">
           <Button
             asChild
             variant="ghost"
@@ -620,7 +621,7 @@ export function SocietyPage() {
               gallery.length > 1 ? "lg:grid-cols-[1.4fr_0.6fr]" : ""
             }`}
           >
-            <div className="h-[170px] overflow-hidden rounded-[1.15rem] bg-navy-50 sm:h-[280px] lg:h-[340px] lg:rounded-[1.75rem]">
+            <div className="h-[160px] overflow-hidden rounded-[1.15rem] bg-navy-50 sm:h-[240px] lg:h-[300px] lg:rounded-[1.6rem]">
               <img
                 src={gallery[0]}
                 alt={society.name}
@@ -637,7 +638,7 @@ export function SocietyPage() {
                     <img
                       src={image}
                       alt={society.name}
-                      className="h-full min-h-[130px] w-full object-cover lg:min-h-[160px]"
+                      className="h-full min-h-[120px] w-full object-cover lg:min-h-[145px]"
                     />
                   </div>
                 ))}
@@ -647,8 +648,8 @@ export function SocietyPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-4 md:py-7">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-5">
+      <section className="container mx-auto px-4 py-3 md:py-5">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_310px] lg:gap-5">
           <div className="space-y-3.5 md:space-y-4">
             <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.45rem] md:p-4.5">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -663,7 +664,7 @@ export function SocietyPage() {
                       </Badge>
                     ) : null}
                   </div>
-                  <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 md:text-5xl">
+                  <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 md:text-4xl">
                     {society.name}
                   </h1>
                   <p className="mt-1.5 flex items-center gap-2 text-sm text-navy-500 md:mt-2 md:text-base">
@@ -678,11 +679,11 @@ export function SocietyPage() {
                 </div>
               </div>
               {society.description ? (
-                <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-navy-600 md:mt-5 md:line-clamp-4 md:text-base">
+                <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-navy-600 md:mt-4 md:line-clamp-3 md:text-base">
                   {society.description}
                 </p>
               ) : null}
-              <div className="mt-4 grid grid-cols-2 gap-2.5 border-t border-navy-100 pt-4 md:mt-5 md:grid-cols-3">
+              <div className="mt-3 grid grid-cols-2 gap-2.5 border-t border-navy-100 pt-3 md:mt-4 md:grid-cols-3">
                 <div className="rounded-2xl bg-blue-50 p-3.5">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">
                     Verified homes available
@@ -718,7 +719,7 @@ export function SocietyPage() {
                 </div>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap md:mt-5">
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap md:mt-4">
                 <Button
                   onClick={() => openSocietyCallback()}
                   className="h-10 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700"
@@ -1248,7 +1249,7 @@ export function SocietyPage() {
           </div>
 
           <aside className="hidden lg:block lg:min-h-[1px]">
-            <div className="fixed right-[max(1rem,calc((100vw-1440px)/2+1rem))] top-24 z-30 max-h-[calc(100vh-7rem)] w-[320px] overflow-y-auto rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-soft">
+            <div className="fixed right-[max(1rem,calc((100vw-1440px)/2+0.5rem))] top-28 z-30 max-h-[calc(100vh-8rem)] w-[310px] overflow-y-auto rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-soft">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                 Next step
               </p>
