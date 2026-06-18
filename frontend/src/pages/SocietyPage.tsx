@@ -1,3 +1,4 @@
+// C76D society sidebar sticky fix: sticky applied to sidebar wrapper for full page scroll.
 // C76C society lower structural fix: collapse empty nearby cards into one verification strip.
 // C76B society lower density polish: compact homes, amenities, nearby intelligence and sidebar.
 // C76 society page UX polish: compact hero/gallery, higher facts, tighter inventory, sidebar and sticky CTA.
@@ -1243,8 +1244,8 @@ export function SocietyPage() {
             ) : null}
           </div>
 
-          <aside className="hidden space-y-4 lg:block">
-            <div className="sticky top-24 rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-soft">
+          <aside className="hidden lg:sticky lg:top-24 lg:block lg:self-start">
+            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-soft">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                 Next step
               </p>
