@@ -231,6 +231,15 @@ function sourceLabel(source?: string) {
   const value = String(source || "").toLowerCase();
 
   if (
+    value.includes("map_search") ||
+    value.includes("map-search") ||
+    value.includes("map search")
+  ) {
+    return "Map/Search conversion";
+  }
+
+
+  if (
     value.includes("owner") ||
     value.includes("sell") ||
     value.includes("seller") ||
@@ -284,7 +293,11 @@ function attributionBadge(lead: AdminLead) {
 
   if (campaign || medium) return "UTM";
   if (aiQuery || String(lead.source || "").toLowerCase().includes("ai")) return "AI";
-  if (searchQuery || sourcePage.includes("/search")) return "Search";
+  if (
+    searchQuery ||
+    sourcePage.includes("/search") ||
+    String(lead.source || "").toLowerCase().includes("map_search")
+  ) return "Search";
   if (sourcePage.includes("/sell") || String(lead.source || "").toLowerCase().includes("owner")) return "Owner";
   if (sourcePage.includes("/property") || String(lead.source || "").toLowerCase().includes("property")) return "Property";
   if (sourcePage.includes("/society") || String(lead.source || "").toLowerCase().includes("society")) return "Society";
@@ -298,7 +311,14 @@ function sourceBucket(lead: AdminLead) {
   const searchQuery = String(lead.search_query || "").trim();
 
   if (aiQuery || source.includes("ai")) return "ai";
-  if (searchQuery || page.includes("/search") || source.includes("search")) return "search";
+  if (
+    searchQuery ||
+    page.includes("/search") ||
+    source.includes("map_search") ||
+    source.includes("map-search") ||
+    source.includes("map search") ||
+    source.includes("search")
+  ) return "search";
   if (isOwnerLeadSource(source) || page.includes("/sell")) return "owner";
   if (isBrokerLeadSource(source)) return "broker";
   if (page.includes("/property") || source.includes("property")) return "property";
@@ -381,7 +401,14 @@ function workflowNextAction(lead: AdminLead) {
     return "Move property lead forward";
   }
 
-  if (source.includes("society") || source.includes("search") || source.includes("ai")) {
+  if (
+    source.includes("society") ||
+    source.includes("map_search") ||
+    source.includes("map-search") ||
+    source.includes("map search") ||
+    source.includes("search") ||
+    source.includes("ai")
+  ) {
     if (status === "New") return "Call and qualify requirement";
     if (status === "Contacted") return "Send shortlist";
     if (status === "Site Visit") return "Schedule society visit";
@@ -425,7 +452,12 @@ function sourceClass(source?: string) {
   }
 
   if (value.includes("ai")) return "bg-indigo-50 text-indigo-700 border-indigo-100";
-  if (value.includes("search")) return "bg-sky-50 text-sky-700 border-sky-100";
+  if (
+    value.includes("map_search") ||
+    value.includes("map-search") ||
+    value.includes("map search") ||
+    value.includes("search")
+  ) return "bg-sky-50 text-sky-700 border-sky-100";
   if (value.includes("property")) return "bg-violet-50 text-violet-700 border-violet-100";
   if (value.includes("society")) return "bg-blue-50 text-blue-700 border-blue-100";
   if (value.includes("floating") || value.includes("chat") || value.includes("callback")) {

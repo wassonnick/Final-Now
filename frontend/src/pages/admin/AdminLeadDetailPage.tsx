@@ -344,6 +344,15 @@ function sourceLabel(source?: string) {
   const value = String(source || "").toLowerCase();
 
   if (
+    value.includes("map_search") ||
+    value.includes("map-search") ||
+    value.includes("map search")
+  ) {
+    return "Map/Search conversion";
+  }
+
+
+  if (
     value.includes("owner") ||
     value.includes("sell") ||
     value.includes("seller") ||
@@ -602,7 +611,14 @@ function leadWorkflowNextAction(lead: AdminLead) {
     return "Move property lead toward visit or negotiation.";
   }
 
-  if (source.includes("society") || source.includes("search") || source.includes("ai")) {
+  if (
+    source.includes("society") ||
+    source.includes("map_search") ||
+    source.includes("map-search") ||
+    source.includes("map search") ||
+    source.includes("search") ||
+    source.includes("ai")
+  ) {
     if (status === "New") return "Call and understand budget, preferred sectors, commute and family needs.";
     if (status === "Contacted") return "Send a short society shortlist with available homes.";
     if (status === "Site Visit") return "Schedule society or property visit.";
@@ -635,6 +651,11 @@ function leadTypeTitle(source?: string) {
     return "Owner listing lead";
   }
 
+  if (
+    value.includes("map_search") ||
+    value.includes("map-search") ||
+    value.includes("map search")
+  ) return "Map/Search lead";
   if (value.includes("property")) return "Property enquiry";
   if (value.includes("society")) return "Society enquiry";
   if (value.includes("search")) return "Search enquiry";
@@ -674,6 +695,14 @@ function leadTypeDescription(source?: string) {
     return "User showed interest in a society. Understand rent/buy need and match available inventory.";
   }
 
+  if (
+    value.includes("map_search") ||
+    value.includes("map-search") ||
+    value.includes("map search")
+  ) {
+    return "Map-search conversion lead. Clarify budget, preferred size and available homes around the selected society or nearby sectors.";
+  }
+
   if (value.includes("search")) {
     return "Search-generated lead. Clarify exact requirement and suggest matching societies or properties.";
   }
@@ -706,7 +735,12 @@ function leadTypeClass(source?: string) {
 
   if (value.includes("property")) return "border-violet-100 bg-violet-50 text-violet-900";
   if (value.includes("society")) return "border-blue-100 bg-blue-50 text-blue-900";
-  if (value.includes("search")) return "border-sky-100 bg-sky-50 text-sky-900";
+  if (
+    value.includes("map_search") ||
+    value.includes("map-search") ||
+    value.includes("map search") ||
+    value.includes("search")
+  ) return "border-sky-100 bg-sky-50 text-sky-900";
 
   return "border-slate-100 bg-slate-50 text-slate-900";
 }

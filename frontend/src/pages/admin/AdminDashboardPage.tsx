@@ -251,6 +251,21 @@ function callSheetWhatsAppUrl(lead: AdminLead) {
   return `https://wa.me/91${digits}?text=${message}`;
 }
 
+
+function dashboardLeadSourceLabel(lead: AdminLead) {
+  const source = String(lead.source || "").toLowerCase();
+
+  if (
+    source.includes("map_search") ||
+    source.includes("map-search") ||
+    source.includes("map search")
+  ) {
+    return "Map/Search conversion";
+  }
+
+  return lead.cta_label || lead.search_query || lead.ai_query || lead.requirement || lead.source || "Website";
+}
+
 function sourceBucket(lead: AdminLead) {
   const source = String(lead.source || "").toLowerCase();
   const page = String(lead.source_page || "").toLowerCase();
@@ -258,7 +273,14 @@ function sourceBucket(lead: AdminLead) {
   const searchQuery = String(lead.search_query || "").trim();
 
   if (aiQuery || source.includes("ai")) return "ai";
-  if (searchQuery || page.includes("/search") || source.includes("search")) return "search";
+  if (
+    searchQuery ||
+    page.includes("/search") ||
+    source.includes("map_search") ||
+    source.includes("map-search") ||
+    source.includes("map search") ||
+    source.includes("search")
+  ) return "search";
   if (isOwnerLeadSource(source) || page.includes("/sell")) return "owner";
   if (isBrokerLeadSource(source)) return "broker";
   if (page.includes("/property") || source.includes("property")) return "property";
@@ -957,7 +979,7 @@ export function AdminDashboardPage() {
                 <p className="mt-1 text-xs font-semibold opacity-75">{item.helper}</p>
                 {item.latest ? (
                   <p className="mt-2 line-clamp-2 text-[11px] leading-5 opacity-70">
-                    Latest: {item.latest.name || "Unnamed"} · {item.latest.cta_label || item.latest.search_query || item.latest.ai_query || item.latest.requirement || item.latest.source || "Website"}
+                    Latest: {item.latest.name || "Unnamed"} · {dashboardLeadSourceLabel(item.latest)}
                   </p>
                 ) : (
                   <p className="mt-2 text-[11px] opacity-60">No leads yet.</p>
