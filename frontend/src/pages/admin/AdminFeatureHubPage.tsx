@@ -1,3 +1,4 @@
+// C84 admin feature hub UX polish: compact owner/broker CRM cards and actions, workflows unchanged.
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -725,18 +726,18 @@ function BrokerCrmLiveLeads() {
 
                 <div>
                   <div className="flex min-w-[170px] flex-col gap-2">
-                    <Button asChild variant="outline" size="sm" className="rounded-full border-blue-200 text-blue-700">
+                    <Button asChild variant="outline" size="sm" className="rounded-full border-blue-200 text-xs font-bold text-blue-700 md:text-sm">
                       <Link to={`/admin/leads/${lead.id}`}>Open lead</Link>
                     </Button>
 
                     {leadPhoneHref(lead.phone) ? (
-                      <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200">
+                      <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
                         <a href={leadPhoneHref(lead.phone)}>Call</a>
                       </Button>
                     ) : null}
 
                     {leadWhatsAppHref(lead) ? (
-                      <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 text-emerald-700">
+                      <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 text-xs font-bold text-emerald-700 md:text-sm">
                         <a href={leadWhatsAppHref(lead)} target="_blank" rel="noreferrer">WhatsApp</a>
                       </Button>
                     ) : null}
@@ -1199,7 +1200,7 @@ function OwnerCrmLiveLeads() {
 
                 <div>
                   <div className="flex min-w-[170px] flex-col gap-2">
-                    <Button asChild variant="outline" size="sm" className="rounded-full border-blue-200 text-blue-700">
+                    <Button asChild variant="outline" size="sm" className="rounded-full border-blue-200 text-xs font-bold text-blue-700 md:text-sm">
                       <Link to={`/admin/leads/${lead.id}`}>Open lead</Link>
                     </Button>
 
@@ -1227,13 +1228,13 @@ function OwnerCrmLiveLeads() {
                     </Button>
 
                     {leadPhoneHref(lead.phone) ? (
-                      <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200">
+                      <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
                         <a href={leadPhoneHref(lead.phone)}>Call</a>
                       </Button>
                     ) : null}
 
                     {leadWhatsAppHref(lead) ? (
-                      <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 text-emerald-700">
+                      <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 text-xs font-bold text-emerald-700 md:text-sm">
                         <a href={leadWhatsAppHref(lead)} target="_blank" rel="noreferrer">WhatsApp</a>
                       </Button>
                     ) : null}
@@ -1286,7 +1287,7 @@ export function AdminFeatureHubPage({ feature }: AdminFeatureHubPageProps) {
             </div>
 
             {config.primaryAction || config.actions?.length ? (
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2">
                 {config.primaryAction ? (
                   <Button asChild className="rounded-full bg-blue-600 hover:bg-blue-700">
                     <Link to={config.primaryAction.href}>
@@ -1306,7 +1307,7 @@ export function AdminFeatureHubPage({ feature }: AdminFeatureHubPageProps) {
           </div>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
+        <section className="grid gap-3 md:grid-cols-3">
           {config.metrics.map((metric) => (
             <div key={metric.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{metric.label}</p>
@@ -1332,7 +1333,7 @@ export function AdminFeatureHubPage({ feature }: AdminFeatureHubPageProps) {
           </div>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-2">
+        <section className="grid gap-3 lg:grid-cols-2">
           <StatusList title="Current Workflows" items={config.workflows} done />
           <StatusList title="Connected Now" items={config.connected} done />
           <StatusList title="Pending Integrations" items={config.pending} />
@@ -1347,7 +1348,7 @@ export function AdminFeatureHubPage({ feature }: AdminFeatureHubPageProps) {
                 Keep shipping in small slices: connect the data model first, then API, then UI automation.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline" className="rounded-full">
                 <Link to="/admin/societies/new-from-url">
                   <WandSparkles className="mr-2 h-4 w-4" />

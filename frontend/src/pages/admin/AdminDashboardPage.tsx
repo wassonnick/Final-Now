@@ -1,3 +1,4 @@
+// C84 admin dashboard UX polish: compact command center cards and scan layout, logic unchanged.
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -372,8 +373,8 @@ function societyStatus(item: any) {
 
 function actionCardClass(featured = false) {
   return featured
-    ? "group rounded-[22px] border border-blue-100 bg-blue-600 p-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg sm:rounded-[28px] sm:p-5"
-    : "group rounded-[22px] border border-slate-200 bg-white p-4 text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg sm:rounded-[28px] sm:p-5";
+    ? "group rounded-[18px] border border-blue-100 bg-blue-600 p-3.5 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:rounded-[22px] sm:p-4"
+    : "group rounded-[18px] border border-slate-200 bg-white p-3.5 text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-md sm:rounded-[22px] sm:p-4";
 }
 
 function slaCardClass(tone: "emerald" | "amber" | "rose" | "orange" | "slate") {
@@ -392,7 +393,7 @@ function statCardClass(tone: "blue" | "emerald" | "rose" | "slate" = "blue") {
         ? "border-rose-100"
         : "border-slate-200";
 
-  return `rounded-[24px] border ${toneClass} bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg md:rounded-[28px] md:p-5`;
+  return `rounded-[20px] border ${toneClass} bg-white p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:rounded-[22px] md:p-4`;
 }
 
 function dashboardValue(value: number | string, isLoading: boolean) {
@@ -845,7 +846,7 @@ export function AdminDashboardPage() {
         </section>
 
         <section className="rounded-[24px] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
                 C56 lead command center
@@ -853,25 +854,25 @@ export function AdminDashboardPage() {
               <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
                 Start here for today’s admin work
               </h2>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
+              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
                 Overdue, due today, hot and no-follow-up leads are surfaced first. Use “Set tomorrow + note” to create a CRM trail.
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-              <Button asChild variant="outline" className="rounded-full border-slate-200">
+              <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
                 <Link to="/admin/leads">Lead Inbox</Link>
               </Button>
-              <Button asChild variant="outline" className="rounded-full border-blue-200 text-blue-700">
+              <Button asChild variant="outline" className="rounded-full border-blue-200 text-xs font-bold text-blue-700 md:text-sm">
                 <Link to="/admin/leads?view=call_sheet">Call Sheet</Link>
               </Button>
-              <Button asChild variant="outline" className="rounded-full border-rose-200 text-rose-700">
+              <Button asChild variant="outline" className="rounded-full border-rose-200 text-xs font-bold text-rose-700 md:text-sm">
                 <Link to="/admin/leads?view=overdue">Overdue</Link>
               </Button>
-              <Button asChild variant="outline" className="rounded-full border-amber-200 text-amber-700">
+              <Button asChild variant="outline" className="rounded-full border-amber-200 text-xs font-bold text-amber-700 md:text-sm">
                 <Link to="/admin/leads?view=no_followup">No Follow-up</Link>
               </Button>
-              <Button asChild variant="outline" className="rounded-full border-emerald-200 text-emerald-700">
+              <Button asChild variant="outline" className="rounded-full border-emerald-200 text-xs font-bold text-emerald-700 md:text-sm">
                 <Link to="/admin/leads?view=owner">Owner Leads</Link>
               </Button>
             </div>
@@ -935,11 +936,11 @@ export function AdminDashboardPage() {
               <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
                 Lead source intelligence
               </h2>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
+              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
                 Jump into leads by public journey: AI, search, property, society, owner or broker.
               </p>
             </div>
-            <Button asChild variant="outline" className="rounded-full border-slate-200">
+            <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
               <Link to="/admin/leads">All leads</Link>
             </Button>
           </div>
@@ -952,14 +953,14 @@ export function AdminDashboardPage() {
                 className={`rounded-[22px] border p-4 transition hover:-translate-y-0.5 hover:shadow-md ${sourceCardClass(item.bucket)}`}
               >
                 <p className="text-xs font-black uppercase tracking-[0.14em] opacity-70">{item.label}</p>
-                <p className="mt-3 text-3xl font-black">{dashboardValue(item.count, leadLoading)}</p>
+                <p className="mt-2 text-2xl font-black">{dashboardValue(item.count, leadLoading)}</p>
                 <p className="mt-1 text-xs font-semibold opacity-75">{item.helper}</p>
                 {item.latest ? (
-                  <p className="mt-3 line-clamp-2 text-[11px] leading-5 opacity-70">
+                  <p className="mt-2 line-clamp-2 text-[11px] leading-5 opacity-70">
                     Latest: {item.latest.name || "Unnamed"} · {item.latest.cta_label || item.latest.search_query || item.latest.ai_query || item.latest.requirement || item.latest.source || "Website"}
                   </p>
                 ) : (
-                  <p className="mt-3 text-[11px] opacity-60">No leads yet.</p>
+                  <p className="mt-2 text-[11px] opacity-60">No leads yet.</p>
                 )}
               </Link>
             ))}
@@ -975,11 +976,11 @@ export function AdminDashboardPage() {
               <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
                 Today’s priority follow-up queue
               </h2>
-              <p className="mt-1 text-sm leading-6 text-blue-900/70">
+              <p className="mt-1 text-xs leading-5 text-blue-900/70 md:text-sm">
                 Work in order: overdue, hot SLA, due today, untouched, then stale. Use call, WhatsApp, open lead or set tomorrow.
               </p>
             </div>
-            <Button asChild variant="outline" className="rounded-full border-blue-200 bg-white text-blue-700">
+            <Button asChild variant="outline" className="rounded-full border-blue-200 bg-white text-xs font-bold text-blue-700 md:text-sm">
               <Link to="/admin/leads?view=call_sheet">Open full call sheet</Link>
             </Button>
           </div>
@@ -991,7 +992,7 @@ export function AdminDashboardPage() {
                 const canCallLead = phoneDigits.length >= 10;
 
                 return (
-                  <div key={lead.id} className="rounded-[22px] border border-blue-100 bg-white p-4 shadow-sm">
+                  <div key={lead.id} className="rounded-[18px] border border-blue-100 bg-white p-3.5 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <span className={`rounded-full border px-3 py-1 text-[11px] font-black ${callSheetReasonClass(lead)}`}>
                         {callSheetReason(lead)}
@@ -1001,7 +1002,7 @@ export function AdminDashboardPage() {
                       </span>
                     </div>
 
-                    <p className="mt-3 text-sm font-black text-slate-950">{lead.name || "Unnamed lead"}</p>
+                    <p className="mt-2 text-sm font-black text-slate-950">{lead.name || "Unnamed lead"}</p>
                     <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
                       {lead.property || lead.society || lead.requirement || "Lead follow-up"}
                     </p>
@@ -1010,7 +1011,7 @@ export function AdminDashboardPage() {
                     </p>
 
                     <div className="mt-4 grid grid-cols-2 gap-2">
-                      <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200">
+                      <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
                         <Link to={`/admin/leads/${lead.id}`}>Open</Link>
                       </Button>
                       <Button
@@ -1019,17 +1020,17 @@ export function AdminDashboardPage() {
                         size="sm"
                         disabled={savingLeadId === lead.id}
                         onClick={() => void handleDashboardTomorrow(lead)}
-                        className="rounded-full border-amber-200 text-amber-700"
+                        className="rounded-full border-amber-200 text-xs font-bold text-amber-700 md:text-sm"
                       >
                         Tomorrow
                       </Button>
                       {canCallLead ? (
-                        <Button asChild variant="outline" size="sm" className="rounded-full border-blue-200 text-blue-700">
+                        <Button asChild variant="outline" size="sm" className="rounded-full border-blue-200 text-xs font-bold text-blue-700 md:text-sm">
                           <a href={`tel:${phoneDigits}`}>Call</a>
                         </Button>
                       ) : null}
                       {canCallLead ? (
-                        <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 text-emerald-700">
+                        <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 text-xs font-bold text-emerald-700 md:text-sm">
                           <a href={callSheetWhatsAppUrl(lead)} target="_blank" rel="noreferrer">WhatsApp</a>
                         </Button>
                       ) : null}
@@ -1054,11 +1055,11 @@ export function AdminDashboardPage() {
               <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
                 Lead aging and response risk
               </h2>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
+              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
                 Track fresh enquiries, aging leads, stale records and hot leads that still need first contact.
               </p>
             </div>
-            <Button asChild variant="outline" className="rounded-full border-slate-200">
+            <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
               <Link to="/admin/leads?view=stale">Review stale leads</Link>
             </Button>
           </div>
@@ -1071,7 +1072,7 @@ export function AdminDashboardPage() {
                 className={`rounded-[22px] border p-4 transition hover:-translate-y-0.5 hover:shadow-md ${slaCardClass(item.tone)}`}
               >
                 <p className="text-xs font-black uppercase tracking-[0.14em] opacity-70">{item.label}</p>
-                <p className="mt-3 text-3xl font-black">{dashboardValue(item.value, leadLoading)}</p>
+                <p className="mt-2 text-2xl font-black">{dashboardValue(item.value, leadLoading)}</p>
                 <p className="mt-1 text-xs font-semibold opacity-75">{item.helper}</p>
               </Link>
             ))}
@@ -1087,11 +1088,11 @@ export function AdminDashboardPage() {
               <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
                 Lead owner workload
               </h2>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
+              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
                 See who owns the current lead pipeline and jump directly into each team member’s queue.
               </p>
             </div>
-            <Button asChild variant="outline" className="rounded-full border-slate-200">
+            <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
               <Link to="/admin/leads?assignee=Unassigned">Review unassigned</Link>
             </Button>
           </div>
@@ -1124,11 +1125,11 @@ export function AdminDashboardPage() {
               <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
                 Quality and duplicate detection
               </h2>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
+              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
                 Spot duplicate phones, missing fields and high-intent leads before follow-up.
               </p>
             </div>
-            <Button asChild variant="outline" className="rounded-full border-slate-200">
+            <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
               <Link to="/admin/leads?view=duplicates">Review duplicates</Link>
             </Button>
           </div>
@@ -1141,7 +1142,7 @@ export function AdminDashboardPage() {
                 className={`rounded-[22px] border p-4 transition hover:-translate-y-0.5 hover:shadow-md ${qualityCardClass(item.tone)}`}
               >
                 <p className="text-xs font-black uppercase tracking-[0.14em] opacity-70">{item.label}</p>
-                <p className="mt-3 text-3xl font-black">{dashboardValue(item.value, leadLoading)}</p>
+                <p className="mt-2 text-2xl font-black">{dashboardValue(item.value, leadLoading)}</p>
                 <p className="mt-1 text-xs font-semibold opacity-75">{item.helper}</p>
               </Link>
             ))}
@@ -1246,7 +1247,7 @@ export function AdminDashboardPage() {
                 Hot leads, owner drafts and society drafts needing attention.
               </p>
             </div>
-            <Button asChild variant="outline" className="rounded-full border-slate-200">
+            <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
               <Link to="/admin/leads">Open CRM</Link>
             </Button>
           </div>
@@ -1291,7 +1292,7 @@ export function AdminDashboardPage() {
                 Latest enquiries from Lead CRM.
               </p>
             </div>
-            <Button asChild variant="outline" className="rounded-full border-slate-200">
+            <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
               <Link to="/admin/leads">Open CRM</Link>
             </Button>
           </div>
@@ -1326,7 +1327,7 @@ export function AdminDashboardPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
+        <section className="grid gap-3 md:grid-cols-3">
           {[
             {
               title: "AI Features",
