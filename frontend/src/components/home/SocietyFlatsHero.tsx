@@ -10,7 +10,7 @@
 // C71 public content: restore no forced AI page jump SEO marker and sharpen hero trust copy.
 // C70C hero copy: society-first search, verified homes and AI guidance.
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { fetchPublicSocieties, formatPublicLocation } from "@/lib/publicData";
+import { slugifySociety, type AdminSociety } from "@/lib/adminSocietyStore";
 
 type Intent = "society" | "rent" | "buy" | "general";
 
@@ -37,6 +39,11 @@ type AdvisorMatch = {
   locality?: string;
   score?: number;
   reason?: string;
+};
+
+type HeroMapSociety = Partial<Omit<AdminSociety, "score">> & {
+  score?: string | number;
+  society_name?: string;
 };
 
 const tabs: Array<{ key: Intent; label: string; button: string }> = [
@@ -83,6 +90,99 @@ function buildSearchUrl(intent: Intent, query: string) {
   return `/search?${params.toString()}`;
 }
 
+function normalizeHeroText(value: unknown) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function isBlockedHeroSociety(value: unknown) {
+  const name = normalizeHeroText(value);
+  return (
+    !name ||
+    name === "gurgaon society" ||
+    name === "verified gurgaon society" ||
+    name.includes("verified gurgaon society")
+  );
+}
+
+function heroTokens(value: string) {
+  return normalizeHeroText(value)
+    .split(" ")
+    .filter((token) => token.length >= 3 && !["under", "near", "with", "bhk", "for", "the", "and", "rs", "lakh"].includes(token));
+}
+
+function heroSearchText(society: HeroMapSociety) {
+  return normalizeHeroText([
+    society.name,
+    society.society_name,
+    society.builder,
+    society.sector,
+    society.locality,
+    society.address,
+  ].filter(Boolean).join(" "));
+}
+
+function deterministicHeroMatches(societies: HeroMapSociety[], query: string) {
+  const tokens = heroTokens(query);
+  if (!tokens.length) return [];
+
+  return societies
+    .filter((society) => !isBlockedHeroSociety(society.name || society.society_name))
+    .map((society) => {
+      const haystack = heroSearchText(society);
+      const hits = tokens.filter((token) => haystack.includes(token)).length;
+      const strongNameHit = tokens.some((token) =>
+        normalizeHeroText([society.name, society.society_name, society.builder].filter(Boolean).join(" ")).includes(token),
+      );
+
+      return { society, hits, strongNameHit };
+    })
+    .filter((item) => item.hits > 0)
+    .sort((a, b) => Number(b.strongNameHit) - Number(a.strongNameHit) || b.hits - a.hits)
+    .map((item) => item.society)
+    .slice(0, 3);
+}
+
+function scoreOfSociety(society: HeroMapSociety, fallback: number) {
+  const parsed = Number(society.score || fallback);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : fallback;
+}
+
+function societyDisplayName(society: HeroMapSociety) {
+  const raw = society.name || society.society_name || "";
+  return isBlockedHeroSociety(raw) ? "" : raw;
+}
+
+function societyHref(society: HeroMapSociety, fallbackQuery: string) {
+  const name = societyDisplayName(society);
+  const slug = society.slug || (name ? slugifySociety(name) : "");
+  return slug
+    ? `/society/${slug}`
+    : `/search?tab=societies&intent=general&q=${encodeURIComponent(name || fallbackQuery)}`;
+}
+
+function societyMeta(society: HeroMapSociety, fallback: string) {
+  return formatPublicLocation(society as AdminSociety) || society.sector || society.locality || fallback;
+}
+
+const fallbackHeroMapSocieties: HeroMapSociety[] = [
+  { name: "DLF Crest", slug: "dlf-crest", sector: "Golf Course Road", score: "94" },
+  { name: "Alpha Corp Sky1", slug: "alpha-corp-sky1", sector: "Sector 15", score: "87" },
+  { name: "M3M Golf Estate", slug: "m3m-golf-estate", sector: "Sector 65", score: "83" },
+];
+
+
+
+
+
+
+
+
+
+
+
 export default function SocietyFlatsHero() {
   const [activeTab, setActiveTab] = useState<Intent>("society");
   const [query, setQuery] = useState("");
@@ -96,9 +196,38 @@ export default function SocietyFlatsHero() {
     { society_name: "M3M Golf Estate", sector: "Sector 65", score: 88 },
     { society_name: "Ireo Skyon", sector: "Sector 60", score: 84 },
   ]);
+  const [heroMapSocieties, setHeroMapSocieties] = useState<HeroMapSociety[]>([]);
+  const [heroMapCards, setHeroMapCards] = useState<HeroMapSociety[]>(fallbackHeroMapSocieties);
+  const [hasExactHeroMapMatch, setHasExactHeroMapMatch] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
   const active = tabs.find((tab) => tab.key === activeTab) || tabs[0];
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchPublicSocieties()
+      .then((items) => {
+        if (!mounted) return;
+        const cleanItems = items.filter((society) => !isBlockedHeroSociety(society.name));
+        setHeroMapSocieties(cleanItems);
+        if (cleanItems.length) setHeroMapCards(cleanItems.slice(0, 3));
+      })
+      .catch((error) => {
+        console.warn("Hero live map societies unavailable:", error);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const mapQuery = aiInput || aiQuestion;
+  const displayMapCards = heroMapCards.filter((society) => societyDisplayName(society)).slice(0, 3);
+  const primaryMapSociety = displayMapCards[0] || fallbackHeroMapSocieties[0];
+  const primaryMapScore = scoreOfSociety(primaryMapSociety, 94);
+
+
 
   const submitSearch = () => {
     window.location.href = buildSearchUrl(activeTab, query);
@@ -110,17 +239,20 @@ export default function SocietyFlatsHero() {
   };
 
   const submitHeroAi = async (value?: string) => {
+    const clean = (value || aiInput).trim();
     trackAiPromptSubmitted({
       source: "homepage_ai",
-      ai_query: value || aiInput,
+      ai_query: clean,
       cta_label: "Ask SocietyFlats AI",
     });
 
-    const clean = (value || aiInput).trim();
     if (!clean || isAiLoading) return;
 
+    const localMatches = deterministicHeroMatches(heroMapSocieties, clean);
+    setHeroMapCards(localMatches);
+    setHasExactHeroMapMatch(localMatches.length > 0);
     setAiQuestion(clean);
-    setAiInput("");
+    setAiInput(clean);
     setIsAiLoading(true);
 
     try {
@@ -140,15 +272,18 @@ export default function SocietyFlatsHero() {
 
       setAiMatches(matches);
       setAiReply(
-        payload?.reply ||
-          (matches.length
-            ? "These are the closest live SocietyFlats matches. Open a result to compare society fit, location strength and available homes."
-            : "No exact live match yet. Try a society name, sector, builder, budget or commute requirement."),
+        localMatches.length
+          ? payload?.reply || "These are live SocietyFlats matches from the current database."
+          : "No exact live society match yet. Try a society, builder, sector or open the full map/search.",
       );
     } catch (error) {
       console.error("Hero AI failed:", error);
       setAiMatches([]);
-      setAiReply("I could not fetch live AI matches right now. Try search results or another requirement.");
+      setAiReply(
+        localMatches.length
+          ? "I found live SocietyFlats matches from the current database."
+          : "No exact live society match yet. Try a society, builder, sector or open the full map/search.",
+      );
     } finally {
       setIsAiLoading(false);
     }
@@ -269,7 +404,7 @@ export default function SocietyFlatsHero() {
                 onSubmit={(event) => {
                   event.preventDefault();
                   const clean = aiInput.trim() || aiQuestion;
-                  window.location.href = `/ai-advisor?q=${encodeURIComponent(clean)}`;
+                  void submitHeroAi(clean);
                 }}
                 className="mt-3 rounded-[1.25rem] border border-blue-100 bg-white p-2 shadow-[0_10px_24px_rgba(37,99,235,0.09)]"
               >
@@ -307,7 +442,7 @@ export default function SocietyFlatsHero() {
                     type="button"
                     onClick={() => {
                       setAiInput(prompt);
-                      window.location.href = `/ai-advisor?q=${encodeURIComponent(prompt)}`;
+                      void submitHeroAi(prompt);
                     }}
                     className="rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-blue-700 ring-1 ring-blue-100 transition hover:bg-blue-50"
                   >
@@ -329,7 +464,7 @@ export default function SocietyFlatsHero() {
                 <div className="absolute left-[56%] top-[30%]">
                   <div className="flex items-center gap-2 rounded-full bg-blue-600 px-3 py-1 text-xs font-black text-white shadow-sm">
                     <span className="h-2 w-2 rounded-full bg-white" />
-                    DLF Crest · 94 fit
+                    {societyDisplayName(primaryMapSociety)} · {primaryMapScore} fit
                   </div>
                   <div className="mx-auto mt-1.5 h-7 w-[2px] bg-blue-300/70" />
                   <div className="mx-auto h-7 w-7 rounded-full border-4 border-blue-500 bg-white shadow-[0_0_0_8px_rgba(37,99,235,0.18)]" />
@@ -343,42 +478,70 @@ export default function SocietyFlatsHero() {
               <div className="mt-0 flex items-center justify-between text-[11px] font-black uppercase tracking-[0.18em] text-navy-500">
                 <span>Matched on map</span>
                 <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 ring-1 ring-emerald-100">
-                  3 within range
+                  {hasExactHeroMapMatch ? `${displayMapCards.length} matched` : "No exact match"}
                 </span>
               </div>
 
-              <div className="mt-2 grid grid-cols-3 gap-1.5">
-                {[
-                  ["DLF Crest", "Sector 54 · 1.8 km", "94 fit"],
-                  ["Alpha Corp Sky1", "Sector 15 · 4.6 km", "87 fit"],
-                  ["M3M Golf Estate", "Sector 65 · 5.1 km", "83 fit"],
-                ].map(([name, meta, fit], index) => (
-                  <Link
-                    key={name}
-                    to={`/ai-advisor?q=${encodeURIComponent(aiInput || aiQuestion)}`}
-                    className="rounded-2xl border border-blue-100 bg-white p-2.5 text-navy-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
-                        #{index + 1}
-                      </p>
-                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700">
-                        {fit}
-                      </span>
-                    </div>
-                    <p className="mt-1.5 truncate text-sm font-black">{name}</p>
-                    <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-500">{meta}</p>
-                  </Link>
-                ))}
-              </div>
+              {!hasExactHeroMapMatch ? (
+                <p className="mt-2 rounded-2xl border border-amber-100 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-800">
+                  No exact live society match yet. Try a society, builder or sector.
+                </p>
+              ) : null}
+
+              {displayMapCards.length ? (
+                <div className="mt-2 grid grid-cols-3 gap-1.5">
+                  {displayMapCards.map((society, index) => {
+                    const name = societyDisplayName(society);
+                    const score = scoreOfSociety(society, 94 - index * 5);
+                    const href = societyHref(society, mapQuery);
+                    const meta = societyMeta(society, "Gurgaon · live match");
+
+                    return (
+                      <Link
+                        key={`${name}-${index}`}
+                        to={href}
+                        onClick={() =>
+                          trackResultClicked({
+                            source: "homepage_hero_live_map",
+                            result_type: "society",
+                            result_slug: society.slug || "",
+                            result_name: name,
+                            position: index + 1,
+                            query: mapQuery,
+                          })
+                        }
+                        className="rounded-2xl border border-blue-100 bg-white p-2.5 text-navy-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+                            #{index + 1}
+                          </p>
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                            {score} fit
+                          </span>
+                        </div>
+                        <p className="mt-1.5 truncate text-sm font-black">{name}</p>
+                        <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-500">{meta}</p>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-2 rounded-2xl border border-amber-100 bg-white/90 p-3 text-center">
+                  <p className="text-xs font-black text-navy-950">No exact live society match yet</p>
+                  <p className="mt-1 text-[11px] font-semibold text-navy-500">
+                    Try a society, builder, sector or open the full map/search.
+                  </p>
+                </div>
+              )}
 
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <Link to={`/search?tab=societies&intent=general&q=${encodeURIComponent(aiInput || aiQuestion)}`}>
+                <Link to={`/maps?q=${encodeURIComponent(mapQuery)}`}>
                   <Button variant="outline" className="h-10 w-full rounded-xl border-blue-100 bg-white text-xs font-black text-blue-700 hover:bg-blue-50">
                     View all on map
                   </Button>
                 </Link>
-                <Link to={`/ai-advisor?q=${encodeURIComponent(aiInput || aiQuestion)}`}>
+                <Link to={`/ai-advisor?q=${encodeURIComponent(mapQuery)}`}>
                   <Button className="h-10 w-full rounded-xl bg-blue-700 text-xs font-black text-white hover:bg-blue-800">
                     Open AI Advisor
                     <ArrowRight className="ml-2 h-3.5 w-3.5" />

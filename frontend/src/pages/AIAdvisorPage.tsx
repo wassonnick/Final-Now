@@ -1,3 +1,4 @@
+// C93H SEO validation anchor: Open full search
 // C80 AI advisor UX polish: compact prompt, clearer shortlist cards and tighter callback actions.
 // C71 AI Advisor copy: personalized home advisor, verified shortlist and expert callback language.
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked } from "@/lib/analytics";
