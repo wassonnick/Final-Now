@@ -136,7 +136,7 @@ export function GoogleSocietyMapView({ societies, query = "", apiKey, className 
           });
 
           const href = societyHref(society);
-          const homesHref = `/search?tab=societies&intent=general&q=${encodeURIComponent(query || society.name)}`;
+          const homesHref = `/search?tab=societies&intent=map&fromMap=1&society=${encodeURIComponent(society.name)}&q=${encodeURIComponent(query || society.name)}`;
 
           marker.addListener("click", () => {
             infoWindowRef.current.setContent(`

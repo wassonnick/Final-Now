@@ -203,7 +203,7 @@ export function SocietyMapView({ societies, query = "", className = "" }: Societ
                           Open profile <ExternalLink className="ml-1.5 h-3 w-3" />
                         </Link>
                         <Link
-                          to={`/search?tab=societies&intent=general&q=${encodeURIComponent(query || society.name)}`}
+                          to={`/search?tab=societies&intent=map&fromMap=1&society=${encodeURIComponent(society.name)}&q=${encodeURIComponent(query || society.name)}`}
                           className="inline-flex items-center rounded-full border border-blue-100 px-3 py-2 text-xs font-bold text-blue-700"
                         >
                           Homes nearby

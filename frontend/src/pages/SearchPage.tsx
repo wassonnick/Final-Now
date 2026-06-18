@@ -286,6 +286,12 @@ function resolveSearchTab(tab: string | null, intent: string | null) {
 }
 
 export function SearchPage() {
+  const searchPageParams = new URLSearchParams(
+    typeof window !== "undefined" ? window.location.search : "",
+  );
+  const fromMapParam = searchPageParams.get("fromMap") === "1";
+  const mapSocietyParam = searchPageParams.get("society") || "";
+
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get("tab");
   const rawIntent = searchParams.get("intent");
@@ -705,6 +711,23 @@ export function SearchPage() {
           </div>
         </div>
       </section>
+
+      {fromMapParam ? (
+        <section className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+          <div className="rounded-[1.35rem] border border-blue-100 bg-blue-50/80 p-4 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
+              Continued from map
+            </p>
+            <h2 className="mt-1 text-lg font-black tracking-[-0.03em] text-navy-950">
+              Showing society-first matches{mapSocietyParam ? ` near ${mapSocietyParam}` : " from your map selection"}.
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-navy-500">
+              Open profiles, compare location fit, or request verified homes around the same society.
+            </p>
+          </div>
+        </section>
+      ) : null}
+
 
       <section className="container mx-auto px-3 pb-36 pt-2 md:px-4 md:pb-10 md:pt-3">
         <div className="grid gap-3 lg:grid-cols-[220px_1fr] lg:gap-3">
