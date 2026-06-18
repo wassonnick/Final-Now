@@ -1,3 +1,4 @@
+// C87 public callback modal polish: tighter form, clearer trust copy, lead payload unchanged.
 import { trackLeadIntent, trackLeadSubmitted } from "@/lib/analytics";
 import { cleanLeadTrackingPayload, type LeadTrackingContext } from "@/lib/leadTracking";
 import { useEffect, useMemo, useState } from "react";
@@ -111,10 +112,10 @@ export function PublicLeadModal({
       : "Request SocietyFlats callback";
 
   const displaySubtitle = success
-    ? "Your request is saved. We will call with matching societies, homes or visit-ready options."
+    ? "Saved. We will call with matching societies, homes or visit-ready next steps."
     : isPropertyLead
       ? "Share your number to confirm availability, price and visit timing."
-      : "Tell us your budget, location or intent. We will shortlist the right society or home.";
+      : "Share your requirement once. We will shortlist the right society or home.";
 
   const finalRequirement =
     normalizeRequirement(form.requirement) ||
@@ -214,18 +215,18 @@ export function PublicLeadModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/60 px-3 pb-3 pt-6 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/60 px-3 pb-3 pt-5 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="flex max-h-[78vh] w-full max-w-[390px] flex-col overflow-hidden rounded-[1.25rem] bg-white shadow-2xl sm:max-h-[76vh] sm:max-w-[420px] sm:rounded-[1.4rem]"
+        className="flex max-h-[82vh] w-full max-w-[392px] flex-col overflow-hidden rounded-[1.15rem] bg-white shadow-2xl sm:max-h-[78vh] sm:max-w-[420px] sm:rounded-[1.25rem]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="relative border-b border-navy-100 px-4 py-3 sm:px-5">
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-3 top-3 rounded-full border border-navy-100 bg-white p-2 text-navy-400 shadow-sm hover:bg-navy-50 sm:right-4 sm:top-4"
+            className="absolute right-3 top-3 rounded-full border border-navy-100 bg-white p-1.5 text-navy-400 shadow-sm hover:bg-navy-50 sm:right-4 sm:top-4"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -235,25 +236,25 @@ export function PublicLeadModal({
             SocietyFlats callback
           </p>
 
-          <h3 className="mt-1 max-w-[82%] text-lg font-extrabold leading-tight text-navy-900 sm:text-xl">
+          <h3 className="mt-1 max-w-[82%] text-base font-extrabold leading-tight text-navy-900 sm:text-lg">
             {displayTitle}
           </h3>
 
-          <p className="mt-1 max-w-[90%] text-xs leading-5 text-navy-500 sm:text-sm">
+          <p className="mt-1 max-w-[92%] text-xs leading-5 text-navy-500">
             {displaySubtitle}
           </p>
 
           {!success ? (
             <div className="mt-2 space-y-1.5">
               {societyName ? (
-                <div className="flex h-8 items-center gap-2 rounded-2xl bg-blue-50 px-3 text-xs font-bold text-navy-800">
+                <div className="flex min-h-8 items-center gap-2 rounded-xl bg-blue-50 px-3 py-1 text-xs font-bold text-navy-800">
                   <Building2 className="h-4 w-4 text-blue-600" />
                   {societyName}
                 </div>
               ) : null}
 
               {propertyTitle ? (
-                <div className="flex h-8 items-center gap-2 rounded-2xl bg-[#F8FAFC] px-3 text-xs font-bold text-navy-800">
+                <div className="flex min-h-8 items-center gap-2 rounded-xl bg-[#F8FAFC] px-3 py-1 text-xs font-bold text-navy-800">
                   <Home className="h-4 w-4 text-blue-600" />
                   {propertyTitle}
                 </div>
@@ -263,10 +264,10 @@ export function PublicLeadModal({
         </div>
 
         {success ? (
-          <div className="px-4 py-4 sm:px-5 sm:py-5">
-            <div className="rounded-2xl bg-green-50 p-5 text-green-700">
+          <div className="px-4 py-4 sm:px-5">
+            <div className="rounded-xl bg-green-50 p-4 text-green-700">
               <CheckCircle2 className="h-7 w-7" />
-              <h4 className="mt-3 text-lg font-bold">Request received</h4>
+              <h4 className="mt-2 text-base font-bold">Request received</h4>
               <p className="mt-2 text-sm leading-relaxed">
                 {successMessage || "Thanks. SocietyFlats has received your request. Our team will call once with matching homes, similar societies and visit-ready next steps."}
               </p>
@@ -275,16 +276,16 @@ export function PublicLeadModal({
             <Button
               type="button"
               onClick={onClose}
-              className="mt-4 h-11 w-full rounded-full bg-blue-600 font-bold hover:bg-blue-700"
+              className="mt-3 h-10 w-full rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700"
             >
               Done
             </Button>
           </div>
         ) : (
           <form onSubmit={submitLead} className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2.5 sm:px-5 sm:py-3">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2.5 sm:px-5">
             {isPropertyLead ? (
-              <div className="mb-2.5">
+              <div className="mb-2">
                 <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-navy-300">
                   Your requirement
                 </p>
@@ -293,11 +294,11 @@ export function PublicLeadModal({
                 </div>
               </div>
             ) : (
-              <div className="mb-2.5">
+              <div className="mb-2">
                 <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-navy-300">
                   I am looking for
                 </p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
                   {requirementChips.map((chip) => {
                     const requirement = normalizeRequirement(chip);
                     const active = form.requirement === requirement;
@@ -307,7 +308,7 @@ export function PublicLeadModal({
                         key={chip}
                         type="button"
                         onClick={() => selectRequirement(chip)}
-                        className={`h-8 rounded-full border px-3 text-xs font-bold transition ${
+                        className={`h-8 rounded-full border px-2.5 text-xs font-bold transition ${
                           active
                             ? "border-blue-300 bg-blue-50 text-blue-700"
                             : "border-navy-100 bg-white text-navy-500 hover:bg-navy-50"
@@ -327,7 +328,7 @@ export function PublicLeadModal({
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
                 placeholder="Your name"
-                className="h-9 w-full rounded-2xl border border-navy-100 px-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                className="h-9 w-full rounded-xl border border-navy-100 px-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
               />
 
               <div>
@@ -342,10 +343,10 @@ export function PublicLeadModal({
                     if (error) setError("");
                   }}
                   placeholder="10-digit mobile number"
-                  className="h-9 w-full rounded-2xl border border-blue-200 bg-blue-50/40 px-3 text-sm font-bold text-navy-900 outline-none focus:border-blue-500 focus:bg-white"
+                  className="h-9 w-full rounded-xl border border-blue-200 bg-blue-50/40 px-3 text-sm font-bold text-navy-900 outline-none focus:border-blue-500 focus:bg-white"
                 />
                 <p className={`mt-1 text-[11px] ${phoneDigits.length && !phoneValid ? "text-red-600" : "text-navy-300"}`}>
-                  {phoneDigits.length}/10 digits · India mobile number only
+                  {phoneDigits.length}/10 digits · Indian mobile only
                 </p>
               </div>
 
@@ -355,14 +356,14 @@ export function PublicLeadModal({
                   value={form.email}
                   onChange={(event) => setForm({ ...form, email: event.target.value })}
                   placeholder="Email optional"
-                  className="h-9 w-full rounded-2xl border border-navy-100 px-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                  className="h-9 w-full rounded-xl border border-navy-100 px-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
                 />
 
                 <input
                   value={form.budget}
                   onChange={(event) => setForm({ ...form, budget: event.target.value })}
                   placeholder="Budget optional"
-                  className="h-9 w-full rounded-2xl border border-navy-100 px-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
+                  className="h-9 w-full rounded-xl border border-navy-100 px-3 text-sm font-semibold text-navy-800 outline-none focus:border-blue-400"
                 />
               </div>
 
@@ -370,7 +371,7 @@ export function PublicLeadModal({
                 <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-navy-300">
                   Best time to call
                 </p>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-1.5">
                   {preferredTimeChips.map((chip) => {
                     const active = form.preferredTime === chip;
 
@@ -379,7 +380,7 @@ export function PublicLeadModal({
                         key={chip}
                         type="button"
                         onClick={() => setForm({ ...form, preferredTime: chip })}
-                        className={`h-8 rounded-full border px-2 text-[11px] font-bold transition ${
+                        className={`h-8 rounded-full border px-1.5 text-[11px] font-bold transition ${
                           active
                             ? "border-blue-300 bg-blue-50 text-blue-700"
                             : "border-navy-100 bg-white text-navy-500 hover:bg-navy-50"
@@ -397,23 +398,27 @@ export function PublicLeadModal({
                   value={form.message}
                   onChange={(event) => setForm({ ...form, message: event.target.value })}
                   placeholder="Message optional"
-                  rows={1}
-                  className="w-full rounded-2xl border border-navy-100 px-3 py-2 text-xs font-semibold text-navy-800 outline-none focus:border-blue-400"
+                  rows={2}
+                  className="w-full rounded-xl border border-navy-100 px-3 py-2 text-xs font-semibold text-navy-800 outline-none focus:border-blue-400"
                 />
               ) : null}
 
               {error ? (
-                <div className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">
+                <div className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">
                   {error}
                 </div>
               ) : null}
+
+              <div className="rounded-xl border border-blue-100 bg-blue-50/50 px-3 py-2 text-[11px] font-semibold leading-5 text-navy-500">
+                No spam. One SocietyFlats callback with society-wise matching options.
+              </div>
             </div>
             </div>
 
             <div className="shrink-0 border-t border-navy-100 bg-white px-4 py-2.5 sm:px-5">
               <Button
                 disabled={submitting}
-                className="h-9 w-full rounded-full bg-blue-600 text-sm font-bold text-white hover:bg-blue-700"
+                className="h-10 w-full rounded-full bg-blue-600 text-sm font-bold text-white hover:bg-blue-700"
               >
                 <Phone className="mr-2 h-4 w-4" />
                 {submitting ? "Submitting..." : submitLabel}
