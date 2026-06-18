@@ -1,5 +1,60 @@
 import { adminHeaders } from '@/lib/adminApi';
 
+
+const normalizeAdminText = (value: unknown): string => {
+  if (value === null || value === undefined) return '';
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (item === null || item === undefined) return '';
+
+        if (typeof item === 'object') {
+          const record = item as Record<string, unknown>;
+          const question = typeof record.question === 'string' ? record.question.trim() : '';
+          const answer = typeof record.answer === 'string' ? record.answer.trim() : '';
+
+          if (question && answer) return `${question}\n${answer}`;
+          if (question) return question;
+          if (answer) return answer;
+
+          return JSON.stringify(item);
+        }
+
+        return String(item).trim();
+      })
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  if (typeof value === 'object') {
+    return JSON.stringify(value, null, 2);
+  }
+
+  return String(value);
+};
+
+const normalizeAdminStringArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (item === null || item === undefined) return '';
+        if (typeof item === 'object') return JSON.stringify(item);
+        return String(item).trim();
+      })
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(/[\n,]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
 export type SocietyStatus = 'Draft' | 'Verified' | 'Premium' | 'Archived';
 export type SocietyImageStatus =
   | 'placeholder'
@@ -295,13 +350,13 @@ export function mapApiSociety(data: any): AdminSociety {
     pricePerSqft: data?.price_per_sqft || '',
     rentalYield: data?.rental_yield || '',
     amenities: parseArray(data?.amenities),
-    nearbySchools: data?.nearby_schools || '',
-    nearbyMetro: data?.nearby_metro || '',
-    nearbyHospitals: data?.nearby_hospitals || '',
-    nearbyOfficeHubs: data?.nearby_office_hubs || '',
+    nearbySchools: normalizeAdminText(data?.nearby_schools),
+    nearbyMetro: normalizeAdminText(data?.nearby_metro),
+    nearbyHospitals: normalizeAdminText(data?.nearby_hospitals),
+    nearbyOfficeHubs: normalizeAdminText(data?.nearby_office_hubs),
     metaTitle: data?.meta_title || '',
     metaDescription: data?.meta_description || '',
-    faq: data?.faq || '',
+    faq: normalizeAdminText(data?.faq),
     coverImage: data?.cover_image || '',
     galleryImages: parseArray(data?.gallery_images),
     approvedGalleryImageUrls: parseArray(data?.approved_gallery_image_urls),
@@ -325,7 +380,7 @@ export function mapApiSociety(data: any): AdminSociety {
     officialGalleryUrl: data?.official_gallery_url || '',
     officialSourceStatus: data?.official_source_status || 'pending',
     officialSourceNotes: data?.official_source_notes || '',
-    fieldsToVerify: data?.fields_to_verify || '',
+    fieldsToVerify: normalizeAdminText(data?.fields_to_verify),
     reraSearchUrl: data?.rera_search_url || '',
     officialReraSourceUrl: data?.official_rera_source_url || '',
     googleMapsUrl: data?.google_maps_url || '',
@@ -504,7 +559,7 @@ export async function fetchSocietyDraftFromUrl(officialProjectUrl: string): Prom
   return {
     society: mapApiSociety(json?.data || {}),
     warnings: Array.isArray(json?.warnings) ? json.warnings : [],
-    fieldsToVerify: Array.isArray(json?.fields_to_verify) ? json.fields_to_verify : [],
+    fieldsToVerify: normalizeAdminStringArray(json?.fields_to_verify),
     diagnostics: json?.diagnostics || {},
   };
 }
@@ -541,7 +596,7 @@ export async function fetchSocietyDraftFromBrochure(file: File, context?: AdminS
   return {
     society: mapApiSociety(json?.data || {}),
     warnings: Array.isArray(json?.warnings) ? json.warnings : [],
-    fieldsToVerify: Array.isArray(json?.fields_to_verify) ? json.fields_to_verify : [],
+    fieldsToVerify: normalizeAdminStringArray(json?.fields_to_verify),
     diagnostics: json?.diagnostics || {},
   };
 }
