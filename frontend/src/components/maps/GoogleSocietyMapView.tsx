@@ -145,8 +145,8 @@ export function GoogleSocietyMapView({ societies, query = "", apiKey, className 
                 <div style="margin-top:4px;font-size:12px;font-weight:600;color:#64748b;">${formatPublicLocation(society)}</div>
                 <div style="margin-top:8px;border-radius:12px;background:#eff6ff;padding:8px 10px;font-size:12px;font-weight:800;color:#1d4ed8;">Society score: ${score}</div>
                 <div style="margin-top:10px;display:flex;gap:8px;">
-                  <a href="${href}" style="border-radius:999px;background:#1d4ed8;color:#fff;padding:8px 10px;font-size:12px;font-weight:800;text-decoration:none;">Open society</a>
-                  <a href="${homesHref}" style="border-radius:999px;border:1px solid #dbeafe;color:#1d4ed8;padding:8px 10px;font-size:12px;font-weight:800;text-decoration:none;">Homes</a>
+                  <a href="${href}" style="border-radius:999px;background:#1d4ed8;color:#fff;padding:8px 10px;font-size:12px;font-weight:800;text-decoration:none;">Open profile</a>
+                  <a href="${homesHref}" style="border-radius:999px;border:1px solid #dbeafe;color:#1d4ed8;padding:8px 10px;font-size:12px;font-weight:800;text-decoration:none;">Homes nearby</a>
                 </div>
               </div>
             `);
@@ -186,10 +186,10 @@ export function GoogleSocietyMapView({ societies, query = "", apiKey, className 
                 Google map coordinates pending
               </p>
               <h2 className="mt-2 font-serif text-3xl font-black tracking-[-0.04em] text-navy-950">
-                Google map will appear as society pins are verified.
+                Google map pins appear after admin coordinate verification.
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500">
-                Add valid latitude and longitude in Admin Society profiles to show Google map pins here.
+                Add valid latitude and longitude in Admin Society profiles to unlock Google map pins and nearby-home CTAs.
               </p>
             </div>
             <Button asChild className="rounded-full bg-blue-700 px-5 hover:bg-blue-800">
@@ -227,7 +227,7 @@ export function GoogleSocietyMapView({ societies, query = "", apiKey, className 
             </h2>
           </div>
           <p className="max-w-xl text-sm leading-6 text-navy-500">
-            Click a pin to open the society profile or matching homes. Google Maps loads only when the API key is configured.
+            Click a pin to open the society profile, compare location fit, or request homes nearby. Google Maps loads only when the API key is configured.
           </p>
         </div>
 

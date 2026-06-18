@@ -91,14 +91,14 @@ export function SocietyMapView({ societies, query = "", className = "" }: Societ
                 Map coordinates pending
               </p>
               <h2 className="mt-2 font-serif text-3xl font-black tracking-[-0.04em] text-navy-950">
-                Real map will appear as society pins are verified.
+                Map pins appear after admin coordinate verification.
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500">
-                Add latitude and longitude in Admin Society profiles to show live OpenStreetMap pins here.
+                Add latitude and longitude in Admin Society profiles to unlock society pins, nearby-home CTAs and location-led shortlisting.
               </p>
             </div>
             <Button asChild className="rounded-full bg-blue-700 px-5 hover:bg-blue-800">
-              <Link to="/societies">Browse societies</Link>
+              <Link to="/societies">Browse all societies</Link>
             </Button>
           </div>
 
@@ -168,7 +168,7 @@ export function SocietyMapView({ societies, query = "", className = "" }: Societ
             </h2>
           </div>
           <p className="max-w-xl text-sm leading-6 text-navy-500">
-            Click a society pin to open its society-first profile. Pins are shown only after valid admin coordinates are available.
+            Click a society pin to open its profile, compare location fit, or request homes near that society.
           </p>
         </div>
 
@@ -200,13 +200,13 @@ export function SocietyMapView({ societies, query = "", className = "" }: Societ
                           to={societyHref(society)}
                           className="inline-flex items-center rounded-full bg-blue-700 px-3 py-2 text-xs font-bold text-white"
                         >
-                          Open society <ExternalLink className="ml-1.5 h-3 w-3" />
+                          Open profile <ExternalLink className="ml-1.5 h-3 w-3" />
                         </Link>
                         <Link
                           to={`/search?tab=societies&intent=general&q=${encodeURIComponent(query || society.name)}`}
                           className="inline-flex items-center rounded-full border border-blue-100 px-3 py-2 text-xs font-bold text-blue-700"
                         >
-                          Homes
+                          Homes nearby
                         </Link>
                       </div>
                     </div>

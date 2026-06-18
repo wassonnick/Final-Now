@@ -135,6 +135,40 @@ export function MapsPage() {
           )
         )}
       </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+        <div className="rounded-[1.75rem] border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-slate-50 p-4 shadow-sm md:p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
+                Map-first shortlisting
+              </p>
+              <h2 className="mt-1 text-xl font-black tracking-[-0.03em] text-navy-950">
+                Found the right location? Request homes near that society.
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500">
+                Compare sectors and society pins on the map, then open verified profiles or continue to homes around the same location.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Link
+                to={`/search?tab=societies&intent=general&q=${encodeURIComponent(query || "Gurgaon societies")}`}
+                className="inline-flex items-center justify-center rounded-full bg-blue-700 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-blue-800"
+              >
+                View matching societies
+              </Link>
+              <Link
+                to={`/search?tab=rent&q=${encodeURIComponent(query || "Gurgaon")}`}
+                className="inline-flex items-center justify-center rounded-full border border-blue-100 bg-white px-5 py-3 text-sm font-black text-blue-700 transition hover:bg-blue-50"
+              >
+                Homes near map area
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
   );
 }
