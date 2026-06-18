@@ -714,16 +714,35 @@ export function SearchPage() {
 
       {fromMapParam ? (
         <section className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
-          <div className="rounded-[1.35rem] border border-blue-100 bg-blue-50/80 p-4 shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
-              Continued from map
-            </p>
-            <h2 className="mt-1 text-lg font-black tracking-[-0.03em] text-navy-950">
-              Showing society-first matches{mapSocietyParam ? ` near ${mapSocietyParam}` : " from your map selection"}.
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-navy-500">
-              Open profiles, compare location fit, or request verified homes around the same society.
-            </p>
+          <div className="rounded-[1.5rem] border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-slate-50 p-4 shadow-sm md:p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
+                  Continued from map
+                </p>
+                <h2 className="mt-1 text-xl font-black tracking-[-0.035em] text-navy-950">
+                  {mapSocietyParam ? `Homes and societies near ${mapSocietyParam}` : "Homes and societies from your map selection"}
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500">
+                  You came from the map. Continue with society-first matches, compare nearby profiles, or request verified homes around the same location.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
+                <Link
+                  to={`/maps?q=${encodeURIComponent(mapSocietyParam || searchPageParams.get("q") || "Gurgaon societies")}&fromSearch=1`}
+                  className="inline-flex items-center justify-center rounded-full border border-blue-100 bg-white px-5 py-3 text-sm font-black text-blue-700 transition hover:bg-blue-50"
+                >
+                  Back to map
+                </Link>
+                <Link
+                  to={`/ai-advisor?q=${encodeURIComponent(mapSocietyParam || searchPageParams.get("q") || "Gurgaon society homes")}`}
+                  className="inline-flex items-center justify-center rounded-full bg-blue-700 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-blue-800"
+                >
+                  Ask AI for nearby homes
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
       ) : null}
@@ -1144,6 +1163,41 @@ export function SearchPage() {
                 ))}
               </div>
             )}
+
+
+            {fromMapParam ? (
+              <section className="rounded-[1.5rem] border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-slate-50 p-4 shadow-sm md:p-5">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
+                      Verified homes request
+                    </p>
+                    <h2 className="mt-1 text-xl font-black tracking-[-0.035em] text-navy-950">
+                      Need verified homes around this location?
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500">
+                      Share your budget and preference. SocietyFlats can shortlist available homes around the selected society or nearby sectors.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Link
+                      to={`/search?tab=societies&intent=general&q=${encodeURIComponent(mapSocietyParam || searchPageParams.get("q") || "Gurgaon societies")}`}
+                      className="inline-flex items-center justify-center rounded-full border border-blue-100 bg-white px-5 py-3 text-sm font-black text-blue-700 transition hover:bg-blue-50"
+                    >
+                      Compare nearby societies
+                    </Link>
+                    <Link
+                      to={`/ai-advisor?q=${encodeURIComponent(`Find verified homes near ${mapSocietyParam || searchPageParams.get("q") || "this Gurgaon location"}`)}`}
+                      className="inline-flex items-center justify-center rounded-full bg-blue-700 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-blue-800"
+                    >
+                      Request homes nearby
+                    </Link>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
 
             <div className="rounded-[1.2rem] border border-blue-100 bg-white p-3 shadow-sm md:rounded-[1.35rem] md:p-4">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
