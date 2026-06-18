@@ -1,3 +1,4 @@
+// C82 admin societies list polish: compact metrics, filters and society cards without logic changes.
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -213,8 +214,8 @@ export function AdminSocietiesPage() {
 
   return (
     <AdminLayout title="Societies" subtitle="Manage society intelligence, status and public profiles">
-      <div className="space-y-4 md:space-y-6">
-        <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+      <div className="space-y-3.5 md:space-y-5">
+        <section className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
           {[
             ["Total societies", societies.length, "All profiles"],
             ["Verified / Premium", verifiedCount, "Public trust profiles"],
@@ -223,13 +224,13 @@ export function AdminSocietiesPage() {
           ].map(([label, value, helper]) => (
             <div
               key={String(label)}
-              className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[28px] md:p-5"
+              className="rounded-[18px] border border-slate-200 bg-white p-3.5 shadow-sm md:rounded-[22px] md:p-4"
             >
               <p className="text-sm font-medium text-slate-500">{label}</p>
-              <p className="mt-2 text-2xl font-bold text-slate-950 md:mt-3 md:text-4xl">
+              <p className="mt-1.5 text-2xl font-bold text-slate-950 md:mt-2 md:text-3xl">
                 {loading ? "-" : value}
               </p>
-              <p className="mt-2 text-sm text-blue-600">{helper}</p>
+              <p className="mt-1.5 text-xs font-semibold text-blue-600 md:text-sm">{helper}</p>
             </div>
           ))}
         </section>
@@ -246,8 +247,8 @@ export function AdminSocietiesPage() {
           </div>
         ) : null}
 
-        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <section className="rounded-[20px] border border-slate-200 bg-white p-3.5 shadow-sm md:rounded-[24px] md:p-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h2 className="text-xl font-bold tracking-tight text-slate-950">
                 Society directory
@@ -285,8 +286,8 @@ export function AdminSocietiesPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2.5 lg:mt-6 lg:grid-cols-[1fr_190px] lg:gap-3">
-            <div className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 px-4">
+          <div className="mt-3 grid gap-2.5 lg:mt-4 lg:grid-cols-[1fr_180px] lg:gap-3">
+            <div className="flex h-10 items-center gap-2.5 rounded-xl border border-slate-200 px-3">
               <Search className="h-4 w-4 text-slate-400" />
               <input
                 value={query}
@@ -299,7 +300,7 @@ export function AdminSocietiesPage() {
             <select
               value={filter}
               onChange={(event) => setFilter(event.target.value)}
-              className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
             >
               {filters.map((item) => (
                 <option key={item}>{item}</option>
@@ -307,7 +308,7 @@ export function AdminSocietiesPage() {
             </select>
           </div>
 
-          <div className="mt-4 flex flex-col gap-3 rounded-[20px] border border-slate-200 bg-slate-50 p-3 md:mt-5 md:rounded-[24px] md:p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="mt-3 flex flex-col gap-2.5 rounded-[18px] border border-slate-200 bg-slate-50 p-3 md:mt-4 lg:flex-row lg:items-center lg:justify-between">
             <p className="text-sm text-slate-500">
               <span className="font-semibold text-slate-900">{filteredSocieties.length}</span>{" "}
               matching societies.{" "}
@@ -361,7 +362,7 @@ export function AdminSocietiesPage() {
             </div>
           </div>
 
-          <div className="mt-4 md:mt-6">
+          <div className="mt-3 md:mt-4">
             {loading ? (
               <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
                 Loading societies...
@@ -381,7 +382,7 @@ export function AdminSocietiesPage() {
             ) : null}
 
             {!loading && filteredSocieties.length ? (
-              <div className="grid gap-3 md:gap-4">
+              <div className="grid gap-2.5 md:gap-3">
                 {filteredSocieties.map((item) => {
                   const selected = selectedIds.includes(item.id);
                   const status = getStatus(item);
@@ -389,12 +390,12 @@ export function AdminSocietiesPage() {
                   return (
                     <article
                       key={item.id}
-                      className={`rounded-[22px] border bg-white p-4 shadow-sm transition hover:border-blue-100 hover:shadow-lg md:rounded-[28px] md:p-5 ${
+                      className={`rounded-[18px] border bg-white p-3.5 shadow-sm transition hover:border-blue-100 hover:shadow-md md:rounded-[22px] md:p-4 ${
                         selected ? "border-blue-200 ring-2 ring-blue-50" : "border-slate-200"
                       }`}
                     >
-                      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between xl:gap-4">
-                        <div className="flex gap-3 md:gap-4">
+                      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                        <div className="flex gap-3">
                           <input
                             type="checkbox"
                             checked={selected}
@@ -424,11 +425,11 @@ export function AdminSocietiesPage() {
                               ) : null}
                             </div>
 
-                            <h3 className="mt-2 text-lg font-bold text-slate-950 md:mt-3 md:text-xl">
+                            <h3 className="mt-2 text-base font-bold text-slate-950 md:text-lg">
                               {item.name}
                             </h3>
 
-                            <p className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 md:mt-2 md:text-sm">
+                            <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-500 md:text-sm">
                               <MapPin className="h-4 w-4" />
                               {locationText(item)}
                             </p>
@@ -439,7 +440,7 @@ export function AdminSocietiesPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 rounded-[18px] bg-slate-50 p-2.5 text-center xl:min-w-[300px] xl:rounded-[22px] xl:p-3">
+                        <div className="grid grid-cols-3 gap-2 rounded-[16px] bg-slate-50 p-2.5 text-center xl:min-w-[280px]">
                           <div>
                             <p className="text-xs text-slate-400">Score</p>
                             <p className="mt-1 font-bold text-slate-950">{item.score || "-"}</p>
@@ -459,7 +460,7 @@ export function AdminSocietiesPage() {
                         </div>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 sm:flex sm:flex-wrap sm:border-t-0 sm:pt-0 md:mt-5">
+                      <div className="mt-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 sm:flex sm:flex-wrap sm:border-t-0 sm:pt-0 md:mt-4">
                         <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
                           <Link to={publicSocietyUrl(item)}>
                             <Eye className="mr-1.5 h-4 w-4" />
@@ -538,7 +539,7 @@ export function AdminSocietiesPage() {
           </div>
         </section>
 
-        <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
+        <section className="rounded-[20px] border border-blue-100 bg-blue-50 p-4">
           <div className="flex items-start gap-3">
             <BarChart3 className="mt-1 h-5 w-5 text-blue-700" />
             <div>
