@@ -574,6 +574,17 @@ export function SearchPage() {
     });
   };
 
+  const openMapSearchCallback = () => {
+    const context = mapSocietyParam || searchPageParams.get("q") || query || "Gurgaon map search";
+
+    setCallbackTarget({
+      type: "society",
+      societyName: context,
+      propertyIntent: "Callback",
+      source: "map_search_conversion",
+    });
+  };
+
   const openPropertyCallback = (property: any) => {
     const listingType = String(property?.listingType || "").toLowerCase();
     const propertyIntent =
@@ -1176,7 +1187,10 @@ export function SearchPage() {
                       Need verified homes around this location?
                     </h2>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500">
-                      Share your budget and preference. SocietyFlats can shortlist available homes around the selected society or nearby sectors.
+                      Share your budget and preferred size. SocietyFlats will shortlist verified available homes around the selected society or nearby sectors.
+                    </p>
+                    <p className="mt-2 text-xs font-bold text-blue-600">
+                      Lead source: Map search{mapSocietyParam ? ` • ${mapSocietyParam}` : ""}
                     </p>
                   </div>
 
@@ -1187,12 +1201,13 @@ export function SearchPage() {
                     >
                       Compare nearby societies
                     </Link>
-                    <Link
-                      to={`/ai-advisor?q=${encodeURIComponent(`Find verified homes near ${mapSocietyParam || searchPageParams.get("q") || "this Gurgaon location"}`)}`}
+                    <button
+                      type="button"
+                      onClick={openMapSearchCallback}
                       className="inline-flex items-center justify-center rounded-full bg-blue-700 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-blue-800"
                     >
                       Request homes nearby
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </section>
