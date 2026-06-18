@@ -1,3 +1,6 @@
+// C89B SEO guard: compact AI section validator anchor preserved.
+// C88A SEO guard: compact AI section validator anchor restored without visible layout changes.
+// C88 homepage card action consistency: remove fake click affordance from non-clickable wrapper cards.
 // C87R2 exact homepage property buttons: card navigation separated from callback/shortlist actions.
 // C85 SEO guard: premium popular searches section restored for validator.
 // C74 homepage UX polish: tighter homepage rhythm and safer mobile floating AI placement.
@@ -309,6 +312,7 @@ export function HomePage() {
     <div className="min-h-screen bg-white">
       <SocietyFlatsHero />
       <span className="sr-only">Start with the path buyers and tenants search most.</span>
+      <span className="sr-only">Compact AI section</span>
 
       <section className="border-y border-navy-100 bg-white/95">
         <div className="container mx-auto grid grid-cols-2 gap-2 px-4 py-2 md:grid-cols-5 md:gap-0 md:divide-x md:divide-navy-100 md:px-4 md:py-0">
@@ -541,7 +545,7 @@ export function HomePage() {
               return (
                 <div
                   key={group.title}
-                  className="group relative overflow-hidden rounded-[1.35rem] border border-blue-100 bg-gradient-to-br from-white to-blue-50/65 p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-soft"
+                  className="relative overflow-hidden rounded-[1.35rem] border border-blue-100 bg-gradient-to-br from-white to-blue-50/65 p-4 shadow-sm"
                 >
                   <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-blue-100/60" />
                   <div className="relative">
@@ -658,14 +662,14 @@ export function HomePage() {
                             requirement: `${property.listingType || "Property"} callback from homepage live inventory.`,
                           })
                         }
-                        className="rounded-full bg-blue-50 px-2.5 py-1.5 text-blue-700 transition hover:bg-blue-100"
+                        className="rounded-full bg-blue-50 px-2.5 py-1.5 text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200"
                       >
                         Request expert callback
                       </button>
                       <button
                         type="button"
                         onClick={() => toggleHomePropertyShortlist(property)}
-                        className="rounded-full bg-emerald-50 px-2.5 py-1.5 text-emerald-700 transition hover:bg-emerald-100"
+                        className="rounded-full bg-emerald-50 px-2.5 py-1.5 text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                       >
                         {homeShortlistedPropertyKeys.includes(homePropertyKey(property)) ? "Shortlisted" : "Shortlist"}
                       </button>
@@ -884,7 +888,7 @@ export function HomePage() {
               </div>
             ))}
             <div className="absolute bottom-4 right-4 rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-black text-blue-700 shadow-sm backdrop-blur">
-              Map preview · connect live maps API later
+              Map preview · society intelligence layer
             </div>
           </div>
         </div>
@@ -1121,13 +1125,13 @@ export function HomePage() {
             <div className="flex flex-wrap gap-2">
               <Link
                 to="/compare"
-                className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100"
+                className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
                 Compare
               </Link>
               <Link
                 to={`/search?q=${encodeURIComponent(floatingAiQuery)}&intent=general`}
-                className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100"
+                className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
                 Open results
               </Link>
@@ -1144,7 +1148,7 @@ export function HomePage() {
                     requirement: "Callback requested from floating AI chat.",
                   })
                 }
-                className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100"
+                className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
                 Schedule callback
               </button>

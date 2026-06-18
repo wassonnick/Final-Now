@@ -1,3 +1,5 @@
+// C89B exact fix: Similar options scrolls to similar properties instead of opening callback popup.
+// C89 property similar options fix: similar CTA scrolls to property matches instead of opening callback popup.
 // C77 property page UX polish: compact hero, tighter details, preserved property-style sidebar.
 // C71 property detail copy: legal verification, society intelligence and stronger enquiry CTAs.
 import { trackEvent, trackLeadIntent, trackLeadSubmitted, trackResultClicked } from "@/lib/analytics";
@@ -829,7 +831,7 @@ export function PropertyPage() {
               </section>
             ) : null}
 
-            <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
+            <section id="similar-properties" className="scroll-mt-24 rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
@@ -981,11 +983,11 @@ export function PropertyPage() {
                   WhatsApp
                 </a>
                 <Button
-                  onClick={() => openLead("callback")}
+                  asChild
                   variant="outline"
                   className="h-9 rounded-full border-navy-200 text-xs text-navy-700"
                 >
-                  Similar options
+                  <a href="#similar-properties">Similar options</a>
                 </Button>
               </div>
 
