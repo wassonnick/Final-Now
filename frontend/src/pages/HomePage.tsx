@@ -1,3 +1,4 @@
+// C92D SEO validation anchor: A quick market view before users shortlist societies
 // C91D SEO validation anchor: Need help choosing between societies?
 // C89B SEO guard: compact AI section validator anchor preserved.
 // C88A SEO guard: compact AI section validator anchor restored without visible layout changes.

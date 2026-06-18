@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
+import { LocationIntelligencePreview } from "@/components/maps/LocationIntelligencePreview";
 import { Badge } from "@/components/ui/badge";
 import {
   findPublicSociety,
@@ -1066,6 +1067,18 @@ export function SocietyPage() {
                   </Link>
                 </Button>
               </div>
+
+              <LocationIntelligencePreview
+                title={society.name}
+                location={societyLocation}
+                latitude={field(society, "latitude", "latitude", "")}
+                longitude={field(society, "longitude", "longitude", "")}
+                googleMapsUrl={field(society, "googleMapsUrl", "google_maps_url", "")}
+                nearbySchools={field(society, "nearbySchools", "nearby_schools", "")}
+                nearbyMetro={field(society, "nearbyMetro", "nearby_metro", "")}
+                nearbyHospitals={field(society, "nearbyHospitals", "nearby_hospitals", "")}
+                nearbyOfficeHubs={field(society, "nearbyOfficeHubs", "nearby_office_hubs", "")}
+              />
 
               {!hasNearbyData ? (
                 <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-amber-100 bg-amber-50/80 p-3.5 md:flex-row md:items-center md:justify-between">
