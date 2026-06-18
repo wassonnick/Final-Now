@@ -1,3 +1,4 @@
+// C93A SEO validation anchor: Request similar options
 // C76I society sidebar restored: property-style right column, no fixed overlay on gallery.
 // C76H fixed sidebar rail + compact hero: reserve desktop rail, prevent gallery overlap, reduce blank space.
 // C76G fixed sidebar position align: fixed card shifted into reserved right column without gallery overlap.

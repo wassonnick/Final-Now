@@ -1,3 +1,6 @@
+import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 // C85 public footer polish: cleaner SocietyFlats trust copy, tighter spacing and stronger internal links.
 // C70C footer copy: society-first trust, owner/broker paths and updated copyright.
 import { Link } from "react-router-dom";
@@ -20,6 +23,7 @@ const ownerLinks = [
 ];
 
 export function Footer() {
+  const [callbackOpen, setCallbackOpen] = useState(false);
   return (
     <footer className="border-t border-navy-900 bg-navy-950 text-white">
       <div className="container mx-auto px-4 pb-28 pt-8 md:pb-8 md:pt-12">
@@ -106,12 +110,13 @@ export function Footer() {
             <p className="mt-2 text-sm leading-6 text-navy-200">
               Share your requirement and get society-wise verified options.
             </p>
-            <Link
-              to="/chat"
-              className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-blue-500"
-            >
-              Request Callback
-            </Link>
+            <Button
+                type="button"
+                onClick={() => setCallbackOpen(true)}
+                className="w-full rounded-full bg-blue-600 text-white shadow-sm hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2"
+              >
+                Request Callback
+              </Button>
           </div>
         </div>
 
@@ -133,6 +138,18 @@ export function Footer() {
           </div>
         </div>
       </div>
-          </footer>
+          
+      <PublicLeadModal
+        open={callbackOpen}
+        onClose={() => setCallbackOpen(false)}
+        title="Request SocietyFlats callback"
+        source="footer_callback"
+        ctaLabel="Footer request callback"
+        leadIntent="general"
+        defaultMessage="I need help shortlisting verified Gurgaon societies or homes."
+        submitLabel="Request callback"
+        successMessage="Request received. SocietyFlats will call you shortly with matching options."
+      />
+    </footer>
   );
 }
