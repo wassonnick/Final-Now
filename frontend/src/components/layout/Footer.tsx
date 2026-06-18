@@ -1,3 +1,4 @@
+// C85 public footer polish: cleaner SocietyFlats trust copy, tighter spacing and stronger internal links.
 // C70C footer copy: society-first trust, owner/broker paths and updated copyright.
 import { Link } from "react-router-dom";
 import { Building2, Mail, MapPin, Phone } from "lucide-react";
@@ -7,20 +8,22 @@ const quickLinks = [
   { label: "Rent", href: "/search?tab=rent" },
   { label: "Buy", href: "/search?tab=buy" },
   { label: "AI Advisor", href: "/ai-advisor" },
+  { label: "Gurgaon Guide", href: "/gurgaon" },
 ];
 
 const ownerLinks = [
   { label: "List Your Flat", href: "/sell" },
-  { label: "Compare", href: "/compare" },
-  { label: "Insights", href: "/insights" },
-  { label: "Map", href: "/map" },
+  { label: "Broker Partner", href: "/broker-crm" },
+  { label: "Compare Societies", href: "/compare" },
+  { label: "Market Insights", href: "/insights" },
+  { label: "Map Intelligence", href: "/map" },
 ];
 
 export function Footer() {
   return (
-    <footer className="bg-navy-950 text-white">
-      <div className="container mx-auto px-4 pb-28 pt-8 md:pb-8 md:pt-14">
-        <div className="grid gap-7 md:grid-cols-[1.2fr_0.8fr_0.8fr_1fr] md:gap-10">
+    <footer className="border-t border-navy-900 bg-navy-950 text-white">
+      <div className="container mx-auto px-4 pb-28 pt-8 md:pb-8 md:pt-12">
+        <div className="grid gap-6 md:grid-cols-[1.15fr_0.8fr_0.8fr_1fr] md:gap-8">
           <div>
             <Link to="/" className="inline-flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600">
@@ -36,12 +39,11 @@ export function Footer() {
               </span>
             </Link>
 
-            <p className="mt-4 max-w-sm text-sm leading-6 text-navy-200 md:text-base md:leading-7">
-              Gurgaon-first society intelligence platform for verified rentals,
-              resale homes and smarter shortlisting.
+            <p className="mt-3 max-w-sm text-sm leading-6 text-navy-200 md:text-[15px] md:leading-7">
+              Gurgaon-first society intelligence for verified rentals, resale homes, owner listings and AI-assisted shortlisting.
             </p>
 
-            <div className="mt-4 grid gap-2 text-sm text-navy-200 md:mt-6">
+            <div className="mt-4 grid gap-2 text-sm text-navy-200">
               <a
                 href="tel:+919911886222"
                 className="inline-flex items-center gap-2 hover:text-white"
@@ -67,7 +69,7 @@ export function Footer() {
             <h3 className="text-sm font-black uppercase tracking-[0.18em] text-blue-200">
               Quick Links
             </h3>
-            <div className="mt-4 grid gap-3">
+            <div className="mt-3 grid gap-2.5">
               {quickLinks.map((item) => (
                 <Link
                   key={item.href}
@@ -84,7 +86,7 @@ export function Footer() {
             <h3 className="text-sm font-black uppercase tracking-[0.18em] text-blue-200">
               For owners
             </h3>
-            <div className="mt-4 grid gap-3">
+            <div className="mt-3 grid gap-2.5">
               {ownerLinks.map((item) => (
                 <Link
                   key={item.href}
@@ -97,31 +99,31 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4 md:p-5">
-            <h3 className="font-display text-lg font-bold text-white">
+          <div className="rounded-[1.25rem] border border-white/10 bg-white/5 p-4">
+            <h3 className="font-display text-base font-bold text-white md:text-lg">
               Need help shortlisting?
             </h3>
             <p className="mt-2 text-sm leading-6 text-navy-200">
-              Share your requirement and get society-wise options.
+              Share your requirement and get society-wise verified options.
             </p>
             <Link
               to="/chat"
-              className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-500"
+              className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-blue-500"
             >
               Request Callback
             </Link>
           </div>
         </div>
 
-        <div className="mt-7 border-t border-white/10 pt-4 md:mt-10 md:pt-6">
+        <div className="mt-6 border-t border-white/10 pt-4 md:mt-8 md:pt-5">
           <div className="flex flex-col gap-3 text-xs text-navy-300 md:flex-row md:items-center md:justify-between">
             <p>© 2026 SocietyFlats. All rights reserved.</p>
 
             <div className="flex flex-wrap gap-3">
-              <Link to="/" className="transition hover:text-white">
+              <Link to="/privacy" className="transition hover:text-white">
                 Privacy Policy
               </Link>
-              <Link to="/" className="transition hover:text-white">
+              <Link to="/terms" className="transition hover:text-white">
                 Terms
               </Link>
               <Link to="/contact" className="transition hover:text-white">

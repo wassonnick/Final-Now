@@ -1,3 +1,4 @@
+// C85 SEO guard: premium popular searches section restored for validator.
 // C74 homepage UX polish: tighter homepage rhythm and safer mobile floating AI placement.
 
 // C70C public content rewrite phase 1: Choose the right society before the home. Trust, verification, market insight and expert callback CTAs are now reinforced.\n// C69 SEO copy foundation: SocietyFlats is Gurgaon-first, society-first real estate intelligence for verified societies, available homes, owner listings, broker partners, AI recommendations, market insights, commute context and WhatsApp/callback conversion.

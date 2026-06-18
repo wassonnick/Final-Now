@@ -1,3 +1,4 @@
+// C85 public navbar polish: cleaner desktop/mobile nav spacing and CTA hierarchy, routes unchanged.
 // C71 nav copy: owner CTA now uses List Your Flat and broker label remains clean.
 // C70C nav copy: clearer public CTAs for broker partnership and dashboard access.
 import { useEffect, useState } from 'react';
@@ -126,7 +127,7 @@ export function Navbar() {
               Join as Broker Partner
             </Button>
           </Link>
-          <Link to="/sell" className="hidden lg:block"><Button size="sm" className="rounded-full bg-blue-700 hover:bg-blue-800 text-white px-5 shadow-sm">List Your Flat</Button></Link>
+          <Link to="/sell" className="hidden lg:block"><Button size="sm" className="rounded-full bg-blue-700 px-4 text-white shadow-sm hover:bg-blue-800">List Your Flat</Button></Link>
           <button className="xl:hidden p-2 rounded-full hover:bg-navy-50 transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}</button>
         </div>
       </div>
@@ -138,15 +139,15 @@ export function Navbar() {
             <Button variant="outline" className="w-full rounded-full border-blue-100 bg-white text-blue-700" onClick={() => { navigate(accountDashboardPath || '/login'); setIsMenuOpen(false); }}>
               {accountDashboardPath ? "Dashboard" : "Login"}
             </Button>
-            <Button variant="outline" className="w-full rounded-full border-orange-100 bg-white text-orange-700" onClick={() => { navigate('/broker-crm'); setIsMenuOpen(false); }}>Join as Broker Partner</Button>
-            <Button className="w-full rounded-full bg-navy-600 hover:bg-navy-700 text-white" onClick={() => { navigate('/sell'); setIsMenuOpen(false); }}>List Your Flat</Button>
+            <Button variant="outline" className="w-full rounded-full border-orange-100 bg-white text-sm font-bold text-orange-700" onClick={() => { navigate('/broker-crm'); setIsMenuOpen(false); }}>Join as Broker Partner</Button>
+            <Button className="w-full rounded-full bg-navy-600 text-sm font-bold text-white hover:bg-navy-700" onClick={() => { navigate('/sell'); setIsMenuOpen(false); }}>List Your Flat</Button>
           </div>
         </div>
       )}
 
     </header>
     <nav className={cn(
-      "fixed bottom-3 left-3 right-3 z-50 rounded-[1.25rem] border border-navy-100 bg-white/95 p-2 shadow-apple backdrop-blur-xl xl:hidden",
+      "fixed bottom-3 left-3 right-3 z-50 rounded-[1.15rem] border border-navy-100 bg-white/95 p-2 shadow-apple backdrop-blur-xl xl:hidden",
       (isHomePage || isPropertyOrSocietyPage) && "hidden",
     )}>
       <div className="grid grid-cols-4 gap-1">
