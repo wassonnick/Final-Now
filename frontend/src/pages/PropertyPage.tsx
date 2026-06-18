@@ -1,3 +1,4 @@
+// C90 detail CTA safety: Share button is wired, similar society links have safe fallback.
 // C89B exact fix: Similar options scrolls to similar properties instead of opening callback popup.
 // C89 property similar options fix: similar CTA scrolls to property matches instead of opening callback popup.
 // C77 property page UX polish: compact hero, tighter details, preserved property-style sidebar.
@@ -392,6 +393,37 @@ export function PropertyPage() {
     });
   };
 
+  const handlePropertyShare = async () => {
+    const shareUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}${propertyHref}`
+        : propertyHref;
+
+    trackEvent("property_page_share_clicked", {
+      entity_type: "property",
+      entity_slug: property?.slug || slug || "",
+      entity_name: title,
+    });
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({
+          title,
+          text: `${title} on SocietyFlats`,
+          url: shareUrl,
+        });
+        return;
+      }
+
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+        return;
+      }
+    } catch (error) {
+      console.error("Property share failed:", error);
+    }
+  };
+
   // C16 property SEO route effect
   useEffect(() => {
     if (property) {
@@ -723,7 +755,12 @@ export function PropertyPage() {
                   <Heart className={cn("mr-2 h-4 w-4", isShortlisted && "fill-current")} />
                   {isShortlisted ? "Saved" : "Save"}
                 </Button>
-                <Button variant="outline" className="hidden rounded-full sm:inline-flex">
+                <Button
+                  type="button"
+                  onClick={handlePropertyShare}
+                  variant="outline"
+                  className="hidden rounded-full sm:inline-flex"
+                >
                   <Share2 className="mr-2 h-4 w-4" /> Share
                 </Button>
               </div>
