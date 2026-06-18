@@ -11,7 +11,8 @@
     "seo:sitemap": "node scripts/generate-sitemap.mjs",
     "prebuild": "npm run seo:sitemap",
     "seo:prerender": "node scripts/prerender-static-meta.mjs",
-    "seo:validate": "node scripts/validate-seo.mjs"
+    "seo:validate": "node scripts/validate-seo.mjs",
+    "coords:audit": "node scripts/audit-map-coordinates.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",
