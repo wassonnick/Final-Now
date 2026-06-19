@@ -1155,6 +1155,7 @@ export function SocietyPage() {
 
               <div className="mt-2.5">
                 <SocietyNearbyGoogleMap
+                  key={activeNearbyCategory}
                   title={society.name}
                   location={societyLocation}
                   latitude={field(society, "latitude", "latitude", "")}
