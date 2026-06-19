@@ -794,17 +794,37 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
       </section>
 
       <section className="hidden bg-blue-50/35 px-4 py-10 md:block">
-        <div className="container mx-auto grid gap-6 lg:grid-cols-[18rem_1fr]">
+        <div className="container mx-auto grid gap-6 lg:grid-cols-[20rem_1fr]">
           <div>
             <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">
-              Maps and lifestyle
+              Live map intelligence
             </p>
             <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
               See societies by commute strength.
             </h2>
             <p className="mt-1.5 text-xs leading-5 text-navy-500">
-              Map intelligence turns metro access, schools, hospitals and office hubs into a practical shortlist before you visit.
+              Preview live Gurgaon society pins, then open the full Google map to compare location, commute and nearby context before you visit.
             </p>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-500">
+                  Ready pins
+                </p>
+                <p className="mt-1 text-2xl font-black text-navy-950">
+                  {mapSocieties.length || 0}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3 shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                  Map mode
+                </p>
+                <p className="mt-1 text-sm font-black text-emerald-800">
+                  Google ready
+                </p>
+              </div>
+            </div>
+
             <div className="mt-5 space-y-2">
               {(mapSocieties.length
                 ? mapSocieties
@@ -828,21 +848,30 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-xs font-black text-blue-700">
                       {scoreOf(society, `${8.8 - index * 0.3}`)}
                     </span>
-                    <div>
-                      <p className="text-sm font-black text-navy-950">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-navy-950">
                         {society.name}
                       </p>
-                      <p className="text-xs font-semibold text-navy-400">
+                      <p className="truncate text-xs font-semibold text-navy-400">
                         {society.sector || formatPublicLocation(society)}
                       </p>
                     </div>
                   </Link>
                 ))}
             </div>
+
+            <Link to="/maps" className="mt-4 inline-flex">
+              <Button className="h-10 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
+                Open live Google map <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
 
-          <div className="relative min-h-[22rem] overflow-hidden rounded-[1.35rem] border border-blue-100 bg-[#eaf3fb] shadow-soft">
-            <div className="absolute inset-0 opacity-60">
+          <Link
+            to="/maps"
+            className="group relative min-h-[22rem] overflow-hidden rounded-[1.35rem] border border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#dbeafe_45%,#f8fafc_100%)] shadow-soft transition hover:-translate-y-0.5 hover:shadow-premium"
+          >
+            <div className="absolute inset-0 opacity-70">
               {[20, 44, 68].map((top) => (
                 <span
                   key={`h-${top}`}
@@ -857,53 +886,54 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
                   style={{ left: `${left}%` }}
                 />
               ))}
+              <span className="absolute left-[10%] top-[66%] h-1 w-[72%] -rotate-12 rounded-full bg-blue-200/60" />
+              <span className="absolute left-[25%] top-[35%] h-1 w-[58%] rotate-6 rounded-full bg-blue-200/60" />
             </div>
-            {[
-              {
-                left: 30,
-                top: 28,
-                score: "9.1",
-                tone: "bg-emerald-500",
-                name: "DLF Crest",
-              },
-              {
-                left: 55,
-                top: 42,
-                score: "8.7",
-                tone: "bg-blue-600",
-                name: "M3M Golf",
-              },
-              {
-                left: 72,
-                top: 60,
-                score: "8.4",
-                tone: "bg-blue-600",
-                name: "Sobha City",
-              },
-              {
-                left: 42,
-                top: 68,
-                score: "7.9",
-                tone: "bg-blue-500",
-                name: "Ireo Skyon",
-              },
-            ].map((pin) => (
-              <div
-                key={pin.name}
-                className="absolute -translate-x-1/2 -translate-y-1/2"
-                style={{ left: `${pin.left}%`, top: `${pin.top}%` }}
-              >
-                <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-white text-xs font-black text-white shadow-xl ${pin.tone}`}
-                >
-                  {pin.score}
-                </span>
-              </div>
-            ))}
-            <div className="absolute bottom-4 right-4 rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-black text-blue-700 shadow-sm backdrop-blur">
-              Map preview · society intelligence layer
+
+            {(mapSocieties.length ? mapSocieties : featuredSocieties)
+              .slice(0, 5)
+              .map((society, index) => {
+                const pinPositions = [
+                  [30, 28],
+                  [55, 42],
+                  [72, 60],
+                  [42, 68],
+                  [62, 28],
+                ];
+                const [left, top] = pinPositions[index] || [50, 50];
+                const isPrimary = index === 0;
+
+                return (
+                  <div
+                    key={society.id || society.name}
+                    className="absolute -translate-x-1/2 -translate-y-1/2"
+                    style={{ left: `${left}%`, top: `${top}%` }}
+                  >
+                    <span
+                      className={`flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-white text-xs font-black text-white shadow-xl transition group-hover:scale-105 ${
+                        isPrimary ? "bg-emerald-500" : "bg-blue-600"
+                      }`}
+                      title={society.name}
+                    >
+                      {scoreOf(society, `${8.8 - index * 0.3}`)}
+                    </span>
+                  </div>
+                );
+              })}
+
+            <div className="absolute left-4 top-4 rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-600">
+                Gurgaon map
+              </p>
+              <p className="mt-1 text-sm font-black text-navy-950">
+                {mapSocieties.length || featuredSocieties.length || 0} live society pins
+              </p>
             </div>
-          </div>
+
+            <div className="absolute bottom-4 right-4 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-black text-blue-700 shadow-sm backdrop-blur">
+              Open full Google map →
+            </div>
+          </Link>
         </div>
       </section>
 
