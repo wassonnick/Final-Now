@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SocietyScoreCard } from './SocietyScoreCard';
 import { cn, formatPrice } from '@/lib/utils';
-import { societyDisplayImage } from '@/lib/societyImages';
+import { societyDisplayImage, societyImageAttribution, societyImageAttributionClassName } from '@/lib/societyImages';
 import type { Society } from '@/types';
 
 interface SocietyCardProps {
@@ -15,6 +15,7 @@ interface SocietyCardProps {
 export function SocietyCard({ society, featured = false }: SocietyCardProps) {
   const avgRent = society.locality?.avg_rent_2bhk || 35000;
   const imageSrc = societyDisplayImage(society);
+  const imageAttribution = societyImageAttribution(society);
 
   return (
     <div className={cn(
@@ -29,6 +30,15 @@ export function SocietyCard({ society, featured = false }: SocietyCardProps) {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-navy-900/60 via-transparent to-transparent" />
+        <span
+          className={cn(
+            "absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-semibold backdrop-blur",
+            societyImageAttributionClassName(imageAttribution.tone),
+          )}
+          title={imageAttribution.title}
+        >
+          {imageAttribution.label}
+        </span>
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-2">

@@ -45,7 +45,7 @@ import {
   rememberCustomerSavedItem,
   toggleCustomerShortlist,
 } from "@/lib/customerAccount";
-import { hasApprovedSocietyImage, societyPlaceholderImage } from "@/lib/societyImages";
+import { hasApprovedSocietyImage, societyImageAttribution, societyImageAttributionClassName, societyPlaceholderImage } from "@/lib/societyImages";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
@@ -440,7 +440,8 @@ export function SocietyPage() {
   }, [relatedSocieties, slug, society]);
 
   if (loading) {
-    return (
+
+  return (
       <div className="min-h-screen bg-ivory-100 py-20">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold text-navy-900">
@@ -615,12 +616,18 @@ export function SocietyPage() {
               gallery.length > 1 ? "lg:grid-cols-[1.4fr_0.6fr]" : ""
             }`}
           >
-            <div className="h-[160px] overflow-hidden rounded-[1.15rem] bg-navy-50 sm:h-[240px] lg:h-[300px] lg:rounded-[1.6rem]">
+            <div className="relative h-[160px] overflow-hidden rounded-[1.15rem] bg-navy-50 sm:h-[240px] lg:h-[300px] lg:rounded-[1.6rem]">
               <img
                 src={gallery[0]}
                 alt={society.name}
                 className="h-full w-full object-cover"
               />
+              <span
+                className={`absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-semibold backdrop-blur ${societyImageAttributionClassName(societyImageAttribution(society).tone)}`}
+                title={societyImageAttribution(society).title}
+              >
+                {societyImageAttribution(society).label}
+              </span>
             </div>
             {gallery.length > 1 ? (
               <div className="hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-1">

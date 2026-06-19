@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Building2, Loader2, MapPin, Search, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { societyDisplayImage } from '@/lib/societyImages';
+import { societyDisplayImage, societyImageAttribution, societyImageAttributionClassName } from '@/lib/societyImages';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
 
@@ -43,6 +43,10 @@ function extractSocieties(payload: ApiResponse): Society[] {
 
 function societyImage(society: Society) {
   return societyDisplayImage(society);
+}
+
+function societyImageBadge(society: Society) {
+  return societyImageAttribution(society);
 }
 
 function societyLocation(society: Society) {
@@ -152,7 +156,10 @@ export function SocietiesPage() {
           </div>
         ) : filteredSocieties.length ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {filteredSocieties.map((society) => (
+            {filteredSocieties.map((society) => {
+              const imageAttribution = societyImageBadge(society);
+
+              return (
               <Link
                 key={society.id || society.slug}
                 to={`/society/${society.slug}`}
@@ -164,6 +171,12 @@ export function SocietiesPage() {
                     alt={society.name}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
+                  <span
+                    className={`absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-semibold backdrop-blur ${societyImageAttributionClassName(imageAttribution.tone)}`}
+                    title={imageAttribution.title}
+                  >
+                    {imageAttribution.label}
+                  </span>
                   <div className="absolute left-4 top-4 flex gap-2">
                     {society.featured ? (
                       <Badge className="rounded-full bg-amber-50 text-amber-700">
@@ -217,7 +230,8 @@ export function SocietiesPage() {
                   </div>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-[2rem] border border-navy-100 bg-white p-10 text-center">

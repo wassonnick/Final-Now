@@ -154,3 +154,49 @@ export function societyPlaceholderImage(input: any, locationOverride = '') {
 export function societyDisplayImage(society: any) {
   return approvedSocietyImage(society) || googlePlacesSocietyPhotoUrl(society) || societyPlaceholderImage(society);
 }
+
+
+export type SocietyImageAttribution = {
+  label: string;
+  tone: "approved" | "google" | "placeholder";
+  title: string;
+};
+
+export function societyImageAttribution(society: any): SocietyImageAttribution {
+  const credit = firstText(field<string>(society, 'imageCredit', 'image_credit', ''));
+
+  if (hasApprovedSocietyImage(society) && approvedSocietyImage(society)) {
+    return {
+      label: credit ? `Image: ${credit}` : "Image: Approved source",
+      tone: "approved",
+      title: "This image is approved for public display by SocietyFlats admin.",
+    };
+  }
+
+  if (hasGooglePlacesDisplayPhoto(society)) {
+    return {
+      label: "Image: Google Places",
+      tone: "google",
+      title: "Reference image displayed through Google Places. It is not owned by SocietyFlats.",
+    };
+  }
+
+  return {
+    label: "Image: SocietyFlats placeholder",
+    tone: "placeholder",
+    title: "Placeholder visual used until an approved or reference image is available.",
+  };
+}
+
+export function societyImageAttributionClassName(tone: SocietyImageAttribution["tone"]): string {
+  if (tone === "approved") {
+    return "bg-emerald-950/80 text-white ring-1 ring-white/20";
+  }
+
+  if (tone === "google") {
+    return "bg-slate-950/80 text-white ring-1 ring-white/20";
+  }
+
+  return "bg-white/90 text-slate-700 ring-1 ring-slate-200";
+}
+
