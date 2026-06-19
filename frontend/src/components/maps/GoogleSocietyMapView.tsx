@@ -75,6 +75,39 @@ export function GoogleSocietyMapView({
   const infoWindowRef = useRef<any>(null);
   const [mapError, setMapError] = useState("");
 
+  const openMarkerInfoWindow = (society: AdminSociety, marker: any) => {
+    if (!mapInstanceRef.current || !window.google?.maps) return;
+
+    infoWindowRef.current = infoWindowRef.current || new window.google.maps.InfoWindow();
+
+    infoWindowRef.current.setContent(`
+      <div style="max-width:240px;font-family:Inter,Arial,sans-serif;">
+        <div style="font-weight:800;color:#0f172a;margin-bottom:4px;">${society.name}</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:10px;">${formatPublicLocation(society)}</div>
+        <a href="${societyPath(society)}" style="font-size:12px;font-weight:800;color:#1d4ed8;text-decoration:none;">Open society profile →</a>
+      </div>
+    `);
+
+    infoWindowRef.current.open(mapInstanceRef.current, marker);
+
+    const position = marker.getPosition?.();
+    if (position) {
+      mapInstanceRef.current.panTo(position);
+    }
+  };
+
+  const openSelectedMarkerAfterRender = () => {
+    if (!selectedSocietyId) return;
+
+    const match = markerSocietyRefs.current.find(
+      (item) => Number(item.society.id) === Number(selectedSocietyId),
+    );
+
+    if (!match) return;
+
+    openMarkerInfoWindow(match.society, match.marker);
+  };
+
   const validSocieties = getValidMapSocieties(societies);
 
   useEffect(() => {
@@ -126,14 +159,7 @@ export function GoogleSocietyMapView({
 
           marker.addListener("click", () => {
             onSelectSociety?.(Number(society.id));
-            infoWindowRef.current.setContent(`
-              <div style="max-width:240px;font-family:Inter,Arial,sans-serif;">
-                <div style="font-weight:800;color:#0f172a;margin-bottom:4px;">${society.name}</div>
-                <div style="font-size:12px;color:#64748b;margin-bottom:10px;">${formatPublicLocation(society)}</div>
-                <a href="${societyPath(society)}" style="font-size:12px;font-weight:800;color:#1d4ed8;text-decoration:none;">Open society profile →</a>
-              </div>
-            `);
-            infoWindowRef.current.open(mapInstanceRef.current, marker);
+            openMarkerInfoWindow(society, marker);
           });
 
           markersRef.current.push(marker);
@@ -147,6 +173,8 @@ export function GoogleSocietyMapView({
           mapInstanceRef.current.setZoom(14);
         }
 
+        openSelectedMarkerAfterRender();
+
         setMapError("");
       } catch (error) {
         console.error("Google map render failed", error);
@@ -159,38 +187,16 @@ export function GoogleSocietyMapView({
     return () => {
       cancelled = true;
     };
-  }, [apiKey, validSocieties, onSelectSociety]);
+  }, [apiKey, validSocieties, onSelectSociety, selectedSocietyId]);
 
   useEffect(() => {
-    if (!selectedSocietyId || !mapInstanceRef.current || !window.google?.maps) return;
+    if (!selectedSocietyId) return;
 
-    const match = markerSocietyRefs.current.find(
-      (item) => Number(item.society.id) === Number(selectedSocietyId),
-    );
+    const timer = window.setTimeout(() => {
+      openSelectedMarkerAfterRender();
+    }, 120);
 
-    if (!match) return;
-
-    infoWindowRef.current = infoWindowRef.current || new window.google.maps.InfoWindow();
-
-    infoWindowRef.current.setContent(`
-      <div style="max-width:240px;font-family:Inter,Arial,sans-serif;">
-        <div style="font-weight:800;color:#0f172a;margin-bottom:4px;">${match.society.name}</div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:10px;">${formatPublicLocation(match.society)}</div>
-        <a href="${societyPath(match.society)}" style="font-size:12px;font-weight:800;color:#1d4ed8;text-decoration:none;">Open society profile →</a>
-      </div>
-    `);
-
-    infoWindowRef.current.open(mapInstanceRef.current, match.marker);
-
-    const position = match.marker.getPosition?.();
-    if (position) {
-      mapInstanceRef.current.panTo(position);
-    }
-
-    if (match.marker.setAnimation && window.google?.maps?.Animation?.BOUNCE) {
-      match.marker.setAnimation(window.google.maps.Animation.BOUNCE);
-      window.setTimeout(() => match.marker.setAnimation(null), 700);
-    }
+    return () => window.clearTimeout(timer);
   }, [selectedSocietyId]);
 
   if (!validSocieties.length) {
