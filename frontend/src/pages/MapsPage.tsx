@@ -18,14 +18,10 @@ import { GoogleSocietyMapView } from "@/components/maps/GoogleSocietyMapView";
 import { fetchPublicSocieties, formatPublicLocation, searchableText } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
 import { type AdminSociety } from "@/lib/adminSocietyStore";
-
-function toNumber(value: unknown) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
+import { googleMapsSearchHref, hasValidMapCoordinates, mapCoordinateHref } from "@/lib/mapCoordinates";
 
 function hasCoordinates(society: AdminSociety) {
-  return toNumber(society.latitude) !== null && toNumber(society.longitude) !== null;
+  return hasValidMapCoordinates(society.latitude, society.longitude);
 }
 
 function societyPath(society: AdminSociety) {
@@ -35,14 +31,10 @@ function societyPath(society: AdminSociety) {
 function mapsHref(society: AdminSociety) {
   if (society.googleMapsUrl) return society.googleMapsUrl;
 
-  const lat = toNumber(society.latitude);
-  const lng = toNumber(society.longitude);
-
-  if (lat !== null && lng !== null) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lat},${lng}`)}`;
-  }
-
-  return `https://www.google.com/maps/search/${encodeURIComponent(`${society.name} ${formatPublicLocation(society)} Gurugram`)}`;
+  return (
+    mapCoordinateHref(society.latitude, society.longitude) ||
+    googleMapsSearchHref(`${society.name} ${formatPublicLocation(society)} Gurugram`)
+  );
 }
 
 function locationWhatsAppMessage(query: string, society?: AdminSociety) {

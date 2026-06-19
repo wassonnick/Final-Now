@@ -3,6 +3,7 @@ import { ArrowRight, Building2, MapPin, Navigation } from "lucide-react";
 
 import { type AdminSociety } from "@/lib/adminSocietyStore";
 import { formatPublicLocation } from "@/lib/publicData";
+import { googleMapsSearchHref, hasValidMapCoordinates, mapCoordinateHref, parseMapCoordinate as parseSharedMapCoordinate } from "@/lib/mapCoordinates";
 
 type SocietyMapViewProps = {
   societies: AdminSociety[];
@@ -15,7 +16,7 @@ function parseMapCoordinate(value: unknown) {
 }
 
 function hasReadyMapCoordinates(society: AdminSociety) {
-  return parseMapCoordinate(society.latitude) !== null && parseMapCoordinate(society.longitude) !== null;
+  return hasValidMapCoordinates(society.latitude, society.longitude);
 }
 
 export function getValidMapSocieties(societies: AdminSociety[]) {
@@ -31,14 +32,13 @@ function societyPath(society: AdminSociety) {
 function googlePinHref(society: AdminSociety) {
   if (society.googleMapsUrl) return society.googleMapsUrl;
 
-  const lat = parseMapCoordinate(society.latitude);
-  const lng = parseMapCoordinate(society.longitude);
+  const coordinateHref = mapCoordinateHref(society.latitude, society.longitude);
 
-  if (lat !== null && lng !== null) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lat},${lng}`)}`;
+  if (coordinateHref) {
+    return coordinateHref;
   }
 
-  return `https://www.google.com/maps/search/${encodeURIComponent(`${society.name} ${formatPublicLocation(society)} Gurugram`)}`;
+  return googleMapsSearchHref(`${society.name} ${formatPublicLocation(society)} Gurugram`);
 }
 
 function positionForSociety(index: number) {

@@ -1,5 +1,6 @@
 import { ExternalLink, MapPin, Navigation, Route, School, Train } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { hasValidMapCoordinates, mapCoordinateHref, parseMapCoordinate } from "@/lib/mapCoordinates";
 
 type LocationIntelligencePreviewProps = {
   title: string;
@@ -15,22 +16,6 @@ type LocationIntelligencePreviewProps = {
 
 function cleanText(value?: string | number | null) {
   return String(value || "").trim();
-}
-
-function toCoord(value?: string | number | null) {
-  const raw = cleanText(value);
-  if (!raw) return null;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function hasRealCoordinates(lat: number | null, lng: number | null) {
-  if (lat === null || lng === null) return false;
-
-  // 0,0 is a placeholder / invalid admin-pending coordinate for SocietyFlats.
-  if (lat === 0 && lng === 0) return false;
-
-  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 }
 
 function splitNearby(value?: string | null) {
@@ -52,12 +37,10 @@ export function LocationIntelligencePreview({
   nearbyHospitals,
   nearbyOfficeHubs,
 }: LocationIntelligencePreviewProps) {
-  const lat = toCoord(latitude);
-  const lng = toCoord(longitude);
-  const hasCoordinates = hasRealCoordinates(lat, lng);
-  const mapsHref =
-    cleanText(googleMapsUrl) ||
-    (hasCoordinates ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}` : "");
+  const lat = parseMapCoordinate(latitude);
+  const lng = parseMapCoordinate(longitude);
+  const hasCoordinates = hasValidMapCoordinates(latitude, longitude);
+  const mapsHref = cleanText(googleMapsUrl) || mapCoordinateHref(latitude, longitude);
 
   const nearbySignals = [
     { label: "Metro", value: cleanText(nearbyMetro), icon: Train },
