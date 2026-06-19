@@ -33,9 +33,9 @@ class GooglePlacesSocietyImageService
             'formatted_address' => $placeAddress ?: null,
             'place_url' => $placeUrl,
             'photo_reference' => $photoReference,
-            'photo_url' => 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=1400&photo_reference=' . rawurlencode((string) $photoReference) . '&key=' . rawurlencode($apiKey),
+            'safe_reference_url' => $placeUrl ?: ($placeId ? 'https://www.google.com/maps/search/?api=1&query=Google&query_place_id=' . rawurlencode($placeId) : null),
             'credit' => 'Google Places',
-            'license_note' => 'Google Places photo reference only. Admin must review Google attribution, usage terms and display rules before approving for live use.',
+            'license_note' => 'Google Places place/photo reference only. API key is never stored. Admin must review Google attribution, usage terms and display rules before approving any live image.',
         ];
     }
 

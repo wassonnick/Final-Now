@@ -99,7 +99,7 @@ class SocietyController extends Controller {
 
     $society->update([
       'place_id' => $reference['place_id'] ?: $society->place_id,
-      'image_reference_url' => $reference['photo_url'],
+      'image_reference_url' => $reference['safe_reference_url'],
       'image_status' => 'google_places_reference_found',
       'image_approved_by_admin' => false,
       'image_alt_text' => $society->image_alt_text ?: $society->name . ' residential society in Gurugram',
