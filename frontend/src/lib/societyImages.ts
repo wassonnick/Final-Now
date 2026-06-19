@@ -24,6 +24,21 @@ function firstText(...values: Array<unknown>) {
     .find(Boolean) || '';
 }
 
+export function isRenderableSocietyImage(value: unknown) {
+  const url = String(value || '').trim();
+
+  if (!url) return false;
+  if (url.startsWith('data:image/')) return true;
+  if (url.startsWith('blob:')) return true;
+
+  if (!/^https?:\/\//i.test(url)) return false;
+
+  if (/maps\.google|google\.com\/maps|maps\.app\.goo\.gl/i.test(url)) return false;
+  if (/maps\.googleapis\.com\/maps\/api\/place\/photo/i.test(url)) return false;
+
+  return /\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(url);
+}
+
 export function hasApprovedSocietyImage(society: any) {
   const approvedByAdmin = Boolean(field<boolean>(society, 'imageApprovedByAdmin', 'image_approved_by_admin', false));
   const imageStatus = String(field<string>(society, 'imageStatus', 'image_status', 'placeholder'));
@@ -37,11 +52,11 @@ export function approvedSocietyImage(society: any) {
   const galleryImages = society?.galleryImages ?? society?.gallery_images;
   const firstGalleryImage = Array.isArray(galleryImages) ? galleryImages.find(Boolean) : '';
 
-  return firstText(
+  return [
     field<string>(society, 'imageUrl', 'image_url', ''),
     field<string>(society, 'coverImage', 'cover_image', ''),
     firstGalleryImage,
-  );
+  ].find(isRenderableSocietyImage) || '';
 }
 
 export function societyPlaceholderImage(input: any, locationOverride = '') {
