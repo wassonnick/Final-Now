@@ -1,20 +1,23 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
+import { Building2, KeyRound, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { setAdminSession } from '@/hooks/useAdminAuth';
+import { clearAdminSession, setAdminSession } from '@/hooks/useAdminAuth';
 
 export function AdminLoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('admin@societyflats.com');
   const [password, setPassword] = useState('Admin@123');
+  const [adminToken, setAdminToken] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'admin@societyflats.com';
     const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'Admin@123';
+    const fallbackToken = import.meta.env.VITE_ADMIN_API_TOKEN || '';
+    const cleanToken = (adminToken || fallbackToken).trim();
 
     if (!email || password.length < 6) {
       setError('Enter admin email and password.');
@@ -26,8 +29,19 @@ export function AdminLoginPage() {
       return;
     }
 
-    setAdminSession(email, import.meta.env.VITE_ADMIN_API_TOKEN || password);
+    if (!cleanToken) {
+      setError('Enter the current Admin API token from Render.');
+      return;
+    }
+
+    setAdminSession(email, cleanToken);
     navigate('/admin/dashboard');
+  };
+
+  const handleClearSession = () => {
+    clearAdminSession();
+    setAdminToken('');
+    setError('Old admin session cleared. Enter the current Admin API token and login again.');
   };
 
   return (
@@ -48,15 +62,24 @@ export function AdminLoginPage() {
             <div className="mb-7 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
               <ShieldCheck className="h-4 w-4" /> Admin Foundation v1
             </div>
-            <h1 className="text-4xl font-semibold tracking-[-0.04em] text-slate-950 md:text-5xl">Manage societies, properties and leads.</h1>
-            <p className="mt-5 text-lg leading-relaxed text-slate-500">A clean control room for Gurgaon-first inventory, reviews, users and lead operations.</p>
+            <h1 className="text-4xl font-semibold tracking-[-0.04em] text-slate-950 md:text-5xl">
+              Manage societies, properties and leads.
+            </h1>
+            <p className="mt-5 text-lg leading-relaxed text-slate-500">
+              A clean control room for Gurgaon-first inventory, reviews, users and lead operations.
+            </p>
 
             <form onSubmit={handleSubmit} className="mt-10 space-y-4 rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-700">Email</span>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input value={email} onChange={(e) => setEmail(e.target.value)} className="h-13 rounded-2xl pl-11" placeholder="admin@societyflats.com" />
+                  <Input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-13 rounded-2xl pl-11"
+                    placeholder="admin@societyflats.com"
+                  />
                 </div>
               </label>
 
@@ -64,14 +87,51 @@ export function AdminLoginPage() {
                 <span className="mb-2 block text-sm font-medium text-slate-700">Password</span>
                 <div className="relative">
                   <LockKeyhole className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-13 rounded-2xl pl-11" placeholder="Password" />
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-13 rounded-2xl pl-11"
+                    placeholder="Password"
+                  />
                 </div>
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">Admin API token</span>
+                <div className="relative">
+                  <KeyRound className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    type="password"
+                    value={adminToken}
+                    onChange={(e) => setAdminToken(e.target.value)}
+                    className="h-13 rounded-2xl pl-11"
+                    placeholder="Paste current Render ADMIN_API_TOKEN"
+                    autoComplete="off"
+                  />
+                </div>
+                <p className="mt-2 text-xs leading-5 text-slate-400">
+                  Required after token rotation. Stored only in this browser admin session.
+                </p>
               </label>
 
               {error ? <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p> : null}
 
-              <Button type="submit" className="h-12 w-full rounded-2xl bg-blue-600 text-white hover:bg-blue-700">Enter Admin Dashboard</Button>
-              <p className="text-center text-xs text-slate-400">Protected admin access. Configure backend token in Render.</p>
+              <Button type="submit" className="h-12 w-full rounded-2xl bg-blue-600 text-white hover:bg-blue-700">
+                Enter Admin Dashboard
+              </Button>
+
+              <button
+                type="button"
+                onClick={handleClearSession}
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+              >
+                Clear old admin session
+              </button>
+
+              <p className="text-center text-xs text-slate-400">
+                Use the same token as backend Render ADMIN_API_TOKEN.
+              </p>
             </form>
           </div>
         </div>
@@ -79,7 +139,11 @@ export function AdminLoginPage() {
         <div className="hidden items-center justify-center bg-gradient-to-br from-blue-50 via-white to-slate-50 p-10 lg:flex">
           <div className="w-full max-w-xl rounded-[40px] border border-white bg-white/70 p-6 shadow-2xl shadow-blue-100/60 backdrop-blur">
             <div className="overflow-hidden rounded-[32px]">
-              <img src="https://images.unsplash.com/photo-1494526585095-c41746248156?w=1400&q=85" alt="Premium society management" className="h-[520px] w-full object-cover" />
+              <img
+                src="https://images.unsplash.com/photo-1494526585095-c41746248156?w=1400&q=85"
+                alt="Premium society management"
+                className="h-[520px] w-full object-cover"
+              />
             </div>
             <div className="mt-6 grid grid-cols-3 gap-3">
               {['Societies', 'Listings', 'Leads'].map((item) => (
