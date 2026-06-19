@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Building2, Loader2, MapPin, Search, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { societyDisplayImage } from '@/lib/societyImages';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
 
@@ -34,9 +35,6 @@ type ApiResponse = {
   } | Society[];
 };
 
-const fallbackImage =
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1400&q=80';
-
 function extractSocieties(payload: ApiResponse): Society[] {
   if (Array.isArray(payload.data)) return payload.data;
   if (Array.isArray(payload.data?.data)) return payload.data.data;
@@ -44,12 +42,7 @@ function extractSocieties(payload: ApiResponse): Society[] {
 }
 
 function societyImage(society: Society) {
-  const approved = Boolean(society.image_approved_by_admin)
-    && ['licensed_uploaded', 'self_shot_uploaded', 'developer_permission_received', 'approved_for_live'].includes(String(society.image_status || ''));
-  if (approved && society.image_url) return society.image_url;
-  if (approved && society.cover_image) return society.cover_image;
-  if (approved && Array.isArray(society.gallery_images) && society.gallery_images[0]) return society.gallery_images[0];
-  return fallbackImage;
+  return societyDisplayImage(society);
 }
 
 function societyLocation(society: Society) {

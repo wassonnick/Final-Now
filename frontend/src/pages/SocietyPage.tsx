@@ -45,6 +45,7 @@ import {
   rememberCustomerSavedItem,
   toggleCustomerShortlist,
 } from "@/lib/customerAccount";
+import { hasApprovedSocietyImage, societyPlaceholderImage } from "@/lib/societyImages";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
@@ -149,7 +150,7 @@ function safeSocietyImage(society: any) {
   try {
     return societyImage(society);
   } catch {
-    return "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1400&q=80";
+    return societyPlaceholderImage(society);
   }
 }
 
@@ -472,17 +473,7 @@ export function SocietyPage() {
     );
   }
 
-  const imageStatus = field<string>(
-    society,
-    "imageStatus",
-    "image_status",
-    "placeholder",
-  );
-  const imageApproved = [
-    "licensed_uploaded",
-    "self_shot_uploaded",
-    "developer_permission_received",
-  ].includes(imageStatus);
+  const imageApproved = hasApprovedSocietyImage(society);
   const gallery = [
     safeSocietyImage(society),
     ...(imageApproved

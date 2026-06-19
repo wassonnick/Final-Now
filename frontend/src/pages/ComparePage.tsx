@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/store';
 import { cn, getScoreGrade, formatPrice } from '@/lib/utils';
 import type { Society } from '@/types';
+import { societyPlaceholderImage } from '@/lib/societyImages';
 
 const scoreCategories = [
   { key: 'security_score', label: 'Security' },
@@ -132,7 +133,7 @@ export function ComparePage() {
                         <X className="w-3 h-3 text-red-600" />
                       </button>
                       <img 
-                        src={society.cover_image} 
+                        src={society.cover_image || societyPlaceholderImage(society.name, society.locality?.name || 'Gurugram')} 
                         alt={society.name}
                         className="w-full h-32 object-cover rounded-xl mb-3"
                       />
