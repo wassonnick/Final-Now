@@ -152,6 +152,111 @@ class SocietyController extends Controller {
     ]);
   }
 
+
+  public function bulkGooglePlacesImageReferences(Request $request, GooglePlacesSocietyImageService $places): JsonResponse
+  {
+    $limit = (int) $request->query('limit', 5);
+
+    if ($limit < 1) {
+      $limit = 1;
+    }
+
+    if ($limit > 10) {
+      $limit = 10;
+    }
+
+    $societies = Society::query()
+      ->where('is_published', true)
+      ->where(function ($query) {
+        $query
+          ->whereNull('place_id')
+          ->orWhereNull('image_reference_url')
+          ->orWhere('image_status', '!=', 'google_places_reference_found');
+      })
+      ->orderBy('id')
+      ->limit($limit)
+      ->get();
+
+    $summary = [
+      'limit' => $limit,
+      'total_checked' => $societies->count(),
+      'updated' => 0,
+      'skipped' => 0,
+      'failed' => 0,
+      'items' => [],
+      'errors' => [],
+    ];
+
+    foreach ($societies as $society) {
+      try {
+        $reference = $places->findImageReference($society);
+
+        $fieldsToVerify = $society->fields_to_verify ?: [];
+
+        if (!is_array($fieldsToVerify)) {
+          $decoded = json_decode((string) $fieldsToVerify, true);
+          $fieldsToVerify = is_array($decoded) ? $decoded : array_filter([(string) $fieldsToVerify]);
+        }
+
+        foreach (['google_places_image_rights', 'image_rights'] as $field) {
+          if (!in_array($field, $fieldsToVerify, true)) {
+            $fieldsToVerify[] = $field;
+          }
+        }
+
+        $society->update([
+          'place_id' => $reference['place_id'] ?: $society->place_id,
+          'image_reference_url' => $reference['safe_reference_url'],
+          'image_status' => 'google_places_reference_found',
+          'image_approved_by_admin' => false,
+          'image_alt_text' => $society->image_alt_text ?: $society->name . ' residential society in Gurugram',
+          'image_credit' => $reference['credit'],
+          'image_license_notes' => $reference['license_note'],
+          'fields_to_verify' => array_values($fieldsToVerify),
+        ]);
+
+        $fresh = $society->fresh();
+
+        $summary['updated']++;
+        $summary['items'][] = [
+          'id' => $fresh->id,
+          'name' => $fresh->name,
+          'slug' => $fresh->slug,
+          'status' => 'updated',
+          'place_id' => $fresh->place_id,
+          'image_status' => $fresh->image_status,
+          'image_credit' => $fresh->image_credit,
+          'place_name' => $reference['place_name'],
+          'formatted_address' => $reference['formatted_address'],
+          'place_url' => $reference['place_url'],
+        ];
+      } catch (\Throwable $exception) {
+        $summary['failed']++;
+
+        $summary['errors'][] = [
+          'id' => $society->id,
+          'name' => $society->name,
+          'slug' => $society->slug,
+          'error' => $exception->getMessage(),
+        ];
+
+        $summary['items'][] = [
+          'id' => $society->id,
+          'name' => $society->name,
+          'slug' => $society->slug,
+          'status' => 'failed',
+          'error' => $exception->getMessage(),
+        ];
+      }
+    }
+
+    return response()->json([
+      'status' => 'ok',
+      'message' => 'Bulk Google Places image reference fetch completed.',
+      'summary' => $summary,
+    ]);
+  }
+
   public function fetchFromUrl(Request $request, SocietyUrlEnrichmentService $enrichment): JsonResponse {
     $validated = $request->validate([
       'official_project_url' => 'required|url|max:2000',

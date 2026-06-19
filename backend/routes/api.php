@@ -28,6 +28,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/societies/fetch-from-brochure', [SocietyController::class, 'fetchFromBrochure']);
     Route::post('/societies/create-from-fetched-data', [SocietyController::class, 'createFromFetchedData']);
     Route::post('/societies/{society}/enrich', [SocietyController::class, 'enrich']);
+    Route::post('/societies/google-places-image-references/bulk', [SocietyController::class, 'bulkGooglePlacesImageReferences']);
     Route::post('/societies/{society}/google-places-image-reference', [SocietyController::class, 'googlePlacesImageReference']);
     Route::get('/import/jobs', [SocietyImportController::class, 'jobs']);
     Route::get('/import/jobs/{job}', [SocietyImportController::class, 'show']);
