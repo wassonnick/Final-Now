@@ -10,6 +10,8 @@ type GoogleSocietyMapViewProps = {
   societies: AdminSociety[];
   query?: string;
   apiKey: string;
+  selectedSocietyId?: number | null;
+  onSelectSociety?: (societyId: number) => void;
 };
 
 declare global {
@@ -59,10 +61,17 @@ function loadGoogleMaps(apiKey: string) {
   return window.societyFlatsGoogleMapsPromise;
 }
 
-export function GoogleSocietyMapView({ societies, query = "", apiKey }: GoogleSocietyMapViewProps) {
+export function GoogleSocietyMapView({
+  societies,
+  query = "",
+  apiKey,
+  selectedSocietyId,
+  onSelectSociety,
+}: GoogleSocietyMapViewProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  const markerSocietyRefs = useRef<Array<{ society: AdminSociety; marker: any }>>([]);
   const infoWindowRef = useRef<any>(null);
   const [mapError, setMapError] = useState("");
 
@@ -93,6 +102,7 @@ export function GoogleSocietyMapView({ societies, query = "", apiKey }: GoogleSo
 
         markersRef.current.forEach((marker) => marker.setMap(null));
         markersRef.current = [];
+        markerSocietyRefs.current = [];
 
         infoWindowRef.current = infoWindowRef.current || new window.google.maps.InfoWindow();
 
@@ -115,6 +125,7 @@ export function GoogleSocietyMapView({ societies, query = "", apiKey }: GoogleSo
           });
 
           marker.addListener("click", () => {
+            onSelectSociety?.(Number(society.id));
             infoWindowRef.current.setContent(`
               <div style="max-width:240px;font-family:Inter,Arial,sans-serif;">
                 <div style="font-weight:800;color:#0f172a;margin-bottom:4px;">${society.name}</div>
@@ -126,6 +137,7 @@ export function GoogleSocietyMapView({ societies, query = "", apiKey }: GoogleSo
           });
 
           markersRef.current.push(marker);
+          markerSocietyRefs.current.push({ society, marker });
         });
 
         if (markersRef.current.length > 1) {
@@ -147,7 +159,27 @@ export function GoogleSocietyMapView({ societies, query = "", apiKey }: GoogleSo
     return () => {
       cancelled = true;
     };
-  }, [apiKey, validSocieties]);
+  }, [apiKey, validSocieties, onSelectSociety]);
+
+  useEffect(() => {
+    if (!selectedSocietyId || !mapInstanceRef.current || !infoWindowRef.current) return;
+
+    const match = markerSocietyRefs.current.find(
+      (item) => Number(item.society.id) === Number(selectedSocietyId),
+    );
+
+    if (!match) return;
+
+    infoWindowRef.current.setContent(`
+      <div style="max-width:240px;font-family:Inter,Arial,sans-serif;">
+        <div style="font-weight:800;color:#0f172a;margin-bottom:4px;">${match.society.name}</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:10px;">${formatPublicLocation(match.society)}</div>
+        <a href="${societyPath(match.society)}" style="font-size:12px;font-weight:800;color:#1d4ed8;text-decoration:none;">Open society profile →</a>
+      </div>
+    `);
+    infoWindowRef.current.open(mapInstanceRef.current, match.marker);
+    mapInstanceRef.current.panTo(match.marker.getPosition());
+  }, [selectedSocietyId]);
 
   if (!validSocieties.length) {
     return (

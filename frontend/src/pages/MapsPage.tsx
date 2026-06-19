@@ -250,7 +250,13 @@ export function MapsPage() {
               </Button>
             </div>
           ) : googleMapsApiKey ? (
-            <GoogleSocietyMapView societies={filteredSocieties} query={query} apiKey={googleMapsApiKey} />
+            <GoogleSocietyMapView
+              societies={filteredSocieties}
+              query={query}
+              apiKey={googleMapsApiKey}
+              selectedSocietyId={selectedSocietyId}
+              onSelectSociety={setSelectedSocietyId}
+            />
           ) : (
             <SocietyMapView societies={filteredSocieties} query={query} />
           )}
