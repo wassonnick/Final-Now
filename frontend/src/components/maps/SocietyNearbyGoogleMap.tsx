@@ -86,22 +86,23 @@ function createPopupOverlay(google: any, map: any, position: any, name: string) 
   overlay.onAdd = function onAdd() {
     const div = document.createElement("div");
     div.style.position = "absolute";
-    div.style.transform = "translate(-50%, -115%)";
+    div.style.transform = "translate(-50%, -175%)";
     div.style.background = "#ffffff";
     div.style.border = "1px solid rgba(37, 99, 235, 0.14)";
     div.style.borderRadius = "999px";
     div.style.boxShadow = "0 8px 20px rgba(15, 23, 42, 0.14)";
-    div.style.padding = "6px 10px";
-    div.style.maxWidth = "145px";
+    div.style.padding = "5px 8px";
+    div.style.maxWidth = "125px";
     div.style.whiteSpace = "nowrap";
     div.style.overflow = "hidden";
     div.style.textOverflow = "ellipsis";
     div.style.fontFamily = "Inter, Arial, sans-serif";
-    div.style.fontSize = "12px";
+    div.style.fontSize = "11px";
     div.style.lineHeight = "1";
     div.style.fontWeight = "900";
     div.style.color = "#0f172a";
     div.style.pointerEvents = "none";
+    div.style.zIndex = "9999";
     div.innerText = cleanText(name);
 
     (this as any).div = div;
@@ -201,6 +202,7 @@ export function SocietyNearbyGoogleMap({
   const societyMarkerRef = useRef<any>(null);
   const placeMarkersRef = useRef<any[]>([]);
   const customPopupRef = useRef<any>(null);
+  const defaultLabelOverlaysRef = useRef<any[]>([]);
   const requestIdRef = useRef(0);
 
   const [mapError, setMapError] = useState("");
@@ -303,8 +305,20 @@ export function SocietyNearbyGoogleMap({
 
         societyMarkerRef.current.addListener("click", openSocietyCard);
 
+        defaultLabelOverlaysRef.current.push(
+          createPopupOverlay(
+            window.google,
+            mapInstanceRef.current,
+            societyMarkerRef.current.getPosition(),
+            title,
+          ),
+        );
+
         placeMarkersRef.current.forEach((marker) => marker.setMap(null));
         placeMarkersRef.current = [];
+
+        defaultLabelOverlaysRef.current.forEach((overlay) => overlay.setMap(null));
+        defaultLabelOverlaysRef.current = [];
 
         const bounds = new window.google.maps.LatLngBounds();
         bounds.extend(center);
@@ -329,18 +343,17 @@ export function SocietyNearbyGoogleMap({
 
           marker.addListener("click", () => {
             if (!mapInstanceRef.current || !window.google?.maps) return;
+            mapInstanceRef.current.panTo(marker.getPosition());
+          });
 
-            if (customPopupRef.current) {
-              customPopupRef.current.setMap(null);
-            }
-
-            customPopupRef.current = createPopupOverlay(
+          defaultLabelOverlaysRef.current.push(
+            createPopupOverlay(
               window.google,
               mapInstanceRef.current,
               marker.getPosition(),
               name,
-            );
-          });
+            ),
+          );
 
           placeMarkersRef.current.push(marker);
           bounds.extend(position);
