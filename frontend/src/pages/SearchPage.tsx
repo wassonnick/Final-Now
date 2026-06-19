@@ -33,10 +33,7 @@ import {
   societyImage,
 } from "@/lib/publicData";
 import { cn } from "@/lib/utils";
-import {
-  societyImageAttribution,
-  societyImageAttributionClassName,
-} from "@/lib/societyImages";
+import { societyImageAttribution } from "@/lib/societyImages";
 import { setPublicSeo } from "@/lib/seo";
 
 const tabs = [
@@ -1013,7 +1010,7 @@ export function SearchPage() {
                           Society
                         </span>
                         <span
-                          className={`absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-semibold backdrop-blur ${societyImageAttributionClassName(imageAttribution.tone)}`}
+                          className="absolute bottom-2 left-3 z-20 max-w-[72%] truncate rounded-full bg-slate-950/90 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm ring-1 ring-white/20 backdrop-blur"
                           title={imageAttribution.title}
                         >
                           {imageAttribution.label}
