@@ -915,7 +915,7 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
                     >
                       {scoreOf(society, `${8.8 - index * 0.3}`)}
                     </span>
-                    <span className="pointer-events-none absolute left-1/2 top-12 hidden w-44 -translate-x-1/2 rounded-2xl border border-blue-100 bg-white px-3 py-2 text-left shadow-xl group-hover/pin:block">
+                    <span className="pointer-events-none absolute left-1/2 top-12 block w-44 -translate-x-1/2 rounded-2xl border border-blue-100 bg-white/95 px-3 py-2 text-left shadow-xl backdrop-blur transition group-hover/pin:-translate-y-0.5 group-hover/pin:shadow-2xl">
                       <span className="block truncate text-xs font-black text-navy-950">
                         {society.name}
                       </span>
