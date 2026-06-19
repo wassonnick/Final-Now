@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
+
 const APPROVED_SOCIETY_IMAGE_STATUSES = [
   'licensed_uploaded',
   'self_shot_uploaded',
@@ -57,6 +59,32 @@ export function approvedSocietyImage(society: any) {
     field<string>(society, 'coverImage', 'cover_image', ''),
     firstGalleryImage,
   ].find(isRenderableSocietyImage) || '';
+}
+
+
+export function hasGooglePlacesDisplayPhoto(society: any) {
+  const imageStatus = String(field<string>(society, 'imageStatus', 'image_status', 'placeholder'));
+  const placeId = firstText(field<string>(society, 'placeId', 'place_id', ''));
+  const referenceUrl = firstText(field<string>(society, 'imageReferenceUrl', 'image_reference_url', ''));
+  const credit = firstText(field<string>(society, 'imageCredit', 'image_credit', ''));
+
+  return (
+    imageStatus === 'google_places_reference_found' &&
+    Boolean(placeId) &&
+    (/google/i.test(credit) || /google\.com|maps\.app\.goo\.gl/i.test(referenceUrl))
+  );
+}
+
+export function googlePlacesSocietyPhotoUrl(society: any, width = 1400) {
+  if (!hasGooglePlacesDisplayPhoto(society)) return '';
+
+  const slugOrId = encodeURIComponent(
+    firstText(field<string>(society, 'slug', 'slug', ''), field<string>(society, 'id', 'id', '')),
+  );
+
+  if (!slugOrId) return '';
+
+  return `${API_BASE}/societies/${slugOrId}/google-place-photo?w=${width}`;
 }
 
 export function societyPlaceholderImage(input: any, locationOverride = '') {
@@ -124,5 +152,5 @@ export function societyPlaceholderImage(input: any, locationOverride = '') {
 }
 
 export function societyDisplayImage(society: any) {
-  return approvedSocietyImage(society) || societyPlaceholderImage(society);
+  return approvedSocietyImage(society) || googlePlacesSocietyPhotoUrl(society) || societyPlaceholderImage(society);
 }

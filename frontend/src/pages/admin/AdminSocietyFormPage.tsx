@@ -42,6 +42,22 @@ import type { AdminSociety, SocietyStatus } from "@/lib/adminSocietyStore";
 const statusOptions: SocietyStatus[] = ["Draft", "Verified", "Premium", "Archived"];
 
 
+
+function isGoogleReferenceUrl(value: string) {
+  return /maps\.google|google\.com\/maps|maps\.app\.goo\.gl|maps\.googleapis\.com\/maps\/api\/place\/photo/i.test(value);
+}
+
+function isDirectRenderableImageUrl(value: string) {
+  const url = value.trim();
+
+  if (!url) return false;
+  if (url.startsWith("data:image/") || url.startsWith("blob:")) return true;
+  if (!/^https?:\/\//i.test(url)) return false;
+  if (isGoogleReferenceUrl(url)) return false;
+
+  return /\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(url);
+}
+
 function imageStatusLabel(society: AdminSociety) {
   if (society.imageApprovedByAdmin) return "Approved for public display";
 
@@ -1083,7 +1099,7 @@ export function AdminSocietyFormPage() {
                   </div>
                   <p className="mt-2 text-xs leading-5 text-amber-700">
                     {referenceIsGoogle
-                      ? "Reference only. Do not approve as a public image unless usage terms, attribution and display rules are reviewed."
+                      ? "Reference only. Do not approve as a public image unless usage terms, attribution and display rules are reviewed. Google display mode can show this automatically without treating it as an owned uploaded image."
                       : "Reference only until rights/permission are confirmed."}
                   </p>
                   {canPreviewReferenceImage ? (

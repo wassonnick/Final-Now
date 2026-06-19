@@ -39,6 +39,45 @@ class GooglePlacesSocietyImageService
         ];
     }
 
+    public function fetchDisplayPhoto(Society $society, int $maxWidth = 1400): array
+    {
+        $apiKey = trim((string) config('services.google_places_api_key', ''));
+
+        if ($apiKey === '') {
+            throw new \InvalidArgumentException('Google Places API key is not configured.');
+        }
+
+        $reference = $this->findImageReference($society);
+        $photoReference = (string) ($reference['photo_reference'] ?? '');
+
+        if ($photoReference === '') {
+            throw new \RuntimeException('No Google Places photo reference was found.');
+        }
+
+        $response = Http::timeout(18)->get('https://maps.googleapis.com/maps/api/place/photo', [
+            'maxwidth' => max(400, min($maxWidth, 1600)),
+            'photo_reference' => $photoReference,
+            'key' => $apiKey,
+        ]);
+
+        if (!$response->ok()) {
+            throw new \RuntimeException('Google Places photo request failed.');
+        }
+
+        $contentType = (string) ($response->header('Content-Type') ?: 'image/jpeg');
+
+        if (!str_starts_with(strtolower($contentType), 'image/')) {
+            throw new \RuntimeException('Google Places did not return an image.');
+        }
+
+        return [
+            'body' => $response->body(),
+            'content_type' => $contentType,
+            'place_id' => $reference['place_id'] ?? $society->place_id,
+            'credit' => $reference['credit'] ?? 'Google Places',
+        ];
+    }
+
     private function resolvePlace(Society $society, string $apiKey): array
     {
         if (!empty($society->place_id)) {

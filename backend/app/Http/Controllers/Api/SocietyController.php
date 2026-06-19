@@ -19,6 +19,36 @@ class SocietyController extends Controller {
     if($request->boolean('featured')) $query->where('featured',true);
     return response()->json(['status'=>'ok','data'=>$query->withCount('properties')->orderByDesc('featured')->orderByDesc('search_boost')->orderBy('name')->paginate($request->integer('per_page',24))]);
   }
+
+  public function googlePlacePhoto(string $idOrSlug, GooglePlacesSocietyImageService $places)
+  {
+    $society = Society::query()
+      ->when(is_numeric($idOrSlug), fn ($query) => $query->where('id', $idOrSlug), fn ($query) => $query->where('slug', $idOrSlug))
+      ->first();
+
+    if (!$society || !in_array($society->status, ['Verified', 'Premium'], true)) {
+      return response()->json(['status' => 'error', 'message' => 'Society not found'], 404);
+    }
+
+    if ($society->image_status !== 'google_places_reference_found' || empty($society->place_id)) {
+      return response()->json(['status' => 'error', 'message' => 'Google Places photo is not available for this society.'], 404);
+    }
+
+    try {
+      $photo = $places->fetchDisplayPhoto($society, (int) request()->integer('w', 1400));
+    } catch (\Throwable $exception) {
+      return response()->json([
+        'status' => 'error',
+        'message' => 'Google Places photo could not be loaded.',
+      ], 404);
+    }
+
+    return response($photo['body'], 200)
+      ->header('Content-Type', $photo['content_type'])
+      ->header('Cache-Control', 'public, max-age=86400')
+      ->header('X-SocietyFlats-Image-Source', 'Google Places');
+  }
+
   public function show(string $idOrSlug): JsonResponse
 {
     $society = Society::with('properties')

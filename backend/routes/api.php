@@ -15,6 +15,7 @@ Route::get('/health', fn () => response()->json([
 ]));
 
 Route::get('/societies', [SocietyController::class, 'index']);
+Route::get('/societies/{idOrSlug}/google-place-photo', [SocietyController::class, 'googlePlacePhoto']);
 Route::get('/societies/{slug}', [SocietyController::class, 'show']);
 Route::get('/properties', [PropertyController::class, 'index']);
 Route::get('/properties/{idOrSlug}', [PropertyController::class, 'show']);
