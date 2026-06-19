@@ -574,6 +574,17 @@ export function SocietyPage() {
     ["RERA Search", reraUrl],
   ].filter(([, href]) => Boolean(href));
   const societyLocation = safeLocation(society);
+  const societyGoogleMapsHref =
+    field<string>(society, "googleMapsUrl", "google_maps_url", "") ||
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      `${society.name} ${societyLocation}`,
+    )}`;
+
+  const nearbyMapsHref = (category: string) =>
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      `${category} near ${society.name} ${societyLocation}`,
+    )}`;
+
   const whatsappMessage = encodeURIComponent(
     `Hi, I am exploring homes in ${society.name}. Please share verified options.`,
   );
@@ -1108,34 +1119,59 @@ export function SocietyPage() {
                     const Icon = item.icon;
 
                     return (
-                      <div key={item.title} className="rounded-2xl border border-blue-100 bg-blue-50/60 p-3">
+                      <a
+                        key={item.title}
+                        href={nearbyMapsHref(item.title)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group rounded-2xl border border-blue-100 bg-blue-50/60 p-3 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm"
+                      >
                         <div className="flex items-start gap-2.5">
                           <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-blue-700">
                             <Icon className="h-4 w-4" />
                           </span>
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-blue-500">
-                              {item.title}
-                            </p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-blue-500">
+                                {item.title}
+                              </p>
+                              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-blue-400 transition group-hover:text-blue-700" />
+                            </div>
                             <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-navy-800">
                               {item.primary}
                             </p>
                             {item.extraCount ? (
                               <p className="mt-1 text-xs font-bold text-blue-600">
-                                +{item.extraCount} more nearby option{item.extraCount === 1 ? "" : "s"}
+                                +{item.extraCount} more nearby option{item.extraCount === 1 ? "" : "s"} on Maps
                               </p>
                             ) : null}
                           </div>
                         </div>
-                      </div>
+                      </a>
                     );
                   })}
                 </div>
               ) : null}
 
               <p className="mt-2 rounded-2xl bg-blue-50 px-3 py-1.5 text-[11px] font-semibold leading-5 text-blue-700">
-                Nearby data is Google Places assisted and admin-reviewed. Use it as a quick location layer before requesting visit guidance.
+                Nearby data is Google Places assisted and admin-reviewed. Tap any card to verify it on Google Maps before requesting visit guidance.
               </p>
+
+              <div className="mt-3 flex flex-col gap-2 rounded-2xl border border-blue-100 bg-white p-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-600">
+                    Live map action
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-navy-900">
+                    Open this society location on Google Maps
+                  </p>
+                </div>
+                <Button asChild variant="outline" className="w-fit rounded-full border-blue-100 text-blue-700">
+                  <a href={societyGoogleMapsHref} target="_blank" rel="noreferrer">
+                    Open full map <ExternalLink className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
+              </div>
 
               <div className="mt-2.5 max-h-[390px] overflow-hidden rounded-2xl border border-blue-100">
                 <LocationIntelligencePreview
