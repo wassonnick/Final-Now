@@ -74,10 +74,10 @@ function cleanText(value?: string | number | null) {
 
 function safeHtml(value?: string | number | null) {
   return cleanText(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function loadGoogleMapsWithPlaces(apiKey: string) {
