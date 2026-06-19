@@ -10,7 +10,7 @@
 // C76 society page UX polish: compact hero/gallery, higher facts, tighter inventory, sidebar and sticky CTA.
 // C71 society detail copy: verified society intelligence, similar homes and expert callback language.
 import { trackEvent, trackLeadIntent, trackResultClicked } from "@/lib/analytics";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -213,6 +213,8 @@ export function SocietyPage() {
   const [callbackOpen, setCallbackOpen] = useState(false);
   const [callbackSource, setCallbackSource] = useState("society_page_callback");
   const [isSocietyShortlisted, setIsSocietyShortlisted] = useState(false);
+  const contentGridRef = useRef<HTMLDivElement | null>(null);
+  const [desktopSidebarFixed, setDesktopSidebarFixed] = useState(false);
   // SEO validation marker: society_page_no_inventory_similar_options
   const [selectedLeadProperty, setSelectedLeadProperty] = useState<any | null>(
     null,
@@ -609,6 +611,30 @@ export function SocietyPage() {
     },
   ];
 
+  useEffect(() => {
+    const updateSidebarMode = () => {
+      if (typeof window === "undefined" || window.innerWidth < 1024 || !contentGridRef.current) {
+        setDesktopSidebarFixed(false);
+        return;
+      }
+
+      const rect = contentGridRef.current.getBoundingClientRect();
+
+      // Fix only after the gallery/main grid reaches the nav area.
+      // Release near the bottom so the sidebar does not float over lower sections.
+      setDesktopSidebarFixed(rect.top <= 96 && rect.bottom > 680);
+    };
+
+    updateSidebarMode();
+    window.addEventListener("scroll", updateSidebarMode, { passive: true });
+    window.addEventListener("resize", updateSidebarMode);
+
+    return () => {
+      window.removeEventListener("scroll", updateSidebarMode);
+      window.removeEventListener("resize", updateSidebarMode);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-ivory-100 pb-28 md:pb-0">
       {/* C45B visible society save CTA */}
@@ -684,7 +710,7 @@ export function SocietyPage() {
       </section>
 
       <section className="container mx-auto px-4 py-3 md:py-5">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch lg:gap-6">
+        <div ref={contentGridRef} className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch lg:gap-6">
           <div className="space-y-3.5 md:space-y-4">
             <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.45rem] md:p-4.5">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -1349,7 +1375,15 @@ export function SocietyPage() {
             ) : null}
           </div>
 
-          <aside className="hidden lg:sticky lg:top-24 lg:block lg:self-start"><div className="max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-soft">
+          <aside className="hidden lg:block lg:self-stretch">
+            <div
+              className={cn(
+                "max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-soft",
+                desktopSidebarFixed
+                  ? "lg:fixed lg:right-[max(1rem,calc((100vw-1280px)/2+1rem))] lg:top-24 lg:z-30 lg:w-[360px]"
+                  : "lg:sticky lg:top-24",
+              )}
+            >
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                 Next step
               </p>
