@@ -865,106 +865,94 @@ QUERY;
             return response()->json([
                 'success' => false,
                 'message' => 'Select up to 5 societies before running nearby autofill.',
-                'summary' => [
-                    'processed' => 0,
-                    'updated' => 0,
-                    'skipped' => 0,
-                    'failed' => 0,
-                ],
+                'summary' => ['processed' => 0, 'updated' => 0, 'skipped' => 0, 'failed' => 0],
                 'results' => [],
             ], 422);
         }
 
-        $summary = [
-            'processed' => 0,
-            'updated' => 0,
-            'skipped' => 0,
-            'failed' => 0,
-        ];
+        $summary = ['processed' => 0, 'updated' => 0, 'skipped' => 0, 'failed' => 0];
         $results = [];
-
         $societies = \App\Models\Society::whereIn('id', $ids)->get()->keyBy('id');
 
         foreach ($ids as $id) {
-            $society = $societies->get($id);
+            try {
+                $society = $societies->get($id);
 
-            if (!$society) {
+                if (!$society) {
+                    $summary['failed']++;
+                    $results[] = ['id' => $id, 'status' => 'failed', 'message' => 'Society not found.'];
+                    continue;
+                }
+
+                $summary['processed']++;
+                $result = $service->suggestionsForSociety($society);
+
+                if (!($result['success'] ?? false)) {
+                    $summary['skipped']++;
+                    $results[] = [
+                        'id' => $society->id,
+                        'name' => $society->name,
+                        'status' => 'skipped',
+                        'message' => $result['message'] ?? 'No suggestions returned.',
+                    ];
+                    continue;
+                }
+
+                $suggestions = $result['suggestions'] ?? [];
+                $changed = [];
+
+                foreach (['nearby_schools', 'nearby_metro', 'nearby_hospitals', 'nearby_office_hubs'] as $field) {
+                    $suggestion = trim((string) ($suggestions[$field] ?? ''));
+                    $current = trim((string) ($society->{$field} ?? ''));
+
+                    if ($suggestion !== '' && $current === '') {
+                        $society->{$field} = $suggestion;
+                        $changed[] = $field;
+                    }
+                }
+
+                if (!$changed) {
+                    $summary['skipped']++;
+                    $results[] = [
+                        'id' => $society->id,
+                        'name' => $society->name,
+                        'status' => 'skipped',
+                        'message' => 'No empty nearby fields were changed.',
+                    ];
+                    continue;
+                }
+
+                $reviewNote = 'Nearby intelligence auto-filled from Google Places; admin review required.';
+
+                if (\Illuminate\Support\Facades\Schema::hasColumn($society->getTable(), 'fields_to_verify')) {
+                    $currentVerify = trim((string) ($society->fields_to_verify ?? ''));
+                    $society->fields_to_verify = trim($currentVerify . ($currentVerify ? "\n" : '') . $reviewNote);
+                }
+
+                if (\Illuminate\Support\Facades\Schema::hasColumn($society->getTable(), 'data_quality')) {
+                    $currentQuality = trim((string) ($society->data_quality ?? ''));
+                    if (!str_contains($currentQuality, 'Google Places nearby')) {
+                        $society->data_quality = trim($currentQuality . ($currentQuality ? ' | ' : '') . 'Google Places nearby suggestions applied; admin review required.');
+                    }
+                }
+
+                $society->save();
+
+                $summary['updated']++;
+                $results[] = [
+                    'id' => $society->id,
+                    'name' => $society->name,
+                    'status' => 'updated',
+                    'updated_fields' => $changed,
+                ];
+            } catch (\Throwable $error) {
                 $summary['failed']++;
                 $results[] = [
                     'id' => $id,
                     'status' => 'failed',
-                    'message' => 'Society not found.',
+                    'message' => $error->getMessage(),
                 ];
-                continue;
             }
-
-            $summary['processed']++;
-
-            $result = $service->suggestionsForSociety($society);
-
-            if (!($result['success'] ?? false)) {
-                $summary['skipped']++;
-                $results[] = [
-                    'id' => $society->id,
-                    'name' => $society->name,
-                    'status' => 'skipped',
-                    'message' => $result['message'] ?? 'No suggestions returned.',
-                ];
-                continue;
-            }
-
-            $suggestions = $result['suggestions'] ?? [];
-            $changed = [];
-
-            foreach ([
-                'nearby_schools',
-                'nearby_metro',
-                'nearby_hospitals',
-                'nearby_office_hubs',
-            ] as $field) {
-                $suggestion = trim((string) ($suggestions[$field] ?? ''));
-
-                if ($suggestion === '') {
-                    continue;
-                }
-
-                $current = trim((string) ($society->{$field} ?? ''));
-
-                if ($current === '') {
-                    $society->{$field} = $suggestion;
-                    $changed[] = $field;
-                }
-            }
-
-            if (!$changed) {
-                $summary['skipped']++;
-                $results[] = [
-                    'id' => $society->id,
-                    'name' => $society->name,
-                    'status' => 'skipped',
-                    'message' => 'No empty nearby fields were changed.',
-                ];
-                continue;
-            }
-
-            $reviewNote = 'Nearby intelligence auto-filled from Google Places; admin review required.';
-            $currentVerify = trim((string) ($society->fields_to_verify ?? ''));
-            $society->fields_to_verify = trim($currentVerify . ($currentVerify ? "\n" : '') . $reviewNote);
-
-            $currentQuality = trim((string) ($society->data_quality ?? ''));
-            if (!str_contains($currentQuality, 'Google Places nearby')) {
-                $society->data_quality = trim($currentQuality . ($currentQuality ? ' | ' : '') . 'Google Places nearby suggestions applied; admin review required.');
-            }
-
-            $society->save();
-
-            $summary['updated']++;
-            $results[] = [
-                'id' => $society->id,
-                'name' => $society->name,
-                'status' => 'updated',
-                'updated_fields' => $changed,
-            ];
         }
 
         return response()->json([
@@ -974,5 +962,6 @@ QUERY;
             'results' => $results,
         ]);
     }
+
 
 }

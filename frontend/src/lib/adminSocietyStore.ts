@@ -751,7 +751,7 @@ export type BulkNearbyAutoFillSummary = {
 };
 
 export async function bulkAutoFillNearbyIntelligence(societyIds: Array<number | string>): Promise<{ message: string; summary: BulkNearbyAutoFillSummary; results: Array<Record<string, unknown>> }> {
-  const json = await request('/admin/societies/nearby-intelligence/auto-fill/bulk', {
+  const json = await request('/admin/societies/nearby-intelligence/bulk-auto-fill', {
     method: 'POST',
     body: JSON.stringify({ society_ids: societyIds }),
   });

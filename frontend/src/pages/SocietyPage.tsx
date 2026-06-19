@@ -1133,16 +1133,20 @@ export function SocietyPage() {
                 </div>
               ) : null}
 
+              <p className="mt-2 rounded-2xl bg-blue-50 px-3 py-2 text-xs font-semibold leading-5 text-blue-700">
+                Nearby data is Google Places assisted and admin-reviewed. Use it as a quick location layer before requesting visit guidance.
+              </p>
+
               <LocationIntelligencePreview
                 title={society.name}
                 location={societyLocation}
                 latitude={field(society, "latitude", "latitude", "")}
                 longitude={field(society, "longitude", "longitude", "")}
                 googleMapsUrl={field(society, "googleMapsUrl", "google_maps_url", "")}
-                nearbySchools={field(society, "nearbySchools", "nearby_schools", "")}
-                nearbyMetro={field(society, "nearbyMetro", "nearby_metro", "")}
-                nearbyHospitals={field(society, "nearbyHospitals", "nearby_hospitals", "")}
-                nearbyOfficeHubs={field(society, "nearbyOfficeHubs", "nearby_office_hubs", "")}
+                nearbySchools={splitLines(field(society, "nearbySchools", "nearby_schools", "")).slice(0, 1).join("\n")}
+                nearbyMetro={splitLines(field(society, "nearbyMetro", "nearby_metro", "")).slice(0, 1).join("\n")}
+                nearbyHospitals={splitLines(field(society, "nearbyHospitals", "nearby_hospitals", "")).slice(0, 1).join("\n")}
+                nearbyOfficeHubs={splitLines(field(society, "nearbyOfficeHubs", "nearby_office_hubs", "")).slice(0, 1).join("\n")}
               />
 
               {!hasNearbyData ? (
@@ -1185,7 +1189,7 @@ export function SocietyPage() {
                   </div>
                 </div>
               ) : (
-                <div className="mt-3 grid gap-2.5 md:grid-cols-2">
+                <div className="hidden">
                   {nearby.map((item) => {
                     const Icon = item.icon;
                     const lines = splitLines(item.value);
@@ -1343,8 +1347,8 @@ export function SocietyPage() {
             ) : null}
           </div>
 
-          <aside className="hidden lg:block">
-            <div className="sticky top-24 rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-soft">
+          <aside className="hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:pb-6">
+            <div className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-soft">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                 Next step
               </p>
