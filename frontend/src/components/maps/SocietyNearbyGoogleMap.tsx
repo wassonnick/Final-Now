@@ -80,26 +80,57 @@ function safeHtml(value?: string | number | null) {
     .replace(/"/g, "&quot;");
 }
 
-function sleekPopupHtml(name: string) {
-  return `
-    <div style="
-      max-width:150px;
-      min-width:110px;
-      font-family:Inter,Arial,sans-serif;
-      padding:8px 10px;
-      border-radius:14px;
-      background:white;
-      box-shadow:0 10px 26px rgba(15,23,42,.16);
-    ">
-      <div style="
-        font-size:12px;
-        line-height:1.25;
-        font-weight:900;
-        color:#0f172a;
-        letter-spacing:-.01em;
-      ">${safeHtml(name)}</div>
-    </div>
-  `;
+function createPopupOverlay(google: any, map: any, position: any, name: string) {
+  const overlay = new google.maps.OverlayView();
+
+  overlay.onAdd = function onAdd() {
+    const div = document.createElement("div");
+    div.style.position = "absolute";
+    div.style.transform = "translate(-50%, -115%)";
+    div.style.background = "#ffffff";
+    div.style.border = "1px solid rgba(37, 99, 235, 0.14)";
+    div.style.borderRadius = "999px";
+    div.style.boxShadow = "0 8px 20px rgba(15, 23, 42, 0.14)";
+    div.style.padding = "6px 10px";
+    div.style.maxWidth = "145px";
+    div.style.whiteSpace = "nowrap";
+    div.style.overflow = "hidden";
+    div.style.textOverflow = "ellipsis";
+    div.style.fontFamily = "Inter, Arial, sans-serif";
+    div.style.fontSize = "12px";
+    div.style.lineHeight = "1";
+    div.style.fontWeight = "900";
+    div.style.color = "#0f172a";
+    div.style.pointerEvents = "none";
+    div.innerText = cleanText(name);
+
+    (this as any).div = div;
+    const panes = this.getPanes();
+    panes?.floatPane?.appendChild(div);
+  };
+
+  overlay.draw = function draw() {
+    const projection = this.getProjection();
+    const div = (this as any).div;
+    if (!projection || !div) return;
+
+    const point = projection.fromLatLngToDivPixel(position);
+    if (!point) return;
+
+    div.style.left = `${point.x}px`;
+    div.style.top = `${point.y}px`;
+  };
+
+  overlay.onRemove = function onRemove() {
+    const div = (this as any).div;
+    if (div?.parentNode) {
+      div.parentNode.removeChild(div);
+    }
+    (this as any).div = null;
+  };
+
+  overlay.setMap(map);
+  return overlay;
 }
 
 function cleanNearbyLine(value: string) {
@@ -169,7 +200,7 @@ export function SocietyNearbyGoogleMap({
   const mapInstanceRef = useRef<any>(null);
   const societyMarkerRef = useRef<any>(null);
   const placeMarkersRef = useRef<any[]>([]);
-  const infoWindowRef = useRef<any>(null);
+  const customPopupRef = useRef<any>(null);
   const requestIdRef = useRef(0);
 
   const [mapError, setMapError] = useState("");
@@ -243,8 +274,6 @@ export function SocietyNearbyGoogleMap({
         mapInstanceRef.current.setCenter(center);
         mapInstanceRef.current.setZoom(14);
 
-        infoWindowRef.current = infoWindowRef.current || new window.google.maps.InfoWindow();
-
         if (societyMarkerRef.current) {
           societyMarkerRef.current.setMap(null);
         }
@@ -258,11 +287,18 @@ export function SocietyNearbyGoogleMap({
         });
 
         const openSocietyCard = () => {
-          if (!infoWindowRef.current || !societyMarkerRef.current || !mapInstanceRef.current) return;
+          if (!societyMarkerRef.current || !mapInstanceRef.current || !window.google?.maps) return;
 
-          infoWindowRef.current.setContent(sleekPopupHtml(title));
+          if (customPopupRef.current) {
+            customPopupRef.current.setMap(null);
+          }
 
-          infoWindowRef.current.open(mapInstanceRef.current, societyMarkerRef.current);
+          customPopupRef.current = createPopupOverlay(
+            window.google,
+            mapInstanceRef.current,
+            societyMarkerRef.current.getPosition(),
+            title,
+          );
         };
 
         societyMarkerRef.current.addListener("click", openSocietyCard);
@@ -292,8 +328,18 @@ export function SocietyNearbyGoogleMap({
           });
 
           marker.addListener("click", () => {
-            infoWindowRef.current.setContent(sleekPopupHtml(name));
-            infoWindowRef.current.open(mapInstanceRef.current, marker);
+            if (!mapInstanceRef.current || !window.google?.maps) return;
+
+            if (customPopupRef.current) {
+              customPopupRef.current.setMap(null);
+            }
+
+            customPopupRef.current = createPopupOverlay(
+              window.google,
+              mapInstanceRef.current,
+              marker.getPosition(),
+              name,
+            );
           });
 
           placeMarkersRef.current.push(marker);
