@@ -270,12 +270,13 @@ export function AdminSocietiesPage() {
                 Refresh
               </Button>
 
-              <Button asChild variant="outline" className="rounded-full border-slate-200 px-3 text-xs sm:text-sm">
+              <Button asChild variant="outline" className="rounded-full border-blue-100 bg-blue-50 px-3 text-xs text-blue-700 hover:bg-blue-100 sm:text-sm">
                 <Link to="/admin/societies/import">
-                  <Button variant="outline" className="rounded-full border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100">
-                    Auto Import
-                  </Button>
+                  Auto Import
                 </Link>
+              </Button>
+
+              <Button asChild variant="outline" className="rounded-full border-slate-200 px-3 text-xs sm:text-sm">
                 <Link to="/admin/societies/new-from-url">
                   <LinkIcon className="mr-2 h-4 w-4" />
                   Add from URL
