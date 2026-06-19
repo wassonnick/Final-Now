@@ -179,6 +179,12 @@ Schema:
   "latitude": number or null,
   "longitude": number or null,
   "google_maps_url": "string or null",
+  "image_reference_url": "official/source image URL if visible in source text, otherwise null",
+  "image_url": "direct official/source image URL only if clearly available, otherwise null",
+  "image_status": "needs_review | official_reference_found | placeholder | null",
+  "image_alt_text": "short image alt text or null",
+  "image_credit": "source/credit text or null",
+  "image_license_notes": "short rights/review note or null",
   "rera_number": "string or null",
   "rera_status": "string or null",
   "meta_title": "SEO title under 65 chars",
@@ -193,7 +199,9 @@ Schema:
 
 Rules:
 - Prefer Gurgaon/Gurugram context.
-- For exact coordinates, return null unless confident.
+- Coordinates: for known Gurgaon societies, provide latitude and longitude when reasonably confident. Use 4-6 decimal precision. Do not invent dummy coordinates. If exact coordinates are uncertain, provide a Google Maps search URL and add coordinates to fields_to_verify.
+- Scores: use differentiated one-decimal category scores. Do not return the same default score for every category unless strongly justified. Consider builder reputation, sector/locality, connectivity, lifestyle amenities, maintenance, security, and resale/rental demand.
+- Images: do not invent copyrighted image URLs. If an official/source image URL is visible in the supplied source text, return it as image_reference_url or image_url and mark image_status as needs_review or official_reference_found. Otherwise return null so the importer can create an admin review reference.
 - Prices/rent ranges can be broad market ranges but mark fields_to_verify.
 - Keep all output review-first, not publicly guaranteed.
 - If unsure, use null and add the field to fields_to_verify.

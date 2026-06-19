@@ -467,12 +467,12 @@ class SocietyImportService
             'project_status' => 'Needs Review',
             'rent_range' => 'To be verified',
             'buy_range' => 'To be verified',
-            'score' => 8.0,
-            'security_score' => 8.0,
-            'maintenance_score' => 8.0,
-            'connectivity_score' => 8.0,
-            'lifestyle_score' => 8.0,
-            'investment_score' => 8.0,
+            'score' => 7.8,
+            'security_score' => 7.7,
+            'maintenance_score' => 7.6,
+            'connectivity_score' => 7.9,
+            'lifestyle_score' => 7.8,
+            'investment_score' => 7.7,
             'amenities' => ['Clubhouse', 'Security', 'Parking', 'Power Backup'],
             'meta_title' => "{$name} Gurgaon | SocietyFlats",
             'meta_description' => "Review {$name} in Gurgaon on SocietyFlats. Verify rent, resale, amenities, map location and available homes before publishing.",
@@ -532,6 +532,12 @@ class SocietyImportService
             'average_sale_price',
             'price_per_sqft',
             'google_maps_url',
+            'image_reference_url',
+            'image_url',
+            'image_status',
+            'image_alt_text',
+            'image_credit',
+            'image_license_notes',
             'rera_number',
             'rera_status',
             'meta_title',
@@ -596,12 +602,11 @@ class SocietyImportService
             $base['latitude'] = $latitude;
             $base['longitude'] = $longitude;
         } else {
-            $verify = $base['fields_to_verify'] ?? [];
-            if (is_array($verify) && !in_array('coordinates', $verify, true)) {
-                $verify[] = 'coordinates';
-                $base['fields_to_verify'] = $verify;
-            }
+            $this->appendImportVerifyField($base, 'coordinates');
         }
+
+        $this->completeImportDraftMetadata($base);
+        $this->strengthenImportScores($base);
 
         if (!empty($aiData['name']) && is_string($aiData['name'])) {
             $cleanName = trim($aiData['name']);
@@ -690,6 +695,182 @@ class SocietyImportService
         }
 
         return $faq;
+    }
+
+    private function completeImportDraftMetadata(array &$base): void
+    {
+        $name = trim((string) ($base['name'] ?? ''));
+        $sector = trim((string) ($base['sector'] ?? ''));
+        $locality = trim((string) ($base['locality'] ?? ''));
+        $city = trim((string) ($base['city'] ?? 'Gurugram'));
+        $state = trim((string) ($base['state'] ?? 'Haryana'));
+
+        $queryParts = array_values(array_filter([$name, $sector, $locality, $city ?: 'Gurugram', $state ?: 'Haryana']));
+        $query = trim(implode(' ', array_unique($queryParts)));
+
+        if ((!isset($base['latitude']) || !isset($base['longitude'])) && !empty($base['google_maps_url'])) {
+            $coords = $this->extractCoordinatesFromUrl((string) $base['google_maps_url']);
+
+            if ($coords !== null) {
+                $base['latitude'] = $coords[0];
+                $base['longitude'] = $coords[1];
+            }
+        }
+
+        if ($name !== '' && empty($base['google_maps_url']) && $query !== '') {
+            $base['google_maps_url'] = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($query);
+            $this->appendImportVerifyField($base, 'coordinates');
+        }
+
+        if ($name !== '' && empty($base['image_reference_url']) && empty($base['image_url'])) {
+            $imageQuery = trim($query . ' society exterior photos');
+            $base['image_reference_url'] = 'https://www.google.com/search?tbm=isch&q=' . rawurlencode($imageQuery);
+            $base['image_status'] = 'needs_review';
+            $base['image_alt_text'] = $name . ' residential society image reference';
+            $base['image_license_notes'] = 'Admin review required. Do not publish third-party images until licensed, self-shot, or developer-approved.';
+            $this->appendImportVerifyField($base, 'image_rights');
+        }
+
+        if (!empty($base['image_reference_url']) || !empty($base['image_url'])) {
+            $base['image_approved_by_admin'] = false;
+
+            if (empty($base['image_status']) || $base['image_status'] === 'placeholder') {
+                $base['image_status'] = 'needs_review';
+            }
+
+            if (empty($base['image_alt_text']) && $name !== '') {
+                $base['image_alt_text'] = $name . ' residential society in Gurugram';
+            }
+
+            if (empty($base['image_license_notes'])) {
+                $base['image_license_notes'] = 'Admin review required before publishing image live.';
+            }
+        }
+    }
+
+    private function extractCoordinatesFromUrl(string $url): ?array
+    {
+        if (preg_match('/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/', $url, $matches)) {
+            return [round((float) $matches[1], 7), round((float) $matches[2], 7)];
+        }
+
+        $decoded = urldecode($url);
+
+        if (preg_match('/(?:query|q)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/', $decoded, $matches)) {
+            return [round((float) $matches[1], 7), round((float) $matches[2], 7)];
+        }
+
+        return null;
+    }
+
+    private function strengthenImportScores(array &$base): void
+    {
+        $scoreFields = [
+            'score',
+            'security_score',
+            'maintenance_score',
+            'connectivity_score',
+            'lifestyle_score',
+            'investment_score',
+        ];
+
+        $existing = [];
+
+        foreach ($scoreFields as $field) {
+            if (isset($base[$field]) && is_numeric($base[$field])) {
+                $existing[$field] = round((float) $base[$field], 1);
+            }
+        }
+
+        $unique = array_unique(array_map(static fn ($value) => number_format((float) $value, 1, '.', ''), $existing));
+        $verifyFields = $base['fields_to_verify'] ?? [];
+        $scoreNeedsReview = is_array($verifyFields) && count(array_intersect($scoreFields, $verifyFields)) > 0;
+
+        $fallbackPattern = (
+            isset($base['score'], $base['security_score'], $base['maintenance_score'], $base['connectivity_score'], $base['lifestyle_score'], $base['investment_score'])
+            && number_format((float) $base['score'], 1, '.', '') === '7.8'
+            && number_format((float) $base['security_score'], 1, '.', '') === '7.7'
+            && number_format((float) $base['maintenance_score'], 1, '.', '') === '7.6'
+            && number_format((float) $base['connectivity_score'], 1, '.', '') === '7.9'
+            && number_format((float) $base['lifestyle_score'], 1, '.', '') === '7.8'
+            && number_format((float) $base['investment_score'], 1, '.', '') === '7.7'
+        );
+
+        $needsCalibration = count($existing) < count($scoreFields)
+            || count($unique) <= 1
+            || $scoreNeedsReview
+            || $fallbackPattern;
+
+        if (!$needsCalibration) {
+            return;
+        }
+
+        $text = strtolower(implode(' ', array_filter([
+            $base['name'] ?? '',
+            $base['builder'] ?? '',
+            $base['sector'] ?? '',
+            $base['locality'] ?? '',
+            $base['address'] ?? '',
+        ])));
+
+        $baseScore = 7.4;
+        $builderBoost = 0.0;
+        $locationBoost = 0.0;
+
+        foreach (['dlf', 'm3m', 'emaar', 'central park', 'ireo', 'godrej', 'tata', 'adani', 'sobha', 'bestech', 'ambience', 'vatika'] as $builder) {
+            if (str_contains($text, $builder)) {
+                $builderBoost = max($builderBoost, 0.45);
+            }
+        }
+
+        foreach (['golf course road', 'golf course extension', 'cyber city', 'dlf phase', 'sector 42', 'sector 43', 'sector 54', 'sector 55', 'sector 56', 'sector 57', 'sector 58', 'sector 59', 'sector 60', 'sector 61', 'sector 62', 'sector 63', 'sector 65', 'sector 66'] as $primeLocation) {
+            if (str_contains($text, $primeLocation)) {
+                $locationBoost = max($locationBoost, 0.5);
+            }
+        }
+
+        foreach (['dwarka expressway', 'sector 102', 'sector 103', 'sector 104', 'sector 106', 'sector 108', 'sector 109', 'sector 110', 'sector 111', 'sector 112', 'sector 113'] as $growthLocation) {
+            if (str_contains($text, $growthLocation)) {
+                $locationBoost = max($locationBoost, 0.25);
+            }
+        }
+
+        $baseScore += $builderBoost + $locationBoost;
+
+        $calibrated = [
+            'security_score' => $baseScore + 0.15,
+            'maintenance_score' => $baseScore - 0.05,
+            'connectivity_score' => $baseScore + $locationBoost + 0.15,
+            'lifestyle_score' => $baseScore + 0.20,
+            'investment_score' => $baseScore + ($builderBoost / 2) + ($locationBoost / 2),
+        ];
+
+        foreach ($calibrated as $field => $value) {
+            $base[$field] = $this->clampImportScore($value);
+        }
+
+        $base['score'] = $this->clampImportScore(array_sum($calibrated) / count($calibrated));
+        $this->appendImportVerifyField($base, 'scores');
+    }
+
+    private function clampImportScore(float $score): float
+    {
+        return round(max(6.8, min(9.4, $score)), 1);
+    }
+
+    private function appendImportVerifyField(array &$base, string $field): void
+    {
+        $current = $base['fields_to_verify'] ?? [];
+
+        if (!is_array($current)) {
+            $current = array_filter([(string) $current]);
+        }
+
+        if (!in_array($field, $current, true)) {
+            $current[] = $field;
+        }
+
+        $base['fields_to_verify'] = array_values($current);
     }
 
     private function cleanAiScore(mixed $value): ?float
