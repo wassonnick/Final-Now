@@ -37,33 +37,40 @@ const CATEGORY_CONFIG: Record<
   string,
   {
     label: string;
-    query: string;
+    queries: string[];
     radius: number;
     icon: typeof School;
   }
 > = {
   Schools: {
     label: "Schools",
-    query: "schools",
+    queries: ["schools", "public school", "school near"],
     radius: 5500,
     icon: School,
   },
   Metro: {
     label: "Metro",
-    query: "metro station rapid metro subway station",
+    queries: ["metro station", "rapid metro station", "subway station"],
     radius: 7000,
     icon: Train,
   },
   Hospitals: {
     label: "Hospitals",
-    query: "hospitals",
+    queries: ["hospitals", "hospital", "emergency hospital"],
     radius: 6000,
     icon: Navigation,
   },
   "Office hubs": {
     label: "Office hubs",
-    query: "business parks office hubs corporate offices",
-    radius: 9000,
+    queries: [
+      "Cyber City",
+      "DLF Cyber Hub",
+      "Golf Course Road offices",
+      "business park",
+      "corporate office",
+      "office hubs",
+    ],
+    radius: 10000,
     icon: Building2,
   },
 };
@@ -175,8 +182,8 @@ export function SocietyNearbyGoogleMap({
       setLoadedPlaces([]);
       setMapStatus(
         activeCategory === "All"
-          ? "Loading nearby markers..."
-          : `Loading ${activeCategory} markers...`,
+          ? "Refreshing nearby markers..."
+          : `Refreshing ${activeCategory} markers...`,
       );
 
       try {
@@ -219,11 +226,11 @@ export function SocietyNearbyGoogleMap({
           if (!infoWindowRef.current || !societyMarkerRef.current || !mapInstanceRef.current) return;
 
           infoWindowRef.current.setContent(`
-            <div style="max-width:260px;font-family:Inter,Arial,sans-serif;">
-              <div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2563eb;margin-bottom:4px;">SocietyFlats society pin</div>
-              <div style="font-size:15px;font-weight:900;color:#0f172a;margin-bottom:4px;">${safeHtml(title)}</div>
-              <div style="font-size:12px;line-height:1.45;color:#64748b;margin-bottom:8px;">${safeHtml(cleanLocation)}</div>
-              <div style="font-size:11px;font-weight:800;color:#16a34a;">Verified coordinate layer</div>
+            <div style="max-width:205px;font-family:Inter,Arial,sans-serif;padding:0;">
+              <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2563eb;margin-bottom:3px;">Society pin</div>
+              <div style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:2px;">${safeHtml(title)}</div>
+              <div style="font-size:11px;line-height:1.35;color:#64748b;margin-bottom:5px;">${safeHtml(cleanLocation)}</div>
+              <div style="font-size:10px;font-weight:800;color:#16a34a;">Verified coordinate</div>
             </div>
           `);
 
@@ -246,10 +253,11 @@ export function SocietyNearbyGoogleMap({
         bounds.extend(center);
 
         const collectedPlaces: Array<{ name: string; category: string }> = [];
-        let pending = categoriesToFetch.length;
+        const seenPlaceKeys = new Set<string>();
+        let pending = 0;
         let totalMarkers = 0;
 
-        const finishCategory = () => {
+        const finishOneSearch = () => {
           pending -= 1;
 
           if (pending <= 0 && requestId === requestIdRef.current && !cancelled) {
@@ -262,11 +270,11 @@ export function SocietyNearbyGoogleMap({
               );
             } else {
               mapInstanceRef.current.setCenter(center);
-              mapInstanceRef.current.setZoom(14);
+              mapInstanceRef.current.setZoom(activeCategory === "All" ? 13 : 14);
               setMapStatus(
                 activeCategory === "All"
-                  ? "Society pin loaded. Nearby markers were not returned by Google Places."
-                  : `Society pin loaded. No ${activeCategory} markers returned nearby.`,
+                  ? "Society pin loaded. Google did not return nearby markers for this society."
+                  : `Society pin loaded. Google did not return ${activeCategory} markers nearby.`,
               );
             }
 
@@ -276,63 +284,76 @@ export function SocietyNearbyGoogleMap({
 
         categoriesToFetch.forEach((category) => {
           const config = CATEGORY_CONFIG[category];
-          if (!config) {
-            finishCategory();
-            return;
-          }
+          if (!config) return;
 
-          service.textSearch(
-            {
-              query: `${config.query} near ${title}, ${cleanLocation}`,
-              location: center,
-              radius: config.radius,
-            },
-            (results: any[] | null, status: string) => {
-              if (cancelled || requestId !== requestIdRef.current) return;
+          const queryLimit = activeCategory === "All" ? 1 : config.queries.length;
+          const queries = config.queries.slice(0, queryLimit);
 
-              if (status !== window.google.maps.places.PlacesServiceStatus.OK || !results?.length) {
-                finishCategory();
-                return;
-              }
+          queries.forEach((query) => {
+            pending += 1;
 
-              results.slice(0, activeCategory === "All" ? 3 : 8).forEach((place) => {
-                const placeLocation = place?.geometry?.location;
-                const name = cleanText(place?.name);
+            service.textSearch(
+              {
+                query: `${query} near ${title}, ${cleanLocation}, Gurgaon`,
+                location: center,
+                radius: config.radius,
+              },
+              (results: any[] | null, status: string) => {
+                if (cancelled || requestId !== requestIdRef.current) return;
 
-                if (!placeLocation || !name) return;
-
-                const marker = new window.google.maps.Marker({
-                  position: placeLocation,
-                  map: mapInstanceRef.current,
-                  title: name,
-                  label: category.charAt(0).toUpperCase(),
-                });
-
-                marker.addListener("click", () => {
-                  infoWindowRef.current.setContent(`
-                    <div style="max-width:250px;font-family:Inter,Arial,sans-serif;">
-                      <div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2563eb;margin-bottom:4px;">${safeHtml(category)}</div>
-                      <div style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:4px;">${safeHtml(name)}</div>
-                      <div style="font-size:12px;line-height:1.45;color:#64748b;">${safeHtml(place?.formatted_address || place?.vicinity)}</div>
-                    </div>
-                  `);
-                  infoWindowRef.current.open(mapInstanceRef.current, marker);
-                });
-
-                placeMarkersRef.current.push(marker);
-                bounds.extend(placeLocation);
-                totalMarkers += 1;
-
-                if (collectedPlaces.length < 8) {
-                  collectedPlaces.push({ name, category });
+                if (status !== window.google.maps.places.PlacesServiceStatus.OK || !results?.length) {
+                  finishOneSearch();
+                  return;
                 }
-              });
 
-              setLoadedPlaces([...collectedPlaces]);
-              finishCategory();
-            },
-          );
+                results.slice(0, activeCategory === "All" ? 2 : 5).forEach((place) => {
+                  const placeLocation = place?.geometry?.location;
+                  const name = cleanText(place?.name);
+                  const placeId = cleanText(place?.place_id);
+                  const key = placeId || `${name}-${placeLocation?.lat?.()}-${placeLocation?.lng?.()}`;
+
+                  if (!placeLocation || !name || seenPlaceKeys.has(key)) return;
+
+                  seenPlaceKeys.add(key);
+
+                  const marker = new window.google.maps.Marker({
+                    position: placeLocation,
+                    map: mapInstanceRef.current,
+                    title: name,
+                    label: category.charAt(0).toUpperCase(),
+                  });
+
+                  marker.addListener("click", () => {
+                    infoWindowRef.current.setContent(`
+                      <div style="max-width:220px;font-family:Inter,Arial,sans-serif;">
+                        <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2563eb;margin-bottom:3px;">${safeHtml(category)}</div>
+                        <div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:3px;">${safeHtml(name)}</div>
+                        <div style="font-size:11px;line-height:1.35;color:#64748b;">${safeHtml(place?.formatted_address || place?.vicinity)}</div>
+                      </div>
+                    `);
+                    infoWindowRef.current.open(mapInstanceRef.current, marker);
+                  });
+
+                  placeMarkersRef.current.push(marker);
+                  bounds.extend(placeLocation);
+                  totalMarkers += 1;
+
+                  if (collectedPlaces.length < 8) {
+                    collectedPlaces.push({ name, category });
+                  }
+                });
+
+                setLoadedPlaces([...collectedPlaces]);
+                finishOneSearch();
+              },
+            );
+          });
         });
+
+        if (pending === 0) {
+          openSocietyCard();
+          setMapStatus("Society pin loaded. No nearby categories are available yet.");
+        }
       } catch (error) {
         console.error("Society nearby Google map failed", error);
         setMapError("Google map could not load. Showing SocietyFlats location preview.");
