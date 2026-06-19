@@ -29,7 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
-import { LocationIntelligencePreview } from "@/components/maps/LocationIntelligencePreview";
+import { SocietyNearbyGoogleMap } from "@/components/maps/SocietyNearbyGoogleMap";
 import { Badge } from "@/components/ui/badge";
 import {
   findPublicSociety,
@@ -213,6 +213,7 @@ export function SocietyPage() {
   const [callbackOpen, setCallbackOpen] = useState(false);
   const [callbackSource, setCallbackSource] = useState("society_page_callback");
   const [isSocietyShortlisted, setIsSocietyShortlisted] = useState(false);
+  const [activeNearbyCategory, setActiveNearbyCategory] = useState("All");
   // SEO validation marker: society_page_no_inventory_similar_options
   const [selectedLeadProperty, setSelectedLeadProperty] = useState<any | null>(
     null,
@@ -574,17 +575,6 @@ export function SocietyPage() {
     ["RERA Search", reraUrl],
   ].filter(([, href]) => Boolean(href));
   const societyLocation = safeLocation(society);
-  const societyGoogleMapsHref =
-    field<string>(society, "googleMapsUrl", "google_maps_url", "") ||
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-      `${society.name} ${societyLocation}`,
-    )}`;
-
-  const nearbyMapsHref = (category: string) =>
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-      `${category} near ${society.name} ${societyLocation}`,
-    )}`;
-
   const whatsappMessage = encodeURIComponent(
     `Hi, I am exploring homes in ${society.name}. Please share verified options.`,
   );
@@ -1119,12 +1109,16 @@ export function SocietyPage() {
                     const Icon = item.icon;
 
                     return (
-                      <a
+                      <button
                         key={item.title}
-                        href={nearbyMapsHref(item.title)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="group rounded-2xl border border-blue-100 bg-blue-50/60 p-3 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm"
+                        type="button"
+                        onClick={() => setActiveNearbyCategory(item.title)}
+                        className={cn(
+                          "group rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm",
+                          activeNearbyCategory === item.title
+                            ? "border-blue-300 bg-blue-50"
+                            : "border-blue-100 bg-blue-50/60",
+                        )}
                       >
                         <div className="flex items-start gap-2.5">
                           <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-blue-700">
@@ -1135,51 +1129,39 @@ export function SocietyPage() {
                               <p className="text-[11px] font-black uppercase tracking-[0.14em] text-blue-500">
                                 {item.title}
                               </p>
-                              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-blue-400 transition group-hover:text-blue-700" />
+                              <span className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-500">
+                                Focus
+                              </span>
                             </div>
                             <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-navy-800">
                               {item.primary}
                             </p>
                             {item.extraCount ? (
                               <p className="mt-1 text-xs font-bold text-blue-600">
-                                +{item.extraCount} more nearby option{item.extraCount === 1 ? "" : "s"} on Maps
+                                +{item.extraCount} more nearby option{item.extraCount === 1 ? "" : "s"} in this layer
                               </p>
                             ) : null}
                           </div>
                         </div>
-                      </a>
+                      </button>
                     );
                   })}
                 </div>
               ) : null}
 
               <p className="mt-2 rounded-2xl bg-blue-50 px-3 py-1.5 text-[11px] font-semibold leading-5 text-blue-700">
-                Nearby data is Google Places assisted and admin-reviewed. Tap any card to verify it on Google Maps before requesting visit guidance.
+                Nearby data is Google Places assisted and admin-reviewed. Tap a card to focus that category inside the map layer.
               </p>
 
-              <div className="mt-3 flex flex-col gap-2 rounded-2xl border border-blue-100 bg-white p-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-600">
-                    Live map action
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-navy-900">
-                    Open this society location on Google Maps
-                  </p>
-                </div>
-                <Button asChild variant="outline" className="w-fit rounded-full border-blue-100 text-blue-700">
-                  <a href={societyGoogleMapsHref} target="_blank" rel="noreferrer">
-                    Open full map <ExternalLink className="ml-2 h-4 w-4" />
-                  </a>
-                </Button>
-              </div>
-
-              <div className="mt-2.5 max-h-[390px] overflow-hidden rounded-2xl border border-blue-100">
-                <LocationIntelligencePreview
+              <div className="mt-2.5">
+                <SocietyNearbyGoogleMap
                   title={society.name}
                   location={societyLocation}
                   latitude={field(society, "latitude", "latitude", "")}
                   longitude={field(society, "longitude", "longitude", "")}
                   googleMapsUrl={field(society, "googleMapsUrl", "google_maps_url", "")}
+                  activeCategory={activeNearbyCategory}
+                  nearbyCategories={nearbyCompactCards}
                   nearbySchools={splitLines(field(society, "nearbySchools", "nearby_schools", "")).slice(0, 1).join("\n")}
                   nearbyMetro={splitLines(field(society, "nearbyMetro", "nearby_metro", "")).slice(0, 1).join("\n")}
                   nearbyHospitals={splitLines(field(society, "nearbyHospitals", "nearby_hospitals", "")).slice(0, 1).join("\n")}
