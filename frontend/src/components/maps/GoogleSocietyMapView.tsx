@@ -1,49 +1,48 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ExternalLink, Loader2, MapPin } from "lucide-react";
+import { ArrowRight, MapPin } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { type AdminSociety } from "@/lib/adminSocietyStore";
 import { formatPublicLocation } from "@/lib/publicData";
-import { slugifySociety, type AdminSociety } from "@/lib/adminSocietyStore";
 import { getValidMapSocieties } from "@/components/maps/SocietyMapView";
 
 type GoogleSocietyMapViewProps = {
   societies: AdminSociety[];
   query?: string;
   apiKey: string;
-  className?: string;
 };
 
-type GoogleMapsWindow = Window &
-  typeof globalThis & {
+declare global {
+  interface Window {
     google?: any;
-    __societyFlatsGoogleMapsPromise?: Promise<void>;
-  };
-
-function scoreOf(society: AdminSociety, fallback = 8.4) {
-  const parsed = Number(society.score || fallback);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed.toFixed(1) : fallback.toFixed(1);
+    societyFlatsGoogleMapsPromise?: Promise<void>;
+  }
 }
 
-function societyHref(society: AdminSociety) {
-  const slug = society.slug || slugifySociety(society.name);
-  return slug ? `/society/${slug}` : `/search?tab=societies&q=${encodeURIComponent(society.name)}&intent=general`;
+function parseMapCoordinate(value: unknown) {
+  const parsed = Number(String(value ?? "").trim());
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function societyPath(society: AdminSociety) {
+  return society.slug
+    ? `/society/${society.slug}`
+    : `/search?tab=societies&intent=general&q=${encodeURIComponent(society.name)}`;
 }
 
 function loadGoogleMaps(apiKey: string) {
-  const win = window as GoogleMapsWindow;
+  if (window.google?.maps) return Promise.resolve();
 
-  if (win.google?.maps) return Promise.resolve();
-
-  if (win.__societyFlatsGoogleMapsPromise) {
-    return win.__societyFlatsGoogleMapsPromise;
+  if (window.societyFlatsGoogleMapsPromise) {
+    return window.societyFlatsGoogleMapsPromise;
   }
 
-  win.__societyFlatsGoogleMapsPromise = new Promise<void>((resolve, reject) => {
+  window.societyFlatsGoogleMapsPromise = new Promise<void>((resolve, reject) => {
     const existing = document.querySelector<HTMLScriptElement>('script[data-societyflats-google-maps="true"]');
+
     if (existing) {
       existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("Google Maps script failed")));
+      existing.addEventListener("error", () => reject(new Error("Google Maps failed to load")));
       return;
     }
 
@@ -53,212 +52,149 @@ function loadGoogleMaps(apiKey: string) {
     script.defer = true;
     script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly`;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Google Maps script failed"));
+    script.onerror = () => reject(new Error("Google Maps failed to load"));
     document.head.appendChild(script);
   });
 
-  return win.__societyFlatsGoogleMapsPromise;
+  return window.societyFlatsGoogleMapsPromise;
 }
 
-export function GoogleSocietyMapView({ societies, query = "", apiKey, className = "" }: GoogleSocietyMapViewProps) {
+export function GoogleSocietyMapView({ societies, query = "", apiKey }: GoogleSocietyMapViewProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const infoWindowRef = useRef<any>(null);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [mapError, setMapError] = useState("");
 
-  const validSocieties = useMemo(() => getValidMapSocieties(societies), [societies]);
-  const pendingSocieties = societies.length - validSocieties.length;
+  const validSocieties = getValidMapSocieties(societies);
 
   useEffect(() => {
-    if (!apiKey || !mapRef.current || !validSocieties.length) {
-      setStatus(apiKey ? "ready" : "error");
-      return;
-    }
-
     let cancelled = false;
 
-    setStatus("loading");
+    async function renderMap() {
+      if (!apiKey || !mapRef.current || !validSocieties.length) return;
 
-    loadGoogleMaps(apiKey)
-      .then(() => {
-        if (cancelled || !mapRef.current) return;
+      try {
+        await loadGoogleMaps(apiKey);
+        if (cancelled || !window.google?.maps || !mapRef.current) return;
 
-        const win = window as GoogleMapsWindow;
-        if (!win.google?.maps) throw new Error("Google Maps unavailable");
-
-        const center = {
-          lat: validSocieties[0].lat,
-          lng: validSocieties[0].lng,
-        };
+        const firstLat = parseMapCoordinate(validSocieties[0].latitude) || 28.4595;
+        const firstLng = parseMapCoordinate(validSocieties[0].longitude) || 77.0266;
 
         if (!mapInstanceRef.current) {
-          mapInstanceRef.current = new win.google.maps.Map(mapRef.current, {
-            center,
+          mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
+            center: { lat: firstLat, lng: firstLng },
             zoom: 12,
-            clickableIcons: false,
             mapTypeControl: false,
-            fullscreenControl: true,
             streetViewControl: false,
-            gestureHandling: "greedy",
-            styles: [
-              {
-                featureType: "poi.business",
-                stylers: [{ visibility: "off" }],
-              },
-            ],
+            fullscreenControl: true,
           });
-        } else {
-          mapInstanceRef.current.setCenter(center);
         }
 
         markersRef.current.forEach((marker) => marker.setMap(null));
         markersRef.current = [];
 
-        infoWindowRef.current = infoWindowRef.current || new win.google.maps.InfoWindow();
+        infoWindowRef.current = infoWindowRef.current || new window.google.maps.InfoWindow();
 
-        const bounds = new win.google.maps.LatLngBounds();
+        const bounds = new window.google.maps.LatLngBounds();
 
-        validSocieties.forEach(({ society, lat, lng }, index) => {
-          const score = scoreOf(society, 8.8 - index * 0.2);
+        validSocieties.forEach((society, index) => {
+          const lat = parseMapCoordinate(society.latitude);
+          const lng = parseMapCoordinate(society.longitude);
+
+          if (lat === null || lng === null) return;
+
           const position = { lat, lng };
+          bounds.extend(position);
 
-          const marker = new win.google.maps.Marker({
+          const marker = new window.google.maps.Marker({
             position,
             map: mapInstanceRef.current,
             title: society.name,
-            label: {
-              text: score,
-              color: "#ffffff",
-              fontSize: "11px",
-              fontWeight: "900",
-            },
+            label: String(index + 1),
           });
-
-          const href = societyHref(society);
-          const homesHref = `/search?tab=societies&intent=map&fromMap=1&society=${encodeURIComponent(society.name)}&q=${encodeURIComponent(query || society.name)}`;
 
           marker.addListener("click", () => {
             infoWindowRef.current.setContent(`
-              <div style="min-width:220px;font-family:Inter,system-ui,sans-serif;">
-                <div style="font-weight:900;font-size:14px;color:#0f172a;">${society.name}</div>
-                <div style="margin-top:4px;font-size:12px;font-weight:600;color:#64748b;">${formatPublicLocation(society)}</div>
-                <div style="margin-top:8px;border-radius:12px;background:#eff6ff;padding:8px 10px;font-size:12px;font-weight:800;color:#1d4ed8;">Society score: ${score}</div>
-                <div style="margin-top:10px;display:flex;gap:8px;">
-                  <a href="${href}" style="border-radius:999px;background:#1d4ed8;color:#fff;padding:8px 10px;font-size:12px;font-weight:800;text-decoration:none;">Open profile</a>
-                  <a href="${homesHref}" style="border-radius:999px;border:1px solid #dbeafe;color:#1d4ed8;padding:8px 10px;font-size:12px;font-weight:800;text-decoration:none;">Homes nearby</a>
-                </div>
+              <div style="max-width:240px;font-family:Inter,Arial,sans-serif;">
+                <div style="font-weight:800;color:#0f172a;margin-bottom:4px;">${society.name}</div>
+                <div style="font-size:12px;color:#64748b;margin-bottom:10px;">${formatPublicLocation(society)}</div>
+                <a href="${societyPath(society)}" style="font-size:12px;font-weight:800;color:#1d4ed8;text-decoration:none;">Open society profile →</a>
               </div>
             `);
-            infoWindowRef.current.open({
-              anchor: marker,
-              map: mapInstanceRef.current,
-            });
+            infoWindowRef.current.open(mapInstanceRef.current, marker);
           });
 
           markersRef.current.push(marker);
-          bounds.extend(position);
         });
 
-        if (validSocieties.length > 1) {
-          mapInstanceRef.current.fitBounds(bounds, 72);
+        if (markersRef.current.length > 1) {
+          mapInstanceRef.current.fitBounds(bounds, 80);
+        } else if (markersRef.current.length === 1) {
+          mapInstanceRef.current.setCenter(markersRef.current[0].getPosition());
+          mapInstanceRef.current.setZoom(14);
         }
 
-        setStatus("ready");
-      })
-      .catch((error) => {
-        console.error("Google Maps failed:", error);
-        if (!cancelled) setStatus("error");
-      });
+        setMapError("");
+      } catch (error) {
+        console.error("Google map render failed", error);
+        setMapError("Google Maps could not load. Use the coordinate fallback or society list view.");
+      }
+    }
+
+    renderMap();
 
     return () => {
       cancelled = true;
     };
-  }, [apiKey, query, validSocieties]);
+  }, [apiKey, validSocieties]);
 
   if (!validSocieties.length) {
     return (
-      <div className={className}>
-        <div className="rounded-[1.75rem] border border-blue-100 bg-gradient-to-br from-white via-blue-50/70 to-slate-50 p-5 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
-                Google map coordinates pending
-              </p>
-              <h2 className="mt-2 font-serif text-3xl font-black tracking-[-0.04em] text-navy-950">
-                Google map pins appear after admin coordinate verification.
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500">
-                Add valid latitude and longitude in Admin Society profiles to unlock Google map pins and nearby-home CTAs.
-              </p>
-            </div>
-            <Button asChild className="rounded-full bg-blue-700 px-5 hover:bg-blue-800">
-              <Link to="/societies">Browse societies</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === "error") {
-    return (
-      <div className={className}>
-        <div className="rounded-[1.75rem] border border-amber-100 bg-amber-50 p-5">
-          <p className="font-black text-amber-900">Google Maps could not load.</p>
-          <p className="mt-1 text-sm leading-6 text-amber-800">
-            Check the API key, billing, domain restrictions and enabled Maps JavaScript API.
-          </p>
-        </div>
+      <div className="rounded-[1.75rem] border border-blue-100 bg-white p-6 shadow-sm">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
+          Google map
+        </p>
+        <h2 className="mt-2 font-serif text-3xl font-black tracking-[-0.05em] text-navy-950">
+          No ready map pins match this search.
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-navy-500">
+          Try a wider society, sector or locality search.
+        </p>
+        <Link
+          to={`/search?tab=societies&intent=general&q=${encodeURIComponent(query || "Gurgaon societies")}`}
+          className="mt-4 inline-flex items-center rounded-full bg-blue-700 px-5 py-3 text-sm font-black text-white hover:bg-blue-800"
+        >
+          Browse society list <ArrowRight className="ml-2 h-4 w-4" />
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className={className}>
-      <div className="overflow-hidden rounded-[1.75rem] border border-blue-100 bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-4 py-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
-              Google Maps layer
-            </p>
-            <h2 className="mt-1 text-xl font-black tracking-[-0.03em] text-navy-950">
-              {validSocieties.length} verified map pin{validSocieties.length === 1 ? "" : "s"}
-            </h2>
-          </div>
-          <p className="max-w-xl text-sm leading-6 text-navy-500">
-            Click a pin to open the society profile, compare location fit, or request homes nearby. Google Maps loads only when the API key is configured.
+    <div className="overflow-hidden rounded-[1.75rem] border border-blue-100 bg-white shadow-sm">
+      <div className="flex items-center justify-between gap-3 border-b border-blue-100 bg-white px-4 py-4">
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-600">
+            Live Google map
           </p>
+          <h2 className="mt-1 text-xl font-black tracking-[-0.03em] text-navy-950">
+            {validSocieties.length} verified society pins
+          </h2>
         </div>
-
-        <div className="relative h-[520px] w-full">
-          <div ref={mapRef} className="h-full w-full" />
-          {status === "loading" ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-              <div className="text-center">
-                <Loader2 className="mx-auto h-6 w-6 animate-spin text-blue-700" />
-                <p className="mt-3 text-sm font-bold text-navy-500">Loading Google map...</p>
-              </div>
-            </div>
-          ) : null}
-        </div>
+        <span className="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
+          <MapPin className="mr-1.5 h-3.5 w-3.5" />
+          Coordinates ready
+        </span>
       </div>
 
-      {pendingSocieties > 0 ? (
-        <div className="mt-4 rounded-[1.35rem] border border-amber-100 bg-amber-50/80 p-4">
-          <div className="flex items-start gap-3">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
-            <div>
-              <p className="text-sm font-black text-amber-900">
-                {pendingSocieties} societ{pendingSocieties === 1 ? "y" : "ies"} pending coordinate verification
-              </p>
-              <p className="mt-1 text-sm leading-6 text-amber-800">
-                These will appear after valid latitude and longitude are added in admin.
-              </p>
-            </div>
-          </div>
+      {mapError ? (
+        <div className="border-b border-amber-100 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
+          {mapError}
         </div>
       ) : null}
+
+      <div ref={mapRef} className="h-[520px] w-full bg-blue-50" />
     </div>
   );
 }
