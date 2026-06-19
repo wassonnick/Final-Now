@@ -162,13 +162,15 @@ export function GoogleSocietyMapView({
   }, [apiKey, validSocieties, onSelectSociety]);
 
   useEffect(() => {
-    if (!selectedSocietyId || !mapInstanceRef.current || !infoWindowRef.current) return;
+    if (!selectedSocietyId || !mapInstanceRef.current || !window.google?.maps) return;
 
     const match = markerSocietyRefs.current.find(
       (item) => Number(item.society.id) === Number(selectedSocietyId),
     );
 
     if (!match) return;
+
+    infoWindowRef.current = infoWindowRef.current || new window.google.maps.InfoWindow();
 
     infoWindowRef.current.setContent(`
       <div style="max-width:240px;font-family:Inter,Arial,sans-serif;">
@@ -177,8 +179,18 @@ export function GoogleSocietyMapView({
         <a href="${societyPath(match.society)}" style="font-size:12px;font-weight:800;color:#1d4ed8;text-decoration:none;">Open society profile →</a>
       </div>
     `);
+
     infoWindowRef.current.open(mapInstanceRef.current, match.marker);
-    mapInstanceRef.current.panTo(match.marker.getPosition());
+
+    const position = match.marker.getPosition?.();
+    if (position) {
+      mapInstanceRef.current.panTo(position);
+    }
+
+    if (match.marker.setAnimation && window.google?.maps?.Animation?.BOUNCE) {
+      match.marker.setAnimation(window.google.maps.Animation.BOUNCE);
+      window.setTimeout(() => match.marker.setAnimation(null), 700);
+    }
   }, [selectedSocietyId]);
 
   if (!validSocieties.length) {
