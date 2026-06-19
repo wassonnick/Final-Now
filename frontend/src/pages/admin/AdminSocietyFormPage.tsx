@@ -391,22 +391,35 @@ export function AdminSocietyFormPage() {
   };
 
   const approveReferenceImage = () => {
-    if (!society.imageReferenceUrl.trim()) {
+    const reference = society.imageReferenceUrl.trim();
+
+    if (!reference) {
       setError("Add an approved/licensed direct image URL before approving it for public display.");
+      return;
+    }
+
+    if (isGoogleReferenceUrl(reference) || society.imageStatus === "google_places_reference_found") {
+      setError("Google Places references cannot be approved as owned/uploaded public images. Keep them as Google reference/display mode or upload a licensed/self-shot image.");
+      return;
+    }
+
+    if (!isDirectRenderableImageUrl(reference)) {
+      setError("Only a direct renderable image URL can be approved. Use a JPG, PNG, WebP, GIF, or AVIF URL after rights are verified.");
       return;
     }
 
     setSociety((current) => ({
       ...current,
-      imageUrl: current.imageReferenceUrl,
-      coverImage: current.imageReferenceUrl,
+      imageUrl: reference,
+      coverImage: reference,
       imageStatus: "approved_for_live",
       imageApprovedByAdmin: true,
+      imageCredit: current.imageCredit || "Approved source",
       imageLicenseNotes:
         current.imageLicenseNotes || "Approved by admin for live use after rights/permission review.",
     }));
 
-    setMessage("Image marked approved for public display. Save only if rights/permission and attribution are verified.");
+    setMessage("Direct image marked approved for public display. Save only if rights/permission and attribution are verified.");
     setSaved(false);
   };
 
@@ -1076,8 +1089,10 @@ export function AdminSocietyFormPage() {
                 />
                 <div className="border-t border-slate-100 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-500">
                   {society.imageApprovedByAdmin
-                    ? "This approved image can appear publicly after save."
-                    : "Public pages show the branded SocietyFlats placeholder until an image is manually approved."}
+                    ? "Approved direct image can appear publicly after save."
+                    : referenceIsGoogle
+                      ? "Google Places display is reference-labeled publicly; it is not treated as an owned/uploaded image."
+                      : "Public pages show the branded SocietyFlats placeholder until a direct image is manually approved."}
                 </div>
               </div>
 
@@ -1099,8 +1114,8 @@ export function AdminSocietyFormPage() {
                   </div>
                   <p className="mt-2 text-xs leading-5 text-amber-700">
                     {referenceIsGoogle
-                      ? "Reference only. Do not approve as a public image unless usage terms, attribution and display rules are reviewed. Google display mode can show this automatically without treating it as an owned uploaded image."
-                      : "Reference only until rights/permission are confirmed."}
+                      ? "Google Places reference/display mode. Do not approve this as an owned uploaded image. Public pages may show it only with Google/source attribution."
+                      : "Reference only until rights, permission, direct image URL and attribution are confirmed."}
                   </p>
                   {canPreviewReferenceImage ? (
                     <div className="mt-3 overflow-hidden rounded-xl border border-amber-100 bg-white">
@@ -1121,6 +1136,10 @@ export function AdminSocietyFormPage() {
                   />
                 </label>
 
+                <div className="mt-3 rounded-2xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-700">
+                  Approval is only for direct licensed/self-shot/developer-permitted image URLs. Google/map links must remain reference/display mode.
+                </div>
+
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <Button
                     type="button"
@@ -1128,7 +1147,7 @@ export function AdminSocietyFormPage() {
                     onClick={approveReferenceImage}
                     className="rounded-full border-blue-200 text-blue-700"
                   >
-                    Approve image
+                    Approve direct image
                   </Button>
                   <Button
                     type="button"
@@ -1259,8 +1278,14 @@ export function AdminSocietyFormPage() {
                 <div>
                   <h2 className="font-bold text-slate-950">Image safety note</h2>
                   <p className="mt-1 text-sm leading-relaxed text-slate-500">
-                    Use uploaded/licensed/self-shot images only for public display. Google Places references stay private until attribution, usage terms and display rules are checked.
+                    Approve only direct images that are self-shot, licensed, or developer-permitted. Keep Google Places and map links as reference/display mode with attribution.
                   </p>
+                  <div className="mt-3 space-y-1.5 text-xs font-medium text-slate-600">
+                    <p>✓ Direct renderable image URL checked</p>
+                    <p>✓ Rights or permission verified</p>
+                    <p>✓ Credit/attribution added where needed</p>
+                    <p>✓ Google references not marked as owned uploads</p>
+                  </div>
                 </div>
               </div>
             </section>
