@@ -80,6 +80,28 @@ function safeHtml(value?: string | number | null) {
     .replace(/"/g, "&quot;");
 }
 
+function sleekPopupHtml(name: string) {
+  return `
+    <div style="
+      max-width:150px;
+      min-width:110px;
+      font-family:Inter,Arial,sans-serif;
+      padding:8px 10px;
+      border-radius:14px;
+      background:white;
+      box-shadow:0 10px 26px rgba(15,23,42,.16);
+    ">
+      <div style="
+        font-size:12px;
+        line-height:1.25;
+        font-weight:900;
+        color:#0f172a;
+        letter-spacing:-.01em;
+      ">${safeHtml(name)}</div>
+    </div>
+  `;
+}
+
 function cleanNearbyLine(value: string) {
   return cleanText(value)
     .replace(/\s+—\s+source:\s+Google Places/gi, "")
@@ -238,14 +260,7 @@ export function SocietyNearbyGoogleMap({
         const openSocietyCard = () => {
           if (!infoWindowRef.current || !societyMarkerRef.current || !mapInstanceRef.current) return;
 
-          infoWindowRef.current.setContent(`
-            <div style="max-width:195px;font-family:Inter,Arial,sans-serif;">
-              <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2563eb;margin-bottom:3px;">Society pin</div>
-              <div style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:2px;">${safeHtml(title)}</div>
-              <div style="font-size:11px;line-height:1.35;color:#64748b;margin-bottom:5px;">${safeHtml(cleanLocation)}</div>
-              <div style="font-size:10px;font-weight:800;color:#16a34a;">Verified coordinate</div>
-            </div>
-          `);
+          infoWindowRef.current.setContent(sleekPopupHtml(title));
 
           infoWindowRef.current.open(mapInstanceRef.current, societyMarkerRef.current);
         };
@@ -277,14 +292,7 @@ export function SocietyNearbyGoogleMap({
           });
 
           marker.addListener("click", () => {
-            infoWindowRef.current.setContent(`
-              <div style="max-width:220px;font-family:Inter,Arial,sans-serif;">
-                <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2563eb;margin-bottom:3px;">${safeHtml(category)}</div>
-                <div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:3px;">${safeHtml(name)}</div>
-                <div style="font-size:11px;line-height:1.35;color:#64748b;">${safeHtml(address)}</div>
-                <div style="margin-top:5px;font-size:10px;font-weight:800;color:#16a34a;">${safeHtml(source)}</div>
-              </div>
-            `);
+            infoWindowRef.current.setContent(sleekPopupHtml(name));
             infoWindowRef.current.open(mapInstanceRef.current, marker);
           });
 
