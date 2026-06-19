@@ -19,6 +19,7 @@ import {
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import {
+  bulkAutoFillNearbyIntelligence,
   deleteAdminSociety,
   fetchAdminSocieties,
   updateAdminSocietyStatus,
@@ -140,6 +141,7 @@ export function AdminSocietiesPage() {
   const [googleImageFetchSummary, setGoogleImageFetchSummary] =
     useState<BulkGooglePlacesImageFetchSummary | null>(null);
   const [googleImageFetchError, setGoogleImageFetchError] = useState("");
+  const [bulkNearbyAutoFillLoading, setBulkNearbyAutoFillLoading] = useState(false);
 
   const handleBulkGoogleImageFetch = async () => {
     try {
@@ -259,6 +261,38 @@ export function AdminSocietiesPage() {
 
   const selectFiltered = () => {
     setSelectedIds(filteredSocieties.map((item) => item.id));
+  };
+
+  const handleBulkNearbyAutoFill = async () => {
+    if (!selectedSocieties.length || bulkNearbyAutoFillLoading) return;
+
+    const eligible = selectedSocieties
+      .filter((item) => hasValidAdminCoordinates(item))
+      .slice(0, 5);
+
+    if (!eligible.length) {
+      setError("Select societies with valid coordinates before running nearby autofill.");
+      return;
+    }
+
+    if (!window.confirm(`Auto-fill nearby intelligence for ${eligible.length} selected societ${eligible.length === 1 ? "y" : "ies"}? This uses Google Places and fills only empty nearby fields.`)) {
+      return;
+    }
+
+    try {
+      setBulkNearbyAutoFillLoading(true);
+      setError("");
+      setMessage("");
+
+      const result = await bulkAutoFillNearbyIntelligence(eligible.map((item) => item.id));
+      setMessage(result.message);
+      await loadSocieties();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Bulk nearby autofill failed.");
+    } finally {
+      setBulkNearbyAutoFillLoading(false);
+    }
   };
 
   const applyBulkStatus = async () => {
@@ -427,6 +461,18 @@ export function AdminSocietiesPage() {
               >
                 <Image className={`mr-2 h-4 w-4 ${googleImageFetchLoading ? "animate-pulse" : ""}`} />
                 {googleImageFetchLoading ? "Fetching refs..." : "Fetch Google refs"}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full border-emerald-200 bg-emerald-50 px-3 text-xs font-bold text-emerald-800 hover:bg-emerald-100 sm:text-sm"
+                onClick={() => void handleBulkNearbyAutoFill()}
+                disabled={bulkNearbyAutoFillLoading || !selectedSocieties.length}
+                title="Select up to 5 societies with valid coordinates. Only empty nearby fields are filled."
+              >
+                <MapPin className={`mr-2 h-4 w-4 ${bulkNearbyAutoFillLoading ? "animate-pulse" : ""}`} />
+                {bulkNearbyAutoFillLoading ? "Filling nearby..." : "Auto-fill nearby"}
               </Button>
 
 

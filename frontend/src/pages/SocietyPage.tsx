@@ -534,6 +534,17 @@ export function SocietyPage() {
   ];
 
   const hasNearbyData = nearby.some((item) => splitLines(item.value).length > 0);
+  const nearbyCompactCards = nearby
+    .map((item) => ({
+      ...item,
+      lines: splitLines(item.value),
+    }))
+    .filter((item) => item.lines.length > 0)
+    .map((item) => ({
+      ...item,
+      primary: item.lines[0]?.replace(/\s+—\s+source:\s+Google Places/gi, "").trim() || "",
+      extraCount: Math.max(item.lines.length - 1, 0),
+    }));
   const sourceUrl = field<string>(society, "sourceUrl", "source_url", "");
   const reraUrl =
     field<string>(society, "reraSearchUrl", "rera_search_url", "") ||
@@ -1075,7 +1086,7 @@ export function SocietyPage() {
                     Location intelligence
                   </p>
                   <h2 className="mt-1 text-xl font-bold text-navy-900 md:text-2xl">
-                    Nearby schools, hospitals and commute
+                    Nearby intelligence, at a glance
                   </h2>
                 </div>
                 <Button
@@ -1089,6 +1100,38 @@ export function SocietyPage() {
                   </Link>
                 </Button>
               </div>
+
+              {/* C109 compact nearby cards */}
+              {nearbyCompactCards.length ? (
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  {nearbyCompactCards.map((item) => {
+                    const Icon = item.icon;
+
+                    return (
+                      <div key={item.title} className="rounded-2xl border border-blue-100 bg-blue-50/60 p-3">
+                        <div className="flex items-start gap-2.5">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-blue-700">
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-blue-500">
+                              {item.title}
+                            </p>
+                            <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-navy-800">
+                              {item.primary}
+                            </p>
+                            {item.extraCount ? (
+                              <p className="mt-1 text-xs font-bold text-blue-600">
+                                +{item.extraCount} more nearby option{item.extraCount === 1 ? "" : "s"}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
 
               <LocationIntelligencePreview
                 title={society.name}

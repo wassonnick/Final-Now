@@ -39,6 +39,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/import/by-url', [SocietyImportController::class, 'byUrl']);
     Route::post('/import/bulk', [SocietyImportController::class, 'bulk']);
     Route::post('/import/bulk-names', [SocietyImportController::class, 'bulkNames']);
+    Route::post('/societies/nearby-intelligence/auto-fill/bulk', [SocietyController::class, 'bulkNearbyIntelligenceAutoFill']);
     Route::post('/societies/{society}/nearby-intelligence/auto-fill', [SocietyController::class, 'nearbyIntelligenceAutoFill']);
     Route::apiResource('societies', SocietyController::class)->except(['create', 'edit']);
     Route::apiResource('properties', PropertyController::class)->except(['create', 'edit']);

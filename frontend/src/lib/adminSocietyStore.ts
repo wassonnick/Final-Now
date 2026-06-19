@@ -743,6 +743,31 @@ export async function autoFillNearbyIntelligence(id: number | string): Promise<{
   };
 }
 
+export type BulkNearbyAutoFillSummary = {
+  processed: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+};
+
+export async function bulkAutoFillNearbyIntelligence(societyIds: Array<number | string>): Promise<{ message: string; summary: BulkNearbyAutoFillSummary; results: Array<Record<string, unknown>> }> {
+  const json = await request('/admin/societies/nearby-intelligence/auto-fill/bulk', {
+    method: 'POST',
+    body: JSON.stringify({ society_ids: societyIds }),
+  });
+
+  return {
+    message: json?.message || 'Bulk nearby autofill complete.',
+    summary: {
+      processed: Number(json?.summary?.processed || 0),
+      updated: Number(json?.summary?.updated || 0),
+      skipped: Number(json?.summary?.skipped || 0),
+      failed: Number(json?.summary?.failed || 0),
+    },
+    results: Array.isArray(json?.results) ? json.results : [],
+  };
+}
+
 export async function fetchGooglePlacesSocietyImageReference(id: number): Promise<{ society: AdminSociety; message: string; meta: Record<string, unknown> }> {
   const response = await adminFetch(`/admin/societies/${id}/google-places-image-reference`, {
     method: 'POST',
