@@ -58,7 +58,7 @@ const normalizeAdminStringArray = (value: unknown): string[] => {
 export type SocietyStatus = 'Draft' | 'Verified' | 'Premium' | 'Archived';
 export type SocietyImageStatus =
   | 'placeholder'
-  | 'official_reference_found'
+  | 'official_reference_found' | 'google_places_reference_found'
   | 'licensed_uploaded'
   | 'self_shot_uploaded'
   | 'developer_permission_received'

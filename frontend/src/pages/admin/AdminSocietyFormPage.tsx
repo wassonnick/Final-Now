@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Building2,
   CheckCircle2,
+  ExternalLink,
   FileText,
   ImagePlus,
   Link as LinkIcon,
@@ -22,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { uploadAdminImage } from "@/lib/adminApi";
+import { societyPlaceholderImage } from "@/lib/societyImages";
 import {
   createEmptyAdminSociety,
   describeBrochureUpdate,
@@ -38,6 +40,42 @@ import {
 import type { AdminSociety, SocietyStatus } from "@/lib/adminSocietyStore";
 
 const statusOptions: SocietyStatus[] = ["Draft", "Verified", "Premium", "Archived"];
+
+
+function imageStatusLabel(society: AdminSociety) {
+  if (society.imageApprovedByAdmin) return "Approved for public display";
+
+  switch (society.imageStatus) {
+    case "google_places_reference_found":
+      return "Google Places reference only";
+    case "official_reference_found":
+      return "Official/reference URL only";
+    case "needs_review":
+      return "Needs rights review";
+    case "approved_for_live":
+      return "Approval pending save";
+    default:
+      return "Placeholder shown publicly";
+  }
+}
+
+function imageStatusTone(society: AdminSociety) {
+  if (society.imageApprovedByAdmin) return "border-emerald-200 bg-emerald-50 text-emerald-700";
+
+  switch (society.imageStatus) {
+    case "google_places_reference_found":
+      return "border-amber-200 bg-amber-50 text-amber-700";
+    case "official_reference_found":
+    case "needs_review":
+      return "border-blue-200 bg-blue-50 text-blue-700";
+    default:
+      return "border-slate-200 bg-slate-100 text-slate-600";
+  }
+}
+
+function isDirectImageReference(url: string) {
+  return /^https?:\/\/.+\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(url.trim());
+}
 
 function friendlyFetchError(err: unknown, fallback: string) {
   if (err instanceof Error && err.message === "Failed to fetch") {
@@ -338,7 +376,7 @@ export function AdminSocietyFormPage() {
 
   const approveReferenceImage = () => {
     if (!society.imageReferenceUrl.trim()) {
-      setError("Add or fetch an image reference URL before approving it.");
+      setError("Add an approved/licensed direct image URL before approving it for public display.");
       return;
     }
 
@@ -352,7 +390,7 @@ export function AdminSocietyFormPage() {
         current.imageLicenseNotes || "Approved by admin for live use after rights/permission review.",
     }));
 
-    setMessage("Image approved for public display. Save changes to publish this approval.");
+    setMessage("Image marked approved for public display. Save only if rights/permission and attribution are verified.");
     setSaved(false);
   };
 
@@ -361,11 +399,27 @@ export function AdminSocietyFormPage() {
       ...current,
       imageUrl: "",
       coverImage: "",
-      imageStatus: current.imageReferenceUrl ? "official_reference_found" : "placeholder",
+      imageStatus: current.imageStatus === "google_places_reference_found" ? "google_places_reference_found" : current.imageReferenceUrl ? "official_reference_found" : "placeholder",
       imageApprovedByAdmin: false,
     }));
 
     setMessage("Image kept as admin reference only. Save changes to keep it private.");
+    setSaved(false);
+  };
+
+  const clearImageReference = () => {
+    setSociety((current) => ({
+      ...current,
+      imageReferenceUrl: "",
+      imageUrl: "",
+      coverImage: "",
+      imageStatus: "placeholder",
+      imageApprovedByAdmin: false,
+      imageCredit: "",
+      imageLicenseNotes: "",
+    }));
+
+    setMessage("Image reference cleared. Save changes to keep this update.");
     setSaved(false);
   };
 
@@ -518,6 +572,16 @@ export function AdminSocietyFormPage() {
       </AdminLayout>
     );
   }
+
+
+  const mediaPreviewImage =
+    society.imageApprovedByAdmin && (society.coverImage || society.imageUrl)
+      ? society.coverImage || society.imageUrl
+      : societyPlaceholderImage(society);
+
+  const referenceUrl = society.imageReferenceUrl.trim();
+  const canPreviewReferenceImage = Boolean(referenceUrl) && isDirectImageReference(referenceUrl);
+  const referenceIsGoogle = society.imageStatus === "google_places_reference_found" || society.imageCredit === "Google Places";
 
   return (
     <AdminLayout
@@ -958,13 +1022,24 @@ export function AdminSocietyFormPage() {
 
           <aside className="space-y-4 md:space-y-5">
             <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
-              <h2 className="text-base font-bold tracking-tight text-slate-950">Media</h2>
-              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">Upload safe images or approve a reference URL.</p>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-bold tracking-tight text-slate-950">Media</h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
+                    Upload safe images or keep external sources as admin references.
+                  </p>
+                </div>
+                <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-bold ${imageStatusTone(society)}`}>
+                  {imageStatusLabel(society)}
+                </span>
+              </div>
 
               <div className="mt-5 rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
                 <ImagePlus className="mx-auto h-8 w-8 text-blue-600" />
                 <p className="mt-3 font-medium text-slate-950">Cover image</p>
-                <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">Upload admin-approved society image.</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
+                  Upload self-shot, licensed, or developer-approved society image.
+                </p>
                 <label className="mt-3 inline-flex cursor-pointer items-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
                   <UploadCloud className="mr-2 h-4 w-4" />
                   Upload Cover
@@ -977,13 +1052,45 @@ export function AdminSocietyFormPage() {
                 </label>
               </div>
 
-              {(society.coverImage || society.imageUrl) ? (
-                <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
-                  <img
-                    src={society.coverImage || society.imageUrl}
-                    alt={society.name || "Society cover"}
-                    className="h-32 w-full object-cover"
-                  />
+              <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
+                <img
+                  src={mediaPreviewImage}
+                  alt={society.name || "Society media preview"}
+                  className="h-32 w-full object-cover"
+                />
+                <div className="border-t border-slate-100 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-500">
+                  {society.imageApprovedByAdmin
+                    ? "This approved image can appear publicly after save."
+                    : "Public pages show the branded SocietyFlats placeholder until an image is manually approved."}
+                </div>
+              </div>
+
+              {referenceUrl ? (
+                <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black uppercase tracking-wide text-amber-700">
+                        {referenceIsGoogle ? "Google Places reference" : "Admin reference"}
+                      </p>
+                      <p className="mt-1 truncate text-sm font-semibold text-slate-800">{referenceUrl}</p>
+                    </div>
+                    <Button asChild type="button" variant="outline" className="h-8 shrink-0 rounded-full border-amber-200 px-3 text-xs font-bold text-amber-700">
+                      <a href={referenceUrl} target="_blank" rel="noreferrer">
+                        <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                        Open
+                      </a>
+                    </Button>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-amber-700">
+                    {referenceIsGoogle
+                      ? "Reference only. Do not approve as a public image unless usage terms, attribution and display rules are reviewed."
+                      : "Reference only until rights/permission are confirmed."}
+                  </p>
+                  {canPreviewReferenceImage ? (
+                    <div className="mt-3 overflow-hidden rounded-xl border border-amber-100 bg-white">
+                      <img src={referenceUrl} alt={`${society.name || "Society"} reference preview`} className="h-24 w-full object-cover" />
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -994,7 +1101,7 @@ export function AdminSocietyFormPage() {
                     value={society.imageReferenceUrl}
                     onChange={(event) => updateField("imageReferenceUrl", event.target.value)}
                     className="mt-2 h-10 rounded-xl border-slate-200"
-                    placeholder="Developer / official image URL"
+                    placeholder="Official source URL / Google place source URL"
                   />
                 </label>
 
@@ -1005,7 +1112,7 @@ export function AdminSocietyFormPage() {
                     onClick={approveReferenceImage}
                     className="rounded-full border-blue-200 text-blue-700"
                   >
-                    Approve
+                    Approve image
                   </Button>
                   <Button
                     type="button"
@@ -1023,6 +1130,14 @@ export function AdminSocietyFormPage() {
                   >
                     <MapPin className="mr-2 h-4 w-4" />
                     Fetch Google Places photo reference
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={clearImageReference}
+                    className="col-span-2 h-10 rounded-full border-rose-200 text-sm font-bold text-rose-700"
+                  >
+                    Clear image reference
                   </Button>
                 </div>
               </div>
@@ -1128,7 +1243,7 @@ export function AdminSocietyFormPage() {
                 <div>
                   <h2 className="font-bold text-slate-950">Image safety note</h2>
                   <p className="mt-1 text-sm leading-relaxed text-slate-500">
-                    Use uploaded/licensed/self-shot images or approve references only after rights review. Google Places photos must remain reference-only until attribution and usage terms are checked.
+                    Use uploaded/licensed/self-shot images only for public display. Google Places references stay private until attribution, usage terms and display rules are checked.
                   </p>
                 </div>
               </div>
