@@ -867,10 +867,7 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
             </Link>
           </div>
 
-          <Link
-            to="/maps"
-            className="group relative min-h-[22rem] overflow-hidden rounded-[1.35rem] border border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#dbeafe_45%,#f8fafc_100%)] shadow-soft transition hover:-translate-y-0.5 hover:shadow-premium"
-          >
+          <div className="relative min-h-[22rem] overflow-hidden rounded-[1.35rem] border border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#dbeafe_45%,#f8fafc_100%)] shadow-soft">
             <div className="absolute inset-0 opacity-70">
               {[20, 44, 68].map((top) => (
                 <span
@@ -904,36 +901,59 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
                 const isPrimary = index === 0;
 
                 return (
-                  <div
+                  <Link
                     key={society.id || society.name}
-                    className="absolute -translate-x-1/2 -translate-y-1/2"
+                    to={society.slug ? `/society/${society.slug}` : "/maps"}
+                    className="group/pin absolute -translate-x-1/2 -translate-y-1/2"
                     style={{ left: `${left}%`, top: `${top}%` }}
                   >
                     <span
-                      className={`flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-white text-xs font-black text-white shadow-xl transition group-hover:scale-105 ${
+                      className={`flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-white text-xs font-black text-white shadow-xl transition group-hover/pin:scale-110 ${
                         isPrimary ? "bg-emerald-500" : "bg-blue-600"
                       }`}
                       title={society.name}
                     >
                       {scoreOf(society, `${8.8 - index * 0.3}`)}
                     </span>
-                  </div>
+                    <span className="pointer-events-none absolute left-1/2 top-12 hidden w-44 -translate-x-1/2 rounded-2xl border border-blue-100 bg-white px-3 py-2 text-left shadow-xl group-hover/pin:block">
+                      <span className="block truncate text-xs font-black text-navy-950">
+                        {society.name}
+                      </span>
+                      <span className="mt-0.5 block truncate text-[11px] font-semibold text-blue-500">
+                        {society.sector || formatPublicLocation(society)}
+                      </span>
+                    </span>
+                  </Link>
                 );
               })}
 
             <div className="absolute left-4 top-4 rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-600">
-                Gurgaon map
+                Gurgaon live map
               </p>
               <p className="mt-1 text-sm font-black text-navy-950">
-                {mapSocieties.length || featuredSocieties.length || 0} live society pins
+                {mapSocieties.length || featuredSocieties.length || 0} real society pins
+              </p>
+              <p className="mt-1 max-w-[13rem] text-[11px] font-semibold leading-4 text-navy-500">
+                Preview only. Open the full map for synced Google markers and society details.
               </p>
             </div>
 
-            <div className="absolute bottom-4 right-4 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-black text-blue-700 shadow-sm backdrop-blur">
-              Open full Google map →
+            <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-white/95 p-1.5 shadow-sm backdrop-blur">
+              <Link
+                to="/maps"
+                className="rounded-full bg-blue-700 px-3.5 py-2 text-[11px] font-black text-white transition hover:bg-blue-800"
+              >
+                Open Gurgaon live map
+              </Link>
+              <Link
+                to="/search?tab=societies"
+                className="rounded-full px-3 py-2 text-[11px] font-black text-blue-700 transition hover:bg-blue-50"
+              >
+                List view
+              </Link>
             </div>
-          </Link>
+          </div>
         </div>
       </section>
 
