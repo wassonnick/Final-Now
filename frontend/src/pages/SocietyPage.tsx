@@ -684,7 +684,7 @@ export function SocietyPage() {
       </section>
 
       <section className="container mx-auto px-4 py-3 md:py-5">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-6">
           <div className="space-y-3.5 md:space-y-4">
             <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.45rem] md:p-4.5">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -1079,7 +1079,7 @@ export function SocietyPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm">
+            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm">
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">
@@ -1133,11 +1133,11 @@ export function SocietyPage() {
                 </div>
               ) : null}
 
-              <p className="mt-2 rounded-2xl bg-blue-50 px-3 py-2 text-xs font-semibold leading-5 text-blue-700">
+              <p className="mt-2 rounded-2xl bg-blue-50 px-3 py-1.5 text-[11px] font-semibold leading-5 text-blue-700">
                 Nearby data is Google Places assisted and admin-reviewed. Use it as a quick location layer before requesting visit guidance.
               </p>
 
-              <div className="mt-3 overflow-hidden rounded-2xl border border-blue-100">
+              <div className="mt-2.5 max-h-[390px] overflow-hidden rounded-2xl border border-blue-100">
                 <LocationIntelligencePreview
                   title={society.name}
                   location={societyLocation}
@@ -1349,7 +1349,7 @@ export function SocietyPage() {
             ) : null}
           </div>
 
-          <aside className="hidden lg:block lg:self-start"><div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-soft">
+          <aside className="hidden lg:sticky lg:top-24 lg:block lg:self-start"><div className="max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-soft">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                 Next step
               </p>

@@ -266,16 +266,9 @@ export function AdminSocietiesPage() {
   const handleBulkNearbyAutoFill = async () => {
     if (!selectedSocieties.length || bulkNearbyAutoFillLoading) return;
 
-    const eligible = selectedSocieties
-      .filter((item) => hasValidAdminCoordinates(item))
-      .slice(0, 5);
+    const batch = selectedSocieties.slice(0, 5);
 
-    if (!eligible.length) {
-      setError("Select societies with valid coordinates before running nearby autofill.");
-      return;
-    }
-
-    if (!window.confirm(`Auto-fill nearby intelligence for ${eligible.length} selected societ${eligible.length === 1 ? "y" : "ies"}? This uses Google Places and fills only empty nearby fields.`)) {
+    if (!window.confirm(`Auto-fill nearby intelligence for ${batch.length} selected societ${batch.length === 1 ? "y" : "ies"}? Backend will skip societies without valid coordinates and fill only empty nearby fields.`)) {
       return;
     }
 
@@ -284,10 +277,10 @@ export function AdminSocietiesPage() {
       setError("");
       setMessage("");
 
-      const result = await bulkAutoFillNearbyIntelligence(eligible.map((item) => item.id));
+      const result = await bulkAutoFillNearbyIntelligence(batch.map((item) => item.id));
       const bulkResultDetails = result.results
         .filter((item) => item.status === "failed" || item.status === "skipped")
-        .slice(0, 3)
+        .slice(0, 5)
         .map((item) => {
           const name = typeof item.name === "string" ? item.name : `ID ${item.id || ""}`;
           const message = typeof item.message === "string" ? item.message : "No detail returned.";
@@ -296,8 +289,8 @@ export function AdminSocietiesPage() {
 
       setMessage(
         bulkResultDetails.length
-          ? `${result.message} ${bulkResultDetails.join(" | ")}`
-          : result.message,
+          ? `Selected ${batch.length}. ${result.message} ${bulkResultDetails.join(" | ")}`
+          : `Selected ${batch.length}. ${result.message}`,
       );
       await loadSocieties();
     } catch (err) {
