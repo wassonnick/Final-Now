@@ -308,7 +308,7 @@ export function SocietyNearbyGoogleMap({
             await new Promise<void>((resolve) => {
               geocoder.geocode(
                 {
-                  address: `${line}, near ${title}, ${cleanLocation}, Gurgaon, Haryana, India`,
+                  address: `${line}, ${cleanLocation}, Gurgaon, Haryana, India`,
                 },
                 (results: any[] | null, status: string) => {
                   if (status === "OK" && results?.[0]?.geometry?.location) {
@@ -326,6 +326,36 @@ export function SocietyNearbyGoogleMap({
               );
             });
           }
+        };
+
+        const addApproxNearbyPins = (category: string) => {
+          const lines = nearbyTextByCategory[category as keyof typeof nearbyTextByCategory] || [];
+          const sourceLines = lines.length ? lines : [`${category} near ${title}`];
+
+          sourceLines.slice(0, activeCategory === "All" ? 2 : 5).forEach((line, index) => {
+            const angle = ((index + 1) * 72 * Math.PI) / 180;
+            const categoryOffset =
+              category === "Schools"
+                ? 0.010
+                : category === "Metro"
+                  ? 0.014
+                  : category === "Hospitals"
+                    ? 0.018
+                    : 0.022;
+
+            const approxPosition = new window.google.maps.LatLng(
+              lat + Math.sin(angle) * categoryOffset,
+              lng + Math.cos(angle) * categoryOffset,
+            );
+
+            addMarker(
+              category,
+              line.split("—")[0].trim() || line,
+              approxPosition,
+              `Approximate nearby preview around ${title}. Exact location pending Google coordinate match.`,
+              "Approx nearby preview",
+            );
+          });
         };
 
         const runPlacesSearch = async (category: string) => {
@@ -376,11 +406,19 @@ export function SocietyNearbyGoogleMap({
         for (const category of categoriesToFetch) {
           if (cancelled || requestId !== requestIdRef.current) return;
 
+          const beforeCategoryMarkers = totalMarkers;
+
           await runPlacesSearch(category);
 
           // Reliable fallback: convert stored admin-reviewed nearby text into real pins.
           if (activeCategory !== "All" || totalMarkers === 0) {
             await geocodeAdminNearbyLines(category);
+          }
+
+          // Guaranteed visual fallback: if Google cannot map the reviewed text,
+          // show clearly-labelled approximate nearby preview pins around society.
+          if (totalMarkers === beforeCategoryMarkers) {
+            addApproxNearbyPins(category);
           }
         }
 
@@ -397,7 +435,7 @@ export function SocietyNearbyGoogleMap({
           setMapStatus(
             activeCategory === "All"
               ? "Society pin loaded. Nearby text exists, but no mappable nearby coordinates were returned."
-              : `Society pin loaded. ${activeCategory} text exists, but no mappable coordinates were returned.`,
+              : `Society pin loaded. Showing approximate ${activeCategory} preview pins from verified nearby text.`,
           );
         }
 
