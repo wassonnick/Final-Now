@@ -72,7 +72,7 @@ export function SocietyMapView({ societies, query = "" }: SocietyMapViewProps) {
               Map pins appear after admin coordinate verification.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-navy-500 md:text-base">
-              Add latitude and longitude in Admin Society profiles to unlock society pins, nearby-home CTAs and location-led shortlisting.
+              Add valid latitude and longitude in Admin Society profiles to unlock verified pins, nearby-home CTAs and location-led shortlisting.
             </p>
           </div>
           <Link
@@ -101,14 +101,14 @@ export function SocietyMapView({ societies, query = "" }: SocietyMapViewProps) {
         <div className="relative z-10 flex items-center justify-between gap-3 border-b border-blue-100 bg-white/80 px-4 py-4 backdrop-blur">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-600">
-              Coordinate map
+              Map preview
             </p>
             <h2 className="mt-1 text-xl font-black tracking-[-0.03em] text-navy-950">
-              {validSocieties.length} verified society pins
+              {validSocieties.length} verified preview pins
             </h2>
           </div>
           <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
-            Coordinates ready
+            Preview pins ready
           </span>
         </div>
 

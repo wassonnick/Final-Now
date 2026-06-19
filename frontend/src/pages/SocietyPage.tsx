@@ -510,6 +510,29 @@ export function SocietyPage() {
     },
   ];
 
+  const nearbyFallbackCards = [
+    {
+      title: "Schools",
+      text: "School access is being verified from public sources and local checks.",
+      icon: School,
+    },
+    {
+      title: "Metro / commute",
+      text: "Metro, road and daily commute context will be confirmed by SocietyFlats.",
+      icon: Train,
+    },
+    {
+      title: "Hospitals",
+      text: "Nearby hospital and emergency-access context is pending admin review.",
+      icon: Shield,
+    },
+    {
+      title: "Office hubs",
+      text: "Office hub proximity and practical travel fit will be added after verification.",
+      icon: Building2,
+    },
+  ];
+
   const hasNearbyData = nearby.some((item) => splitLines(item.value).length > 0);
   const sourceUrl = field<string>(society, "sourceUrl", "source_url", "");
   const reraUrl =
@@ -1080,27 +1103,43 @@ export function SocietyPage() {
               />
 
               {!hasNearbyData ? (
-                <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-amber-100 bg-amber-50/80 p-3.5 md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white text-amber-700 shadow-sm">
-                      <Shield className="h-4 w-4" />
-                    </span>
-                    <div>
-                      <p className="text-sm font-black text-navy-900">
-                        Location details are under admin verification.
-                      </p>
-                      <p className="mt-1 text-sm leading-5 text-navy-600">
-                        Request a callback and the team will confirm schools, metro, hospitals and office-hub context for {society.name}.
-                      </p>
+                <div className="mt-3 space-y-3">
+                  <div className="flex flex-col gap-3 rounded-2xl border border-amber-100 bg-amber-50/80 p-3.5 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white text-amber-700 shadow-sm">
+                        <Shield className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-black text-navy-900">
+                          Nearby intelligence is pending admin verification.
+                        </p>
+                        <p className="mt-1 text-sm leading-5 text-navy-600">
+                          We are still completing schools, metro, hospitals and office-hub context for {society.name}. Request a callback for human-verified guidance.
+                        </p>
+                      </div>
                     </div>
+                    <Button
+                      onClick={() => openSocietyCallback("society_page_location_verification_callback")}
+                      size="sm"
+                      className="shrink-0 rounded-full bg-blue-600 px-4 font-bold hover:bg-blue-700"
+                    >
+                      Verify on call
+                    </Button>
                   </div>
-                  <Button
-                    onClick={() => openSocietyCallback("society_page_location_verification_callback")}
-                    size="sm"
-                    className="shrink-0 rounded-full bg-blue-600 px-4 font-bold hover:bg-blue-700"
-                  >
-                    Verify on call
-                  </Button>
+
+                  <div className="grid gap-2.5 md:grid-cols-2">
+                    {nearbyFallbackCards.map((item) => {
+                      const Icon = item.icon;
+
+                      return (
+                        <div key={item.title} className="rounded-[1.1rem] bg-blue-50/70 p-3.5">
+                          <Icon className="h-4 w-4 text-blue-600" />
+                          <h3 className="mt-2 font-bold text-navy-900">{item.title}</h3>
+                          <p className="mt-2 text-sm leading-5 text-navy-600">{item.text}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               ) : (
                 <div className="mt-3 grid gap-2.5 md:grid-cols-2">

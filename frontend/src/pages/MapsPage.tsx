@@ -124,7 +124,7 @@ export function MapsPage() {
     return Array.from(chips).slice(0, 6);
   }, [societies]);
 
-  const mapLabel = googleMapsApiKey ? "Live Google map" : "Coordinate map";
+  const mapLabel = googleMapsApiKey ? "Live Google map" : "Map preview";
   const visiblePinCount = pinnedSocieties.length;
   const matchCount = filteredSocieties.length;
 
@@ -221,6 +221,13 @@ export function MapsPage() {
           {fromSearch ? (
             <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
               Continued from search. Use the map pins to compare location before opening society profiles.
+            </div>
+          ) : null}
+
+          {!googleMapsApiKey ? (
+            <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+              <span className="font-black">Google Maps key not connected.</span>{" "}
+              Showing SocietyFlats map preview with verified coordinate pins. Add VITE_GOOGLE_MAPS_API_KEY in frontend Render env to enable the live Google map.
             </div>
           ) : null}
         </div>

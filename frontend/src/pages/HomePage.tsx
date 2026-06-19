@@ -49,6 +49,7 @@ import {
 } from "@/lib/publicData";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { setPublicSeo } from "@/lib/seo";
+import { societyImageAttribution } from "@/lib/societyImages";
 
 const whySocietyFlats = [
   {
@@ -408,7 +409,10 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
 
           {featuredSocieties.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {featuredSocieties.map((society) => (
+              {featuredSocieties.map((society) => {
+                const imageAttribution = societyImageAttribution(society);
+
+                return (
                 <Link
                   key={society.id}
                   to={`/society/${society.slug}`}
@@ -427,6 +431,12 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
                     </span>
                     <span className="absolute right-3 top-3 rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-black text-emerald-700">
                       Verified
+                    </span>
+                    <span
+                      className="absolute bottom-2 left-3 z-20 max-w-[72%] truncate rounded-full bg-slate-950/90 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm ring-1 ring-white/20 backdrop-blur"
+                      title={imageAttribution.title}
+                    >
+                      {imageAttribution.label}
                     </span>
                   </div>
                   <div className="p-3 md:p-3.5">
@@ -478,7 +488,8 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
                     </span>
                   </div>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="rounded-[1.5rem] border border-dashed border-navy-200 bg-ivory-100 p-6 text-navy-500">
