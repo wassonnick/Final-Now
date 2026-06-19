@@ -719,6 +719,30 @@ export async function createSocietyFromFetchedData(society: AdminSociety, publis
   return mapApiSociety(json?.data || {});
 }
 
+export type NearbyIntelligenceSuggestions = {
+  nearby_schools: string;
+  nearby_metro: string;
+  nearby_hospitals: string;
+  nearby_office_hubs: string;
+};
+
+export async function autoFillNearbyIntelligence(id: number | string): Promise<{ suggestions: NearbyIntelligenceSuggestions; message: string; meta: Record<string, unknown> }> {
+  const json = await request(`/admin/societies/${id}/nearby-intelligence/auto-fill`, {
+    method: 'POST',
+  });
+
+  return {
+    suggestions: {
+      nearby_schools: json?.suggestions?.nearby_schools || '',
+      nearby_metro: json?.suggestions?.nearby_metro || '',
+      nearby_hospitals: json?.suggestions?.nearby_hospitals || '',
+      nearby_office_hubs: json?.suggestions?.nearby_office_hubs || '',
+    },
+    message: json?.message || 'Nearby intelligence suggestions fetched.',
+    meta: json?.meta || {},
+  };
+}
+
 export async function fetchGooglePlacesSocietyImageReference(id: number): Promise<{ society: AdminSociety; message: string; meta: Record<string, unknown> }> {
   const response = await adminFetch(`/admin/societies/${id}/google-places-image-reference`, {
     method: 'POST',

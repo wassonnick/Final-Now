@@ -845,4 +845,11 @@ QUERY;
 
     return $amenities;
   }
+    public function nearbyIntelligenceAutoFill(\App\Models\Society $society, \App\Services\GooglePlacesNearbyIntelligenceService $service)
+    {
+        $result = $service->suggestionsForSociety($society);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
 }

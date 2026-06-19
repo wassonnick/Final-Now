@@ -28,6 +28,8 @@ import {
   createEmptyAdminSociety,
   describeBrochureUpdate,
   enrichAdminSociety,
+  autoFillNearbyIntelligence,
+  type NearbyIntelligenceSuggestions,
   fetchAdminSociety,
   fetchSocietyDraftFromBrochure,
   fetchGooglePlacesSocietyImageReference,
@@ -222,6 +224,10 @@ export function AdminSocietyFormPage() {
   const [loadedSourceUrl, setLoadedSourceUrl] = useState("");
   const [error, setError] = useState("");
   const [coordinateExtractMessage, setCoordinateExtractMessage] = useState("");
+  const [nearbyAutoFillLoading, setNearbyAutoFillLoading] = useState(false);
+  const [nearbyAutoFillMessage, setNearbyAutoFillMessage] = useState("");
+  const [nearbyAutoFillSuggestions, setNearbyAutoFillSuggestions] =
+    useState<NearbyIntelligenceSuggestions | null>(null);
   const [message, setMessage] = useState("");
   const [saved, setSaved] = useState(false);
 
@@ -629,6 +635,53 @@ export function AdminSocietyFormPage() {
       mapsQuery: `business parks near ${nearbyResearchLocation}`,
     },
   ] as const;
+
+  const handleNearbyAutoFill = async () => {
+    if (!isEdit || nearbyAutoFillLoading) return;
+
+    try {
+      setNearbyAutoFillLoading(true);
+      setNearbyAutoFillMessage("");
+      setError("");
+
+      const result = await autoFillNearbyIntelligence(society.id);
+      setNearbyAutoFillSuggestions(result.suggestions);
+      setNearbyAutoFillMessage(result.message);
+    } catch (err) {
+      console.error(err);
+      setNearbyAutoFillMessage(
+        err instanceof Error ? err.message : "Nearby auto-fill failed. Check coordinates and backend Google Places key.",
+      );
+    } finally {
+      setNearbyAutoFillLoading(false);
+    }
+  };
+
+  const applyNearbyAutoFillSuggestions = () => {
+    if (!nearbyAutoFillSuggestions) return;
+
+    setSociety((current) => ({
+      ...current,
+      nearbySchools: nearbyAutoFillSuggestions.nearby_schools || current.nearbySchools,
+      nearbyMetro: nearbyAutoFillSuggestions.nearby_metro || current.nearbyMetro,
+      nearbyHospitals: nearbyAutoFillSuggestions.nearby_hospitals || current.nearbyHospitals,
+      nearbyOfficeHubs: nearbyAutoFillSuggestions.nearby_office_hubs || current.nearbyOfficeHubs,
+      fieldsToVerify: [
+        current.fieldsToVerify,
+        "Nearby intelligence auto-filled from Google Places; admin review required.",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      dataQuality: current.dataQuality.includes("Google Places nearby")
+        ? current.dataQuality
+        : [current.dataQuality, "Google Places nearby suggestions applied; admin review required."]
+            .filter(Boolean)
+            .join(" | "),
+    }));
+
+    setSaved(false);
+    setNearbyAutoFillMessage("Suggestions applied to the form. Review/edit, then save.");
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -1133,10 +1186,65 @@ export function AdminSocietyFormPage() {
                     Use these links to verify nearby context, then manually add only checked data below.
                   </p>
                 </div>
-                <span className="w-fit rounded-full border border-emerald-100 bg-white px-3 py-1.5 text-xs font-black text-emerald-700">
-                  {nearbyResearchActions.filter((item) => item.status === "Added").length}/4 filled
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="w-fit rounded-full border border-emerald-100 bg-white px-3 py-1.5 text-xs font-black text-emerald-700">
+                    {nearbyResearchActions.filter((item) => item.status === "Added").length}/4 filled
+                  </span>
+                  {isEdit ? (
+                    <Button
+                      type="button"
+                      onClick={handleNearbyAutoFill}
+                      disabled={nearbyAutoFillLoading}
+                      className="rounded-full bg-emerald-700 px-4 text-xs font-black text-white hover:bg-emerald-800"
+                    >
+                      {nearbyAutoFillLoading ? "Fetching..." : "Auto-fill via Google Places"}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
+
+              {nearbyAutoFillMessage ? (
+                <div className="mt-4 rounded-2xl border border-emerald-100 bg-white px-3 py-2.5 text-xs font-semibold leading-5 text-emerald-700">
+                  {nearbyAutoFillMessage}
+                </div>
+              ) : null}
+
+              {nearbyAutoFillSuggestions ? (
+                <div className="mt-4 rounded-2xl border border-emerald-100 bg-white p-3">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm font-black text-slate-950">Google Places suggestions preview</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-500">
+                        Review these before applying. Existing filled fields are not overwritten by blank suggestions.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={applyNearbyAutoFillSuggestions}
+                      variant="outline"
+                      className="w-fit rounded-full border-emerald-100 text-emerald-700 hover:bg-emerald-50"
+                    >
+                      Apply suggestions
+                    </Button>
+                  </div>
+
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {[
+                      ["Schools", nearbyAutoFillSuggestions.nearby_schools],
+                      ["Metro / commute", nearbyAutoFillSuggestions.nearby_metro],
+                      ["Hospitals", nearbyAutoFillSuggestions.nearby_hospitals],
+                      ["Office hubs", nearbyAutoFillSuggestions.nearby_office_hubs],
+                    ].map(([label, value]) => (
+                      <div key={label} className="rounded-xl bg-emerald-50/70 p-3">
+                        <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-700">{label}</p>
+                        <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap text-xs leading-5 text-slate-700">
+                          {String(value || "No suggestion returned.")}
+                        </pre>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {nearbyResearchActions.map((item) => (
