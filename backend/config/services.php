@@ -36,6 +36,7 @@ return [
     ],
 
     'admin_api_token' => env('ADMIN_API_TOKEN'),
+    'google_places_api_key' => env('GOOGLE_PLACES_API_KEY'),
 
     'lead_notifications' => [
         'enabled' => env('LEAD_NOTIFICATION_ENABLED', false),

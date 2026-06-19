@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use App\Services\SocietyEnrichment\SocietyBrochureExtractionService;
 use App\Services\SocietyEnrichment\SocietyUrlEnrichmentService;
+use App\Services\GooglePlacesSocietyImageService;
 class SocietyController extends Controller {
   public function index(Request $request): JsonResponse {
     $query=Society::query();
@@ -66,6 +67,61 @@ class SocietyController extends Controller {
       ], 201);
   }
   public function update(Request $request, Society $society): JsonResponse { $p=$this->withSocietyDefaults($this->payload($request,true), true); if(isset($p['name'])&&empty($p['slug'])) $p['slug']=Str::slug($p['name']); $society->update($p); return response()->json(['status'=>'ok','message'=>'Society updated successfully.','data'=>$society]); }
+  public function googlePlacesImageReference(Society $society, GooglePlacesSocietyImageService $places): JsonResponse
+  {
+    try {
+      $reference = $places->findImageReference($society);
+    } catch (\InvalidArgumentException $exception) {
+      return response()->json([
+        'status' => 'error',
+        'message' => $exception->getMessage(),
+      ], 422);
+    } catch (\Throwable $exception) {
+      return response()->json([
+        'status' => 'error',
+        'message' => 'Unable to fetch a Google Places photo reference.',
+        'detail' => $exception->getMessage(),
+      ], 422);
+    }
+
+    $fieldsToVerify = $society->fields_to_verify ?: [];
+
+    if (!is_array($fieldsToVerify)) {
+      $decoded = json_decode((string) $fieldsToVerify, true);
+      $fieldsToVerify = is_array($decoded) ? $decoded : array_filter([(string) $fieldsToVerify]);
+    }
+
+    foreach (['google_places_image_rights', 'image_rights'] as $field) {
+      if (!in_array($field, $fieldsToVerify, true)) {
+        $fieldsToVerify[] = $field;
+      }
+    }
+
+    $society->update([
+      'place_id' => $reference['place_id'] ?: $society->place_id,
+      'image_reference_url' => $reference['photo_url'],
+      'image_status' => 'google_places_reference_found',
+      'image_approved_by_admin' => false,
+      'image_alt_text' => $society->image_alt_text ?: $society->name . ' residential society in Gurugram',
+      'image_credit' => $reference['credit'],
+      'image_license_notes' => $reference['license_note'],
+      'fields_to_verify' => array_values($fieldsToVerify),
+    ]);
+
+    return response()->json([
+      'status' => 'ok',
+      'message' => 'Google Places photo reference saved for admin review. It is not approved for public display.',
+      'data' => $society->fresh(),
+      'meta' => [
+        'place_id' => $reference['place_id'],
+        'place_name' => $reference['place_name'],
+        'formatted_address' => $reference['formatted_address'],
+        'place_url' => $reference['place_url'],
+        'credit' => $reference['credit'],
+      ],
+    ]);
+  }
+
   public function fetchFromUrl(Request $request, SocietyUrlEnrichmentService $enrichment): JsonResponse {
     $validated = $request->validate([
       'official_project_url' => 'required|url|max:2000',

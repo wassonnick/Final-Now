@@ -1,4 +1,4 @@
-import { adminHeaders } from '@/lib/adminApi';
+import { adminFetch, adminHeaders } from '@/lib/adminApi';
 
 
 const normalizeAdminText = (value: unknown): string => {
@@ -717,3 +717,22 @@ export async function createSocietyFromFetchedData(society: AdminSociety, publis
 
   return mapApiSociety(json?.data || {});
 }
+
+export async function fetchGooglePlacesSocietyImageReference(id: number): Promise<{ society: AdminSociety; message: string; meta: Record<string, unknown> }> {
+  const response = await adminFetch(`/admin/societies/${id}/google-places-image-reference`, {
+    method: 'POST',
+  });
+
+  const json = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(json?.message || 'Unable to fetch Google Places image reference.');
+  }
+
+  return {
+    society: mapApiSociety(json?.data || {}),
+    message: json?.message || 'Google Places image reference saved for admin review.',
+    meta: json?.meta || {},
+  };
+}
+

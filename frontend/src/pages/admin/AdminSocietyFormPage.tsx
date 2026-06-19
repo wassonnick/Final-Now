@@ -28,6 +28,7 @@ import {
   enrichAdminSociety,
   fetchAdminSociety,
   fetchSocietyDraftFromBrochure,
+  fetchGooglePlacesSocietyImageReference,
   MAX_BROCHURE_UPLOAD_BYTES,
   mergeFetchedSocietyDraft,
   saveAdminSociety,
@@ -304,6 +305,34 @@ export function AdminSocietyFormPage() {
       setError(friendlyFetchError(err, "Unable to extract details from this brochure."));
     } finally {
       setBrochureExtracting(false);
+    }
+  };
+
+  const fetchGooglePlacesImageReference = async () => {
+    const societyId = Number(society.id || 0);
+
+    if (!societyId) {
+      setError("Save the society first before fetching a Google Places image reference.");
+      return;
+    }
+
+    setError(null);
+    setMessage("Fetching Google Places photo reference...");
+
+    try {
+      const result = await fetchGooglePlacesSocietyImageReference(societyId);
+
+      setSociety((current) => ({
+        ...current,
+        ...result.society,
+        imageApprovedByAdmin: false,
+      }));
+
+      setMessage(result.message);
+      setSaved(false);
+    } catch (err) {
+      console.error(err);
+      setError(friendlyFetchError(err, "Unable to fetch Google Places image reference."));
     }
   };
 
@@ -986,6 +1015,15 @@ export function AdminSocietyFormPage() {
                   >
                     Reference only
                   </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={fetchGooglePlacesImageReference}
+                    className="col-span-2 h-10 rounded-full border-amber-200 text-sm font-bold text-amber-700"
+                  >
+                    <MapPin className="mr-2 h-4 w-4" />
+                    Fetch Google Places photo reference
+                  </Button>
                 </div>
               </div>
 
@@ -1090,7 +1128,7 @@ export function AdminSocietyFormPage() {
                 <div>
                   <h2 className="font-bold text-slate-950">Image safety note</h2>
                   <p className="mt-1 text-sm leading-relaxed text-slate-500">
-                    Use uploaded/licensed/self-shot images or approve references only after rights review.
+                    Use uploaded/licensed/self-shot images or approve references only after rights review. Google Places photos must remain reference-only until attribution and usage terms are checked.
                   </p>
                 </div>
               </div>
