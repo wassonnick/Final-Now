@@ -572,7 +572,63 @@ export function AdminSocietyFormPage() {
     setCoordinateExtractMessage(
       `${trustLabel}. Source: ${coordinates.source}. Coordinates: ${coordinates.latitude}, ${coordinates.longitude}.${coordinates.warning ? ` ${coordinates.warning}` : ""}`,
     );
-  };;
+  };
+
+  const nearbyResearchLocation = [
+    society.name,
+    society.sector,
+    society.locality,
+    society.city || "Gurugram",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const openResearchUrl = (url: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const googleSearchUrl = (query: string) => {
+    return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+  };
+
+  const googleMapsSearchUrl = (query: string) => {
+    return `https://www.google.com/maps/search/${encodeURIComponent(query)}`;
+  };
+
+  const nearbyResearchActions = [
+    {
+      label: "Schools",
+      field: "nearbySchools",
+      status: society.nearbySchools.trim() ? "Added" : "Missing",
+      helper: "Find school names, drive time and distance from verified public results.",
+      searchQuery: `schools near ${nearbyResearchLocation}`,
+      mapsQuery: `schools near ${nearbyResearchLocation}`,
+    },
+    {
+      label: "Metro / commute",
+      field: "nearbyMetro",
+      status: society.nearbyMetro.trim() ? "Added" : "Missing",
+      helper: "Check nearest metro/rapid metro station, arterial roads and practical commute.",
+      searchQuery: `nearest metro station to ${nearbyResearchLocation}`,
+      mapsQuery: `metro station near ${nearbyResearchLocation}`,
+    },
+    {
+      label: "Hospitals",
+      field: "nearbyHospitals",
+      status: society.nearbyHospitals.trim() ? "Added" : "Missing",
+      helper: "Verify nearby hospitals or emergency-care access before adding.",
+      searchQuery: `hospitals near ${nearbyResearchLocation}`,
+      mapsQuery: `hospitals near ${nearbyResearchLocation}`,
+    },
+    {
+      label: "Office hubs",
+      field: "nearbyOfficeHubs",
+      status: society.nearbyOfficeHubs.trim() ? "Added" : "Missing",
+      helper: "Check Cyber Hub, Golf Course Road, Sohna Road, SPR, Udyog Vihar or relevant hubs.",
+      searchQuery: `office hubs near ${nearbyResearchLocation}`,
+      mapsQuery: `business parks near ${nearbyResearchLocation}`,
+    },
+  ] as const;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -1061,6 +1117,72 @@ export function AdminSocietyFormPage() {
                     <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">{item.helper}</p>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            <section className="rounded-[20px] border border-emerald-100 bg-emerald-50/60 p-4 shadow-sm md:p-5">
+              <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">
+                    C107 nearby filling workflow
+                  </p>
+                  <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-950">
+                    Research nearby data safely
+                  </h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
+                    Use these links to verify nearby context, then manually add only checked data below.
+                  </p>
+                </div>
+                <span className="w-fit rounded-full border border-emerald-100 bg-white px-3 py-1.5 text-xs font-black text-emerald-700">
+                  {nearbyResearchActions.filter((item) => item.status === "Added").length}/4 filled
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {nearbyResearchActions.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-emerald-100 bg-white p-3 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-black text-slate-950">{item.label}</p>
+                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+                          {item.helper}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${
+                        item.status === "Added"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-amber-50 text-amber-700"
+                      }`}>
+                        {item.status}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full border-emerald-100 text-emerald-700 hover:bg-emerald-50"
+                        onClick={() => openResearchUrl(googleSearchUrl(item.searchQuery))}
+                      >
+                        Google search
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full border-blue-100 text-blue-700 hover:bg-blue-50"
+                        onClick={() => openResearchUrl(googleMapsSearchUrl(item.mapsQuery))}
+                      >
+                        Maps search
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-emerald-100 bg-white px-3 py-2.5 text-xs font-semibold leading-5 text-slate-600">
+                Suggested format: <span className="font-black text-slate-950">Name — approx distance / drive time — source checked</span>. Keep one verified item per line.
               </div>
             </section>
 
