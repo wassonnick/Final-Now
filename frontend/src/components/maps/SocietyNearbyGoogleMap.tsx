@@ -44,7 +44,7 @@ const CATEGORY_CONFIG: Record<
 > = {
   Schools: {
     label: "Schools",
-    queries: ["schools", "public school", "school near"],
+    queries: ["schools", "public school", "school"],
     radius: 5500,
     icon: School,
   },
@@ -56,20 +56,13 @@ const CATEGORY_CONFIG: Record<
   },
   Hospitals: {
     label: "Hospitals",
-    queries: ["hospitals", "hospital", "emergency hospital"],
+    queries: ["hospitals", "hospital"],
     radius: 6000,
     icon: Navigation,
   },
   "Office hubs": {
     label: "Office hubs",
-    queries: [
-      "Cyber City",
-      "DLF Cyber Hub",
-      "Golf Course Road offices",
-      "business park",
-      "corporate office",
-      "office hubs",
-    ],
+    queries: ["Cyber City", "DLF Cyber Hub", "Golf Course Road offices", "business park", "corporate office"],
     radius: 10000,
     icon: Building2,
   },
@@ -87,8 +80,23 @@ function safeHtml(value?: string | number | null) {
     .replace(/"/g, "&quot;");
 }
 
+function cleanNearbyLine(value: string) {
+  return cleanText(value)
+    .replace(/\s+—\s+source:\s+Google Places/gi, "")
+    .replace(/\s+—\s*Google rating\s+[0-9.]+/gi, "")
+    .trim();
+}
+
+function splitNearbyText(value?: string | null) {
+  return cleanText(value)
+    .split(/\n+/)
+    .map(cleanNearbyLine)
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
 function loadGoogleMapsWithPlaces(apiKey: string) {
-  if (window.google?.maps?.places?.PlacesService) return Promise.resolve();
+  if (window.google?.maps) return Promise.resolve();
 
   if (window.societyFlatsGoogleMapsPlacesPromise) {
     return window.societyFlatsGoogleMapsPlacesPromise;
@@ -103,12 +111,7 @@ function loadGoogleMapsWithPlaces(apiKey: string) {
       existing.addEventListener("load", () => resolve());
       existing.addEventListener("error", () => reject(new Error("Google Maps failed to load")));
 
-      if (window.google?.maps?.importLibrary) {
-        window.google.maps.importLibrary("places").finally(resolve);
-      } else if (window.google?.maps) {
-        resolve();
-      }
-
+      if (window.google?.maps) resolve();
       return;
     }
 
@@ -148,13 +151,23 @@ export function SocietyNearbyGoogleMap({
   const requestIdRef = useRef(0);
 
   const [mapError, setMapError] = useState("");
-  const [loadedPlaces, setLoadedPlaces] = useState<Array<{ name: string; category: string }>>([]);
+  const [loadedPlaces, setLoadedPlaces] = useState<Array<{ name: string; category: string; source: string }>>([]);
   const [mapStatus, setMapStatus] = useState("Loading nearby markers...");
 
   const lat = parseMapCoordinate(latitude);
   const lng = parseMapCoordinate(longitude);
   const hasCoordinates = hasValidMapCoordinates(latitude, longitude);
   const cleanLocation = cleanText(location) || "Gurgaon";
+
+  const nearbyTextByCategory = useMemo(
+    () => ({
+      Schools: splitNearbyText(nearbySchools),
+      Metro: splitNearbyText(nearbyMetro),
+      Hospitals: splitNearbyText(nearbyHospitals),
+      "Office hubs": splitNearbyText(nearbyOfficeHubs),
+    }),
+    [nearbyHospitals, nearbyMetro, nearbyOfficeHubs, nearbySchools],
+  );
 
   const categoriesToFetch = useMemo(() => {
     if (activeCategory && activeCategory !== "All" && CATEGORY_CONFIG[activeCategory]) {
@@ -226,7 +239,7 @@ export function SocietyNearbyGoogleMap({
           if (!infoWindowRef.current || !societyMarkerRef.current || !mapInstanceRef.current) return;
 
           infoWindowRef.current.setContent(`
-            <div style="max-width:205px;font-family:Inter,Arial,sans-serif;padding:0;">
+            <div style="max-width:195px;font-family:Inter,Arial,sans-serif;">
               <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2563eb;margin-bottom:3px;">Society pin</div>
               <div style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:2px;">${safeHtml(title)}</div>
               <div style="font-size:11px;line-height:1.35;color:#64748b;margin-bottom:5px;">${safeHtml(cleanLocation)}</div>
@@ -242,118 +255,153 @@ export function SocietyNearbyGoogleMap({
         placeMarkersRef.current.forEach((marker) => marker.setMap(null));
         placeMarkersRef.current = [];
 
-        if (!window.google?.maps?.places?.PlacesService) {
-          openSocietyCard();
-          setMapStatus("Society pin loaded. Google Places markers are unavailable for this key.");
-          return;
-        }
-
-        const service = new window.google.maps.places.PlacesService(mapInstanceRef.current);
         const bounds = new window.google.maps.LatLngBounds();
         bounds.extend(center);
 
-        const collectedPlaces: Array<{ name: string; category: string }> = [];
+        const collectedPlaces: Array<{ name: string; category: string; source: string }> = [];
         const seenPlaceKeys = new Set<string>();
-        let pending = 0;
         let totalMarkers = 0;
 
-        const finishOneSearch = () => {
-          pending -= 1;
+        const addMarker = (category: string, name: string, position: any, address = "", source = "Google") => {
+          const key = `${category}-${name}-${position?.lat?.()}-${position?.lng?.()}`;
 
-          if (pending <= 0 && requestId === requestIdRef.current && !cancelled) {
-            if (totalMarkers > 0) {
-              mapInstanceRef.current.fitBounds(bounds, 80);
-              setMapStatus(
-                activeCategory === "All"
-                  ? `${totalMarkers} nearby markers loaded.`
-                  : `${totalMarkers} ${activeCategory} marker${totalMarkers === 1 ? "" : "s"} loaded.`,
-              );
-            } else {
-              mapInstanceRef.current.setCenter(center);
-              mapInstanceRef.current.setZoom(activeCategory === "All" ? 13 : 14);
-              setMapStatus(
-                activeCategory === "All"
-                  ? "Society pin loaded. Google did not return nearby markers for this society."
-                  : `Society pin loaded. Google did not return ${activeCategory} markers nearby.`,
-              );
-            }
+          if (!position || !name || seenPlaceKeys.has(key)) return;
 
-            openSocietyCard();
+          seenPlaceKeys.add(key);
+
+          const marker = new window.google.maps.Marker({
+            position,
+            map: mapInstanceRef.current,
+            title: name,
+            label: category.charAt(0).toUpperCase(),
+          });
+
+          marker.addListener("click", () => {
+            infoWindowRef.current.setContent(`
+              <div style="max-width:220px;font-family:Inter,Arial,sans-serif;">
+                <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2563eb;margin-bottom:3px;">${safeHtml(category)}</div>
+                <div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:3px;">${safeHtml(name)}</div>
+                <div style="font-size:11px;line-height:1.35;color:#64748b;">${safeHtml(address)}</div>
+                <div style="margin-top:5px;font-size:10px;font-weight:800;color:#16a34a;">${safeHtml(source)}</div>
+              </div>
+            `);
+            infoWindowRef.current.open(mapInstanceRef.current, marker);
+          });
+
+          placeMarkersRef.current.push(marker);
+          bounds.extend(position);
+          totalMarkers += 1;
+
+          if (collectedPlaces.length < 8) {
+            collectedPlaces.push({ name, category, source });
+            setLoadedPlaces([...collectedPlaces]);
           }
         };
 
-        categoriesToFetch.forEach((category) => {
+        const geocodeAdminNearbyLines = async (category: string) => {
+          const geocoder = new window.google.maps.Geocoder();
+          const lines = nearbyTextByCategory[category as keyof typeof nearbyTextByCategory] || [];
+
+          for (const line of lines) {
+            if (cancelled || requestId !== requestIdRef.current) return;
+
+            await new Promise<void>((resolve) => {
+              geocoder.geocode(
+                {
+                  address: `${line}, near ${title}, ${cleanLocation}, Gurgaon, Haryana, India`,
+                },
+                (results: any[] | null, status: string) => {
+                  if (status === "OK" && results?.[0]?.geometry?.location) {
+                    addMarker(
+                      category,
+                      line.split("—")[0].trim() || line,
+                      results[0].geometry.location,
+                      results[0].formatted_address,
+                      "SocietyFlats verified nearby text",
+                    );
+                  }
+
+                  resolve();
+                },
+              );
+            });
+          }
+        };
+
+        const runPlacesSearch = async (category: string) => {
+          if (!window.google?.maps?.places?.PlacesService) return;
+
           const config = CATEGORY_CONFIG[category];
           if (!config) return;
 
+          const service = new window.google.maps.places.PlacesService(mapInstanceRef.current);
           const queryLimit = activeCategory === "All" ? 1 : config.queries.length;
           const queries = config.queries.slice(0, queryLimit);
 
-          queries.forEach((query) => {
-            pending += 1;
+          for (const query of queries) {
+            if (cancelled || requestId !== requestIdRef.current) return;
 
-            service.textSearch(
-              {
-                query: `${query} near ${title}, ${cleanLocation}, Gurgaon`,
-                location: center,
-                radius: config.radius,
-              },
-              (results: any[] | null, status: string) => {
-                if (cancelled || requestId !== requestIdRef.current) return;
+            await new Promise<void>((resolve) => {
+              service.textSearch(
+                {
+                  query: `${query} near ${title}, ${cleanLocation}, Gurgaon`,
+                  location: center,
+                  radius: config.radius,
+                },
+                (results: any[] | null, status: string) => {
+                  if (status === window.google.maps.places.PlacesServiceStatus.OK && results?.length) {
+                    results.slice(0, activeCategory === "All" ? 2 : 5).forEach((place) => {
+                      const placeLocation = place?.geometry?.location;
+                      const name = cleanText(place?.name);
 
-                if (status !== window.google.maps.places.PlacesServiceStatus.OK || !results?.length) {
-                  finishOneSearch();
-                  return;
-                }
+                      if (!placeLocation || !name) return;
 
-                results.slice(0, activeCategory === "All" ? 2 : 5).forEach((place) => {
-                  const placeLocation = place?.geometry?.location;
-                  const name = cleanText(place?.name);
-                  const placeId = cleanText(place?.place_id);
-                  const key = placeId || `${name}-${placeLocation?.lat?.()}-${placeLocation?.lng?.()}`;
-
-                  if (!placeLocation || !name || seenPlaceKeys.has(key)) return;
-
-                  seenPlaceKeys.add(key);
-
-                  const marker = new window.google.maps.Marker({
-                    position: placeLocation,
-                    map: mapInstanceRef.current,
-                    title: name,
-                    label: category.charAt(0).toUpperCase(),
-                  });
-
-                  marker.addListener("click", () => {
-                    infoWindowRef.current.setContent(`
-                      <div style="max-width:220px;font-family:Inter,Arial,sans-serif;">
-                        <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2563eb;margin-bottom:3px;">${safeHtml(category)}</div>
-                        <div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:3px;">${safeHtml(name)}</div>
-                        <div style="font-size:11px;line-height:1.35;color:#64748b;">${safeHtml(place?.formatted_address || place?.vicinity)}</div>
-                      </div>
-                    `);
-                    infoWindowRef.current.open(mapInstanceRef.current, marker);
-                  });
-
-                  placeMarkersRef.current.push(marker);
-                  bounds.extend(placeLocation);
-                  totalMarkers += 1;
-
-                  if (collectedPlaces.length < 8) {
-                    collectedPlaces.push({ name, category });
+                      addMarker(
+                        category,
+                        name,
+                        placeLocation,
+                        place?.formatted_address || place?.vicinity,
+                        "Google Places",
+                      );
+                    });
                   }
-                });
 
-                setLoadedPlaces([...collectedPlaces]);
-                finishOneSearch();
-              },
-            );
-          });
-        });
+                  resolve();
+                },
+              );
+            });
+          }
+        };
 
-        if (pending === 0) {
-          openSocietyCard();
-          setMapStatus("Society pin loaded. No nearby categories are available yet.");
+        for (const category of categoriesToFetch) {
+          if (cancelled || requestId !== requestIdRef.current) return;
+
+          await runPlacesSearch(category);
+
+          // Reliable fallback: convert stored admin-reviewed nearby text into real pins.
+          if (activeCategory !== "All" || totalMarkers === 0) {
+            await geocodeAdminNearbyLines(category);
+          }
         }
+
+        if (totalMarkers > 0) {
+          mapInstanceRef.current.fitBounds(bounds, 80);
+          setMapStatus(
+            activeCategory === "All"
+              ? `${totalMarkers} nearby marker${totalMarkers === 1 ? "" : "s"} loaded.`
+              : `${totalMarkers} ${activeCategory} marker${totalMarkers === 1 ? "" : "s"} loaded.`,
+          );
+        } else {
+          mapInstanceRef.current.setCenter(center);
+          mapInstanceRef.current.setZoom(activeCategory === "All" ? 13 : 14);
+          setMapStatus(
+            activeCategory === "All"
+              ? "Society pin loaded. Nearby text exists, but no mappable nearby coordinates were returned."
+              : `Society pin loaded. ${activeCategory} text exists, but no mappable coordinates were returned.`,
+          );
+        }
+
+        openSocietyCard();
       } catch (error) {
         console.error("Society nearby Google map failed", error);
         setMapError("Google map could not load. Showing SocietyFlats location preview.");
@@ -365,7 +413,7 @@ export function SocietyNearbyGoogleMap({
     return () => {
       cancelled = true;
     };
-  }, [activeCategory, categoriesToFetch, cleanLocation, hasCoordinates, lat, lng, title]);
+  }, [activeCategory, categoriesToFetch, cleanLocation, hasCoordinates, lat, lng, nearbyTextByCategory, title]);
 
   if (!GOOGLE_MAPS_API_KEY || !hasCoordinates || mapError) {
     return (
@@ -431,6 +479,9 @@ export function SocietyNearbyGoogleMap({
                   </p>
                   <p className="mt-0.5 line-clamp-1 text-xs font-bold text-navy-800">
                     {place.name}
+                  </p>
+                  <p className="mt-0.5 text-[10px] font-bold text-emerald-700">
+                    {place.source}
                   </p>
                 </div>
               ))
