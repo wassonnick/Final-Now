@@ -922,20 +922,8 @@ QUERY;
                     continue;
                 }
 
-                $reviewNote = 'Nearby intelligence auto-filled from Google Places; admin review required.';
-
-                if (\Illuminate\Support\Facades\Schema::hasColumn($society->getTable(), 'fields_to_verify')) {
-                    $currentVerify = trim((string) ($society->fields_to_verify ?? ''));
-                    $society->fields_to_verify = trim($currentVerify . ($currentVerify ? "\n" : '') . $reviewNote);
-                }
-
-                if (\Illuminate\Support\Facades\Schema::hasColumn($society->getTable(), 'data_quality')) {
-                    $currentQuality = trim((string) ($society->data_quality ?? ''));
-                    if (!str_contains($currentQuality, 'Google Places nearby')) {
-                        $society->data_quality = trim($currentQuality . ($currentQuality ? ' | ' : '') . 'Google Places nearby suggestions applied; admin review required.');
-                    }
-                }
-
+                // Keep C109 bulk autofill safe: only fill empty nearby fields.
+                // Do not mutate fields_to_verify/data_quality here because those columns may be cast as arrays.
                 $society->save();
 
                 $summary['updated']++;

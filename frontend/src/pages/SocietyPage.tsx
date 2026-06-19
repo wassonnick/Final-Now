@@ -1137,33 +1137,7 @@ export function SocietyPage() {
                 Nearby data is Google Places assisted and admin-reviewed. Use it as a quick location layer before requesting visit guidance.
               </p>
 
-              <div className="mt-3 rounded-2xl border border-blue-100 bg-white p-3 md:flex md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-600">
-                    Map pin
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-navy-900">
-                    {society.name} · {societyLocation}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold text-navy-500">
-                    Pinned coordinates are used for commute and nearby intelligence.
-                  </p>
-                </div>
-                <Button asChild variant="outline" className="mt-3 rounded-full border-blue-100 text-blue-700 md:mt-0">
-                  <a
-                    href={
-                      field(society, "googleMapsUrl", "google_maps_url", "") ||
-                      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${field(society, "latitude", "latitude", "")},${field(society, "longitude", "longitude", "")}`)}`
-                    }
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open on Google Maps <ExternalLink className="ml-2 h-4 w-4" />
-                  </a>
-                </Button>
-              </div>
-
-              <div className="md:hidden">
+              <div className="mt-3 overflow-hidden rounded-2xl border border-blue-100">
                 <LocationIntelligencePreview
                   title={society.name}
                   location={societyLocation}
@@ -1375,8 +1349,7 @@ export function SocietyPage() {
             ) : null}
           </div>
 
-          <aside className="hidden lg:block">
-            <div className="fixed right-[max(1rem,calc((100vw-1280px)/2+1rem))] top-24 z-30 max-h-[calc(100vh-7rem)] w-[340px] overflow-y-auto rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-soft">
+          <aside className="hidden lg:block lg:self-start"><div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-soft">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                 Next step
               </p>
