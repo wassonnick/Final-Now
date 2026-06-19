@@ -51,6 +51,79 @@ function getStatus(item: AdminSociety) {
   return item.status || "Draft";
 }
 
+function cleanText(value: unknown) {
+  return String(value || "").trim();
+}
+
+function hasValidAdminCoordinates(item: AdminSociety) {
+  const lat = Number(cleanText(item.latitude));
+  const lng = Number(cleanText(item.longitude));
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  if (lat === 0 && lng === 0) return false;
+
+  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+function hasNearbyIntelligence(item: AdminSociety) {
+  return Boolean(
+    cleanText(item.nearbySchools) ||
+      cleanText(item.nearbyMetro) ||
+      cleanText(item.nearbyHospitals) ||
+      cleanText(item.nearbyOfficeHubs),
+  );
+}
+
+function hasFullNearbyIntelligence(item: AdminSociety) {
+  return Boolean(
+    cleanText(item.nearbySchools) &&
+      cleanText(item.nearbyMetro) &&
+      cleanText(item.nearbyHospitals) &&
+      cleanText(item.nearbyOfficeHubs),
+  );
+}
+
+function hasGoogleMapLink(item: AdminSociety) {
+  return Boolean(cleanText(item.googleMapsUrl));
+}
+
+function dataCompletionStatus(item: AdminSociety) {
+  const mapReady = hasValidAdminCoordinates(item);
+  const nearbyReady = hasNearbyIntelligence(item);
+  const fullNearbyReady = hasFullNearbyIntelligence(item);
+  const googleMapReady = hasGoogleMapLink(item);
+
+  if (mapReady && fullNearbyReady && googleMapReady) {
+    return {
+      label: "Launch ready",
+      tone: "border-emerald-100 bg-emerald-50 text-emerald-700",
+      helper: "Map, Google URL and nearby intelligence complete",
+    };
+  }
+
+  if (mapReady && nearbyReady) {
+    return {
+      label: "Data partial",
+      tone: "border-blue-100 bg-blue-50 text-blue-700",
+      helper: "Map ready, nearby data partly complete",
+    };
+  }
+
+  if (!mapReady) {
+    return {
+      label: "Needs coordinates",
+      tone: "border-amber-100 bg-amber-50 text-amber-700",
+      helper: "Add latitude and longitude",
+    };
+  }
+
+  return {
+    label: "Needs nearby",
+    tone: "border-slate-200 bg-slate-50 text-slate-600",
+    helper: "Add schools, metro, hospitals and office hubs",
+  };
+}
+
 export function AdminSocietiesPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All");
@@ -140,6 +213,20 @@ export function AdminSocietiesPage() {
       ).toFixed(1)
     : "0.0";
   const selectedSocieties = societies.filter((item) => selectedIds.includes(item.id));
+
+  const locationDataSummary = {
+    mapReady: societies.filter(hasValidAdminCoordinates).length,
+    googleMapReady: societies.filter(hasGoogleMapLink).length,
+    nearbyPartial: societies.filter(hasNearbyIntelligence).length,
+    nearbyComplete: societies.filter(hasFullNearbyIntelligence).length,
+    launchReady: societies.filter((society) => {
+      return (
+        hasValidAdminCoordinates(society) &&
+        hasGoogleMapLink(society) &&
+        hasFullNearbyIntelligence(society)
+      );
+    }).length,
+  };
 
   const handleDelete = async (society: AdminSociety) => {
     if (deletingId) return;
@@ -261,6 +348,40 @@ export function AdminSocietiesPage() {
               <p className="mt-1.5 text-xs font-semibold text-blue-600 md:text-sm">{helper}</p>
             </div>
           ))}
+        </section>
+
+        <section className="rounded-[20px] border border-blue-100 bg-blue-50/60 p-3.5 shadow-sm md:rounded-[24px] md:p-4">
+          <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">
+                C106 data completion
+              </p>
+              <h2 className="mt-1 text-lg font-bold text-slate-950">
+                Location and nearby intelligence readiness
+              </h2>
+            </div>
+            <p className="text-xs font-semibold text-slate-500">
+              Use this before publishing or featuring society pages.
+            </p>
+          </div>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            {[
+              ["Map ready", locationDataSummary.mapReady, "Valid coordinates"],
+              ["Google URL", locationDataSummary.googleMapReady, "Map link saved"],
+              ["Nearby partial", locationDataSummary.nearbyPartial, "Some nearby data"],
+              ["Nearby complete", locationDataSummary.nearbyComplete, "All nearby fields"],
+              ["Launch ready", locationDataSummary.launchReady, "Map + nearby complete"],
+            ].map(([label, value, helper]) => (
+              <div key={String(label)} className="rounded-2xl border border-blue-100 bg-white px-3 py-2.5">
+                <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-500">
+                  {label}
+                </p>
+                <p className="mt-1 text-2xl font-black text-slate-950">{loading ? "-" : value}</p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-500">{helper}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
         {message ? (
@@ -508,6 +629,17 @@ export function AdminSocietiesPage() {
                                   Image
                                 </span>
                               ) : null}
+
+                              {(() => {
+                                const completion = dataCompletionStatus(item);
+
+                                return (
+                                  <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${completion.tone}`} title={completion.helper}>
+                                    <MapPin className="mr-1 h-3 w-3" />
+                                    {completion.label}
+                                  </span>
+                                );
+                              })()}
                             </div>
 
                             <h3 className="mt-2 text-base font-bold text-slate-950 md:text-lg">
@@ -522,6 +654,18 @@ export function AdminSocietiesPage() {
                             <p className="mt-1 text-sm text-slate-500">
                               {item.builder || "Builder n/a"} • /{item.slug}
                             </p>
+
+                            <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-bold">
+                              <span className={`rounded-full px-2 py-1 ${hasValidAdminCoordinates(item) ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                                {hasValidAdminCoordinates(item) ? "Coordinates OK" : "Coordinates missing"}
+                              </span>
+                              <span className={`rounded-full px-2 py-1 ${hasGoogleMapLink(item) ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                                {hasGoogleMapLink(item) ? "Google map URL" : "No map URL"}
+                              </span>
+                              <span className={`rounded-full px-2 py-1 ${hasFullNearbyIntelligence(item) ? "bg-emerald-50 text-emerald-700" : hasNearbyIntelligence(item) ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-500"}`}>
+                                {hasFullNearbyIntelligence(item) ? "Nearby complete" : hasNearbyIntelligence(item) ? "Nearby partial" : "Nearby pending"}
+                              </span>
+                            </div>
                           </div>
                         </div>
 

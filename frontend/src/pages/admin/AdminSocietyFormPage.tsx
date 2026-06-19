@@ -253,6 +253,41 @@ export function AdminSocietyFormPage() {
 
   const readiness = useMemo(() => completionScore(society), [society]);
 
+  const hasValidCoordinates = isValidLatLng(society.latitude, society.longitude);
+  const locationReadinessChecks = [
+    {
+      label: "Coordinates",
+      done: hasValidCoordinates,
+      helper: hasValidCoordinates ? "Valid map pin ready" : "Add valid latitude and longitude",
+    },
+    {
+      label: "Google Maps URL",
+      done: Boolean(society.googleMapsUrl.trim()),
+      helper: society.googleMapsUrl.trim() ? "Map source saved" : "Paste exact Google Maps place URL",
+    },
+    {
+      label: "Schools",
+      done: Boolean(society.nearbySchools.trim()),
+      helper: society.nearbySchools.trim() ? "School context added" : "Add nearby schools",
+    },
+    {
+      label: "Metro / commute",
+      done: Boolean(society.nearbyMetro.trim()),
+      helper: society.nearbyMetro.trim() ? "Commute context added" : "Add metro/commute notes",
+    },
+    {
+      label: "Hospitals",
+      done: Boolean(society.nearbyHospitals.trim()),
+      helper: society.nearbyHospitals.trim() ? "Hospital context added" : "Add nearby hospitals",
+    },
+    {
+      label: "Office hubs",
+      done: Boolean(society.nearbyOfficeHubs.trim()),
+      helper: society.nearbyOfficeHubs.trim() ? "Office hub context added" : "Add office hubs / business districts",
+    },
+  ];
+  const locationReadinessDone = locationReadinessChecks.filter((item) => item.done).length;
+
   const activeSourceUrl = society.officialProjectUrl || society.sourceUrl;
   const sourceChanged = activeSourceUrl !== loadedSourceUrl;
   const hasBeenEnriched =
@@ -989,8 +1024,58 @@ export function AdminSocietyFormPage() {
               </div>
             </section>
 
+            <section className="rounded-[20px] border border-blue-100 bg-blue-50/60 p-4 shadow-sm md:p-5">
+              <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">
+                    C106 location checklist
+                  </p>
+                  <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-950">
+                    Society data completion
+                  </h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
+                    Complete this before featuring the society or relying on public map intelligence.
+                  </p>
+                </div>
+                <span className="w-fit rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700">
+                  {locationReadinessDone}/{locationReadinessChecks.length} complete
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-2 md:grid-cols-2">
+                {locationReadinessChecks.map((item) => (
+                  <div
+                    key={item.label}
+                    className={`rounded-2xl border px-3 py-2.5 ${
+                      item.done
+                        ? "border-emerald-100 bg-white text-emerald-700"
+                        : "border-amber-100 bg-white text-amber-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-black text-slate-950">{item.label}</p>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${item.done ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                        {item.done ? "Done" : "Missing"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">{item.helper}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
             <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
-              <h2 className="text-lg font-bold tracking-tight text-slate-950">Nearby Intelligence</h2>
+              <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-slate-950">Nearby Intelligence</h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
+                    Add verified, public-safe nearby data. Use one item per line.
+                  </p>
+                </div>
+                <p className="text-xs font-bold text-blue-600">
+                  Schools · Metro · Hospitals · Office hubs
+                </p>
+              </div>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {[
                   ["Nearby Schools", "nearbySchools"],
@@ -1004,7 +1089,7 @@ export function AdminSocietyFormPage() {
                       value={String(society[key as keyof AdminSociety] || "")}
                       onChange={(event) => updateField(key as keyof AdminSociety, event.target.value as never)}
                       className="mt-2 min-h-24 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
-                      placeholder="One item per line"
+                      placeholder="One verified item per line. Example: Metro station name — approx distance/time"
                     />
                   </label>
                 ))}
