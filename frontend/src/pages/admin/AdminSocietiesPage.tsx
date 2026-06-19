@@ -24,6 +24,7 @@ import {
   updateAdminSocietyStatus,
 } from "@/lib/adminSocietyStore";
 import type { AdminSociety, SocietyStatus } from "@/lib/adminSocietyStore";
+import { bulkFetchGooglePlacesSocietyImageReferences, type BulkGooglePlacesImageFetchSummary } from "@/lib/googlePlacesImageAdminApi";
 
 const filters = ["All", "Verified", "Premium", "Draft", "Archived"];
 
@@ -62,6 +63,33 @@ export function AdminSocietiesPage() {
   const [bulkStatus, setBulkStatus] = useState<SocietyStatus>("Draft");
   const [bulkWorking, setBulkWorking] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState<number | null>(null);
+  const [googleImageFetchLoading, setGoogleImageFetchLoading] = useState(false);
+  const [googleImageFetchSummary, setGoogleImageFetchSummary] =
+    useState<BulkGooglePlacesImageFetchSummary | null>(null);
+  const [googleImageFetchError, setGoogleImageFetchError] = useState("");
+
+  const handleBulkGoogleImageFetch = async () => {
+    try {
+      setGoogleImageFetchLoading(true);
+      setGoogleImageFetchError("");
+      setMessage("");
+
+      const result = await bulkFetchGooglePlacesSocietyImageReferences(5);
+      setGoogleImageFetchSummary(result.summary);
+      setMessage(
+        `Google image reference fetch complete: ${result.summary.updated} updated, ${result.summary.failed} failed.`
+      );
+
+      await loadSocieties();
+    } catch (err) {
+      console.error(err);
+      setGoogleImageFetchError(
+        err instanceof Error ? err.message : "Bulk Google image reference fetch failed."
+      );
+    } finally {
+      setGoogleImageFetchLoading(false);
+    }
+  };
 
   const loadSocieties = async () => {
     try {
@@ -269,6 +297,17 @@ export function AdminSocietiesPage() {
                 <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
                 Refresh
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full border-amber-200 bg-amber-50 px-3 text-xs text-amber-800 hover:bg-amber-100 sm:text-sm"
+                onClick={() => void handleBulkGoogleImageFetch()}
+                disabled={googleImageFetchLoading}
+              >
+                <Image className={`mr-2 h-4 w-4 ${googleImageFetchLoading ? "animate-pulse" : ""}`} />
+                {googleImageFetchLoading ? "Fetching refs..." : "Fetch Google refs"}
+              </Button>
+
 
               <Button asChild variant="outline" className="rounded-full border-blue-100 bg-blue-50 px-3 text-xs text-blue-700 hover:bg-blue-100 sm:text-sm">
                 <Link to="/admin/societies/import">
@@ -369,7 +408,47 @@ export function AdminSocietiesPage() {
           </div>
 
           <div className="mt-3 md:mt-4">
-            {loading ? (
+  
+          {googleImageFetchError && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {googleImageFetchError}
+            </div>
+          )}
+
+          {googleImageFetchSummary && (
+            <div className="rounded-2xl border border-amber-100 bg-amber-50/70 px-4 py-3">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-amber-950">
+                    Google Places image reference fetch complete
+                  </p>
+                  <p className="mt-1 text-xs text-amber-800">
+                    Reference-only images remain unapproved for ownership/licensing review.
+                  </p>
+                </div>
+                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                  <div className="rounded-xl bg-white/80 px-3 py-2">
+                    <p className="text-amber-700">Checked</p>
+                    <p className="font-semibold text-amber-950">{googleImageFetchSummary.total_checked}</p>
+                  </div>
+                  <div className="rounded-xl bg-white/80 px-3 py-2">
+                    <p className="text-amber-700">Updated</p>
+                    <p className="font-semibold text-amber-950">{googleImageFetchSummary.updated}</p>
+                  </div>
+                  <div className="rounded-xl bg-white/80 px-3 py-2">
+                    <p className="text-amber-700">Failed</p>
+                    <p className="font-semibold text-amber-950">{googleImageFetchSummary.failed}</p>
+                  </div>
+                  <div className="rounded-xl bg-white/80 px-3 py-2">
+                    <p className="text-amber-700">Limit</p>
+                    <p className="font-semibold text-amber-950">{googleImageFetchSummary.limit}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {loading ? (
               <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
                 Loading societies...
               </div>
