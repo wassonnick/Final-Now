@@ -285,7 +285,20 @@ export function AdminSocietiesPage() {
       setMessage("");
 
       const result = await bulkAutoFillNearbyIntelligence(eligible.map((item) => item.id));
-      setMessage(result.message);
+      const bulkResultDetails = result.results
+        .filter((item) => item.status === "failed" || item.status === "skipped")
+        .slice(0, 3)
+        .map((item) => {
+          const name = typeof item.name === "string" ? item.name : `ID ${item.id || ""}`;
+          const message = typeof item.message === "string" ? item.message : "No detail returned.";
+          return `${name}: ${message}`;
+        });
+
+      setMessage(
+        bulkResultDetails.length
+          ? `${result.message} ${bulkResultDetails.join(" | ")}`
+          : result.message,
+      );
       await loadSocieties();
     } catch (err) {
       console.error(err);
