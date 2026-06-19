@@ -33,6 +33,10 @@ import {
   societyImage,
 } from "@/lib/publicData";
 import { cn } from "@/lib/utils";
+import {
+  societyImageAttribution,
+  societyImageAttributionClassName,
+} from "@/lib/societyImages";
 import { setPublicSeo } from "@/lib/seo";
 
 const tabs = [
@@ -986,7 +990,10 @@ export function SearchPage() {
               />
             ) : activeTab === "societies" ? (
               <div className="grid gap-3 md:grid-cols-2 md:gap-3 xl:grid-cols-3">
-                {societyResults.map((society) => (
+                {societyResults.map((society) => {
+                  const imageAttribution = societyImageAttribution(society);
+
+                  return (
                   <article
                     key={society.id}
                     className="group overflow-hidden rounded-[1.2rem] border border-blue-100 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-apple"
@@ -1004,6 +1011,12 @@ export function SearchPage() {
                         <div className="absolute inset-0 bg-gradient-to-t from-navy-950/30 via-transparent to-transparent" />
                         <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-black text-blue-700">
                           Society
+                        </span>
+                        <span
+                          className={`absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-semibold backdrop-blur ${societyImageAttributionClassName(imageAttribution.tone)}`}
+                          title={imageAttribution.title}
+                        >
+                          {imageAttribution.label}
                         </span>
                         <span className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-black text-navy-900">
                           Score {society.score || "New"}
@@ -1068,7 +1081,8 @@ export function SearchPage() {
                       </div>
                     </div>
                   </article>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div
