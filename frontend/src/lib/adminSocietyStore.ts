@@ -205,6 +205,7 @@ function normalizeStatus(value: unknown): SocietyStatus {
 function normalizeImageStatus(value: unknown): SocietyImageStatus {
   if (
     value === 'official_reference_found' ||
+    value === 'google_places_reference_found' ||
     value === 'licensed_uploaded' ||
     value === 'self_shot_uploaded' ||
     value === 'developer_permission_received' ||
