@@ -684,7 +684,7 @@ export function SocietyPage() {
       </section>
 
       <section className="container mx-auto px-4 py-3 md:py-5">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch lg:gap-6">
           <div className="space-y-3.5 md:space-y-4">
             <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.45rem] md:p-4.5">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
