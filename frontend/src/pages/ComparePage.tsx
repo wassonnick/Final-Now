@@ -154,7 +154,7 @@ function compareRankPrompt(items: any[]) {
     return "Rank Gurgaon societies by family fit, commute, rent, resale and overall lifestyle.";
   }
 
-  return `Rank these societies: ${names.join(" vs ")}. Compare them for family fit, commute, rent value, resale value, amenities, pros, watch-outs and best overall choice.`;
+  return `Rank only these selected societies in order: ${names.join(" vs ")}. Do not suggest other societies unless clearly marked as broader alternatives. Compare family fit, commute, rent value, resale value, amenities, pros, watch-outs and best overall choice.`;
 }
 
 function compareSearchPanelLabel(count: number) {
@@ -289,10 +289,10 @@ export function ComparePage() {
                   Society comparison
                 </span>
                 <h1 className="mt-4 max-w-4xl font-display text-[36px] font-black leading-[0.98] tracking-[-0.045em] text-navy-950 md:text-[56px]">
-                  Search societies and build your comparison.
+                  Search societies here and build your comparison.
                 </h1>
                 <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-blue-500">
-                  Use the search panel here to find societies, tap Compare on society cards, and return here to compare score, location, recommended-for, pros, watch-outs and rent/resale context.
+                  Your compare list is empty. Use the open search panel below, search a society, tap Compare on society cards, and return here.
                 </p>
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                   <Button asChild className="h-12 rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">
@@ -438,7 +438,7 @@ export function ComparePage() {
                   </Button>
                 ) : (
                   <Button variant="outline" className="h-11 rounded-full border-blue-100 px-5 font-black text-blue-700" onClick={clearCompare}>
-                    Clear
+                    Clear + search
                   </Button>
                 )}
               </div>
@@ -453,7 +453,7 @@ export function ComparePage() {
 
           <div className="mt-3 flex flex-wrap gap-2">
             <Button variant="ghost" className="rounded-full text-navy-500" onClick={clearCompare}>
-              <X className="mr-2 h-4 w-4" /> Clear all selected
+              <X className="mr-2 h-4 w-4" /> Clear and search again
             </Button>
             <Button asChild variant="outline" className="rounded-full border-blue-100 font-black text-blue-700">
               <Link to={`/ai-advisor?q=${encodeURIComponent(compareRankPrompt(items))}`}>

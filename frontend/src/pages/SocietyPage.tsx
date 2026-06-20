@@ -221,41 +221,6 @@ export function SocietyPage() {
     null,
   );
 
-  const { compareList, addToCompare, removeFromCompare } = useAppStore();
-  const isSocietyCompared = compareList.some((item: any) => String(item.id) === String(society?.id));
-
-  const toggleSocietyCompare = () => {
-    if (!society?.id) return;
-
-    if (isSocietyCompared) {
-      removeFromCompare(society.id);
-      trackEvent("society_removed_from_compare", {
-        source: "society_page",
-        entity_type: "society",
-        entity_slug: slug || "",
-        entity_name: society?.name || "",
-      });
-      return;
-    }
-
-    if (compareList.length >= 3) {
-      trackEvent("compare_limit_reached", {
-        source: "society_page",
-        entity_type: "society",
-        entity_slug: slug || "",
-        entity_name: society?.name || "",
-      });
-      return;
-    }
-
-    addToCompare(society);
-    trackEvent("society_added_to_compare", {
-      source: "society_page",
-      entity_type: "society",
-      entity_slug: slug || "",
-      entity_name: society?.name || "",
-    });
-  };
 
   const openSocietyCallback = (source = "society_page_callback") => {
     trackLeadIntent({
@@ -367,6 +332,44 @@ export function SocietyPage() {
   }, [slug]);
 
   const society = apiSociety || fallbackSociety;
+
+  const { compareList, addToCompare, removeFromCompare } = useAppStore();
+  const isSocietyCompared = Boolean(
+    society?.id && compareList.some((item: any) => String(item.id) === String(society.id)),
+  );
+
+  const toggleSocietyCompare = () => {
+    if (!society?.id) return;
+
+    if (isSocietyCompared) {
+      removeFromCompare(society.id);
+      trackEvent("society_removed_from_compare", {
+        source: "society_page",
+        entity_type: "society",
+        entity_slug: slug || "",
+        entity_name: society?.name || "",
+      });
+      return;
+    }
+
+    if (compareList.length >= 3) {
+      trackEvent("compare_limit_reached", {
+        source: "society_page",
+        entity_type: "society",
+        entity_slug: slug || "",
+        entity_name: society?.name || "",
+      });
+      return;
+    }
+
+    addToCompare(society);
+    trackEvent("society_added_to_compare", {
+      source: "society_page",
+      entity_type: "society",
+      entity_slug: slug || "",
+      entity_name: society?.name || "",
+    });
+  };
   const fallbackProperties = getSocietyProperties(society?.name);
   const properties = apiProperties.length ? apiProperties : fallbackProperties;
 

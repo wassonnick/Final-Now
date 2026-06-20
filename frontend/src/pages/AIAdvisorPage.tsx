@@ -126,6 +126,21 @@ function queryFocusLabel(query: string) {
   return query.trim() || "your requirement";
 }
 
+function selectedSocietyNamesFromRankPrompt(query: string) {
+  const match = query.match(/Rank only these selected societies in order:\s*(.+?)\.\s*Do not suggest/i);
+  const raw = match?.[1] || "";
+  if (!raw) return [];
+
+  return raw
+    .split(/\s+vs\s+/i)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function isExactRankPrompt(query: string) {
+  return selectedSocietyNamesFromRankPrompt(query).length > 0;
+}
+
 function directSocietyMatchScore(society: any, query: string) {
   const tokens = queryTokens(query);
   const text = societySearchText(society);
@@ -495,6 +510,21 @@ export function AIAdvisorPage() {
   const activeQuestion = question || input || "Gurgaon society shortlist";
   const searchUrl = `/search?q=${encodeURIComponent(activeQuestion)}&tab=societies&intent=general`;
 
+  const exactRankSocieties = useMemo(() => {
+    const names = selectedSocietyNamesFromRankPrompt(activeQuestion);
+    if (!names.length) return [];
+
+    return names
+      .map((name) => {
+        const normalizedName = normalize(name);
+        return publicSocieties.find((society) => {
+          const societyName = normalize(society?.name);
+          return societyName === normalizedName || societyName.includes(normalizedName) || normalizedName.includes(societyName);
+        });
+      })
+      .filter(Boolean);
+  }, [publicSocieties, activeQuestion]);
+
   const directSocietyMatches = useMemo(() => {
     const rows = publicSocieties
       .map((society) => ({
@@ -536,10 +566,11 @@ export function AIAdvisorPage() {
   }, [matches, publicSocieties]);
 
   const resultSocieties = useMemo(() => {
+    if (exactRankSocieties.length) return exactRankSocieties;
     if (directSocietyMatches.length) return directSocietyMatches;
     if (apiSocieties.length) return apiSocieties;
     return fallbackSocieties;
-  }, [directSocietyMatches, apiSocieties, fallbackSocieties]);
+  }, [exactRankSocieties, directSocietyMatches, apiSocieties, fallbackSocieties]);
 
   const suggestedProperties = useMemo(() => {
     const directRows = publicProperties
@@ -559,9 +590,9 @@ export function AIAdvisorPage() {
   }, [publicProperties, activeQuestion]);
 
   const topSociety = resultSocieties[0];
-  const resultSource: "api" | "fallback" = directSocietyMatches.length || apiSocieties.length ? "api" : "fallback";
-  const focusLabel = queryFocusLabel(activeQuestion);
-  const hasDirectSocietyMatches = directSocietyMatches.length > 0;
+  const resultSource: "api" | "fallback" = exactRankSocieties.length || directSocietyMatches.length || apiSocieties.length ? "api" : "fallback";
+  const focusLabel = isExactRankPrompt(activeQuestion) ? "selected societies" : queryFocusLabel(activeQuestion);
+  const hasDirectSocietyMatches = exactRankSocieties.length > 0 || directSocietyMatches.length > 0;
 
   useEffect(() => {
     setPublicSeo(
@@ -683,7 +714,7 @@ export function AIAdvisorPage() {
                       Live matches while you ask
                     </p>
                     <span className="rounded-full border border-blue-100 bg-white px-2.5 py-1 text-[10px] font-black text-blue-700">
-                      {hasDirectSocietyMatches ? "Query-specific" : "Suggested"}
+                      {exactRankSocieties.length ? "Selected ranking" : hasDirectSocietyMatches ? "Query-specific" : "Suggested"}
                     </span>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-3">
@@ -798,6 +829,8 @@ export function AIAdvisorPage() {
                       <Loader2 className="h-4 w-4 animate-spin text-blue-700" />
                       Finding live SocietyFlats matches for {focusLabel}...
                     </span>
+                  ) : exactRankSocieties.length ? (
+                    `Ranking your selected societies only. Open each result below to review details, pros, watch-outs and available homes.`
                   ) : hasDirectSocietyMatches ? (
                     `Showing direct SocietyFlats matches for ${focusLabel}. Open a result below or continue to full search.`
                   ) : (
@@ -813,7 +846,7 @@ export function AIAdvisorPage() {
                       Top matches in this view
                     </p>
                     <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-blue-700">
-                      {hasDirectSocietyMatches ? "Direct" : "Closest"}
+                      {exactRankSocieties.length ? "Ranked selected" : hasDirectSocietyMatches ? "Direct" : "Closest"}
                     </span>
                   </div>
                   <div className="grid gap-2">
