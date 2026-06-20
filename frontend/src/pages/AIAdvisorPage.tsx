@@ -161,6 +161,28 @@ function directPropertyMatchScore(property: any, query: string) {
   return score;
 }
 
+function societyMatchLabel(society: any, query: string) {
+  const direct = directSocietyMatchScore(society, query);
+  if (direct >= 100) return "Closest match";
+  if (direct >= 35) return "Recommended nearby";
+  if (direct > 0) return "Partial match";
+  return "Broader option";
+}
+
+function societyMatchBadgeClass(label: string) {
+  if (label === "Closest match") return "bg-emerald-50 text-emerald-700";
+  if (label === "Recommended nearby") return "bg-blue-50 text-blue-700";
+  if (label === "Partial match") return "bg-amber-50 text-amber-700";
+  return "bg-slate-100 text-slate-600";
+}
+
+function propertyMatchLabel(property: any, query: string) {
+  const direct = directPropertyMatchScore(property, query);
+  if (direct >= 80) return "Closest home";
+  if (direct >= 30) return "Related home";
+  return "Broader home";
+}
+
 function scoreNumber(value: unknown, fallback = 8.1) {
   const parsed = Number(value || fallback);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
@@ -236,6 +258,59 @@ function advisorReply(matchesCount: number, query: string) {
   return `No exact AI match came back for “${query}”. Showing the closest live SocietyFlats matches from Gurgaon society data.`;
 }
 
+function FirstFoldResultCard({
+  society,
+  index,
+  activeQuestion,
+}: {
+  society: any;
+  index: number;
+  activeQuestion: string;
+}) {
+  const name = matchName(society);
+  const label = societyMatchLabel(society, activeQuestion);
+
+  return (
+    <Link
+      to={toSocietyUrl(society)}
+      onClick={() =>
+        trackResultClicked({
+          source: "ai_advisor_page",
+          ai_query: activeQuestion,
+          entity_type: "society",
+          entity_slug: society?.slug || "",
+          entity_name: name,
+          cta_label: "Open first-fold AI result",
+          result_position: index + 1,
+        })
+      }
+      className="group rounded-[1.15rem] border border-blue-100 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="rounded-full bg-blue-700 px-2.5 py-1 text-[11px] font-black text-white">
+          #{index + 1}
+        </span>
+        <span className={`rounded-full px-2.5 py-1 text-[10px] font-black ${societyMatchBadgeClass(label)}`}>
+          {label}
+        </span>
+      </div>
+
+      <h3 className="mt-2 line-clamp-1 font-display text-lg font-black text-navy-950 group-hover:text-blue-700">
+        {name}
+      </h3>
+      <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-blue-500">
+        <MapPin className="h-3.5 w-3.5" />
+        {society?.sector || society?.locality || (society?.slug ? formatPublicLocation(society) : "Gurgaon")}
+      </p>
+
+      <div className="mt-2 flex items-center justify-between border-t border-blue-50 pt-2 text-xs font-black text-blue-700">
+        Open society
+        <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+      </div>
+    </Link>
+  );
+}
+
 function SocietyResultCard({
   society,
   index,
@@ -255,6 +330,7 @@ function SocietyResultCard({
     (source === "api"
       ? "Matched by SocietyFlats AI from your requirement."
       : "Closest live society match from public SocietyFlats data.");
+  const label = societyMatchLabel(society, activeQuestion);
 
   return (
     <Link
@@ -286,10 +362,10 @@ function SocietyResultCard({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-navy-950/45 via-transparent to-transparent" />
         <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">
-          #{index + 1} AI match
+          #{index + 1}
         </span>
-        <span className="absolute right-3 top-3 rounded-full bg-blue-700 px-3 py-1 text-xs font-black text-white">
-          {societyScore(society)}
+        <span className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-black ${societyMatchBadgeClass(label)}`}>
+          {label}
         </span>
       </div>
 
@@ -315,7 +391,9 @@ function SocietyResultCard({
   );
 }
 
-function PropertySuggestionCard({ property }: { property: any }) {
+function PropertySuggestionCard({ property, activeQuestion }: { property: any; activeQuestion: string }) {
+  const label = propertyMatchLabel(property, activeQuestion);
+
   return (
     <Link
       to={propertyUrl(property)}
@@ -328,7 +406,7 @@ function PropertySuggestionCard({ property }: { property: any }) {
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
         />
         <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">
-          {property?.listingType || "Home"}
+          {label}
         </span>
       </div>
       <div className="p-3">
@@ -361,6 +439,7 @@ function InlineTopResult({
 }) {
   const name = matchName(society);
   const resultUrl = toSocietyUrl(society);
+  const label = societyMatchLabel(society, activeQuestion);
 
   return (
     <Link
@@ -382,7 +461,12 @@ function InlineTopResult({
         {index + 1}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-black text-navy-950">{name}</p>
+        <div className="flex items-center gap-2">
+          <p className="truncate text-sm font-black text-navy-950">{name}</p>
+          <span className={`hidden rounded-full px-2 py-0.5 text-[10px] font-black sm:inline-flex ${societyMatchBadgeClass(label)}`}>
+            {label}
+          </span>
+        </div>
         <p className="mt-0.5 truncate text-xs font-bold text-blue-500">
           {society?.sector || society?.locality || (society?.slug ? formatPublicLocation(society) : "Gurgaon")}
         </p>
@@ -592,16 +676,39 @@ export function AIAdvisorPage() {
                 Search by budget, office, school, builder, pet needs, lifestyle or investment goal. Results open into society pages and full search.
               </p>
 
-              <div className="mt-5 grid gap-2 sm:grid-cols-3">
-                {trustItems.map(([step, label]) => (
-                  <div key={step} className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-700 text-xs font-black text-white">
-                      {step}
+              {resultSocieties.length ? (
+                <div className="mt-5">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
+                      Live matches while you ask
+                    </p>
+                    <span className="rounded-full border border-blue-100 bg-white px-2.5 py-1 text-[10px] font-black text-blue-700">
+                      {hasDirectSocietyMatches ? "Query-specific" : "Suggested"}
                     </span>
-                    <p className="mt-2 text-xs font-black text-navy-800">{label}</p>
                   </div>
-                ))}
-              </div>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {resultSocieties.slice(0, 3).map((society, index) => (
+                      <FirstFoldResultCard
+                        key={`${matchName(society)}-fold-${society?.slug || index}`}
+                        society={society}
+                        index={index}
+                        activeQuestion={activeQuestion}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                  {trustItems.map(([step, label]) => (
+                    <div key={step} className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-700 text-xs font-black text-white">
+                        {step}
+                      </span>
+                      <p className="mt-2 text-xs font-black text-navy-800">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {quickNeeds.map((item) => (
@@ -842,7 +949,7 @@ export function AIAdvisorPage() {
               {suggestedProperties.length ? (
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   {suggestedProperties.map((property) => (
-                    <PropertySuggestionCard key={property?.id || property?.slug || property?.title} property={property} />
+                    <PropertySuggestionCard key={property?.id || property?.slug || property?.title} property={property} activeQuestion={activeQuestion} />
                   ))}
                 </div>
               ) : (
