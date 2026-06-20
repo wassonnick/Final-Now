@@ -81,7 +81,84 @@ function normalize(value: unknown) {
 function queryTokens(query: string) {
   return normalize(query)
     .split(" ")
-    .filter((token) => token.length >= 2 && !["near", "under", "with", "flat", "home", "homes", "society", "societies", "gurgaon", "gurugram"].includes(token));
+    .filter(
+      (token) =>
+        token.length >= 2 &&
+        ![
+          "near",
+          "under",
+          "with",
+          "flat",
+          "flats",
+          "home",
+          "homes",
+          "society",
+          "societies",
+          "gurgaon",
+          "gurugram",
+          "compare",
+          "best",
+          "good",
+          "family",
+          "friendly",
+          "budget",
+          "need",
+          "want",
+        ].includes(token),
+    );
+}
+
+function exactSectorToken(query: string) {
+  const match = normalize(query).match(/\bsector\s*(\d+[a-z]?)\b/);
+  return match?.[1] || "";
+}
+
+function queryFocusLabel(query: string) {
+  const normalized = normalize(query);
+  const sector = exactSectorToken(query);
+  if (sector) return `Sector ${sector}`;
+  if (normalized.includes("dlf") && normalized.includes("m3m")) return "DLF and M3M";
+  if (normalized.includes("dlf")) return "DLF";
+  if (normalized.includes("m3m")) return "M3M";
+  if (normalized.includes("golf course")) return "Golf Course Road";
+  if (normalized.includes("cyber")) return "Cyber City / nearby commute";
+  if (normalized.includes("pet")) return "pet-friendly lifestyle";
+  return query.trim() || "your requirement";
+}
+
+function directSocietyMatchScore(society: any, query: string) {
+  const tokens = queryTokens(query);
+  const text = societySearchText(society);
+  const sector = exactSectorToken(query);
+  let score = 0;
+
+  if (sector) {
+    const sectorText = normalize([society?.sector, society?.locality, society?.address].filter(Boolean).join(" "));
+    if (new RegExp(`\\bsector\\s*${sector}\\b`).test(sectorText) || new RegExp(`\\b${sector}\\b`).test(sectorText)) {
+      score += 120;
+    }
+  }
+
+  for (const token of tokens) {
+    if (text.includes(token)) score += token.length <= 2 ? 12 : 22;
+  }
+
+  return score;
+}
+
+function directPropertyMatchScore(property: any, query: string) {
+  const tokens = queryTokens(query);
+  const text = propertySearchText(property);
+  const sector = exactSectorToken(query);
+  let score = 0;
+
+  if (sector && text.includes(sector)) score += 90;
+
+  for (const token of tokens) {
+    if (text.includes(token)) score += token.length <= 2 ? 10 : 18;
+  }
+
+  return score;
 }
 
 function scoreNumber(value: unknown, fallback = 8.1) {
@@ -129,24 +206,18 @@ function propertySearchText(property: any) {
 }
 
 function rankSocietyForQuery(society: any, query: string) {
-  const tokens = queryTokens(query);
-  const text = societySearchText(society);
-  const tokenScore = tokens.reduce((score, token) => score + (text.includes(token) ? 1 : 0), 0);
-
   return (
-    tokenScore * 20 +
-    scoreNumber(society?.score) * 10 +
-    (society?.featured ? 12 : 0) +
-    (society?.showInHero ? 8 : 0) +
-    (society?.searchBoost ? 6 : 0) +
+    directSocietyMatchScore(society, query) * 10 +
+    scoreNumber(society?.score) * 8 +
+    (society?.featured ? 8 : 0) +
+    (society?.showInHero ? 5 : 0) +
+    (society?.searchBoost ? 4 : 0) +
     Number(society?.propertiesCount || 0)
   );
 }
 
 function rankPropertyForQuery(property: any, query: string) {
-  const tokens = queryTokens(query);
-  const text = propertySearchText(property);
-  return tokens.reduce((score, token) => score + (text.includes(token) ? 1 : 0), 0) * 20;
+  return directPropertyMatchScore(property, query) * 10;
 }
 
 function matchName(match: AdvisorMatch) {
@@ -218,7 +289,7 @@ function SocietyResultCard({
           #{index + 1} AI match
         </span>
         <span className="absolute right-3 top-3 rounded-full bg-blue-700 px-3 py-1 text-xs font-black text-white">
-          {society?.score ? `${society.score}${Number(society.score) > 10 ? "%" : ""}` : societyScore(society)}
+          {societyScore(society)}
         </span>
       </div>
 
@@ -279,6 +350,48 @@ function PropertySuggestionCard({ property }: { property: any }) {
   );
 }
 
+function InlineTopResult({
+  society,
+  index,
+  activeQuestion,
+}: {
+  society: any;
+  index: number;
+  activeQuestion: string;
+}) {
+  const name = matchName(society);
+  const resultUrl = toSocietyUrl(society);
+
+  return (
+    <Link
+      to={resultUrl}
+      onClick={() =>
+        trackResultClicked({
+          source: "ai_advisor_page",
+          ai_query: activeQuestion,
+          entity_type: "society",
+          entity_slug: society?.slug || "",
+          entity_name: name,
+          cta_label: "Open inline AI result",
+          result_position: index + 1,
+        })
+      }
+      className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-white p-2.5 shadow-sm transition hover:border-blue-200 hover:bg-blue-50"
+    >
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-700 text-xs font-black text-white">
+        {index + 1}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-black text-navy-950">{name}</p>
+        <p className="mt-0.5 truncate text-xs font-bold text-blue-500">
+          {society?.sector || society?.locality || (society?.slug ? formatPublicLocation(society) : "Gurgaon")}
+        </p>
+      </div>
+      <ArrowRight className="h-4 w-4 shrink-0 text-blue-700" />
+    </Link>
+  );
+}
+
 export function AIAdvisorPage() {
   const [searchParams] = useSearchParams();
   const initialQuery = searchParams.get("q") || searchParams.get("society") || "";
@@ -298,15 +411,31 @@ export function AIAdvisorPage() {
   const activeQuestion = question || input || "Gurgaon society shortlist";
   const searchUrl = `/search?q=${encodeURIComponent(activeQuestion)}&tab=societies&intent=general`;
 
+  const directSocietyMatches = useMemo(() => {
+    const rows = publicSocieties
+      .map((society) => ({
+        society,
+        directScore: directSocietyMatchScore(society, activeQuestion),
+      }))
+      .filter((item) => item.directScore > 0)
+      .sort((a, b) => {
+        if (b.directScore !== a.directScore) return b.directScore - a.directScore;
+        return rankSocietyForQuery(b.society, activeQuestion) - rankSocietyForQuery(a.society, activeQuestion);
+      })
+      .map((item) => item.society);
+
+    return rows.slice(0, 6);
+  }, [publicSocieties, activeQuestion]);
+
   const fallbackSocieties = useMemo(() => {
     return [...publicSocieties]
       .sort((a, b) => rankSocietyForQuery(b, activeQuestion) - rankSocietyForQuery(a, activeQuestion))
       .slice(0, 6);
   }, [publicSocieties, activeQuestion]);
 
-  const resultSocieties = useMemo(() => {
-    if (matches.length) {
-      const enriched = matches.map((match) => {
+  const apiSocieties = useMemo(() => {
+    return matches
+      .map((match) => {
         const name = normalize(matchName(match));
         const found = publicSocieties.find((society) => {
           return (
@@ -318,22 +447,37 @@ export function AIAdvisorPage() {
         });
 
         return found ? { ...found, ...match, name: found.name || matchName(match) } : match;
-      });
+      })
+      .slice(0, 6);
+  }, [matches, publicSocieties]);
 
-      return enriched.slice(0, 6);
-    }
-
+  const resultSocieties = useMemo(() => {
+    if (directSocietyMatches.length) return directSocietyMatches;
+    if (apiSocieties.length) return apiSocieties;
     return fallbackSocieties;
-  }, [matches, fallbackSocieties, publicSocieties]);
+  }, [directSocietyMatches, apiSocieties, fallbackSocieties]);
 
   const suggestedProperties = useMemo(() => {
-    return [...publicProperties]
-      .sort((a, b) => rankPropertyForQuery(b, activeQuestion) - rankPropertyForQuery(a, activeQuestion))
-      .slice(0, 4);
+    const directRows = publicProperties
+      .map((property) => ({
+        property,
+        directScore: directPropertyMatchScore(property, activeQuestion),
+      }))
+      .filter((item) => item.directScore > 0)
+      .sort((a, b) => b.directScore - a.directScore)
+      .map((item) => item.property);
+
+    const fallbackRows = [...publicProperties].sort(
+      (a, b) => rankPropertyForQuery(b, activeQuestion) - rankPropertyForQuery(a, activeQuestion),
+    );
+
+    return (directRows.length ? directRows : fallbackRows).slice(0, 4);
   }, [publicProperties, activeQuestion]);
 
   const topSociety = resultSocieties[0];
-  const resultSource: "api" | "fallback" = matches.length ? "api" : "fallback";
+  const resultSource: "api" | "fallback" = directSocietyMatches.length || apiSocieties.length ? "api" : "fallback";
+  const focusLabel = queryFocusLabel(activeQuestion);
+  const hasDirectSocietyMatches = directSocietyMatches.length > 0;
 
   useEffect(() => {
     setPublicSeo(
@@ -393,7 +537,11 @@ export function AIAdvisorPage() {
 
       setApiReturned(true);
       setMatches(nextMatches);
-      setReply(payload?.reply || advisorReply(nextMatches.length, clean));
+      setReply(
+        nextMatches.length
+          ? `I found AI matches for ${queryFocusLabel(clean)}. Open the top result or use full search for a wider shortlist.`
+          : advisorReply(nextMatches.length, clean),
+      );
     } catch (error) {
       console.error("AI advisor request failed:", error);
       setApiReturned(false);
@@ -541,13 +689,38 @@ export function AIAdvisorPage() {
                   {loading ? (
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin text-blue-700" />
-                      Finding live SocietyFlats matches...
+                      Finding live SocietyFlats matches for {focusLabel}...
                     </span>
+                  ) : hasDirectSocietyMatches ? (
+                    `Showing direct SocietyFlats matches for ${focusLabel}. Open a result below or continue to full search.`
                   ) : (
                     reply
                   )}
                 </div>
               </div>
+
+              {resultSocieties.length ? (
+                <div className="mt-3 rounded-[1.15rem] border border-blue-100 bg-blue-50/60 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-blue-700">
+                      Top matches in this view
+                    </p>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-blue-700">
+                      {hasDirectSocietyMatches ? "Direct" : "Closest"}
+                    </span>
+                  </div>
+                  <div className="grid gap-2">
+                    {resultSocieties.slice(0, 3).map((society, index) => (
+                      <InlineTopResult
+                        key={`${matchName(society)}-inline-${society?.slug || index}`}
+                        society={society}
+                        index={index}
+                        activeQuestion={activeQuestion}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
                 <Link
@@ -596,10 +769,10 @@ export function AIAdvisorPage() {
                     Society recommendations
                   </p>
                   <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950 md:text-[30px]">
-                    {resultSocieties.length ? "Best society matches for your brief" : "Answer once to get a shortlist"}
+                    {resultSocieties.length ? `Best society matches for ${focusLabel}` : "Answer once to get a shortlist"}
                   </h2>
                   <p className="mt-1.5 max-w-2xl text-sm font-semibold leading-6 text-navy-500">
-                    Open society pages to review location, inventory, pricing context and callback options.
+                    Results are ranked by direct query relevance first, then society strength. Open a society before choosing homes.
                   </p>
                 </div>
 
