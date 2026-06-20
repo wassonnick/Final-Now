@@ -15,11 +15,13 @@ import {
   MessageCircle,
   PhoneCall,
   Search,
+  Scale,
   Shield,
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAppStore } from "@/store";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { cleanLeadTrackingPayload } from "@/lib/leadTracking";
 import { Input } from "@/components/ui/input";
@@ -684,6 +686,43 @@ export function SearchPage() {
     }
   };
 
+  const { compareList, addToCompare, removeFromCompare } = useAppStore();
+  const isSocietyCompared = (society: any) =>
+    compareList.some((item: any) => String(item.id) === String(society?.id));
+
+  const toggleSocietyCompare = (society: any) => {
+    if (!society?.id) return;
+
+    if (isSocietyCompared(society)) {
+      removeFromCompare(society.id);
+      trackEvent("society_removed_from_compare", {
+        source: "search_page",
+        entity_type: "society",
+        entity_slug: society?.slug || "",
+        entity_name: society?.name || "",
+        search_query: query || "",
+      });
+      return;
+    }
+
+    if (compareList.length >= 3) {
+      trackEvent("compare_limit_reached", {
+        source: "search_page",
+        search_query: query || "",
+      });
+      return;
+    }
+
+    addToCompare(society);
+    trackEvent("society_added_to_compare", {
+      source: "search_page",
+      entity_type: "society",
+      entity_slug: society?.slug || "",
+      entity_name: society?.name || "",
+      search_query: query || "",
+    });
+  };
+
   const visibleCount =
     activeTab === "societies"
       ? societyResults.length
@@ -1021,7 +1060,7 @@ export function SearchPage() {
                     variant="outline"
                     className="hidden rounded-full md:inline-flex"
                   >
-                    <Link to="/compare">Compare</Link>
+                    <Link to="/compare">Compare {compareList.length ? `(${compareList.length})` : ""}</Link>
                   </Button>
                   <Button
                     asChild
@@ -1037,6 +1076,18 @@ export function SearchPage() {
                   </Button>
                 </div>
               </div>
+
+              {activeTab === "societies" ? (
+                <div className="mt-2 flex flex-col gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 text-xs font-bold text-blue-700 md:flex-row md:items-center md:justify-between">
+                  <span>
+                    Compare flow: tap Compare on up to 3 society cards, then open the Compare page.
+                  </span>
+                  <Link to="/compare" className="inline-flex items-center font-black text-blue-800">
+                    Open compare {compareList.length ? `(${compareList.length})` : ""}
+                    <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              ) : null}
 
               <div className="mt-2 flex gap-2 overflow-x-auto pb-1 lg:hidden">
                 {quickLocalities.map((item) => (
@@ -1202,10 +1253,19 @@ export function SearchPage() {
                         </Button>
 
                         <div className="grid grid-cols-2 gap-2">
-                          <Button asChild variant="outline" className="h-8 w-full rounded-full border-blue-100 px-2 text-xs font-bold text-blue-700 md:text-sm">
-                            <Link to={societySearchUrl(society, "rent")}>
-                              View Homes
-                            </Link>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className={
+                              isSocietyCompared(society)
+                                ? "h-8 w-full rounded-full border-emerald-100 bg-emerald-50 px-2 text-xs font-black text-emerald-700 md:text-sm"
+                                : "h-8 w-full rounded-full border-blue-100 px-2 text-xs font-black text-blue-700 md:text-sm"
+                            }
+                            onClick={() => toggleSocietyCompare(society)}
+                            title={compareList.length >= 3 && !isSocietyCompared(society) ? "Compare limit reached. Remove one society first." : "Add society to compare"}
+                          >
+                            <Scale className="mr-1.5 h-3.5 w-3.5" />
+                            {isSocietyCompared(society) ? "Added" : compareList.length >= 3 ? "Compare full" : "Compare"}
                           </Button>
 
                           <Button
@@ -1217,6 +1277,12 @@ export function SearchPage() {
                             Callback
                           </Button>
                         </div>
+
+                        <Button asChild variant="outline" className="h-8 w-full rounded-full border-blue-100 px-2 text-xs font-bold text-blue-700 md:text-sm">
+                          <Link to={societySearchUrl(society, "rent")}>
+                            View Homes
+                          </Link>
+                        </Button>
                       </div>
                     </div>
                   </article>

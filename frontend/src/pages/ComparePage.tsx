@@ -105,6 +105,41 @@ function buyText(society: any) {
   return society?.buyRange || society?.buy_range || society?.resaleRange || "On request";
 }
 
+function recommendedFor(society: any) {
+  const location = localityName(society);
+  const score = scoreValue(society);
+  const rental = scoreValue(society, "rental_demand_score");
+  const family = scoreValue(society, "family_friendly_score");
+  const pet = scoreValue(society, "pet_friendly_score");
+
+  if (rental >= 80) return "Rental demand and corporate tenants";
+  if (family >= 80) return "Families comparing lifestyle and schools";
+  if (pet >= 75) return "Pet-friendly home seekers";
+  if (score >= 85) return "Premium society-first shortlist";
+  return `${location} society comparison`;
+}
+
+function societyPros(society: any) {
+  const pros = [];
+  if (scoreValue(society, "connectivity_score") >= 80) pros.push("Strong connectivity");
+  if (scoreValue(society, "security_score") >= 80) pros.push("Security strength");
+  if (scoreValue(society, "amenities_score") >= 80) pros.push("Amenity depth");
+  if (scoreValue(society, "rental_demand_score") >= 80) pros.push("Rental demand");
+  if (!pros.length && rentText(society) !== "On request") pros.push("Rent range visible");
+  if (!pros.length) pros.push("Good society context");
+  return pros.slice(0, 3);
+}
+
+function societyWatchouts(society: any) {
+  const watchouts = [];
+  if (rentText(society) === "On request") watchouts.push("Rent needs verification");
+  if (buyText(society) === "On request") watchouts.push("Resale range pending");
+  if (scoreValue(society, "maintenance_score") && scoreValue(society, "maintenance_score") < 70) watchouts.push("Check maintenance");
+  if (scoreValue(society, "connectivity_score") && scoreValue(society, "connectivity_score") < 70) watchouts.push("Check commute");
+  if (!watchouts.length) watchouts.push("Verify tower/floor pricing");
+  return watchouts.slice(0, 2);
+}
+
 function amenityValue(society: any, key: string) {
   const amenities = society?.amenities;
   if (!amenities) return false;
@@ -166,6 +201,34 @@ function CompareCard({
           </div>
         </div>
 
+        <div className="mt-3 rounded-2xl border border-blue-100 bg-blue-50/55 p-3">
+          <p className="text-[11px] font-black uppercase tracking-[0.14em] text-blue-700">Recommended for</p>
+          <p className="mt-1 text-sm font-black leading-5 text-navy-900">{recommendedFor(society)}</p>
+        </div>
+
+        <div className="mt-3 grid gap-2 md:grid-cols-2">
+          <div className="rounded-2xl bg-emerald-50 p-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-emerald-700">Pros</p>
+            <div className="mt-2 space-y-1.5">
+              {societyPros(society).map((item) => (
+                <p key={item} className="flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {item}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-amber-50 p-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-700">Watch-outs</p>
+            <div className="mt-2 space-y-1.5">
+              {societyWatchouts(society).map((item) => (
+                <p key={item} className="text-xs font-bold text-amber-800">• {item}</p>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <Button asChild className="mt-3 h-10 w-full rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
           <Link to={`/society/${society?.slug || ""}`}>
             View society <ArrowRight className="ml-2 h-4 w-4" />
@@ -208,12 +271,12 @@ export function ComparePage() {
                   Compare Gurgaon societies before choosing the flat.
                 </h1>
                 <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-blue-500">
-                  Add societies from search or society pages and compare score, location, amenities, rent/resale context and next actions in one decision grid.
+                  Go to society search, tap Compare on up to 3 society cards, then return here to compare score, location, recommended-for, pros, watch-outs and rent/resale context.
                 </p>
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                   <Button asChild className="h-12 rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">
                     <Link to="/search?tab=societies">
-                      Browse societies <Search className="ml-2 h-4 w-4" />
+                      Search societies <Search className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="h-12 rounded-full border-blue-100 bg-white px-6 font-black text-blue-700 hover:bg-blue-50">
@@ -254,9 +317,13 @@ export function ComparePage() {
               </div>
               <Button asChild variant="outline" className="rounded-full border-blue-100 font-black text-blue-700 hover:bg-blue-50">
                 <Link to="/search?tab=societies">
-                  Start comparing <ArrowRight className="ml-2 h-4 w-4" />
+                  Search and add to compare <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
+            </div>
+
+            <div className="mb-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold leading-6 text-blue-700">
+              How to add societies: open society search, tap the Compare button on any society card, add up to 3 societies, then come back here.
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
@@ -350,6 +417,9 @@ export function ComparePage() {
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Decision grid</p>
               <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950">Score-by-score comparison</h2>
+              <p className="mt-1.5 max-w-2xl text-sm font-semibold leading-6 text-navy-500">
+                Scores are only one lens. Use the cards above for recommended use-case, pros and watch-outs.
+              </p>
             </div>
           </div>
 
