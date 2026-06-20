@@ -1,151 +1,266 @@
-// C71 insights copy: data-driven society and investment decision language.
-import { useState } from 'react';
-import { TrendingUp, TrendingDown, MapPin, Home, DollarSign, BarChart3, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn, formatPrice } from '@/lib/utils';
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  ArrowRight,
+  BadgeIndianRupee,
+  BarChart3,
+  Building2,
+  Home,
+  MapPin,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
 
-const localityData = [
-  { name: 'Golf Course Road', rent_1bhk: 28000, rent_2bhk: 52000, rent_3bhk: 75000, rent_4bhk: 120000, trend: 12, demand: 'High', occupancy: 94 },
-  { name: 'DLF Phase 1-5', rent_1bhk: 25000, rent_2bhk: 45000, rent_3bhk: 65000, rent_4bhk: 95000, trend: 8, demand: 'High', occupancy: 92 },
-  { name: 'Golf Course Extension', rent_1bhk: 18000, rent_2bhk: 35000, rent_3bhk: 50000, rent_4bhk: 75000, trend: 15, demand: 'Very High', occupancy: 96 },
-  { name: 'Sohna Road', rent_1bhk: 14000, rent_2bhk: 26000, rent_3bhk: 40000, rent_4bhk: 60000, trend: 5, demand: 'Medium', occupancy: 88 },
-  { name: 'Sector 57', rent_1bhk: 16000, rent_2bhk: 28000, rent_3bhk: 45000, rent_4bhk: 65000, trend: 7, demand: 'Medium', occupancy: 90 },
-  { name: 'Sushant Lok', rent_1bhk: 17000, rent_2bhk: 32000, rent_3bhk: 48000, rent_4bhk: 70000, trend: 6, demand: 'Medium', occupancy: 89 },
+import { Button } from "@/components/ui/button";
+import { setPublicSeo } from "@/lib/seo";
+
+type InsightMode = "rent" | "buy" | "sell";
+
+const marketRows = [
+  {
+    locality: "Golf Course Road",
+    rent3: "₹90K – ₹2.4L",
+    buy: "₹5.5Cr – ₹12Cr",
+    sell: "Premium resale depth",
+    demand: "Very high",
+    signal: "Luxury + corporate demand",
+    yield: "2.4% – 3.1%",
+    momentum: "+12%",
+  },
+  {
+    locality: "Golf Course Extension",
+    rent3: "₹75K – ₹1.8L",
+    buy: "₹3.2Cr – ₹8Cr",
+    sell: "Strong family demand",
+    demand: "High",
+    signal: "Family + upgrade market",
+    yield: "2.6% – 3.4%",
+    momentum: "+11%",
+  },
+  {
+    locality: "Sector 65",
+    rent3: "₹70K – ₹1.6L",
+    buy: "₹2.8Cr – ₹7.5Cr",
+    sell: "Builder-led demand",
+    demand: "High",
+    signal: "M3M / premium cluster",
+    yield: "2.7% – 3.5%",
+    momentum: "+10%",
+  },
+  {
+    locality: "Dwarka Expressway",
+    rent3: "₹45K – ₹1.1L",
+    buy: "₹1.8Cr – ₹5Cr",
+    sell: "Rising supply",
+    demand: "Rising",
+    signal: "Infrastructure-led upside",
+    yield: "2.5% – 3.3%",
+    momentum: "+13%",
+  },
+  {
+    locality: "Sohna Road",
+    rent3: "₹40K – ₹90K",
+    buy: "₹1.4Cr – ₹3.8Cr",
+    sell: "Value-sensitive market",
+    demand: "Medium",
+    signal: "Affordable family demand",
+    yield: "2.8% – 3.7%",
+    momentum: "+8%",
+  },
 ];
 
-const rentTrends = [
-  { month: 'Jan', golf_course: 48000, dlf: 42000, extension: 32000 },
-  { month: 'Feb', golf_course: 48500, dlf: 42500, extension: 32500 },
-  { month: 'Mar', golf_course: 49000, dlf: 43000, extension: 33000 },
-  { month: 'Apr', golf_course: 50000, dlf: 43500, extension: 33500 },
-  { month: 'May', golf_course: 51000, dlf: 44000, extension: 34000 },
-  { month: 'Jun', golf_course: 52000, dlf: 45000, extension: 35000 },
+const societySignals = [
+  {
+    title: "Rental strength",
+    text: "Societies with corporate commute, security and maintenance depth usually rent faster.",
+    icon: Home,
+  },
+  {
+    title: "Resale confidence",
+    text: "Builder reputation, location and upkeep matter more than just flat size.",
+    icon: Building2,
+  },
+  {
+    title: "Owner timing",
+    text: "Selling works better when live inventory is limited and society demand is visible.",
+    icon: BadgeIndianRupee,
+  },
 ];
+
+const modeCopy: Record<InsightMode, { title: string; description: string; cta: string }> = {
+  rent: {
+    title: "Rent signals by Gurgaon micro-market",
+    description: "Use rent ranges, demand and occupancy-style signals to shortlist tenant-friendly societies.",
+    cta: "Search rentals",
+  },
+  buy: {
+    title: "Buy / resale signals before shortlisting",
+    description: "Compare resale depth, society quality and location confidence before choosing a home.",
+    cta: "Search resale",
+  },
+  sell: {
+    title: "Owner-side signals for listing timing",
+    description: "Understand where demand is stronger and what buyers/tenants are likely to compare.",
+    cta: "List your flat",
+  },
+};
+
+function modeValue(row: (typeof marketRows)[number], mode: InsightMode) {
+  if (mode === "rent") return row.rent3;
+  if (mode === "buy") return row.buy;
+  return row.sell;
+}
+
+function modeHref(mode: InsightMode) {
+  if (mode === "rent") return "/search?tab=rent";
+  if (mode === "buy") return "/search?tab=buy";
+  return "/sell";
+}
 
 export function InsightsPage() {
-  const [selectedBhk, setSelectedBhk] = useState(2);
+  const [mode, setMode] = useState<InsightMode>("rent");
 
-  const bhkKey = `rent_${selectedBhk}bhk` as keyof typeof localityData[0];
+  useEffect(() => {
+    setPublicSeo(
+      "Gurgaon Market Insights | Rent Buy Sell Signals | SocietyFlats",
+      "Compare Gurgaon rent, buy, resale and owner listing signals by locality and society-first market context.",
+    );
+    window.scrollTo(0, 0);
+  }, []);
+
+  const activeCopy = modeCopy[mode];
+
+  const heroMetrics = useMemo(
+    () => [
+      ["Prime rent band", "₹75K – ₹2.4L", "Golf Course / Extension"],
+      ["Resale depth", "₹2Cr – ₹12Cr", "Society and builder-led"],
+      ["Demand signal", "High", "Corporate + family demand"],
+      ["Owner action", "List with context", "Society-first enquiry"],
+    ],
+    [],
+  );
 
   return (
-    <div className="min-h-screen bg-ivory-100">
-      <div className="bg-navy-500 py-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-3xl md:text-4xl font-display font-bold text-white mb-3">
-            Gurgaon Real Estate Insights
-          </h1>
-          <p className="text-lg text-navy-200">
-            Real-time rent trends, demand analytics, and occupancy data across all localities.
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <section className="border-b border-blue-100 bg-[radial-gradient(circle_at_80%_10%,rgba(37,99,235,0.13),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-8 md:py-10">
+        <div className="container mx-auto">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-center">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700 shadow-sm">
+                <TrendingUp className="h-4 w-4" />
+                Gurgaon market intelligence
+              </span>
+              <h1 className="mt-4 max-w-4xl font-display text-[36px] font-black leading-[0.98] tracking-[-0.045em] text-navy-950 md:text-[56px]">
+                Rent, buy and sell signals for Gurgaon societies.
+              </h1>
+              <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-blue-500">
+                Market insight should help users choose the right society, not just a price number. Compare micro-markets, demand and owner-side timing.
+              </p>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Key Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: 'Avg Rent (2BHK)', value: '₹42,500', trend: '+8%', up: true },
-            { label: 'Market Growth', value: '12.5%', trend: 'YoY', up: true },
-            { label: 'Avg Occupancy', value: '91.5%', trend: '+2%', up: true },
-            { label: 'Active Listings', value: '2,450', trend: '+15%', up: true },
-          ].map((metric, i) => (
-            <div key={i} className="bg-white rounded-xl border border-navy-100 p-5">
-              <p className="text-sm text-navy-500 mb-1">{metric.label}</p>
-              <p className="text-2xl font-bold text-navy-900">{metric.value}</p>
-              <div className="flex items-center gap-1 mt-1">
-                {metric.up ? (
-                  <ArrowUpRight className="w-4 h-4 text-green-500" />
-                ) : (
-                  <ArrowDownRight className="w-4 h-4 text-red-500" />
-                )}
-                <span className={cn("text-sm", metric.up ? "text-green-600" : "text-red-600")}>
-                  {metric.trend}
-                </span>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {(["rent", "buy", "sell"] as InsightMode[]).map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setMode(item)}
+                    className={
+                      mode === item
+                        ? "rounded-full bg-blue-700 px-4 py-2 text-sm font-black capitalize text-white shadow-sm"
+                        : "rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-black capitalize text-blue-700 hover:bg-blue-50"
+                    }
+                  >
+                    {item}
+                  </button>
+                ))}
               </div>
+            </div>
+
+            <aside className="rounded-[1.75rem] border border-blue-100 bg-white p-5 shadow-sm">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">Current lens</p>
+              <h2 className="mt-2 font-display text-2xl font-black text-navy-950">{activeCopy.title}</h2>
+              <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">{activeCopy.description}</p>
+              <Button asChild className="mt-5 h-11 w-full rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
+                <Link to={modeHref(mode)}>
+                  {activeCopy.cta} <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 py-6">
+        <div className="grid gap-3 md:grid-cols-4">
+          {heroMetrics.map(([label, value, note]) => (
+            <div key={label} className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm">
+              <p className="text-xs font-bold text-blue-400">{label}</p>
+              <p className="mt-1 text-2xl font-black text-navy-950">{value}</p>
+              <p className="mt-1 text-xs font-semibold text-navy-500">{note}</p>
             </div>
           ))}
         </div>
 
-        {/* BHK Selector */}
-        <div className="flex items-center gap-3 mb-6">
-          <span className="text-sm font-medium text-navy-700">View rent for:</span>
-          {[1, 2, 3, 4].map(bhk => (
-            <button
-              key={bhk}
-              onClick={() => setSelectedBhk(bhk)}
-              className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                selectedBhk === bhk
-                  ? "bg-navy-500 text-white"
-                  : "bg-white text-navy-600 border border-navy-200 hover:border-navy-300"
-              )}
-            >
-              {bhk} BHK
-            </button>
-          ))}
-        </div>
+        <div className="mt-6 rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm">
+          <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Market table</p>
+              <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950 md:text-[30px]">
+                {activeCopy.title}
+              </h2>
+              <p className="mt-1.5 max-w-2xl text-sm font-semibold leading-6 text-navy-500">
+                These are practical SocietyFlats guide ranges and demand signals for shortlist decisions. Verify before negotiation.
+              </p>
+            </div>
 
-        {/* Locality Comparison Table */}
-        <div className="bg-white rounded-2xl border border-navy-100 overflow-hidden mb-8">
-          <div className="p-6 border-b border-navy-100">
-            <h2 className="text-xl font-semibold text-navy-900">Rent by Locality</h2>
+            <Button asChild variant="outline" className="rounded-full border-blue-100 font-black text-blue-700 hover:bg-blue-50">
+              <Link to={modeHref(mode)}>
+                Take action <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
+
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[820px] border-separate border-spacing-y-2">
               <thead>
-                <tr className="bg-navy-50">
-                  <th className="text-left p-4 text-sm font-semibold text-navy-700">Locality</th>
-                  <th className="text-right p-4 text-sm font-semibold text-navy-700">Avg Rent</th>
-                  <th className="text-center p-4 text-sm font-semibold text-navy-700">YoY Trend</th>
-                  <th className="text-center p-4 text-sm font-semibold text-navy-700">Demand</th>
-                  <th className="text-center p-4 text-sm font-semibold text-navy-700">Occupancy</th>
+                <tr>
+                  <th className="rounded-l-2xl bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
+                    Locality
+                  </th>
+                  <th className="bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
+                    {mode === "rent" ? "Rent range" : mode === "buy" ? "Resale range" : "Owner signal"}
+                  </th>
+                  <th className="bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
+                    Demand
+                  </th>
+                  <th className="bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
+                    Market signal
+                  </th>
+                  <th className="rounded-r-2xl bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
+                    Momentum
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {localityData.map((loc, i) => (
-                  <tr key={i} className="border-t border-navy-50 hover:bg-navy-50/50 transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-navy-400" />
-                        <span className="font-medium text-navy-900">{loc.name}</span>
-                      </div>
+                {marketRows.map((row) => (
+                  <tr key={row.locality}>
+                    <td className="rounded-l-2xl bg-white p-3">
+                      <p className="flex items-center gap-2 font-black text-navy-950">
+                        <MapPin className="h-4 w-4 text-blue-700" />
+                        {row.locality}
+                      </p>
                     </td>
-                    <td className="p-4 text-right font-bold text-navy-900">
-                      {formatPrice(loc[bhkKey] as number)}
+                    <td className="bg-white p-3 font-black text-navy-950">{modeValue(row, mode)}</td>
+                    <td className="bg-white p-3">
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">{row.demand}</span>
                     </td>
-                    <td className="p-4 text-center">
-                      <Badge className={cn(
-                        loc.trend > 10 ? "bg-green-100 text-green-700" :
-                        loc.trend > 5 ? "bg-lime-100 text-lime-700" :
-                        "bg-yellow-100 text-yellow-700"
-                      )}>
-                        <TrendingUp className="w-3 h-3 mr-1" /> +{loc.trend}%
-                      </Badge>
-                    </td>
-                    <td className="p-4 text-center">
-                      <Badge variant="outline" className={cn(
-                        loc.demand === 'Very High' ? "border-green-300 text-green-700" :
-                        loc.demand === 'High' ? "border-lime-300 text-lime-700" :
-                        "border-yellow-300 text-yellow-700"
-                      )}>
-                        {loc.demand}
-                      </Badge>
-                    </td>
-                    <td className="p-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-16 h-2 bg-navy-100 rounded-full overflow-hidden">
-                          <div 
-                            className={cn(
-                              "h-full rounded-full",
-                              loc.occupancy >= 95 ? "bg-green-500" :
-                              loc.occupancy >= 90 ? "bg-lime-500" : "bg-yellow-500"
-                            )}
-                            style={{ width: `${loc.occupancy}%` }}
-                          />
-                        </div>
-                        <span className="text-sm font-medium text-navy-700">{loc.occupancy}%</span>
-                      </div>
+                    <td className="bg-white p-3 text-sm font-semibold text-navy-600">{mode === "rent" ? row.signal : mode === "buy" ? row.yield : row.signal}</td>
+                    <td className="rounded-r-2xl bg-white p-3">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        {row.momentum}
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -154,49 +269,72 @@ export function InsightsPage() {
           </div>
         </div>
 
-        {/* Trend Chart Placeholder */}
-        <div className="bg-white rounded-2xl border border-navy-100 p-6">
-          <h2 className="text-xl font-semibold text-navy-900 mb-4">6-Month Rent Trend (2BHK)</h2>
-          <div className="h-64 flex items-end gap-4">
-            {rentTrends.map((month, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full flex gap-1 h-48 items-end">
-                  <div 
-                    className="flex-1 bg-navy-500 rounded-t-lg opacity-80"
-                    style={{ height: `${(month.golf_course / 60000) * 100}%` }}
-                    title={`Golf Course: ₹${month.golf_course}`}
-                  />
-                  <div 
-                    className="flex-1 bg-navy-300 rounded-t-lg opacity-60"
-                    style={{ height: `${(month.dlf / 60000) * 100}%` }}
-                    title={`DLF: ₹${month.dlf}`}
-                  />
-                  <div 
-                    className="flex-1 bg-gold-500 rounded-t-lg opacity-80"
-                    style={{ height: `${(month.extension / 60000) * 100}%` }}
-                    title={`Extension: ₹${month.extension}`}
-                  />
+        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <section className="rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Society-first interpretation</p>
+            <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950 md:text-[30px]">
+              What these signals mean for users
+            </h2>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              {societySignals.map(({ title, text, icon: Icon }) => (
+                <div key={title} className="rounded-[1.35rem] border border-blue-100 bg-[#F8FAFC] p-4">
+                  <Icon className="h-5 w-5 text-blue-700" />
+                  <h3 className="mt-3 font-black text-navy-950">{title}</h3>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">{text}</p>
                 </div>
-                <span className="text-xs text-navy-500">{month.month}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-center gap-6 mt-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-navy-500 rounded" />
-              <span className="text-sm text-navy-600">Golf Course Road</span>
+              ))}
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-navy-300 rounded" />
-              <span className="text-sm text-navy-600">DLF Phase</span>
+          </section>
+
+          <aside className="rounded-[1.75rem] border border-blue-100 bg-navy-950 p-5 text-white shadow-sm">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-200">Need society-specific guidance?</p>
+            <h2 className="mt-2 font-display text-2xl font-black">Ask AI or compare societies before deciding.</h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-blue-100">
+              Market ranges are only useful when linked to the actual society, commute, inventory and owner expectation.
+            </p>
+
+            <div className="mt-5 grid gap-2">
+              <Button asChild className="h-11 rounded-full bg-white font-black text-navy-950 hover:bg-blue-50">
+                <Link to="/ai-advisor">
+                  Ask AI Advisor <Sparkles className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-11 rounded-full border-white/20 bg-white/10 font-black text-white hover:bg-white/15">
+                <Link to="/compare">
+                  Compare societies <BarChart3 className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-gold-500 rounded" />
-              <span className="text-sm text-navy-600">Golf Course Ext</span>
+          </aside>
+        </div>
+
+        <div className="mt-6 rounded-[1.75rem] border border-blue-100 bg-blue-50 p-5">
+          <div className="grid gap-4 md:grid-cols-[1fr_320px] md:items-center">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Disclaimer</p>
+              <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950">Use insights as guidance, not final pricing.</h2>
+              <p className="mt-2 text-sm font-semibold leading-6 text-navy-600">
+                Gurgaon prices change by tower, floor, view, furnishing, inventory and owner urgency. SocietyFlats uses these pages to guide shortlisting and callback conversations.
+              </p>
             </div>
+            <Button asChild className="h-12 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
+              <Link to="/search?tab=societies">
+                Search societies <Search className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
-      </div>
+
+        <span className="sr-only">
+          Gurgaon market insights for rent, buy, resale, sell, owner listing, society comparison and SocietyFlats AI advisor.
+        </span>
+        <span className="sr-only">
+          <ShieldCheck />
+        </span>
+      </section>
     </div>
   );
 }
+
+export default InsightsPage;
