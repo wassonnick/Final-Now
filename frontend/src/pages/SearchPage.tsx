@@ -83,6 +83,95 @@ function safeJoin(value: unknown) {
   return Array.isArray(value) ? value.join(" ") : "";
 }
 
+const searchStopWords = new Set([
+  "under",
+  "near",
+  "with",
+  "for",
+  "the",
+  "and",
+  "or",
+  "rs",
+  "in",
+  "at",
+  "to",
+  "from",
+  "budget",
+  "society",
+  "societies",
+  "flat",
+  "flats",
+  "home",
+  "homes",
+  "gurgaon",
+  "gurugram",
+]);
+
+function normalizeSearchValue(value: unknown) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[₹,]/g, " ")
+    .replace(/\b(\d+)\s*bhk\b/g, "$1 bhk $1bhk")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function searchTokens(value: string) {
+  const normalized = normalizeSearchValue(value);
+  const tokens = normalized
+    .split(" ")
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2 && !searchStopWords.has(token));
+
+  const bhkMatch = normalized.match(/\b(\d+)\s*bhk\b/);
+  if (bhkMatch?.[1]) tokens.push(bhkMatch[1], `${bhkMatch[1]}bhk`);
+
+  return Array.from(new Set(tokens));
+}
+
+function scoreSearchText(text: string, query: string) {
+  const cleanQuery = normalizeSearchValue(query);
+  if (!cleanQuery) return 1000;
+
+  const haystack = normalizeSearchValue(text);
+  if (!haystack) return 0;
+
+  let score = haystack.includes(cleanQuery) ? 120 : 0;
+  const tokens = searchTokens(cleanQuery);
+
+  for (const token of tokens) {
+    if (haystack.includes(token)) score += token.length >= 4 ? 30 : 16;
+  }
+
+  return score;
+}
+
+function sortedSearchResults<T>(
+  items: T[],
+  query: string,
+  buildText: (item: T) => string,
+) {
+  if (!query.trim()) return items;
+
+  return items
+    .map((item, index) => ({
+      item,
+      index,
+      score: scoreSearchText(buildText(item), query),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((entry) => entry.item);
+}
+
+function quickSearchIntent(value: string): "societies" | "rent" | "buy" {
+  const clean = normalizeSearchValue(value);
+  if (/\b(buy|sale|resale|purchase)\b/.test(clean)) return "buy";
+  if (/\b(bhk|rent|under|budget|lakh|l)\b/.test(clean)) return "rent";
+  return "societies";
+}
+
 function resultLabel(tab: string) {
   if (tab === "rent") return "Rent homes";
   if (tab === "buy") return "Buy / Resale homes";
@@ -356,7 +445,7 @@ export function SearchPage() {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ message: aiQuery, intent: "rent" }),
+      body: JSON.stringify({ message: aiQuery, intent: "general" }),
     })
       .then((response) => {
         if (!response.ok) throw new Error("AI search failed");
@@ -381,21 +470,23 @@ export function SearchPage() {
   }, [isAiSearch, searchParams]);
 
   const filteredSocieties = useMemo(() => {
-    const q = query.toLowerCase().trim();
-    return societies.filter((society) => {
-      const text = searchableText(
+    return sortedSearchResults(societies, query, (society) =>
+      searchableText(
         society?.name,
         society?.builder,
         society?.sector,
         society?.locality,
+        society?.address,
+        society?.description,
         safeJoin(society?.amenities),
-        society?.nearbyOfficeHubs,
-        society?.nearbyMetro,
+        safeJoin(society?.nearbyOfficeHubs),
+        safeJoin(society?.nearbyMetro),
+        safeJoin(society?.nearbySchools),
+        safeJoin(society?.nearbyHospitals),
         society?.rentRange,
         society?.buyRange,
-      );
-      return !q || text.includes(q);
-    });
+      ),
+    );
   }, [query, societies]);
 
   const aiSocietyResults = useMemo(
@@ -422,26 +513,31 @@ export function SearchPage() {
       : filteredSocieties;
 
   const filteredProperties = useMemo(() => {
-    const q = query.toLowerCase().trim();
-    return properties.filter((property) => {
-      const typeMatch =
-        activeTab === "rent"
-          ? property?.listingType === "Rent"
-          : activeTab === "buy"
-            ? saleListingTypes.includes(property?.listingType)
-            : true;
-      const text = searchableText(
+    const typedProperties = properties.filter((property) => {
+      const listingType = String(property?.listingType || "").toLowerCase();
+      return activeTab === "rent"
+        ? listingType.includes("rent")
+        : activeTab === "buy"
+          ? saleListingTypes.some((type) => listingType === type.toLowerCase())
+          : true;
+    });
+
+    return sortedSearchResults(typedProperties, query, (property) =>
+      searchableText(
         property?.title,
         property?.society,
         property?.locality,
         property?.price,
         property?.listingType,
         property?.bedrooms,
+        property?.bathrooms,
         property?.areaSqft,
+        property?.floor,
+        property?.furnishedStatus,
+        property?.description,
         safeJoin(property?.amenities),
-      );
-      return typeMatch && (!q || text.includes(q));
-    });
+      ),
+    );
   }, [activeTab, properties, query]);
 
   const updateUrl = (tab: string, searchValue: string) => {
@@ -546,7 +642,7 @@ export function SearchPage() {
     activeTab === "societies"
       ? societyResults.length
       : filteredProperties.length;
-  const selectedSociety = societyResults[0] || societies[0];
+  const selectedSociety = societyResults[0];
   const recommendedSocieties = societyResults.slice(0, 3);
   const aiRecommendedSocieties = useMemo(() => {
     const base = societyResults.length > 0 ? societyResults : societies;

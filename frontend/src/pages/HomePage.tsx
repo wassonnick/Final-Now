@@ -288,7 +288,7 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message: cleanQuery, intent: "rent" }),
+        body: JSON.stringify({ message: cleanQuery, intent: "general" }),
       });
 
       if (!response.ok) throw new Error("Floating AI request failed");

@@ -77,6 +77,18 @@ export function AIAdvisorPage() {
   const activeQuestion = question || input || "Gurgaon society shortlist";
   const searchUrl = `/search?q=${encodeURIComponent(activeQuestion)}&tab=societies&intent=general`;
 
+  // C111A auto-run query handoff: homepage/search chips open this page with ?q=.
+  useEffect(() => {
+    const clean = initialQuery.trim();
+    if (!clean) return;
+
+    const timer = window.setTimeout(() => {
+      void submitAdvisor(clean);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const submitAdvisor = async (value?: string) => {
     const clean = (value || input).trim();
     if (!clean || loading) return;

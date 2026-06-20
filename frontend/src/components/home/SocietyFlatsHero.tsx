@@ -169,6 +169,13 @@ function societyMeta(society: HeroMapSociety, fallback: string) {
   return formatPublicLocation(society as AdminSociety) || society.sector || society.locality || fallback;
 }
 
+function quickHeroSearchIntent(value: string): Intent {
+  const clean = normalizeHeroText(value);
+  if (/\b(buy|sale|resale|purchase)\b/.test(clean)) return "buy";
+  if (/\b(bhk|rent|under|budget|lakh|l)\b/.test(clean)) return "rent";
+  return "society";
+}
+
 const fallbackHeroMapSocieties: HeroMapSociety[] = [
   { name: "DLF Crest", slug: "dlf-crest", sector: "Golf Course Road", score: "9.4" },
   { name: "Alpha Corp Sky1", slug: "alpha-corp-sky1", sector: "Sector 15", score: "8.7" },
@@ -259,7 +266,7 @@ export default function SocietyFlatsHero() {
 
   const applyQuickSearch = (value: string) => {
     setQuery(value);
-    window.location.href = buildSearchUrl("society", value);
+    window.location.href = buildSearchUrl(quickHeroSearchIntent(value), value);
   };
 
   const submitHeroAi = async (value?: string) => {
