@@ -148,6 +148,21 @@ function amenityValue(society: any, key: string) {
   return Boolean(amenities?.[key]);
 }
 
+function compareRankPrompt(items: any[]) {
+  const names = items.map((item) => item?.name).filter(Boolean);
+  if (!names.length) {
+    return "Rank Gurgaon societies by family fit, commute, rent, resale and overall lifestyle.";
+  }
+
+  return `Rank these societies: ${names.join(" vs ")}. Compare them for family fit, commute, rent value, resale value, amenities, pros, watch-outs and best overall choice.`;
+}
+
+function compareSearchPanelLabel(count: number) {
+  if (count === 0) return "Search society to compare";
+  if (count >= 3) return "Compare list full";
+  return "Find another society to compare";
+}
+
 function bestForRow(items: any[], key: string) {
   return Math.max(...items.map((society) => scoreValue(society, key)));
 }
@@ -274,10 +289,10 @@ export function ComparePage() {
                   Society comparison
                 </span>
                 <h1 className="mt-4 max-w-4xl font-display text-[36px] font-black leading-[0.98] tracking-[-0.045em] text-navy-950 md:text-[56px]">
-                  Compare Gurgaon societies before choosing the flat.
+                  Search societies and build your comparison.
                 </h1>
                 <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-blue-500">
-                  Go to society search, tap Compare on up to 3 society cards, then return here to compare score, location, recommended-for, pros, watch-outs and rent/resale context.
+                  Use the search panel here to find societies, tap Compare on society cards, and return here to compare score, location, recommended-for, pros, watch-outs and rent/resale context.
                 </p>
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                   <Button asChild className="h-12 rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">
@@ -328,8 +343,30 @@ export function ComparePage() {
               </Button>
             </div>
 
-            <div className="mb-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold leading-6 text-blue-700">
-              How to add societies: open society search, tap the Compare button on any society card, add up to 3 societies, then come back here.
+            <div className="mb-4 rounded-[1.35rem] border border-blue-100 bg-blue-50 p-4">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-700">Search society to compare</p>
+              <p className="mt-1.5 text-sm font-bold leading-6 text-blue-700">
+                Start from here, search a society, tap Compare on up to 3 cards, then come back to this page.
+              </p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <Link
+                  to="/search?tab=societies&intent=society"
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-3 text-sm font-black text-blue-700 transition hover:bg-blue-100"
+                >
+                  <Search className="h-4 w-4 shrink-0" />
+                  <span className="truncate">Search society name, sector or builder</span>
+                </Link>
+                <Button asChild className="h-11 rounded-full bg-blue-700 px-5 font-black text-white hover:bg-blue-800">
+                  <Link to="/search?tab=societies&intent=society">
+                    Search societies
+                  </Link>
+                </Button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
+                <Link to="/search?tab=societies&q=Golf%20Course%20Road&intent=society" className="rounded-full bg-white px-3 py-1 text-blue-700">Golf Course Road</Link>
+                <Link to="/search?tab=societies&q=Sector%2065&intent=society" className="rounded-full bg-white px-3 py-1 text-blue-700">Sector 65</Link>
+                <Link to="/search?tab=societies&q=M3M&intent=society" className="rounded-full bg-white px-3 py-1 text-blue-700">M3M</Link>
+              </div>
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
@@ -389,7 +426,7 @@ export function ComparePage() {
                 >
                   <Search className="h-4 w-4 shrink-0" />
                   <span className="truncate">
-                    {items.length < 3 ? "Find another society to compare" : "Compare list full"}
+                    {compareSearchPanelLabel(items.length)}
                   </span>
                 </Link>
 
@@ -419,7 +456,7 @@ export function ComparePage() {
               <X className="mr-2 h-4 w-4" /> Clear all selected
             </Button>
             <Button asChild variant="outline" className="rounded-full border-blue-100 font-black text-blue-700">
-              <Link to="/ai-advisor">
+              <Link to={`/ai-advisor?q=${encodeURIComponent(compareRankPrompt(items))}`}>
                 Ask AI to rank these <Sparkles className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -565,7 +602,7 @@ export function ComparePage() {
               Ask AI to rank the comparison by commute, budget, school or lifestyle.
             </p>
             <Button asChild className="mt-4 h-10 w-full rounded-full bg-white font-black text-navy-950 hover:bg-blue-50">
-              <Link to="/ai-advisor">Open AI Advisor</Link>
+              <Link to={`/ai-advisor?q=${encodeURIComponent(compareRankPrompt(items))}`}>Open AI Advisor</Link>
             </Button>
           </div>
         </div>

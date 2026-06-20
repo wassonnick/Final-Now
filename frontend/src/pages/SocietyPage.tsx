@@ -23,10 +23,12 @@ import {
   MessageCircle,
   Phone,
   School,
+  Scale,
   Shield,
   Train,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAppStore } from "@/store";
 import { cn } from "@/lib/utils";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { SocietyNearbyGoogleMap } from "@/components/maps/SocietyNearbyGoogleMap";
@@ -218,6 +220,42 @@ export function SocietyPage() {
   const [selectedLeadProperty, setSelectedLeadProperty] = useState<any | null>(
     null,
   );
+
+  const { compareList, addToCompare, removeFromCompare } = useAppStore();
+  const isSocietyCompared = compareList.some((item: any) => String(item.id) === String(society?.id));
+
+  const toggleSocietyCompare = () => {
+    if (!society?.id) return;
+
+    if (isSocietyCompared) {
+      removeFromCompare(society.id);
+      trackEvent("society_removed_from_compare", {
+        source: "society_page",
+        entity_type: "society",
+        entity_slug: slug || "",
+        entity_name: society?.name || "",
+      });
+      return;
+    }
+
+    if (compareList.length >= 3) {
+      trackEvent("compare_limit_reached", {
+        source: "society_page",
+        entity_type: "society",
+        entity_slug: slug || "",
+        entity_name: society?.name || "",
+      });
+      return;
+    }
+
+    addToCompare(society);
+    trackEvent("society_added_to_compare", {
+      source: "society_page",
+      entity_type: "society",
+      entity_slug: slug || "",
+      entity_name: society?.name || "",
+    });
+  };
 
   const openSocietyCallback = (source = "society_page_callback") => {
     trackLeadIntent({
@@ -764,6 +802,22 @@ export function SocietyPage() {
                 </Button>
 
                 <Button
+                  type="button"
+                  onClick={toggleSocietyCompare}
+                  variant="outline"
+                  className={cn(
+                    "h-10 rounded-full text-sm font-bold",
+                    isSocietyCompared
+                      ? "border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      : "border-blue-100 text-blue-700 hover:bg-blue-50",
+                  )}
+                  title={compareList.length >= 3 && !isSocietyCompared ? "Compare list full. Remove one society first." : "Add this society to compare"}
+                >
+                  <Scale className="mr-2 h-4 w-4" />
+                  {isSocietyCompared ? "Added to compare" : compareList.length >= 3 ? "Compare full" : "Compare"}
+                </Button>
+
+                <Button
                   asChild
                   variant="outline"
                   className="h-10 rounded-full border-navy-200 text-sm font-bold"
@@ -820,13 +874,25 @@ export function SocietyPage() {
                     Why people shortlist {society.name}
                   </h2>
                 </div>
-                <Button asChild variant="outline" className="rounded-full">
-                  <Link
-                    to={`/compare?society=${encodeURIComponent(society.name)}`}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    onClick={toggleSocietyCompare}
+                    variant="outline"
+                    className={cn(
+                      "rounded-full",
+                      isSocietyCompared
+                        ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+                        : "border-blue-100 text-blue-700",
+                    )}
                   >
-                    Compare societies
-                  </Link>
-                </Button>
+                    <Scale className="mr-2 h-4 w-4" />
+                    {isSocietyCompared ? "Added" : "Add to compare"}
+                  </Button>
+                  <Button asChild variant="outline" className="rounded-full border-blue-100 text-blue-700">
+                    <Link to="/compare">Open compare</Link>
+                  </Button>
+                </div>
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-4">
                 {whyChoose.map((item) => {
@@ -1452,6 +1518,21 @@ export function SocietyPage() {
               </Button>
 
               <Button
+                type="button"
+                onClick={toggleSocietyCompare}
+                variant="outline"
+                className={cn(
+                  "mt-2 w-full rounded-full",
+                  isSocietyCompared
+                    ? "border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                    : "border-blue-100 text-blue-700 hover:bg-blue-50",
+                )}
+              >
+                <Scale className="mr-2 h-4 w-4" />
+                {isSocietyCompared ? "Added to compare" : compareList.length >= 3 ? "Compare full" : "Add to compare"}
+              </Button>
+
+              <Button
                 asChild
                 variant="ghost"
                 className="mt-1 w-full rounded-full text-blue-700 hover:bg-blue-50"
@@ -1476,15 +1557,21 @@ export function SocietyPage() {
           >
             <Phone className="mr-1.5 h-4 w-4" /> Callback
           </Button>
-          <a
-            href={`https://wa.me/919911886222?text=${whatsappMessage}`}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Open WhatsApp for this society"
-            className="inline-flex h-10 items-center justify-center rounded-full border border-green-200 bg-green-50 px-2 text-xs font-bold text-green-700 hover:bg-green-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2"
+          <Button
+            type="button"
+            onClick={toggleSocietyCompare}
+            variant="outline"
+            aria-label="Add this society to compare"
+            className={cn(
+              "h-10 rounded-full px-2 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2",
+              isSocietyCompared
+                ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+                : "border-blue-100 text-blue-700",
+            )}
           >
-            <MessageCircle className="mr-1.5 h-4 w-4" /> WhatsApp
-          </a>
+            <Scale className="mr-1.5 h-4 w-4" />
+            {isSocietyCompared ? "Added" : "Compare"}
+          </Button>
           <Button
             asChild
             variant="outline"
