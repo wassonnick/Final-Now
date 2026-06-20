@@ -191,6 +191,20 @@ function societyMatchBadgeClass(label: string) {
   return "bg-slate-100 text-slate-600";
 }
 
+function selectedRankLabel(index: number) {
+  if (index === 0) return "Best match";
+  if (index === 1) return "2nd choice";
+  if (index === 2) return "3rd choice";
+  return `Rank ${index + 1}`;
+}
+
+function selectedRankBadgeClass(index: number) {
+  if (index === 0) return "bg-emerald-50 text-emerald-700";
+  if (index === 1) return "bg-blue-50 text-blue-700";
+  if (index === 2) return "bg-violet-50 text-violet-700";
+  return "bg-slate-100 text-slate-600";
+}
+
 function propertyMatchLabel(property: any, query: string) {
   const direct = directPropertyMatchScore(property, query);
   if (direct >= 80) return "Closest home";
@@ -283,7 +297,9 @@ function FirstFoldResultCard({
   activeQuestion: string;
 }) {
   const name = matchName(society);
-  const label = societyMatchLabel(society, activeQuestion);
+  const isSelectedRanking = isExactRankPrompt(activeQuestion);
+  const label = isSelectedRanking ? selectedRankLabel(index) : societyMatchLabel(society, activeQuestion);
+  const badgeClass = isSelectedRanking ? selectedRankBadgeClass(index) : societyMatchBadgeClass(label);
 
   return (
     <Link
@@ -305,7 +321,7 @@ function FirstFoldResultCard({
         <span className="rounded-full bg-blue-700 px-2.5 py-1 text-[11px] font-black text-white">
           #{index + 1}
         </span>
-        <span className={`rounded-full px-2.5 py-1 text-[10px] font-black ${societyMatchBadgeClass(label)}`}>
+        <span className={`rounded-full px-2.5 py-1 text-[10px] font-black ${badgeClass}`}>
           {label}
         </span>
       </div>
@@ -345,7 +361,9 @@ function SocietyResultCard({
     (source === "api"
       ? "Matched by SocietyFlats AI from your requirement."
       : "Closest live society match from public SocietyFlats data.");
-  const label = societyMatchLabel(society, activeQuestion);
+  const isSelectedRanking = isExactRankPrompt(activeQuestion);
+  const label = isSelectedRanking ? selectedRankLabel(index) : societyMatchLabel(society, activeQuestion);
+  const badgeClass = isSelectedRanking ? selectedRankBadgeClass(index) : societyMatchBadgeClass(label);
 
   return (
     <Link
@@ -379,7 +397,7 @@ function SocietyResultCard({
         <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">
           #{index + 1}
         </span>
-        <span className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-black ${societyMatchBadgeClass(label)}`}>
+        <span className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-black ${badgeClass}`}>
           {label}
         </span>
       </div>
@@ -454,7 +472,9 @@ function InlineTopResult({
 }) {
   const name = matchName(society);
   const resultUrl = toSocietyUrl(society);
-  const label = societyMatchLabel(society, activeQuestion);
+  const isSelectedRanking = isExactRankPrompt(activeQuestion);
+  const label = isSelectedRanking ? selectedRankLabel(index) : societyMatchLabel(society, activeQuestion);
+  const badgeClass = isSelectedRanking ? selectedRankBadgeClass(index) : societyMatchBadgeClass(label);
 
   return (
     <Link
@@ -478,7 +498,7 @@ function InlineTopResult({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate text-sm font-black text-navy-950">{name}</p>
-          <span className={`hidden rounded-full px-2 py-0.5 text-[10px] font-black sm:inline-flex ${societyMatchBadgeClass(label)}`}>
+          <span className={`hidden rounded-full px-2 py-0.5 text-[10px] font-black sm:inline-flex ${badgeClass}`}>
             {label}
           </span>
         </div>
@@ -909,10 +929,10 @@ export function AIAdvisorPage() {
                     Society recommendations
                   </p>
                   <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950 md:text-[30px]">
-                    {resultSocieties.length ? `Best society matches for ${focusLabel}` : "Answer once to get a shortlist"}
+                    {exactRankSocieties.length ? "Ranked selected societies" : resultSocieties.length ? `Best society matches for ${focusLabel}` : "Answer once to get a shortlist"}
                   </h2>
                   <p className="mt-1.5 max-w-2xl text-sm font-semibold leading-6 text-navy-500">
-                    Results are ranked by direct query relevance first, then society strength. Open a society before choosing homes.
+                    {exactRankSocieties.length ? "Ranking only the selected comparison list. Open each society to review details before deciding." : "Results are ranked by direct query relevance first, then society strength. Open a society before choosing homes."}
                   </p>
                 </div>
 

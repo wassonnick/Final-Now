@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -263,6 +263,12 @@ function CompareCard({
 export function ComparePage() {
   const { compareList, removeFromCompare, clearCompare } = useAppStore();
   const items = Array.isArray(compareList) ? compareList.slice(0, 3) : [];
+  const [compareSearchOpen, setCompareSearchOpen] = useState(false);
+
+  const clearAndOpenSearch = () => {
+    clearCompare();
+    setCompareSearchOpen(true);
+  };
 
   useEffect(() => {
     setPublicSeo(
@@ -271,6 +277,10 @@ export function ComparePage() {
     );
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (!items.length) setCompareSearchOpen(true);
+  }, [items.length]);
 
   const winner = useMemo(() => {
     if (!items.length) return null;
@@ -426,7 +436,7 @@ export function ComparePage() {
                 >
                   <Search className="h-4 w-4 shrink-0" />
                   <span className="truncate">
-                    {compareSearchPanelLabel(items.length)}
+                    {compareSearchOpen || items.length === 0 ? "Search society to compare" : compareSearchPanelLabel(items.length)}
                   </span>
                 </Link>
 
@@ -437,7 +447,7 @@ export function ComparePage() {
                     </Link>
                   </Button>
                 ) : (
-                  <Button variant="outline" className="h-11 rounded-full border-blue-100 px-5 font-black text-blue-700" onClick={clearCompare}>
+                  <Button variant="outline" className="h-11 rounded-full border-blue-100 px-5 font-black text-blue-700" onClick={clearAndOpenSearch}>
                     Clear + search
                   </Button>
                 )}
@@ -452,7 +462,7 @@ export function ComparePage() {
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button variant="ghost" className="rounded-full text-navy-500" onClick={clearCompare}>
+            <Button variant="ghost" className="rounded-full text-navy-500" onClick={clearAndOpenSearch}>
               <X className="mr-2 h-4 w-4" /> Clear and search again
             </Button>
             <Button asChild variant="outline" className="rounded-full border-blue-100 font-black text-blue-700">
@@ -463,6 +473,35 @@ export function ComparePage() {
           </div>
         </div>
       </section>
+
+      {compareSearchOpen ? (
+        <section className="border-b border-blue-100 bg-white px-4 py-4">
+          <div className="container mx-auto rounded-[1.5rem] border border-blue-100 bg-blue-50 p-4 shadow-sm">
+            <div className="grid gap-3 md:grid-cols-[1fr_220px] md:items-center">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-700">Search society to compare</p>
+                <h2 className="mt-1 font-display text-2xl font-black text-navy-950">Add societies again from search</h2>
+                <p className="mt-1 text-sm font-semibold leading-6 text-blue-600">
+                  Search a society, sector or builder. Tap Compare on up to 3 society cards and return here.
+                </p>
+              </div>
+
+              <Button asChild className="h-12 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
+                <Link to="/search?tab=societies&intent=society">
+                  Open society search <Search className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
+              <Link to="/search?tab=societies&q=Golf%20Course%20Road&intent=society" className="rounded-full bg-white px-3 py-1.5 text-blue-700">Golf Course Road</Link>
+              <Link to="/search?tab=societies&q=Sector%2065&intent=society" className="rounded-full bg-white px-3 py-1.5 text-blue-700">Sector 65</Link>
+              <Link to="/search?tab=societies&q=M3M&intent=society" className="rounded-full bg-white px-3 py-1.5 text-blue-700">M3M</Link>
+              <Link to="/search?tab=societies&q=DLF&intent=society" className="rounded-full bg-white px-3 py-1.5 text-blue-700">DLF</Link>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="container mx-auto px-4 py-6">
         {winner ? (
