@@ -1,8 +1,7 @@
 // C93H SEO validation anchor: Open full search
-// C80 AI advisor UX polish: compact prompt, clearer shortlist cards and tighter callback actions.
-// C71 AI Advisor copy: personalized home advisor, verified shortlist and expert callback language.
+// C111C-FIX1: premium AI advisor result flow with clickable society/property cards.
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked } from "@/lib/analytics";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -17,12 +16,21 @@ import {
   MessageCircle,
   Search,
   Send,
+  ShieldCheck,
   Sparkles,
   Target,
 } from "lucide-react";
 
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { Button } from "@/components/ui/button";
+import {
+  fetchPublicProperties,
+  fetchPublicSocieties,
+  formatPublicLocation,
+  propertyImage,
+  propertyUrl,
+  societyImage,
+} from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
 
 type AdvisorMatch = {
@@ -48,23 +56,284 @@ const promptChips = [
   "Compare DLF and M3M societies",
 ];
 
-const examplePrompts = [
-  "Budget + office commute",
+const trustItems = [
+  ["1", "Ask in plain English"],
+  ["2", "Get society-first matches"],
+  ["3", "Open profile or callback"],
+];
+
+const quickNeeds = [
+  "Budget + commute",
   "School + family lifestyle",
   "Pet friendly + park access",
+  "Builder preference",
 ];
+
+function normalize(value: unknown) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/₹|rs\.?|lacs?|lakhs?|crores?|cr/gi, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function queryTokens(query: string) {
+  return normalize(query)
+    .split(" ")
+    .filter((token) => token.length >= 2 && !["near", "under", "with", "flat", "home", "homes", "society", "societies", "gurgaon", "gurugram"].includes(token));
+}
+
+function scoreNumber(value: unknown, fallback = 8.1) {
+  const parsed = Number(value || fallback);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed > 10 ? parsed / 10 : parsed;
+}
+
+function societyScore(society: any) {
+  return scoreNumber(society?.score || society?.overallScore || society?.overall_score).toFixed(1);
+}
+
+function compactText(value: unknown, fallback = "On request") {
+  const text = String(value || "").trim();
+  return text || fallback;
+}
+
+function societySearchText(society: any) {
+  return normalize([
+    society?.name,
+    society?.builder,
+    society?.sector,
+    society?.locality,
+    society?.address,
+    society?.configuration,
+    society?.rentRange,
+    society?.buyRange,
+    Array.isArray(society?.amenities) ? society.amenities.join(" ") : "",
+  ].filter(Boolean).join(" "));
+}
+
+function propertySearchText(property: any) {
+  return normalize([
+    property?.title,
+    property?.society,
+    property?.locality,
+    property?.builder,
+    property?.listingType,
+    property?.bhk,
+    property?.price,
+    typeof property?.society === "object" ? property?.society?.name : "",
+    typeof property?.society === "object" ? property?.society?.builder : "",
+    typeof property?.society === "object" ? property?.society?.sector : "",
+  ].filter(Boolean).join(" "));
+}
+
+function rankSocietyForQuery(society: any, query: string) {
+  const tokens = queryTokens(query);
+  const text = societySearchText(society);
+  const tokenScore = tokens.reduce((score, token) => score + (text.includes(token) ? 1 : 0), 0);
+
+  return (
+    tokenScore * 20 +
+    scoreNumber(society?.score) * 10 +
+    (society?.featured ? 12 : 0) +
+    (society?.showInHero ? 8 : 0) +
+    (society?.searchBoost ? 6 : 0) +
+    Number(society?.propertiesCount || 0)
+  );
+}
+
+function rankPropertyForQuery(property: any, query: string) {
+  const tokens = queryTokens(query);
+  const text = propertySearchText(property);
+  return tokens.reduce((score, token) => score + (text.includes(token) ? 1 : 0), 0) * 20;
+}
+
+function matchName(match: AdvisorMatch) {
+  return match.society_name || match.name || "Society match";
+}
+
+function toSocietyUrl(item: any) {
+  return item?.slug ? `/society/${item.slug}` : "/search?tab=societies&intent=general";
+}
+
+function advisorReply(matchesCount: number, query: string) {
+  if (matchesCount > 0) {
+    return `Shortlist ready for “${query}”. Open the strongest society profile first, then use full search or callback for visit-ready homes.`;
+  }
+
+  return `No exact AI match came back for “${query}”. Showing the closest live SocietyFlats matches from Gurgaon society data.`;
+}
+
+function SocietyResultCard({
+  society,
+  index,
+  activeQuestion,
+  source,
+}: {
+  society: any;
+  index: number;
+  activeQuestion: string;
+  source: "api" | "fallback";
+}) {
+  const name = society?.society_name || society?.name || "Society match";
+  const slug = society?.slug || "";
+  const resultUrl = slug ? `/society/${slug}` : `/search?q=${encodeURIComponent(activeQuestion)}&tab=societies&intent=general`;
+  const reason =
+    society?.reason ||
+    (source === "api"
+      ? "Matched by SocietyFlats AI from your requirement."
+      : "Closest live society match from public SocietyFlats data.");
+
+  return (
+    <Link
+      to={resultUrl}
+      onClick={() =>
+        trackResultClicked({
+          source: "ai_advisor_page",
+          ai_query: activeQuestion,
+          entity_type: "society",
+          entity_slug: slug,
+          entity_name: name,
+          cta_label: "Open AI society result",
+          result_position: index + 1,
+        })
+      }
+      className="group overflow-hidden rounded-[1.35rem] border border-blue-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+    >
+      <div className="relative h-32 overflow-hidden bg-blue-50">
+        {society?.slug || society?.coverImage || society?.imageUrl ? (
+          <img
+            src={societyImage(society)}
+            alt={name}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 to-white">
+            <Building2 className="h-8 w-8 text-blue-300" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-navy-950/45 via-transparent to-transparent" />
+        <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">
+          #{index + 1} AI match
+        </span>
+        <span className="absolute right-3 top-3 rounded-full bg-blue-700 px-3 py-1 text-xs font-black text-white">
+          {society?.score ? `${society.score}${Number(society.score) > 10 ? "%" : ""}` : societyScore(society)}
+        </span>
+      </div>
+
+      <div className="p-3.5">
+        <h3 className="line-clamp-1 font-display text-xl font-black text-navy-950 group-hover:text-blue-700">
+          {name}
+        </h3>
+        <p className="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-blue-500">
+          <MapPin className="h-4 w-4" />
+          {society?.sector || society?.locality || (society?.slug ? formatPublicLocation(society) : "Gurgaon")}
+        </p>
+
+        <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-navy-500">{reason}</p>
+
+        <div className="mt-3 flex items-center justify-between border-t border-blue-50 pt-3">
+          <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-blue-700">
+            Society intelligence
+          </span>
+          <ArrowRight className="h-4 w-4 text-blue-700 transition group-hover:translate-x-1" />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function PropertySuggestionCard({ property }: { property: any }) {
+  return (
+    <Link
+      to={propertyUrl(property)}
+      className="group overflow-hidden rounded-[1.25rem] border border-blue-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+    >
+      <div className="relative h-28 overflow-hidden bg-blue-50">
+        <img
+          src={propertyImage(property)}
+          alt={property?.title || "Property"}
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+        />
+        <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">
+          {property?.listingType || "Home"}
+        </span>
+      </div>
+      <div className="p-3">
+        <h3 className="line-clamp-1 text-lg font-black text-navy-950 group-hover:text-blue-700">
+          {property?.title || "Verified home"}
+        </h3>
+        <p className="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-blue-500">
+          <MapPin className="h-4 w-4" />
+          {property?.society || property?.locality || "Gurgaon"}
+        </p>
+        <div className="mt-3 flex items-center justify-between border-t border-blue-50 pt-2.5">
+          <span className="text-sm font-bold text-navy-500">{property?.furnishedStatus || "Verified listing"}</span>
+          <span className="rounded-full bg-blue-700 px-3 py-1.5 text-sm font-black text-white">
+            {compactText(property?.price)}
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export function AIAdvisorPage() {
   const [searchParams] = useSearchParams();
   const initialQuery = searchParams.get("q") || searchParams.get("society") || "";
+
   const [input, setInput] = useState(initialQuery);
   const [question, setQuestion] = useState(initialQuery || "Tell us your budget, office/school and lifestyle");
   const [reply, setReply] = useState(
     "Type your requirement or tap a quick prompt. SocietyFlats AI will shortlist Gurgaon societies from live inventory and society context.",
   );
   const [matches, setMatches] = useState<AdvisorMatch[]>([]);
+  const [publicSocieties, setPublicSocieties] = useState<any[]>([]);
+  const [publicProperties, setPublicProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [callbackOpen, setCallbackOpen] = useState(false);
+  const [apiReturned, setApiReturned] = useState(false);
+
+  const activeQuestion = question || input || "Gurgaon society shortlist";
+  const searchUrl = `/search?q=${encodeURIComponent(activeQuestion)}&tab=societies&intent=general`;
+
+  const fallbackSocieties = useMemo(() => {
+    return [...publicSocieties]
+      .sort((a, b) => rankSocietyForQuery(b, activeQuestion) - rankSocietyForQuery(a, activeQuestion))
+      .slice(0, 6);
+  }, [publicSocieties, activeQuestion]);
+
+  const resultSocieties = useMemo(() => {
+    if (matches.length) {
+      const enriched = matches.map((match) => {
+        const name = normalize(matchName(match));
+        const found = publicSocieties.find((society) => {
+          return (
+            (match.slug && society?.slug === match.slug) ||
+            normalize(society?.name) === name ||
+            normalize(society?.name).includes(name) ||
+            name.includes(normalize(society?.name))
+          );
+        });
+
+        return found ? { ...found, ...match, name: found.name || matchName(match) } : match;
+      });
+
+      return enriched.slice(0, 6);
+    }
+
+    return fallbackSocieties;
+  }, [matches, fallbackSocieties, publicSocieties]);
+
+  const suggestedProperties = useMemo(() => {
+    return [...publicProperties]
+      .sort((a, b) => rankPropertyForQuery(b, activeQuestion) - rankPropertyForQuery(a, activeQuestion))
+      .slice(0, 4);
+  }, [publicProperties, activeQuestion]);
+
+  const topSociety = resultSocieties[0];
+  const resultSource: "api" | "fallback" = matches.length ? "api" : "fallback";
 
   useEffect(() => {
     setPublicSeo(
@@ -74,22 +343,25 @@ export function AIAdvisorPage() {
     window.scrollTo(0, 0);
   }, []);
 
-  const activeQuestion = question || input || "Gurgaon society shortlist";
-  const searchUrl = `/search?q=${encodeURIComponent(activeQuestion)}&tab=societies&intent=general`;
-
-  // C111A auto-run query handoff: homepage/search chips open this page with ?q=.
   useEffect(() => {
-    const clean = initialQuery.trim();
-    if (!clean) return;
+    let mounted = true;
 
-    const timer = window.setTimeout(() => {
-      void submitAdvisor(clean);
-    }, 0);
+    Promise.all([fetchPublicSocieties(), fetchPublicProperties()])
+      .then(([societyRows, propertyRows]) => {
+        if (!mounted) return;
+        setPublicSocieties(Array.isArray(societyRows) ? societyRows : []);
+        setPublicProperties(Array.isArray(propertyRows) ? propertyRows : []);
+      })
+      .catch((error) => {
+        console.error("AI advisor public data load failed:", error);
+      });
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const submitAdvisor = async (value?: string) => {
+  async function submitAdvisor(value?: string) {
     const clean = (value || input).trim();
     if (!clean || loading) return;
 
@@ -102,6 +374,7 @@ export function AIAdvisorPage() {
     setQuestion(clean);
     setInput("");
     setLoading(true);
+    setApiReturned(false);
 
     try {
       const response = await fetch(`${getApiBaseUrl()}/ai/advisor`, {
@@ -118,30 +391,35 @@ export function AIAdvisorPage() {
       const payload = await response.json();
       const nextMatches = Array.isArray(payload?.matches) ? payload.matches.slice(0, 6) : [];
 
+      setApiReturned(true);
       setMatches(nextMatches);
-      setReply(
-        payload?.reply ||
-          (nextMatches.length
-            ? "Shortlist ready. Open a society profile, continue to full search, or request a callback."
-            : "No exact live match was found yet. Try adding society name, sector, builder, budget or commute."),
-      );
+      setReply(payload?.reply || advisorReply(nextMatches.length, clean));
     } catch (error) {
       console.error("AI advisor request failed:", error);
+      setApiReturned(false);
       setMatches([]);
-      setReply("I could not fetch live AI matches right now. You can still open full search or request a callback.");
+      setReply("Live AI response is temporarily unavailable. Showing closest SocietyFlats matches and search actions below.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
+  // C111C: one auto-run only. Previous version submitted URL query twice.
   useEffect(() => {
-    if (initialQuery) submitAdvisor(initialQuery);
+    const clean = initialQuery.trim();
+    if (!clean) return;
+
+    const timer = window.setTimeout(() => {
+      void submitAdvisor(clean);
+    }, 120);
+
+    return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery]);
 
   return (
-    <div className="min-h-screen bg-white">
-      <section className="border-b border-blue-100 bg-gradient-to-b from-blue-50/80 via-white to-white px-4 py-5 md:py-10">
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <section className="border-b border-blue-100 bg-[radial-gradient(circle_at_80%_10%,rgba(37,99,235,0.14),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-6 md:py-8">
         <div className="container mx-auto">
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs font-bold text-navy-400">
             <Link to="/" className="hover:text-blue-700">Home</Link>
@@ -151,73 +429,67 @@ export function AIAdvisorPage() {
             <span className="text-navy-700">AI shortlist</span>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-[0.68fr_1.32fr] lg:items-start">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700 shadow-sm">
                 <Sparkles className="h-4 w-4" />
-                Continued from homepage
+                Society-first AI advisor
               </span>
 
-              <h1 className="mt-3 font-display text-3xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
-                SocietyFlats AI: your personal Gurgaon home advisor.
+              <h1 className="mt-4 max-w-3xl font-display text-[34px] font-black leading-[0.98] tracking-[-0.045em] text-navy-950 md:text-[52px]">
+                Tell us what you need. Get a Gurgaon society shortlist.
               </h1>
-              <p className="sr-only">Continue your Gurgaon society shortlist.</p>
 
-              <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
-                Tell us your budget, office or school location, family needs, pets, preferred builder, lifestyle or investment goal.
+              <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-blue-500 md:text-[17px]">
+                Search by budget, office, school, builder, pet needs, lifestyle or investment goal. Results open into society pages and full search.
               </p>
 
-              <div className="mt-4 grid grid-cols-3 gap-2 rounded-[1.25rem] border border-blue-100 bg-white p-2 shadow-sm">
-                {[
-                  ["1", "Ask"],
-                  ["2", "Shortlist"],
-                  ["3", "Open / callback"],
-                ].map(([step, label]) => (
-                  <div key={step} className="rounded-2xl bg-blue-50 px-2 py-2.5 text-center">
-                    <span className="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-blue-700 text-xs font-black text-white">
+              <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                {trustItems.map(([step, label]) => (
+                  <div key={step} className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-700 text-xs font-black text-white">
                       {step}
                     </span>
-                    <p className="mt-2 text-[11px] font-black text-navy-700">{label}</p>
+                    <p className="mt-2 text-xs font-black text-navy-800">{label}</p>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-3 grid gap-2">
-                {examplePrompts.map((item) => (
-                  <div key={item} className="flex items-center gap-2 text-sm font-bold text-navy-600">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <div className="mt-4 flex flex-wrap gap-2">
+                {quickNeeds.map((item) => (
+                  <span key={item} className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700 shadow-sm">
                     {item}
-                  </div>
+                  </span>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-[1.35rem] border border-blue-100 bg-white p-3 shadow-soft md:p-4">
+            <div className="rounded-[1.5rem] border border-blue-100 bg-white p-3 shadow-[0_18px_48px_rgba(37,99,235,0.10)] md:p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-700 text-white">
                     <Bot className="h-5 w-5" />
                   </span>
                   <div>
-                    <p className="font-black text-navy-950">Start here</p>
-                    <p className="text-xs font-bold text-emerald-700">Personalized Gurgaon shortlist</p>
+                    <p className="font-black text-navy-950">Start your shortlist</p>
+                    <p className="text-xs font-bold text-emerald-700">AI + live SocietyFlats data</p>
                   </div>
                 </div>
 
-                <span className="hidden rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 sm:inline-flex">
-                  Action page
+                <span className="hidden rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700 sm:inline-flex">
+                  Action-ready
                 </span>
               </div>
 
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
-                  submitAdvisor();
+                  void submitAdvisor();
                 }}
                 className="rounded-[1.25rem] border border-blue-100 bg-blue-50/70 p-3"
               >
                 <label className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">
-                  Tell us what you need
+                  Your requirement
                 </label>
 
                 <div className="mt-2 flex items-center gap-2 rounded-2xl bg-white px-3 py-3 shadow-sm">
@@ -249,7 +521,7 @@ export function AIAdvisorPage() {
                           ai_query: prompt,
                           cta_label: "Prompt chip",
                         });
-                        submitAdvisor(prompt);
+                        void submitAdvisor(prompt);
                       }}
                       className="rounded-full border border-blue-100 bg-white px-3 py-2 text-left text-xs font-black text-blue-700 transition hover:bg-blue-50"
                     >
@@ -262,9 +534,9 @@ export function AIAdvisorPage() {
               <div className="mt-3 rounded-[1.15rem] border border-blue-100 bg-white p-3.5 text-sm font-semibold leading-6 text-navy-600">
                 <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-blue-600">
                   <ClipboardList className="h-4 w-4" />
-                  Current shortlist brief
+                  Current brief
                 </div>
-                <p className="text-base font-black text-navy-950">{question}</p>
+                <p className="line-clamp-2 text-base font-black text-navy-950">{activeQuestion}</p>
                 <div className="mt-3 rounded-2xl bg-blue-50 p-3">
                   {loading ? (
                     <span className="inline-flex items-center gap-2">
@@ -289,7 +561,7 @@ export function AIAdvisorPage() {
                   }
                 >
                   <Button variant="outline" className="w-full rounded-full border-blue-100 text-blue-700 hover:bg-blue-50">
-                    View all matching results
+                    View full search
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -306,7 +578,7 @@ export function AIAdvisorPage() {
                   className="rounded-full bg-blue-700 hover:bg-blue-800"
                 >
                   <MessageCircle className="mr-2 h-4 w-4" />
-                  Schedule expert callback
+                  Expert callback
                 </Button>
               </div>
             </div>
@@ -314,126 +586,158 @@ export function AIAdvisorPage() {
         </div>
       </section>
 
-      <section className="px-4 py-5 md:py-7">
-        <div className="container mx-auto">
-          <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                Your society recommendations
-              </p>
-              <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950 md:text-3xl">
-                {matches.length ? "Your perfect society matches" : "Answer once to get a shortlist"}
-              </h2>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500">
-                Results open into society pages where you can check location context, verified homes, society fit and callback options.
-              </p>
-            </div>
-          </div>
-
-          {matches.length ? (
-            <>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {matches.map((match, index) => {
-                  const name = match.society_name || match.name || "Society match";
-                  const resultUrl = match.slug ? `/society/${match.slug}` : searchUrl;
-
-                  return (
-                    <Link
-                      key={`${name}-${index}`}
-                      to={resultUrl}
-                      onClick={() =>
-                        trackResultClicked({
-                          source: "ai_advisor_page",
-                          ai_query: activeQuestion,
-                          entity_type: "society",
-                          entity_slug: match.slug || "",
-                          entity_name: name,
-                          cta_label: "View society intelligence",
-                          result_position: index + 1,
-                        })
-                      }
-                      className="group rounded-[1.2rem] border border-blue-100 bg-white p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-700 text-sm font-black text-white">
-                            {index + 1}
-                          </span>
-                          <div>
-                            <h3 className="text-lg font-black text-navy-950 group-hover:text-blue-700">
-                              {name}
-                            </h3>
-                            <p className="mt-1 flex items-center gap-1 text-xs font-bold text-navy-400">
-                              <MapPin className="h-3.5 w-3.5" />
-                              {match.sector || match.locality || "Gurgaon"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
-                          {match.score ? `${match.score}%` : "Match"}
-                        </span>
-                      </div>
-
-                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-navy-500">
-                        {match.reason || "Open the society page to view score, location strengths, live homes and callback options."}
-                      </p>
-
-                      <div className="mt-3 flex items-center justify-between border-t border-blue-50 pt-3">
-                        <span className="inline-flex items-center gap-2 text-xs font-black text-blue-700">
-                          <Building2 className="h-4 w-4" />
-                          View society intelligence
-                        </span>
-                        <ArrowRight className="h-4 w-4 text-blue-700 transition group-hover:translate-x-1" />
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              <div className="mt-4 rounded-[1.25rem] border border-blue-100 bg-blue-50/60 p-3.5 md:flex md:items-center md:justify-between">
+      <section className="container mx-auto px-4 py-6 md:py-8">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_330px] lg:items-start">
+          <main className="space-y-5">
+            <section className="rounded-[1.5rem] border border-blue-100 bg-white p-4 shadow-sm">
+              <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
-                  <p className="text-sm font-black text-navy-950">Want expert help shortlisting?</p>
-                  <p className="mt-1 text-sm leading-6 text-navy-500">
-                    Share your requirement and SocietyFlats will call with matching societies, verified homes and visit-ready next steps.
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
+                    Society recommendations
+                  </p>
+                  <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950 md:text-[30px]">
+                    {resultSocieties.length ? "Best society matches for your brief" : "Answer once to get a shortlist"}
+                  </h2>
+                  <p className="mt-1.5 max-w-2xl text-sm font-semibold leading-6 text-navy-500">
+                    Open society pages to review location, inventory, pricing context and callback options.
                   </p>
                 </div>
-                <Button
-                  onClick={() => setCallbackOpen(true)}
-                  className="mt-3 rounded-full bg-blue-700 hover:bg-blue-800 md:mt-0"
-                >
-                  <CalendarCheck className="mr-2 h-4 w-4" />
-                  Schedule expert callback
+
+                <Button asChild variant="outline" className="rounded-full border-blue-100 font-black text-blue-700 hover:bg-blue-50">
+                  <Link to={searchUrl}>
+                    Full search <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
                 </Button>
               </div>
-            </>
-          ) : (
-            <div className="grid gap-3 md:grid-cols-3">
-              {[
-                {
-                  title: "Ask in plain English",
-                  text: "Example: 3BHK near Cyber City under Rs 1L",
-                  Icon: Search,
-                },
-                {
-                  title: "Get verified shortlist",
-                  text: "AI checks society fit, live inventory and commute context.",
-                  Icon: Target,
-                },
-                {
-                  title: "Open or schedule callback",
-                  text: "View society intelligence pages or ask us to shortlist.",
-                  Icon: Home,
-                },
-              ].map(({ title, text, Icon }) => (
-                <div key={title} className="rounded-[1.35rem] border border-dashed border-blue-200 bg-blue-50/40 p-5 text-navy-600">
-                  <Icon className="h-5 w-5 text-blue-700" />
-                  <p className="mt-3 font-black text-navy-950">{title}</p>
-                  <p className="mt-2 text-sm leading-6">{text}</p>
+
+              {resultSocieties.length ? (
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {resultSocieties.map((society, index) => (
+                    <SocietyResultCard
+                      key={`${matchName(society)}-${society?.slug || index}`}
+                      society={society}
+                      index={index}
+                      activeQuestion={activeQuestion}
+                      source={resultSource}
+                    />
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="grid gap-3 md:grid-cols-3">
+                  {[
+                    {
+                      title: "Ask in plain English",
+                      text: "Example: 3BHK near Cyber City under Rs 1L",
+                      Icon: Search,
+                    },
+                    {
+                      title: "Get verified shortlist",
+                      text: "AI checks society fit, live inventory and commute context.",
+                      Icon: Target,
+                    },
+                    {
+                      title: "Open or schedule callback",
+                      text: "View society intelligence pages or ask us to shortlist.",
+                      Icon: Home,
+                    },
+                  ].map(({ title, text, Icon }) => (
+                    <div key={title} className="rounded-[1.25rem] border border-dashed border-blue-200 bg-blue-50/40 p-4 text-navy-600">
+                      <Icon className="h-5 w-5 text-blue-700" />
+                      <p className="mt-3 font-black text-navy-950">{title}</p>
+                      <p className="mt-2 text-sm leading-6">{text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-[1.5rem] border border-blue-100 bg-white p-4 shadow-sm">
+              <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
+                    Home suggestions
+                  </p>
+                  <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950 md:text-[28px]">
+                    Homes related to this requirement
+                  </h2>
+                  <p className="mt-1.5 max-w-2xl text-sm font-semibold leading-6 text-navy-500">
+                    Property cards stay secondary. The society match should lead the decision.
+                  </p>
+                </div>
+              </div>
+
+              {suggestedProperties.length ? (
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  {suggestedProperties.map((property) => (
+                    <PropertySuggestionCard key={property?.id || property?.slug || property?.title} property={property} />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-[1.25rem] border border-dashed border-blue-100 bg-blue-50/50 p-4 text-sm font-semibold text-navy-500">
+                  Live property suggestions are not available for this exact brief yet. Open full search or request a callback.
+                </div>
+              )}
+            </section>
+          </main>
+
+          <aside className="space-y-4">
+            <div className="rounded-[1.5rem] border border-blue-100 bg-white p-4 shadow-sm">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Best next step</p>
+              <h3 className="mt-2 font-display text-2xl font-black text-navy-950">
+                {topSociety ? matchName(topSociety) : "Start with AI"}
+              </h3>
+              <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">
+                {topSociety
+                  ? "Open the top society first, then compare homes or request help."
+                  : "Add your budget, location and lifestyle needs to get a shortlist."}
+              </p>
+
+              <div className="mt-4 grid gap-2">
+                {topSociety ? (
+                  <Button asChild className="h-11 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
+                    <Link to={toSocietyUrl(topSociety)}>
+                      Open top match <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                ) : null}
+
+                <Button asChild variant="outline" className="h-11 rounded-full border-blue-100 font-black text-blue-700 hover:bg-blue-50">
+                  <Link to={searchUrl}>
+                    View full search <Search className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+
+                <Button
+                  onClick={() => setCallbackOpen(true)}
+                  className="h-11 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800"
+                >
+                  <CalendarCheck className="mr-2 h-4 w-4" />
+                  Request callback
+                </Button>
+              </div>
             </div>
-          )}
+
+            <div className="rounded-[1.5rem] border border-blue-100 bg-blue-50 p-4">
+              <p className="flex items-center gap-2 text-sm font-black text-navy-950">
+                <ShieldCheck className="h-4 w-4 text-blue-700" />
+                How to use this result
+              </p>
+              <div className="mt-3 space-y-2 text-sm font-semibold leading-6 text-navy-600">
+                <p>1. Open the society page first.</p>
+                <p>2. Check location, rent/resale and inventory.</p>
+                <p>3. Use callback for visit-ready options.</p>
+              </div>
+            </div>
+
+            <div className="rounded-[1.5rem] border border-blue-100 bg-navy-950 p-4 text-white">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-200">AI status</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-blue-100">
+                {apiReturned || matches.length
+                  ? "Live AI response received. Results are clickable."
+                  : "Fallback matching is active from public SocietyFlats data."}
+              </p>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -459,3 +763,5 @@ export function AIAdvisorPage() {
     </div>
   );
 }
+
+export default AIAdvisorPage;
