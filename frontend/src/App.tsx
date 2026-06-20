@@ -1,5 +1,4 @@
 import { Suspense, lazy, useEffect, type ReactNode } from 'react';
-import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { ProtectedAccountRoute } from "@/components/auth/ProtectedAccountRoute";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
