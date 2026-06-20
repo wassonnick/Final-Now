@@ -260,6 +260,19 @@ function sourceLabel(source?: string) {
 
   if (value.includes("ai")) return "AI advisor";
 
+  if (value.includes("ai_advisor_callback") || value.includes("ai_advisor_page")) return "AI advisor";
+  if (value.includes("homepage_hero_live_map")) return "Homepage map";
+  if (value.includes("homepage_live_inventory_callback")) return "Homepage inventory";
+  if (value.includes("homepage_empty_inventory")) return "Homepage no-inventory";
+  if (value.includes("homepage_owner_talk")) return "Homepage owner CTA";
+  if (value.includes("homepage_ai")) return "Homepage AI";
+  if (value.includes("floating_chat_callback")) return "Floating chat";
+  if (value.includes("map_search_conversion")) return "Map search";
+  if (value.includes("owner_listing_rent")) return "Owner rent listing";
+  if (value.includes("owner_listing_sale")) return "Owner sale listing";
+  if (value.includes("sell_page_owner_listing")) return "Owner listing form";
+  if (value === "sell_page" || value.includes("sell_page")) return "Sell page";
+  if (value === "search_page" || value.includes("search_page")) return "Search page";
   if (value.includes("property_page_callback") || value.includes("property_callback")) {
     return "Property callback";
   }
