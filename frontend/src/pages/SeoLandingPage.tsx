@@ -341,8 +341,8 @@ function FeaturedSocietyCard({
   const attribution = societyImageAttribution(society);
 
   return (
-    <div className={`overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_48px_rgba(37,99,235,0.12)] ${compact ? "" : "lg:sticky lg:top-24"}`}>
-      <div className="relative h-48 overflow-hidden bg-blue-50">
+    <div className={`overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_48px_rgba(37,99,235,0.12)] ${compact ? "" : ""}`}>
+      <div className="relative h-40 overflow-hidden bg-blue-50">
         <img src={societyImage(society)} alt={society.name} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-navy-950/70 via-navy-950/10 to-transparent" />
         <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-700 shadow-sm">
@@ -356,9 +356,9 @@ function FeaturedSocietyCard({
         </span>
       </div>
 
-      <div className="p-4 md:p-5">
+      <div className="p-4">
         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">Featured society</p>
-        <h3 className="mt-2 line-clamp-2 font-display text-2xl font-black leading-tight text-navy-950">
+        <h3 className="mt-2 line-clamp-2 font-display text-[22px] font-black leading-tight text-navy-950">
           {society.name}
         </h3>
         <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-blue-500">
@@ -538,7 +538,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_82%_14%,rgba(37,99,235,0.14),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)]">
-        <div className="container mx-auto px-4 py-8 md:py-10">
+        <div className="container mx-auto px-4 py-6 md:py-8">
           <nav className="mb-5 flex items-center gap-2 text-xs font-black text-blue-300">
             <Link to="/" className="hover:text-blue-700">Home</Link>
             <span>/</span>
@@ -554,15 +554,15 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                 <span className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">{copy.eyebrow}</span>
               </div>
 
-              <h1 className="mt-5 max-w-4xl font-display text-[36px] font-black leading-[0.96] tracking-[-0.05em] text-navy-950 md:text-[60px]">
+              <h1 className="mt-4 max-w-4xl font-display text-[34px] font-black leading-[0.96] tracking-[-0.05em] text-navy-950 md:text-[52px]">
                 {copy.title}
               </h1>
 
-              <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-blue-500 md:text-lg md:leading-8">
+              <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-blue-500 md:text-[17px] md:leading-7">
                 {copy.description}
               </p>
 
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <Button asChild className="h-12 rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">
                   <Link to={searchHref}>
                     {copy.primaryCta} <Search className="ml-2 h-4 w-4" />
@@ -588,7 +588,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                 ))}
               </div>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 <MetricPill icon={Building2} label="Societies" value={String(scopedSocieties.length || societies.length || "Live")} />
                 <MetricPill icon={Home} label="Inventory" value={String(scopedProperties.length || properties.length || "Live")} />
                 <MetricPill icon={ShieldCheck} label="Flow" value="Verified + AI" />
@@ -600,30 +600,30 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
         </div>
       </section>
 
-      <section className="border-y border-blue-50 bg-white px-4 py-4">
+      <section className="border-y border-blue-50 bg-white px-4 py-3">
         <div className="container mx-auto grid gap-3 md:grid-cols-3">
-          <div className="rounded-[1.25rem] bg-blue-50/70 p-4">
+          <div className="rounded-[1.1rem] bg-blue-50/70 p-3">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Best match logic</p>
-            <p className="mt-2 text-sm font-semibold leading-6 text-navy-600">
+            <p className="mt-1.5 text-sm font-semibold leading-5 text-navy-600">
               Featured and highest-score societies are promoted first for this page.
             </p>
           </div>
-          <div className="rounded-[1.25rem] bg-blue-50/70 p-4">
+          <div className="rounded-[1.1rem] bg-blue-50/70 p-3">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Page focus</p>
-            <p className="mt-2 text-sm font-semibold leading-6 text-navy-600">
+            <p className="mt-1.5 text-sm font-semibold leading-5 text-navy-600">
               {copy.insightText}
             </p>
           </div>
-          <div className="rounded-[1.25rem] bg-blue-50/70 p-4">
+          <div className="rounded-[1.1rem] bg-blue-50/70 p-3">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Next action</p>
-            <p className="mt-2 text-sm font-semibold leading-6 text-navy-600">
+            <p className="mt-1.5 text-sm font-semibold leading-5 text-navy-600">
               Search, ask AI or open the featured society before requesting a visit.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-8 md:py-10">
+      <section className="container mx-auto px-4 py-6 md:py-8">
         {loading ? (
           <div className="flex min-h-[280px] items-center justify-center rounded-[2rem] border border-blue-100 bg-white">
             <div className="text-center">
@@ -634,9 +634,9 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
         ) : error ? (
           <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-8 text-amber-800">{error}</div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_370px] lg:items-start">
-            <main className="space-y-8">
-              <section className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+            <main className="space-y-6">
+              <section className="rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
                 <SectionTitle
                   eyebrow="Top societies"
                   title={`Best societies for ${pageLabel}`}
@@ -666,7 +666,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                 )}
               </section>
 
-              <section className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
+              <section className="rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
                 <SectionTitle
                   eyebrow="Available homes"
                   title="Homes linked to this search"
@@ -693,7 +693,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                 )}
               </section>
 
-              <section className="rounded-[2rem] border border-blue-100 bg-[linear-gradient(135deg,#eff6ff,#ffffff)] p-5 shadow-sm md:p-6">
+              <section className="rounded-[1.75rem] border border-blue-100 bg-[linear-gradient(135deg,#eff6ff,#ffffff)] p-4 shadow-sm md:p-5">
                 <p className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-700">SocietyFlats view</p>
                 <h2 className="mt-2 font-display text-3xl font-black text-navy-950">{copy.insightTitle}</h2>
                 <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-blue-500">{copy.insightText}</p>
@@ -713,7 +713,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                 </div>
               </section>
 
-              <section className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
+              <section className="rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
                 <SectionTitle
                   eyebrow="Explore more"
                   title="Search Gurgaon by locality and builder"
@@ -750,10 +750,10 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
               </section>
             </main>
 
-            <aside className="space-y-4">
+            <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
               <FeaturedSocietyCard society={bestSociety} copy={copy} searchHref={searchHref} />
 
-              <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-sm lg:sticky lg:top-[560px]">
+              <div className="rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm">
                 <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">Quick actions</p>
                 <div className="mt-4 grid gap-2">
                   <Button asChild className="h-11 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
@@ -781,12 +781,12 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
         )}
       </section>
 
-      <section className="bg-white px-4 py-8 md:py-10">
-        <div className="container mx-auto rounded-[2rem] border border-blue-100 bg-navy-950 p-5 text-white shadow-sm md:p-7">
+      <section className="bg-white px-4 py-6 md:py-8">
+        <div className="container mx-auto rounded-[1.75rem] border border-blue-100 bg-navy-950 p-5 text-white shadow-sm md:p-6">
           <div className="grid gap-5 lg:grid-cols-[1fr_420px] lg:items-center">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-200">Ready to shortlist?</p>
-              <h2 className="mt-2 font-display text-3xl font-black">Compare the society first. Then choose the flat.</h2>
+              <h2 className="mt-2 font-display text-3xl font-black text-white">Compare the society first. Then choose the flat.</h2>
               <p className="mt-3 text-sm font-semibold leading-6 text-blue-100">
                 SocietyFlats connects Gurgaon society intelligence, verified inventory and callback support in one flow.
               </p>
@@ -810,7 +810,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
 
       <InternalSeoLinks
         variant="landing"
-        title="More Gurgaon search paths"
+        title="Continue Gurgaon discovery"
         description="Continue exploring Gurgaon by society, locality, builder and live inventory paths."
       />
 
