@@ -172,6 +172,38 @@ function quickSearchIntent(value: string): "societies" | "rent" | "buy" {
   return "societies";
 }
 
+function isSectorLikeQuery(value: string) {
+  return /\bsector\s*\d+[a-z]?\b/i.test(value.trim());
+}
+
+function primarySocietySearchText(society: any) {
+  return searchableText(
+    society?.name,
+    society?.builder,
+    society?.sector,
+    society?.locality,
+    society?.address,
+  );
+}
+
+function expandedSocietySearchText(society: any) {
+  return searchableText(
+    society?.name,
+    society?.builder,
+    society?.sector,
+    society?.locality,
+    society?.address,
+    society?.description,
+    safeJoin(society?.amenities),
+    safeJoin(society?.nearbyOfficeHubs),
+    safeJoin(society?.nearbyMetro),
+    safeJoin(society?.nearbySchools),
+    safeJoin(society?.nearbyHospitals),
+    society?.rentRange,
+    society?.buyRange,
+  );
+}
+
 function resultLabel(tab: string) {
   if (tab === "rent") return "Rent homes";
   if (tab === "buy") return "Buy / Resale homes";
@@ -470,23 +502,11 @@ export function SearchPage() {
   }, [isAiSearch, searchParams]);
 
   const filteredSocieties = useMemo(() => {
-    return sortedSearchResults(societies, query, (society) =>
-      searchableText(
-        society?.name,
-        society?.builder,
-        society?.sector,
-        society?.locality,
-        society?.address,
-        society?.description,
-        safeJoin(society?.amenities),
-        safeJoin(society?.nearbyOfficeHubs),
-        safeJoin(society?.nearbyMetro),
-        safeJoin(society?.nearbySchools),
-        safeJoin(society?.nearbyHospitals),
-        society?.rentRange,
-        society?.buyRange,
-      ),
-    );
+    const buildText = isSectorLikeQuery(query)
+      ? primarySocietySearchText
+      : expandedSocietySearchText;
+
+    return sortedSearchResults(societies, query, buildText);
   }, [query, societies]);
 
   const aiSocietyResults = useMemo(
