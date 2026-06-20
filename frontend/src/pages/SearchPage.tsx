@@ -186,6 +186,32 @@ function primarySocietySearchText(society: any) {
   );
 }
 
+function sectorQueryKey(value: string) {
+  const match = normalizeSearchValue(value).match(/\bsector\s*(\d+[a-z]?)\b/);
+  return match?.[1] || "";
+}
+
+function societyMatchesSectorQuery(society: any, queryValue: string) {
+  const sectorKey = sectorQueryKey(queryValue);
+  if (!sectorKey) return false;
+
+  const exactSectorPattern = new RegExp(`\\bsector\\s*${sectorKey}\\b`, "i");
+  const exactLoosePattern = new RegExp(`\\b${sectorKey}\\b`, "i");
+
+  const sectorFields = [
+    society?.sector,
+    society?.locality,
+    society?.address,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value));
+
+  return sectorFields.some((value) => {
+    const normalized = normalizeSearchValue(value);
+    return exactSectorPattern.test(normalized) || exactLoosePattern.test(normalized);
+  });
+}
+
 function expandedSocietySearchText(society: any) {
   return searchableText(
     society?.name,
@@ -502,11 +528,11 @@ export function SearchPage() {
   }, [isAiSearch, searchParams]);
 
   const filteredSocieties = useMemo(() => {
-    const buildText = isSectorLikeQuery(query)
-      ? primarySocietySearchText
-      : expandedSocietySearchText;
+    if (isSectorLikeQuery(query)) {
+      return societies.filter((society) => societyMatchesSectorQuery(society, query));
+    }
 
-    return sortedSearchResults(societies, query, buildText);
+    return sortedSearchResults(societies, query, expandedSocietySearchText);
   }, [query, societies]);
 
   const aiSocietyResults = useMemo(
