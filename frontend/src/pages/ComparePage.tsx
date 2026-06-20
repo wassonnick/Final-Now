@@ -362,28 +362,66 @@ export function ComparePage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <section className="border-b border-blue-100 bg-white px-4 py-6">
-        <div className="container mx-auto flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Compare journey</p>
-            <h1 className="mt-1.5 font-display text-3xl font-black text-navy-950 md:text-4xl">
-              Compare selected societies
-            </h1>
-            <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">
-              Side-by-side society intelligence, price context and next actions.
-            </p>
+      <section className="border-b border-blue-100 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-5">
+        <div className="container mx-auto">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_460px] lg:items-end">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Compare selected</p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-3">
+                <h1 className="font-display text-3xl font-black text-navy-950 md:text-4xl">
+                  {items.length} societ{items.length === 1 ? "y" : "ies"} selected
+                </h1>
+                <span className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700 shadow-sm">
+                  Maximum 3
+                </span>
+              </div>
+              <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-navy-500">
+                Compare score, price context, recommended use-case, pros and watch-outs. Add more societies from search if needed.
+              </p>
+            </div>
+
+            <div className="rounded-[1.35rem] border border-blue-100 bg-white p-3 shadow-sm">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-700">Search more societies</p>
+              <div className="mt-2 flex gap-2">
+                <Link
+                  to="/search?tab=societies&intent=society"
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-black text-blue-700 transition hover:bg-blue-100"
+                >
+                  <Search className="h-4 w-4 shrink-0" />
+                  <span className="truncate">
+                    {items.length < 3 ? "Find another society to compare" : "Compare list full"}
+                  </span>
+                </Link>
+
+                {items.length < 3 ? (
+                  <Button asChild className="h-11 rounded-full bg-blue-700 px-5 font-black text-white hover:bg-blue-800">
+                    <Link to="/search?tab=societies&intent=society">
+                      <Plus className="mr-2 h-4 w-4" /> Add
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" className="h-11 rounded-full border-blue-100 px-5 font-black text-blue-700" onClick={clearCompare}>
+                    Clear
+                  </Button>
+                )}
+              </div>
+
+              <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-navy-500">
+                <Link to="/search?tab=societies&q=Golf%20Course%20Road&intent=society" className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">Golf Course Road</Link>
+                <Link to="/search?tab=societies&q=Sector%2065&intent=society" className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">Sector 65</Link>
+                <Link to="/search?tab=societies&q=M3M&intent=society" className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">M3M</Link>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {items.length < 3 ? (
-              <Button asChild variant="outline" className="rounded-full border-blue-100 font-black text-blue-700">
-                <Link to="/search?tab=societies">
-                  <Plus className="mr-2 h-4 w-4" /> Add society
-                </Link>
-              </Button>
-            ) : null}
+          <div className="mt-3 flex flex-wrap gap-2">
             <Button variant="ghost" className="rounded-full text-navy-500" onClick={clearCompare}>
-              <X className="mr-2 h-4 w-4" /> Clear all
+              <X className="mr-2 h-4 w-4" /> Clear all selected
+            </Button>
+            <Button asChild variant="outline" className="rounded-full border-blue-100 font-black text-blue-700">
+              <Link to="/ai-advisor">
+                Ask AI to rank these <Sparkles className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </div>
         </div>
