@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowRight,
+  BadgeIndianRupee,
   Building2,
   CheckCircle2,
   Home,
@@ -42,6 +43,9 @@ type LandingCopy = {
   searchQuery: string;
   primaryCta: string;
   secondaryCta: string;
+  focusLabel: string;
+  insightTitle: string;
+  insightText: string;
 };
 
 const localityLabels: Record<string, string> = {
@@ -90,6 +94,14 @@ function slugify(value: string) {
     .replace(/(^-|-$)+/g, "");
 }
 
+function normalize(value: unknown) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function readableFromSlug(value: string | undefined, fallback: string) {
   if (!value) return fallback;
   return value
@@ -99,10 +111,14 @@ function readableFromSlug(value: string | undefined, fallback: string) {
     .join(" ");
 }
 
-function scoreOf(society: any, fallback = "8.3") {
+function scoreNumber(society: any, fallback = 8.1) {
   const parsed = Number(society?.score || society?.overallScore || society?.overall_score || fallback);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
-  return parsed > 10 ? (parsed / 10).toFixed(1) : parsed.toFixed(1);
+  return parsed > 10 ? parsed / 10 : parsed;
+}
+
+function scoreOf(society: any, fallback = "8.1") {
+  return scoreNumber(society, Number(fallback)).toFixed(1);
 }
 
 function compactText(value: unknown, fallback = "On request") {
@@ -110,59 +126,96 @@ function compactText(value: unknown, fallback = "On request") {
   return text || fallback;
 }
 
-function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug?: string): LandingCopy {
-  const localityLabel = localityLabels[localitySlug || ""] || readableFromSlug(localitySlug, "Gurgaon");
-  const builderLabel = builderLabels[builderSlug || ""] || readableFromSlug(builderSlug, "Gurgaon builder");
+function qualityRank(society: any) {
+  return (
+    scoreNumber(society) * 100 +
+    (society?.featured ? 50 : 0) +
+    (society?.showInHero ? 35 : 0) +
+    (society?.searchBoost ? 25 : 0) +
+    Number(society?.propertiesCount || 0)
+  );
+}
 
-  if (variant === "gurgaon-societies") {
+function sortByQuality(rows: any[]) {
+  return [...rows].sort((a, b) => qualityRank(b) - qualityRank(a));
+}
+
+function landingLabel(variant: LandingVariant, localitySlug?: string, builderSlug?: string) {
+  if (variant === "locality") return localityLabels[localitySlug || ""] || readableFromSlug(localitySlug, "Gurgaon");
+  if (variant === "builder") return builderLabels[builderSlug || ""] || readableFromSlug(builderSlug, "Gurgaon builder");
+  if (variant === "gurgaon-properties") return "Gurgaon properties";
+  if (variant === "gurgaon-societies") return "Gurgaon societies";
+  return "Gurgaon";
+}
+
+function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug?: string): LandingCopy {
+  const label = landingLabel(variant, localitySlug, builderSlug);
+
+  if (variant === "builder") {
     return {
-      eyebrow: "Gurgaon society directory",
-      title: "Verified Gurgaon societies with live context",
+      eyebrow: `${label} Gurgaon`,
+      title: `Best ${label} societies in Gurgaon`,
       description:
-        "Browse society-first profiles with location, builder, rent range, resale range and available inventory context before choosing a home.",
-      canonical: "/gurgaon/societies",
-      searchQuery: "Gurgaon societies",
-      primaryCta: "Search Gurgaon societies",
-      secondaryCta: "Open AI shortlist",
+        `Compare ${label} societies by location, score, rent range, resale range and available homes before booking a visit.`,
+      canonical: `/builder/${builderSlug}`,
+      searchQuery: `${label} Gurgaon`,
+      primaryCta: `Search ${label} societies`,
+      secondaryCta: "Ask AI Advisor",
+      focusLabel: `${label} best match`,
+      insightTitle: `Why shortlist ${label} societies first?`,
+      insightText:
+        `${label} projects can vary sharply by micro-market, maintenance, access and inventory depth. SocietyFlats keeps the builder context connected to society-level details.`,
+    };
+  }
+
+  if (variant === "locality") {
+    return {
+      eyebrow: `${label} Gurgaon`,
+      title: `Top societies near ${label}`,
+      description:
+        `See the strongest society matches around ${label}, with rent/resale context, locality signals and live property links.`,
+      canonical: `/gurgaon/${localitySlug}`,
+      searchQuery: `${label} Gurgaon`,
+      primaryCta: `Search ${label}`,
+      secondaryCta: "Ask AI Advisor",
+      focusLabel: `${label} top society`,
+      insightTitle: `Why ${label} needs society-first comparison`,
+      insightText:
+        `Two societies in the same sector can feel very different. Compare society quality, commute, resident fit and inventory before choosing a flat.`,
     };
   }
 
   if (variant === "gurgaon-properties") {
     return {
       eyebrow: "Gurgaon live inventory",
-      title: "Verified Gurgaon flats and owner listings",
+      title: "Gurgaon flats inside verified societies",
       description:
-        "Explore published homes inside verified Gurgaon societies with rent, resale, furnishing and society context in one flow.",
+        "Explore published homes with society context first, so rent and resale decisions are backed by location, pricing and community fit.",
       canonical: "/gurgaon/properties",
       searchQuery: "Gurgaon properties",
       primaryCta: "Search live homes",
       secondaryCta: "List owner property",
+      focusLabel: "Best society with inventory",
+      insightTitle: "Property search should start with society context",
+      insightText:
+        "A flat is easier to judge when the society, commute, maintenance, pricing and resident profile are visible in the same journey.",
     };
   }
 
-  if (variant === "locality") {
+  if (variant === "gurgaon-societies") {
     return {
-      eyebrow: `${localityLabel} society guide`,
-      title: `Best societies and flats in ${localityLabel}, Gurgaon`,
+      eyebrow: "Gurgaon society directory",
+      title: "Verified Gurgaon societies ranked for better shortlists",
       description:
-        "Compare verified societies, available homes, commute strength, pricing context and callback support for this Gurgaon micro-market.",
-      canonical: `/gurgaon/${localitySlug}`,
-      searchQuery: `${localityLabel} Gurgaon`,
-      primaryCta: `Search ${localityLabel}`,
-      secondaryCta: "Ask AI Advisor",
-    };
-  }
-
-  if (variant === "builder") {
-    return {
-      eyebrow: `${builderLabel} Gurgaon guide`,
-      title: `${builderLabel} societies and flats in Gurgaon`,
-      description:
-        "Compare builder-linked society profiles, location strengths, rent/resale signals and available homes before shortlisting.",
-      canonical: `/builder/${builderSlug}`,
-      searchQuery: `${builderLabel} Gurgaon`,
-      primaryCta: `Search ${builderLabel} societies`,
-      secondaryCta: "Ask AI Advisor",
+        "Compare Gurgaon societies by builder, sector, score, rent range, resale context and available homes in one clean flow.",
+      canonical: "/gurgaon/societies",
+      searchQuery: "Gurgaon societies",
+      primaryCta: "Search societies",
+      secondaryCta: "Open AI shortlist",
+      focusLabel: "Top Gurgaon society",
+      insightTitle: "Choose the society before the flat",
+      insightText:
+        "SocietyFlats helps users compare location, lifestyle, maintenance, pricing and available inventory before they request visits.",
     };
   }
 
@@ -170,88 +223,56 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
     eyebrow: "Gurgaon society-first search",
     title: "Find the right Gurgaon society before choosing the home",
     description:
-      "Discover verified Gurgaon societies, live properties, owner listings and society-first recommendations on SocietyFlats.",
+      "A premium society-first search path for Gurgaon buyers, tenants, owners and brokers. Compare society quality before you shortlist flats.",
     canonical: "/gurgaon",
     searchQuery: "Gurgaon societies",
     primaryCta: "Search matching societies",
-    secondaryCta: "List owner property",
+    secondaryCta: "Ask AI Advisor",
+    focusLabel: "Highest score society",
+    insightTitle: "Gurgaon search works better society-first",
+    insightText:
+      "Locality, builder, budget and BHK matter, but the society decides daily life. Start with society intelligence, then choose the home.",
   };
 }
 
-function breadcrumbLabelForLanding(variant: LandingVariant, localitySlug?: string, builderSlug?: string) {
-  if (variant === "locality") return localityLabels[localitySlug || ""] || readableFromSlug(localitySlug, "Locality");
-  if (variant === "builder") return builderLabels[builderSlug || ""] || readableFromSlug(builderSlug, "Builder");
-  if (variant === "gurgaon-societies") return "Gurgaon Societies";
-  if (variant === "gurgaon-properties") return "Gurgaon Properties";
-  return "Gurgaon";
-}
-
-function landingSeoText(variant: LandingVariant, localitySlug?: string, builderSlug?: string) {
-  const localityLabel = localityLabels[localitySlug || ""] || readableFromSlug(localitySlug, "Gurgaon");
-  const builderLabel = builderLabels[builderSlug || ""] || readableFromSlug(builderSlug, "Gurgaon builder");
-
-  if (variant === "builder") {
-    return `${builderLabel} pages on SocietyFlats help users compare Gurgaon societies by location, rent signals, resale context, live inventory and callback support.`;
-  }
-
-  if (variant === "locality") {
-    return `${localityLabel} pages collect verified Gurgaon societies and available homes so users can compare location strength, pricing context and resident fit faster.`;
-  }
-
-  if (variant === "gurgaon-properties") {
-    return "Gurgaon property pages focus on published inventory inside verified societies, with society context before users request visits or callbacks.";
-  }
-
-  if (variant === "gurgaon-societies") {
-    return "Gurgaon society pages help users shortlist the right community first by comparing location, builder, lifestyle fit, pricing range and available homes.";
-  }
-
-  return "SocietyFlats is built around the Gurgaon society-first journey: compare the society, understand the location and then shortlist homes with better context.";
-}
-
 function matchesLocality(label: string, society: any) {
-  const value = label.toLowerCase();
-  const text = [society?.name, society?.sector, society?.locality, society?.address].filter(Boolean).join(" ").toLowerCase();
-  return text.includes(value);
+  const needle = normalize(label);
+  const text = normalize([society?.name, society?.sector, society?.locality, society?.address].filter(Boolean).join(" "));
+  return Boolean(needle) && text.includes(needle);
 }
 
 function matchesBuilder(label: string, society: any) {
-  const value = label.toLowerCase();
-  const text = [society?.name, society?.builder].filter(Boolean).join(" ").toLowerCase();
-  return text.includes(value);
+  const needle = normalize(label);
+  const text = normalize([society?.name, society?.builder].filter(Boolean).join(" "));
+  return Boolean(needle) && text.includes(needle);
 }
 
 function propertyMatchesLocality(label: string, property: any) {
-  const value = label.toLowerCase();
-  const text = [
-    property?.title,
-    property?.society,
-    property?.locality,
-    typeof property?.society === "object" ? property?.society?.locality : "",
-    typeof property?.society === "object" ? property?.society?.sector : "",
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return text.includes(value);
-}
-
-function propertyMatchesBuilder(label: string, property: any) {
-  const value = label.toLowerCase();
-  const text = [
+  const needle = normalize(label);
+  const text = normalize([
     property?.title,
     property?.society,
     property?.locality,
     property?.builder,
+    typeof property?.society === "object" ? property?.society?.name : "",
+    typeof property?.society === "object" ? property?.society?.sector : "",
+    typeof property?.society === "object" ? property?.society?.locality : "",
+  ].filter(Boolean).join(" "));
+
+  return Boolean(needle) && text.includes(needle);
+}
+
+function propertyMatchesBuilder(label: string, property: any) {
+  const needle = normalize(label);
+  const text = normalize([
+    property?.title,
+    property?.society,
+    property?.builder,
     typeof property?.society === "object" ? property?.society?.builder : "",
     typeof property?.society === "object" ? property?.society?.name : "",
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+  ].filter(Boolean).join(" "));
 
-  return text.includes(value);
+  return Boolean(needle) && text.includes(needle);
 }
 
 function SectionTitle({
@@ -263,7 +284,7 @@ function SectionTitle({
   eyebrow: string;
   title: string;
   description: string;
-  action?: React.ReactNode;
+  action?: ReactNode;
 }) {
   return (
     <div className="mb-4 flex flex-col gap-3 md:mb-5 md:flex-row md:items-end md:justify-between">
@@ -272,10 +293,167 @@ function SectionTitle({
         <h2 className="mt-2 font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-3xl">
           {title}
         </h2>
-        <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-navy-500">{description}</p>
+        <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-navy-500">{description}</p>
       </div>
       {action}
     </div>
+  );
+}
+
+function MetricPill({ label, value, icon: Icon }: { label: string; value: string; icon: any }) {
+  return (
+    <div className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
+      <div className="flex items-center gap-2 text-blue-500">
+        <Icon className="h-4 w-4" />
+        <p className="text-[11px] font-black uppercase tracking-[0.14em]">{label}</p>
+      </div>
+      <p className="mt-2 text-lg font-black text-navy-950">{value}</p>
+    </div>
+  );
+}
+
+function FeaturedSocietyCard({
+  society,
+  copy,
+  searchHref,
+  compact = false,
+}: {
+  society?: any;
+  copy: LandingCopy;
+  searchHref: string;
+  compact?: boolean;
+}) {
+  if (!society) {
+    return (
+      <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-sm">
+        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">Best match</p>
+        <h3 className="mt-2 text-2xl font-black text-navy-950">No exact society card yet</h3>
+        <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">
+          Search is ready. Admin can add featured societies for this page.
+        </p>
+        <Button asChild className="mt-4 h-11 w-full rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
+          <Link to={searchHref}>Open search <ArrowRight className="ml-2 h-4 w-4" /></Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const attribution = societyImageAttribution(society);
+
+  return (
+    <div className={`overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_48px_rgba(37,99,235,0.12)] ${compact ? "" : "lg:sticky lg:top-24"}`}>
+      <div className="relative h-48 overflow-hidden bg-blue-50">
+        <img src={societyImage(society)} alt={society.name} className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy-950/70 via-navy-950/10 to-transparent" />
+        <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-700 shadow-sm">
+          {copy.focusLabel}
+        </span>
+        <span className="absolute right-3 top-3 rounded-full bg-blue-700 px-3 py-1.5 text-xs font-black text-white shadow-sm">
+          {scoreOf(society)} score
+        </span>
+        <span className="absolute bottom-3 left-3 max-w-[75%] truncate rounded-full bg-slate-950/90 px-3 py-1.5 text-xs font-semibold text-white">
+          {attribution.label}
+        </span>
+      </div>
+
+      <div className="p-4 md:p-5">
+        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">Featured society</p>
+        <h3 className="mt-2 line-clamp-2 font-display text-2xl font-black leading-tight text-navy-950">
+          {society.name}
+        </h3>
+        <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-blue-500">
+          <MapPin className="h-4 w-4" /> {formatPublicLocation(society)}
+        </p>
+
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="rounded-2xl bg-blue-50 p-3">
+            <p className="text-xs font-bold text-blue-300">Rent range</p>
+            <p className="mt-1 text-sm font-black text-navy-950">{compactText(society.rentRange)}</p>
+          </div>
+          <div className="rounded-2xl bg-ivory-100 p-3">
+            <p className="text-xs font-bold text-blue-300">Resale range</p>
+            <p className="mt-1 text-sm font-black text-navy-950">{compactText(society.buyRange)}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-2">
+          <Button asChild className="h-11 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
+            <Link to={`/society/${society.slug}`}>
+              View society <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="h-11 rounded-full border-blue-100 font-black text-blue-700 hover:bg-blue-50">
+            <Link to={searchHref}>
+              Search nearby homes <Search className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SocietyCard({ society }: { society: any }) {
+  return (
+    <Link
+      to={`/society/${society.slug}`}
+      className="group overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium"
+    >
+      <div className="relative h-36 overflow-hidden bg-blue-50">
+        <img src={societyImage(society)} alt={society.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy-950/45 via-transparent to-transparent" />
+        <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">Society</span>
+        <span className="absolute right-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-navy-950">
+          {scoreOf(society)}
+        </span>
+      </div>
+
+      <div className="p-4">
+        <h3 className="line-clamp-1 font-display text-xl font-black text-navy-950 group-hover:text-blue-700">{society.name}</h3>
+        <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-blue-500">
+          <MapPin className="h-4 w-4" /> {formatPublicLocation(society)}
+        </p>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-blue-50/60 p-2">
+          <div className="rounded-xl bg-white p-3">
+            <p className="text-xs font-bold text-blue-300">Rent</p>
+            <p className="mt-1 text-sm font-black text-navy-950">{compactText(society.rentRange)}</p>
+          </div>
+          <div className="rounded-xl bg-white p-3">
+            <p className="text-xs font-bold text-blue-300">Resale</p>
+            <p className="mt-1 text-sm font-black text-navy-950">{compactText(society.buyRange)}</p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function PropertyCard({ property }: { property: any }) {
+  return (
+    <Link
+      to={propertyUrl(property)}
+      className="group overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium"
+    >
+      <div className="relative h-32 overflow-hidden bg-blue-50">
+        <img src={propertyImage(property)} alt={property.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+        <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">
+          {property.listingType || "Property"}
+        </span>
+      </div>
+      <div className="p-4">
+        <h3 className="line-clamp-2 text-lg font-black text-navy-950 group-hover:text-blue-700">{property.title}</h3>
+        <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-blue-500">
+          <MapPin className="h-4 w-4" /> {property.society || property.locality || "Gurgaon"}
+        </p>
+        <div className="mt-4 flex items-center justify-between border-t border-blue-50 pt-3">
+          <span className="text-sm font-bold text-navy-500">{property.furnishedStatus || "Verified listing"}</span>
+          <span className="rounded-full bg-blue-700 px-3 py-1.5 text-sm font-black text-white">
+            {compactText(property.price)}
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }
 
@@ -288,12 +466,9 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const searchHref = `/search?tab=${
-    variant === "gurgaon-properties" ? "rent" : "societies"
-  }&q=${encodeURIComponent(copy.searchQuery)}${variant === "gurgaon-properties" ? "" : "&intent=society"}`;
-
+  const searchTab = variant === "gurgaon-properties" ? "rent" : "societies";
+  const searchHref = `/search?tab=${searchTab}&q=${encodeURIComponent(copy.searchQuery)}${searchTab === "societies" ? "&intent=society" : ""}`;
   const aiHref = `/ai-advisor?q=${encodeURIComponent(copy.searchQuery)}`;
-  const sellHref = "/sell";
 
   useEffect(() => {
     setPublicSeo(copy.title, copy.description, { canonical: copy.canonical });
@@ -307,7 +482,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
     Promise.all([fetchPublicSocieties(), fetchPublicProperties()])
       .then(([societyRows, propertyRows]) => {
         if (!mounted) return;
-        setSocieties(Array.isArray(societyRows) ? societyRows : []);
+        setSocieties(sortByQuality(Array.isArray(societyRows) ? societyRows : []));
         setProperties(Array.isArray(propertyRows) ? propertyRows : []);
       })
       .catch((fetchError) => {
@@ -327,62 +502,59 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
     let rows = societies;
 
     if (variant === "locality") {
-      const label = localityLabels[locality || ""] || readableFromSlug(locality, "");
+      const label = landingLabel(variant, locality, builderSlug);
       rows = rows.filter((society) => matchesLocality(label, society) || matchesLocality(String(locality || ""), society));
     }
 
     if (variant === "builder") {
-      const label = builderLabels[builderSlug || ""] || readableFromSlug(builderSlug, "");
+      const label = landingLabel(variant, locality, builderSlug);
       rows = rows.filter((society) => matchesBuilder(label, society) || matchesBuilder(String(builderSlug || ""), society));
     }
 
-    return rows.slice(0, 6);
+    return sortByQuality(rows);
   }, [societies, variant, locality, builderSlug]);
 
   const scopedProperties = useMemo(() => {
     let rows = properties;
 
     if (variant === "locality") {
-      const label = localityLabels[locality || ""] || readableFromSlug(locality, "");
+      const label = landingLabel(variant, locality, builderSlug);
       rows = rows.filter((property) => propertyMatchesLocality(label, property) || propertyMatchesLocality(String(locality || ""), property));
     }
 
     if (variant === "builder") {
-      const label = builderLabels[builderSlug || ""] || readableFromSlug(builderSlug, "");
+      const label = landingLabel(variant, locality, builderSlug);
       rows = rows.filter((property) => propertyMatchesBuilder(label, property) || propertyMatchesBuilder(String(builderSlug || ""), property));
     }
 
-    return rows.slice(0, 4);
+    return rows.slice(0, 6);
   }, [properties, variant, locality, builderSlug]);
 
-  const hasScopedResults = scopedSocieties.length > 0 || scopedProperties.length > 0;
-  const heroSociety = scopedSocieties[0] || societies[0];
-  const heroProperty = scopedProperties[0] || properties[0];
+  const bestSociety = scopedSocieties[0] || societies[0];
+  const shownSocieties = scopedSocieties.slice(0, 6);
+  const shownProperties = scopedProperties.slice(0, 4);
+  const pageLabel = landingLabel(variant, locality, builderSlug);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_80%_10%,rgba(37,99,235,0.12),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)]">
+      <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_82%_14%,rgba(37,99,235,0.14),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)]">
         <div className="container mx-auto px-4 py-8 md:py-10">
           <nav className="mb-5 flex items-center gap-2 text-xs font-black text-blue-300">
-            <Link to="/" className="hover:text-blue-700">
-              Home
-            </Link>
+            <Link to="/" className="hover:text-blue-700">Home</Link>
             <span>/</span>
-            <Link to="/gurgaon" className="hover:text-blue-700">
-              Gurgaon
-            </Link>
+            <Link to="/gurgaon" className="hover:text-blue-700">Gurgaon</Link>
             <span>/</span>
-            <span className="text-blue-700">{breadcrumbLabelForLanding(variant, locality, builderSlug)}</span>
+            <span className="text-blue-700">{pageLabel}</span>
           </nav>
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-stretch">
+          <div className="grid gap-7 lg:grid-cols-[minmax(0,1.05fr)_430px] lg:items-center">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 shadow-sm">
                 <Sparkles className="h-3.5 w-3.5 text-blue-700" />
                 <span className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">{copy.eyebrow}</span>
               </div>
 
-              <h1 className="mt-5 max-w-4xl font-display text-[34px] font-black leading-[0.98] tracking-[-0.045em] text-navy-950 md:text-[56px]">
+              <h1 className="mt-5 max-w-4xl font-display text-[36px] font-black leading-[0.96] tracking-[-0.05em] text-navy-950 md:text-[60px]">
                 {copy.title}
               </h1>
 
@@ -398,137 +570,55 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                 </Button>
 
                 <Button asChild variant="outline" className="h-12 rounded-full border-blue-100 bg-white px-6 font-black text-blue-700 hover:bg-blue-50">
-                  <Link to={variant === "gurgaon-properties" ? sellHref : aiHref}>
+                  <Link to={variant === "gurgaon-properties" ? "/sell" : aiHref}>
                     {copy.secondaryCta} <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </div>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm">
-                  <p className="text-xs font-bold text-blue-400">Verified societies</p>
-                  <p className="mt-1 text-2xl font-black text-navy-950">{scopedSocieties.length || societies.length || "Live"}</p>
-                </div>
-                <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm">
-                  <p className="text-xs font-bold text-blue-400">Live inventory</p>
-                  <p className="mt-1 text-2xl font-black text-navy-950">{scopedProperties.length || properties.length || "Live"}</p>
-                </div>
-                <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm">
-                  <p className="text-xs font-bold text-blue-400">Help flow</p>
-                  <p className="mt-1 text-xl font-black text-navy-950">AI + Callback</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-[0_18px_48px_rgba(37,99,235,0.10)]">
-              <div className="relative h-52 overflow-hidden rounded-[1.5rem] bg-blue-50">
-                {heroSociety ? (
-                  <img src={societyImage(heroSociety)} alt={heroSociety.name} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full bg-[linear-gradient(135deg,#eaf2ff,#ffffff)]" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-navy-950/60 via-navy-950/10 to-transparent" />
-                <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-700 shadow-sm">
-                  Society-first guide
-                </span>
-                {heroSociety ? (
-                  <span className="absolute bottom-3 left-3 max-w-[74%] truncate rounded-full bg-slate-950/90 px-3 py-1.5 text-xs font-semibold text-white">
-                    {societyImageAttribution(heroSociety).label}
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="mt-4">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-400">Featured match</p>
-                <h3 className="mt-1 line-clamp-1 text-2xl font-black text-navy-950">
-                  {heroSociety?.name || "Gurgaon society search"}
-                </h3>
-                <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-blue-500">
-                  <MapPin className="h-4 w-4" />
-                  {heroSociety ? formatPublicLocation(heroSociety) : "Compare Gurgaon micro-markets"}
-                </p>
-
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <div className="rounded-2xl bg-blue-50 p-3">
-                    <p className="text-xs font-bold text-blue-300">Society score</p>
-                    <p className="mt-1 text-lg font-black text-navy-950">{heroSociety ? scoreOf(heroSociety) : "AI"}</p>
-                  </div>
-                  <div className="rounded-2xl bg-ivory-100 p-3">
-                    <p className="text-xs font-bold text-blue-300">Inventory</p>
-                    <p className="mt-1 text-lg font-black text-navy-950">{heroProperty ? "Available" : "On request"}</p>
-                  </div>
-                </div>
-
-                <Button asChild className="mt-4 h-11 w-full rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
-                  <Link to={searchHref}>
-                    Continue search <ArrowRight className="ml-2 h-4 w-4" />
+              <div className="mt-5 flex flex-wrap gap-2">
+                {["Rent homes", "Buy / resale", "Societies", "AI shortlist"].map((chip) => (
+                  <Link
+                    key={chip}
+                    to={chip === "AI shortlist" ? aiHref : `/search?tab=${chip.includes("Buy") ? "buy" : chip.includes("Rent") ? "rent" : "societies"}&q=${encodeURIComponent(copy.searchQuery)}${chip === "Societies" ? "&intent=society" : ""}`}
+                    className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700 shadow-sm hover:bg-blue-50"
+                  >
+                    {chip}
                   </Link>
-                </Button>
+                ))}
+              </div>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <MetricPill icon={Building2} label="Societies" value={String(scopedSocieties.length || societies.length || "Live")} />
+                <MetricPill icon={Home} label="Inventory" value={String(scopedProperties.length || properties.length || "Live")} />
+                <MetricPill icon={ShieldCheck} label="Flow" value="Verified + AI" />
               </div>
             </div>
+
+            <FeaturedSocietyCard society={bestSociety} copy={copy} searchHref={searchHref} compact />
           </div>
         </div>
       </section>
 
       <section className="border-y border-blue-50 bg-white px-4 py-4">
-        <div className="container mx-auto rounded-[1.25rem] border border-blue-100 bg-blue-50/40 p-4 text-sm font-semibold leading-6 text-blue-600">
-          {landingSeoText(variant, locality, builderSlug)}
-        </div>
-      </section>
-
-      <section className="bg-white px-4 py-8 md:py-10">
-        <div className="container mx-auto">
-          <div className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">Popular Gurgaon society searches</p>
-                <h2 className="mt-2 font-display text-2xl font-black text-navy-950 md:text-3xl">Explore by locality and builder</h2>
-                <p className="mt-2 text-sm font-medium leading-6 text-navy-500">
-                  Continue with high-intent Gurgaon pages that match how users search before choosing a society.
-                </p>
-              </div>
-              <Button asChild variant="outline" className="h-10 rounded-full border-blue-100 bg-white font-black text-blue-700 hover:bg-blue-50">
-                <Link to="/search?tab=societies">
-                  Search Gurgaon societies <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-
-            <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              <div className="rounded-[1.5rem] border border-blue-100 bg-[#F8FAFC] p-4">
-                <p className="flex items-center gap-2 text-sm font-black text-navy-950">
-                  <MapPin className="h-4 w-4 text-blue-700" /> Search by Gurgaon locality
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {popularLocalities.map((item) => (
-                    <Link
-                      key={item}
-                      to={`/gurgaon/${slugify(item)}`}
-                      className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700 hover:bg-blue-50"
-                    >
-                      {item}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[1.5rem] border border-blue-100 bg-[#F8FAFC] p-4">
-                <p className="flex items-center gap-2 text-sm font-black text-navy-950">
-                  <Building2 className="h-4 w-4 text-blue-700" /> Search by builder
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {popularBuilders.map((item) => (
-                    <Link
-                      key={item}
-                      to={`/builder/${slugify(item)}`}
-                      className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700 hover:bg-blue-50"
-                    >
-                      {item}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
+        <div className="container mx-auto grid gap-3 md:grid-cols-3">
+          <div className="rounded-[1.25rem] bg-blue-50/70 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Best match logic</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-navy-600">
+              Featured and highest-score societies are promoted first for this page.
+            </p>
+          </div>
+          <div className="rounded-[1.25rem] bg-blue-50/70 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Page focus</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-navy-600">
+              {copy.insightText}
+            </p>
+          </div>
+          <div className="rounded-[1.25rem] bg-blue-50/70 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Next action</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-navy-600">
+              Search, ask AI or open the featured society before requesting a visit.
+            </p>
           </div>
         </div>
       </section>
@@ -544,159 +634,173 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
         ) : error ? (
           <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-8 text-amber-800">{error}</div>
         ) : (
-          <div className="space-y-8 md:space-y-10">
-            {hasScopedResults ? (
-              <>
-                <section>
-                  <SectionTitle
-                    eyebrow="Societies"
-                    title="Verified society profiles"
-                    description="Open society pages with location context, rent/resale signals and available home links."
-                    action={
-                      <Button asChild variant="outline" className="h-10 rounded-full border-blue-100 bg-white font-black text-blue-700 hover:bg-blue-50">
-                        <Link to="/search?tab=societies">
-                          View all societies <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    }
-                  />
-
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {scopedSocieties.map((society) => (
-                      <Link
-                        key={society.id || society.slug || society.name}
-                        to={`/society/${society.slug}`}
-                        className="group overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium"
-                      >
-                        <div className="relative h-36 overflow-hidden bg-blue-50">
-                          <img src={societyImage(society)} alt={society.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-navy-950/45 via-transparent to-transparent" />
-                          <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">Society</span>
-                          <span className="absolute right-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-navy-950">
-                            Score {scoreOf(society)}
-                          </span>
-                        </div>
-
-                        <div className="p-4">
-                          <h3 className="line-clamp-1 font-display text-xl font-black text-navy-950 group-hover:text-blue-700">{society.name}</h3>
-                          <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-blue-500">
-                            <MapPin className="h-4 w-4" /> {formatPublicLocation(society)}
-                          </p>
-
-                          <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-blue-50/60 p-2">
-                            <div className="rounded-xl bg-white p-3">
-                              <p className="text-xs font-bold text-blue-300">Rent</p>
-                              <p className="mt-1 text-sm font-black text-navy-950">{compactText(society.rentRange)}</p>
-                            </div>
-                            <div className="rounded-xl bg-white p-3">
-                              <p className="text-xs font-bold text-blue-300">Resale</p>
-                              <p className="mt-1 text-sm font-black text-navy-950">{compactText(society.buyRange)}</p>
-                            </div>
-                          </div>
-                        </div>
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_370px] lg:items-start">
+            <main className="space-y-8">
+              <section className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
+                <SectionTitle
+                  eyebrow="Top societies"
+                  title={`Best societies for ${pageLabel}`}
+                  description="Ranked by page relevance, featured status and society score. Open a society before shortlisting flats."
+                  action={
+                    <Button asChild variant="outline" className="h-10 rounded-full border-blue-100 bg-white font-black text-blue-700 hover:bg-blue-50">
+                      <Link to={searchHref}>
+                        View search <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
+                    </Button>
+                  }
+                />
+
+                {shownSocieties.length ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {shownSocieties.map((society) => (
+                      <SocietyCard key={society.id || society.slug || society.name} society={society} />
                     ))}
                   </div>
-                </section>
+                ) : (
+                  <div className="rounded-[1.5rem] border border-dashed border-blue-100 bg-blue-50/50 p-5">
+                    <p className="text-sm font-bold text-navy-700">No exact society cards attached yet.</p>
+                    <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">
+                      Use search or AI Advisor for nearby Gurgaon matches while this page gets more admin-approved data.
+                    </p>
+                  </div>
+                )}
+              </section>
 
-                <section>
-                  <SectionTitle
-                    eyebrow="Inventory"
-                    title="Live verified properties"
-                    description="Browse homes inside verified societies with clear next actions."
-                    action={
-                      <Button asChild variant="outline" className="h-10 rounded-full border-blue-100 bg-white font-black text-blue-700 hover:bg-blue-50">
-                        <Link to="/search?tab=rent">
-                          View all properties <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    }
-                  />
+              <section className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
+                <SectionTitle
+                  eyebrow="Available homes"
+                  title="Homes linked to this search"
+                  description="Inventory appears with society context so users can judge the community before the flat."
+                  action={
+                    <Button asChild variant="outline" className="h-10 rounded-full border-blue-100 bg-white font-black text-blue-700 hover:bg-blue-50">
+                      <Link to={`/search?tab=rent&q=${encodeURIComponent(copy.searchQuery)}`}>
+                        Search homes <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  }
+                />
 
-                  {scopedProperties.length ? (
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                      {scopedProperties.map((property) => (
-                        <Link
-                          key={property.id || property.slug || property.title}
-                          to={propertyUrl(property)}
-                          className="group overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium"
-                        >
-                          <div className="relative h-32 overflow-hidden bg-blue-50">
-                            <img src={propertyImage(property)} alt={property.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                            <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">
-                              {property.listingType || "Property"}
-                            </span>
-                          </div>
-                          <div className="p-4">
-                            <h3 className="line-clamp-2 text-lg font-black text-navy-950 group-hover:text-blue-700">{property.title}</h3>
-                            <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-blue-500">
-                              <MapPin className="h-4 w-4" /> {property.society || property.locality || "Gurgaon"}
-                            </p>
+                {shownProperties.length ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {shownProperties.map((property) => (
+                      <PropertyCard key={property.id || property.slug || property.title} property={property} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-[1.5rem] border border-dashed border-blue-100 bg-blue-50/50 p-5 text-sm font-semibold text-navy-500">
+                    No live property cards are attached to this exact page yet. Search can still find live Gurgaon homes.
+                  </div>
+                )}
+              </section>
 
-                            <div className="mt-4 flex items-center justify-between border-t border-blue-50 pt-3">
-                              <span className="text-sm font-bold text-navy-500">{property.furnishedStatus || "Verified listing"}</span>
-                              <span className="rounded-full bg-blue-700 px-3 py-1.5 text-sm font-black text-white">
-                                {compactText(property.price)}
-                              </span>
-                            </div>
-                          </div>
+              <section className="rounded-[2rem] border border-blue-100 bg-[linear-gradient(135deg,#eff6ff,#ffffff)] p-5 shadow-sm md:p-6">
+                <p className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-700">SocietyFlats view</p>
+                <h2 className="mt-2 font-display text-3xl font-black text-navy-950">{copy.insightTitle}</h2>
+                <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-blue-500">{copy.insightText}</p>
+
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  {[
+                    ["Society quality", "Score, lifestyle and builder context."],
+                    ["Pricing context", "Rent and resale ranges where available."],
+                    ["Next action", "Search, AI shortlist or callback."],
+                  ].map(([title, body]) => (
+                    <div key={title} className="rounded-2xl bg-white p-4 shadow-sm">
+                      <CheckCircle2 className="h-5 w-5 text-blue-700" />
+                      <p className="mt-3 font-black text-navy-950">{title}</p>
+                      <p className="mt-1 text-sm font-semibold leading-5 text-navy-500">{body}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-[2rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
+                <SectionTitle
+                  eyebrow="Explore more"
+                  title="Search Gurgaon by locality and builder"
+                  description="Use these internal paths to continue browsing high-intent Gurgaon society pages."
+                />
+
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-[1.5rem] border border-blue-100 bg-[#F8FAFC] p-4">
+                    <p className="flex items-center gap-2 text-sm font-black text-navy-950">
+                      <MapPin className="h-4 w-4 text-blue-700" /> Localities
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {popularLocalities.map((item) => (
+                        <Link key={item} to={`/gurgaon/${slugify(item)}`} className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700 hover:bg-blue-50">
+                          {item}
                         </Link>
                       ))}
                     </div>
-                  ) : (
-                    <div className="rounded-[1.5rem] border border-dashed border-blue-100 bg-white p-5 text-sm font-semibold text-navy-500">
-                      No live property cards are attached to this page yet. Use search or request an AI shortlist for current options.
+                  </div>
+
+                  <div className="rounded-[1.5rem] border border-blue-100 bg-[#F8FAFC] p-4">
+                    <p className="flex items-center gap-2 text-sm font-black text-navy-950">
+                      <Building2 className="h-4 w-4 text-blue-700" /> Builders
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {popularBuilders.map((item) => (
+                        <Link key={item} to={`/builder/${slugify(item)}`} className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-700 hover:bg-blue-50">
+                          {item}
+                        </Link>
+                      ))}
                     </div>
-                  )}
-                </section>
-              </>
-            ) : (
-              <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-sm">
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">No exact public cards yet</p>
-                <h2 className="mt-2 font-display text-3xl font-black text-navy-950">We can still shortlist options manually.</h2>
-                <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-navy-500">
-                  This SEO page is live for discovery, but matching public cards are still being added. Continue to search or ask AI for nearby matches.
-                </p>
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                  <Button asChild className="rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
-                    <Link to={searchHref}>
-                      Open search <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
+                  </div>
+                </div>
+              </section>
+            </main>
+
+            <aside className="space-y-4">
+              <FeaturedSocietyCard society={bestSociety} copy={copy} searchHref={searchHref} />
+
+              <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-sm lg:sticky lg:top-[560px]">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">Quick actions</p>
+                <div className="mt-4 grid gap-2">
+                  <Button asChild className="h-11 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
+                    <Link to={searchHref}>Search this page <Search className="ml-2 h-4 w-4" /></Link>
                   </Button>
-                  <Button asChild variant="outline" className="rounded-full border-blue-100 font-black text-blue-700">
-                    <Link to={aiHref}>
-                      Ask AI Advisor <Sparkles className="ml-2 h-4 w-4" />
-                    </Link>
+                  <Button asChild variant="outline" className="h-11 rounded-full border-blue-100 font-black text-blue-700 hover:bg-blue-50">
+                    <Link to={aiHref}>Ask AI Advisor <Sparkles className="ml-2 h-4 w-4" /></Link>
+                  </Button>
+                  <Button asChild variant="outline" className="h-11 rounded-full border-blue-100 font-black text-blue-700 hover:bg-blue-50">
+                    <Link to="/sell">List owner property <Home className="ml-2 h-4 w-4" /></Link>
                   </Button>
                 </div>
+
+                <div className="mt-4 rounded-2xl bg-blue-50 p-4">
+                  <p className="flex items-center gap-2 text-sm font-black text-navy-950">
+                    <BadgeIndianRupee className="h-4 w-4 text-blue-700" /> Price check
+                  </p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">
+                    Rent and resale ranges are indicative and should be verified before visit or negotiation.
+                  </p>
+                </div>
               </div>
-            )}
+            </aside>
           </div>
         )}
       </section>
 
       <section className="bg-white px-4 py-8 md:py-10">
-        <div className="container mx-auto rounded-[2rem] border border-blue-100 bg-[linear-gradient(135deg,#eff6ff,#ffffff)] p-5 shadow-sm md:p-7">
+        <div className="container mx-auto rounded-[2rem] border border-blue-100 bg-navy-950 p-5 text-white shadow-sm md:p-7">
           <div className="grid gap-5 lg:grid-cols-[1fr_420px] lg:items-center">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-700">Need help?</p>
-              <h2 className="mt-2 font-display text-3xl font-black text-navy-950">
-                Tell us your budget and preferred Gurgaon society
-              </h2>
-              <p className="mt-3 text-sm font-semibold leading-6 text-blue-500">
-                SocietyFlats can shortlist matching homes, arrange callbacks and help you compare Gurgaon societies before a visit.
+              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-200">Ready to shortlist?</p>
+              <h2 className="mt-2 font-display text-3xl font-black">Compare the society first. Then choose the flat.</h2>
+              <p className="mt-3 text-sm font-semibold leading-6 text-blue-100">
+                SocietyFlats connects Gurgaon society intelligence, verified inventory and callback support in one flow.
               </p>
             </div>
 
             <div className="grid gap-3">
-              <Button asChild className="h-12 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
+              <Button asChild className="h-12 rounded-full bg-white font-black text-navy-950 hover:bg-blue-50">
                 <Link to={searchHref}>
                   Find matching societies <Search className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="h-12 rounded-full border-blue-100 bg-white font-black text-blue-700 hover:bg-blue-50">
-                <Link to="/sell">
-                  List owner property <Home className="ml-2 h-4 w-4" />
+              <Button asChild variant="outline" className="h-12 rounded-full border-white/20 bg-white/10 font-black text-white hover:bg-white/15">
+                <Link to={aiHref}>
+                  Open AI shortlist <Sparkles className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </div>
