@@ -287,13 +287,13 @@ function SectionTitle({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex flex-col gap-3 md:mb-5 md:flex-row md:items-end md:justify-between">
+    <div className="mb-3 flex flex-col gap-3 md:mb-4 md:flex-row md:items-end md:justify-between">
       <div>
         <p className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-700">{eyebrow}</p>
-        <h2 className="mt-2 font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-3xl">
+        <h2 className="mt-1.5 font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-[28px]">
           {title}
         </h2>
-        <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-navy-500">{description}</p>
+        <p className="mt-1.5 max-w-2xl text-sm font-semibold leading-6 text-navy-500">{description}</p>
       </div>
       {action}
     </div>
@@ -342,7 +342,7 @@ function FeaturedSocietyCard({
 
   return (
     <div className={`overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_48px_rgba(37,99,235,0.12)] ${compact ? "" : ""}`}>
-      <div className="relative h-40 overflow-hidden bg-blue-50">
+      <div className="relative h-28 overflow-hidden bg-blue-50">
         <img src={societyImage(society)} alt={society.name} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-navy-950/70 via-navy-950/10 to-transparent" />
         <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-700 shadow-sm">
@@ -356,27 +356,27 @@ function FeaturedSocietyCard({
         </span>
       </div>
 
-      <div className="p-4">
+      <div className="p-3">
         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">Featured society</p>
-        <h3 className="mt-2 line-clamp-2 font-display text-[22px] font-black leading-tight text-navy-950">
+        <h3 className="mt-1.5 line-clamp-1 font-display text-xl font-black leading-tight text-navy-950">
           {society.name}
         </h3>
-        <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-blue-500">
+        <p className="mt-1.5 flex items-center gap-2 text-sm font-semibold text-blue-500">
           <MapPin className="h-4 w-4" /> {formatPublicLocation(society)}
         </p>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <div className="rounded-2xl bg-blue-50 p-3">
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="rounded-xl bg-blue-50 p-2.5">
             <p className="text-xs font-bold text-blue-300">Rent range</p>
-            <p className="mt-1 text-sm font-black text-navy-950">{compactText(society.rentRange)}</p>
+            <p className="mt-0.5 text-sm font-black text-navy-950">{compactText(society.rentRange)}</p>
           </div>
-          <div className="rounded-2xl bg-ivory-100 p-3">
+          <div className="rounded-xl bg-ivory-100 p-2.5">
             <p className="text-xs font-bold text-blue-300">Resale range</p>
-            <p className="mt-1 text-sm font-black text-navy-950">{compactText(society.buyRange)}</p>
+            <p className="mt-0.5 text-sm font-black text-navy-950">{compactText(society.buyRange)}</p>
           </div>
         </div>
 
-        <div className="mt-4 grid gap-2">
+        <div className="mt-3 grid gap-2">
           <Button asChild className="h-11 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
             <Link to={`/society/${society.slug}`}>
               View society <ArrowRight className="ml-2 h-4 w-4" />
@@ -397,9 +397,9 @@ function SocietyCard({ society }: { society: any }) {
   return (
     <Link
       to={`/society/${society.slug}`}
-      className="group overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium"
+      className="group overflow-hidden rounded-[1.25rem] border border-blue-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
     >
-      <div className="relative h-36 overflow-hidden bg-blue-50">
+      <div className="relative h-28 overflow-hidden bg-blue-50">
         <img src={societyImage(society)} alt={society.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
         <div className="absolute inset-0 bg-gradient-to-t from-navy-950/45 via-transparent to-transparent" />
         <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">Society</span>
@@ -408,20 +408,20 @@ function SocietyCard({ society }: { society: any }) {
         </span>
       </div>
 
-      <div className="p-4">
-        <h3 className="line-clamp-1 font-display text-xl font-black text-navy-950 group-hover:text-blue-700">{society.name}</h3>
-        <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-blue-500">
+      <div className="p-3">
+        <h3 className="line-clamp-1 font-display text-lg font-black text-navy-950 group-hover:text-blue-700">{society.name}</h3>
+        <p className="mt-1.5 flex items-center gap-2 text-sm font-semibold text-blue-500">
           <MapPin className="h-4 w-4" /> {formatPublicLocation(society)}
         </p>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-blue-50/60 p-2">
-          <div className="rounded-xl bg-white p-3">
-            <p className="text-xs font-bold text-blue-300">Rent</p>
-            <p className="mt-1 text-sm font-black text-navy-950">{compactText(society.rentRange)}</p>
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-blue-50/60 p-1.5">
+          <div className="min-w-0 flex-1 rounded-lg bg-white px-2.5 py-2">
+            <p className="text-[11px] font-bold text-blue-300">Rent</p>
+            <p className="truncate text-sm font-black text-navy-950">{compactText(society.rentRange)}</p>
           </div>
-          <div className="rounded-xl bg-white p-3">
-            <p className="text-xs font-bold text-blue-300">Resale</p>
-            <p className="mt-1 text-sm font-black text-navy-950">{compactText(society.buyRange)}</p>
+          <div className="min-w-0 flex-1 rounded-lg bg-white px-2.5 py-2">
+            <p className="text-[11px] font-bold text-blue-300">Resale</p>
+            <p className="truncate text-sm font-black text-navy-950">{compactText(society.buyRange)}</p>
           </div>
         </div>
       </div>
@@ -433,20 +433,20 @@ function PropertyCard({ property }: { property: any }) {
   return (
     <Link
       to={propertyUrl(property)}
-      className="group overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium"
+      className="group overflow-hidden rounded-[1.25rem] border border-blue-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
     >
-      <div className="relative h-32 overflow-hidden bg-blue-50">
+      <div className="relative h-28 overflow-hidden bg-blue-50">
         <img src={propertyImage(property)} alt={property.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
         <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">
           {property.listingType || "Property"}
         </span>
       </div>
-      <div className="p-4">
-        <h3 className="line-clamp-2 text-lg font-black text-navy-950 group-hover:text-blue-700">{property.title}</h3>
-        <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-blue-500">
+      <div className="p-3">
+        <h3 className="line-clamp-1 text-lg font-black text-navy-950 group-hover:text-blue-700">{property.title}</h3>
+        <p className="mt-1.5 flex items-center gap-2 text-sm font-semibold text-blue-500">
           <MapPin className="h-4 w-4" /> {property.society || property.locality || "Gurgaon"}
         </p>
-        <div className="mt-4 flex items-center justify-between border-t border-blue-50 pt-3">
+        <div className="mt-3 flex items-center justify-between border-t border-blue-50 pt-2.5">
           <span className="text-sm font-bold text-navy-500">{property.furnishedStatus || "Verified listing"}</span>
           <span className="rounded-full bg-blue-700 px-3 py-1.5 text-sm font-black text-white">
             {compactText(property.price)}
@@ -635,8 +635,8 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
           <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-8 text-amber-800">{error}</div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-            <main className="space-y-6">
-              <section className="rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
+            <main className="space-y-5">
+              <section className="rounded-[1.5rem] border border-blue-100 bg-white p-4 shadow-sm">
                 <SectionTitle
                   eyebrow="Top societies"
                   title={`Best societies for ${pageLabel}`}
@@ -666,7 +666,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                 )}
               </section>
 
-              <section className="rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
+              <section className="rounded-[1.5rem] border border-blue-100 bg-white p-4 shadow-sm">
                 <SectionTitle
                   eyebrow="Available homes"
                   title="Homes linked to this search"
@@ -713,7 +713,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                 </div>
               </section>
 
-              <section className="rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
+              <section className="rounded-[1.5rem] border border-blue-100 bg-white p-4 shadow-sm">
                 <SectionTitle
                   eyebrow="Explore more"
                   title="Search Gurgaon by locality and builder"
@@ -750,12 +750,12 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
               </section>
             </main>
 
-            <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+            <aside className="space-y-4">
               <FeaturedSocietyCard society={bestSociety} copy={copy} searchHref={searchHref} />
 
-              <div className="rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm">
+              <div className="rounded-[1.5rem] border border-blue-100 bg-white p-4 shadow-sm">
                 <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">Quick actions</p>
-                <div className="mt-4 grid gap-2">
+                <div className="mt-3 grid gap-2">
                   <Button asChild className="h-11 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
                     <Link to={searchHref}>Search this page <Search className="ml-2 h-4 w-4" /></Link>
                   </Button>
