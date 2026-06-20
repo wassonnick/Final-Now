@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store";
 import { setPublicSeo } from "@/lib/seo";
+import { societyImage } from "@/lib/publicData";
 import { societyPlaceholderImage } from "@/lib/societyImages";
 
 const comparisonRows = [
@@ -88,13 +89,11 @@ function localityName(society: any) {
 }
 
 function coverImage(society: any) {
-  return (
-    society?.cover_image ||
-    society?.coverImage ||
-    society?.imageUrl ||
-    society?.main_image_url ||
-    societyPlaceholderImage(society?.name || "Society", localityName(society))
-  );
+  return societyImage(society);
+}
+
+function fallbackCompareImage(society: any) {
+  return societyPlaceholderImage(society?.name || "Society", localityName(society));
 }
 
 function rentText(society: any) {
@@ -165,7 +164,14 @@ function CompareCard({
   return (
     <div className="overflow-hidden rounded-[1.5rem] border border-blue-100 bg-white shadow-sm">
       <div className="relative h-32 overflow-hidden bg-blue-50">
-        <img src={coverImage(society)} alt={society?.name} className="h-full w-full object-cover" />
+        <img
+          src={coverImage(society)}
+          alt={society?.name}
+          className="h-full w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.src = fallbackCompareImage(society);
+          }}
+        />
         <button
           type="button"
           onClick={onRemove}
