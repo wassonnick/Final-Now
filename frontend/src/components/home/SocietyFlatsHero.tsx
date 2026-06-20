@@ -147,7 +147,9 @@ function deterministicHeroMatches(societies: HeroMapSociety[], query: string) {
 
 function scoreOfSociety(society: HeroMapSociety, fallback: number) {
   const parsed = Number(society.score || fallback);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : fallback;
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback.toFixed(1);
+  const normalized = parsed > 10 ? parsed / 10 : parsed;
+  return normalized.toFixed(1);
 }
 
 function societyDisplayName(society: HeroMapSociety) {
@@ -168,10 +170,31 @@ function societyMeta(society: HeroMapSociety, fallback: string) {
 }
 
 const fallbackHeroMapSocieties: HeroMapSociety[] = [
-  { name: "DLF Crest", slug: "dlf-crest", sector: "Golf Course Road", score: "94" },
-  { name: "Alpha Corp Sky1", slug: "alpha-corp-sky1", sector: "Sector 15", score: "87" },
-  { name: "M3M Golf Estate", slug: "m3m-golf-estate", sector: "Sector 65", score: "83" },
+  { name: "DLF Crest", slug: "dlf-crest", sector: "Golf Course Road", score: "9.4" },
+  { name: "Alpha Corp Sky1", slug: "alpha-corp-sky1", sector: "Sector 15", score: "8.7" },
+  { name: "M3M Golf Estate", slug: "m3m-golf-estate", sector: "Sector 65", score: "8.3" },
 ];
+
+const heroMapPinPositions = [
+  { left: "57%", top: "30%" },
+  { left: "42%", top: "48%" },
+  { left: "68%", top: "58%" },
+  { left: "31%", top: "36%" },
+  { left: "73%", top: "22%" },
+];
+
+function heroMapPinPositionFor(society: HeroMapSociety) {
+  const key = normalizeHeroText([
+    society.name,
+    society.society_name,
+    society.slug,
+    society.sector,
+    society.locality,
+  ].filter(Boolean).join(" "));
+
+  const hash = key.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return heroMapPinPositions[hash % heroMapPinPositions.length];
+}
 
 
 
@@ -224,8 +247,9 @@ export default function SocietyFlatsHero() {
 
   const mapQuery = aiInput || aiQuestion;
   const displayMapCards = heroMapCards.filter((society) => societyDisplayName(society)).slice(0, 3);
-  const primaryMapSociety = displayMapCards[0] || fallbackHeroMapSocieties[0];
-  const primaryMapScore = scoreOfSociety(primaryMapSociety, 94);
+  const primaryMapSociety = displayMapCards[0];
+  const primaryMapScore = primaryMapSociety ? scoreOfSociety(primaryMapSociety, 9.4) : "";
+  const primaryMapPosition = primaryMapSociety ? heroMapPinPositionFor(primaryMapSociety) : heroMapPinPositions[0];
 
 
 
@@ -461,14 +485,19 @@ export default function SocietyFlatsHero() {
                 <div className="absolute bottom-[22%] left-[38%] h-3.5 w-3.5 rounded-full border border-blue-100 bg-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]" />
                 <div className="absolute bottom-[12%] right-[14%] h-3.5 w-3.5 rounded-full border border-blue-100 bg-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]" />
 
-                <div className="absolute left-[56%] top-[30%]">
-                  <div className="flex items-center gap-2 rounded-full bg-blue-600 px-3 py-1 text-xs font-black text-white shadow-sm">
-                    <span className="h-2 w-2 rounded-full bg-white" />
-                    {societyDisplayName(primaryMapSociety)} · {primaryMapScore} fit
+                {primaryMapSociety ? (
+                  <div
+                    className="absolute -translate-x-1/2"
+                    style={{ left: primaryMapPosition.left, top: primaryMapPosition.top }}
+                  >
+                    <div className="flex items-center gap-2 rounded-full bg-blue-600 px-3 py-1 text-xs font-black text-white shadow-sm">
+                      <span className="h-2 w-2 rounded-full bg-white" />
+                      {societyDisplayName(primaryMapSociety)} · {primaryMapScore} score
+                    </div>
+                    <div className="mx-auto mt-1.5 h-7 w-[2px] bg-blue-300/70" />
+                    <div className="mx-auto h-7 w-7 rounded-full border-4 border-blue-500 bg-white shadow-[0_0_0_8px_rgba(37,99,235,0.18)]" />
                   </div>
-                  <div className="mx-auto mt-1.5 h-7 w-[2px] bg-blue-300/70" />
-                  <div className="mx-auto h-7 w-7 rounded-full border-4 border-blue-500 bg-white shadow-[0_0_0_8px_rgba(37,99,235,0.18)]" />
-                </div>
+                ) : null}
 
                 <p className="absolute right-4 top-[36%] text-xs font-bold text-navy-500">
                   Cyber City
@@ -492,7 +521,7 @@ export default function SocietyFlatsHero() {
                 <div className="mt-2 grid grid-cols-3 gap-1.5">
                   {displayMapCards.map((society, index) => {
                     const name = societyDisplayName(society);
-                    const score = scoreOfSociety(society, 94 - index * 5);
+                    const score = scoreOfSociety(society, 9.4 - index * 0.4);
                     const href = societyHref(society, mapQuery);
                     const meta = societyMeta(society, "Gurgaon · live match");
 

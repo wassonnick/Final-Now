@@ -328,7 +328,7 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
             },
             {
               icon: Home,
-              value: `${properties.length || "2,500+"}`,
+              value: properties.length ? String(properties.length) : "Live",
               label: "Verified homes",
               tone: "bg-emerald-50 text-emerald-700",
             },
@@ -383,7 +383,7 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
           <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                25-point society intelligence
+                Verified society intelligence
               </p>
               <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
                 Choose the right society first

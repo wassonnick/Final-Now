@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, type ReactNode } from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { ProtectedAccountRoute } from "@/components/auth/ProtectedAccountRoute";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -197,10 +198,22 @@ function AppShell() {
   );
 }
 
+
+function ScrollToTop() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname, location.search]);
+
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <ScrollToTop />
         <AppShell />
       </BrowserRouter>
 
