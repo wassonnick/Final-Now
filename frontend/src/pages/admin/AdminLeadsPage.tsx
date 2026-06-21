@@ -45,6 +45,7 @@ const pipelineViews = [
   { label: "Owner Listings", view: "owner" },
   { label: "Broker Listings", view: "broker" },
   { label: "AI / General", view: "ai" },
+  { label: "Test / QA", view: "test_qa" },
 ];
 
 const priorities: Array<"All" | LeadPriority> = ["All", "Hot", "Warm", "Cold"];
@@ -729,9 +730,60 @@ function isCompleteLead(lead: AdminLead) {
   return canUsePhone(lead.phone) && hasMeaningfulRequirement(lead) && Boolean(String(lead.name || "").trim());
 }
 
+
+function qaTestLeadText(lead: AdminLead) {
+  return [
+    lead.id ? `id:${lead.id}` : "",
+    lead.name,
+    lead.phone,
+    lead.source,
+    (lead as any).message,
+    lead.requirement,
+    lead.lead_intent,
+    lead.search_query,
+    lead.ai_query,
+    lead.cta_label,
+    lead.utm_campaign,
+    lead.entity_type,
+    lead.entity_slug,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function isQaTestLead(lead: AdminLead) {
+  const value = qaTestLeadText(lead);
+
+  return (
+    /\bc11[0-9][a-z0-9_-]*/i.test(value) ||
+    value.includes("qa_validation") ||
+    value.includes("qa validation") ||
+    value.includes("invalid phone test") ||
+    value.includes("valid phone test") ||
+    value.includes("invalid probe") ||
+    value.includes("valid final") ||
+    value.includes("invalid final") ||
+    value.includes("fix2 invalid") ||
+    value.includes("fix2 valid") ||
+    value.includes("test lead") ||
+    value.includes("test_source") ||
+    value.includes("_test") ||
+    value.includes(" test ")
+  );
+}
+
+function qaTestLeadSearchText(lead: AdminLead) {
+  return isQaTestLead(lead)
+    ? "test qa qa_validation c112 c112f validation probe invalid valid final test lead cleanup"
+    : "";
+}
+
+
 function leadQualityBadges(lead: AdminLead, allLeads: AdminLead[]) {
   const badges: string[] = [];
 
+  if (isQaTestLead(lead)) badges.push("Test / QA");
   if (isDuplicateLead(lead, allLeads)) badges.push(`Duplicate x${samePhoneLeadCount(lead, allLeads)}`);
   if (isMissingPhoneLead(lead)) badges.push("Missing phone");
   if (isMissingRequirementLead(lead)) badges.push("Missing requirement");
@@ -744,6 +796,7 @@ function leadQualityBadges(lead: AdminLead, allLeads: AdminLead[]) {
 function leadQualityBadgeClass(label: string) {
   const value = label.toLowerCase();
 
+  if (value.includes("test") || value.includes("qa")) return "border-slate-300 bg-slate-100 text-slate-700";
   if (value.includes("duplicate")) return "border-amber-100 bg-amber-50 text-amber-700";
   if (value.includes("missing")) return "border-rose-100 bg-rose-50 text-rose-700";
   if (value.includes("high")) return "border-emerald-100 bg-emerald-50 text-emerald-700";
@@ -760,6 +813,7 @@ function leadQualitySearchText(lead: AdminLead, allLeads: AdminLead[]) {
     isMissingRequirementLead(lead) ? "missing requirement no requirement incomplete" : "",
     isHighIntentLead(lead) ? "high intent hot callback visit property owner broker" : "",
     isCompleteLead(lead) ? "complete quality complete" : "",
+    qaTestLeadSearchText(lead),
   ].filter(Boolean).join(" ");
 }
 
@@ -990,6 +1044,10 @@ function leadSlaSearchText(lead: AdminLead) {
 function dashboardLeadViewMatches(lead: AdminLead, view: string, allLeads: AdminLead[] = []) {
   if (!view || view === "all") return true;
 
+  if (view === "test_qa") {
+    return isQaTestLead(lead);
+  }
+
   if (view === "today") {
     if (!lead.createdAt) return false;
     const date = new Date(lead.createdAt);
@@ -1122,6 +1180,7 @@ function dashboardLeadViewLabel(view: string) {
   if (view === "hot_sla") return "Hot SLA leads";
   if (view === "untouched") return "Untouched leads";
   if (view === "ai") return "AI / General leads";
+  if (view === "test_qa") return "Test / QA leads";
   if (view === "search") return "Search journey leads";
   if (view === "property") return "Property page leads";
   if (view === "society") return "Society page leads";
@@ -1155,6 +1214,7 @@ function pipelineEmptyMessage(view: string) {
   if (view === "hot_sla") return "No hot SLA leads pending.";
   if (view === "untouched") return "No untouched leads found.";
   if (view === "ai") return "No AI or general leads found.";
+  if (view === "test_qa") return "No test or QA leads found.";
   if (view === "search") return "No search journey leads found.";
   if (view === "property") return "No property page leads found.";
   if (view === "society") return "No society page leads found.";
@@ -1358,6 +1418,8 @@ export function AdminLeadsPage() {
             lead.entity_slug,
             lead.requirement,
             sourceLabel(lead.source),
+            qaTestLeadSearchText(lead),
+            qaTestLeadText(lead),
           ]
             .join(" ")
             .toLowerCase()
