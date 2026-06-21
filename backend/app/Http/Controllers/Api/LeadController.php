@@ -10,6 +10,27 @@ use Illuminate\Http\Request;
 
 class LeadController extends Controller
 {
+    private function normalizePhone($value): string
+    {
+        return substr(preg_replace('/\D+/', '', (string) $value), -10);
+    }
+
+    private function isValidIndianMobile($value): bool
+    {
+        return preg_match('/^[6-9]\d{9}$/', $this->normalizePhone($value)) === 1;
+    }
+
+    private function invalidPhoneResponse(): JsonResponse
+    {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Enter a valid 10-digit Indian mobile number starting with 6, 7, 8 or 9.',
+            'errors' => [
+                'phone' => ['Enter a valid 10-digit Indian mobile number starting with 6, 7, 8 or 9.'],
+            ],
+        ], 422);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = Lead::with(['property.society', 'society', 'linkedProperties'])->latest();
@@ -55,7 +76,7 @@ class LeadController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|max:30',
             'email' => 'nullable|email|max:255',
             'property_id' => 'nullable|integer|exists:properties,id',
             'society_id' => 'nullable|integer|exists:societies,id',
@@ -82,6 +103,13 @@ class LeadController extends Controller
             'source' => 'nullable|string|max:255',
         ]);
 
+        $phone = $this->normalizePhone($validated['phone'] ?? '');
+
+        if (! $this->isValidIndianMobile($phone)) {
+            return $this->invalidPhoneResponse();
+        }
+
+        $validated['phone'] = $phone;
         $validated['source'] = $this->normaliseSource($validated['source'] ?? null);
         $validated['status'] = 'New';
         $validated['priority'] = $this->inferPriority($validated);
