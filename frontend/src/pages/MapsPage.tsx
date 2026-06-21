@@ -47,6 +47,49 @@ function locationWhatsAppMessage(query: string, society?: AdminSociety) {
   );
 }
 
+function mapScoreValue(society: any) {
+  const score = Number(
+    society?.score ??
+      society?.overall_score ??
+      society?.overallScore ??
+      society?.source_confidence_score ??
+      0,
+  );
+  return Number.isFinite(score) ? score : 0;
+}
+
+function pickDefaultMapSociety(societies: any[], query = "") {
+  const ready = Array.isArray(societies) ? societies.filter((society) => {
+    const lat = Number(String(society?.latitude ?? "").trim());
+    const lng = Number(String(society?.longitude ?? "").trim());
+    return Number.isFinite(lat) && Number.isFinite(lng);
+  }) : [];
+
+  if (!ready.length) return null;
+
+  const normalizedQuery = query.trim().toLowerCase();
+  if (normalizedQuery) {
+    const queryMatch = ready.find((society) =>
+      [society?.name, society?.sector, society?.locality, society?.builder]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(normalizedQuery),
+    );
+    if (queryMatch) return queryMatch;
+  }
+
+  const sorted = [...ready].sort((a, b) => {
+    const scoreDiff = mapScoreValue(b) - mapScoreValue(a);
+    if (scoreDiff) return scoreDiff;
+    return String(a?.name || "").localeCompare(String(b?.name || ""));
+  });
+
+  // Rotate the spotlight daily so the map does not always default to the same society.
+  const daySeed = Math.floor(Date.now() / 86400000);
+  return sorted[daySeed % sorted.length] || sorted[0];
+}
+
 export function MapsPage() {
   const [params] = useSearchParams();
   const initialQuery = params.get("q") || "";
@@ -123,6 +166,19 @@ export function MapsPage() {
 
     return Array.from(chips).slice(0, 6);
   }, [societies]);
+
+  useEffect(() => {
+    const defaultSociety = pickDefaultMapSociety(societies, query);
+    if (!defaultSociety?.id) return;
+
+    setSelectedSocietyId((current) => {
+      if (current) {
+        const stillVisible = societies.some((society) => Number(society.id) === Number(current));
+        if (stillVisible) return current;
+      }
+      return Number(defaultSociety.id);
+    });
+  }, [societies, query]);
 
   const mapLabel = googleMapsApiKey ? "Live Google map" : "Map preview";
   const visiblePinCount = pinnedSocieties.length;

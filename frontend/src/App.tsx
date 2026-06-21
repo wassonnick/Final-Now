@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { FloatingHelpline } from '@/components/layout/FloatingHelpline';
 
 import { HomePage } from '@/pages/HomePage';
 
@@ -192,6 +193,7 @@ function AppShell() {
         </Suspense>
       </main>
 
+      {!isAdmin && <FloatingHelpline />}
       {!isAdmin && <Footer />}
     </div>
   );
