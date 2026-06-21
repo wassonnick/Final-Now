@@ -75,25 +75,9 @@ export function GoogleSocietyMapView({
   const infoWindowRef = useRef<any>(null);
   const [mapError, setMapError] = useState("");
 
-  const openMarkerInfoWindow = (society: AdminSociety, marker: any) => {
-    if (!mapInstanceRef.current || !window.google?.maps) return;
-
-    infoWindowRef.current = infoWindowRef.current || new window.google.maps.InfoWindow();
-
-    infoWindowRef.current.setContent(`
-      <div style="max-width:240px;font-family:Inter,Arial,sans-serif;">
-        <div style="font-weight:800;color:#0f172a;margin-bottom:4px;">${society.name}</div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:10px;">${formatPublicLocation(society)}</div>
-        <a href="${societyPath(society)}" style="font-size:12px;font-weight:800;color:#1d4ed8;text-decoration:none;">Open society profile →</a>
-      </div>
-    `);
-
-    infoWindowRef.current.open(mapInstanceRef.current, marker);
-
-    const position = marker.getPosition?.();
-    if (position) {
-      mapInstanceRef.current.panTo(position);
-    }
+  const openMarkerInfoWindow = (_society: AdminSociety, _marker: any) => {
+    // C111F-FIX4: Google popup disabled. Map uses tiny labels + right selected panel only.
+    return;
   };
 
   const openSelectedMarkerAfterRender = () => {

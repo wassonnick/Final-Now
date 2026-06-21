@@ -9,6 +9,8 @@ import {
   MapPin,
   Minus,
   Plus,
+  MessageCircle,
+  Phone,
   Search,
   ShieldCheck,
   Sparkles,
@@ -155,6 +157,16 @@ function compareRankPrompt(items: any[]) {
   }
 
   return `Rank only these selected societies in order: ${names.join(" vs ")}. Do not suggest other societies unless clearly marked as broader alternatives. Compare family fit, commute, rent value, resale value, amenities, pros, watch-outs and best overall choice.`;
+}
+
+function compareHelpMessage(items: any[]) {
+  const names = items.map((item) => item?.name).filter(Boolean);
+  const subject = names.length ? names.join(" vs ") : "Gurgaon societies";
+  return encodeURIComponent(`Hi SocietyFlats, I need help comparing ${subject}. Please guide me on rent, resale, commute, family fit and available homes.`);
+}
+
+function societyHelpMessage(society: any) {
+  return encodeURIComponent(`Hi SocietyFlats, I need info and availability for ${society?.name || "this society"} from the compare page.`);
 }
 
 function compareSearchPanelLabel(count: number) {
@@ -531,6 +543,28 @@ export function ComparePage() {
             />
           ))}
         </div>
+
+        {items.length ? (
+          <div className="mb-4 rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-700">Need help choosing?</p>
+                <h2 className="mt-1 font-display text-2xl font-black text-navy-950">Talk to SocietyFlats before final shortlisting.</h2>
+                <p className="mt-1 text-sm font-semibold leading-6 text-navy-500">
+                  Share this comparison and get help on rent, resale, commute, family fit and available homes.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <a href="tel:+919911886222" className="inline-flex h-11 items-center justify-center rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
+                  <Phone className="mr-2 h-4 w-4" /> Call
+                </a>
+                <a href={`https://wa.me/919911886222?text=${compareHelpMessage(items)}`} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center justify-center rounded-full border border-green-200 bg-green-50 px-5 text-sm font-black text-green-700 hover:bg-green-100">
+                  <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-6 rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm">
           <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">

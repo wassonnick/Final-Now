@@ -359,7 +359,7 @@ export function MapsPage() {
           {selectedSociety ? (
             <div className="rounded-[1.5rem] border border-blue-100 bg-gradient-to-b from-blue-50 to-white p-4 shadow-sm">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">Selected pin</p>
-              <h3 className="mt-2 text-xl font-black tracking-[-0.04em] text-navy-950">{selectedSociety.name}</h3>
+              <h3 className="mt-2 text-xl font-black tracking-[-0.04em] text-navy-950">{selectedSociety?.name || "Select a society pin"}</h3>
               <p className="mt-2 text-sm leading-6 text-navy-500">{formatPublicLocation(selectedSociety)}</p>
 
               <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
@@ -381,7 +381,7 @@ export function MapsPage() {
                   Open society profile <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
                 <Link
-                  to={`/search?tab=rent&q=${encodeURIComponent(selectedSociety.name)}`}
+                  to={`/search?tab=rent&q=${encodeURIComponent(selectedSociety?.name)}`}
                   className="inline-flex items-center justify-center rounded-full border border-blue-100 bg-white px-4 py-3 text-sm font-black text-blue-700 transition hover:bg-blue-50"
                 >
                   <Home className="mr-2 h-4 w-4" />
