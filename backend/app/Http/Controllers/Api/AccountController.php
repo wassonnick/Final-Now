@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use Illuminate\Support\Str;
+use App\Models\Property;
+use App\Models\Lead;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\AccountOtp;
@@ -32,7 +35,136 @@ class AccountController extends Controller
             'meta' => $account->meta,
             'created_at' => optional($account->created_at)->toISOString(),
             'updated_at' => optional($account->updated_at)->toISOString(),
+            'has_account_token' => filled($account->api_token_hash),
         ];
+    }
+
+
+    private function issueAccountToken(Account $account): string
+    {
+        $plainToken = Str::random(80);
+
+        $account->forceFill([
+            'api_token_hash' => hash('sha256', $plainToken),
+            'api_token_created_at' => now(),
+        ])->save();
+
+        return $plainToken;
+    }
+
+    private function accountFromBearer(Request $request): ?Account
+    {
+        $header = (string) $request->header('Authorization', '');
+        $token = trim(preg_replace('/^Bearer\s+/i', '', $header));
+
+        if ($token === '' || strlen($token) < 40) {
+            return null;
+        }
+
+        return Account::where('api_token_hash', hash('sha256', $token))->first();
+    }
+
+    private function safeLeadPayload(Lead $lead): array
+    {
+        return [
+            'id' => $lead->id,
+            'source' => $lead->source,
+            'society_name' => $lead->society_name,
+            'property_title' => $lead->property_title,
+            'requirement' => $lead->requirement,
+            'budget' => $lead->budget,
+            'status' => $lead->status,
+            'lead_intent' => $lead->lead_intent,
+            'entity_type' => $lead->entity_type,
+            'entity_slug' => $lead->entity_slug,
+            'created_at' => optional($lead->created_at)->toISOString(),
+            'updated_at' => optional($lead->updated_at)->toISOString(),
+        ];
+    }
+
+    private function safePropertyPayload(Property $property): array
+    {
+        return [
+            'id' => $property->id,
+            'title' => $property->title,
+            'slug' => $property->slug,
+            'society_name' => optional($property->society)->name,
+            'listing_type' => $property->listing_type,
+            'status' => $property->status,
+            'owner_verification_status' => $property->owner_verification_status,
+            'source_lead_id' => $property->source_lead_id,
+            'created_at' => optional($property->created_at)->toISOString(),
+            'updated_at' => optional($property->updated_at)->toISOString(),
+        ];
+    }
+
+    public function dashboard(Request $request)
+    {
+        $account = $this->accountFromBearer($request);
+
+        if (! $account) {
+            return response()->json([
+                'message' => 'Unauthorized account dashboard request.',
+            ], 401);
+        }
+
+        $phone = $this->normalizePhone($account->phone_normalized ?: $account->phone);
+
+        if ($phone === '') {
+            return response()->json([
+                'message' => 'Account phone is missing.',
+            ], 422);
+        }
+
+        $baseLeadQuery = Lead::query()
+            ->where(function ($query) use ($phone) {
+                $query->where('phone', 'like', '%' . $phone)
+                    ->orWhere('phone', 'like', '%' . $phone . '%');
+            });
+
+        $ownerLeadQuery = (clone $baseLeadQuery)
+            ->where(function ($query) {
+                $query->where('source', 'like', 'owner_listing%')
+                    ->orWhere('lead_intent', 'like', 'owner_listing%')
+                    ->orWhere('entity_type', 'owner_listing');
+            });
+
+        $brokerLeadQuery = (clone $baseLeadQuery)
+            ->where(function ($query) {
+                $query->where('source', 'like', '%broker%')
+                    ->orWhere('message', 'like', '%broker%');
+            });
+
+        $propertyQuery = Property::with(['society'])
+            ->where(function ($query) use ($phone) {
+                $query->where('owner_phone', 'like', '%' . $phone)
+                    ->orWhere('owner_phone', 'like', '%' . $phone . '%');
+            });
+
+        $ownerLeadCount = (clone $ownerLeadQuery)->count();
+        $brokerLeadCount = (clone $brokerLeadQuery)->count();
+        $propertyCount = (clone $propertyQuery)->count();
+
+        $ownerLeads = (clone $ownerLeadQuery)->latest()->limit(20)->get();
+        $brokerLeads = (clone $brokerLeadQuery)->latest()->limit(20)->get();
+        $properties = (clone $propertyQuery)->latest()->limit(20)->get();
+
+        return response()->json([
+            'account' => $this->accountPayload($account),
+            'scope' => [
+                'role' => $account->role,
+                'phone_normalized' => $phone,
+                'privacy' => 'C112D-A protected by bearer token. Buyer/tenant contact details are not exposed.',
+            ],
+            'summary' => [
+                'owner_listing_leads' => $ownerLeadCount,
+                'broker_submissions' => $brokerLeadCount,
+                'linked_properties' => $propertyCount,
+            ],
+            'owner_listing_leads' => $ownerLeads->map(fn (Lead $lead) => $this->safeLeadPayload($lead))->values(),
+            'broker_submissions' => $brokerLeads->map(fn (Lead $lead) => $this->safeLeadPayload($lead))->values(),
+            'linked_properties' => $properties->map(fn (Property $property) => $this->safePropertyPayload($property))->values(),
+        ]);
     }
 
     public function upsert(Request $request)
@@ -193,9 +325,12 @@ class AccountController extends Controller
             ],
         );
 
+        $accountAccessToken = $this->issueAccountToken($account);
+
         return response()->json([
             'message' => 'OTP verified.',
             'account' => $this->accountPayload($account),
+            'account_access_token' => $accountAccessToken,
         ]);
     }
 }

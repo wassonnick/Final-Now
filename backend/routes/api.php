@@ -53,5 +53,6 @@ Route::prefix('accounts')->group(function () {
     Route::post('/request-otp', [\App\Http\Controllers\Api\AccountController::class, 'requestOtp']);
     Route::post('/verify-otp', [\App\Http\Controllers\Api\AccountController::class, 'verifyOtp']);
     Route::get('/me', [\App\Http\Controllers\Api\AccountController::class, 'me']);
+    Route::get('/dashboard', [\App\Http\Controllers\Api\AccountController::class, 'dashboard']);
 });
 
