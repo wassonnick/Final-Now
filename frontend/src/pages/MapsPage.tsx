@@ -86,8 +86,8 @@ function pickDefaultMapSociety(societies: any[], query = "") {
   });
 
   // Rotate the spotlight daily so the map does not always default to the same society.
-  const daySeed = Math.floor(Date.now() / 86400000);
-  return sorted[daySeed % sorted.length] || sorted[0];
+  const rotationSeed = Math.floor(Date.now() / 3600000);
+  return sorted[rotationSeed % sorted.length] || sorted[0];
 }
 
 export function MapsPage() {
@@ -172,10 +172,19 @@ export function MapsPage() {
     if (!defaultSociety?.id) return;
 
     setSelectedSocietyId((current) => {
-      if (current) {
-        const stillVisible = societies.some((society) => Number(society.id) === Number(current));
-        if (stillVisible) return current;
+      const currentSociety = societies.find((society) => Number(society.id) === Number(current));
+      const currentIsVisible = Boolean(currentSociety);
+
+      // Query pages should select the query match. Fresh map loads should not stay stuck on DLF Crest.
+      if (query.trim()) return Number(defaultSociety.id);
+
+      if (
+        currentIsVisible &&
+        String(currentSociety?.name || "").toLowerCase() !== "dlf crest"
+      ) {
+        return current;
       }
+
       return Number(defaultSociety.id);
     });
   }, [societies, query]);
