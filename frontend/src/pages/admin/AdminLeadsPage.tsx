@@ -424,6 +424,21 @@ function workflowNextActionClass(lead: AdminLead) {
   return "bg-blue-50 text-blue-700 border-blue-100";
 }
 
+
+function compactLeadTypeLabel(lead: AdminLead) {
+  const bucket = sourceBucket(lead);
+
+  if (bucket === "owner") return "Owner";
+  if (bucket === "broker") return "Broker";
+  if (bucket === "property") return "Property";
+  if (bucket === "society") return "Society";
+  if (bucket === "ai") return "AI";
+  if (bucket === "search") return "Search";
+
+  return sourceLabel(lead.source);
+}
+
+
 function sourceClass(source?: string) {
   const value = String(source || "").toLowerCase();
 
@@ -524,7 +539,6 @@ function leadIntentSignal(lead: AdminLead): AdminLeadIntentSignal {
   const combined = [source, page, cta, intent, requirement, entityType].join(" ");
 
   const helper = [
-    lead.lead_intent ? `Intent: ${lead.lead_intent}` : "",
     lead.cta_label ? `CTA: ${lead.cta_label}` : "",
     lead.entity_type ? `Entity: ${lead.entity_type}${lead.entity_slug ? ` · ${lead.entity_slug}` : ""}` : "",
     lead.search_query ? `Search: ${lead.search_query}` : "",
@@ -1781,22 +1795,11 @@ export function AdminLeadsPage() {
 
                       <div className="flex flex-col items-end gap-1 xl:items-start">
                         <span className={`rounded-full border px-3 py-1 text-xs font-bold xl:mt-3 inline-flex ${sourceClass(lead.source)}`} title={attributionTitle(lead)}>
-                          {sourceLabel(lead.source)}
-                        </span>
-                        <span
-                          className={`rounded-full border px-3 py-1 text-xs font-black xl:mt-3 inline-flex ${intentSignal.className}`}
-                          title={`C112G lead intent clarity: ${intentSignal.helper}`}
-                        >
-                          {intentSignal.label}
+                          {compactLeadTypeLabel(lead)}
                         </span>
                         <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
                           {leadTypeWorkflowLabel(lead)}
                         </span>
-                        {attributionBadge(lead) ? (
-                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-blue-700">
-                            {attributionBadge(lead)}
-                          </span>
-                        ) : null}
                         <div className="mt-1 flex flex-wrap justify-end gap-1 xl:justify-start">
                           {leadQualityBadges(lead, leads).map((badge) => (
                             <span key={badge} className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${leadQualityBadgeClass(badge)}`}>
@@ -1828,13 +1831,24 @@ export function AdminLeadsPage() {
                   <div className="mt-3 rounded-2xl bg-slate-50 p-3 xl:mt-0 xl:bg-transparent xl:p-0">
                     <p className="font-semibold text-slate-950">{lead.society || "Not specified"}</p>
                     <p className="mt-1 text-sm text-slate-500">{cleanLeadInterestMeta(lead)}</p>
-                    <p className="mt-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 xl:bg-transparent xl:px-0 xl:py-0 xl:text-sm">
-                      {cleanLeadInterestRequirement(lead)}
-                    </p>
-                    <p className="mt-2 line-clamp-2 text-[11px] font-bold text-slate-500">
-                      Lead intent: <span className="text-slate-800">{intentSignal.label}</span>
-                      {intentSignal.helper ? ` · ${intentSignal.helper}` : ""}
-                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-black ${intentSignal.className}`}
+                        title={`C112G-FIX2 compact intent: ${intentSignal.helper}`}
+                      >
+                        {intentSignal.label}
+                      </span>
+                      {cleanLeadInterestRequirement(lead) && cleanLeadInterestRequirement(lead) !== intentSignal.label ? (
+                        <span className="text-xs font-bold text-slate-500">
+                          {cleanLeadInterestRequirement(lead)}
+                        </span>
+                      ) : null}
+                    </div>
+                    {intentSignal.helper ? (
+                      <p className="mt-1 line-clamp-1 text-[11px] font-bold text-slate-400">
+                        {intentSignal.helper}
+                      </p>
+                    ) : null}
                     <p className={`mt-2 inline-flex rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.1em] xl:hidden ${workflowNextActionClass(lead)}`}>
                       Next: {workflowNextAction(lead)}
                     </p>
