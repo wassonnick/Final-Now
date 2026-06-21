@@ -72,12 +72,74 @@ export function GoogleSocietyMapView({
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const markerSocietyRefs = useRef<Array<{ society: AdminSociety; marker: any }>>([]);
+  const labelOverlaysRef = useRef<any[]>([]);
   const infoWindowRef = useRef<any>(null);
   const [mapError, setMapError] = useState("");
 
   const openMarkerInfoWindow = (_society: AdminSociety, _marker: any) => {
     // C111F-FIX4: Google popup disabled. Map uses tiny labels + right selected panel only.
     return;
+  };
+
+  const createSocietyNameLabel = (society: AdminSociety, marker: any) => {
+    if (!window.google?.maps || !mapInstanceRef.current) return null;
+
+    const OverlayView = window.google.maps.OverlayView;
+
+    class SocietyNameLabel extends OverlayView {
+      div?: HTMLDivElement;
+
+      onAdd() {
+        const div = document.createElement("div");
+        div.textContent = society.name;
+        div.style.position = "absolute";
+        div.style.transform = "translate(-50%, -44px)";
+        div.style.whiteSpace = "nowrap";
+        div.style.maxWidth = "175px";
+        div.style.overflow = "hidden";
+        div.style.textOverflow = "ellipsis";
+        div.style.padding = "8px 12px";
+        div.style.borderRadius = "16px";
+        div.style.background = "rgba(255,255,255,0.98)";
+        div.style.border = "1px solid rgba(219,234,254,1)";
+        div.style.boxShadow = "0 14px 30px rgba(15,23,42,0.16)";
+        div.style.color = "#0f172a";
+        div.style.fontFamily = "Inter, Arial, sans-serif";
+        div.style.fontSize = "13px";
+        div.style.fontWeight = "900";
+        div.style.lineHeight = "1";
+        div.style.pointerEvents = "auto";
+        div.style.cursor = "pointer";
+        div.style.zIndex = String(Number(selectedSocietyId) === Number(society.id) ? 40 : 25);
+
+        div.addEventListener("click", () => {
+          onSelectSociety?.(Number(society.id));
+        });
+
+        this.div = div;
+        this.getPanes()?.overlayMouseTarget.appendChild(div);
+      }
+
+      draw() {
+        if (!this.div) return;
+        const projection = this.getProjection();
+        const position = marker.getPosition?.();
+        if (!projection || !position) return;
+        const point = projection.fromLatLngToDivPixel(position);
+        if (!point) return;
+        this.div.style.left = `${point.x}px`;
+        this.div.style.top = `${point.y}px`;
+      }
+
+      onRemove() {
+        this.div?.parentNode?.removeChild(this.div);
+        this.div = undefined;
+      }
+    }
+
+    const overlay = new SocietyNameLabel();
+    overlay.setMap(mapInstanceRef.current);
+    return overlay;
   };
 
   const openSelectedMarkerAfterRender = () => {
@@ -118,10 +180,10 @@ export function GoogleSocietyMapView({
         }
 
         markersRef.current.forEach((marker) => marker.setMap(null));
+        labelOverlaysRef.current.forEach((overlay) => overlay.setMap?.(null));
         markersRef.current = [];
+        labelOverlaysRef.current = [];
         markerSocietyRefs.current = [];
-
-        infoWindowRef.current = infoWindowRef.current || new window.google.maps.InfoWindow();
 
         const bounds = new window.google.maps.LatLngBounds();
 
@@ -147,6 +209,8 @@ export function GoogleSocietyMapView({
 
           markersRef.current.push(marker);
           markerSocietyRefs.current.push({ society, marker });
+          const labelOverlay = createSocietyNameLabel(society, marker);
+          if (labelOverlay) labelOverlaysRef.current.push(labelOverlay);
         });
 
         if (markersRef.current.length > 1) {

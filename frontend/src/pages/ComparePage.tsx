@@ -262,11 +262,22 @@ function CompareCard({
           </div>
         </div>
 
-        <Button asChild className="mt-3 h-10 w-full rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
-          <Link to={`/society/${society?.slug || ""}`}>
-            View society <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Button asChild className="h-10 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
+            <Link to={`/society/${society?.slug || ""}`}>
+              View society <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+          <a
+            href={`https://wa.me/919911886222?text=${societyHelpMessage(society)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-10 items-center justify-center rounded-full border border-green-200 bg-green-50 px-3 text-sm font-black text-green-700 hover:bg-green-100"
+          >
+            <MessageCircle className="mr-1.5 h-4 w-4" />
+            Get help
+          </a>
+        </div>
       </div>
     </div>
   );
@@ -533,17 +544,6 @@ export function ComparePage() {
           </div>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-3">
-          {items.map((society, index) => (
-            <CompareCard
-              key={society.id || society.slug || society.name}
-              society={society}
-              index={index}
-              onRemove={() => removeFromCompare(society.id)}
-            />
-          ))}
-        </div>
-
         {items.length ? (
           <div className="mb-4 rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -565,6 +565,17 @@ export function ComparePage() {
             </div>
           </div>
         ) : null}
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {items.map((society, index) => (
+            <CompareCard
+              key={society.id || society.slug || society.name}
+              society={society}
+              index={index}
+              onRemove={() => removeFromCompare(society.id)}
+            />
+          ))}
+        </div>
 
         <div className="mt-6 rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm">
           <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">

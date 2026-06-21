@@ -152,7 +152,10 @@ export function MapsPage() {
   );
 
   const selectedSociety = useMemo(
-    () => pinnedSocieties.find((society) => Number(society.id) === selectedSocietyId) || pinnedSocieties[0],
+    () =>
+      selectedSocietyId
+        ? pinnedSocieties.find((society) => Number(society.id) === selectedSocietyId) || null
+        : null,
     [pinnedSocieties, selectedSocietyId],
   );
 
@@ -355,6 +358,16 @@ export function MapsPage() {
               )}
             </div>
           </div>
+
+          {!selectedSociety ? (
+            <div className="rounded-[1.5rem] border border-blue-100 bg-gradient-to-b from-blue-50 to-white p-4 shadow-sm">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">Selected pin</p>
+              <h3 className="mt-2 text-xl font-black tracking-[-0.04em] text-navy-950">Select a society pin</h3>
+              <p className="mt-2 text-sm leading-6 text-navy-500">
+                Click a map pin or society from the list to see rent range, buy range and profile actions.
+              </p>
+            </div>
+          ) : null}
 
           {selectedSociety ? (
             <div className="rounded-[1.5rem] border border-blue-100 bg-gradient-to-b from-blue-50 to-white p-4 shadow-sm">
