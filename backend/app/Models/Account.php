@@ -19,10 +19,13 @@ class Account extends Model
         'last_login_at',
         'phone_verified_at',
         'meta',
+        'api_token_hash',
+        'api_token_created_at',
     ];
 
     protected $casts = [
         'last_login_at' => 'datetime',
+        'api_token_created_at' => 'datetime',
         'phone_verified_at' => 'datetime',
         'meta' => 'array',
     ];
