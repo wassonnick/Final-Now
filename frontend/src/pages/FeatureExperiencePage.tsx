@@ -312,6 +312,8 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
   const [notice, setNotice] = useState('');
 
   const submit = async () => {
+    if (state === 'loading' || state === 'success') return;
+
     const cleanPhone = form.phone.replace(/[^0-9]/g, '').slice(-10);
 
     if (!form.name.trim() || !cleanPhone) {
@@ -399,7 +401,7 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
       }
 
       setState('success');
-      setNotice('Callback request sent. Admin can see it in Leads.');
+      setNotice('Request received. A SocietyFlats advisor will review your requirement and get back to you shortly.');
     } catch (error) {
       setState('error');
       setNotice(error instanceof Error ? error.message : 'Unable to submit. Please try again.');
@@ -468,9 +470,9 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
-            <Button disabled={state === 'loading'} onClick={submit} className="h-10 rounded-full bg-orange-600 px-5 text-sm font-bold hover:bg-orange-700">
+            <Button disabled={state === 'loading' || state === 'success'} onClick={submit} className="h-10 rounded-full bg-orange-600 px-5 text-sm font-bold hover:bg-orange-700">
               {state === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BriefcaseBusiness className="mr-2 h-4 w-4" />}
-              Submit broker application
+              {state === 'success' ? 'Request sent' : state === 'loading' ? 'Sending...' : 'Submit broker application'}
             </Button>
 
             {state === 'success' ? (
@@ -549,9 +551,9 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
           </label>
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-3">
-          <Button disabled={state === 'loading'} onClick={submit} className="h-10 rounded-full bg-navy-600 px-5 text-sm font-bold hover:bg-navy-700">
+          <Button disabled={state === 'loading' || state === 'success'} onClick={submit} className="h-10 rounded-full bg-navy-600 px-5 text-sm font-bold hover:bg-navy-700">
             {state === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-            Send request
+            {state === 'success' ? 'Request sent' : state === 'loading' ? 'Sending...' : 'Send request'}
           </Button>
           {notice ? (
             <span className={cn('text-sm font-semibold', state === 'success' ? 'text-emerald-700' : 'text-red-600')}>{notice}</span>

@@ -134,6 +134,7 @@ export function PublicLeadModal({
 
   const submitLead = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting || success) return;
     setError("");
 
     if (!form.name.trim()) {
@@ -283,7 +284,7 @@ export function PublicLeadModal({
               <CheckCircle2 className="h-7 w-7" />
               <h4 className="mt-3 text-lg font-bold">Request received</h4>
               <p className="mt-2 text-sm leading-relaxed">
-                {successMessage || "Thanks. SocietyFlats has received your request. Our team will call once with matching homes, similar societies and visit-ready next steps."}
+                {"Thanks. SocietyFlats has received your request. Our team will call once with matching homes, similar societies and visit-ready next steps."}
               </p>
             </div>
 
@@ -427,11 +428,11 @@ export function PublicLeadModal({
 
             <div className="shrink-0 border-t border-navy-100 bg-white px-4 py-2.5 sm:px-5">
               <Button
-                disabled={submitting}
+                disabled={submitting || success}
                 className="h-9 w-full rounded-full bg-blue-600 text-sm font-bold text-white hover:bg-blue-700"
               >
                 <Phone className="mr-2 h-4 w-4" />
-                {submitting ? "Submitting..." : submitLabel}
+                {success ? "Request sent" : submitting ? "Sending..." : submitLabel}
               </Button>
             </div>
           </form>

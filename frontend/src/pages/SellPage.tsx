@@ -84,6 +84,7 @@ export function SellPage() {
 
   const submitOwnerLead = async (event: FormEvent) => {
     event.preventDefault();
+    if (submitting || success) return;
     setSubmitting(true);
     setError("");
 
@@ -438,10 +439,10 @@ export function SellPage() {
                     </div>
                   ) : null}
                   <Button
-                    disabled={submitting}
+                    disabled={submitting || success}
                     className="h-11 w-full rounded-xl bg-blue-700 font-semibold text-white shadow-lg shadow-blue-100 hover:bg-blue-800"
                   >
-                    {submitting ? "Submitting..." : "Continue"}{" "}
+                    {success ? "Request sent" : submitting ? "Sending..." : "Continue"}{" "}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </form>

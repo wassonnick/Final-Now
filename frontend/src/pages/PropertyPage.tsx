@@ -546,6 +546,7 @@ export function PropertyPage() {
 
   const submitLead = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (leadSubmitting || leadSuccess) return;
     if (!property) return;
 
     const normalizedPhone = cleanLeadPhone(leadForm.phone);
@@ -1113,8 +1114,14 @@ export function PropertyPage() {
             </div>
 
             {leadSuccess ? (
-              <div className="mt-6 rounded-2xl bg-green-50 p-5 text-green-700">
-                Request received. SocietyFlats will call you shortly with availability, visit options and next steps.
+              <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-emerald-800">
+                <p className="text-base font-black text-emerald-900">Request received</p>
+                <p className="mt-2 text-sm font-semibold leading-6">
+                  Thanks. A SocietyFlats advisor will review your requirement and get back to you shortly.
+                </p>
+                <p className="mt-2 text-xs font-bold text-emerald-700">
+                  We’ve saved your interest for {title}.
+                </p>
               </div>
             ) : (
               <form onSubmit={submitLead} className="mt-6 space-y-4">
@@ -1179,8 +1186,8 @@ export function PropertyPage() {
                   <div className="rounded-2xl bg-red-50 p-3 text-sm text-red-700">{leadError}</div>
                 ) : null}
 
-                <Button disabled={leadSubmitting} className="w-full rounded-full bg-blue-600 hover:bg-blue-700">
-                  {leadSubmitting ? "Submitting..." : "Submit enquiry"}
+                <Button disabled={leadSubmitting || leadSuccess} className="w-full rounded-full bg-blue-600 hover:bg-blue-700">
+                  {leadSuccess ? "Request sent" : leadSubmitting ? "Sending..." : "Submit enquiry"}
                 </Button>
               </form>
             )}

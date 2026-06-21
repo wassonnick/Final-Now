@@ -624,9 +624,11 @@ export function SearchPage() {
   };
 
   const submitLead = async () => {
+    if (isSubmittingLead || leadStatus === "success") return;
+
     const normalizedPhone = cleanLeadPhone(leadPhone);
 
-    if (!leadName.trim() || !isValidLeadPhone(normalizedPhone) || isSubmittingLead) {
+    if (!leadName.trim() || !isValidLeadPhone(normalizedPhone)) {
       setLeadStatus("error");
       return;
     }
