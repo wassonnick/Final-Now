@@ -40,30 +40,11 @@ const statuses: Array<"All" | LeadStatus> = [
 
 const pipelineViews = [
   { label: "All", view: "all" },
-  { label: "Today", view: "today" },
-  { label: "Active", view: "active" },
-  { label: "Call Sheet", view: "call_sheet" },
-  { label: "Due Today", view: "followups" },
-  { label: "Overdue", view: "overdue" },
-  { label: "Upcoming", view: "upcoming" },
-  { label: "No Follow-up", view: "no_followup" },
-  { label: "Duplicates", view: "duplicates" },
-  { label: "Missing Phone", view: "missing_phone" },
-  { label: "Missing Requirement", view: "missing_requirement" },
-  { label: "High Intent", view: "high_intent" },
-  { label: "Fresh", view: "fresh" },
-  { label: "Aging", view: "aging" },
-  { label: "Stale", view: "stale" },
-  { label: "Hot SLA", view: "hot_sla" },
-  { label: "Untouched", view: "untouched" },
-  { label: "AI", view: "ai" },
-  { label: "Search", view: "search" },
-  { label: "Property", view: "property" },
-  { label: "Society", view: "society" },
-  { label: "Hot", view: "hot" },
-  { label: "Booked", view: "booked" },
-  { label: "Owner Leads", view: "owner" },
-  { label: "Broker Leads", view: "broker" },
+  { label: "Society Leads", view: "society" },
+  { label: "Property Leads", view: "property" },
+  { label: "Owner Listings", view: "owner" },
+  { label: "Broker Listings", view: "broker" },
+  { label: "AI / General", view: "ai" },
 ];
 
 const priorities: Array<"All" | LeadPriority> = ["All", "Hot", "Warm", "Cold"];
@@ -976,7 +957,7 @@ function dashboardLeadViewLabel(view: string) {
   if (view === "stale") return "Stale leads";
   if (view === "hot_sla") return "Hot SLA leads";
   if (view === "untouched") return "Untouched leads";
-  if (view === "ai") return "AI advisor leads";
+  if (view === "ai") return "AI / General leads";
   if (view === "search") return "Search journey leads";
   if (view === "property") return "Property page leads";
   if (view === "society") return "Society page leads";
@@ -1009,7 +990,7 @@ function pipelineEmptyMessage(view: string) {
   if (view === "stale") return "No stale leads found.";
   if (view === "hot_sla") return "No hot SLA leads pending.";
   if (view === "untouched") return "No untouched leads found.";
-  if (view === "ai") return "No AI advisor leads found.";
+  if (view === "ai") return "No AI or general leads found.";
   if (view === "search") return "No search journey leads found.";
   if (view === "property") return "No property page leads found.";
   if (view === "society") return "No society page leads found.";
@@ -1420,7 +1401,7 @@ export function AdminLeadsPage() {
             <div>
               <h2 className="text-xl font-bold tracking-tight text-slate-950">Lead Inbox</h2>
               <p className="mt-1 text-sm text-slate-500">
-                Live backend leads from SocietyFlats public enquiries and callback forms.
+                Segmented lead inbox for society enquiries, property enquiries, owner listings, broker listings and AI/general callbacks.
               </p>
             </div>
 
