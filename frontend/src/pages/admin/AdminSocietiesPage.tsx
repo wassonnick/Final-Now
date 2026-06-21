@@ -503,6 +503,20 @@ export function AdminSocietiesPage() {
                 <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
                 Refresh
               </Button>
+
+              {/* C112E-B-FIX2A visible backfill button */}
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full border-emerald-200 bg-emerald-50 px-3 text-xs font-bold text-emerald-800 hover:bg-emerald-100 sm:text-sm"
+                onClick={() => void handlePublishFieldBackfill()}
+                disabled={publishBackfillLoading}
+                title="Backfills is_published, verification_status and published_at from current society status."
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${publishBackfillLoading ? "animate-spin" : ""}`} />
+                {publishBackfillLoading ? "Backfilling..." : "Backfill publish fields"}
+              </Button>
+
               <Button
                 type="button"
                 variant="outline"
