@@ -128,7 +128,7 @@ function AccountCard({
           <div className="flex flex-wrap items-center gap-2">
             <Badge className={cn("rounded-full border px-3 py-1 text-xs font-bold", roleBadgeClass(account.role))}>
               <RoleIcon className="mr-1 h-3.5 w-3.5" />
-              {account.role === "broker" ? "Broker" : "Customer"}
+              {account.role === "broker" ? "Broker" : "Owner / Customer"}
             </Badge>
 
             <Badge className={cn("rounded-full border px-3 py-1 text-xs font-bold", statusBadgeClass(account.status))}>
@@ -169,8 +169,15 @@ function AccountCard({
             </div>
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
               <p className="text-2xl font-black text-emerald-700">{listingCount}</p>
-              <p className="text-xs font-bold text-emerald-700">Linked listings</p>
+              <p className="text-xs font-bold text-emerald-700">Linked listings / drafts</p>
             </div>
+          </div>
+
+          <div className="mt-3 rounded-2xl border border-amber-100 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+            <p className="font-black">Admin-only routing note</p>
+            <p className="mt-1">
+              These records are visible to admin because they match this account phone/source lead. Owner/broker dashboard visibility is not exposed here yet.
+            </p>
           </div>
         </div>
 
@@ -302,8 +309,8 @@ function AccountCard({
           <div className="rounded-[24px] border border-slate-100 bg-slate-50 p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="text-sm font-black text-slate-950">Related owner listings</p>
-                <p className="text-xs text-slate-500">Drafts or properties matched by owner phone.</p>
+                <p className="text-sm font-black text-slate-950">Related listings / drafts</p>
+                <p className="text-xs text-slate-500">Drafts or properties matched by owner/broker phone or source lead.</p>
               </div>
               <Badge className="rounded-full bg-white text-slate-600">{listingCount}</Badge>
             </div>
@@ -341,7 +348,7 @@ function AccountCard({
               </div>
             ) : (
               <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
-                No owner listing or draft is linked to this account phone yet.
+                No listing or draft is linked to this account phone yet.
               </p>
             )}
           </div>
@@ -470,12 +477,12 @@ export function AdminUsersPage() {
   };
 
   return (
-    <AdminLayout title="Users" subtitle="Manage accounts with linked leads and owner listings">
+    <AdminLayout title="Users" subtitle="Admin account linkage for owners, brokers, leads and submitted listings">
       <div className="space-y-6">
         <section className="grid gap-3 md:grid-cols-4">
           {[
             ["Total accounts", metrics.total, Users, "bg-slate-50 text-slate-700"],
-            ["Customers", metrics.customers, UserRound, "bg-blue-50 text-blue-700"],
+            ["Owners / Customers", metrics.customers, UserRound, "bg-blue-50 text-blue-700"],
             ["Brokers", metrics.brokers, BriefcaseBusiness, "bg-orange-50 text-orange-700"],
             ["Linked records", metrics.linked, CheckCircle2, "bg-emerald-50 text-emerald-700"],
           ].map(([label, value, Icon, tone]) => {
@@ -525,7 +532,7 @@ export function AdminUsersPage() {
               className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700"
             >
               <option value="">All roles</option>
-              <option value="customer">Customers</option>
+              <option value="customer">Owners / Customers</option>
               <option value="broker">Brokers</option>
             </select>
 
@@ -586,7 +593,7 @@ export function AdminUsersPage() {
               </div>
               <p className="mt-4 text-lg font-black text-slate-950">No accounts found</p>
               <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">
-                Try another phone, clear the filters, or wait until the customer/broker logs in, submits an owner listing, or completes broker signup.
+                Try another phone, clear the filters, or wait until the owner/customer/broker logs in, submits a listing, or completes broker signup.
               </p>
               <Button onClick={clearSearch} variant="outline" className="mt-5 rounded-full border-slate-200">
                 Clear search and show all accounts
@@ -601,9 +608,9 @@ export function AdminUsersPage() {
               <ArrowRight className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-black text-slate-950">C52 account workflow</p>
+              <p className="font-black text-slate-950">C112A admin-only routing checkpoint</p>
               <p className="mt-1 text-sm leading-6 text-slate-500">
-                Open a lead, use Linked account → Open in Users, then review all related leads/listings and update account role or status without leaving the admin workflow.
+                Open a lead, use Linked account → Open in Users, then review all related leads/listings by phone/source lead. Owner/broker dashboard exposure remains intentionally locked until account-scoped APIs are added.
               </p>
             </div>
           </div>
