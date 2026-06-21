@@ -5,7 +5,10 @@ import {
   BadgeIndianRupee,
   BarChart3,
   Building2,
+  CheckCircle2,
+  FileSearch,
   Home,
+  Info,
   MapPin,
   Search,
   ShieldCheck,
@@ -18,99 +21,143 @@ import { setPublicSeo } from "@/lib/seo";
 
 type InsightMode = "rent" | "buy" | "sell";
 
-const marketRows = [
+type MarketRow = {
+  locality: string;
+  rent: string;
+  buy: string;
+  sell: string;
+  rentSignal: string;
+  buySignal: string;
+  sellSignal: string;
+  demand: string;
+  sourceLabel: string;
+  confidence: "Admin reviewed" | "Guide range" | "Needs verification";
+  action: string;
+  href: string;
+};
+
+const marketRows: MarketRow[] = [
   {
     locality: "Golf Course Road",
-    rent3: "₹90K – ₹2.4L",
+    rent: "₹90K – ₹2.4L",
     buy: "₹5.5Cr – ₹12Cr",
     sell: "Premium resale depth",
+    rentSignal: "Corporate tenants, premium maintenance and luxury society demand.",
+    buySignal: "High-ticket resale market where society brand and tower quality drive pricing.",
+    sellSignal: "Works best with verified tower, floor, view and recent society-level buyer demand.",
     demand: "Very high",
-    signal: "Luxury + corporate demand",
-    yield: "2.4% – 3.1%",
-    momentum: "+12%",
+    sourceLabel: "Admin guide + live society inventory signals",
+    confidence: "Guide range",
+    action: "Search Golf Course Road",
+    href: "/search?tab=societies&q=Golf%20Course%20Road&intent=society",
   },
   {
     locality: "Golf Course Extension",
-    rent3: "₹75K – ₹1.8L",
+    rent: "₹75K – ₹1.8L",
     buy: "₹3.2Cr – ₹8Cr",
-    sell: "Strong family demand",
+    sell: "Strong family upgrade market",
+    rentSignal: "Family tenants compare commute, school access, amenities and maintenance.",
+    buySignal: "Resale strength depends heavily on builder, age, layout and society upkeep.",
+    sellSignal: "Good owner-listing zone when inventory is limited and pricing is realistic.",
     demand: "High",
-    signal: "Family + upgrade market",
-    yield: "2.6% – 3.4%",
-    momentum: "+11%",
+    sourceLabel: "Admin guide + public society parameters",
+    confidence: "Guide range",
+    action: "Search Extension Road",
+    href: "/search?tab=societies&q=Golf%20Course%20Extension%20Road&intent=society",
   },
   {
     locality: "Sector 65",
-    rent3: "₹70K – ₹1.6L",
+    rent: "₹70K – ₹1.6L",
     buy: "₹2.8Cr – ₹7.5Cr",
-    sell: "Builder-led demand",
+    sell: "Builder-led premium cluster",
+    rentSignal: "Tenant demand often follows M3M / premium society recall and office commute.",
+    buySignal: "Buyer interest depends on exact project, tower, density and possession status.",
+    sellSignal: "Owner listings need strong photos, verified society context and price benchmarking.",
     demand: "High",
-    signal: "M3M / premium cluster",
-    yield: "2.7% – 3.5%",
-    momentum: "+10%",
+    sourceLabel: "Admin guide + builder/locality context",
+    confidence: "Guide range",
+    action: "Search Sector 65",
+    href: "/search?tab=societies&q=Sector%2065&intent=society",
   },
   {
     locality: "Dwarka Expressway",
-    rent3: "₹45K – ₹1.1L",
+    rent: "₹45K – ₹1.1L",
     buy: "₹1.8Cr – ₹5Cr",
-    sell: "Rising supply",
+    sell: "Infrastructure-led demand",
+    rentSignal: "Rental demand varies widely by connectivity, handover quality and live occupancy.",
+    buySignal: "Upside depends on micro-location, access, society delivery and future infrastructure.",
+    sellSignal: "Owner should position listing with society readiness and commute clarity.",
     demand: "Rising",
-    signal: "Infrastructure-led upside",
-    yield: "2.5% – 3.3%",
-    momentum: "+13%",
+    sourceLabel: "Infrastructure-led guide range",
+    confidence: "Needs verification",
+    action: "Search Dwarka Expressway",
+    href: "/search?tab=societies&q=Dwarka%20Expressway&intent=society",
   },
   {
     locality: "Sohna Road",
-    rent3: "₹40K – ₹90K",
+    rent: "₹40K – ₹90K",
     buy: "₹1.4Cr – ₹3.8Cr",
-    sell: "Value-sensitive market",
+    sell: "Value-sensitive family market",
+    rentSignal: "Renters compare budget, daily commute and society maintenance more closely.",
+    buySignal: "Resale works when pricing is value-led and society quality is easy to verify.",
+    sellSignal: "Owner listings need realistic pricing and clear comparison with nearby societies.",
     demand: "Medium",
-    signal: "Affordable family demand",
-    yield: "2.8% – 3.7%",
-    momentum: "+8%",
+    sourceLabel: "Admin guide + value-market context",
+    confidence: "Guide range",
+    action: "Search Sohna Road",
+    href: "/search?tab=societies&q=Sohna%20Road&intent=society",
   },
 ];
 
-const societySignals = [
+const sourceStack = [
   {
-    title: "Rental strength",
-    text: "Societies with corporate commute, security and maintenance depth usually rent faster.",
+    title: "Admin-reviewed society data",
+    text: "Rent range, buy range, price-per-sqft, rental yield and source confidence can later be pulled from enriched admin society fields.",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Live SocietyFlats inventory",
+    text: "Available homes and society pages help validate whether a range is actionable today.",
     icon: Home,
   },
   {
-    title: "Resale confidence",
-    text: "Builder reputation, location and upkeep matter more than just flat size.",
-    icon: Building2,
-  },
-  {
-    title: "Owner timing",
-    text: "Selling works better when live inventory is limited and society demand is visible.",
-    icon: BadgeIndianRupee,
+    title: "Public source references",
+    text: "Future version should show source URLs, official/RERA references and last-reviewed date per locality or society.",
+    icon: FileSearch,
   },
 ];
 
-const modeCopy: Record<InsightMode, { title: string; description: string; cta: string }> = {
+const modeCopy: Record<InsightMode, { title: string; description: string; cta: string; tableColumn: string }> = {
   rent: {
     title: "Rent signals by Gurgaon micro-market",
-    description: "Use rent ranges, demand and occupancy-style signals to shortlist tenant-friendly societies.",
+    description: "Use rent guide ranges, demand and society quality signals to shortlist tenant-friendly societies.",
     cta: "Search rentals",
+    tableColumn: "Rent guide range",
   },
   buy: {
     title: "Buy / resale signals before shortlisting",
-    description: "Compare resale depth, society quality and location confidence before choosing a home.",
+    description: "Compare resale bands, builder context and society quality before choosing where to buy.",
     cta: "Search resale",
+    tableColumn: "Resale guide range",
   },
   sell: {
     title: "Owner-side signals for listing timing",
-    description: "Understand where demand is stronger and what buyers/tenants are likely to compare.",
+    description: "Understand where demand is stronger and how an owner listing should be positioned.",
     cta: "List your flat",
+    tableColumn: "Owner listing signal",
   },
 };
 
-function modeValue(row: (typeof marketRows)[number], mode: InsightMode) {
-  if (mode === "rent") return row.rent3;
+function modeValue(row: MarketRow, mode: InsightMode) {
+  if (mode === "rent") return row.rent;
   if (mode === "buy") return row.buy;
   return row.sell;
+}
+
+function modeSignal(row: MarketRow, mode: InsightMode) {
+  if (mode === "rent") return row.rentSignal;
+  if (mode === "buy") return row.buySignal;
+  return row.sellSignal;
 }
 
 function modeHref(mode: InsightMode) {
@@ -119,13 +166,25 @@ function modeHref(mode: InsightMode) {
   return "/sell";
 }
 
+function confidenceClass(confidence: MarketRow["confidence"]) {
+  if (confidence === "Admin reviewed") return "bg-emerald-50 text-emerald-700";
+  if (confidence === "Guide range") return "bg-blue-50 text-blue-700";
+  return "bg-amber-50 text-amber-700";
+}
+
+function confidenceText(confidence: MarketRow["confidence"]) {
+  if (confidence === "Admin reviewed") return "Admin reviewed";
+  if (confidence === "Guide range") return "Guide range";
+  return "Verify before use";
+}
+
 export function InsightsPage() {
   const [mode, setMode] = useState<InsightMode>("rent");
 
   useEffect(() => {
     setPublicSeo(
       "Gurgaon Market Insights | Rent Buy Sell Signals | SocietyFlats",
-      "Compare Gurgaon rent, buy, resale and owner listing signals by locality and society-first market context.",
+      "Source-labelled Gurgaon rent, buy, resale and owner listing signals by locality and society-first market context.",
     );
     window.scrollTo(0, 0);
   }, []);
@@ -134,10 +193,10 @@ export function InsightsPage() {
 
   const heroMetrics = useMemo(
     () => [
-      ["Prime rent band", "₹75K – ₹2.4L", "Golf Course / Extension"],
-      ["Resale depth", "₹2Cr – ₹12Cr", "Society and builder-led"],
-      ["Demand signal", "High", "Corporate + family demand"],
-      ["Owner action", "List with context", "Society-first enquiry"],
+      ["Data status", "Guide ranges", "Not final pricing"],
+      ["Signals covered", "Rent / Buy / Sell", "Separate decision lenses"],
+      ["Verification", "Admin + source path", "Future source URLs"],
+      ["Next action", "Search or callback", "Society-specific decision"],
     ],
     [],
   );
@@ -146,17 +205,19 @@ export function InsightsPage() {
     <div className="min-h-screen bg-[#F8FAFC]">
       <section className="border-b border-blue-100 bg-[radial-gradient(circle_at_80%_10%,rgba(37,99,235,0.13),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-8 md:py-10">
         <div className="container mx-auto">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-center">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-center">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700 shadow-sm">
                 <TrendingUp className="h-4 w-4" />
-                Gurgaon market intelligence
+                Source-labelled Gurgaon intelligence
               </span>
+
               <h1 className="mt-4 max-w-4xl font-display text-[36px] font-black leading-[0.98] tracking-[-0.045em] text-navy-950 md:text-[56px]">
-                Rent, buy and sell signals for Gurgaon societies.
+                Rent, buy and sell signals with clear verification labels.
               </h1>
+
               <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-blue-500">
-                Market insight should help users choose the right society, not just a price number. Compare micro-markets, demand and owner-side timing.
+                These insights are not final pricing. They are society-first guide ranges and demand signals to help users shortlist, compare and request verification.
               </p>
 
               <div className="mt-5 flex flex-wrap gap-2">
@@ -171,7 +232,7 @@ export function InsightsPage() {
                         : "rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-black capitalize text-blue-700 hover:bg-blue-50"
                     }
                   >
-                    {item}
+                    {item === "buy" ? "Buy / resale" : item}
                   </button>
                 ))}
               </div>
@@ -181,6 +242,17 @@ export function InsightsPage() {
               <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">Current lens</p>
               <h2 className="mt-2 font-display text-2xl font-black text-navy-950">{activeCopy.title}</h2>
               <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">{activeCopy.description}</p>
+
+              <div className="mt-4 rounded-2xl bg-blue-50 p-3">
+                <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-blue-700">
+                  <Info className="h-4 w-4" />
+                  Source label
+                </p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-navy-600">
+                  Current version uses SocietyFlats guide ranges. Future admin enrichment should attach source URLs, confidence score and last-reviewed date.
+                </p>
+              </div>
+
               <Button asChild className="mt-5 h-11 w-full rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
                 <Link to={modeHref(mode)}>
                   {activeCopy.cta} <ArrowRight className="ml-2 h-4 w-4" />
@@ -196,7 +268,7 @@ export function InsightsPage() {
           {heroMetrics.map(([label, value, note]) => (
             <div key={label} className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm">
               <p className="text-xs font-bold text-blue-400">{label}</p>
-              <p className="mt-1 text-2xl font-black text-navy-950">{value}</p>
+              <p className="mt-1 text-xl font-black text-navy-950 md:text-2xl">{value}</p>
               <p className="mt-1 text-xs font-semibold text-navy-500">{note}</p>
             </div>
           ))}
@@ -209,8 +281,8 @@ export function InsightsPage() {
               <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950 md:text-[30px]">
                 {activeCopy.title}
               </h2>
-              <p className="mt-1.5 max-w-2xl text-sm font-semibold leading-6 text-navy-500">
-                These are practical SocietyFlats guide ranges and demand signals for shortlist decisions. Verify before negotiation.
+              <p className="mt-1.5 max-w-3xl text-sm font-semibold leading-6 text-navy-500">
+                Every row is labelled as a guide range or verification-needed signal. Final pricing must be checked against society, tower, floor, view, furnishing and live inventory.
               </p>
             </div>
 
@@ -222,23 +294,26 @@ export function InsightsPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] border-separate border-spacing-y-2">
+            <table className="w-full min-w-[980px] border-separate border-spacing-y-2">
               <thead>
                 <tr>
                   <th className="rounded-l-2xl bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
                     Locality
                   </th>
                   <th className="bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
-                    {mode === "rent" ? "Rent range" : mode === "buy" ? "Resale range" : "Owner signal"}
+                    {activeCopy.tableColumn}
                   </th>
                   <th className="bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
                     Demand
                   </th>
                   <th className="bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
-                    Market signal
+                    Mode-specific signal
+                  </th>
+                  <th className="bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
+                    Source / confidence
                   </th>
                   <th className="rounded-r-2xl bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
-                    Momentum
+                    Action
                   </th>
                 </tr>
               </thead>
@@ -255,12 +330,18 @@ export function InsightsPage() {
                     <td className="bg-white p-3">
                       <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">{row.demand}</span>
                     </td>
-                    <td className="bg-white p-3 text-sm font-semibold text-navy-600">{mode === "rent" ? row.signal : mode === "buy" ? row.yield : row.signal}</td>
-                    <td className="rounded-r-2xl bg-white p-3">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
-                        <TrendingUp className="h-3.5 w-3.5" />
-                        {row.momentum}
+                    <td className="bg-white p-3 text-sm font-semibold leading-6 text-navy-600">{modeSignal(row, mode)}</td>
+                    <td className="bg-white p-3">
+                      <p className="text-xs font-black text-navy-800">{row.sourceLabel}</p>
+                      <span className={`mt-1 inline-flex rounded-full px-3 py-1 text-[11px] font-black ${confidenceClass(row.confidence)}`}>
+                        {confidenceText(row.confidence)}
                       </span>
+                    </td>
+                    <td className="rounded-r-2xl bg-white p-3">
+                      <Link to={row.href} className="inline-flex items-center rounded-full border border-blue-100 px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-50">
+                        {row.action}
+                        <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                      </Link>
                     </td>
                   </tr>
                 ))}
@@ -269,15 +350,15 @@ export function InsightsPage() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
           <section className="rounded-[1.75rem] border border-blue-100 bg-white p-4 shadow-sm">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Society-first interpretation</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Source stack</p>
             <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950 md:text-[30px]">
-              What these signals mean for users
+              How these insights should become stronger over time
             </h2>
 
             <div className="mt-4 grid gap-3 md:grid-cols-3">
-              {societySignals.map(({ title, text, icon: Icon }) => (
+              {sourceStack.map(({ title, text, icon: Icon }) => (
                 <div key={title} className="rounded-[1.35rem] border border-blue-100 bg-[#F8FAFC] p-4">
                   <Icon className="h-5 w-5 text-blue-700" />
                   <h3 className="mt-3 font-black text-navy-950">{title}</h3>
@@ -289,7 +370,7 @@ export function InsightsPage() {
 
           <aside className="rounded-[1.75rem] border border-blue-100 bg-navy-950 p-5 text-white shadow-sm">
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-200">Need society-specific guidance?</p>
-            <h2 className="mt-2 font-display text-2xl font-black">Ask AI or compare societies before deciding.</h2>
+            <h2 className="mt-2 font-display text-2xl font-black text-white">Ask AI or compare societies before deciding.</h2>
             <p className="mt-2 text-sm font-semibold leading-6 text-blue-100">
               Market ranges are only useful when linked to the actual society, commute, inventory and owner expectation.
             </p>
@@ -312,10 +393,10 @@ export function InsightsPage() {
         <div className="mt-6 rounded-[1.75rem] border border-blue-100 bg-blue-50 p-5">
           <div className="grid gap-4 md:grid-cols-[1fr_320px] md:items-center">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Disclaimer</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Verification note</p>
               <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950">Use insights as guidance, not final pricing.</h2>
               <p className="mt-2 text-sm font-semibold leading-6 text-navy-600">
-                Gurgaon prices change by tower, floor, view, furnishing, inventory and owner urgency. SocietyFlats uses these pages to guide shortlisting and callback conversations.
+                Gurgaon prices change by tower, floor, view, furnishing, inventory and owner urgency. Future admin enrichment should attach source URL, official/RERA URL, confidence score and last-reviewed date to every market signal.
               </p>
             </div>
             <Button asChild className="h-12 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
@@ -327,10 +408,11 @@ export function InsightsPage() {
         </div>
 
         <span className="sr-only">
-          Gurgaon market insights for rent, buy, resale, sell, owner listing, society comparison and SocietyFlats AI advisor.
+          Gurgaon market insights for rent, buy, resale, sell, owner listing, society comparison, source confidence, public references and SocietyFlats AI advisor.
         </span>
         <span className="sr-only">
-          <ShieldCheck />
+          <CheckCircle2 />
+          <BadgeIndianRupee />
         </span>
       </section>
     </div>
