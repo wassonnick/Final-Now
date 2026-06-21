@@ -166,28 +166,7 @@ export function MapsPage() {
 
     return Array.from(chips).slice(0, 6);
   }, [societies]);
-
-  useEffect(() => {
-    const defaultSociety = pickDefaultMapSociety(societies, query);
-    if (!defaultSociety?.id) return;
-
-    setSelectedSocietyId((current) => {
-      const currentSociety = societies.find((society) => Number(society.id) === Number(current));
-      const currentIsVisible = Boolean(currentSociety);
-
-      // Query pages should select the query match. Fresh map loads should not stay stuck on DLF Crest.
-      if (query.trim()) return Number(defaultSociety.id);
-
-      if (
-        currentIsVisible &&
-        String(currentSociety?.name || "").toLowerCase() !== "dlf crest"
-      ) {
-        return current;
-      }
-
-      return Number(defaultSociety.id);
-    });
-  }, [societies, query]);
+  // C111F-FIX3: no forced default selected society. User selects from pin/list.
 
   const mapLabel = googleMapsApiKey ? "Live Google map" : "Map preview";
   const visiblePinCount = pinnedSocieties.length;

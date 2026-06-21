@@ -159,7 +159,6 @@ export function GoogleSocietyMapView({
 
           marker.addListener("click", () => {
             onSelectSociety?.(Number(society.id));
-            openMarkerInfoWindow(society, marker);
           });
 
           markersRef.current.push(marker);
@@ -173,7 +172,7 @@ export function GoogleSocietyMapView({
           mapInstanceRef.current.setZoom(14);
         }
 
-        openSelectedMarkerAfterRender();
+        // Auto popup disabled.
 
         setMapError("");
       } catch (error) {
@@ -193,7 +192,7 @@ export function GoogleSocietyMapView({
     if (!selectedSocietyId) return;
 
     const timer = window.setTimeout(() => {
-      openSelectedMarkerAfterRender();
+      // Auto popup disabled.
     }, 120);
 
     return () => window.clearTimeout(timer);
