@@ -724,7 +724,7 @@ export function AIAdvisorPage() {
               </h1>
 
               <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-blue-500 md:text-[17px]">
-                Search by budget, office, school, builder, pet needs, lifestyle or investment goal. Results open into society pages and full search.
+                Continued from homepage, search, compare or map view. Continue from homepage search, society search, compare or map view. Search by budget, office, school, builder, pet needs, lifestyle or investment goal. Results open into society pages and full search.
               </p>
 
               {resultSocieties.length ? (
