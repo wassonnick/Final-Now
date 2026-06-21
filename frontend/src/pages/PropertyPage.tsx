@@ -504,6 +504,24 @@ export function PropertyPage() {
     `Hi, I am interested in ${title}. Please share details.`,
   );
 
+  const propertyLeadContext = (type: "callback" | "enquiry") =>
+    [
+      "Property lead context:",
+      `Source: ${type === "callback" ? "property_page_callback" : "property_page_enquiry"}`,
+      `CTA: ${type === "callback" ? "Check availability" : "Ask about this property"}`,
+      `Intent: ${leadRequirementFor(listingType, type)}`,
+      `Entity: property · ${property?.slug || slug || ""}`,
+      `Property: ${title}`,
+      societyName ? `Society: ${societyName}` : "",
+      societyLocality ? `Location: ${societyLocality}` : "Location: Gurgaon",
+      listingType ? `Listing type: ${listingType}` : "",
+      price ? `Price: ${price}` : "",
+      typeof window !== "undefined" ? `Page URL: ${window.location.href}` : "",
+      typeof document !== "undefined" && document.referrer ? `Referrer: ${document.referrer}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
   const openLead = (type: "callback" | "enquiry") => {
     trackLeadIntent({
       source: type === "callback" ? "property_page_callback" : "property_page_enquiry",

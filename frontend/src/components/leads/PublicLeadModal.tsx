@@ -174,13 +174,28 @@ export function PublicLeadModal({
       ? `${finalRequirement} · Preferred time: ${selectedTime}`
       : finalRequirement;
 
+    const leadContextLines = [
+      "Lead context:",
+      `Source: ${source}`,
+      `CTA: ${leadTrackingPayload.cta_label || ctaLabel || source}`,
+      `Intent: ${leadTrackingPayload.lead_intent || leadIntent || finalRequirement}`,
+      `Entity: ${leadTrackingPayload.entity_type || (propertySlug ? "property" : societyName ? "society" : "general")}${leadTrackingPayload.entity_slug ? ` · ${leadTrackingPayload.entity_slug}` : ""}`,
+      societyName ? `Society: ${societyName}` : "",
+      propertyTitle ? `Property: ${propertyTitle}` : "",
+      selectedBudget ? `Budget: ${selectedBudget}` : "",
+      selectedTime ? `Preferred time: ${selectedTime}` : "",
+      typeof window !== "undefined" ? `Page URL: ${window.location.href}` : "",
+      typeof document !== "undefined" && document.referrer ? `Referrer: ${document.referrer}` : "",
+    ].filter(Boolean);
+
     const enrichedMessage = [
       baseMessage,
       selectedBudget ? `Budget: ${selectedBudget}.` : "",
       selectedTime ? `Best time to call: ${selectedTime}.` : "",
+      leadContextLines.join("\n"),
     ]
       .filter(Boolean)
-      .join("\n");
+      .join("\n\n");
 
     try {
       await backendApi.createLead({
