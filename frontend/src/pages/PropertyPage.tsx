@@ -651,16 +651,16 @@ export function PropertyPage() {
       </div>
 
       <section className="bg-white">
-        <div className="container mx-auto px-4 py-4 md:py-5">
-          <Button asChild variant="ghost" className="mb-4 rounded-full text-navy-600">
+        <div className="container mx-auto px-4 py-3 md:py-4">
+          <Button asChild variant="ghost" className="mb-3 rounded-full text-navy-600">
             <Link to={societySlug ? `/society/${societySlug}` : "/properties"}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               {societyName ? `Back to ${societyName}` : "Back to properties"}
             </Link>
           </Button>
 
-          <div className={photos.length > 1 ? "grid gap-4 lg:grid-cols-[1fr_240px]" : "grid gap-4"}>
-            <div className="relative h-[175px] overflow-hidden rounded-[1.2rem] bg-navy-50 sm:h-[240px] md:h-[360px] md:rounded-[1.75rem]">
+          <div className={photos.length > 1 ? "grid gap-3 lg:grid-cols-[1fr_220px]" : "grid gap-3"}>
+            <div className="relative h-[155px] overflow-hidden rounded-[1.15rem] bg-navy-50 sm:h-[220px] md:h-[315px] md:rounded-[1.5rem]">
               <img src={photos[activeImage] || photos[0]} alt={title} className="h-full w-full object-cover" />
               <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                 {property.verified ? (
@@ -675,7 +675,7 @@ export function PropertyPage() {
             </div>
 
             {photos.length > 1 ? (
-              <div className="hidden gap-3 lg:grid">
+              <div className="hidden gap-2.5 lg:grid">
                 {photos.slice(0, 3).map((photo, index) => (
                   <button
                     key={`${photo}-${index}`}
@@ -686,7 +686,7 @@ export function PropertyPage() {
                       activeImage === index ? "border-blue-500" : "border-transparent",
                     )}
                   >
-                    <img src={photo} alt={title} className="h-full min-h-[110px] w-full object-cover" />
+                    <img src={photo} alt={title} className="h-full min-h-[96px] w-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -695,34 +695,34 @@ export function PropertyPage() {
         </div>
       </section>
 
-      <main className="container mx-auto px-4 py-4 md:py-6">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6">
-          <div className="space-y-4 md:space-y-5">
-            <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.65rem] md:p-5">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <main className="container mx-auto px-4 py-3 md:py-4">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-5">
+          <div className="space-y-3 md:space-y-4">
+            <section className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:rounded-[1.45rem] md:p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <div className="mb-3 flex flex-wrap gap-2">
+                  <div className="mb-2.5 flex flex-wrap gap-2">
                     <Badge className="border-blue-100 bg-blue-50 text-blue-700">{listingType}</Badge>
                     {property.status ? <Badge variant="outline">{property.status}</Badge> : null}
                   </div>
 
-                  <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 md:text-4xl">
+                  <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 md:text-3xl">
                     {title}
                   </h1>
 
-                  <p className="mt-3 flex items-center gap-2 text-navy-500">
+                  <p className="mt-2 flex items-center gap-2 text-sm text-navy-500">
                     <MapPin className="h-4 w-4" />
                     <span>{societyName || "Gurgaon"} • {societyLocality}</span>
                   </p>
                 </div>
 
-                <div className="rounded-[1.5rem] bg-blue-50 px-5 py-4 text-left md:text-right">
+                <div className="rounded-[1.25rem] bg-blue-50 px-4 py-3 text-left md:text-right">
                   <p className="text-sm text-blue-700">Price</p>
                   <p className="mt-1 text-2xl font-bold text-navy-900">{price}</p>
                 </div>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-2.5 md:grid-cols-4">
+              <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
                 {[
                   { label: "Type", value: propertyType, icon: Home },
                   { label: "Bedrooms", value: `${property.bedrooms || "-"} BHK`, icon: Bed },
@@ -731,7 +731,7 @@ export function PropertyPage() {
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
-                    <div key={item.label} className="rounded-2xl bg-blue-50/55 p-3.5">
+                    <div key={item.label} className="rounded-2xl bg-blue-50/55 p-3">
                       <Icon className="h-4 w-4 text-blue-600" />
                       <p className="mt-2 text-xs text-navy-400">{item.label}</p>
                       <p className="mt-1 font-semibold text-navy-900">{item.value}</p>
@@ -740,11 +740,11 @@ export function PropertyPage() {
                 })}
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap md:mt-5">
-                <Button onClick={() => openLead("callback")} className="h-10 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700">
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                <Button onClick={() => openLead("callback")} className="h-9 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700">
                   <Phone className="mr-2 h-4 w-4" /> Check availability
                 </Button>
-                <Button onClick={() => openLead("enquiry")} variant="outline" className="h-10 rounded-full border-blue-200 text-sm font-bold text-blue-700">
+                <Button onClick={() => openLead("enquiry")} variant="outline" className="h-9 rounded-full border-blue-200 text-sm font-bold text-blue-700">
                   <Mail className="mr-2 h-4 w-4" /> Ask details
                 </Button>
                 <Button
@@ -767,7 +767,7 @@ export function PropertyPage() {
             </section>
 
             {societyName ? (
-              <section className="rounded-[1.5rem] border border-blue-100 bg-blue-50 p-4 shadow-sm md:hidden">
+              <section className="rounded-[1.3rem] border border-blue-100 bg-blue-50 p-3.5 shadow-sm md:hidden">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
                   Society-first check
                 </p>
@@ -785,9 +785,9 @@ export function PropertyPage() {
               </section>
             ) : null}
 
-            <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
+            <section className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:rounded-[1.4rem] md:p-4">
               <h2 className="text-xl font-bold text-navy-900 md:text-2xl">Property details</h2>
-              <div className="mt-3 grid grid-cols-2 gap-3 md:mt-4 md:grid-cols-3 md:gap-3">
+              <div className="mt-3 grid grid-cols-2 gap-2.5 md:grid-cols-3">
                 {[
                   ["Listing type", listingType],
                   ["Price", price],
@@ -801,14 +801,14 @@ export function PropertyPage() {
                 ].map(([label, value]) => (
                   <div key={String(label)}>
                     <p className="text-xs text-navy-500 md:text-sm">{label}</p>
-                    <p className="mt-1 text-sm font-semibold capitalize text-navy-900 md:text-base">{value || "-"}</p>
+                    <p className="mt-1 text-sm font-semibold capitalize text-navy-900">{value || "-"}</p>
                   </div>
                 ))}
               </div>
             </section>
 
-            <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
-              <div className="grid gap-3 md:grid-cols-3">
+            <section className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:rounded-[1.4rem] md:p-4">
+              <div className="grid gap-2.5 md:grid-cols-3">
                 {[
                   { label: "Verified society", value: societyName || "Gurgaon inventory", icon: Shield },
                   { label: "Location context", value: societyLocality, icon: MapPin },
@@ -816,7 +816,7 @@ export function PropertyPage() {
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
-                    <div key={item.label} className="rounded-[1.15rem] bg-blue-50/55 p-3.5">
+                    <div key={item.label} className="rounded-[1.05rem] bg-blue-50/55 p-3">
                       <Icon className="h-5 w-5 text-blue-600" />
                       <p className="mt-3 text-sm text-navy-400">{item.label}</p>
                       <p className="mt-1 font-semibold text-navy-900">{item.value}</p>
@@ -826,19 +826,19 @@ export function PropertyPage() {
               </div>
             </section>
 
-            <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
+            <section className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:rounded-[1.4rem] md:p-4">
               <h2 className="text-2xl font-bold text-navy-900">Description</h2>
-              <p className="mt-3 line-clamp-3 whitespace-pre-line text-sm leading-6 text-navy-600 md:line-clamp-5">
+              <p className="mt-2.5 line-clamp-3 whitespace-pre-line text-sm leading-6 text-navy-600 md:line-clamp-4">
                 {publicPropertyDescription(property.description)}
               </p>
             </section>
 
-            <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
+            <section className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:rounded-[1.4rem] md:p-4">
               <h2 className="text-2xl font-bold text-navy-900">Amenities</h2>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {amenities.length ? (
                   amenities.map((item) => (
-                    <span key={item} className="rounded-full bg-blue-50 px-3.5 py-1.5 text-sm font-semibold text-blue-700">
+                    <span key={item} className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
                       {item}
                     </span>
                   ))
@@ -849,13 +849,13 @@ export function PropertyPage() {
             </section>
 
             {societyName ? (
-              <section className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
+              <section className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:rounded-[1.4rem] md:p-4">
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">Society context</p>
                 <h2 className="mt-2 text-2xl font-bold text-navy-900">About {societyName}</h2>
                 <p className="mt-3 text-navy-500">
                   Review the society profile before requesting a visit so the property decision includes location, amenities and inventory context.
                 </p>
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   {societySlug ? (
                     <Button asChild variant="outline" className="rounded-full">
                       <Link to={`/society/${societySlug}`}>View society profile</Link>
@@ -868,7 +868,7 @@ export function PropertyPage() {
               </section>
             ) : null}
 
-            <section id="similar-properties" className="scroll-mt-24 rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.55rem] md:p-5">
+            <section id="similar-properties" className="scroll-mt-24 rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:rounded-[1.4rem] md:p-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
@@ -877,7 +877,7 @@ export function PropertyPage() {
                   <h2 className="mt-2 text-xl font-bold text-navy-900 md:text-2xl">
                     Similar properties in {societyName || "this society"}
                   </h2>
-                  <p className="mt-2 text-sm text-navy-500">
+                  <p className="mt-1.5 text-sm text-navy-500">
                     Continue shortlisting without leaving the current society profile.
                   </p>
                 </div>
@@ -889,7 +889,7 @@ export function PropertyPage() {
               </div>
 
               {similarProperties.length > 0 ? (
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="mt-3 grid gap-2.5 md:grid-cols-3">
                   {similarProperties.map((item) => {
                     const itemTitle = item.title || "Similar home";
                     const itemPrice = item.price || item.rent || "On request";
@@ -902,22 +902,22 @@ export function PropertyPage() {
                       <Link
                         key={String(item.id || item.slug || itemTitle)}
                         to={itemPath}
-                        className="group overflow-hidden rounded-[1.2rem] border border-blue-100 bg-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
+                        className="group overflow-hidden rounded-[1.1rem] border border-blue-100 bg-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
                       >
-                        <div className="h-24 bg-navy-50 md:h-28">
+                        <div className="h-20 bg-navy-50 md:h-24">
                           <img src={itemPhoto} alt={itemTitle} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                         </div>
-                        <div className="p-3.5">
+                        <div className="p-3">
                           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
                             {getField(item, "listingType", "listing_type", "Property")}
                           </p>
-                          <h3 className="mt-2 line-clamp-2 font-bold text-navy-900 group-hover:text-blue-700">
+                          <h3 className="mt-1.5 line-clamp-2 font-bold text-navy-900 group-hover:text-blue-700">
                             {itemTitle}
                           </h3>
-                          <p className="mt-2 text-sm text-navy-500">
+                          <p className="mt-1.5 text-sm text-navy-500">
                             {itemBedrooms} BHK • {itemArea} sq.ft
                           </p>
-                          <div className="mt-3 flex items-center justify-between gap-3 border-t border-navy-100 pt-3">
+                          <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-navy-100 pt-2.5">
                             <p className="font-bold text-navy-900">{itemPrice}</p>
                             <span className="text-sm font-semibold text-blue-700">View</span>
                           </div>
@@ -927,7 +927,7 @@ export function PropertyPage() {
                   })}
                 </div>
               ) : (
-                <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-5">
+                <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
                     No public alternatives shown yet
                   </p>
@@ -953,7 +953,7 @@ export function PropertyPage() {
           </div>
 
           <aside className="hidden lg:block">
-            <div className="sticky top-24 rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-soft">
+            <div className="sticky top-24 rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-soft">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">
@@ -963,7 +963,7 @@ export function PropertyPage() {
                     Confirm this home
                   </h3>
                 </div>
-                <div className="rounded-2xl bg-blue-50 px-3 py-2 text-right">
+                <div className="rounded-2xl bg-blue-50 px-3 py-1.5 text-right">
                   <p className="text-[11px] text-blue-700">Price</p>
                   <p className="text-lg font-bold leading-tight text-navy-900">
                     {price}
@@ -971,14 +971,14 @@ export function PropertyPage() {
                 </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="mt-2.5 grid grid-cols-2 gap-1.5">
                 {[
                   ["BHK", `${property.bedrooms || "-"}`],
                   ["Area", `${areaSqft || "-"} sq.ft`],
                   ["Type", propertyType],
                   ["Society", societyName || "Gurgaon"],
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-xl bg-[#F8FAFC] px-3 py-2">
+                  <div key={label} className="rounded-xl bg-[#F8FAFC] px-3 py-1.5">
                     <p className="text-[11px] text-navy-400">{label}</p>
                     <p className="mt-0.5 truncate text-sm font-semibold text-navy-900">
                       {value}
@@ -987,14 +987,14 @@ export function PropertyPage() {
                 ))}
               </div>
 
-              <div className="mt-3 rounded-xl border border-navy-100 px-3 py-2">
+              <div className="mt-2.5 rounded-xl border border-navy-100 px-3 py-1.5">
                 <p className="text-[11px] text-navy-400">Location</p>
                 <p className="mt-0.5 truncate text-sm font-semibold text-navy-900">
                   {societyLocality}
                 </p>
               </div>
 
-              <div className="mt-3 space-y-2">
+              <div className="mt-2.5 space-y-1.5">
                 <Button
                   onClick={() => openLead("callback")}
                   className="h-9 w-full rounded-full bg-blue-600 text-sm hover:bg-blue-700"

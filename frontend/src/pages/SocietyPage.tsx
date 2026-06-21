@@ -670,11 +670,11 @@ export function SocietyPage() {
         </Button>
       </div>
       <section className="bg-white">
-        <div className="container mx-auto px-4 py-3 md:py-4">
+        <div className="container mx-auto px-4 py-2.5 md:py-3">
           <Button
             asChild
             variant="ghost"
-            className="mb-3 rounded-full text-navy-600 md:mb-4"
+            className="mb-2 rounded-full text-navy-600 md:mb-3"
           >
             <Link to="/search?tab=societies">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to societies
@@ -692,7 +692,7 @@ export function SocietyPage() {
               gallery.length > 1 ? "lg:grid-cols-[1.4fr_0.6fr]" : ""
             }`}
           >
-            <div className="relative h-[160px] overflow-hidden rounded-[1.15rem] bg-navy-50 sm:h-[240px] lg:h-[300px] lg:rounded-[1.6rem]">
+            <div className="relative h-[148px] overflow-hidden rounded-[1.1rem] bg-navy-50 sm:h-[220px] lg:h-[260px] lg:rounded-[1.45rem]">
               <img
                 src={gallery[0]}
                 alt={society.name}
@@ -706,7 +706,7 @@ export function SocietyPage() {
               </span>
             </div>
             {gallery.length > 1 ? (
-              <div className="hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-1">
+              <div className="hidden gap-2.5 sm:grid sm:grid-cols-2 lg:grid-cols-1">
                 {gallery.slice(1, 3).map((image) => (
                   <div
                     key={image}
@@ -715,7 +715,7 @@ export function SocietyPage() {
                     <img
                       src={image}
                       alt={society.name}
-                      className="h-full min-h-[120px] w-full object-cover lg:min-h-[145px]"
+                      className="h-full min-h-[105px] w-full object-cover lg:min-h-[126px]"
                     />
                   </div>
                 ))}
@@ -725,13 +725,13 @@ export function SocietyPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-3 md:py-5">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-6">
-          <div className="space-y-3.5 md:space-y-4">
-            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.45rem] md:p-4.5">
+      <section className="container mx-auto px-4 py-2.5 md:py-4">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-5">
+          <div className="space-y-3 md:space-y-3.5">
+            <div className="rounded-[1.2rem] border border-blue-100 bg-white p-3.5 shadow-sm md:rounded-[1.35rem] md:p-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <div className="mb-3 flex flex-wrap gap-2">
+                  <div className="mb-2.5 flex flex-wrap gap-2">
                     <Badge className="border-blue-100 bg-blue-50 text-blue-700">
                       {field(society, "status", "status", "Verified")}
                     </Badge>
@@ -741,14 +741,14 @@ export function SocietyPage() {
                       </Badge>
                     ) : null}
                   </div>
-                  <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 md:text-4xl">
+                  <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 md:text-3xl">
                     {society.name}
                   </h1>
-                  <p className="mt-1.5 flex items-center gap-2 text-sm text-navy-500 md:mt-2 md:text-base">
+                  <p className="mt-1 flex items-center gap-2 text-sm text-navy-500 md:text-[15px]">
                     <MapPin className="h-5 w-5" /> {societyLocation}
                   </p>
                 </div>
-                <div className="w-fit min-w-24 rounded-[1.15rem] bg-navy-600 px-4 py-3 text-center text-white md:min-w-28 md:rounded-[1.25rem] md:px-5 md:py-4">
+                <div className="w-fit min-w-24 rounded-[1.05rem] bg-navy-600 px-3.5 py-2.5 text-center text-white md:min-w-28 md:rounded-[1.15rem] md:px-4 md:py-3">
                   <p className="text-sm text-white/70">Society Score</p>
                   <p className="mt-1 text-3xl font-bold">
                     {field(society, "score", "score", "8.5")}
@@ -756,12 +756,12 @@ export function SocietyPage() {
                 </div>
               </div>
               {society.description ? (
-                <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-navy-600 md:mt-4 md:line-clamp-3 md:text-base">
+                <p className="mt-2.5 line-clamp-2 text-sm leading-6 text-navy-600 md:mt-3 md:line-clamp-2 md:text-[15px]">
                   {society.description}
                 </p>
               ) : null}
-              <div className="mt-3 grid grid-cols-2 gap-2.5 border-t border-navy-100 pt-3 md:mt-4 md:grid-cols-3">
-                <div className="rounded-2xl bg-blue-50 p-3.5">
+              <div className="mt-2.5 grid grid-cols-2 gap-2 border-t border-navy-100 pt-2.5 md:mt-3 md:grid-cols-3">
+                <div className="rounded-2xl bg-blue-50 p-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">
                     Verified homes available
                   </p>
@@ -772,7 +772,7 @@ export function SocietyPage() {
                     live option{properties.length === 1 ? "" : "s"} in database
                   </p>
                 </div>
-                <div className="rounded-2xl bg-[#F8FAFC] p-3.5">
+                <div className="rounded-2xl bg-[#F8FAFC] p-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-navy-500">
                     Rent range
                   </p>
@@ -783,7 +783,7 @@ export function SocietyPage() {
                     subject to live availability
                   </p>
                 </div>
-                <div className="hidden rounded-2xl bg-[#F8FAFC] p-3.5 md:block">
+                <div className="hidden rounded-2xl bg-[#F8FAFC] p-3 md:block">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-navy-500">
                     Buy range
                   </p>
@@ -796,10 +796,10 @@ export function SocietyPage() {
                 </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap md:mt-4">
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                 <Button
                   onClick={() => openSocietyCallback()}
-                  className="h-10 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700"
+                  className="h-9 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700"
                 >
                   <Phone className="mr-2 h-4 w-4" /> Request available homes
                 </Button>
@@ -809,7 +809,7 @@ export function SocietyPage() {
                   onClick={toggleSocietyCompare}
                   variant="outline"
                   className={cn(
-                    "h-10 rounded-full text-sm font-bold",
+                    "h-9 rounded-full text-sm font-bold",
                     isSocietyCompared
                       ? "border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                       : "border-blue-100 text-blue-700 hover:bg-blue-50",
@@ -823,7 +823,7 @@ export function SocietyPage() {
                 <Button
                   asChild
                   variant="outline"
-                  className="h-10 rounded-full border-navy-200 text-sm font-bold"
+                  className="h-9 rounded-full border-navy-200 text-sm font-bold"
                 >
                   <Link
                     to={`/search?tab=societies&q=${encodeURIComponent(society.name)}&intent=general`}
@@ -867,7 +867,7 @@ export function SocietyPage() {
               </div>
             </div>
 
-            <div className="hidden rounded-[1.65rem] border border-blue-100 bg-white p-5 shadow-sm md:block">
+            <div className="hidden rounded-[1.4rem] border border-blue-100 bg-white p-4 shadow-sm md:block">
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
@@ -897,13 +897,13 @@ export function SocietyPage() {
                   </Button>
                 </div>
               </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-4">
+              <div className="mt-3 grid gap-2.5 md:grid-cols-4">
                 {whyChoose.map((item) => {
                   const Icon = item.icon;
                   return (
                     <div
                       key={item.label}
-                      className="rounded-[1.15rem] bg-[#F8FAFC] p-3.5"
+                      className="rounded-[1.05rem] bg-[#F8FAFC] p-3"
                     >
                       <Icon className="h-5 w-5 text-blue-600" />
                       <p className="mt-3 text-sm text-navy-400">{item.label}</p>
@@ -916,7 +916,7 @@ export function SocietyPage() {
               </div>
             </div>
 
-            <div className="hidden gap-3 md:grid md:grid-cols-3">
+            <div className="hidden gap-2.5 md:grid md:grid-cols-3">
               {[
                 ["Builder", field(society, "builder", "builder", "Not added")],
                 [
@@ -947,17 +947,17 @@ export function SocietyPage() {
               ].map(([label, value]) => (
                 <div
                   key={label}
-                  className="rounded-[1.1rem] border border-blue-100 bg-white p-3"
+                  className="rounded-[1rem] border border-blue-100 bg-white p-2.5"
                 >
                   <p className="text-sm text-navy-400">{label}</p>
-                  <p className="mt-2 font-semibold text-navy-900">
+                  <p className="mt-1 font-semibold text-navy-900">
                     {value || "Not added"}
                   </p>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:hidden">
+            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:hidden">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                 About this society
               </p>
@@ -994,7 +994,7 @@ export function SocietyPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[1.45rem] md:p-4.5">
+            <div className="rounded-[1.2rem] border border-blue-100 bg-white p-3.5 shadow-sm md:rounded-[1.35rem] md:p-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
@@ -1011,7 +1011,7 @@ export function SocietyPage() {
                 </p>
               </div>
 
-              <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <div className="mt-3 grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
                 {properties.length ? (
                   properties.map((property) => {
                     const propertyUrl = safePropertyUrl(property);
@@ -1035,7 +1035,7 @@ export function SocietyPage() {
                         className="overflow-hidden rounded-[1.15rem] border border-blue-100 bg-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
                       >
                         <Link to={propertyUrl} className="block">
-                          <div className="h-24 bg-navy-50 md:h-[112px]">
+                          <div className="h-20 bg-navy-50 md:h-24">
                             <img
                               src={safePropertyImage(property)}
                               alt={property.title}
@@ -1044,7 +1044,7 @@ export function SocietyPage() {
                           </div>
                         </Link>
 
-                        <div className="p-3">
+                        <div className="p-2.5">
                           <div className="flex items-center justify-between gap-3">
                             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
                               {listingType}
@@ -1073,7 +1073,7 @@ export function SocietyPage() {
                             </p>
                           </div>
 
-                          <div className="mt-2 grid grid-cols-2 gap-2">
+                          <div className="mt-2 grid grid-cols-2 gap-1.5">
                             <Button
                               asChild
                               variant="outline"
@@ -1128,17 +1128,17 @@ export function SocietyPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm">
+            <div className="rounded-[1.2rem] border border-blue-100 bg-white p-3 shadow-sm">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <h2 className="text-xl font-bold text-navy-900">Amenities</h2>
                 <span className="text-xs font-bold text-navy-400">{amenities.length || 0} listed</span>
               </div>
-              <div className="mt-2.5 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap gap-1.5">
                 {amenities.length ? (
                   amenities.map((item) => (
                     <span
                       key={item}
-                      className="rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-700"
+                      className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700"
                     >
                       {item}
                     </span>
@@ -1149,7 +1149,7 @@ export function SocietyPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm">
+            <div className="rounded-[1.2rem] border border-blue-100 bg-white p-3 shadow-sm">
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">
@@ -1173,7 +1173,7 @@ export function SocietyPage() {
 
               {/* C109 compact nearby cards */}
               {nearbyCompactCards.length ? (
-                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                <div className="mt-2.5 grid gap-2 md:grid-cols-2">
                   {nearbyCompactCards.map((item) => {
                     const Icon = item.icon;
 
@@ -1183,7 +1183,7 @@ export function SocietyPage() {
                         type="button"
                         onClick={() => setActiveNearbyCategory(item.title)}
                         className={cn(
-                          "group rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm",
+                          "group rounded-2xl border p-2.5 text-left transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm",
                           activeNearbyCategory === item.title
                             ? "border-blue-300 bg-blue-50"
                             : "border-blue-100 bg-blue-50/60",
@@ -1304,7 +1304,7 @@ export function SocietyPage() {
               )}
             </div>
 
-            <div className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:hidden">
+            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:hidden">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                 You may also like
               </p>
@@ -1316,7 +1316,7 @@ export function SocietyPage() {
               </p>
 
               {similarSocieties.length ? (
-                <div className="mt-3 space-y-2.5">
+                <div className="mt-3 space-y-2">
                   {similarSocieties.map((item) => {
                     const itemSlug = field<string>(item, "slug", "slug", "");
                     const itemLocation =
@@ -1330,7 +1330,7 @@ export function SocietyPage() {
                     return (
                       <div
                         key={itemSlug || item.name}
-                        className="rounded-2xl border border-blue-100 bg-[#F8FAFC] p-3.5"
+                        className="rounded-2xl border border-blue-100 bg-[#F8FAFC] p-3"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -1350,7 +1350,7 @@ export function SocietyPage() {
                             </p>
                           </div>
                         </div>
-                        <div className="mt-3 flex items-center justify-between gap-3 border-t border-navy-100 pt-3">
+                        <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-navy-100 pt-2.5">
                           <div>
                             <p className="text-[11px] uppercase tracking-[0.12em] text-navy-400">
                               Rent range
@@ -1437,7 +1437,7 @@ export function SocietyPage() {
             ) : null}
           </div>
 
-          <aside className="hidden lg:sticky lg:top-24 lg:block lg:self-start"><div className="max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-soft">
+          <aside className="hidden lg:sticky lg:top-24 lg:block lg:self-start"><div className="max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-soft">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
                 Next step
               </p>
@@ -1445,7 +1445,7 @@ export function SocietyPage() {
                 Get homes or similar options for {society.name}
               </h3>
 
-              <div className="mt-2.5 rounded-2xl bg-blue-50 p-3">
+              <div className="mt-2 rounded-2xl bg-blue-50 p-2.5">
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-sm font-medium text-blue-700">
                     Live homes
@@ -1456,7 +1456,7 @@ export function SocietyPage() {
                 </div>
               </div>
 
-              <div className="mt-2.5 space-y-1">
+              <div className="mt-2 space-y-0.5">
                 {[
                   [
                     "Rent range",
@@ -1491,7 +1491,7 @@ export function SocietyPage() {
                 ].map(([label, value]) => (
                   <div
                     key={label}
-                    className="flex items-center justify-between gap-4 border-b border-navy-100 py-1.5 last:border-0"
+                    className="flex items-center justify-between gap-4 border-b border-navy-100 py-1 last:border-0"
                   >
                     <span className="text-xs text-navy-500">{label}</span>
                     <span className="text-right text-sm font-semibold text-navy-900">
