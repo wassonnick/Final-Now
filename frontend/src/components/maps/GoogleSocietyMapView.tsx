@@ -90,27 +90,28 @@ export function GoogleSocietyMapView({
       div?: HTMLDivElement;
 
       onAdd() {
+        const selected = Number(selectedSocietyId) === Number(society.id);
         const div = document.createElement("div");
         div.textContent = society.name;
         div.style.position = "absolute";
-        div.style.transform = "translate(-50%, -44px)";
+        div.style.transform = selected ? "translate(-50%, -48px) scale(1.08)" : "translate(-50%, -44px)";
         div.style.whiteSpace = "nowrap";
         div.style.maxWidth = "175px";
         div.style.overflow = "hidden";
         div.style.textOverflow = "ellipsis";
-        div.style.padding = "8px 12px";
+        div.style.padding = selected ? "9px 14px" : "8px 12px";
         div.style.borderRadius = "16px";
-        div.style.background = "rgba(255,255,255,0.98)";
-        div.style.border = "1px solid rgba(219,234,254,1)";
-        div.style.boxShadow = "0 14px 30px rgba(15,23,42,0.16)";
-        div.style.color = "#0f172a";
+        div.style.background = selected ? "#1d4ed8" : "rgba(255,255,255,0.98)";
+        div.style.border = selected ? "2px solid rgba(255,255,255,0.96)" : "1px solid rgba(219,234,254,1)";
+        div.style.boxShadow = selected ? "0 18px 38px rgba(29,78,216,0.38)" : "0 14px 30px rgba(15,23,42,0.16)";
+        div.style.color = selected ? "#ffffff" : "#0f172a";
         div.style.fontFamily = "Inter, Arial, sans-serif";
-        div.style.fontSize = "13px";
+        div.style.fontSize = selected ? "14px" : "13px";
         div.style.fontWeight = "900";
         div.style.lineHeight = "1";
         div.style.pointerEvents = "auto";
         div.style.cursor = "pointer";
-        div.style.zIndex = String(Number(selectedSocietyId) === Number(society.id) ? 40 : 25);
+        div.style.zIndex = selected ? "80" : "25";
 
         div.addEventListener("click", () => {
           onSelectSociety?.(Number(society.id));
@@ -196,11 +197,28 @@ export function GoogleSocietyMapView({
           const position = { lat, lng };
           bounds.extend(position);
 
+          const selected = Number(selectedSocietyId) === Number(society.id);
+
           const marker = new window.google.maps.Marker({
             position,
             map: mapInstanceRef.current,
             title: society.name,
-            label: String(index + 1),
+            label: {
+              text: String(index + 1),
+              color: "#ffffff",
+              fontWeight: "900",
+            },
+            zIndex: selected ? 999 : index + 1,
+            icon: selected
+              ? {
+                  path: window.google.maps.SymbolPath.CIRCLE,
+                  scale: 14,
+                  fillColor: "#1d4ed8",
+                  fillOpacity: 1,
+                  strokeColor: "#ffffff",
+                  strokeWeight: 4,
+                }
+              : undefined,
           });
 
           marker.addListener("click", () => {

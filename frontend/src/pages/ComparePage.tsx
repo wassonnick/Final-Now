@@ -679,10 +679,10 @@ export function ComparePage() {
               Open each society to see available homes and callback options before planning a visit.
             </p>
           </div>
-          <div className="rounded-[1.5rem] border border-blue-100 bg-navy-950 p-4 text-white shadow-sm">
+          <div className="rounded-[1.5rem] border border-blue-100 bg-blue-50 p-4 shadow-sm">
             <Sparkles className="h-5 w-5 text-blue-200" />
             <h3 className="mt-3 font-black">Need help deciding?</h3>
-            <p className="mt-2 text-sm font-semibold leading-6 text-blue-100">
+            <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">
               Ask AI to rank the comparison by commute, budget, school or lifestyle.
             </p>
             <Button asChild className="mt-4 h-10 w-full rounded-full bg-white font-black text-navy-950 hover:bg-blue-50">
