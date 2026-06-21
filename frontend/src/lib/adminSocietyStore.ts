@@ -529,6 +529,26 @@ export async function saveAdminSociety(society: AdminSociety, isEdit: boolean): 
   return mapApiSociety(json?.data || {});
 }
 
+
+export type SocietyPublishFieldBackfillResponse = {
+  status: string;
+  message: string;
+  summary: {
+    total: number;
+    published: number;
+    unpublished: number;
+    updated: number;
+    skipped: number;
+  };
+};
+
+export async function backfillAdminSocietyPublishFields(): Promise<SocietyPublishFieldBackfillResponse> {
+  return request('/admin/societies/publish-fields/backfill', {
+    method: 'POST',
+    body: JSON.stringify({ source: 'admin_societies_page_c112e_b' }),
+  });
+}
+
 export async function updateAdminSocietyStatus(id: number | string, status: SocietyStatus): Promise<AdminSociety> {
   const isPublished = status === 'Verified' || status === 'Premium';
 

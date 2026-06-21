@@ -20,6 +20,7 @@ import {
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import {
+  backfillAdminSocietyPublishFields,
   bulkAutoFillNearbyIntelligence,
   deleteAdminSociety,
   fetchAdminSocieties,
@@ -155,6 +156,36 @@ export function AdminSocietiesPage() {
     useState<BulkGooglePlacesImageFetchSummary | null>(null);
   const [googleImageFetchError, setGoogleImageFetchError] = useState("");
   const [bulkNearbyAutoFillLoading, setBulkNearbyAutoFillLoading] = useState(false);
+  const [publishBackfillLoading, setPublishBackfillLoading] = useState(false);
+
+
+  const handlePublishFieldBackfill = async () => {
+    if (publishBackfillLoading) return;
+
+    if (!window.confirm("Backfill publish fields for all societies? Verified/Premium will become published; Draft/Archived will become unpublished.")) {
+      return;
+    }
+
+    try {
+      setPublishBackfillLoading(true);
+      setError("");
+      setMessage("");
+
+      const result = await backfillAdminSocietyPublishFields();
+      const summary = result.summary;
+
+      setMessage(
+        `C112E-B publish field backfill complete: ${summary.updated} updated, ${summary.skipped} already synced, ${summary.published} published, ${summary.unpublished} unpublished.`,
+      );
+
+      await loadSocieties();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Publish field backfill failed.");
+    } finally {
+      setPublishBackfillLoading(false);
+    }
+  };
 
   const handleBulkGoogleImageFetch = async () => {
     try {
@@ -415,7 +446,7 @@ export function AdminSocietiesPage() {
               </h2>
             </div>
             <p className="text-xs font-semibold text-slate-500">
-              Use this before publishing or featuring society pages. C112E publish fields now sync status, verification and published_at.
+              Use this before publishing or featuring society pages. C112E publish fields now sync status, verification and published_at. C112E-B backfill normalizes old records.
             </p>
           </div>
 

@@ -397,6 +397,74 @@ class SocietyController extends Controller {
 
     return response()->json(['status'=>'ok','message'=>'Draft society enriched from public source. Review before publishing.','data'=>$society->fresh(),'enrichment'=>['updated_fields'=>$updatedFields,'diagnostics'=>$diagnostics]]);
   }
+
+  public function backfillPublishFields(): JsonResponse
+  {
+    $summary = [
+      'total' => 0,
+      'published' => 0,
+      'unpublished' => 0,
+      'updated' => 0,
+      'skipped' => 0,
+    ];
+
+    Society::query()
+      ->orderBy('id')
+      ->chunkById(100, function ($societies) use (&$summary) {
+        foreach ($societies as $society) {
+          $summary['total']++;
+
+          $status = (string) ($society->status ?: 'Draft');
+          $shouldPublish = in_array($status, ['Verified', 'Premium'], true);
+
+          $updates = [];
+
+          if ($shouldPublish) {
+            $summary['published']++;
+
+            if (! $society->is_published) {
+              $updates['is_published'] = true;
+            }
+
+            if ($society->verification_status !== 'verified') {
+              $updates['verification_status'] = 'verified';
+            }
+
+            if (! $society->published_at) {
+              $updates['published_at'] = now();
+            }
+          } else {
+            $summary['unpublished']++;
+
+            if ($society->is_published) {
+              $updates['is_published'] = false;
+            }
+
+            if ($society->published_at) {
+              $updates['published_at'] = null;
+            }
+
+            if (! in_array($society->verification_status, ['needs_verification', 'draft', 'archived'], true)) {
+              $updates['verification_status'] = $status === 'Archived' ? 'archived' : 'needs_verification';
+            }
+          }
+
+          if ($updates) {
+            $society->update($updates);
+            $summary['updated']++;
+          } else {
+            $summary['skipped']++;
+          }
+        }
+      });
+
+    return response()->json([
+      'status' => 'ok',
+      'message' => 'C112E-B society publish fields backfilled safely.',
+      'summary' => $summary,
+    ]);
+  }
+
   public function destroy(Society $society): JsonResponse { $society->delete(); return response()->json(['status'=>'ok','message'=>'Society deleted successfully.']); }
   
 private function withSocietyDefaults(array $payload, bool $partial = false): array {
