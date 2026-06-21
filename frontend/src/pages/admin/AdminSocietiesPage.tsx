@@ -6,6 +6,7 @@ import {
   Building2,
   Edit3,
   Eye,
+  Globe2,
   Image,
   Link as LinkIcon,
   MapPin,
@@ -51,6 +52,18 @@ function editSocietyUrl(item: AdminSociety) {
 function getStatus(item: AdminSociety) {
   return item.status || "Draft";
 }
+
+function publishLabel(item: AdminSociety) {
+  const liveByStatus = item.status === "Verified" || item.status === "Premium";
+  return item.isPublished || liveByStatus ? "Published" : "Unpublished";
+}
+
+function publishTone(item: AdminSociety) {
+  return publishLabel(item) === "Published"
+    ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+    : "border-slate-200 bg-slate-50 text-slate-600";
+}
+
 
 function cleanText(value: unknown) {
   return String(value || "").trim();
@@ -203,6 +216,7 @@ export function AdminSocietiesPage() {
     });
   }, [societies, query, filter]);
 
+  const publishedCount = societies.filter((item) => item.isPublished || item.status === "Verified" || item.status === "Premium").length;
   const featuredCount = societies.filter((item) => item.featured).length;
   const verifiedCount = societies.filter(
     (item) => item.status === "Verified" || item.status === "Premium",
@@ -373,7 +387,7 @@ export function AdminSocietiesPage() {
         <section className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
           {[
             ["Total societies", societies.length, "All profiles"],
-            ["Verified / Premium", verifiedCount, "Public trust profiles"],
+            ["Published", publishedCount, "Live public profiles"],
             ["Featured", featuredCount, "Highlighted societies"],
             ["Avg. score", avgScore, "Society scoring"],
           ].map(([label, value, helper]) => (
@@ -401,7 +415,7 @@ export function AdminSocietiesPage() {
               </h2>
             </div>
             <p className="text-xs font-semibold text-slate-500">
-              Use this before publishing or featuring society pages.
+              Use this before publishing or featuring society pages. C112E publish fields now sync status, verification and published_at.
             </p>
           </div>
 
@@ -668,6 +682,11 @@ export function AdminSocietiesPage() {
                                 {status}
                               </span>
 
+                              <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${publishTone(item)}`}>
+                                <Globe2 className="mr-1 h-3 w-3" />
+                                {publishLabel(item)}
+                              </span>
+
                               {item.featured ? (
                                 <span className="inline-flex items-center rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
                                   <Star className="mr-1 h-3 w-3" />
@@ -827,7 +846,7 @@ export function AdminSocietiesPage() {
               <h3 className="font-bold text-slate-950">Society workflow note</h3>
               <p className="mt-1 text-sm leading-relaxed text-slate-600">
                 Keep societies in Draft while data/images are being verified. Move them
-                to Verified or Premium only after public-safe details are ready.
+                to Verified or Premium only after public-safe details are ready. C112E keeps status, verification_status, is_published and published_at in sync.
               </p>
             </div>
           </div>

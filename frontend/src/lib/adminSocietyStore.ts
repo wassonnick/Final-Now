@@ -530,9 +530,16 @@ export async function saveAdminSociety(society: AdminSociety, isEdit: boolean): 
 }
 
 export async function updateAdminSocietyStatus(id: number | string, status: SocietyStatus): Promise<AdminSociety> {
+  const isPublished = status === 'Verified' || status === 'Premium';
+
   const json = await request(`/admin/societies/${id}`, {
     method: 'PUT',
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({
+      status,
+      verification_status: isPublished ? 'verified' : 'needs_verification',
+      is_published: isPublished,
+      published_at: isPublished ? new Date().toISOString() : null,
+    }),
   });
 
   return mapApiSociety(json?.data || {});
