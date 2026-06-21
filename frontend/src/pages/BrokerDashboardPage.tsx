@@ -208,11 +208,21 @@ export function BrokerDashboardPage() {
     [requirementSubmissions],
   );
 
+  const privacySafeLeadItems = useMemo(
+    () =>
+      listingSubmissions.map((item) => ({
+        title: `Lead update tracker for ${item.title}`,
+        meta: "Admin will verify inventory, publish only approved listings and share privacy-safe enquiry updates here. Buyer/tenant phone and deal details remain locked.",
+        status: "Admin controlled",
+      })),
+    [listingSubmissions],
+  );
+
   const brokerStats = [
     { label: "Submissions", value: String(activity.length), helper: "Real broker activity", icon: ClipboardList },
     { label: "Partner profile", value: String(partnerSubmissions.length), helper: "Broker onboarding", icon: BriefcaseBusiness },
     { label: "Listings", value: String(listingSubmissions.length), helper: "Inventory submitted", icon: Home },
-    { label: "Commission", value: "TBD", helper: "Admin-controlled", icon: BadgeIndianRupee },
+    { label: "Safe lead updates", value: String(privacySafeLeadItems.length), helper: "Contact privacy locked", icon: Phone },
   ];
 
   const closeSignupWelcome = () => {
@@ -372,14 +382,14 @@ export function BrokerDashboardPage() {
                 </div>
               </div>
               <p className="mt-5 rounded-3xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-                Brokers can see their submissions and pipeline foundation. Buyer phone/email, commission status and deal visibility remain controlled by admin.
+                Brokers can see their own submissions, inventory pipeline and privacy-safe lead update placeholders. Buyer phone/email, commission status and deal visibility remain controlled by admin.
               </p>
               <div className="mt-5 grid gap-3">
                 {[
                   "Submit inventory or buyer requirements",
                   "Admin verifies broker profile and area coverage",
                   "SocietyFlats controls customer contact visibility",
-                  "Commission stage updates after verified deal progress",
+                  "Lead/contact visibility remains locked until a safe backend route exists",
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700">
                     <CheckCircle2 className="h-5 w-5 text-orange-600" />
@@ -403,13 +413,17 @@ export function BrokerDashboardPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="leads" className="mt-6">
-            <BrokerEmptyState
-              title="Listing leads are admin-controlled"
-              text="Once your inventory is verified and SocietyFlats routes matching enquiries, privacy-safe lead updates will appear here."
-              actionLabel="Submit more inventory"
-              href="/broker-crm"
-            />
+          <TabsContent value="leads" className="mt-6 space-y-3">
+            {privacySafeLeadItems.length ? (
+              privacySafeLeadItems.map((item) => <BrokerItemCard key={`${item.title}-${item.meta}`} {...item} />)
+            ) : (
+              <BrokerEmptyState
+                title="Listing leads are admin-controlled"
+                text="Once your inventory is verified and SocietyFlats routes matching enquiries, privacy-safe lead updates will appear here. Buyer/tenant contact details remain protected."
+                actionLabel="Submit more inventory"
+                href="/broker-crm"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="requirements" className="mt-6 space-y-3">
@@ -428,7 +442,7 @@ export function BrokerDashboardPage() {
           <TabsContent value="commissions" className="mt-6">
             <BrokerEmptyState
               title="Commission tracker comes after admin verification"
-              text="Commission stages will remain admin-controlled until a verified deal moves into site visit, negotiation or closure stage."
+              text="Commission stages will remain admin-controlled until a verified deal moves into site visit, negotiation or closure stage. This dashboard will not expose buyer/tenant contact details."
               actionLabel="Open partner intake"
               href="/broker-crm"
             />
@@ -457,10 +471,10 @@ export function BrokerDashboardPage() {
         <section className="mt-8 rounded-[28px] border border-orange-100 bg-orange-50 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">C46 broker foundation</p>
-              <h2 className="mt-2 text-2xl font-black text-slate-950">Broker dashboard now reads real account submissions.</h2>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">C112C broker privacy-safe lead visibility</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">Broker dashboard now shows privacy-safe lead update placeholders.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Broker CRM submissions are linked to the broker phone in this temporary account layer while admin remains the source of truth.
+                Broker CRM submissions are linked to the broker phone in this temporary account layer. Inventory lead updates stay privacy-safe while admin remains the source of truth.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
