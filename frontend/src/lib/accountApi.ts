@@ -24,6 +24,7 @@ export type BackendAccount = {
   meta?: Record<string, unknown> | null;
   created_at?: string | null;
   updated_at?: string | null;
+  has_account_token?: boolean;
 };
 
 export type AccountDelivery = {
@@ -38,6 +39,7 @@ export type AccountResponse = {
   account?: BackendAccount;
   delivery?: AccountDelivery;
   dev_otp?: string | null;
+  account_access_token?: string | null;
 };
 
 async function postJson<T>(path: string, payload: Record<string, unknown>): Promise<T> {
@@ -116,6 +118,73 @@ export async function fetchAccountByPhone(phone: string) {
     return await response.json();
   } catch (error) {
     console.warn("Account fetch skipped:", error);
+    return null;
+  }
+}
+
+
+export type AccountDashboardLead = {
+  id: number;
+  source?: string | null;
+  society_name?: string | null;
+  property_title?: string | null;
+  requirement?: string | null;
+  budget?: string | null;
+  status?: string | null;
+  lead_intent?: string | null;
+  entity_type?: string | null;
+  entity_slug?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type AccountDashboardProperty = {
+  id: number;
+  title?: string | null;
+  slug?: string | null;
+  society_name?: string | null;
+  listing_type?: string | null;
+  status?: string | null;
+  owner_verification_status?: string | null;
+  source_lead_id?: number | string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type AccountDashboardResponse = {
+  account?: BackendAccount;
+  scope?: {
+    role?: CustomerAccountRole;
+    phone_normalized?: string;
+    privacy?: string;
+  };
+  summary?: {
+    owner_listing_leads?: number;
+    broker_submissions?: number;
+    linked_properties?: number;
+  };
+  owner_listing_leads?: AccountDashboardLead[];
+  broker_submissions?: AccountDashboardLead[];
+  linked_properties?: AccountDashboardProperty[];
+};
+
+export async function fetchAccountDashboard(accountAccessToken?: string | null) {
+  const token = String(accountAccessToken || "").trim();
+  if (!token) return null;
+
+  try {
+    const response = await fetch(`${API_BASE}/accounts/dashboard`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) return null;
+
+    return (await response.json()) as AccountDashboardResponse;
+  } catch (error) {
+    console.warn("Account dashboard fetch skipped:", error);
     return null;
   }
 }

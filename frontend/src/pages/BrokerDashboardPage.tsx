@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardResponse } from "@/lib/accountApi";
 import {
   CUSTOMER_ACCOUNT_EVENT,
   clearCustomerAccountSession,
@@ -71,6 +72,29 @@ function brokerItemMeta(item: BrokerActivityItem) {
   ]
     .filter(Boolean)
     .join(" · ");
+}
+
+function backendBrokerLeadTitle(lead: AccountDashboardLead) {
+  return lead.property_title || lead.society_name || lead.requirement || `Broker submission #${lead.id}`;
+}
+
+function backendBrokerLeadMeta(lead: AccountDashboardLead) {
+  return [
+    brokerSourceLabel(lead.source || ""),
+    lead.society_name ? `Area/Society: ${lead.society_name}` : "",
+    lead.requirement || "",
+    `Backend synced ${formatDate(lead.created_at || undefined)}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function backendBrokerToDashboardItem(lead: AccountDashboardLead): BrokerDashboardItem {
+  return {
+    title: backendBrokerLeadTitle(lead),
+    meta: backendBrokerLeadMeta(lead),
+    status: lead.status || "Backend synced",
+  };
 }
 
 function toDashboardItem(item: BrokerActivityItem): BrokerDashboardItem {
@@ -155,6 +179,7 @@ export function BrokerDashboardPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [showSignupWelcome, setShowSignupWelcome] = useState(searchParams.get("signup") === "success");
   const [activity, setActivity] = useState<BrokerActivityItem[]>([]);
+  const [backendDashboard, setBackendDashboard] = useState<AccountDashboardResponse | null>(null);
   const session = getCustomerAccountSession();
 
   const refreshBrokerData = () => {
@@ -174,6 +199,25 @@ export function BrokerDashboardPage() {
       window.removeEventListener(CUSTOMER_ACCOUNT_EVENT, handleRefresh);
     };
   }, [session?.phone]);
+
+  useEffect(() => {
+    let active = true;
+
+    if (!session?.accountAccessToken) {
+      setBackendDashboard(null);
+      return () => {
+        active = false;
+      };
+    }
+
+    fetchAccountDashboard(session.accountAccessToken).then((dashboard) => {
+      if (active) setBackendDashboard(dashboard);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [session?.accountAccessToken]);
 
   const brokerName = session?.name || "Broker Partner";
   const brokerPhone = session?.phone || "";
@@ -208,6 +252,14 @@ export function BrokerDashboardPage() {
     [requirementSubmissions],
   );
 
+  const backendBrokerItems = useMemo(
+    () => (backendDashboard?.broker_submissions || []).map(backendBrokerToDashboardItem),
+    [backendDashboard?.broker_submissions],
+  );
+
+  const backendBrokerSubmissionCount = backendDashboard?.summary?.broker_submissions;
+  const hasBackendDashboard = Boolean(backendDashboard?.scope?.privacy);
+
   const privacySafeLeadItems = useMemo(
     () =>
       listingSubmissions.map((item) => ({
@@ -218,11 +270,13 @@ export function BrokerDashboardPage() {
     [listingSubmissions],
   );
 
+  const brokerLeadUpdateItems = backendBrokerItems.length ? backendBrokerItems : privacySafeLeadItems;
+
   const brokerStats = [
-    { label: "Submissions", value: String(activity.length), helper: "Real broker activity", icon: ClipboardList },
+    { label: "Submissions", value: String(backendBrokerSubmissionCount ?? activity.length), helper: hasBackendDashboard ? "Backend protected" : "Local fallback", icon: ClipboardList },
     { label: "Partner profile", value: String(partnerSubmissions.length), helper: "Broker onboarding", icon: BriefcaseBusiness },
     { label: "Listings", value: String(listingSubmissions.length), helper: "Inventory submitted", icon: Home },
-    { label: "Safe lead updates", value: String(privacySafeLeadItems.length), helper: "Contact privacy locked", icon: Phone },
+    { label: "Safe lead updates", value: String(brokerLeadUpdateItems.length), helper: "Contact privacy locked", icon: Phone },
   ];
 
   const closeSignupWelcome = () => {
@@ -382,7 +436,7 @@ export function BrokerDashboardPage() {
                 </div>
               </div>
               <p className="mt-5 rounded-3xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-                Brokers can see their own submissions, inventory pipeline and privacy-safe lead update placeholders. Buyer phone/email, commission status and deal visibility remain controlled by admin.
+                Brokers can see their own submissions, protected backend summary when OTP token exists, and privacy-safe lead update placeholders. Buyer phone/email, commission status and deal visibility remain controlled by admin.
               </p>
               <div className="mt-5 grid gap-3">
                 {[
@@ -414,8 +468,8 @@ export function BrokerDashboardPage() {
           </TabsContent>
 
           <TabsContent value="leads" className="mt-6 space-y-3">
-            {privacySafeLeadItems.length ? (
-              privacySafeLeadItems.map((item) => <BrokerItemCard key={`${item.title}-${item.meta}`} {...item} />)
+            {brokerLeadUpdateItems.length ? (
+              brokerLeadUpdateItems.map((item) => <BrokerItemCard key={`${item.title}-${item.meta}`} {...item} />)
             ) : (
               <BrokerEmptyState
                 title="Listing leads are admin-controlled"
@@ -471,10 +525,10 @@ export function BrokerDashboardPage() {
         <section className="mt-8 rounded-[28px] border border-orange-100 bg-orange-50 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">C112C broker privacy-safe lead visibility</p>
-              <h2 className="mt-2 text-2xl font-black text-slate-950">Broker dashboard now shows privacy-safe lead update placeholders.</h2>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">C112D-B broker protected dashboard</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">Broker dashboard now supports protected backend sync.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Broker CRM submissions are linked to the broker phone in this temporary account layer. Inventory lead updates stay privacy-safe while admin remains the source of truth.
+                Broker CRM submissions are linked to the broker phone in this temporary account layer. Inventory lead updates stay privacy-safe; protected backend sync is used when OTP token exists while admin remains the source of truth.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">

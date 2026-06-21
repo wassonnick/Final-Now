@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardResponse } from "@/lib/accountApi";
 import {
   CUSTOMER_ACCOUNT_EVENT,
   clearCustomerAccountSession,
@@ -72,6 +73,30 @@ function listingMeta(lead: CustomerActivityLead) {
   ]
     .filter(Boolean)
     .join(" · ");
+}
+
+function backendLeadTitle(lead: AccountDashboardLead) {
+  return lead.property_title || lead.society_name || lead.requirement || `Owner listing #${lead.id}`;
+}
+
+function backendLeadMeta(lead: AccountDashboardLead) {
+  return [
+    sourceLabel(lead.source || ""),
+    lead.society_name ? `Society: ${lead.society_name}` : "",
+    lead.requirement || "",
+    lead.budget ? `Expected: ${lead.budget}` : "",
+    `Backend synced ${formatDate(lead.created_at || undefined)}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function backendToDashboardItem(lead: AccountDashboardLead): OwnerDashboardItem {
+  return {
+    title: backendLeadTitle(lead),
+    meta: backendLeadMeta(lead),
+    status: lead.status || "Backend synced",
+  };
 }
 
 function toDashboardItem(lead: CustomerActivityLead): OwnerDashboardItem {
@@ -152,6 +177,7 @@ export function OwnerDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [activity, setActivity] = useState<CustomerActivityLead[]>([]);
+  const [backendDashboard, setBackendDashboard] = useState<AccountDashboardResponse | null>(null);
   const session = getCustomerAccountSession();
 
   const refreshOwnerData = () => {
@@ -173,6 +199,25 @@ export function OwnerDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.phone]);
 
+  useEffect(() => {
+    let active = true;
+
+    if (!session?.accountAccessToken) {
+      setBackendDashboard(null);
+      return () => {
+        active = false;
+      };
+    }
+
+    fetchAccountDashboard(session.accountAccessToken).then((dashboard) => {
+      if (active) setBackendDashboard(dashboard);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [session?.accountAccessToken]);
+
   const ownerName = session?.name || "Owner";
   const ownerPhone = session?.phone || "";
 
@@ -186,9 +231,14 @@ export function OwnerDashboard() {
     [activity],
   );
 
+  const backendOwnerLeadItems = useMemo(
+    () => (backendDashboard?.owner_listing_leads || []).map(backendToDashboardItem),
+    [backendDashboard?.owner_listing_leads],
+  );
+
   const listingItems = useMemo(
-    () => listingSubmissions.map(toDashboardItem),
-    [listingSubmissions],
+    () => (backendOwnerLeadItems.length ? backendOwnerLeadItems : listingSubmissions.map(toDashboardItem)),
+    [backendOwnerLeadItems, listingSubmissions],
   );
 
   const recentItems = useMemo(
@@ -206,9 +256,13 @@ export function OwnerDashboard() {
     [listingSubmissions],
   );
 
+  const backendOwnerLeadCount = backendDashboard?.summary?.owner_listing_leads;
+  const backendLinkedPropertyCount = backendDashboard?.summary?.linked_properties;
+  const hasBackendDashboard = Boolean(backendDashboard?.scope?.privacy);
+
   const ownerStats = [
-    { label: "Submitted listings", value: String(listingSubmissions.length), helper: "Owner rent/sale requests", icon: Home },
-    { label: "Admin review", value: String(listingSubmissions.length), helper: "Verification pipeline", icon: ShieldCheck },
+    { label: "Submitted listings", value: String(backendOwnerLeadCount ?? listingSubmissions.length), helper: hasBackendDashboard ? "Backend protected" : "Local fallback", icon: Home },
+    { label: "Admin review", value: String(backendLinkedPropertyCount ?? listingSubmissions.length), helper: "Verification pipeline", icon: ShieldCheck },
     { label: "Safe lead updates", value: String(propertyLeadItems.length), helper: "Contact privacy locked", icon: MessageCircle },
     { label: "Other enquiries", value: String(enquirySubmissions.length), helper: "Search/society callbacks", icon: Phone },
   ];
@@ -331,11 +385,11 @@ export function OwnerDashboard() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-950">Admin-controlled visibility</h2>
-                  <p className="mt-1 text-sm text-slate-500">C112B privacy-safe owner dashboard.</p>
+                  <p className="mt-1 text-sm text-slate-500">C112D-B protected backend dashboard with local fallback.</p>
                 </div>
               </div>
               <p className="mt-5 rounded-3xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-                Owners can see their own submitted listing requests and privacy-safe lead update placeholders. Buyer/tenant contact details, negotiations and deal status remain controlled by SocietyFlats admin until account-scoped APIs are added.
+                Owners can see their own submitted listing requests and privacy-safe lead update placeholders. Buyer/tenant contact details, negotiations and deal status remain controlled by SocietyFlats admin with C112D protected account APIs now connected when OTP token exists.
               </p>
               <div className="mt-5 grid gap-3">
                 {[
@@ -401,7 +455,7 @@ export function OwnerDashboard() {
                     Phone: {ownerPhone || "Not available"} · Role: Owner / Customer
                   </p>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                    C112B creates a real owner dashboard shell. Backend account-scoped owner listings and lead routes remain pending for C112D.
+                    C112D-B connects this dashboard to the protected backend account summary when OTP token exists; local activity remains as fallback.
                   </p>
                 </div>
               </div>
@@ -412,8 +466,8 @@ export function OwnerDashboard() {
         <section className="mt-8 rounded-[28px] border border-blue-100 bg-blue-50 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">C112B real owner dashboard</p>
-              <h2 className="mt-2 text-2xl font-black text-slate-950">Owner dashboard is now separate from customer dashboard.</h2>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">C112D-B owner protected dashboard</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">Owner dashboard now supports protected backend sync.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 This page shows owner-safe submitted listings and protected lead update placeholders without exposing buyer or tenant contact data.
               </p>

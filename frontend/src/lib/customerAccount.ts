@@ -5,6 +5,7 @@ export type CustomerAccountSession = {
   phone?: string;
   name?: string;
   loginAt?: string;
+  accountAccessToken?: string;
 };
 
 export type CustomerActivityLead = {
@@ -157,10 +158,12 @@ export function createCustomerAccountSession({
   name,
   phone,
   role = "customer",
+  accountAccessToken,
 }: {
   name?: string;
   phone: string;
   role?: CustomerAccountRole;
+  accountAccessToken?: string | null;
 }) {
   if (typeof window === "undefined") return null;
 
@@ -172,6 +175,7 @@ export function createCustomerAccountSession({
     phone: cleanPhone,
     name: String(name || "").trim() || "Customer",
     loginAt: new Date().toISOString(),
+    accountAccessToken: String(accountAccessToken || "").trim() || undefined,
   };
 
   window.localStorage.setItem(ACCOUNT_SESSION_KEY, JSON.stringify(session));

@@ -75,6 +75,7 @@ export function LoginPage() {
       role: (account?.role as AccountRole | undefined) || role,
       phone: account?.phone_normalized || account?.phone || cleanMobile,
       name: account?.name || accountName,
+      accountAccessToken: response?.account_access_token || null,
     });
 
     setStep("verified");
@@ -387,7 +388,7 @@ export function LoginPage() {
               )}
 
               <p className="mt-4 text-xs leading-5 text-slate-500">
-                C51A prepares OTP delivery through a provider layer. Fallback remains until SMS/WhatsApp delivery is fully connected.
+                C112D-B stores protected account token after OTP verification. Fallback login remains local-only until OTP delivery is fully connected.
               </p>
             </div>
           </div>
