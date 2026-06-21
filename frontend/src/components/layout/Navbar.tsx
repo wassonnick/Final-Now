@@ -147,7 +147,7 @@ export function Navbar() {
 
     </header>
     <nav className={cn(
-      "fixed bottom-3 left-3 right-3 z-50 rounded-[1.15rem] border border-navy-100 bg-white/95 p-2 shadow-apple backdrop-blur-xl xl:hidden",
+      "fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 right-3 z-50 rounded-[1.15rem] border border-navy-100 bg-white/95 p-2 shadow-apple backdrop-blur-xl xl:hidden",
       (isHomePage || isPropertyOrSocietyPage) && "hidden",
     )}>
       <div className="grid grid-cols-4 gap-1">

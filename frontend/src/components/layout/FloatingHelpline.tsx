@@ -1,4 +1,5 @@
 import { MessageCircle, Phone } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 const PHONE_DISPLAY = "+91 99118 86222";
 const PHONE_TEL = "+919911886222";
@@ -6,6 +7,10 @@ const WHATSAPP_URL =
   "https://wa.me/919911886222?text=Hi%20SocietyFlats%2C%20I%20need%20help%20shortlisting%20a%20Gurgaon%20society%20or%20home.";
 
 export function FloatingHelpline() {
+  const location = useLocation();
+  const hideMobileForPageCta =
+    location.pathname.startsWith("/society/") || location.pathname.startsWith("/property/");
+
   return (
     <>
       <div className="fixed right-3 top-1/2 z-40 hidden -translate-y-1/2 lg:block">
@@ -31,7 +36,7 @@ export function FloatingHelpline() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-[4.65rem] z-40 flex justify-center px-3 lg:hidden">
+      <div className={`${hideMobileForPageCta ? "hidden" : "fixed"} inset-x-0 bottom-[calc(5.45rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 lg:hidden`}>
         <div className="flex items-center overflow-hidden rounded-full border border-blue-100 bg-white/95 shadow-[0_12px_28px_rgba(15,23,42,0.16)] backdrop-blur">
           <a
             href={`tel:${PHONE_TEL}`}

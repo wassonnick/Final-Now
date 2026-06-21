@@ -214,11 +214,11 @@ export function PublicLeadModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/60 px-3 pb-3 pt-6 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/60 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-4 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="flex max-h-[78vh] w-full max-w-[390px] flex-col overflow-hidden rounded-[1.25rem] bg-white shadow-2xl sm:max-h-[76vh] sm:max-w-[420px] sm:rounded-[1.4rem]"
+        className="flex max-h-[calc(100dvh-1.25rem-env(safe-area-inset-bottom))] w-full max-w-[390px] flex-col overflow-hidden rounded-[1.25rem] bg-white shadow-2xl sm:max-h-[76vh] sm:max-w-[420px] sm:rounded-[1.4rem]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="relative border-b border-navy-100 px-4 py-3 sm:px-5">
