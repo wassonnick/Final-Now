@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardResponse } from "@/lib/accountApi";
+import { fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardProperty, type AccountDashboardResponse } from "@/lib/accountApi";
 import {
   CUSTOMER_ACCOUNT_EVENT,
   clearCustomerAccountSession,
@@ -73,6 +73,29 @@ function listingMeta(lead: CustomerActivityLead) {
   ]
     .filter(Boolean)
     .join(" · ");
+}
+
+function backendPropertyMeta(property: AccountDashboardProperty) {
+  return [
+    property.society_name ? `Society: ${property.society_name}` : "",
+    property.listing_type || "",
+    property.price ? `Expected: ${property.price}` : "",
+    property.bedrooms ? `${property.bedrooms} BHK` : "",
+    property.area_sqft ? `${property.area_sqft} sq.ft.` : "",
+    property.owner_verification_status ? `Owner review: ${property.owner_verification_status}` : "",
+    `Backend synced ${formatDate(property.updated_at || property.created_at || undefined)}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function backendPropertyToDashboardItem(property: AccountDashboardProperty): OwnerDashboardItem {
+  return {
+    title: property.title || `Owner property #${property.id}`,
+    meta: backendPropertyMeta(property),
+    status: property.status || property.owner_verification_status || "Backend synced",
+    value: property.verified ? "Verified" : undefined,
+  };
 }
 
 function backendLeadTitle(lead: AccountDashboardLead) {
@@ -236,9 +259,19 @@ export function OwnerDashboard() {
     [backendDashboard?.owner_listing_leads],
   );
 
+  const backendLinkedPropertyItems = useMemo(
+    () => (backendDashboard?.linked_properties || []).map(backendPropertyToDashboardItem),
+    [backendDashboard?.linked_properties],
+  );
+
   const listingItems = useMemo(
-    () => (backendOwnerLeadItems.length ? backendOwnerLeadItems : listingSubmissions.map(toDashboardItem)),
-    [backendOwnerLeadItems, listingSubmissions],
+    () =>
+      backendLinkedPropertyItems.length
+        ? backendLinkedPropertyItems
+        : backendOwnerLeadItems.length
+          ? backendOwnerLeadItems
+          : listingSubmissions.map(toDashboardItem),
+    [backendLinkedPropertyItems, backendOwnerLeadItems, listingSubmissions],
   );
 
   const recentItems = useMemo(
@@ -385,7 +418,7 @@ export function OwnerDashboard() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-950">Admin-controlled visibility</h2>
-                  <p className="mt-1 text-sm text-slate-500">C112D-B protected backend dashboard with local fallback.</p>
+                  <p className="mt-1 text-sm text-slate-500">C112D-C protected backend dashboard with enriched owner property cards.</p>
                 </div>
               </div>
               <p className="mt-5 rounded-3xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">
@@ -466,8 +499,8 @@ export function OwnerDashboard() {
         <section className="mt-8 rounded-[28px] border border-blue-100 bg-blue-50 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">C112D-B owner protected dashboard</p>
-              <h2 className="mt-2 text-2xl font-black text-slate-950">Owner dashboard now supports protected backend sync.</h2>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">C112D-C owner enriched dashboard</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">Owner dashboard now shows protected backend property cards when available.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 This page shows owner-safe submitted listings and protected lead update placeholders without exposing buyer or tenant contact data.
               </p>

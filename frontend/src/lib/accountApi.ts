@@ -127,6 +127,8 @@ export type AccountDashboardLead = {
   id: number;
   source?: string | null;
   society_name?: string | null;
+  society_slug?: string | null;
+  locality?: string | null;
   property_title?: string | null;
   requirement?: string | null;
   budget?: string | null;
@@ -134,6 +136,9 @@ export type AccountDashboardLead = {
   lead_intent?: string | null;
   entity_type?: string | null;
   entity_slug?: string | null;
+  property_slug?: string | null;
+  linked_properties_count?: number;
+  linked_properties?: AccountDashboardProperty[];
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -147,6 +152,13 @@ export type AccountDashboardProperty = {
   status?: string | null;
   owner_verification_status?: string | null;
   source_lead_id?: number | string | null;
+  price?: string | null;
+  bedrooms?: string | null;
+  bathrooms?: string | null;
+  area_sqft?: string | null;
+  furnished_status?: string | null;
+  verified?: boolean;
+  public_url?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
 };

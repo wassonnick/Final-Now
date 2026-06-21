@@ -66,17 +66,27 @@ class AccountController extends Controller
 
     private function safeLeadPayload(Lead $lead): array
     {
+        $linkedProperties = $lead->relationLoaded('linkedProperties')
+            ? $lead->linkedProperties
+            : collect();
+
         return [
             'id' => $lead->id,
             'source' => $lead->source,
             'society_name' => $lead->society_name,
             'property_title' => $lead->property_title,
+            'property_slug' => $lead->property_slug,
             'requirement' => $lead->requirement,
             'budget' => $lead->budget,
             'status' => $lead->status,
             'lead_intent' => $lead->lead_intent,
             'entity_type' => $lead->entity_type,
             'entity_slug' => $lead->entity_slug,
+            'linked_properties_count' => $linkedProperties->count(),
+            'linked_properties' => $linkedProperties
+                ->take(6)
+                ->map(fn (Property $property) => $this->safePropertyPayload($property))
+                ->values(),
             'created_at' => optional($lead->created_at)->toISOString(),
             'updated_at' => optional($lead->updated_at)->toISOString(),
         ];
@@ -88,11 +98,20 @@ class AccountController extends Controller
             'id' => $property->id,
             'title' => $property->title,
             'slug' => $property->slug,
-            'society_name' => optional($property->society)->name,
+            'society_name' => optional($property->society)->name ?: $property->society,
+            'society_slug' => optional($property->society)->slug,
+            'locality' => $property->locality,
             'listing_type' => $property->listing_type,
             'status' => $property->status,
             'owner_verification_status' => $property->owner_verification_status,
             'source_lead_id' => $property->source_lead_id,
+            'price' => $property->price,
+            'bedrooms' => $property->bedrooms,
+            'bathrooms' => $property->bathrooms,
+            'area_sqft' => $property->area_sqft,
+            'furnished_status' => $property->furnished_status,
+            'verified' => (bool) $property->verified,
+            'public_url' => $property->slug ? '/property/' . $property->slug : null,
             'created_at' => optional($property->created_at)->toISOString(),
             'updated_at' => optional($property->updated_at)->toISOString(),
         ];
@@ -116,7 +135,7 @@ class AccountController extends Controller
             ], 422);
         }
 
-        $baseLeadQuery = Lead::query()
+        $baseLeadQuery = Lead::with(['linkedProperties.society'])
             ->where(function ($query) use ($phone) {
                 $query->where('phone', 'like', '%' . $phone)
                     ->orWhere('phone', 'like', '%' . $phone . '%');
@@ -135,10 +154,14 @@ class AccountController extends Controller
                     ->orWhere('message', 'like', '%broker%');
             });
 
-        $propertyQuery = Property::with(['society'])
+        $propertyQuery = Property::with(['society', 'sourceLead'])
             ->where(function ($query) use ($phone) {
                 $query->where('owner_phone', 'like', '%' . $phone)
-                    ->orWhere('owner_phone', 'like', '%' . $phone . '%');
+                    ->orWhere('owner_phone', 'like', '%' . $phone . '%')
+                    ->orWhereHas('sourceLead', function ($leadQuery) use ($phone) {
+                        $leadQuery->where('phone', 'like', '%' . $phone)
+                            ->orWhere('phone', 'like', '%' . $phone . '%');
+                    });
             });
 
         $ownerLeadCount = (clone $ownerLeadQuery)->count();
@@ -154,7 +177,7 @@ class AccountController extends Controller
             'scope' => [
                 'role' => $account->role,
                 'phone_normalized' => $phone,
-                'privacy' => 'C112D-A protected by bearer token. Buyer/tenant contact details are not exposed.',
+                'privacy' => 'C112D-C protected by bearer token. Owner/broker records are enriched without exposing buyer/tenant contact details.',
             ],
             'summary' => [
                 'owner_listing_leads' => $ownerLeadCount,

@@ -525,8 +525,8 @@ export function BrokerDashboardPage() {
         <section className="mt-8 rounded-[28px] border border-orange-100 bg-orange-50 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">C112D-B broker protected dashboard</p>
-              <h2 className="mt-2 text-2xl font-black text-slate-950">Broker dashboard now supports protected backend sync.</h2>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">C112D-C broker enriched dashboard</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">Broker dashboard now supports protected enriched backend submissions.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 Broker CRM submissions are linked to the broker phone in this temporary account layer. Inventory lead updates stay privacy-safe; protected backend sync is used when OTP token exists while admin remains the source of truth.
               </p>
