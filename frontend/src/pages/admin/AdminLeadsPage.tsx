@@ -341,6 +341,7 @@ function attributionSearchText(lead: AdminLead) {
     sourceLabel(lead.source),
     attributionBadge(lead),
     sourceBucket(lead),
+    leadIntentSearchText(lead),
   ]
     .filter(Boolean)
     .join(" ");
@@ -503,6 +504,155 @@ function c14RequirementLabel(lead: AdminLead) {
 
   return requirement || "General Enquiry";
 }
+
+
+type AdminLeadIntentSignal = {
+  label: string;
+  helper: string;
+  className: string;
+};
+
+function leadIntentSignal(lead: AdminLead): AdminLeadIntentSignal {
+  const source = String(lead.source || "").toLowerCase();
+  const page = String(lead.source_page || "").toLowerCase();
+  const cta = String(lead.cta_label || "").toLowerCase();
+  const intent = String(lead.lead_intent || "").toLowerCase();
+  const requirement = String(lead.requirement || "").toLowerCase();
+  const entityType = String(lead.entity_type || "").toLowerCase();
+  const aiQuery = String(lead.ai_query || "").trim();
+  const searchQuery = String(lead.search_query || "").trim();
+  const combined = [source, page, cta, intent, requirement, entityType].join(" ");
+
+  const helper = [
+    lead.lead_intent ? `Intent: ${lead.lead_intent}` : "",
+    lead.cta_label ? `CTA: ${lead.cta_label}` : "",
+    lead.entity_type ? `Entity: ${lead.entity_type}${lead.entity_slug ? ` · ${lead.entity_slug}` : ""}` : "",
+    lead.search_query ? `Search: ${lead.search_query}` : "",
+    lead.ai_query ? `AI: ${lead.ai_query}` : "",
+  ].filter(Boolean).join(" · ") || sourceLabel(lead.source);
+
+  if (isOwnerLeadSource(source) || page.includes("/sell") || entityType.includes("owner")) {
+    if (/rent|rental/.test(combined)) {
+      return {
+        label: "Owner Listing · Rent",
+        helper,
+        className: "border-emerald-100 bg-emerald-50 text-emerald-700",
+      };
+    }
+
+    if (/sale|sell|resale|buy/.test(combined)) {
+      return {
+        label: "Owner Listing · Sale",
+        helper,
+        className: "border-emerald-100 bg-emerald-50 text-emerald-700",
+      };
+    }
+
+    return {
+      label: "Owner Listing",
+      helper,
+      className: "border-emerald-100 bg-emerald-50 text-emerald-700",
+    };
+  }
+
+  if (isBrokerLeadSource(source) || entityType.includes("broker")) {
+    return {
+      label: "Broker Partner",
+      helper,
+      className: "border-orange-100 bg-orange-50 text-orange-700",
+    };
+  }
+
+  if (combined.includes("visit") || lead.status === "Site Visit") {
+    return {
+      label: "Visit Request",
+      helper,
+      className: "border-rose-100 bg-rose-50 text-rose-700",
+    };
+  }
+
+  if (sourceBucket(lead) === "property" || entityType.includes("property")) {
+    if (/rent|rental/.test(combined)) {
+      return {
+        label: "Property · Rent",
+        helper,
+        className: "border-violet-100 bg-violet-50 text-violet-700",
+      };
+    }
+
+    if (/buy|sale|resale|purchase/.test(combined)) {
+      return {
+        label: "Property · Buy",
+        helper,
+        className: "border-violet-100 bg-violet-50 text-violet-700",
+      };
+    }
+
+    if (combined.includes("callback")) {
+      return {
+        label: "Property Callback",
+        helper,
+        className: "border-violet-100 bg-violet-50 text-violet-700",
+      };
+    }
+
+    return {
+      label: "Property Enquiry",
+      helper,
+      className: "border-violet-100 bg-violet-50 text-violet-700",
+    };
+  }
+
+  if (sourceBucket(lead) === "society" || entityType.includes("society")) {
+    return {
+      label: combined.includes("callback") ? "Society Callback" : "Society Enquiry",
+      helper,
+      className: "border-blue-100 bg-blue-50 text-blue-700",
+    };
+  }
+
+  if (aiQuery || sourceBucket(lead) === "ai" || combined.includes("ai")) {
+    return {
+      label: "AI Enquiry",
+      helper,
+      className: "border-indigo-100 bg-indigo-50 text-indigo-700",
+    };
+  }
+
+  if (searchQuery || sourceBucket(lead) === "search" || combined.includes("search")) {
+    return {
+      label: "Search Enquiry",
+      helper,
+      className: "border-sky-100 bg-sky-50 text-sky-700",
+    };
+  }
+
+  if (combined.includes("callback") || combined.includes("chat")) {
+    return {
+      label: "General Callback",
+      helper,
+      className: "border-amber-100 bg-amber-50 text-amber-700",
+    };
+  }
+
+  return {
+    label: lead.requirement || "General Enquiry",
+    helper,
+    className: "border-slate-200 bg-slate-50 text-slate-600",
+  };
+}
+
+function leadIntentSearchText(lead: AdminLead) {
+  const signal = leadIntentSignal(lead);
+
+  return [
+    signal.label,
+    signal.helper,
+    signal.label.toLowerCase().replace(/[^a-z0-9]+/g, " "),
+    "c112g lead intent business intent rent buy visit owner broker ai search society property callback",
+  ].filter(Boolean).join(" ");
+}
+
 
 
 function cleanPhone(phone?: string) {
@@ -1596,6 +1746,7 @@ export function AdminLeadsPage() {
 
             {!loading && filteredLeads.map((lead) => {
               const hasPhone = canUsePhone(lead.phone);
+              const intentSignal = leadIntentSignal(lead);
 
               return (
                 <div
@@ -1631,6 +1782,12 @@ export function AdminLeadsPage() {
                       <div className="flex flex-col items-end gap-1 xl:items-start">
                         <span className={`rounded-full border px-3 py-1 text-xs font-bold xl:mt-3 inline-flex ${sourceClass(lead.source)}`} title={attributionTitle(lead)}>
                           {sourceLabel(lead.source)}
+                        </span>
+                        <span
+                          className={`rounded-full border px-3 py-1 text-xs font-black xl:mt-3 inline-flex ${intentSignal.className}`}
+                          title={`C112G lead intent clarity: ${intentSignal.helper}`}
+                        >
+                          {intentSignal.label}
                         </span>
                         <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
                           {leadTypeWorkflowLabel(lead)}
@@ -1673,6 +1830,10 @@ export function AdminLeadsPage() {
                     <p className="mt-1 text-sm text-slate-500">{cleanLeadInterestMeta(lead)}</p>
                     <p className="mt-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 xl:bg-transparent xl:px-0 xl:py-0 xl:text-sm">
                       {cleanLeadInterestRequirement(lead)}
+                    </p>
+                    <p className="mt-2 line-clamp-2 text-[11px] font-bold text-slate-500">
+                      Lead intent: <span className="text-slate-800">{intentSignal.label}</span>
+                      {intentSignal.helper ? ` · ${intentSignal.helper}` : ""}
                     </p>
                     <p className={`mt-2 inline-flex rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.1em] xl:hidden ${workflowNextActionClass(lead)}`}>
                       Next: {workflowNextAction(lead)}
