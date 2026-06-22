@@ -26,6 +26,7 @@ The document repeatedly labels features “BUILT & DEPLOYED”, but several are 
 - Saved-search alerts: daily scheduler worker, matching against published live inventory, duplicate-safe match records, account-visible results and credential-gated delivery webhooks.
 - Builder/RWA review responses: approved claim ownership, admin moderation and approved-only public display.
 - AI chat: server-side Gemini conversation proxy, published-inventory grounding, private expiring conversation tokens, rate limiting and safe provider/no-inventory fallbacks.
+- Gemini spreadsheet importer: admin `.xlsx`/`.csv` upload, validated identity columns, 200-row queue, one-at-a-time AI enrichment, duplicate summaries and forced draft/unpublished output.
 
 ## Partially implemented
 

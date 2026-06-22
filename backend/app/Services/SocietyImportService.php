@@ -4,16 +4,29 @@ namespace App\Services;
 
 use App\Models\Society;
 use App\Models\SocietyImportJob;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class SocietyImportService
 {
-    public function __construct(private SocietyAiEnrichmentService $ai)
-    {
-    }
+    public function __construct(private SocietyAiEnrichmentService $ai) {}
 
     public function processJobTick(SocietyImportJob $job): SocietyImportJob
+    {
+        $lock = Cache::lock('society-import-job-'.$job->id, 120);
+        if (! $lock->get()) {
+            return $job->refresh();
+        }
+
+        try {
+            return $this->processJobTickUnlocked($job);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function processJobTickUnlocked(SocietyImportJob $job): SocietyImportJob
     {
         $job->refresh();
 
@@ -37,6 +50,10 @@ class SocietyImportService
 
         if ($job->type === 'bulk_names') {
             return $this->processBulkNamesJob($job);
+        }
+
+        if ($job->type === 'bulk_spreadsheet') {
+            return $this->processSpreadsheetJob($job);
         }
 
         if ($job->type === 'bulk_source') {
@@ -80,7 +97,7 @@ class SocietyImportService
 
     private function processSingleNameJob(SocietyImportJob $job): SocietyImportJob
     {
-        if (!empty($job->results)) {
+        if (! empty($job->results)) {
             return $job;
         }
 
@@ -101,7 +118,7 @@ class SocietyImportService
 
     private function processSingleUrlJob(SocietyImportJob $job): SocietyImportJob
     {
-        if (!empty($job->results)) {
+        if (! empty($job->results)) {
             return $job;
         }
 
@@ -144,7 +161,7 @@ class SocietyImportService
             ], $names);
 
             $job->update(['results' => $results]);
-            $this->log($job, 'Prepared ' . count($results) . ' names for import. Polling will process one society per tick.');
+            $this->log($job, 'Prepared '.count($results).' names for import. Polling will process one society per tick.');
 
             return $job->refresh();
         }
@@ -184,12 +201,25 @@ class SocietyImportService
                 'results' => $results,
             ]);
 
-            $this->log($job, 'Prepared ' . count($results) . " {$this->sourceLabel($source)} candidates for {$locality}. Polling will import one per tick.");
+            $this->log($job, 'Prepared '.count($results)." {$this->sourceLabel($source)} candidates for {$locality}. Polling will import one per tick.");
 
             return $job->refresh();
         }
 
         return $this->processNextPendingResult($job, $job->source ?: 'Bulk Source Import');
+    }
+
+    private function processSpreadsheetJob(SocietyImportJob $job): SocietyImportJob
+    {
+        $results = $job->results ?: [];
+        if ($results === []) {
+            $this->log($job, 'Spreadsheet contains no prepared rows.');
+            $job->update(['status' => 'failed', 'failed_count' => 1, 'completed_at' => now()]);
+
+            return $job->refresh();
+        }
+
+        return $this->processNextPendingResult($job, 'Gemini Spreadsheet Import');
     }
 
     private function processNextPendingResult(SocietyImportJob $job, string $source): SocietyImportJob
@@ -217,7 +247,8 @@ class SocietyImportService
                 'message' => 'Empty name',
             ];
         } else {
-            $results[$nextIndex] = $this->importSingleFromName($name, $job, $source);
+            $seed = $job->type === 'bulk_spreadsheet' ? $results[$nextIndex] : [];
+            $results[$nextIndex] = $this->importSingleFromName($name, $job, $source, $seed);
         }
 
         $job->update(['results' => $results]);
@@ -231,6 +262,7 @@ class SocietyImportService
 
         $imported = collect($results)->where('status', 'created')->count();
         $failed = collect($results)->where('status', 'failed')->count();
+        $skipped = collect($results)->where('status', 'skipped')->count();
 
         if ($pending) {
             $job->update([
@@ -250,12 +282,12 @@ class SocietyImportService
             'completed_at' => now(),
         ]);
 
-        $this->log($job, "Import finished. Created {$imported}, failed {$failed}, total " . count($results) . '.');
+        $this->log($job, "Import finished. Created {$imported}, skipped duplicates {$skipped}, failed {$failed}, total ".count($results).'.');
 
         return $job->refresh();
     }
 
-    private function importSingleFromName(string $name, SocietyImportJob $job, string $source): array
+    private function importSingleFromName(string $name, SocietyImportJob $job, string $source, array $seed = []): array
     {
         $name = trim($name);
 
@@ -283,14 +315,15 @@ class SocietyImportService
             ];
         }
 
-        $this->log($job, "AI provider: " . $this->ai->provider() . " | available: " . ($this->ai->isAvailable() ? "yes" : "no"));
+        $this->log($job, 'AI provider: '.$this->ai->provider().' | available: '.($this->ai->isAvailable() ? 'yes' : 'no'));
 
-        $aiData = $this->ai->enrichSociety($name, "", $source);
+        $context = $seed === [] ? '' : "Admin-provided spreadsheet identity fields (treat these as authoritative):\n".json_encode(array_intersect_key($seed, array_flip(['society_name', 'city', 'sector', 'locality', 'builder', 'google_maps_url'])), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $aiData = $this->ai->enrichSociety($name, $context, $source);
 
-        if (!empty($aiData["_ai_error"]) && $this->ai->isAvailable()) {
-            $message = !empty($aiData["_ai_quota_limited"])
-                ? "AI quota/rate limit hit. Draft not created to avoid weak fallback data. Try again later or reduce bulk size."
-                : "AI enrichment failed: " . $aiData["_ai_error"] . ". Draft not created to avoid weak fallback data.";
+        if (! empty($aiData['_ai_error']) && $this->ai->isAvailable()) {
+            $message = ! empty($aiData['_ai_quota_limited'])
+                ? 'AI quota/rate limit hit. Draft not created to avoid weak fallback data. Try again later or reduce bulk size.'
+                : 'AI enrichment failed: '.$aiData['_ai_error'].'. Draft not created to avoid weak fallback data.';
 
             $this->log($job, $message);
 
@@ -310,13 +343,29 @@ class SocietyImportService
                 'status' => 'failed',
                 'message' => $message,
             ];
-        } elseif (!empty($aiData)) {
-            $this->log($job, "AI enrichment parsed. Mapping structured fields into draft.");
+        } elseif (! empty($aiData)) {
+            $this->log($job, 'AI enrichment parsed. Mapping structured fields into draft.');
         } else {
-            $this->log($job, "AI enrichment unavailable. Using safe fallback fields.");
+            $this->log($job, 'AI enrichment unavailable. Using safe fallback fields.');
         }
 
-        $society = Society::create($this->draftDataByName($name, $source, $aiData));
+        $draft = $this->draftDataByName($name, $source, $aiData);
+        foreach (['city', 'sector', 'locality', 'builder', 'google_maps_url'] as $field) {
+            if (isset($seed[$field]) && trim((string) $seed[$field]) !== '') {
+                $draft[$field] = trim((string) $seed[$field]);
+            }
+        }
+        $draft['name'] = $name;
+        $draft['status'] = 'Draft';
+        $draft['verification_status'] = 'Needs Review';
+        $draft['is_published'] = false;
+        $draft['published_at'] = null;
+        $draft['featured'] = false;
+        $draft['show_in_hero'] = false;
+        $draft['search_boost'] = false;
+        $draft['source_name'] = $source;
+        $draft['official_source_notes'] = trim(($draft['official_source_notes'] ?? '').' Imported from spreadsheet row '.($seed['row_number'] ?? 'unknown').'; all Gemini fields require admin review.');
+        $society = Society::create($draft);
 
         $this->log($job, "Draft created: {$society->name} (ID {$society->id}). Review before publishing.");
 
@@ -326,12 +375,13 @@ class SocietyImportService
             'id' => $society->id,
             'edit_url' => "/admin/societies/{$society->id}/edit",
             'message' => 'Draft created',
+            'row_number' => $seed['row_number'] ?? null,
         ];
     }
 
     private function importSingleFromUrl(string $url, SocietyImportJob $job): array
     {
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
             $this->log($job, 'Invalid URL.');
 
             return [
@@ -383,16 +433,16 @@ class SocietyImportService
             ];
         }
 
-        $context = trim(($description ? $description . "\n\n" : "") . $bodyText);
+        $context = trim(($description ? $description."\n\n" : '').$bodyText);
 
-        $this->log($job, "AI provider: " . $this->ai->provider() . " | available: " . ($this->ai->isAvailable() ? "yes" : "no"));
+        $this->log($job, 'AI provider: '.$this->ai->provider().' | available: '.($this->ai->isAvailable() ? 'yes' : 'no'));
 
-        $aiData = $this->ai->enrichSociety($name, $context, 'URL Import: ' . $url);
+        $aiData = $this->ai->enrichSociety($name, $context, 'URL Import: '.$url);
 
-        if (!empty($aiData["_ai_error"]) && $this->ai->isAvailable()) {
-            $message = !empty($aiData["_ai_quota_limited"])
-                ? "AI quota/rate limit hit during URL extraction. Draft not created to avoid weak fallback data."
-                : "AI URL extraction failed: " . $aiData["_ai_error"] . ". Draft not created to avoid weak fallback data.";
+        if (! empty($aiData['_ai_error']) && $this->ai->isAvailable()) {
+            $message = ! empty($aiData['_ai_quota_limited'])
+                ? 'AI quota/rate limit hit during URL extraction. Draft not created to avoid weak fallback data.'
+                : 'AI URL extraction failed: '.$aiData['_ai_error'].'. Draft not created to avoid weak fallback data.';
 
             $this->log($job, $message);
 
@@ -412,10 +462,10 @@ class SocietyImportService
                 'status' => 'failed',
                 'message' => $message,
             ];
-        } elseif (!empty($aiData)) {
-            $this->log($job, "AI URL extraction parsed. Mapping structured fields into draft.");
+        } elseif (! empty($aiData)) {
+            $this->log($job, 'AI URL extraction parsed. Mapping structured fields into draft.');
         } else {
-            $this->log($job, "AI enrichment unavailable. Using URL title/meta fallback.");
+            $this->log($job, 'AI enrichment unavailable. Using URL title/meta fallback.');
         }
 
         $data = $this->draftDataByName($name, 'URL Import', $aiData);
@@ -506,7 +556,7 @@ class SocietyImportService
 
     private function mergeAiDraftData(array $base, array $aiData, string $fallbackName): array
     {
-        if (empty($aiData) || !empty($aiData['_ai_error'])) {
+        if (empty($aiData) || ! empty($aiData['_ai_error'])) {
             return $base;
         }
 
@@ -566,13 +616,13 @@ class SocietyImportService
         foreach ($arrayFields as $field) {
             $value = $this->cleanAiStringArray($aiData[$field] ?? null);
 
-            if (!empty($value)) {
+            if (! empty($value)) {
                 $base[$field] = $value;
             }
         }
 
         $faq = $this->cleanAiFaq($aiData['faq'] ?? null);
-        if (!empty($faq)) {
+        if (! empty($faq)) {
             $base['faq'] = $faq;
         }
 
@@ -609,7 +659,7 @@ class SocietyImportService
         $this->completeImportDraftMetadata($base);
         $this->strengthenImportScores($base);
 
-        if (!empty($aiData['name']) && is_string($aiData['name'])) {
+        if (! empty($aiData['name']) && is_string($aiData['name'])) {
             $cleanName = trim($aiData['name']);
 
             if ($cleanName !== '' && mb_strlen($cleanName) <= 160) {
@@ -655,7 +705,7 @@ class SocietyImportService
             $value = preg_split('/[,\n]+/', $value) ?: [];
         }
 
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             return [];
         }
 
@@ -674,14 +724,14 @@ class SocietyImportService
 
     private function cleanAiFaq(mixed $value): array
     {
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             return [];
         }
 
         $faq = [];
 
         foreach ($value as $item) {
-            if (!is_array($item)) {
+            if (! is_array($item)) {
                 continue;
             }
 
@@ -710,7 +760,7 @@ class SocietyImportService
         $queryParts = array_values(array_filter([$name, $sector, $locality, $city ?: 'Gurugram', $state ?: 'Haryana']));
         $query = trim(implode(' ', array_unique($queryParts)));
 
-        if ((!isset($base['latitude']) || !isset($base['longitude'])) && !empty($base['google_maps_url'])) {
+        if ((! isset($base['latitude']) || ! isset($base['longitude'])) && ! empty($base['google_maps_url'])) {
             $coords = $this->extractCoordinatesFromUrl((string) $base['google_maps_url']);
 
             if ($coords !== null) {
@@ -720,20 +770,20 @@ class SocietyImportService
         }
 
         if ($name !== '' && empty($base['google_maps_url']) && $query !== '') {
-            $base['google_maps_url'] = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($query);
+            $base['google_maps_url'] = 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($query);
             $this->appendImportVerifyField($base, 'coordinates');
         }
 
         if ($name !== '' && empty($base['image_reference_url']) && empty($base['image_url'])) {
-            $imageQuery = trim($query . ' society exterior photos');
-            $base['image_reference_url'] = 'https://www.google.com/search?tbm=isch&q=' . rawurlencode($imageQuery);
+            $imageQuery = trim($query.' society exterior photos');
+            $base['image_reference_url'] = 'https://www.google.com/search?tbm=isch&q='.rawurlencode($imageQuery);
             $base['image_status'] = 'needs_review';
-            $base['image_alt_text'] = $name . ' residential society image reference';
+            $base['image_alt_text'] = $name.' residential society image reference';
             $base['image_license_notes'] = 'Admin review required. Do not publish third-party images until licensed, self-shot, or developer-approved.';
             $this->appendImportVerifyField($base, 'image_rights');
         }
 
-        if (!empty($base['image_reference_url']) || !empty($base['image_url'])) {
+        if (! empty($base['image_reference_url']) || ! empty($base['image_url'])) {
             $base['image_approved_by_admin'] = false;
 
             if (empty($base['image_status']) || $base['image_status'] === 'placeholder') {
@@ -741,7 +791,7 @@ class SocietyImportService
             }
 
             if (empty($base['image_alt_text']) && $name !== '') {
-                $base['image_alt_text'] = $name . ' residential society in Gurugram';
+                $base['image_alt_text'] = $name.' residential society in Gurugram';
             }
 
             if (empty($base['image_license_notes'])) {
@@ -803,7 +853,7 @@ class SocietyImportService
             || $scoreNeedsReview
             || $fallbackPattern;
 
-        if (!$needsCalibration) {
+        if (! $needsCalibration) {
             return;
         }
 
@@ -864,11 +914,11 @@ class SocietyImportService
     {
         $current = $base['fields_to_verify'] ?? [];
 
-        if (!is_array($current)) {
+        if (! is_array($current)) {
             $current = array_filter([(string) $current]);
         }
 
-        if (!in_array($field, $current, true)) {
+        if (! in_array($field, $current, true)) {
             $current[] = $field;
         }
 
@@ -877,7 +927,7 @@ class SocietyImportService
 
     private function cleanAiScore(mixed $value): ?float
     {
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             return null;
         }
 
@@ -892,7 +942,7 @@ class SocietyImportService
 
     private function cleanAiInteger(mixed $value, int $min, int $max): ?int
     {
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             return null;
         }
 
@@ -907,7 +957,7 @@ class SocietyImportService
 
     private function cleanAiFloat(mixed $value): ?float
     {
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             return null;
         }
 
@@ -965,14 +1015,14 @@ class SocietyImportService
         $needle = mb_strtolower(trim($locality));
         $items = $this->knownGurgaonSocieties();
 
-        if ($needle && !in_array($needle, ['gurgaon', 'gurugram', 'all'], true)) {
+        if ($needle && ! in_array($needle, ['gurgaon', 'gurugram', 'all'], true)) {
             $filtered = array_filter($items, function ($item) use ($needle) {
                 return str_contains(mb_strtolower($item['sector'] ?? ''), $needle)
                     || str_contains(mb_strtolower($item['locality'] ?? ''), $needle)
                     || str_contains(mb_strtolower($item['name'] ?? ''), $needle);
             });
 
-            if (!empty($filtered)) {
+            if (! empty($filtered)) {
                 $items = array_values($filtered);
             }
         }
@@ -1074,7 +1124,7 @@ class SocietyImportService
     private function guessSector(string $name): string
     {
         if (preg_match('/sector\s*[- ]?\s*(\d+[a-zA-Z]?)/i', $name, $match)) {
-            return 'Sector ' . strtoupper($match[1]);
+            return 'Sector '.strtoupper($match[1]);
         }
 
         foreach ($this->knownGurgaonSocieties() as $item) {

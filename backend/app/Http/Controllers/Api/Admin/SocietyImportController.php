@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SocietyImportJob;
-use App\Services\SocietyImportService;
 use App\Services\SocietyAiEnrichmentService;
+use App\Services\SocietyImportService;
+use App\Services\SocietySpreadsheetParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -14,8 +15,7 @@ class SocietyImportController extends Controller
     public function __construct(
         private SocietyImportService $service,
         private SocietyAiEnrichmentService $ai
-    ) {
-    }
+    ) {}
 
     public function jobs(Request $request): JsonResponse
     {
@@ -169,7 +169,7 @@ class SocietyImportController extends Controller
             $names = preg_split('/[\r\n,]+/', $names) ?: [];
         }
 
-        if (!is_array($names)) {
+        if (! is_array($names)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Names must be a list or newline separated text.',
@@ -195,7 +195,7 @@ class SocietyImportController extends Controller
             'status' => 'queued',
             'logs' => [[
                 'ts' => now()->format('H:i:s'),
-                'msg' => 'Queued name-list import for ' . count($names) . ' societies.',
+                'msg' => 'Queued name-list import for '.count($names).' societies.',
             ]],
             'triggered_by' => $request->header('X-Admin-Email') ?: 'admin',
         ]);
@@ -205,5 +205,22 @@ class SocietyImportController extends Controller
             'message' => 'Name list import queued.',
             'data' => $job,
         ], 202);
+    }
+
+    public function spreadsheet(Request $request, SocietySpreadsheetParser $parser): JsonResponse
+    {
+        $request->validate(['file' => ['required', 'file', 'mimes:xlsx,csv', 'max:5120']]);
+        $rows = $parser->parse($request->file('file'));
+        $job = SocietyImportJob::create([
+            'type' => 'bulk_spreadsheet',
+            'input' => json_encode(['filename' => $request->file('file')->getClientOriginalName(), 'row_count' => count($rows)]),
+            'source' => 'Gemini Spreadsheet Import',
+            'status' => 'queued',
+            'results' => array_map(fn ($row) => [...$row, 'name' => $row['society_name'], 'status' => 'pending'], $rows),
+            'logs' => [['ts' => now()->format('H:i:s'), 'msg' => 'Validated spreadsheet and queued '.count($rows).' society drafts.']],
+            'triggered_by' => $request->header('X-Admin-Email') ?: 'admin',
+        ]);
+
+        return response()->json(['status' => 'ok', 'message' => 'Spreadsheet validated. '.count($rows).' Gemini draft imports queued.', 'data' => $job, 'preview' => array_slice($rows, 0, 10)], 202);
     }
 }

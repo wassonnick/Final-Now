@@ -5,7 +5,9 @@ import {
   CheckCircle2,
   Clock3,
   Database,
+  Download,
   ExternalLink,
+  FileSpreadsheet,
   Link as LinkIcon,
   ListChecks,
   Play,
@@ -14,6 +16,7 @@ import {
   Sparkles,
   TerminalSquare,
   Trash2,
+  Upload,
 } from "lucide-react";
 
 import { AdminLayout } from "@/layouts/AdminLayout";
@@ -21,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminFetch } from "@/lib/adminApi";
 
-type ImportMode = "name" | "url" | "bulk" | "names";
+type ImportMode = "file" | "name" | "url" | "bulk" | "names";
 
 type ImportLog = {
   ts?: string;
@@ -70,6 +73,12 @@ const modes: Array<{
   icon: typeof Sparkles;
 }> = [
   {
+    id: "file",
+    label: "Excel / CSV",
+    description: "Upload up to 200 societies with name, city, sector, locality and builder.",
+    icon: FileSpreadsheet,
+  },
+  {
     id: "name",
     label: "By name",
     description: "Type one society name and create a draft profile.",
@@ -114,6 +123,7 @@ function modeLabel(type?: string) {
   if (type === "by_url") return "By URL";
   if (type === "bulk_source") return "Bulk source";
   if (type === "bulk_names") return "Name list";
+  if (type === "bulk_spreadsheet") return "Excel / CSV";
   return type || "Import";
 }
 
@@ -126,7 +136,8 @@ function logLine(log: ImportLog, index: number) {
 }
 
 export function AdminSocietyImportPage() {
-  const [mode, setMode] = useState<ImportMode>("name");
+  const [mode, setMode] = useState<ImportMode>("file");
+  const [spreadsheet, setSpreadsheet] = useState<File | null>(null);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [source, setSource] = useState("MagicBricks");
@@ -247,6 +258,20 @@ export function AdminSocietyImportPage() {
   }
 
   async function handleSubmit() {
+    if (mode === "file") {
+      if (!spreadsheet) { setError("Choose an .xlsx or .csv file first."); return; }
+      setError(""); setNotice(""); setSubmitting(true);
+      try {
+        const formData = new FormData(); formData.append("file", spreadsheet);
+        const response = await adminFetch("/admin/import/spreadsheet", { method: "POST", body: formData });
+        const json = await parseResponse(response);
+        setNotice(json?.message || "Spreadsheet import queued.");
+        if (json?.data?.id) setSelectedJobId(json.data.id);
+        await loadJobs();
+      } catch (err) { setError(err instanceof Error ? err.message : "Could not upload spreadsheet."); }
+      finally { setSubmitting(false); }
+      return;
+    }
     if (mode === "name") {
       await queueImport("/admin/import/by-name", { name });
       return;
@@ -307,7 +332,7 @@ export function AdminSocietyImportPage() {
   return (
     <AdminLayout
       title="Society Auto Importer"
-      subtitle="Import Gurgaon societies by name, URL, bulk source or name list. All imports are draft-first for admin review."
+      subtitle="Upload Excel/CSV or import by name and URL. Gemini creates review drafts only—never public inventory."
     >
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.75fr)]">
         <section className="space-y-5">
@@ -355,7 +380,7 @@ export function AdminSocietyImportPage() {
               </p>
             </div>
 
-            <div className="mt-5 grid gap-2 md:grid-cols-4">
+            <div className="mt-5 grid gap-2 md:grid-cols-2 xl:grid-cols-5">
               {modes.map((item) => {
                 const Icon = item.icon;
                 const active = mode === item.id;
@@ -403,11 +428,28 @@ export function AdminSocietyImportPage() {
                 ) : (
                   <Play className="mr-2 h-4 w-4" />
                 )}
-                {mode === "bulk" ? "Start bulk import" : "Start import"}
+                {mode === "file" ? "Upload and queue" : mode === "bulk" ? "Start bulk import" : "Start import"}
               </Button>
             </div>
 
             <div className="mt-5 space-y-5">
+              {mode === "file" ? (
+                <div className="space-y-4">
+                  <label className="flex cursor-pointer flex-col items-center justify-center rounded-[24px] border-2 border-dashed border-blue-200 bg-blue-50/40 px-5 py-10 text-center hover:bg-blue-50">
+                    <Upload className="h-8 w-8 text-blue-700" />
+                    <span className="mt-3 text-base font-black text-slate-950">{spreadsheet?.name || "Choose Excel or CSV file"}</span>
+                    <span className="mt-1 text-xs text-slate-500">.xlsx or .csv · maximum 5 MB · maximum 200 society rows</span>
+                    <input type="file" accept=".xlsx,.csv" className="sr-only" onChange={(event) => setSpreadsheet(event.target.files?.[0] || null)} />
+                  </label>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    <p className="font-black text-slate-900">Required columns: society_name, city</p>
+                    <p className="mt-1">Optional: sector, locality, builder, google_maps_url. Spreadsheet identity fields override Gemini; generated enrichment still needs admin review.</p>
+                  </div>
+                  <Button asChild type="button" variant="outline" className="rounded-full border-emerald-200 text-emerald-700">
+                    <a href="/templates/societyflats-gemini-import-template.xlsx" download><Download className="mr-2 h-4 w-4" />Download Excel template</a>
+                  </Button>
+                </div>
+              ) : null}
               {mode === "name" ? (
                 <label className="block space-y-2">
                   <span className="text-sm font-bold text-slate-700">Society name</span>
@@ -662,6 +704,9 @@ export function AdminSocietyImportPage() {
                       </span>
                       <span className="rounded-full bg-slate-100 px-2.5 py-1">
                         Failed {job.failed_count || 0}
+                      </span>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1">
+                        Skipped {(job.results || []).filter((result) => result.status === "skipped").length}
                       </span>
                       {job.status === "completed" ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">

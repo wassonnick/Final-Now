@@ -158,6 +158,7 @@ function AppShell() {
             <Route path="/admin/societies" element={<ProtectedAdminRoute><AdminSocietiesPage /></ProtectedAdminRoute>} />
             <Route path="/admin/societies/new-from-url" element={<ProtectedAdminRoute><AdminSocietyUrlCreatePage /></ProtectedAdminRoute>} />
             <Route path="/admin/societies/import" element={<ProtectedAdminRoute><AdminSocietyImportPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/society-importer" element={<ProtectedAdminRoute><AdminSocietyImportPage /></ProtectedAdminRoute>} />
             <Route path="/admin/societies/new" element={<ProtectedAdminRoute><AdminSocietyFormPage /></ProtectedAdminRoute>} />
             <Route path="/admin/societies/:id/edit" element={<ProtectedAdminRoute><AdminSocietyFormPage /></ProtectedAdminRoute>} />
 
