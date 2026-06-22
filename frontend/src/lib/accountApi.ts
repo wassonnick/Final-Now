@@ -36,6 +36,7 @@ export type AccountDelivery = {
 
 export type AccountResponse = {
   message?: string;
+  existing?: boolean;
   account?: BackendAccount;
   delivery?: AccountDelivery;
   dev_otp?: string | null;

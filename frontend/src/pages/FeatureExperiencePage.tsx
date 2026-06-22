@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { fetchPublicProperties, fetchPublicSocieties, formatPublicLocation, searchableText, societyImage } from '@/lib/publicData';
 import { cn } from '@/lib/utils';
 import { createCustomerAccountSession, rememberBrokerActivitySubmission } from '@/lib/customerAccount';
-import { syncAccountToBackend } from '@/lib/accountApi';
+import { fetchAccountByPhone, syncAccountToBackend } from '@/lib/accountApi';
 
 type FeatureExperienceKey = 'maps' | 'broker-crm' | 'chat' | 'recommendations';
 
@@ -355,6 +355,15 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
         `Inventory / Client Details: ${userMessage || 'Not provided'}`,
         'Suggested next action: Verify broker profile, working areas, inventory quality and commission terms.',
       ].join('\n');
+
+      if (isBrokerCrm) {
+        const existingAccount = await fetchAccountByPhone(cleanPhone || form.phone);
+        if (existingAccount?.account?.id) {
+          setState('error');
+          setNotice('This phone number is already registered. Please login or continue with OTP instead of creating a duplicate broker account.');
+          return;
+        }
+      }
 
       const payload = {
         name: form.name.trim(),

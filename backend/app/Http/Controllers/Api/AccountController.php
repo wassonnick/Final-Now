@@ -209,24 +209,61 @@ class AccountController extends Controller
             ], 422);
         }
 
-        $account = Account::updateOrCreate(
-            ['phone_normalized' => $phone],
-            [
-                'role' => $validated['role'],
-                'phone' => $phone,
-                'name' => $validated['name'] ?? null,
-                'email' => $validated['email'] ?? null,
-                'status' => 'active',
+        $existingAccount = Account::where('phone_normalized', $phone)->first();
+
+        if ($existingAccount) {
+            $payload = [
+                'phone' => $existingAccount->phone ?: $phone,
                 'last_login_at' => now(),
-                'meta' => array_filter([
-                    'source' => $validated['source'] ?? null,
-                    ...($validated['meta'] ?? []),
-                ]),
-            ],
-        );
+            ];
+
+            if (! $existingAccount->name && ! empty($validated['name'])) {
+                $payload['name'] = $validated['name'];
+            }
+
+            if (! $existingAccount->email && ! empty($validated['email'])) {
+                $payload['email'] = $validated['email'];
+            }
+
+            $incomingMeta = array_filter([
+                'last_signup_source' => $validated['source'] ?? null,
+                ...($validated['meta'] ?? []),
+            ]);
+
+            if ($incomingMeta) {
+                $payload['meta'] = array_merge($existingAccount->meta ?: [], [
+                    'duplicateSignupAttempted' => true,
+                    'duplicateSignupLastAttemptedAt' => now()->toISOString(),
+                    'duplicateSignupRoleAttempted' => $validated['role'],
+                ], $incomingMeta);
+            }
+
+            $existingAccount->update($payload);
+
+            return response()->json([
+                'message' => 'This phone number is already registered. Please login or continue with OTP.',
+                'existing' => true,
+                'account' => $this->accountPayload($existingAccount->fresh()),
+            ]);
+        }
+
+        $account = Account::create([
+            'role' => $validated['role'],
+            'phone' => $phone,
+            'phone_normalized' => $phone,
+            'name' => $validated['name'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'status' => 'active',
+            'last_login_at' => now(),
+            'meta' => array_filter([
+                'source' => $validated['source'] ?? null,
+                ...($validated['meta'] ?? []),
+            ]),
+        ]);
 
         return response()->json([
             'message' => 'Account synced.',
+            'existing' => false,
             'account' => $this->accountPayload($account),
         ]);
     }
