@@ -1371,6 +1371,28 @@ export function AdminLeadsPage() {
     return leads
       .filter((lead) => dashboardLeadViewMatches(lead, dashboardView, leads))
       .sort((first, second) => {
+        const newestFirst = () => {
+          const createdDelta =
+            new Date(second.createdAt || 0).getTime() - new Date(first.createdAt || 0).getTime();
+          if (createdDelta !== 0) return createdDelta;
+
+          return Number(second.id || 0) - Number(first.id || 0);
+        };
+
+        const operationalFollowUpViews = new Set([
+          "call_sheet",
+          "followups",
+          "overdue",
+          "upcoming",
+          "no_followup",
+          "hot_sla",
+          "untouched",
+        ]);
+
+        if (!dashboardView || dashboardView === "all" || !operationalFollowUpViews.has(dashboardView)) {
+          return newestFirst();
+        }
+
         const weightDelta =
           dashboardView === "call_sheet"
             ? callSheetSortWeight(first) - callSheetSortWeight(second)
@@ -1380,7 +1402,7 @@ export function AdminLeadsPage() {
         const timeDelta = followUpTimeValue(first) - followUpTimeValue(second);
         if (timeDelta !== 0) return timeDelta;
 
-        return new Date(second.createdAt || 0).getTime() - new Date(first.createdAt || 0).getTime();
+        return newestFirst();
       })
       .filter((lead) => {
         const matchesSearch =
