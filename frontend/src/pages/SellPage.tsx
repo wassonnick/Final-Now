@@ -21,7 +21,7 @@ import { backendApi } from "@/services/backendApi";
 import { trackEvent, trackLeadIntent, trackLeadSubmitted } from "@/lib/analytics";
 import { cleanLeadTrackingPayload } from "@/lib/leadTracking";
 import { createCustomerAccountSession } from "@/lib/customerAccount";
-import { syncAccountToBackend } from "@/lib/accountApi";
+import { fetchAccountByPhone, syncAccountToBackend } from "@/lib/accountApi";
 
 function cleanOwnerLeadPhone(value: string) {
   return String(value || "").replace(/\D/g, "").slice(0, 10);
@@ -141,6 +141,19 @@ export function SellPage() {
       source: purpose === "rent" ? "owner_listing_rent" : "owner_listing_sale",
       society_name: societyName,
     });
+
+    try {
+      const existingAccount = await fetchAccountByPhone(cleanPhone);
+      if (existingAccount?.account?.id) {
+        setError("This phone number is already registered. Please login or continue with OTP before submitting another owner listing.");
+        setSubmitting(false);
+        return;
+      }
+    } catch {
+      setError("Could not validate this phone number. Please try again before submitting.");
+      setSubmitting(false);
+      return;
+    }
 
     const ownerMessage = [
       "Owner listing submission from Sell page",

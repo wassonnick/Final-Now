@@ -305,17 +305,34 @@ class AccountController extends Controller
             ], 422);
         }
 
-        $account = Account::updateOrCreate(
-            ['phone_normalized' => $phone],
-            [
+        $account = Account::where('phone_normalized', $phone)->first();
+
+        if ($account) {
+            $payload = [
+                'phone' => $account->phone ?: $phone,
+                'last_login_at' => now(),
+            ];
+
+            if (! $account->name && ! empty($validated['name'])) {
+                $payload['name'] = $validated['name'];
+            }
+
+            if (! $account->email && ! empty($validated['email'])) {
+                $payload['email'] = $validated['email'];
+            }
+
+            $account->update($payload);
+        } else {
+            $account = Account::create([
                 'role' => $validated['role'],
                 'phone' => $phone,
+                'phone_normalized' => $phone,
                 'name' => $validated['name'] ?? null,
                 'email' => $validated['email'] ?? null,
                 'status' => 'otp_pending',
                 'last_login_at' => now(),
-            ],
-        );
+            ]);
+        }
 
         $code = (string) random_int(100000, 999999);
 
@@ -374,16 +391,25 @@ class AccountController extends Controller
 
         $otp->update(['verified_at' => now()]);
 
-        $account = Account::updateOrCreate(
-            ['phone_normalized' => $phone],
-            [
-                'role' => $validated['role'],
-                'phone' => $phone,
+        $account = Account::where('phone_normalized', $phone)->first();
+
+        if ($account) {
+            $account->update([
+                'phone' => $account->phone ?: $phone,
                 'status' => 'active',
                 'phone_verified_at' => now(),
                 'last_login_at' => now(),
-            ],
-        );
+            ]);
+        } else {
+            $account = Account::create([
+                'role' => $validated['role'],
+                'phone' => $phone,
+                'phone_normalized' => $phone,
+                'status' => 'active',
+                'phone_verified_at' => now(),
+                'last_login_at' => now(),
+            ]);
+        }
 
         $accountAccessToken = $this->issueAccountToken($account);
 
