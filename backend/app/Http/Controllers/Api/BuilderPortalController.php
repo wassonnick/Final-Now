@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Concerns\AuthenticatesAccount;
 use App\Http\Controllers\Controller;
 use App\Models\BuilderClaim;
+use App\Models\Review;
+use App\Models\ReviewResponse;
 use App\Models\Society;
 use App\Models\SocietyAnnouncement;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +22,7 @@ class BuilderPortalController extends Controller
             return response()->json(['message' => 'OTP login required.'], 401);
         }
 
-        return response()->json(['data' => $account->builderClaims()->with(['society:id,name,slug', 'announcements'])->latest()->get()]);
+        return response()->json(['data' => $account->builderClaims()->with(['society' => fn ($query) => $query->select('id', 'name', 'slug')->with(['reviews' => fn ($reviews) => $reviews->select('id', 'society_id', 'title', 'content', 'rating')->where('status', 'approved')]), 'announcements'])->latest()->get()]);
     }
 
     public function storeClaim(Request $request): JsonResponse
@@ -58,5 +60,19 @@ class BuilderPortalController extends Controller
         $items = SocietyAnnouncement::query()->where('society_id', $society->id)->where('status', 'published')->whereNotNull('published_at')->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))->latest('published_at')->get();
 
         return response()->json(['data' => $items]);
+    }
+
+    public function storeReviewResponse(Request $request, BuilderClaim $claim, Review $review): JsonResponse
+    {
+        if (! $account = $this->accountFromBearer($request)) {
+            return response()->json(['message' => 'OTP login required.'], 401);
+        }
+        if ($claim->account_id !== $account->id || $claim->status !== 'approved' || $review->society_id !== $claim->society_id || $review->status !== 'approved') {
+            return response()->json(['message' => 'An approved claim for this society is required.'], 403);
+        }
+        $data = $request->validate(['content' => ['required', 'string', 'min:10', 'max:5000']]);
+        $response = ReviewResponse::updateOrCreate(['review_id' => $review->id, 'builder_claim_id' => $claim->id], $data + ['account_id' => $account->id, 'status' => 'pending', 'moderation_notes' => null, 'published_at' => null]);
+
+        return response()->json(['message' => 'Response submitted for admin moderation.', 'data' => $response], $response->wasRecentlyCreated ? 201 : 200);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\SavedSearch;
+use App\Models\SavedSearchAlert;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -55,6 +56,16 @@ class SavedSearchController extends Controller
         $savedSearch->delete();
 
         return response()->json(['message' => 'Saved search deleted.']);
+    }
+
+    public function alerts(Request $request): JsonResponse
+    {
+        $account = $this->account($request);
+        if (! $account) {
+            return $this->unauthorized();
+        }
+
+        return response()->json(['data' => SavedSearchAlert::query()->with(['property.society:id,name,slug', 'savedSearch:id,name'])->where('account_id', $account->id)->latest()->limit(100)->get()]);
     }
 
     private function validated(Request $request, bool $partial = false): array

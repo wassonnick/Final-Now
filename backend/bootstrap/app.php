@@ -1,5 +1,12 @@
 <?php
 
+use App\Console\Commands\EnrichOfficialSocietySources;
+use App\Console\Commands\FetchSocietyFromUrl;
+use App\Console\Commands\ImportGurgaonMasterSocieties;
+use App\Console\Commands\ImportGurgaonReraSocieties;
+use App\Console\Commands\MatchSavedSearches;
+use App\Http\Middleware\ApiCors;
+use App\Http\Middleware\EnsureAdminApiToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,15 +19,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
-        \App\Console\Commands\ImportGurgaonReraSocieties::class,
-        \App\Console\Commands\ImportGurgaonMasterSocieties::class,
-        \App\Console\Commands\EnrichOfficialSocietySources::class,
-        \App\Console\Commands\FetchSocietyFromUrl::class,
+        ImportGurgaonReraSocieties::class,
+        ImportGurgaonMasterSocieties::class,
+        EnrichOfficialSocietySources::class,
+        FetchSocietyFromUrl::class,
+        MatchSavedSearches::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->append(\App\Http\Middleware\ApiCors::class);
+        $middleware->append(ApiCors::class);
         $middleware->alias([
-            'admin.api' => \App\Http\Middleware\EnsureAdminApiToken::class,
+            'admin.api' => EnsureAdminApiToken::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

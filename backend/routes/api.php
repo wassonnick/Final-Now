@@ -73,6 +73,8 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::patch('/builder-claims/{claim}', [AdminBuilderPortalController::class, 'updateClaim']);
     Route::get('/society-announcements', [AdminBuilderPortalController::class, 'announcements']);
     Route::patch('/society-announcements/{announcement}', [AdminBuilderPortalController::class, 'updateAnnouncement']);
+    Route::get('/review-responses', [AdminBuilderPortalController::class, 'reviewResponses']);
+    Route::patch('/review-responses/{response}', [AdminBuilderPortalController::class, 'updateReviewResponse']);
     Route::post('/site-visits/{siteVisit}/remind', [AdminSiteVisitController::class, 'remind']);
     Route::apiResource('site-visits', AdminSiteVisitController::class)->only(['index', 'store', 'update']);
 });
@@ -84,7 +86,9 @@ Route::prefix('accounts')->group(function () {
     Route::get('/me', [AccountController::class, 'me']);
     Route::get('/dashboard', [AccountController::class, 'dashboard']);
     Route::apiResource('saved-searches', SavedSearchController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('/saved-search-alerts', [SavedSearchController::class, 'alerts']);
     Route::get('/builder-claims', [BuilderPortalController::class, 'claims']);
     Route::post('/builder-claims', [BuilderPortalController::class, 'storeClaim']);
     Route::post('/builder-claims/{claim}/announcements', [BuilderPortalController::class, 'storeAnnouncement']);
+    Route::post('/builder-claims/{claim}/reviews/{review}/response', [BuilderPortalController::class, 'storeReviewResponse']);
 });

@@ -143,13 +143,13 @@ services:
       - key: MEILISEARCH_KEY
         value: ""
 
-  # Background worker (optional - for queues)
+  # Scheduler worker. Queue delivery is synchronous; this process runs due alert matching.
   - type: worker
     name: societyflats-worker
     env: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    startCommand: php artisan queue:work
+    startCommand: php artisan schedule:work
     envVars:
       - key: APP_NAME
         value: SocietyFlats

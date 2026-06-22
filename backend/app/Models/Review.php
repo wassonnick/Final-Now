@@ -50,4 +50,9 @@ class Review extends Model
     {
         return $this->hasMany(ReviewHelpfulVote::class);
     }
+
+    public function responses(): HasMany
+    {
+        return $this->hasMany(ReviewResponse::class);
+    }
 }

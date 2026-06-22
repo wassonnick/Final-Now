@@ -21,7 +21,7 @@ class ReviewController extends Controller
             ->firstOrFail();
 
         $reviews = Review::query()
-            ->with('account:id,name')
+            ->with(['account:id,name', 'responses' => fn ($query) => $query->with('claim:id,organisation_name')->where('status', 'approved')->oldest()])
             ->where('society_id', $society->id)
             ->where('status', 'approved')
             ->latest()

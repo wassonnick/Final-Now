@@ -46,6 +46,13 @@ return [
         'frontend_url' => env('FRONTEND_URL', 'https://societyflats.com'),
     ],
 
+    'saved_search_alerts' => [
+        'enabled' => env('SAVED_SEARCH_ALERT_ENABLED', false),
+        'webhook_url' => env('SAVED_SEARCH_ALERT_WEBHOOK_URL'),
+        'webhook_token' => env('SAVED_SEARCH_ALERT_WEBHOOK_TOKEN'),
+        'frontend_url' => env('FRONTEND_URL', 'https://societyflats.com'),
+    ],
+
     'otp' => [
         'enabled' => env('OTP_DELIVERY_ENABLED', false),
         'provider' => env('OTP_PROVIDER', 'log'),

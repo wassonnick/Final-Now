@@ -60,4 +60,9 @@ class Property extends Model
     {
         return $this->hasMany(Lead::class);
     }
+
+    public function savedSearchAlerts(): HasMany
+    {
+        return $this->hasMany(SavedSearchAlert::class);
+    }
 }

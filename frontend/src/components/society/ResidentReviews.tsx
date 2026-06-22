@@ -19,6 +19,7 @@ type Review = {
   cons?: string[] | null;
   created_at?: string;
   account?: { name?: string | null };
+  responses?: { id: number; content: string; published_at?: string; claim?: { organisation_name?: string } }[];
 };
 
 type ReviewResponse = {
@@ -130,6 +131,7 @@ export function ResidentReviews({ societyId, societySlug, societyName }: { socie
               </div>
               {review.is_verified_resident ? <p className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-emerald-700"><CheckCircle2 className="h-4 w-4" /> Phone-verified reviewer</p> : null}
               <p className="mt-3 text-sm leading-6 text-navy-700">{review.content}</p>
+              {(review.responses || []).map((response) => <div key={response.id} className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-3"><p className="text-xs font-black uppercase tracking-wide text-blue-700">Verified response · {response.claim?.organisation_name || 'Society representative'}</p><p className="mt-2 text-sm leading-6 text-navy-700">{response.content}</p></div>)}
               <div className="mt-3 flex flex-wrap gap-2">{(review.pros || []).map((item) => <span key={item} className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs text-emerald-700">+ {item}</span>)}{(review.cons || []).map((item) => <span key={item} className="rounded-full bg-rose-50 px-2.5 py-1 text-xs text-rose-700">− {item}</span>)}</div>
               <button type="button" onClick={() => void vote(review.id)} className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-blue-700"><ThumbsUp className="h-4 w-4" /> Helpful ({review.helpful_count || 0})</button>
             </article>

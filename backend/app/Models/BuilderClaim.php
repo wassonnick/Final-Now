@@ -26,4 +26,9 @@ class BuilderClaim extends Model
     {
         return $this->hasMany(SocietyAnnouncement::class);
     }
+
+    public function reviewResponses(): HasMany
+    {
+        return $this->hasMany(ReviewResponse::class);
+    }
 }
