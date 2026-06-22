@@ -85,4 +85,17 @@ class SocietySpreadsheetImportTest extends TestCase
         $this->getJson('/api/societies/google-image-society/google-place-photo')->assertNotFound();
         $this->withToken('admin-test-token')->patchJson("/api/admin/import/societies/{$society->id}/image", ['decision' => 'approve', 'rights_confirmed' => true])->assertOk()->assertJsonPath('data.image_status', 'google_places_reference_found')->assertJsonPath('data.image_approved_by_admin', true);
     }
+
+    public function test_empty_grounded_response_retries_once_without_grounding(): void
+    {
+        config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'test-model', 'services.google_places_api_key' => null]);
+        Http::fakeSequence()
+            ->push(['candidates' => [['finishReason' => 'STOP', 'content' => ['parts' => []]]]])
+            ->push(['candidates' => [['content' => ['parts' => [['text' => json_encode(['name' => 'Fallback Heights', 'city' => 'Gurugram', 'description' => 'Review-safe fallback profile.', 'fields_to_verify' => ['market_ranges', 'distances', 'image_rights']])]]]]]]);
+        $file = UploadedFile::fake()->createWithContent('fallback.csv', "society_name,city\nFallback Heights,Gurugram\n");
+        $this->withToken('admin-test-token')->post('/api/admin/import/spreadsheet', ['file' => $file, 'include_images' => '1'], ['Accept' => 'application/json'])->assertAccepted();
+        $this->withToken('admin-test-token')->getJson('/api/admin/import/jobs?limit=10')->assertOk();
+        Http::assertSentCount(2);
+        $this->assertDatabaseHas('societies', ['name' => 'Fallback Heights', 'status' => 'Draft', 'is_published' => false]);
+    }
 }

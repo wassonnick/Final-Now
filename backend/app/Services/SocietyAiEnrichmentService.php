@@ -98,6 +98,10 @@ class SocietyAiEnrichmentService
             if (! $response || ! $response->successful()) {
                 $status = $response ? $response->status() : 0;
 
+                if ($useSearchGrounding) {
+                    return $this->enrichWithGemini($name, $context."\n\nGoogle Search grounding was unavailable. Produce the fullest review-safe draft from supplied context and model knowledge; mark unsupported market, distance, legal and image claims in fields_to_verify.", $source, $findImageCandidate, false);
+                }
+
                 return [
                     '_ai_error' => 'Gemini HTTP '.$status,
                     '_ai_error_status' => $status,
@@ -111,6 +115,10 @@ class SocietyAiEnrichmentService
             if ($text === '') {
                 $finishReason = (string) data_get($response->json(), 'candidates.0.finishReason', 'unknown');
                 $blockReason = (string) data_get($response->json(), 'promptFeedback.blockReason', 'none');
+
+                if ($useSearchGrounding && $blockReason === 'none') {
+                    return $this->enrichWithGemini($name, $context."\n\nGoogle Search grounding returned no final text. Produce the fullest review-safe draft from supplied context and model knowledge; mark unsupported market, distance, legal and image claims in fields_to_verify.", $source, $findImageCandidate, false);
+                }
 
                 return [
                     '_ai_error' => "Gemini returned empty text (finish: {$finishReason}, block: {$blockReason})",
