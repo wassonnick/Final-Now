@@ -105,11 +105,15 @@ class SocietyAiEnrichmentService
                 ];
             }
 
-            $text = (string) data_get($response->json(), 'candidates.0.content.parts.0.text', '');
+            $text = collect(data_get($response->json(), 'candidates.0.content.parts', []))
+                ->pluck('text')->filter(fn ($part) => is_string($part) && trim($part) !== '')->join("\n");
 
             if ($text === '') {
+                $finishReason = (string) data_get($response->json(), 'candidates.0.finishReason', 'unknown');
+                $blockReason = (string) data_get($response->json(), 'promptFeedback.blockReason', 'none');
+
                 return [
-                    '_ai_error' => 'Gemini returned empty text',
+                    '_ai_error' => "Gemini returned empty text (finish: {$finishReason}, block: {$blockReason})",
                     '_ai_error_status' => 200,
                 ];
             }
