@@ -25,15 +25,17 @@ class ImportGurgaonMasterSocieties extends Command
         $resetUnverified = (bool) $this->option('reset-unverified');
         $dryRun = (bool) $this->option('dry-run');
 
-        if (!is_file($file)) {
+        if (! is_file($file)) {
             $this->error("Import file not found: {$file}");
+
             return self::FAILURE;
         }
 
         $rows = json_decode((string) file_get_contents($file), true);
 
-        if (!is_array($rows)) {
+        if (! is_array($rows)) {
             $this->error('Import file is not valid JSON.');
+
             return self::FAILURE;
         }
 
@@ -46,18 +48,55 @@ class ImportGurgaonMasterSocieties extends Command
         }
 
         $created = 0;
-        $updated = 0;
-        $skipped = 0;
+        $skippedDuplicates = 0;
+        $skippedNonResidential = 0;
+        $failed = 0;
+        $seen = [];
 
-        foreach ($rows as $row) {
+        foreach ($rows as $index => $row) {
+            if (! is_array($row)) {
+                $failed++;
+                $this->error('Row '.($index + 1).' failed: expected a JSON object.');
+
+                continue;
+            }
+
+            if ($this->looksCommercial($row)) {
+                $skippedNonResidential++;
+
+                continue;
+            }
+
             $payload = $this->payloadFromRow($row, $resetUnverified);
 
-            if (!$payload) {
-                $skipped++;
+            if (! $payload) {
+                $failed++;
+                $this->error('Row '.($index + 1).' failed: name and slug are required.');
+
+                continue;
+            }
+
+            $identity = $this->importIdentityKey($payload);
+
+            if (isset($seen[$identity])) {
+                $skippedDuplicates++;
+                $this->warn("Skipped duplicate input row: {$payload['name']}.");
+
+                continue;
+            }
+
+            $seen[$identity] = true;
+            $duplicate = $this->findDuplicate($payload);
+
+            if ($duplicate) {
+                $skippedDuplicates++;
+                $this->warn("Skipped duplicate: {$payload['name']} matches society ID {$duplicate->id} ({$duplicate->name}).");
+
                 continue;
             }
 
             if ($dryRun) {
+                $created++;
                 $this->line(sprintf(
                     '- %s | %s | %s | %s',
                     $payload['name'],
@@ -65,36 +104,49 @@ class ImportGurgaonMasterSocieties extends Command
                     $payload['sector'] ?: 'sector pending',
                     $payload['source_url'] ?: 'source pending'
                 ));
+
                 continue;
             }
 
-            $society = Society::updateOrCreate(['slug' => $payload['slug']], $payload);
-            $society->wasRecentlyCreated ? $created++ : $updated++;
+            try {
+                Society::create($payload);
+                $created++;
+            } catch (\Throwable $exception) {
+                $failed++;
+                $this->error('Row '.($index + 1)." failed ({$payload['name']}): {$exception->getMessage()}");
+            }
         }
 
-        $this->info($dryRun
-            ? 'Dry run complete. Found '.(count($rows) - $skipped)." importable records, skipped {$skipped}."
-            : "Import complete. Created {$created}, updated {$updated}, skipped {$skipped}."
-        );
+        $summary = [
+            'mode' => $dryRun ? 'dry-run' : 'import',
+            'total_rows' => count($rows),
+            $dryRun ? 'would_create' : 'created' => $created,
+            'skipped_duplicates' => $skippedDuplicates,
+            'skipped_non_residential' => $skippedNonResidential,
+            'failed' => $failed,
+        ];
 
-        return self::SUCCESS;
+        $this->info($dryRun ? 'Dry run complete. No database rows were written.' : 'Draft import complete.');
+        $this->line('SUMMARY '.json_encode($summary, JSON_UNESCAPED_SLASHES));
+
+        return $failed > 0 ? self::FAILURE : self::SUCCESS;
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param  array<string, mixed>  $row
      * @return array<string, mixed>|null
      */
     private function payloadFromRow(array $row, bool $resetUnverified): ?array
     {
-        $name = trim((string) ($row['official_name'] ?: $row['society_name'] ?: ''));
-        $slug = trim((string) ($row['slug'] ?: Str::slug($name)));
+        $name = trim((string) (($row['official_name'] ?? null) ?: ($row['society_name'] ?? null) ?: ($row['name'] ?? '')));
+        $slug = trim((string) (($row['slug'] ?? null) ?: Str::slug($name)));
 
-        if (!$name || !$slug || $this->looksCommercial($row)) {
+        if (! $name || ! $slug) {
             return null;
         }
 
-        $sector = $this->sectorFromText((string) ($row['approx_area_sector'] ?? ''));
-        $locality = trim((string) ($row['micro_market'] ?: $row['approx_area_sector'] ?: 'Gurugram'));
+        $sector = trim((string) ($row['sector'] ?? '')) ?: $this->sectorFromText((string) ($row['approx_area_sector'] ?? ''));
+        $locality = trim((string) (($row['micro_market'] ?? null) ?: ($row['locality'] ?? null) ?: ($row['approx_area_sector'] ?? null) ?: 'Gurugram'));
         $imageUrl = trim((string) ($row['image_url'] ?? ''));
         $imageStatus = Str::lower(trim((string) ($row['image_status'] ?? '')));
         $safeImage = $imageUrl && $imageUrl !== 'placeholder' && in_array($imageStatus, self::SAFE_IMAGE_STATUSES, true);
@@ -120,11 +172,26 @@ class ImportGurgaonMasterSocieties extends Command
             'builder' => trim((string) ($row['developer_builder'] ?? '')) ?: null,
             'sector' => $sector,
             'locality' => $locality,
-            'address' => trim((string) ($row['approx_area_sector'] ?? '')) ?: null,
-            'description' => $this->descriptionFromRow($row, $name, $sector, $locality),
-            'meta_title' => "{$name} Gurgaon - Society Profile",
-            'meta_description' => $this->metaDescriptionFromRow($row, $name, $sector, $locality),
+            'city' => trim((string) ($row['city'] ?? 'Gurugram')) ?: 'Gurugram',
+            'state' => trim((string) ($row['state'] ?? 'Haryana')) ?: 'Haryana',
+            'society_type' => trim((string) ($row['society_type'] ?? '')) ?: null,
+            'address' => trim((string) ($row['address'] ?? $row['approx_area_sector'] ?? '')) ?: null,
+            'description' => trim((string) ($row['description'] ?? '')) ?: $this->descriptionFromRow($row, $name, $sector, $locality),
+            'project_status' => trim((string) ($row['project_status'] ?? $row['launch_status'] ?? '')) ?: null,
+            'configuration' => trim((string) ($row['configuration'] ?? '')) ?: null,
+            'project_area' => trim((string) ($row['project_area'] ?? '')) ?: null,
+            'unit_size_range' => trim((string) ($row['unit_size_range'] ?? '')) ?: null,
+            'amenities' => $this->listFromRow($row['amenities'] ?? []),
+            'nearby_schools' => $this->listFromRow($row['nearby_schools'] ?? []),
+            'nearby_metro' => $this->listFromRow($row['nearby_metro'] ?? []),
+            'nearby_hospitals' => $this->listFromRow($row['nearby_hospitals'] ?? []),
+            'nearby_office_hubs' => $this->listFromRow($row['nearby_office_hubs'] ?? []),
+            'meta_title' => trim((string) ($row['meta_title'] ?? '')) ?: "{$name} Gurgaon - Society Profile",
+            'meta_description' => trim((string) ($row['meta_description'] ?? '')) ?: $this->metaDescriptionFromRow($row, $name, $sector, $locality),
             'status' => 'Draft',
+            'verification_status' => 'needs_verification',
+            'is_published' => false,
+            'published_at' => null,
             'featured' => false,
             'show_in_hero' => false,
             'search_boost' => false,
@@ -134,13 +201,14 @@ class ImportGurgaonMasterSocieties extends Command
             'connectivity_score' => $scores['connectivity'],
             'lifestyle_score' => $scores['lifestyle'],
             'investment_score' => $scores['investment'],
-            'latitude' => $row['latitude'] ? (string) $row['latitude'] : null,
-            'longitude' => $row['longitude'] ? (string) $row['longitude'] : null,
+            'latitude' => ! empty($row['latitude']) ? (string) $row['latitude'] : null,
+            'longitude' => ! empty($row['longitude']) ? (string) $row['longitude'] : null,
             'cover_image' => $safeImage ? $imageUrl : null,
             'gallery_images' => $safeImage ? [$imageUrl] : [],
             'image_reference_url' => trim((string) ($row['image_reference_url'] ?? $row['image_search_url'] ?? '')) ?: null,
             'image_url' => $safeImage ? $imageUrl : null,
             'image_status' => $safeImage ? $imageStatusText : 'placeholder',
+            'image_approved_by_admin' => false,
             'image_alt_text' => trim((string) ($row['image_alt_text'] ?? '')) ?: "{$name} residential society in Gurugram",
             'image_credit' => trim((string) ($row['image_credit'] ?? '')) ?: null,
             'image_license_notes' => trim((string) ($row['image_license_notes'] ?? '')) ?: 'Placeholder only. Do not publish third-party images until licensed, self-shot, or developer-approved.',
@@ -180,7 +248,7 @@ class ImportGurgaonMasterSocieties extends Command
                 'nearby_office_hubs' => null,
             ];
 
-            if (!$row['latitude'] || !$row['longitude']) {
+            if (empty($row['latitude']) || empty($row['longitude'])) {
                 $payload['latitude'] = null;
                 $payload['longitude'] = null;
             }
@@ -189,8 +257,68 @@ class ImportGurgaonMasterSocieties extends Command
         return $payload;
     }
 
+    /** @return array<int, string> */
+    private function listFromRow(mixed $value): array
+    {
+        if (is_string($value)) {
+            $value = preg_split('/[|,;\n]+/', $value) ?: [];
+        }
+
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            fn ($item) => trim((string) $item),
+            $value,
+        ))));
+    }
+
     /**
-     * @param array<string, mixed> $row
+     * Match conservatively by slug, or by normalized name plus sector/locality.
+     * Existing records are always skipped; imports never overwrite reviewed data.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function findDuplicate(array $payload): ?Society
+    {
+        $name = mb_strtolower(trim((string) $payload['name']));
+        $sector = mb_strtolower(trim((string) ($payload['sector'] ?? '')));
+        $locality = mb_strtolower(trim((string) ($payload['locality'] ?? '')));
+
+        return Society::query()
+            ->where('slug', $payload['slug'])
+            ->orWhere(function ($query) use ($name, $sector, $locality) {
+                $query->whereRaw('LOWER(name) = ?', [$name]);
+
+                if ($sector !== '' || $locality !== '') {
+                    $query->where(function ($location) use ($sector, $locality) {
+                        if ($sector !== '') {
+                            $location->orWhereRaw('LOWER(COALESCE(sector, ?)) = ?', ['', $sector]);
+                        }
+
+                        if ($locality !== '') {
+                            $location->orWhereRaw('LOWER(COALESCE(locality, ?)) = ?', ['', $locality]);
+                        }
+                    });
+                }
+            })
+            ->first();
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function importIdentityKey(array $payload): string
+    {
+        return implode('|', [
+            mb_strtolower(trim((string) $payload['slug'])),
+            mb_strtolower(trim((string) $payload['name'])),
+            mb_strtolower(trim((string) ($payload['sector'] ?? ''))),
+            mb_strtolower(trim((string) ($payload['locality'] ?? ''))),
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
      */
     private function descriptionFromRow(array $row, string $name, ?string $sector, string $locality): string
     {
@@ -211,7 +339,7 @@ class ImportGurgaonMasterSocieties extends Command
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param  array<string, mixed>  $row
      */
     private function metaDescriptionFromRow(array $row, string $name, ?string $sector, string $locality): string
     {
@@ -223,7 +351,7 @@ class ImportGurgaonMasterSocieties extends Command
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param  array<string, mixed>  $row
      * @return array<string, float>
      */
     private function scoresFromRow(array $row, ?string $sector, string $locality): array
@@ -264,7 +392,7 @@ class ImportGurgaonMasterSocieties extends Command
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param  array<string, mixed>  $row
      */
     private function looksCommercial(array $row): bool
     {

@@ -16,7 +16,10 @@ class PropertyController extends Controller
         $q = Property::query()->with(['society', 'sourceLead']);
 
         if (!$this->isAdminRequest($request)) {
-            $q->where('status', 'Live');
+            $q->where('status', 'Live')
+                ->whereHas('society', fn ($society) => $society
+                    ->where('is_published', true)
+                    ->whereIn('status', ['Verified', 'Premium']));
         }
 
         if ($request->filled('q')) {
@@ -48,7 +51,10 @@ class PropertyController extends Controller
         $query = Property::with(['society', 'sourceLead']);
 
         if (!$this->isAdminRequest($request)) {
-            $query->where('status', 'Live');
+            $query->where('status', 'Live')
+                ->whereHas('society', fn ($society) => $society
+                    ->where('is_published', true)
+                    ->whereIn('status', ['Verified', 'Premium']));
         }
 
     if (is_numeric($idOrSlug)) {

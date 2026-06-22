@@ -30,8 +30,9 @@ class ImportGurgaonReraSocieties extends Command
             ->withHeaders(['User-Agent' => 'SocietyFlats draft importer (+https://societyflats.com)'])
             ->get($source);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             $this->error("Import source returned HTTP {$response->status()}.");
+
             return self::FAILURE;
         }
 
@@ -41,47 +42,88 @@ class ImportGurgaonReraSocieties extends Command
             $records = array_slice($records, 0, $limit);
         }
 
-        if (!$records) {
+        if (! $records) {
             $this->warn('No Gurgaon RERA records found.');
+
             return self::SUCCESS;
         }
 
         $created = 0;
-        $updated = 0;
+        $skipped = 0;
+        $failed = 0;
 
         foreach ($records as $record) {
+            $existing = Society::query()
+                ->where('slug', $record['slug'])
+                ->orWhere(function ($query) use ($record) {
+                    $query->whereRaw('LOWER(name) = ?', [mb_strtolower($record['name'])]);
+
+                    if (! empty($record['sector']) || ! empty($record['locality'])) {
+                        $query->where(function ($location) use ($record) {
+                            if (! empty($record['sector'])) {
+                                $location->orWhereRaw('LOWER(COALESCE(sector, ?)) = ?', ['', mb_strtolower($record['sector'])]);
+                            }
+
+                            if (! empty($record['locality'])) {
+                                $location->orWhereRaw('LOWER(COALESCE(locality, ?)) = ?', ['', mb_strtolower($record['locality'])]);
+                            }
+                        });
+                    }
+                })
+                ->first();
+
+            if ($existing) {
+                $skipped++;
+                $this->warn("Skipped duplicate: {$record['name']} matches society ID {$existing->id}.");
+
+                continue;
+            }
+
             if ($dryRun) {
+                $created++;
                 $this->line(sprintf(
                     '- %s | %s | %s',
                     $record['name'],
                     $record['builder'] ?: 'builder unknown',
                     $record['source_url']
                 ));
+
                 continue;
             }
 
-            $society = Society::updateOrCreate(
-                ['slug' => $record['slug']],
-                $record + [
+            try {
+                Society::create($record + [
                     'status' => 'Draft',
+                    'verification_status' => 'needs_verification',
+                    'is_published' => false,
+                    'published_at' => null,
                     'featured' => false,
                     'show_in_hero' => false,
                     'search_boost' => false,
+                    'image_approved_by_admin' => false,
                     'score' => 8.0,
                     'data_quality' => 'Imported draft - verify before publishing',
                     'imported_at' => now(),
-                ],
-            );
-
-            $society->wasRecentlyCreated ? $created++ : $updated++;
+                ]);
+                $created++;
+            } catch (\Throwable $exception) {
+                $failed++;
+                $this->error("Failed {$record['name']}: {$exception->getMessage()}");
+            }
         }
 
-        $this->info($dryRun
-            ? 'Dry run complete. Found '.count($records).' records.'
-            : "Import complete. Created {$created}, updated {$updated} draft societies."
-        );
+        $summary = [
+            'mode' => $dryRun ? 'dry-run' : 'import',
+            'total_rows' => count($records),
+            $dryRun ? 'would_create' : 'created' => $created,
+            'skipped_duplicates' => $skipped,
+            'failed' => $failed,
+        ];
 
-        return self::SUCCESS;
+        $this->info($dryRun ? 'Dry run complete. No database rows were written.' : 'RERA draft import complete.');
+        $this->line('SUMMARY '.json_encode($summary, JSON_UNESCAPED_SLASHES));
+
+        return $failed > 0 ? self::FAILURE : self::SUCCESS;
     }
 
     /**
@@ -90,7 +132,7 @@ class ImportGurgaonReraSocieties extends Command
     private function parseDirectory(string $html, string $source, bool $includeCommercial): array
     {
         $previous = libxml_use_internal_errors(true);
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         $dom->loadHTML($html);
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
@@ -103,7 +145,7 @@ class ImportGurgaonReraSocieties extends Command
             $href = trim((string) $anchor->getAttribute('href'));
             $text = $this->cleanText((string) $anchor->textContent);
 
-            if (!$href || !$text || $href === '/rera/haryana/gurgaon' || $href === '/rera/haryana/gurgaon/') {
+            if (! $href || ! $text || $href === '/rera/haryana/gurgaon' || $href === '/rera/haryana/gurgaon/') {
                 continue;
             }
 
@@ -114,11 +156,11 @@ class ImportGurgaonReraSocieties extends Command
             $location = $this->locationFromText($text);
             $reraNumber = $this->reraNumberFromText($text);
 
-            if (!$includeCommercial && $this->looksCommercial($name, $text)) {
+            if (! $includeCommercial && $this->looksCommercial($name, $text)) {
                 continue;
             }
 
-            if (!$name || isset($records[$slug])) {
+            if (! $name || isset($records[$slug])) {
                 continue;
             }
 

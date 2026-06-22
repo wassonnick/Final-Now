@@ -13,7 +13,8 @@ class SocietyController extends Controller {
   public function index(Request $request): JsonResponse {
     $query=Society::query();
     if (!$request->is('api/admin/*')) {
-      $query->whereIn('status', ['Verified', 'Premium']);
+      $query->where('is_published', true)
+        ->whereIn('status', ['Verified', 'Premium']);
     }
     if($request->filled('q')){ $q=$request->string('q'); $query->where(fn($b)=>$b->where('name','ilike',"%{$q}%")->orWhere('locality','ilike',"%{$q}%")->orWhere('sector','ilike',"%{$q}%")->orWhere('builder','ilike',"%{$q}%")); }
     if($request->boolean('featured')) $query->where('featured',true);
@@ -26,7 +27,7 @@ class SocietyController extends Controller {
       ->when(is_numeric($idOrSlug), fn ($query) => $query->where('id', $idOrSlug), fn ($query) => $query->where('slug', $idOrSlug))
       ->first();
 
-    if (!$society || !in_array($society->status, ['Verified', 'Premium'], true)) {
+    if (!$society || !$society->is_published || !in_array($society->status, ['Verified', 'Premium'], true)) {
       return response()->json(['status' => 'error', 'message' => 'Society not found'], 404);
     }
 
@@ -51,11 +52,16 @@ class SocietyController extends Controller {
 
   public function show(string $idOrSlug): JsonResponse
 {
-    $society = Society::with('properties')
+    $isAdmin = request()->is('api/admin/*');
+    $properties = $isAdmin
+        ? fn ($query) => $query
+        : fn ($query) => $query->where('status', 'Live');
+
+    $society = Society::with(['properties' => $properties])
         ->when(is_numeric($idOrSlug), fn ($query) => $query->where('id', $idOrSlug), fn ($query) => $query->where('slug', $idOrSlug))
         ->first();
 
-    if (!$society || (!request()->is('api/admin/*') && !in_array($society->status, ['Verified', 'Premium'], true))) {
+    if (!$society || (!$isAdmin && (!$society->is_published || !in_array($society->status, ['Verified', 'Premium'], true)))) {
         return response()->json([
             'status' => 'error',
             'message' => 'Society not found',

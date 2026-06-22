@@ -479,6 +479,7 @@ class SocietyImportService
             'status' => 'Draft',
             'verification_status' => 'Needs Review',
             'is_published' => false,
+            'published_at' => null,
             'featured' => false,
             'show_in_hero' => false,
             'search_boost' => false,
@@ -620,6 +621,7 @@ class SocietyImportService
         $base['status'] = 'Draft';
         $base['verification_status'] = 'Needs Review';
         $base['is_published'] = false;
+        $base['published_at'] = null;
 
         return $base;
     }
