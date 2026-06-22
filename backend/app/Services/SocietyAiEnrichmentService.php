@@ -78,10 +78,10 @@ class SocietyAiEnrichmentService
                             ]],
                         ]],
                         'tools' => $useSearchGrounding ? [['google_search' => (object) []]] : null,
-                        'generationConfig' => [
+                        'generationConfig' => array_filter([
                             'temperature' => 0.2,
-                            'responseMimeType' => 'application/json',
-                        ],
+                            'responseMimeType' => $useSearchGrounding ? null : 'application/json',
+                        ], fn ($value) => $value !== null),
                     ], fn ($value) => $value !== null));
 
                 if ($response->successful()) {
