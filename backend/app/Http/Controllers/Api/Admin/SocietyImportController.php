@@ -254,6 +254,19 @@ class SocietyImportController extends Controller
         return response()->json(['message' => 'Image approved. It can display only after the society itself is published.', 'data' => $society->fresh()]);
     }
 
+    public function reEnrich(Request $request, Society $society): JsonResponse
+    {
+        try {
+            $draft = $this->service->reEnrichDraft($society, $request->boolean('include_images', true));
+        } catch (\InvalidArgumentException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        } catch (\Throwable $exception) {
+            return response()->json(['message' => 'Gemini could not complete draft re-enrichment.', 'detail' => $exception->getMessage()], 422);
+        }
+
+        return response()->json(['message' => 'Draft re-enriched with grounded Gemini data. Review every field before publishing.', 'data' => $draft]);
+    }
+
     private function isDirectImageUrl(string $url): bool
     {
         if (! filter_var($url, FILTER_VALIDATE_URL) || ! preg_match('/^https?:\/\//i', $url)) {

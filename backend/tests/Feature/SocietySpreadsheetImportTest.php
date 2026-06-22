@@ -53,7 +53,7 @@ class SocietySpreadsheetImportTest extends TestCase
             $payload = $request->data();
             $this->assertArrayHasKey('google_search', $payload['tools'][0]);
 
-            return Http::response(['candidates' => [['content' => ['parts' => [['text' => json_encode(['name' => 'Image Heights', 'city' => 'Gurugram', 'image_url' => 'https://developer.example.com/image-heights.jpg', 'image_status' => 'needs_review', 'image_credit' => 'Official developer', 'source_confidence_score' => 75, 'fields_to_verify' => ['image_rights']])]]]]]]);
+            return Http::response(['candidates' => [['content' => ['parts' => [['text' => json_encode(['name' => 'Image Heights', 'city' => 'Gurugram', 'description' => 'A sufficiently detailed grounded society description for admin review.', 'project_area' => '20 acres', 'configuration' => '3 and 4 BHK', 'total_towers' => '12', 'total_units' => '800', 'rent_range' => '₹50,000 - ₹80,000', 'buy_range' => '₹3 Cr - ₹5 Cr', 'nearby_schools' => ['Example School - 2 km'], 'nearby_hospitals' => ['Example Hospital - 3 km'], 'nearby_metro' => ['Example Metro - 5 km'], 'nearby_office_hubs' => ['Cyber City - 20 km'], 'official_project_url' => 'https://developer.example.com/image-heights', 'official_developer_url' => 'https://developer.example.com', 'image_url' => 'https://developer.example.com/image-heights.jpg', 'image_status' => 'needs_review', 'image_credit' => 'Official developer', 'source_confidence_score' => 75, 'fields_to_verify' => ['image_rights']])]]]]]]);
         });
         $csv = "society_name,city,builder\nImage Heights,Gurugram,Example Builder\n";
         $file = UploadedFile::fake()->createWithContent('images.csv', $csv);
@@ -62,9 +62,20 @@ class SocietySpreadsheetImportTest extends TestCase
         $society = Society::where('name', 'Image Heights')->firstOrFail();
         $this->assertFalse((bool) $society->image_approved_by_admin);
         $this->assertSame('needs_review', $society->image_status);
+        $this->assertSame('20 acres', $society->project_area);
+        $this->assertSame(['Example School - 2 km'], $society->nearby_schools);
+        $this->assertSame('https://developer.example.com/image-heights', $society->official_project_url);
         $this->withToken('admin-test-token')->patchJson("/api/admin/import/societies/{$society->id}/image", ['decision' => 'approve', 'rights_confirmed' => false])->assertUnprocessable();
         $this->withToken('admin-test-token')->patchJson("/api/admin/import/societies/{$society->id}/image", ['decision' => 'approve', 'rights_confirmed' => true])->assertOk()->assertJsonPath('data.image_status', 'approved_for_live')->assertJsonPath('data.image_approved_by_admin', true);
         $this->getJson('/api/societies')->assertOk()->assertJsonPath('data.total', 0);
+    }
+
+    public function test_sparse_imported_draft_can_be_re_enriched_without_becoming_public(): void
+    {
+        config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'test-model']);
+        $society = Society::create(['name' => 'Sparse Society', 'slug' => 'sparse-society', 'builder' => 'Known Builder', 'city' => 'Gurugram', 'status' => 'Draft', 'verification_status' => 'Needs Review', 'is_published' => false, 'imported_at' => now(), 'description' => 'Basic draft']);
+        Http::fake(fn () => Http::response(['candidates' => [['content' => ['parts' => [['text' => json_encode(['name' => 'Sparse Society', 'description' => 'A complete grounded description with project and location intelligence.', 'sector' => 'Sector 70', 'project_area' => '10 acres', 'total_towers' => '8', 'total_units' => '500', 'rent_range' => '₹40,000 - ₹60,000', 'buy_range' => '₹2 Cr - ₹3 Cr', 'nearby_schools' => ['School A'], 'nearby_metro' => ['Metro A'], 'nearby_hospitals' => ['Hospital A'], 'nearby_office_hubs' => ['Office A'], 'official_project_url' => 'https://builder.example.com/project', 'meta_title' => 'Sparse Society Gurgaon', 'meta_description' => 'Grounded project profile.', 'source_confidence_score' => 90])]]]]]]));
+        $this->withToken('admin-test-token')->postJson("/api/admin/import/societies/{$society->id}/re-enrich", ['include_images' => false])->assertOk()->assertJsonPath('data.project_area', '10 acres')->assertJsonPath('data.status', 'Draft')->assertJsonPath('data.is_published', false)->assertJsonPath('data.builder', 'Known Builder');
     }
 
     public function test_google_places_photo_requires_explicit_admin_display_approval(): void

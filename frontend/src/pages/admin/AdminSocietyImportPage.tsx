@@ -150,6 +150,7 @@ export function AdminSocietyImportPage() {
   const [spreadsheet, setSpreadsheet] = useState<File | null>(null);
   const [includeImages, setIncludeImages] = useState(true);
   const [confirmedImageRights, setConfirmedImageRights] = useState<number[]>([]);
+  const [reenrichingId, setReenrichingId] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [source, setSource] = useState("MagicBricks");
@@ -338,6 +339,17 @@ export function AdminSocietyImportPage() {
       setJobs((current) => current.map((job) => ({ ...job, results: job.results?.map((item) => item.id === result.id ? { ...item, image_reference_url: society.image_reference_url, image_url: society.image_url, image_status: society.image_status, image_credit: society.image_credit, image_approved_by_admin: Boolean(society.image_approved_by_admin) } : item) })));
       setNotice(json?.message || "Image review saved.");
     } catch (err) { setError(err instanceof Error ? err.message : "Could not review image."); }
+  }
+
+  async function reEnrich(result: ImportResult) {
+    if (!result.id) return;
+    setError(""); setNotice(""); setReenrichingId(result.id);
+    try {
+      const response = await adminFetch(`/admin/import/societies/${result.id}/re-enrich`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ include_images: includeImages }) });
+      const json = await parseResponse(response);
+      setNotice(json?.message || "Draft re-enriched.");
+    } catch (err) { setError(err instanceof Error ? err.message : "Could not re-enrich draft."); }
+    finally { setReenrichingId(null); }
   }
 
   function toggleSuggestion(name: string) {
@@ -682,7 +694,7 @@ export function AdminSocietyImportPage() {
                   return <article key={`image-${result.id}`} className="rounded-2xl border border-white/10 bg-white/10 p-3 text-white">
                     {canApprove ? <img src={candidate} alt={`${result.name || "Society"} candidate`} className="h-32 w-full rounded-xl object-cover" /> : null}
                     <p className="mt-2 text-sm font-black">{result.name}</p><p className="mt-1 text-xs text-slate-300">{result.image_credit || result.image_status || "Needs review"}</p>
-                    <div className="mt-3 flex flex-wrap gap-2"><a href={candidate} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1.5 text-xs font-bold">Open reference <ExternalLink className="h-3 w-3" /></a>{canApprove && !result.image_approved_by_admin ? <><label className="flex items-center gap-1 text-[11px] text-slate-200"><input type="checkbox" checked={confirmedImageRights.includes(Number(result.id))} onChange={() => setConfirmedImageRights((items) => items.includes(Number(result.id)) ? items.filter((id) => id !== Number(result.id)) : [...items, Number(result.id)])} /> Rights confirmed</label><button type="button" onClick={() => void reviewImage(result, "approve")} className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-black">Approve</button></> : null}<button type="button" onClick={() => void reviewImage(result, "reject")} className="rounded-full bg-rose-600/80 px-3 py-1.5 text-xs font-black">Reject</button></div>
+                    <div className="mt-3 flex flex-wrap gap-2"><a href={candidate} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1.5 text-xs font-bold">Open reference <ExternalLink className="h-3 w-3" /></a><button type="button" disabled={reenrichingId === result.id} onClick={() => void reEnrich(result)} className="rounded-full bg-blue-600 px-3 py-1.5 text-xs font-black">{reenrichingId === result.id ? "Researching…" : "Re-enrich fields"}</button>{canApprove && !result.image_approved_by_admin ? <><label className="flex items-center gap-1 text-[11px] text-slate-200"><input type="checkbox" checked={confirmedImageRights.includes(Number(result.id))} onChange={() => setConfirmedImageRights((items) => items.includes(Number(result.id)) ? items.filter((id) => id !== Number(result.id)) : [...items, Number(result.id)])} /> Rights confirmed</label><button type="button" onClick={() => void reviewImage(result, "approve")} className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-black">Approve</button></> : null}<button type="button" onClick={() => void reviewImage(result, "reject")} className="rounded-full bg-rose-600/80 px-3 py-1.5 text-xs font-black">Reject</button></div>
                     {!canApprove ? <p className="mt-2 text-[11px] leading-4 text-amber-200">Reference/page links cannot be approved as direct images. Review them, then add a licensed direct image in the society editor.</p> : result.image_status === "google_places_reference_found" ? <p className="mt-2 text-[11px] leading-4 text-blue-200">Approval confirms Google attribution and display terms; it does not mark the photo as owned.</p> : null}
                   </article>;
                 })}
@@ -767,14 +779,14 @@ export function AdminSocietyImportPage() {
                               {result.name || "Society"}
                             </span>
                             {result.edit_url ? (
-                              <RouterLink
+                              <span className="flex items-center gap-2"><button type="button" disabled={reenrichingId === result.id} onClick={(event) => { event.stopPropagation(); void reEnrich(result); }} className="font-black text-violet-700">{reenrichingId === result.id ? "Researching…" : "Re-enrich"}</button><RouterLink
                                 to={result.edit_url}
                                 className="inline-flex items-center gap-1 font-black text-blue-700"
                                 onClick={(event) => event.stopPropagation()}
                               >
                                 Edit
                                 <ExternalLink className="h-3 w-3" />
-                              </RouterLink>
+                              </RouterLink></span>
                             ) : (
                               <span className="font-bold text-slate-400">{result.status}</span>
                             )}

@@ -28,6 +28,7 @@ The document repeatedly labels features “BUILT & DEPLOYED”, but several are 
 - AI chat: server-side Gemini conversation proxy, published-inventory grounding, private expiring conversation tokens, rate limiting and safe provider/no-inventory fallbacks.
 - Gemini spreadsheet importer: admin `.xlsx`/`.csv` upload, validated identity columns, 200-row queue, one-at-a-time AI enrichment, duplicate summaries and forced draft/unpublished output.
 - Import image review: optional Gemini Google Search grounding plus Google Places references, private candidate queue, direct-image rights confirmation and explicit admin approve/reject controls.
+- Complete-draft enrichment: grounded spreadsheet research across project metrics, market ranges, nearby intelligence and official URLs, measured completeness/confidence, plus in-place re-enrichment for sparse unpublished imports.
 
 ## Partially implemented
 

@@ -30,7 +30,7 @@ class SocietyAiEnrichmentService
         ];
     }
 
-    public function enrichSociety(string $name, string $context = '', string $source = '', bool $findImageCandidate = false): array
+    public function enrichSociety(string $name, string $context = '', string $source = '', bool $findImageCandidate = false, bool $useSearchGrounding = false): array
     {
         if (! $this->isAvailable()) {
             return [];
@@ -40,10 +40,10 @@ class SocietyAiEnrichmentService
             return [];
         }
 
-        return $this->enrichWithGemini($name, $context, $source, $findImageCandidate);
+        return $this->enrichWithGemini($name, $context, $source, $findImageCandidate, $useSearchGrounding);
     }
 
-    private function enrichWithGemini(string $name, string $context = '', string $source = '', bool $findImageCandidate = false): array
+    private function enrichWithGemini(string $name, string $context = '', string $source = '', bool $findImageCandidate = false, bool $useSearchGrounding = false): array
     {
         $apiKey = trim((string) config('services.gemini.api_key', ''));
         $model = trim((string) config('services.gemini.model', 'gemini-2.0-flash')) ?: 'gemini-2.0-flash';
@@ -77,7 +77,7 @@ class SocietyAiEnrichmentService
                                 'text' => $prompt,
                             ]],
                         ]],
-                        'tools' => $findImageCandidate ? [['google_search' => (object) []]] : null,
+                        'tools' => $useSearchGrounding ? [['google_search' => (object) []]] : null,
                         'generationConfig' => [
                             'temperature' => 0.2,
                             'responseMimeType' => 'application/json',
@@ -114,7 +114,15 @@ class SocietyAiEnrichmentService
                 ];
             }
 
-            return $this->parseJson($text);
+            $data = $this->parseJson($text);
+            $sources = collect(data_get($response->json(), 'candidates.0.groundingMetadata.groundingChunks', []))
+                ->map(fn ($chunk) => ['title' => data_get($chunk, 'web.title'), 'url' => data_get($chunk, 'web.uri')])
+                ->filter(fn ($source) => $source['url'])->unique('url')->values()->all();
+            if ($sources !== []) {
+                $data['grounding_sources'] = $sources;
+            }
+
+            return $data;
         } catch (\Throwable $e) {
             return [
                 '_ai_error' => $e->getMessage(),
@@ -183,6 +191,9 @@ Schema:
   "latitude": number or null,
   "longitude": number or null,
   "google_maps_url": "string or null",
+  "official_project_url": "official developer project page URL or null",
+  "official_developer_url": "official developer home page URL or null",
+  "official_gallery_url": "official project gallery URL or null",
   "image_reference_url": "official/source image URL if visible in source text, otherwise null",
   "image_url": "direct official/source image URL only if clearly available, otherwise null",
   "image_status": "needs_review | official_reference_found | placeholder | null",
@@ -207,6 +218,8 @@ Rules:
 - Scores: use differentiated one-decimal category scores. Do not return the same default score for every category unless strongly justified. Consider builder reputation, sector/locality, connectivity, lifestyle amenities, maintenance, security, and resale/rental demand.
 - Images: do not invent copyrighted image URLs. If an official/source image URL is visible in the supplied source text, return it as image_reference_url or image_url and mark image_status as needs_review or official_reference_found. Otherwise return null so the importer can create an admin review reference.
 - Image candidate mode: {$imageInstruction}
+- Search every major category before returning null. Populate project area, configurations, towers, units, market ranges, coordinates, nearby schools, hospitals, commute links, office hubs, official URLs and SEO whenever grounded evidence exists.
+- Do not return a generic basic profile when search grounding is available. Use null only after the searched sources do not support the field.
 - Prices/rent ranges can be broad market ranges but mark fields_to_verify.
 - Keep all output review-first, not publicly guaranteed.
 - If unsure, use null and add the field to fields_to_verify.

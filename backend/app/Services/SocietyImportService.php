@@ -95,6 +95,33 @@ class SocietyImportService
         return $items;
     }
 
+    public function reEnrichDraft(Society $society, bool $includeImages = true): Society
+    {
+        if ($society->is_published || ! $society->imported_at) {
+            throw new \InvalidArgumentException('Only unpublished imported drafts can be re-enriched.');
+        }
+        $identity = $society->only(['name', 'slug', 'builder', 'sector', 'locality', 'city', 'state', 'google_maps_url']);
+        $context = "Existing draft. Research and fill every missing or placeholder field while preserving the supplied identity fields:\n".json_encode($society->only($society->getFillable()), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $aiData = $this->ai->enrichSociety($society->name, $context, 'Gemini Draft Re-enrichment', $includeImages, true);
+        if ($aiData === [] || ! empty($aiData['_ai_error'])) {
+            throw new \RuntimeException((string) ($aiData['_ai_error'] ?? 'Gemini enrichment is unavailable.'));
+        }
+        $merged = $this->mergeAiDraftData($society->only($society->getFillable()), $aiData, $society->name);
+        foreach ($identity as $field => $value) {
+            if ($value !== null && $value !== '') {
+                $merged[$field] = $value;
+            }
+        }
+        $merged['status'] = 'Draft';
+        $merged['verification_status'] = 'Needs Review';
+        $merged['is_published'] = false;
+        $merged['published_at'] = null;
+        $merged['image_approved_by_admin'] = false;
+        $society->update($merged);
+
+        return $society->fresh();
+    }
+
     private function processSingleNameJob(SocietyImportJob $job): SocietyImportJob
     {
         if (! empty($job->results)) {
@@ -319,7 +346,7 @@ class SocietyImportService
 
         $context = $seed === [] ? '' : "Admin-provided spreadsheet identity fields (treat these as authoritative):\n".json_encode(array_intersect_key($seed, array_flip(['society_name', 'city', 'sector', 'locality', 'builder', 'google_maps_url'])), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $includeImages = (bool) ($seed['include_images'] ?? false);
-        $aiData = $this->ai->enrichSociety($name, $context, $source, $includeImages);
+        $aiData = $this->ai->enrichSociety($name, $context, $source, $includeImages, $seed !== []);
 
         if (! empty($aiData['_ai_error']) && $this->ai->isAvailable()) {
             $message = ! empty($aiData['_ai_quota_limited'])
@@ -624,6 +651,10 @@ class SocietyImportService
             'meta_title',
             'meta_description',
             'data_quality',
+            'official_project_url',
+            'official_developer_url',
+            'official_gallery_url',
+            'official_source_url',
         ];
 
         foreach ($stringFields as $field) {
@@ -676,6 +707,11 @@ class SocietyImportService
             $base['source_confidence_score'] = $confidence;
         }
 
+        $groundingSources = collect($aiData['grounding_sources'] ?? [])->filter(fn ($source) => is_array($source) && ! empty($source['url']))->take(12)->map(fn ($source) => trim((string) ($source['title'] ?? 'Source')).': '.trim((string) $source['url']))->all();
+        if ($groundingSources !== []) {
+            $base['official_source_notes'] = 'Gemini grounded sources (admin verification required): '.implode(' | ', $groundingSources);
+        }
+
         $latitude = $this->cleanAiFloat($aiData['latitude'] ?? null);
         $longitude = $this->cleanAiFloat($aiData['longitude'] ?? null);
 
@@ -688,6 +724,7 @@ class SocietyImportService
 
         $this->completeImportDraftMetadata($base);
         $this->strengthenImportScores($base);
+        $this->applyImportCompleteness($base);
 
         if (! empty($aiData['name']) && is_string($aiData['name'])) {
             $cleanName = trim($aiData['name']);
@@ -704,6 +741,15 @@ class SocietyImportService
         $base['published_at'] = null;
 
         return $base;
+    }
+
+    private function applyImportCompleteness(array &$base): void
+    {
+        $fields = ['builder', 'sector', 'locality', 'address', 'description', 'project_status', 'configuration', 'project_area', 'unit_size_range', 'total_towers', 'total_units', 'rent_range', 'buy_range', 'rental_yield', 'average_rent', 'average_sale_price', 'price_per_sqft', 'amenities', 'nearby_schools', 'nearby_metro', 'nearby_hospitals', 'nearby_office_hubs', 'latitude', 'longitude', 'official_project_url', 'meta_title', 'meta_description'];
+        $complete = collect($fields)->filter(fn ($field) => isset($base[$field]) && $base[$field] !== null && $base[$field] !== '' && $base[$field] !== [] && ! in_array($base[$field], ['To be verified', 'Needs Review'], true))->count();
+        $percent = (int) round(($complete / count($fields)) * 100);
+        $base['source_confidence_score'] = min((int) ($base['source_confidence_score'] ?? $percent), max(35, $percent));
+        $base['data_quality'] = "AI grounded draft {$percent}% complete - admin verification required";
     }
 
     private function cleanAiString(mixed $value): ?string
