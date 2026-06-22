@@ -40,4 +40,9 @@ class Account extends Model
     {
         return $this->hasMany(SavedSearch::class);
     }
+
+    public function builderClaims(): HasMany
+    {
+        return $this->hasMany(BuilderClaim::class);
+    }
 }

@@ -33,6 +33,7 @@ const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((module) => 
 const SiteVisitConfirmationPage = lazy(() => import('@/pages/SiteVisitConfirmationPage').then((module) => ({ default: module.SiteVisitConfirmationPage })));
 const InvestmentCalculatorPage = lazy(() => import('@/pages/InvestmentCalculatorPage').then((module) => ({ default: module.InvestmentCalculatorPage })));
 const BuilderFloorsPage = lazy(() => import('@/pages/BuilderFloorsPage').then((module) => ({ default: module.BuilderFloorsPage })));
+const BuilderPortalPage = lazy(() => import('@/pages/BuilderPortalPage').then((module) => ({ default: module.BuilderPortalPage })));
 
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage').then((module) => ({ default: module.AdminLoginPage })));
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })));
@@ -49,6 +50,8 @@ const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage').then((m
 const AdminSettingsPage = lazy(() => import('@/pages/admin/AdminSettingsPage').then((module) => ({ default: module.AdminSettingsPage })));
 const AdminFeatureHubPage = lazy(() => import('@/pages/admin/AdminFeatureHubPage').then((module) => ({ default: module.AdminFeatureHubPage })));
 const AdminSiteVisitsPage = lazy(() => import('@/pages/admin/AdminSiteVisitsPage').then((module) => ({ default: module.AdminSiteVisitsPage })));
+const AdminRentHistoryPage = lazy(() => import('@/pages/admin/AdminRentHistoryPage').then((module) => ({ default: module.AdminRentHistoryPage })));
+const AdminBuilderPortalPage = lazy(() => import('@/pages/admin/AdminBuilderPortalPage').then((module) => ({ default: module.AdminBuilderPortalPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -141,6 +144,7 @@ function AppShell() {
             <Route path="/visit/:token" element={<SiteVisitConfirmationPage />} />
             <Route path="/investment-calculator" element={<InvestmentCalculatorPage />} />
             <Route path="/builder-floors" element={<BuilderFloorsPage />} />
+            <Route path="/builder-portal" element={<BuilderPortalPage />} />
 
             {/* Admin */}
             <Route
@@ -185,6 +189,8 @@ function AppShell() {
             <Route path="/admin/reviews" element={<ProtectedAdminRoute><AdminReviewsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsersPage /></ProtectedAdminRoute>} />
             <Route path="/admin/site-visits" element={<ProtectedAdminRoute><AdminSiteVisitsPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/rent-history" element={<ProtectedAdminRoute><AdminRentHistoryPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/builder-portal" element={<ProtectedAdminRoute><AdminBuilderPortalPage /></ProtectedAdminRoute>} />
             <Route path="/admin/ai" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="ai" /></ProtectedAdminRoute>} />
             <Route path="/admin/maps" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="maps" /></ProtectedAdminRoute>} />
             <Route path="/admin/broker-crm" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="broker-crm" /></ProtectedAdminRoute>} />

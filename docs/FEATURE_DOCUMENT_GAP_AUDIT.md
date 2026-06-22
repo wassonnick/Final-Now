@@ -21,6 +21,8 @@ The document repeatedly labels features “BUILT & DEPLOYED”, but several are 
 - Site visits: admin slot proposals, private visitor confirmation, lead follow-up synchronization, reminders and completion/cancellation tracking.
 - Investment intelligence: gross/net yield, payback, multi-year value/rent projection, total ROI, CAGR, live society ranking and locality reference ranges.
 - Builder-floor discovery: dedicated SEO page, live builder-floor inventory, apartment comparison and due-diligence guidance.
+- Rent intelligence: source-backed snapshots, draft/verify admin controls, published-society chart and verified trend API. Scheduled scraping remains excluded until a source is approved.
+- Builder/RWA portal: OTP-account society claims, admin verification, moderated announcements and approved-only public updates.
 
 ## Partially implemented
 
@@ -36,9 +38,9 @@ The document repeatedly labels features “BUILT & DEPLOYED”, but several are 
 - Razorpay order creation, signature verification, payment plans and payment ledger.
 - AI chat proxy with a conversational provider; the current chat surface submits leads/callback requests.
 - Scheduled daily saved-search matching and outbound alert delivery.
-- Weekly rent scraping, rent-history storage and 12-month charts.
+- Scheduled weekly rent collection from an approved/licensed data source.
 - AI rental-agreement drafting and PDF workflow.
-- Builder/RWA claims, announcements, review responses and official-document portal.
+- Builder/RWA review responses and private official-document storage.
 - Tenant document verification, scoring tiers and shareable verification profiles.
 - Email/password customer authentication and a global React AuthContext; the active implementation is OTP/account-token based.
 

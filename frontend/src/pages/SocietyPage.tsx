@@ -33,6 +33,8 @@ import { cn } from "@/lib/utils";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { SocietyNearbyGoogleMap } from "@/components/maps/SocietyNearbyGoogleMap";
 import { ResidentReviews } from "@/components/society/ResidentReviews";
+import { RentHistoryChart } from "@/components/society/RentHistoryChart";
+import { OfficialAnnouncements } from "@/components/society/OfficialAnnouncements";
 import { Badge } from "@/components/ui/badge";
 import {
   findPublicSociety,
@@ -1550,6 +1552,8 @@ export function SocietyPage() {
             </div>
           </aside>
         </div>
+        <RentHistoryChart societySlug={String(society.slug || slug || "")} />
+        <OfficialAnnouncements societySlug={String(society.slug || slug || "")} />
         <ResidentReviews
           societyId={Number(society.id)}
           societySlug={String(society.slug || slug || "")}

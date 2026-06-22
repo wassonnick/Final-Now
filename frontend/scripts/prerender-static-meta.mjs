@@ -241,6 +241,15 @@ const routeMeta = [
     schemaType: "CollectionPage",
   },
   {
+    path: "/builder-portal",
+    title: "Builder and RWA Portal | SocietyFlats",
+    description:
+      "Claim a published Gurgaon society and submit official updates through the SocietyFlats verification workflow.",
+    priority: "0.5",
+    changefreq: "monthly",
+    schemaType: "WebPage",
+  },
+  {
     path: "/404",
     title: "Page Not Found | SocietyFlats",
     description:
@@ -478,6 +487,7 @@ function staticCrawlLinks() {
     ["/properties", "All verified properties"],
     ["/investment-calculator", "Gurgaon rental yield calculator"],
     ["/builder-floors", "Builder floors in Gurgaon"],
+    ["/builder-portal", "Builder and RWA verification portal"],
   ];
 
   return [
