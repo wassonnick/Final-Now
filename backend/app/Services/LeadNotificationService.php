@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Lead;
+use App\Models\SiteVisit;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -13,7 +14,7 @@ class LeadNotificationService
         $enabled = (bool) config('services.lead_notifications.enabled', false);
         $webhookUrl = trim((string) config('services.lead_notifications.webhook_url', ''));
 
-        if (!$enabled || $webhookUrl === '') {
+        if (! $enabled || $webhookUrl === '') {
             return;
         }
 
@@ -34,7 +35,7 @@ class LeadNotificationService
             'property_title' => $lead->property_title ?: optional($lead->property)->title,
             'property_slug' => $lead->property_slug ?: optional($lead->property)->slug,
             'message' => $lead->message,
-            'admin_url' => rtrim((string) config('services.lead_notifications.admin_base_url', ''), '/') . '/admin/leads/' . $lead->id,
+            'admin_url' => rtrim((string) config('services.lead_notifications.admin_base_url', ''), '/').'/admin/leads/'.$lead->id,
             'whatsapp_text' => $this->formatWhatsAppText($lead),
             'created_at' => optional($lead->created_at)->toISOString(),
         ];
@@ -53,6 +54,45 @@ class LeadNotificationService
         }
     }
 
+    public function notifySiteVisit(SiteVisit $visit, string $event): void
+    {
+        $enabled = (bool) config('services.lead_notifications.enabled', false);
+        $webhookUrl = trim((string) config('services.lead_notifications.webhook_url', ''));
+
+        if (! $enabled || $webhookUrl === '') {
+            return;
+        }
+
+        $visit->loadMissing(['lead', 'society', 'property']);
+        $confirmationUrl = rtrim((string) config('services.lead_notifications.frontend_url', ''), '/').'/visit/'.$visit->confirmation_token;
+
+        $payload = [
+            'event' => $event,
+            'site_visit_id' => $visit->id,
+            'lead_id' => $visit->lead_id,
+            'visitor_name' => $visit->visitor_name,
+            'visitor_phone' => $visit->visitor_phone,
+            'society_name' => optional($visit->society)->name ?: optional($visit->lead)->society_name,
+            'property_title' => optional($visit->property)->title ?: optional($visit->lead)->property_title,
+            'proposed_slots' => $visit->proposed_slots,
+            'selected_slot' => optional($visit->selected_slot)->toISOString(),
+            'confirmation_url' => $confirmationUrl,
+            'message' => $event === 'site_visit_reminder'
+                ? 'Reminder: your SocietyFlats site visit is scheduled for '.optional($visit->selected_slot)->format('d M Y, h:i A').'.'
+                : 'Choose or review your SocietyFlats site visit slot: '.$confirmationUrl,
+        ];
+
+        try {
+            Http::timeout(8)->retry(1, 300)->withHeaders($this->headers())->post($webhookUrl, $payload)->throw();
+        } catch (\Throwable $exception) {
+            Log::warning('Site visit notification failed', [
+                'site_visit_id' => $visit->id,
+                'event' => $event,
+                'message' => $exception->getMessage(),
+            ]);
+        }
+    }
+
     private function headers(): array
     {
         $headers = [
@@ -63,7 +103,7 @@ class LeadNotificationService
         $token = trim((string) config('services.lead_notifications.webhook_token', ''));
 
         if ($token !== '') {
-            $headers['Authorization'] = 'Bearer ' . $token;
+            $headers['Authorization'] = 'Bearer '.$token;
             $headers['X-Webhook-Token'] = $token;
         }
 
@@ -74,21 +114,21 @@ class LeadNotificationService
     {
         $society = $lead->society_name ?: optional($lead->society)->name ?: optional(optional($lead->property)->society)->name ?: 'Not specified';
         $property = $lead->property_title ?: optional($lead->property)->title ?: 'Not specified';
-        $adminUrl = rtrim((string) config('services.lead_notifications.admin_base_url', ''), '/') . '/admin/leads/' . $lead->id;
+        $adminUrl = rtrim((string) config('services.lead_notifications.admin_base_url', ''), '/').'/admin/leads/'.$lead->id;
 
         return implode("\n", array_filter([
             'New SocietyFlats lead',
-            'Name: ' . $lead->name,
-            'Phone: ' . $lead->phone,
-            $lead->email ? 'Email: ' . $lead->email : null,
-            'Requirement: ' . ($lead->requirement ?: 'Not specified'),
-            'Society: ' . $society,
-            'Property: ' . $property,
-            $lead->budget ? 'Budget: ' . $lead->budget : null,
-            'Source: ' . ($lead->source ?: 'Website'),
-            'Priority: ' . ($lead->priority ?: 'Warm'),
-            $lead->message ? 'Message: ' . $lead->message : null,
-            $adminUrl !== '/admin/leads/' . $lead->id ? 'Open lead: ' . $adminUrl : null,
+            'Name: '.$lead->name,
+            'Phone: '.$lead->phone,
+            $lead->email ? 'Email: '.$lead->email : null,
+            'Requirement: '.($lead->requirement ?: 'Not specified'),
+            'Society: '.$society,
+            'Property: '.$property,
+            $lead->budget ? 'Budget: '.$lead->budget : null,
+            'Source: '.($lead->source ?: 'Website'),
+            'Priority: '.($lead->priority ?: 'Warm'),
+            $lead->message ? 'Message: '.$lead->message : null,
+            $adminUrl !== '/admin/leads/'.$lead->id ? 'Open lead: '.$adminUrl : null,
         ]));
     }
 }

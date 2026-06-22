@@ -43,6 +43,7 @@ return [
         'webhook_url' => env('LEAD_NOTIFICATION_WEBHOOK_URL'),
         'webhook_token' => env('LEAD_NOTIFICATION_WEBHOOK_TOKEN'),
         'admin_base_url' => env('ADMIN_FRONTEND_URL', 'https://societyflats.com'),
+        'frontend_url' => env('FRONTEND_URL', 'https://societyflats.com'),
     ],
 
     'otp' => [

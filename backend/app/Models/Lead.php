@@ -61,4 +61,8 @@ class Lead extends Model
         return $this->hasMany(Property::class, 'source_lead_id');
     }
 
+    public function siteVisits(): HasMany
+    {
+        return $this->hasMany(SiteVisit::class);
+    }
 }

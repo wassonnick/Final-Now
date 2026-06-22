@@ -223,6 +223,24 @@ const routeMeta = [
     schemaType: "CollectionPage",
   },
   {
+    path: "/investment-calculator",
+    title: "Rental Yield and ROI Calculator Gurgaon | SocietyFlats",
+    description:
+      "Calculate gross yield, net yield, payback, projected value and CAGR for a Gurgaon property investment.",
+    priority: "0.65",
+    changefreq: "weekly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/builder-floors",
+    title: "Builder Floors in Gurgaon | SocietyFlats",
+    description:
+      "Explore Gurgaon builder floors with apartment comparisons, title-diligence guidance and published inventory.",
+    priority: "0.7",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
     path: "/404",
     title: "Page Not Found | SocietyFlats",
     description:
@@ -458,6 +476,8 @@ function staticCrawlLinks() {
     ["/builder/alpha-corp", "Alpha Corp societies in Gurgaon"],
     ["/societies", "All verified societies"],
     ["/properties", "All verified properties"],
+    ["/investment-calculator", "Gurgaon rental yield calculator"],
+    ["/builder-floors", "Builder floors in Gurgaon"],
   ];
 
   return [

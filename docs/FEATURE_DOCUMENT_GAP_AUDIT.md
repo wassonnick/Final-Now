@@ -18,6 +18,9 @@ The document repeatedly labels features “BUILT & DEPLOYED”, but several are 
 - Saved searches: account-scoped persistence, search-page save action, dashboard management and alert preferences.
 - Enhanced property details: full-screen gallery/lightbox, sale EMI calculator, virtual-tour and floor-plan fields/CTAs.
 - Dormant AI recommendation and rent-estimate controller methods are now routed.
+- Site visits: admin slot proposals, private visitor confirmation, lead follow-up synchronization, reminders and completion/cancellation tracking.
+- Investment intelligence: gross/net yield, payback, multi-year value/rent projection, total ROI, CAGR, live society ranking and locality reference ranges.
+- Builder-floor discovery: dedicated SEO page, live builder-floor inventory, apartment comparison and due-diligence guidance.
 
 ## Partially implemented
 
@@ -33,13 +36,10 @@ The document repeatedly labels features “BUILT & DEPLOYED”, but several are 
 - Razorpay order creation, signature verification, payment plans and payment ledger.
 - AI chat proxy with a conversational provider; the current chat surface submits leads/callback requests.
 - Scheduled daily saved-search matching and outbound alert delivery.
-- Site-visit slot proposals, public confirmation links and reminders.
 - Weekly rent scraping, rent-history storage and 12-month charts.
 - AI rental-agreement drafting and PDF workflow.
 - Builder/RWA claims, announcements, review responses and official-document portal.
 - Tenant document verification, scoring tiers and shareable verification profiles.
-- Dedicated investment/yield dashboard with multi-year CAGR projections and locality benchmarks.
-- Dedicated builder-floor editorial/comparison landing page (builder-floor inventory itself is supported).
 - Email/password customer authentication and a global React AuthContext; the active implementation is OTP/account-token based.
 
 ## Documentation corrections

@@ -67,6 +67,18 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://www.societyflats.com/investment-calculator</loc>
+    <lastmod>2026-06-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/builder-floors</loc>
+    <lastmod>2026-06-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.societyflats.com/gurgaon/sector-56</loc>
     <lastmod>2026-06-22</lastmod>
     <changefreq>weekly</changefreq>

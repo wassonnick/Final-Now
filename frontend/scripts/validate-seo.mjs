@@ -14,6 +14,8 @@ const requiredRoutes = [
   "/builder/dlf",
   "/societies",
   "/properties",
+  "/investment-calculator",
+  "/builder-floors",
   "/404",
 ];
 
@@ -79,6 +81,8 @@ async function validateInternalLinks() {
     "/gurgaon/golf-course-extension-road",
     "/builder/dlf",
     "/builder/m3m",
+    "/investment-calculator",
+    "/builder-floors",
   ];
 
   for (const required of requiredContent) {

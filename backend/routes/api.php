@@ -1,15 +1,19 @@
 <?php
-use App\Http\Controllers\Api\Admin\ImageUploadController;
-use App\Http\Controllers\Api\Admin\AdminStatsController;
+
+use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\Admin\AdminAccountController;
-use App\Http\Controllers\Api\Admin\SocietyImportController;
 use App\Http\Controllers\Api\Admin\AdminReviewController;
+use App\Http\Controllers\Api\Admin\AdminSiteVisitController;
+use App\Http\Controllers\Api\Admin\AdminStatsController;
+use App\Http\Controllers\Api\Admin\ImageUploadController;
+use App\Http\Controllers\Api\Admin\SocietyImportController;
+use App\Http\Controllers\Api\AIController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\SavedSearchController;
+use App\Http\Controllers\Api\SiteVisitController;
 use App\Http\Controllers\Api\SocietyController;
-use App\Http\Controllers\Api\AIController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', fn () => response()->json([
@@ -29,6 +33,8 @@ Route::get('/ai/rent-estimate', [AIController::class, 'rentEstimate']);
 Route::get('/societies/{idOrSlug}/reviews', [ReviewController::class, 'bySociety']);
 Route::post('/reviews', [ReviewController::class, 'store']);
 Route::post('/reviews/{review}/helpful', [ReviewController::class, 'markHelpful']);
+Route::get('/site-visits/{token}', [SiteVisitController::class, 'show']);
+Route::post('/site-visits/{token}/confirm', [SiteVisitController::class, 'confirm']);
 Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/stats', AdminStatsController::class);
     Route::post('/uploads/images', [ImageUploadController::class, 'store']);
@@ -55,14 +61,15 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::apiResource('leads', LeadController::class)->only(['index', 'show', 'update', 'destroy']);
     Route::apiResource('accounts', AdminAccountController::class)->only(['index', 'show', 'update']);
     Route::apiResource('reviews', AdminReviewController::class)->only(['index', 'update', 'destroy']);
+    Route::post('/site-visits/{siteVisit}/remind', [AdminSiteVisitController::class, 'remind']);
+    Route::apiResource('site-visits', AdminSiteVisitController::class)->only(['index', 'store', 'update']);
 });
 
-
 Route::prefix('accounts')->group(function () {
-    Route::post('/upsert', [\App\Http\Controllers\Api\AccountController::class, 'upsert']);
-    Route::post('/request-otp', [\App\Http\Controllers\Api\AccountController::class, 'requestOtp']);
-    Route::post('/verify-otp', [\App\Http\Controllers\Api\AccountController::class, 'verifyOtp']);
-    Route::get('/me', [\App\Http\Controllers\Api\AccountController::class, 'me']);
-    Route::get('/dashboard', [\App\Http\Controllers\Api\AccountController::class, 'dashboard']);
+    Route::post('/upsert', [AccountController::class, 'upsert']);
+    Route::post('/request-otp', [AccountController::class, 'requestOtp']);
+    Route::post('/verify-otp', [AccountController::class, 'verifyOtp']);
+    Route::get('/me', [AccountController::class, 'me']);
+    Route::get('/dashboard', [AccountController::class, 'dashboard']);
     Route::apiResource('saved-searches', SavedSearchController::class)->only(['index', 'store', 'update', 'destroy']);
 });

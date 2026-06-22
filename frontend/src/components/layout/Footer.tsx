@@ -12,6 +12,7 @@ const quickLinks = [
   { label: "Buy", href: "/search?tab=buy" },
   { label: "AI Advisor", href: "/ai-advisor" },
   { label: "Gurgaon Guide", href: "/gurgaon" },
+  { label: "Investment Calculator", href: "/investment-calculator" },
 ];
 
 const ownerLinks = [
@@ -19,7 +20,8 @@ const ownerLinks = [
   { label: "Broker Partner", href: "/broker-crm" },
   { label: "Compare Societies", href: "/compare" },
   { label: "Market Insights", href: "/insights" },
-  { label: "Map Intelligence", href: "/map" },
+  { label: "Map Intelligence", href: "/maps" },
+  { label: "Builder Floors", href: "/builder-floors" },
 ];
 
 export function Footer() {

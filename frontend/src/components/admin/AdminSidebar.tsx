@@ -14,6 +14,7 @@ import {
   Star,
   Target,
   Users,
+  CalendarCheck,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const links = [
   { label: "Societies", href: "/admin/societies", icon: Building2 },
   { label: "Properties", href: "/admin/properties", icon: Home },
   { label: "Leads", href: "/admin/leads", icon: MessageSquareText },
+  { label: "Site Visits", href: "/admin/site-visits", icon: CalendarCheck },
   { label: "AI Features", href: "/admin/ai", icon: Bot },
   { label: "Maps", href: "/admin/maps", icon: MapPinned },
   { label: "Broker CRM", href: "/admin/broker-crm", icon: BriefcaseBusiness },

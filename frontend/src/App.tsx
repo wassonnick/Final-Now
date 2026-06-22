@@ -30,6 +30,9 @@ const SocietiesPage = lazy(() => import('@/pages/SocietiesPage').then((module) =
 const PropertiesPage = lazy(() => import('@/pages/PropertiesPage').then((module) => ({ default: module.PropertiesPage })));
 const SeoLandingPage = lazy(() => import('@/pages/SeoLandingPage').then((module) => ({ default: module.SeoLandingPage })));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage })));
+const SiteVisitConfirmationPage = lazy(() => import('@/pages/SiteVisitConfirmationPage').then((module) => ({ default: module.SiteVisitConfirmationPage })));
+const InvestmentCalculatorPage = lazy(() => import('@/pages/InvestmentCalculatorPage').then((module) => ({ default: module.InvestmentCalculatorPage })));
+const BuilderFloorsPage = lazy(() => import('@/pages/BuilderFloorsPage').then((module) => ({ default: module.BuilderFloorsPage })));
 
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage').then((module) => ({ default: module.AdminLoginPage })));
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })));
@@ -45,6 +48,7 @@ const AdminReviewsPage = lazy(() => import('@/pages/admin/AdminReviewsPage').the
 const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage').then((module) => ({ default: module.AdminUsersPage })));
 const AdminSettingsPage = lazy(() => import('@/pages/admin/AdminSettingsPage').then((module) => ({ default: module.AdminSettingsPage })));
 const AdminFeatureHubPage = lazy(() => import('@/pages/admin/AdminFeatureHubPage').then((module) => ({ default: module.AdminFeatureHubPage })));
+const AdminSiteVisitsPage = lazy(() => import('@/pages/admin/AdminSiteVisitsPage').then((module) => ({ default: module.AdminSiteVisitsPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -134,6 +138,9 @@ function AppShell() {
             <Route path="/broker" element={<ProtectedAccountRoute role="broker"><BrokerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/sell" element={<SellPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/visit/:token" element={<SiteVisitConfirmationPage />} />
+            <Route path="/investment-calculator" element={<InvestmentCalculatorPage />} />
+            <Route path="/builder-floors" element={<BuilderFloorsPage />} />
 
             {/* Admin */}
             <Route
@@ -177,6 +184,7 @@ function AppShell() {
 
             <Route path="/admin/reviews" element={<ProtectedAdminRoute><AdminReviewsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsersPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/site-visits" element={<ProtectedAdminRoute><AdminSiteVisitsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/ai" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="ai" /></ProtectedAdminRoute>} />
             <Route path="/admin/maps" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="maps" /></ProtectedAdminRoute>} />
             <Route path="/admin/broker-crm" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="broker-crm" /></ProtectedAdminRoute>} />
