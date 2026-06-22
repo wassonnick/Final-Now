@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Society;
 use App\Models\SocietyImportJob;
 use App\Services\SocietyAiEnrichmentService;
 use App\Services\SocietyImportService;
@@ -209,18 +210,59 @@ class SocietyImportController extends Controller
 
     public function spreadsheet(Request $request, SocietySpreadsheetParser $parser): JsonResponse
     {
-        $request->validate(['file' => ['required', 'file', 'mimes:xlsx,csv', 'max:5120']]);
+        $request->validate(['file' => ['required', 'file', 'mimes:xlsx,csv', 'max:5120'], 'include_images' => ['nullable', 'boolean']]);
         $rows = $parser->parse($request->file('file'));
+        $includeImages = $request->boolean('include_images');
         $job = SocietyImportJob::create([
             'type' => 'bulk_spreadsheet',
             'input' => json_encode(['filename' => $request->file('file')->getClientOriginalName(), 'row_count' => count($rows)]),
             'source' => 'Gemini Spreadsheet Import',
             'status' => 'queued',
-            'results' => array_map(fn ($row) => [...$row, 'name' => $row['society_name'], 'status' => 'pending'], $rows),
+            'results' => array_map(fn ($row) => [...$row, 'name' => $row['society_name'], 'status' => 'pending', 'include_images' => $includeImages], $rows),
             'logs' => [['ts' => now()->format('H:i:s'), 'msg' => 'Validated spreadsheet and queued '.count($rows).' society drafts.']],
             'triggered_by' => $request->header('X-Admin-Email') ?: 'admin',
         ]);
 
         return response()->json(['status' => 'ok', 'message' => 'Spreadsheet validated. '.count($rows).' Gemini draft imports queued.', 'data' => $job, 'preview' => array_slice($rows, 0, 10)], 202);
+    }
+
+    public function imageDecision(Request $request, Society $society): JsonResponse
+    {
+        $data = $request->validate(['decision' => ['required', 'in:approve,reject'], 'rights_confirmed' => ['nullable', 'boolean']]);
+        if (! $society->imported_at) {
+            return response()->json(['message' => 'Only imported society image candidates can be reviewed here.'], 422);
+        }
+        if ($data['decision'] === 'reject') {
+            $society->update(['cover_image' => null, 'image_url' => null, 'image_status' => 'rejected', 'image_approved_by_admin' => false]);
+
+            return response()->json(['message' => 'Image candidate rejected and kept off public pages.', 'data' => $society->fresh()]);
+        }
+        if (! ($data['rights_confirmed'] ?? false)) {
+            return response()->json(['message' => 'Confirm image rights, permission and attribution before approval.'], 422);
+        }
+        if ($society->image_status === 'google_places_reference_found' && $society->place_id && str_contains(strtolower((string) $society->image_credit), 'google')) {
+            $society->update(['image_approved_by_admin' => true, 'image_license_notes' => $society->image_license_notes ?: 'Google Places attribution/display terms reviewed and approved by admin.']);
+
+            return response()->json(['message' => 'Google Places image display approved with attribution. It remains hidden until the society is published.', 'data' => $society->fresh()]);
+        }
+        $candidate = trim((string) ($society->image_url ?: $society->image_reference_url));
+        if (! $this->isDirectImageUrl($candidate)) {
+            return response()->json(['message' => 'Only a direct JPG, PNG, WebP, GIF or AVIF URL can be approved. Keep Google Places/search/page links as references.'], 422);
+        }
+        $society->update(['image_url' => $candidate, 'cover_image' => $candidate, 'image_status' => 'approved_for_live', 'image_approved_by_admin' => true, 'image_credit' => $society->image_credit ?: 'Admin-approved source', 'image_license_notes' => $society->image_license_notes ?: 'Rights/permission and attribution confirmed by admin.']);
+
+        return response()->json(['message' => 'Image approved. It can display only after the society itself is published.', 'data' => $society->fresh()]);
+    }
+
+    private function isDirectImageUrl(string $url): bool
+    {
+        if (! filter_var($url, FILTER_VALIDATE_URL) || ! preg_match('/^https?:\/\//i', $url)) {
+            return false;
+        }
+        if (preg_match('/google\.(com|co\.in)\/search|maps\.google|maps\.app\.goo\.gl/i', $url)) {
+            return false;
+        }
+
+        return (bool) preg_match('/\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i', $url);
     }
 }

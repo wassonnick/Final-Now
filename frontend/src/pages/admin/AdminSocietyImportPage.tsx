@@ -37,6 +37,11 @@ type ImportResult = {
   status?: string;
   edit_url?: string;
   message?: string;
+  image_reference_url?: string;
+  image_url?: string;
+  image_status?: string;
+  image_credit?: string;
+  image_approved_by_admin?: boolean;
 };
 
 type ImportJob = {
@@ -131,6 +136,11 @@ function jobIsLive(job: ImportJob) {
   return ["queued", "running"].includes(String(job.status || "").toLowerCase());
 }
 
+function directImageUrl(value?: string) {
+  const url = String(value || "").trim();
+  return /^https?:\/\//i.test(url) && /\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(url) && !/google\.(com|co\.in)\/search|maps\.google|maps\.app\.goo\.gl/i.test(url);
+}
+
 function logLine(log: ImportLog, index: number) {
   return `[${log.ts || "--:--:--"}] ${log.msg || `Log ${index + 1}`}`;
 }
@@ -138,6 +148,8 @@ function logLine(log: ImportLog, index: number) {
 export function AdminSocietyImportPage() {
   const [mode, setMode] = useState<ImportMode>("file");
   const [spreadsheet, setSpreadsheet] = useState<File | null>(null);
+  const [includeImages, setIncludeImages] = useState(true);
+  const [confirmedImageRights, setConfirmedImageRights] = useState<number[]>([]);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [source, setSource] = useState("MagicBricks");
@@ -262,7 +274,7 @@ export function AdminSocietyImportPage() {
       if (!spreadsheet) { setError("Choose an .xlsx or .csv file first."); return; }
       setError(""); setNotice(""); setSubmitting(true);
       try {
-        const formData = new FormData(); formData.append("file", spreadsheet);
+        const formData = new FormData(); formData.append("file", spreadsheet); formData.append("include_images", includeImages ? "1" : "0");
         const response = await adminFetch("/admin/import/spreadsheet", { method: "POST", body: formData });
         const json = await parseResponse(response);
         setNotice(json?.message || "Spreadsheet import queued.");
@@ -315,6 +327,17 @@ export function AdminSocietyImportPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not remove import job.");
     }
+  }
+
+  async function reviewImage(result: ImportResult, decision: "approve" | "reject") {
+    if (!result.id) return;
+    setError(""); setNotice("");
+    try {
+      const response = await adminFetch(`/admin/import/societies/${result.id}/image`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision, rights_confirmed: confirmedImageRights.includes(result.id) }) });
+      const json = await parseResponse(response); const society = json?.data || {};
+      setJobs((current) => current.map((job) => ({ ...job, results: job.results?.map((item) => item.id === result.id ? { ...item, image_reference_url: society.image_reference_url, image_url: society.image_url, image_status: society.image_status, image_credit: society.image_credit, image_approved_by_admin: Boolean(society.image_approved_by_admin) } : item) })));
+      setNotice(json?.message || "Image review saved.");
+    } catch (err) { setError(err instanceof Error ? err.message : "Could not review image."); }
   }
 
   function toggleSuggestion(name: string) {
@@ -445,6 +468,10 @@ export function AdminSocietyImportPage() {
                     <p className="font-black text-slate-900">Required columns: society_name, city</p>
                     <p className="mt-1">Optional: sector, locality, builder, google_maps_url. Spreadsheet identity fields override Gemini; generated enrichment still needs admin review.</p>
                   </div>
+                  <label className="flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
+                    <input type="checkbox" checked={includeImages} onChange={(event) => setIncludeImages(event.target.checked)} className="mt-1 h-4 w-4" />
+                    <span><span className="block font-black">Find image candidates in the same Gemini import</span><span className="mt-1 block text-xs leading-5 text-blue-700">Uses Gemini Google Search grounding and Google Places when configured. Candidates remain private and require admin approval.</span></span>
+                  </label>
                   <Button asChild type="button" variant="outline" className="rounded-full border-emerald-200 text-emerald-700">
                     <a href="/templates/societyflats-gemini-import-template.xlsx" download><Download className="mr-2 h-4 w-4" />Download Excel template</a>
                   </Button>
@@ -645,6 +672,22 @@ export function AdminSocietyImportPage() {
                 <p key={`${log.ts || "log"}-${index}`}>{logLine(log, index)}</p>
               ))}
             </div>
+
+            {activeJob?.results?.some((result) => result.image_reference_url || result.image_url) ? (
+              <div className="mt-4 space-y-3">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-200">Image approval queue</p>
+                {activeJob.results.filter((result) => result.image_reference_url || result.image_url).map((result) => {
+                  const candidate = result.image_url || result.image_reference_url || "";
+                  const canApprove = directImageUrl(candidate) || result.image_status === "google_places_reference_found";
+                  return <article key={`image-${result.id}`} className="rounded-2xl border border-white/10 bg-white/10 p-3 text-white">
+                    {canApprove ? <img src={candidate} alt={`${result.name || "Society"} candidate`} className="h-32 w-full rounded-xl object-cover" /> : null}
+                    <p className="mt-2 text-sm font-black">{result.name}</p><p className="mt-1 text-xs text-slate-300">{result.image_credit || result.image_status || "Needs review"}</p>
+                    <div className="mt-3 flex flex-wrap gap-2"><a href={candidate} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1.5 text-xs font-bold">Open reference <ExternalLink className="h-3 w-3" /></a>{canApprove && !result.image_approved_by_admin ? <><label className="flex items-center gap-1 text-[11px] text-slate-200"><input type="checkbox" checked={confirmedImageRights.includes(Number(result.id))} onChange={() => setConfirmedImageRights((items) => items.includes(Number(result.id)) ? items.filter((id) => id !== Number(result.id)) : [...items, Number(result.id)])} /> Rights confirmed</label><button type="button" onClick={() => void reviewImage(result, "approve")} className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-black">Approve</button></> : null}<button type="button" onClick={() => void reviewImage(result, "reject")} className="rounded-full bg-rose-600/80 px-3 py-1.5 text-xs font-black">Reject</button></div>
+                    {!canApprove ? <p className="mt-2 text-[11px] leading-4 text-amber-200">Reference/page links cannot be approved as direct images. Review them, then add a licensed direct image in the society editor.</p> : result.image_status === "google_places_reference_found" ? <p className="mt-2 text-[11px] leading-4 text-blue-200">Approval confirms Google attribution and display terms; it does not mark the photo as owned.</p> : null}
+                  </article>;
+                })}
+              </div>
+            ) : null}
 
             {hasLiveJobs ? (
               <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-amber-200">

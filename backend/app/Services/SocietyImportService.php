@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class SocietyImportService
 {
-    public function __construct(private SocietyAiEnrichmentService $ai) {}
+    public function __construct(private SocietyAiEnrichmentService $ai, private GooglePlacesSocietyImageService $places) {}
 
     public function processJobTick(SocietyImportJob $job): SocietyImportJob
     {
@@ -318,7 +318,8 @@ class SocietyImportService
         $this->log($job, 'AI provider: '.$this->ai->provider().' | available: '.($this->ai->isAvailable() ? 'yes' : 'no'));
 
         $context = $seed === [] ? '' : "Admin-provided spreadsheet identity fields (treat these as authoritative):\n".json_encode(array_intersect_key($seed, array_flip(['society_name', 'city', 'sector', 'locality', 'builder', 'google_maps_url'])), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        $aiData = $this->ai->enrichSociety($name, $context, $source);
+        $includeImages = (bool) ($seed['include_images'] ?? false);
+        $aiData = $this->ai->enrichSociety($name, $context, $source, $includeImages);
 
         if (! empty($aiData['_ai_error']) && $this->ai->isAvailable()) {
             $message = ! empty($aiData['_ai_quota_limited'])
@@ -364,8 +365,32 @@ class SocietyImportService
         $draft['show_in_hero'] = false;
         $draft['search_boost'] = false;
         $draft['source_name'] = $source;
+        $draft['image_approved_by_admin'] = false;
+        if ($includeImages && ! empty($draft['image_url'])) {
+            $draft['image_status'] = 'needs_review';
+        }
         $draft['official_source_notes'] = trim(($draft['official_source_notes'] ?? '').' Imported from spreadsheet row '.($seed['row_number'] ?? 'unknown').'; all Gemini fields require admin review.');
         $society = Society::create($draft);
+
+        if ($includeImages && trim((string) config('services.google_places_api_key')) !== '') {
+            try {
+                $reference = $this->places->findImageReference($society);
+                $society->update([
+                    'place_id' => $reference['place_id'] ?: $society->place_id,
+                    'image_reference_url' => $reference['safe_reference_url'],
+                    'image_status' => 'google_places_reference_found',
+                    'image_approved_by_admin' => false,
+                    'image_alt_text' => $society->image_alt_text ?: $society->name.' residential society in Gurugram',
+                    'image_credit' => $reference['credit'],
+                    'image_license_notes' => $reference['license_note'],
+                ]);
+                $this->log($job, "Google Places image reference found for {$society->name}; admin approval is still required.");
+            } catch (\Throwable $exception) {
+                $this->log($job, "No Google Places image reference saved for {$society->name}: {$exception->getMessage()}");
+            }
+        }
+
+        $society->refresh();
 
         $this->log($job, "Draft created: {$society->name} (ID {$society->id}). Review before publishing.");
 
@@ -376,6 +401,11 @@ class SocietyImportService
             'edit_url' => "/admin/societies/{$society->id}/edit",
             'message' => 'Draft created',
             'row_number' => $seed['row_number'] ?? null,
+            'image_reference_url' => $society->image_reference_url,
+            'image_url' => $society->image_url,
+            'image_status' => $society->image_status,
+            'image_credit' => $society->image_credit,
+            'image_approved_by_admin' => (bool) $society->image_approved_by_admin,
         ];
     }
 

@@ -30,9 +30,9 @@ class SocietyAiEnrichmentService
         ];
     }
 
-    public function enrichSociety(string $name, string $context = '', string $source = ''): array
+    public function enrichSociety(string $name, string $context = '', string $source = '', bool $findImageCandidate = false): array
     {
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             return [];
         }
 
@@ -40,10 +40,10 @@ class SocietyAiEnrichmentService
             return [];
         }
 
-        return $this->enrichWithGemini($name, $context, $source);
+        return $this->enrichWithGemini($name, $context, $source, $findImageCandidate);
     }
 
-    private function enrichWithGemini(string $name, string $context = '', string $source = ''): array
+    private function enrichWithGemini(string $name, string $context = '', string $source = '', bool $findImageCandidate = false): array
     {
         $apiKey = trim((string) config('services.gemini.api_key', ''));
         $model = trim((string) config('services.gemini.model', 'gemini-2.0-flash')) ?: 'gemini-2.0-flash';
@@ -54,7 +54,7 @@ class SocietyAiEnrichmentService
 
         $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
 
-        $prompt = $this->buildPrompt($name, $context, $source);
+        $prompt = $this->buildPrompt($name, $context, $source, $findImageCandidate);
 
         try {
             $response = null;
@@ -65,7 +65,7 @@ class SocietyAiEnrichmentService
                         'x-goog-api-key' => $apiKey,
                         'Content-Type' => 'application/json',
                     ])
-                    ->post($endpoint, [
+                    ->post($endpoint, array_filter([
                         'systemInstruction' => [
                             'parts' => [[
                                 'text' => 'You are a careful Indian real-estate data extraction assistant for SocietyFlats. Return only factual, review-safe structured JSON. Never invent exact coordinates unless highly confident. Use null when unsure.',
@@ -77,11 +77,12 @@ class SocietyAiEnrichmentService
                                 'text' => $prompt,
                             ]],
                         ]],
+                        'tools' => $findImageCandidate ? [['google_search' => (object) []]] : null,
                         'generationConfig' => [
                             'temperature' => 0.2,
                             'responseMimeType' => 'application/json',
                         ],
-                    ]);
+                    ], fn ($value) => $value !== null));
 
                 if ($response->successful()) {
                     break;
@@ -94,11 +95,11 @@ class SocietyAiEnrichmentService
                 sleep($attempt * 2);
             }
 
-            if (!$response || !$response->successful()) {
+            if (! $response || ! $response->successful()) {
                 $status = $response ? $response->status() : 0;
 
                 return [
-                    '_ai_error' => 'Gemini HTTP ' . $status,
+                    '_ai_error' => 'Gemini HTTP '.$status,
                     '_ai_error_status' => $status,
                     '_ai_quota_limited' => $status === 429,
                 ];
@@ -122,10 +123,13 @@ class SocietyAiEnrichmentService
         }
     }
 
-    private function buildPrompt(string $name, string $context = '', string $source = ''): string
+    private function buildPrompt(string $name, string $context = '', string $source = '', bool $findImageCandidate = false): string
     {
         $context = Str::limit(trim($context), 14000, '');
         $source = trim($source);
+        $imageInstruction = $findImageCandidate
+            ? 'Use Google Search grounding to identify the official developer/project page or Google Maps place. Return a direct image URL only when it is clearly an official reusable project image; otherwise return the official gallery/project page as image_reference_url. Never return broker-portal or random image-search URLs.'
+            : 'Do not search for an image. Return image fields only when a clearly official image is present in supplied source text.';
 
         return <<<PROMPT
 Create a structured draft society profile for SocietyFlats.com.
@@ -202,6 +206,7 @@ Rules:
 - Coordinates: for known Gurgaon societies, provide latitude and longitude when reasonably confident. Use 4-6 decimal precision. Do not invent dummy coordinates. If exact coordinates are uncertain, provide a Google Maps search URL and add coordinates to fields_to_verify.
 - Scores: use differentiated one-decimal category scores. Do not return the same default score for every category unless strongly justified. Consider builder reputation, sector/locality, connectivity, lifestyle amenities, maintenance, security, and resale/rental demand.
 - Images: do not invent copyrighted image URLs. If an official/source image URL is visible in the supplied source text, return it as image_reference_url or image_url and mark image_status as needs_review or official_reference_found. Otherwise return null so the importer can create an admin review reference.
+- Image candidate mode: {$imageInstruction}
 - Prices/rent ranges can be broad market ranges but mark fields_to_verify.
 - Keep all output review-first, not publicly guaranteed.
 - If unsure, use null and add the field to fields_to_verify.

@@ -31,7 +31,7 @@ class SocietyController extends Controller {
       return response()->json(['status' => 'error', 'message' => 'Society not found'], 404);
     }
 
-    if ($society->image_status !== 'google_places_reference_found' || empty($society->place_id)) {
+    if ($society->image_status !== 'google_places_reference_found' || empty($society->place_id) || !$society->image_approved_by_admin) {
       return response()->json(['status' => 'error', 'message' => 'Google Places photo is not available for this society.'], 404);
     }
 

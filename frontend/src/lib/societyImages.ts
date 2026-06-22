@@ -63,12 +63,14 @@ export function approvedSocietyImage(society: any) {
 
 
 export function hasGooglePlacesDisplayPhoto(society: any) {
+  const approvedByAdmin = Boolean(field<boolean>(society, 'imageApprovedByAdmin', 'image_approved_by_admin', false));
   const imageStatus = String(field<string>(society, 'imageStatus', 'image_status', 'placeholder'));
   const placeId = firstText(field<string>(society, 'placeId', 'place_id', ''));
   const referenceUrl = firstText(field<string>(society, 'imageReferenceUrl', 'image_reference_url', ''));
   const credit = firstText(field<string>(society, 'imageCredit', 'image_credit', ''));
 
   return (
+    approvedByAdmin &&
     imageStatus === 'google_places_reference_found' &&
     Boolean(placeId) &&
     (/google/i.test(credit) || /google\.com|maps\.app\.goo\.gl/i.test(referenceUrl))
@@ -199,4 +201,3 @@ export function societyImageAttributionClassName(tone: SocietyImageAttribution["
 
   return "bg-white/90 text-slate-700 ring-1 ring-slate-200";
 }
-
