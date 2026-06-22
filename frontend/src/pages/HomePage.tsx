@@ -147,7 +147,10 @@ function getApiBaseUrl() {
 }
 
 function scoreOf(society: any, fallback = "8.2") {
-  return society?.score || society?.overallScore || fallback;
+  const raw = society?.score ?? society?.overallScore ?? fallback;
+  const parsed = Number(raw);
+  if (Number.isFinite(parsed) && parsed > 0) return parsed.toFixed(1);
+  return String(fallback);
 }
 
 function initials(name: string) {
@@ -826,16 +829,8 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
             </div>
 
             <div className="mt-5 space-y-2">
-              {(mapSocieties.length
-                ? mapSocieties
-                : [
-                    { name: "DLF The Crest", sector: "Sector 54" },
-                    { name: "M3M Golf Estate", sector: "Sector 65" },
-                    { name: "Sobha City", sector: "Sector 108" },
-                  ]
-              )
-                .slice(0, 4)
-                .map((society, index) => (
+              {mapSocieties.length ? (
+                mapSocieties.slice(0, 4).map((society, index) => (
                   <Link
                     key={society.name}
                     to={
@@ -857,7 +852,12 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
                       </p>
                     </div>
                   </Link>
-                ))}
+                ))
+              ) : (
+                <div className="rounded-2xl border border-blue-100 bg-white/80 p-3 text-xs font-bold leading-5 text-navy-500 shadow-sm">
+                  No live society pins yet. Import and publish societies to activate map cards.
+                </div>
+              )}
             </div>
 
             <Link to="/maps" className="mt-4 inline-flex">
@@ -887,7 +887,7 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
               <span className="absolute left-[25%] top-[35%] h-1 w-[58%] rotate-6 rounded-full bg-blue-200/60" />
             </div>
 
-            {(mapSocieties.length ? mapSocieties : featuredSocieties)
+            {mapSocieties
               .slice(0, 5)
               .map((society, index) => {
                 const pinPositions = [
@@ -932,7 +932,7 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
                 Gurgaon live map
               </p>
               <p className="mt-1 text-sm font-black text-navy-950">
-                {mapSocieties.length || featuredSocieties.length || 0} real society pins
+                {mapSocieties.length || 0} real society pins
               </p>
               <p className="mt-1 max-w-[13rem] text-[11px] font-semibold leading-4 text-navy-500">
                 Preview only. Open the full map for synced Google markers and society details.

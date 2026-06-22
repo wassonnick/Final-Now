@@ -176,11 +176,7 @@ function quickHeroSearchIntent(value: string): Intent {
   return "society";
 }
 
-const fallbackHeroMapSocieties: HeroMapSociety[] = [
-  { name: "DLF Crest", slug: "dlf-crest", sector: "Golf Course Road", score: "9.4" },
-  { name: "Alpha Corp Sky1", slug: "alpha-corp-sky1", sector: "Sector 15", score: "8.7" },
-  { name: "M3M Golf Estate", slug: "m3m-golf-estate", sector: "Sector 65", score: "8.3" },
-];
+const fallbackHeroMapSocieties: HeroMapSociety[] = [];
 
 const heroMapPinPositions = [
   { left: "57%", top: "30%" },
@@ -221,13 +217,9 @@ export default function SocietyFlatsHero() {
   const [aiReply, setAiReply] = useState(
     "Ask here. I will shortlist Gurgaon societies by budget, commute, family fit, verified inventory and lifestyle match.",
   );
-  const [aiMatches, setAiMatches] = useState<AdvisorMatch[]>([
-    { society_name: "DLF The Crest", sector: "Golf Course Road", score: 92 },
-    { society_name: "M3M Golf Estate", sector: "Sector 65", score: 88 },
-    { society_name: "Ireo Skyon", sector: "Sector 60", score: 84 },
-  ]);
+  const [aiMatches, setAiMatches] = useState<AdvisorMatch[]>([]);
   const [heroMapSocieties, setHeroMapSocieties] = useState<HeroMapSociety[]>([]);
-  const [heroMapCards, setHeroMapCards] = useState<HeroMapSociety[]>(fallbackHeroMapSocieties);
+  const [heroMapCards, setHeroMapCards] = useState<HeroMapSociety[]>([]);
   const [hasExactHeroMapMatch, setHasExactHeroMapMatch] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
 

@@ -689,6 +689,11 @@ export function SearchPage() {
   };
 
   const { compareList, addToCompare, removeFromCompare } = useAppStore();
+  const liveSocietyIds = useMemo(
+    () => new Set(societies.map((society: any) => String(society?.id)).filter(Boolean)),
+    [societies],
+  );
+  const liveCompareCount = compareList.filter((item: any) => liveSocietyIds.has(String(item?.id))).length;
   const isSocietyCompared = (society: any) =>
     compareList.some((item: any) => String(item.id) === String(society?.id));
 
@@ -1062,7 +1067,7 @@ export function SearchPage() {
                     variant="outline"
                     className="hidden rounded-full md:inline-flex"
                   >
-                    <Link to="/compare">Compare {compareList.length ? `(${compareList.length})` : ""}</Link>
+                    <Link to="/compare">Compare {liveCompareCount ? `(${liveCompareCount})` : ""}</Link>
                   </Button>
                   <Button
                     asChild
@@ -1085,7 +1090,7 @@ export function SearchPage() {
                     Compare flow: tap Compare on up to 3 society cards, then open the Compare page.
                   </span>
                   <Link to="/compare" className="inline-flex items-center font-black text-blue-800">
-                    Open compare {compareList.length ? `(${compareList.length})` : ""}
+                    Open compare {liveCompareCount ? `(${liveCompareCount})` : ""}
                     <ArrowRight className="ml-1 h-3.5 w-3.5" />
                   </Link>
                 </div>
