@@ -12,39 +12,47 @@ class AdminReviewController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Review::with(['society', 'user'])->latest();
+        $query = Review::query()->with(['society:id,name,slug', 'account:id,name'])->latest();
 
-        if ($status = $request->query('status')) {
-            $query->where('status', $status);
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
         }
 
-        return response()->json($query->paginate((int) $request->query('per_page', 20)));
+        return response()->json($query->paginate(max(1, min($request->integer('per_page', 20), 100))));
     }
 
-    public function update(Request $request, string $id): JsonResponse
+    public function update(Request $request, Review $review): JsonResponse
     {
-        $review = Review::findOrFail($id);
         $validated = $request->validate([
-            'status' => 'required|in:pending,approved,rejected',
-            'moderation_notes' => 'nullable|string',
+            'status' => ['required', 'in:pending,approved,rejected'],
+            'moderation_notes' => ['nullable', 'string', 'max:3000'],
         ]);
 
         $review->update($validated);
+        $this->refreshSocietyMetrics($review->society_id);
 
-        $society = Society::find($review->society_id);
-        if ($society) {
-            $society->update([
-                'review_count' => $society->reviews()->count(),
-                'avg_rating' => $society->reviews()->avg('rating') ?: 0,
-            ]);
-        }
-
-        return response()->json($review->fresh(['society', 'user']));
+        return response()->json([
+            'message' => 'Review moderation updated.',
+            'data' => $review->fresh(['society:id,name,slug', 'account:id,name']),
+        ]);
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Review $review): JsonResponse
     {
-        Review::findOrFail($id)->delete();
-        return response()->json(['message' => 'Review deleted']);
+        $societyId = $review->society_id;
+        $review->delete();
+        $this->refreshSocietyMetrics($societyId);
+
+        return response()->json(['message' => 'Review deleted.']);
+    }
+
+    private function refreshSocietyMetrics(int $societyId): void
+    {
+        $approved = Review::query()->where('society_id', $societyId)->where('status', 'approved');
+
+        Society::query()->whereKey($societyId)->update([
+            'review_count' => (clone $approved)->count(),
+            'avg_rating' => round((float) ((clone $approved)->avg('rating') ?: 0), 2),
+        ]);
     }
 }

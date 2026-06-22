@@ -164,6 +164,8 @@ class PropertyController extends Controller
             'amenities.*' => 'string|max:100',
             'images' => 'nullable|array',
             'images.*' => 'string|max:2000',
+            'virtual_tour_url' => 'nullable|url|max:2000',
+            'floor_plan_url' => 'nullable|url|max:2000',
             'featured' => 'nullable|boolean',
             'verified' => 'nullable|boolean',
         ]);

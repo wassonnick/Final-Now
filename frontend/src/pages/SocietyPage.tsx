@@ -32,6 +32,7 @@ import { useAppStore } from "@/store";
 import { cn } from "@/lib/utils";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { SocietyNearbyGoogleMap } from "@/components/maps/SocietyNearbyGoogleMap";
+import { ResidentReviews } from "@/components/society/ResidentReviews";
 import { Badge } from "@/components/ui/badge";
 import {
   findPublicSociety,
@@ -1549,6 +1550,11 @@ export function SocietyPage() {
             </div>
           </aside>
         </div>
+        <ResidentReviews
+          societyId={Number(society.id)}
+          societySlug={String(society.slug || slug || "")}
+          societyName={society.name}
+        />
       </section>
 
       <div className="fixed inset-x-3 bottom-3 z-50 rounded-2xl border border-navy-100 bg-white/95 px-3 py-2 shadow-[0_-10px_24px_rgba(15,23,42,0.12)] backdrop-blur md:hidden">

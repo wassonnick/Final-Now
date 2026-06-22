@@ -13,16 +13,19 @@ class Review extends Model
     use HasFactory, HasUuids;
 
     protected $table = 'reviews';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
-        'society_id', 'user_id', 'rating', 'title', 'content', 'security_rating',
+        'society_id', 'account_id', 'reviewer_name', 'rating', 'title', 'content', 'security_rating',
         'maintenance_rating', 'amenities_rating', 'connectivity_rating', 'management_rating',
         'value_for_money_rating', 'lived_duration_months', 'property_type', 'bhk',
-        'floor_number', 'pros', 'cons', 'is_verified_resident', 'verification_proof',
-        'status', 'moderation_notes', 'helpful_count', 'reported_count'
+        'floor_number', 'pros', 'cons', 'is_verified_resident',
+        'status', 'moderation_notes', 'helpful_count', 'reported_count',
     ];
 
     protected $casts = [
@@ -38,9 +41,9 @@ class Review extends Model
         return $this->belongsTo(Society::class);
     }
 
-    public function user(): BelongsTo
+    public function account(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Account::class);
     }
 
     public function helpfulVotes(): HasMany

@@ -29,6 +29,7 @@ import {
   type CustomerActivityLead,
   type CustomerSavedItem,
 } from "@/lib/customerAccount";
+import { SavedSearchesPanel } from "@/components/search/SavedSearchesPanel";
 
 type DashboardItem = {
   title: string;
@@ -308,6 +309,7 @@ export function CustomerDashboardPage() {
             {[
               ["overview", "Overview", BarChart3],
               ["shortlist", "Shortlist", Heart],
+              ["saved-searches", "Saved Searches", Search],
               ["enquiries", "Enquiries", Phone],
               ["listings", "Listed Properties", Home],
               ["leads", "Property Leads", MessageCircle],
@@ -401,6 +403,10 @@ export function CustomerDashboardPage() {
                 href="/search?tab=societies"
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="saved-searches" className="mt-6">
+            <SavedSearchesPanel />
           </TabsContent>
 
           <TabsContent value="enquiries" className="mt-6 space-y-3">

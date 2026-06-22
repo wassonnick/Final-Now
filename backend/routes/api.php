@@ -3,8 +3,11 @@ use App\Http\Controllers\Api\Admin\ImageUploadController;
 use App\Http\Controllers\Api\Admin\AdminStatsController;
 use App\Http\Controllers\Api\Admin\AdminAccountController;
 use App\Http\Controllers\Api\Admin\SocietyImportController;
+use App\Http\Controllers\Api\Admin\AdminReviewController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\PropertyController;
+use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\SavedSearchController;
 use App\Http\Controllers\Api\SocietyController;
 use App\Http\Controllers\Api\AIController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +24,11 @@ Route::get('/properties', [PropertyController::class, 'index']);
 Route::get('/properties/{idOrSlug}', [PropertyController::class, 'show']);
 Route::post('/leads', [LeadController::class, 'store']);
 Route::post('/ai/advisor', [AIController::class, 'advisor']);
+Route::post('/ai/recommendations', [AIController::class, 'recommendations']);
+Route::get('/ai/rent-estimate', [AIController::class, 'rentEstimate']);
+Route::get('/societies/{idOrSlug}/reviews', [ReviewController::class, 'bySociety']);
+Route::post('/reviews', [ReviewController::class, 'store']);
+Route::post('/reviews/{review}/helpful', [ReviewController::class, 'markHelpful']);
 Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/stats', AdminStatsController::class);
     Route::post('/uploads/images', [ImageUploadController::class, 'store']);
@@ -46,6 +54,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::apiResource('properties', PropertyController::class)->except(['create', 'edit']);
     Route::apiResource('leads', LeadController::class)->only(['index', 'show', 'update', 'destroy']);
     Route::apiResource('accounts', AdminAccountController::class)->only(['index', 'show', 'update']);
+    Route::apiResource('reviews', AdminReviewController::class)->only(['index', 'update', 'destroy']);
 });
 
 
@@ -55,5 +64,5 @@ Route::prefix('accounts')->group(function () {
     Route::post('/verify-otp', [\App\Http\Controllers\Api\AccountController::class, 'verifyOtp']);
     Route::get('/me', [\App\Http\Controllers\Api\AccountController::class, 'me']);
     Route::get('/dashboard', [\App\Http\Controllers\Api\AccountController::class, 'dashboard']);
+    Route::apiResource('saved-searches', SavedSearchController::class)->only(['index', 'store', 'update', 'destroy']);
 });
-

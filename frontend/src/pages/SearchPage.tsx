@@ -37,6 +37,7 @@ import {
 import { cn } from "@/lib/utils";
 import { societyImageAttribution } from "@/lib/societyImages";
 import { setPublicSeo } from "@/lib/seo";
+import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 
 const tabs = [
   { key: "societies", label: "Societies", mobileLabel: "Society", icon: Building2 },
@@ -872,6 +873,10 @@ export function SearchPage() {
               </div>
 
               <div className="hidden items-center gap-2 md:flex">
+                <SaveSearchButton
+                  filters={{ ...Object.fromEntries(searchParams.entries()), q: query, tab: activeTab }}
+                  suggestedName={`${query || quickLocalities[0]} · ${activeTab}`}
+                />
                 <Button
                   variant="outline"
                   size="sm"

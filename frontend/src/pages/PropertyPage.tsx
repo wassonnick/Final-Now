@@ -14,6 +14,9 @@ import {
   Bath,
   Bed,
   CalendarCheck,
+  Calculator,
+  ChevronLeft,
+  ChevronRight,
   CheckCircle2,
   Heart,
   Home,
@@ -24,6 +27,7 @@ import {
   Phone,
   Share2,
   Shield,
+  ExternalLink,
   X,
 } from "lucide-react";
 
@@ -80,6 +84,10 @@ interface Property {
   coverImage?: string | null;
   gallery_images?: string[] | string | null;
   galleryImages?: string[] | string | null;
+  virtual_tour_url?: string | null;
+  virtualTourUrl?: string | null;
+  floor_plan_url?: string | null;
+  floorPlanUrl?: string | null;
   society?: string | SocietyRef | null;
   society_name?: string | null;
   societyName?: string | null;
@@ -263,6 +271,15 @@ function safePropertyPath(property: Property): string {
   return "/properties";
 }
 
+function moneyValue(value: unknown): number {
+  const text = String(value || '').toLowerCase();
+  const amount = Number(text.replace(/[^0-9.]/g, '')) || 0;
+  if (text.includes('cr')) return amount * 10_000_000;
+  if (text.includes('lakh') || /\bl\b/.test(text)) return amount * 100_000;
+  if (text.includes('k')) return amount * 1_000;
+  return amount;
+}
+
 export function PropertyPage() {
   const { slug } = useParams();
 
@@ -270,6 +287,10 @@ export function PropertyPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [activeImage, setActiveImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [loanPercent, setLoanPercent] = useState(80);
+  const [interestRate, setInterestRate] = useState(8.5);
+  const [tenureYears, setTenureYears] = useState(20);
   const [isShortlisted, setIsShortlisted] = useState(false);
   const [similarProperties, setSimilarProperties] = useState<Property[]>([]);
 
@@ -350,6 +371,17 @@ export function PropertyPage() {
   const furnishedStatus = getField(property, "furnishedStatus", "furnished_status", "-");
   const amenities = useMemo(() => parseList(property?.amenities), [property?.amenities]);
   const photos = useMemo(() => (property ? getPhotos(property) : []), [property]);
+  const saleListing = /sale|buy|resale|builder/i.test(String(listingType));
+  const propertyPrice = moneyValue(price);
+  const loanAmount = propertyPrice * (loanPercent / 100);
+  const monthlyRate = interestRate / 1200;
+  const months = tenureYears * 12;
+  const monthlyEmi = loanAmount > 0 && monthlyRate > 0
+    ? loanAmount * monthlyRate * Math.pow(1 + monthlyRate, months) / (Math.pow(1 + monthlyRate, months) - 1)
+    : months > 0 ? loanAmount / months : 0;
+  const totalPayable = monthlyEmi * months;
+  const virtualTourUrl = property?.virtualTourUrl || property?.virtual_tour_url;
+  const floorPlanUrl = property?.floorPlanUrl || property?.floor_plan_url;
   const customerSession = getCustomerAccountSession();
   const propertyHref = property ? safePropertyPath(property) : `/property/${slug || ""}`;
 
@@ -679,7 +711,7 @@ export function PropertyPage() {
           </Button>
 
           <div className={photos.length > 1 ? "grid gap-3 lg:grid-cols-[1fr_220px]" : "grid gap-3"}>
-            <div className="relative h-[155px] overflow-hidden rounded-[1.15rem] bg-navy-50 sm:h-[220px] md:h-[315px] md:rounded-[1.5rem]">
+            <button type="button" onClick={() => setLightboxOpen(true)} aria-label="Open property photo gallery" className="relative h-[155px] overflow-hidden rounded-[1.15rem] bg-navy-50 text-left sm:h-[220px] md:h-[315px] md:rounded-[1.5rem]">
               <img src={photos[activeImage] || photos[0]} alt={title} className="h-full w-full object-cover" />
               <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                 {property.verified ? (
@@ -691,7 +723,8 @@ export function PropertyPage() {
                   <Badge className="border-0 bg-amber-50 text-amber-700">Featured</Badge>
                 ) : null}
               </div>
-            </div>
+              <span className="absolute bottom-3 right-3 rounded-full bg-black/65 px-3 py-1.5 text-xs font-bold text-white">View gallery · {activeImage + 1}/{photos.length}</span>
+            </button>
 
             {photos.length > 1 ? (
               <div className="hidden gap-2.5 lg:grid">
@@ -713,6 +746,16 @@ export function PropertyPage() {
           </div>
         </div>
       </section>
+
+      {lightboxOpen ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" role="dialog" aria-modal="true" aria-label="Property photo gallery">
+          <button type="button" onClick={() => setLightboxOpen(false)} aria-label="Close gallery" className="absolute right-5 top-5 rounded-full bg-white/10 p-3 text-white hover:bg-white/20"><X className="h-6 w-6" /></button>
+          <button type="button" onClick={() => setActiveImage((activeImage - 1 + photos.length) % photos.length)} aria-label="Previous photo" className="absolute left-3 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 md:left-8"><ChevronLeft className="h-7 w-7" /></button>
+          <img src={photos[activeImage] || photos[0]} alt={`${title} photo ${activeImage + 1}`} className="max-h-[85vh] max-w-[88vw] rounded-2xl object-contain" />
+          <button type="button" onClick={() => setActiveImage((activeImage + 1) % photos.length)} aria-label="Next photo" className="absolute right-3 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 md:right-8"><ChevronRight className="h-7 w-7" /></button>
+          <span className="absolute bottom-5 rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white">{activeImage + 1} / {photos.length}</span>
+        </div>
+      ) : null}
 
       <main className="container mx-auto px-4 py-3 md:py-4">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-5">
@@ -851,6 +894,32 @@ export function PropertyPage() {
                 {publicPropertyDescription(property.description)}
               </p>
             </section>
+
+            {virtualTourUrl || floorPlanUrl ? (
+              <section className="rounded-[1.25rem] border border-blue-100 bg-blue-50 p-4 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Explore remotely</p>
+                <h2 className="mt-2 text-xl font-bold text-navy-900">Tour and floor-plan references</h2>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {virtualTourUrl ? <Button asChild className="rounded-full bg-blue-600 hover:bg-blue-700"><a href={virtualTourUrl} target="_blank" rel="noreferrer"><ExternalLink className="mr-2 h-4 w-4" /> Open virtual tour</a></Button> : null}
+                  {floorPlanUrl ? <Button asChild variant="outline" className="rounded-full border-blue-200 bg-white text-blue-700"><a href={floorPlanUrl} target="_blank" rel="noreferrer"><ExternalLink className="mr-2 h-4 w-4" /> View floor plan</a></Button> : null}
+                </div>
+              </section>
+            ) : null}
+
+            {saleListing && propertyPrice > 0 ? (
+              <section className="rounded-[1.25rem] border border-blue-100 bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-3"><span className="rounded-xl bg-blue-50 p-2 text-blue-700"><Calculator className="h-5 w-5" /></span><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">Finance estimate</p><h2 className="text-xl font-bold text-navy-900">EMI calculator</h2></div></div>
+                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  <label className="text-sm font-bold text-navy-700">Loan amount · {loanPercent}%<input type="range" min="10" max="90" step="5" value={loanPercent} onChange={(event) => setLoanPercent(Number(event.target.value))} className="mt-3 w-full" /></label>
+                  <label className="text-sm font-bold text-navy-700">Interest · {interestRate.toFixed(1)}%<input type="range" min="6" max="14" step="0.1" value={interestRate} onChange={(event) => setInterestRate(Number(event.target.value))} className="mt-3 w-full" /></label>
+                  <label className="text-sm font-bold text-navy-700">Tenure · {tenureYears} years<input type="range" min="5" max="30" step="1" value={tenureYears} onChange={(event) => setTenureYears(Number(event.target.value))} className="mt-3 w-full" /></label>
+                </div>
+                <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">{[
+                  ['Property price', propertyPrice], ['Loan amount', loanAmount], ['Monthly EMI', monthlyEmi], ['Total interest', Math.max(0, totalPayable - loanAmount)],
+                ].map(([label, value]) => <div key={String(label)} className="rounded-2xl bg-blue-50 p-3"><p className="text-xs text-blue-700">{label}</p><p className="mt-1 font-black text-navy-950">₹{Math.round(Number(value)).toLocaleString('en-IN')}</p></div>)}</div>
+                <p className="mt-3 text-xs text-navy-400">Illustrative estimate only. Bank eligibility, fees and actual rates may differ.</p>
+              </section>
+            ) : null}
 
             <section className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:rounded-[1.4rem] md:p-4">
               <h2 className="text-2xl font-bold text-navy-900">Amenities</h2>

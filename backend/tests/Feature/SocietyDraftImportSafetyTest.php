@@ -113,4 +113,18 @@ class SocietyDraftImportSafetyTest extends TestCase
             }
         }
     }
+
+    public function test_ai_advisor_does_not_expose_unpublished_inventory(): void
+    {
+        Society::create([
+            'name' => 'Hidden AI Society',
+            'slug' => 'hidden-ai-society',
+            'status' => 'Verified',
+            'is_published' => false,
+        ]);
+
+        $this->postJson('/api/ai/advisor', ['message' => 'Recommend a society in Gurgaon'])
+            ->assertOk()
+            ->assertJsonCount(0, 'matches');
+    }
 }

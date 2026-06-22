@@ -33,6 +33,8 @@ class Property extends Model
         'description',
         'amenities',
         'images',
+        'virtual_tour_url',
+        'floor_plan_url',
         'featured',
         'verified',
     ];

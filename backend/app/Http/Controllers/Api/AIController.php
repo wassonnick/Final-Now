@@ -27,11 +27,15 @@ class AIController extends Controller
 
         $properties = Property::query()
             ->where('status', 'Live')
+            ->whereHas('society', fn ($query) => $query
+                ->where('is_published', true)
+                ->whereIn('status', ['Verified', 'Premium']))
             ->when($listingTypes, fn ($query) => $query->whereIn('listing_type', $listingTypes))
             ->get()
             ->groupBy('society_id');
 
         $societies = Society::query()
+            ->where('is_published', true)
             ->whereIn('status', ['Verified', 'Premium'])
             ->withCount(['properties as available_homes' => function ($query) use ($listingTypes) {
                 $query->where('status', 'Live');
@@ -128,7 +132,11 @@ class AIController extends Controller
             'area' => 'required|integer|min:300',
         ]);
 
-        $society = Society::findOrFail($validated['societyId']);
+        $society = Society::query()
+            ->whereKey($validated['societyId'])
+            ->where('is_published', true)
+            ->whereIn('status', ['Verified', 'Premium'])
+            ->firstOrFail();
         $bhk = (int) $validated['bhk'];
         $area = (int) $validated['area'];
         $baseRent = $this->priceFromText($society->average_rent ?: $society->rent_range) ?: (45000 + ($bhk * 18000));
