@@ -250,6 +250,15 @@ const routeMeta = [
     schemaType: "WebPage",
   },
   {
+    path: "/chat",
+    title: "Gurgaon Society AI Chat | SocietyFlats",
+    description:
+      "Ask a conversational assistant grounded in published SocietyFlats societies and live Gurgaon homes.",
+    priority: "0.6",
+    changefreq: "weekly",
+    schemaType: "WebPage",
+  },
+  {
     path: "/404",
     title: "Page Not Found | SocietyFlats",
     description:
@@ -488,6 +497,7 @@ function staticCrawlLinks() {
     ["/investment-calculator", "Gurgaon rental yield calculator"],
     ["/builder-floors", "Builder floors in Gurgaon"],
     ["/builder-portal", "Builder and RWA verification portal"],
+    ["/chat", "Gurgaon society AI chat"],
   ];
 
   return [

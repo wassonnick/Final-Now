@@ -67,6 +67,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://www.societyflats.com/chat</loc>
+    <lastmod>2026-06-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://www.societyflats.com/investment-calculator</loc>
     <lastmod>2026-06-22</lastmod>
     <changefreq>weekly</changefreq>

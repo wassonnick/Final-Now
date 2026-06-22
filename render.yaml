@@ -142,6 +142,10 @@ services:
         value: ""
       - key: MEILISEARCH_KEY
         value: ""
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash
 
   # Scheduler worker. Queue delivery is synchronous; this process runs due alert matching.
   - type: worker

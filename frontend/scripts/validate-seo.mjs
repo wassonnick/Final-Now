@@ -17,6 +17,7 @@ const requiredRoutes = [
   "/investment-calculator",
   "/builder-floors",
   "/builder-portal",
+  "/chat",
   "/404",
 ];
 
@@ -85,6 +86,7 @@ async function validateInternalLinks() {
     "/investment-calculator",
     "/builder-floors",
     "/builder-portal",
+    "/chat",
   ];
 
   for (const required of requiredContent) {

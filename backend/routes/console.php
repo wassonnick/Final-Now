@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\AiConversation;
 use App\Models\Property;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -29,3 +30,4 @@ Artisan::command('inventory:clear-dummy-properties {--force}', function () {
 })->purpose('Delete current property inventory before uploading verified real listings');
 
 Schedule::command('saved-searches:match')->dailyAt('08:00')->withoutOverlapping();
+Schedule::call(fn () => AiConversation::query()->where('expires_at', '<', now())->delete())->dailyAt('03:15')->name('prune-expired-ai-conversations')->withoutOverlapping();

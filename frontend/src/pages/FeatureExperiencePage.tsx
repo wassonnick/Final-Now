@@ -24,6 +24,8 @@ import { fetchPublicProperties, fetchPublicSocieties, formatPublicLocation, sear
 import { cn } from '@/lib/utils';
 import { createCustomerAccountSession, rememberBrokerActivitySubmission } from '@/lib/customerAccount';
 import { fetchAccountByPhone, syncAccountToBackend } from '@/lib/accountApi';
+import { AiChatTool } from '@/components/chat/AiChatTool';
+import { setPublicSeo } from '@/lib/seo';
 
 type FeatureExperienceKey = 'maps' | 'broker-crm' | 'chat' | 'recommendations';
 
@@ -46,9 +48,9 @@ const featureIntro = {
     icon: BriefcaseBusiness,
   },
   chat: {
-    title: 'Chat & Callback',
-    eyebrow: 'Quick help',
-    text: 'Ask a question, request a callback, or send a WhatsApp-ready lead to the admin pipeline.',
+    title: 'SocietyFlats AI Chat',
+    eyebrow: 'Published-data assistant',
+    text: 'Ask follow-up questions and browse matches grounded in published SocietyFlats societies and live homes.',
     icon: MessageSquareText,
   },
   recommendations: {
@@ -597,9 +599,10 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    if (feature === 'chat') setPublicSeo('Gurgaon Society AI Chat | SocietyFlats', 'Ask a conversational assistant grounded in published SocietyFlats societies and live Gurgaon homes.', { canonical: '/chat' });
     fetchPublicSocieties().then(setSocieties).catch((error) => console.error('Societies fetch failed:', error));
     fetchPublicProperties().then(setProperties).catch((error) => console.error('Properties fetch failed:', error));
-  }, []);
+  }, [feature]);
 
   return (
     <div className="min-h-screen bg-ivory-100">
@@ -633,14 +636,15 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
             </div>
             <div className="rounded-[1.5rem] border border-navy-100 bg-white p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-navy-400">Workflow</p>
-              <p className="mt-2 text-lg font-bold text-navy-900">{feature === 'maps' ? 'Location search' : feature === 'recommendations' ? 'Ranked matches' : 'Lead capture'}</p>
+              <p className="mt-2 text-lg font-bold text-navy-900">{feature === 'maps' ? 'Location search' : feature === 'recommendations' ? 'Ranked matches' : 'Grounded AI chat'}</p>
             </div>
           </div>
         )}
 
         {feature === 'maps' ? <MapsTool societies={societies} /> : null}
         {feature === 'recommendations' ? <RecommendationsTool societies={societies} /> : null}
-        {feature === 'broker-crm' || feature === 'chat' ? <LeadFlowTool feature={feature} /> : null}
+        {feature === 'broker-crm' ? <LeadFlowTool feature={feature} /> : null}
+        {feature === 'chat' ? <AiChatTool /> : null}
       </section>
     </div>
   );

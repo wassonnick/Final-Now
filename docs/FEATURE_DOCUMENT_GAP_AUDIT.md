@@ -25,6 +25,7 @@ The document repeatedly labels features “BUILT & DEPLOYED”, but several are 
 - Builder/RWA portal: OTP-account society claims, admin verification, moderated announcements and approved-only public updates.
 - Saved-search alerts: daily scheduler worker, matching against published live inventory, duplicate-safe match records, account-visible results and credential-gated delivery webhooks.
 - Builder/RWA review responses: approved claim ownership, admin moderation and approved-only public display.
+- AI chat: server-side Gemini conversation proxy, published-inventory grounding, private expiring conversation tokens, rate limiting and safe provider/no-inventory fallbacks.
 
 ## Partially implemented
 
@@ -38,7 +39,6 @@ The document repeatedly labels features “BUILT & DEPLOYED”, but several are 
 ## Not implemented yet
 
 - Razorpay order creation, signature verification, payment plans and payment ledger.
-- AI chat proxy with a conversational provider; the current chat surface submits leads/callback requests.
 - Production outbound saved-search delivery credentials and provider-specific templates.
 - Scheduled weekly rent collection from an approved/licensed data source.
 - AI rental-agreement drafting and PDF workflow.
