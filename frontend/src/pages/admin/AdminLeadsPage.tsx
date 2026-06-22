@@ -1617,30 +1617,34 @@ export function AdminLeadsPage() {
 
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {[
-            ["Today", todayLeads, "New enquiries"],
-            ["Active Leads", activeLeads, "In pipeline"],
-            ["Call Sheet", callSheetLeads, "Priority queue"],
-            ["Follow-ups", followUpsToday, "Due today"],
-            ["Overdue", overdueFollowUps, "Needs action"],
-            ["Upcoming", upcomingFollowUps, "Scheduled"],
-            ["No Follow-up", noFollowUps, "Needs reminder"],
-            ["Duplicates", duplicateLeads, "Same phone"],
-            ["Missing Phone", missingPhoneLeads, "Incomplete"],
-            ["Missing Req.", missingRequirementLeads, "Incomplete"],
-            ["High Intent", highIntentLeads, "Priority quality"],
-            ["Fresh", freshLeads, "New today"],
-            ["Aging", agingLeads, "1–2 days"],
-            ["Stale", staleLeads, "3+ days"],
-            ["Hot SLA", hotSlaLeads, "Hot + New"],
-            ["Untouched", untouchedLeads, "No follow-up"],
-            ["Hot Leads", hotLeads, "Priority follow-ups"],
-            ["Booked", bookedLeads, "Closed wins"],
-          ].map(([label, value, helper]) => (
-            <div key={String(label)} className="rounded-[20px] border border-slate-200 bg-white p-3.5 shadow-sm">
+            ["Today", todayLeads, "New enquiries", "/admin/leads?view=today"],
+            ["Active Leads", activeLeads, "In pipeline", "/admin/leads?view=active"],
+            ["Call Sheet", callSheetLeads, "Priority queue", "/admin/leads?view=call_sheet"],
+            ["Follow-ups", followUpsToday, "Due today", "/admin/leads?view=followups"],
+            ["Overdue", overdueFollowUps, "Needs action", "/admin/leads?view=overdue"],
+            ["Upcoming", upcomingFollowUps, "Scheduled", "/admin/leads?view=upcoming"],
+            ["No Follow-up", noFollowUps, "Needs reminder", "/admin/leads?view=no_followup"],
+            ["Duplicates", duplicateLeads, "Same phone", "/admin/leads?view=duplicates"],
+            ["Missing Phone", missingPhoneLeads, "Incomplete", "/admin/leads?view=missing_phone"],
+            ["Missing Req.", missingRequirementLeads, "Incomplete", "/admin/leads?view=missing_requirement"],
+            ["High Intent", highIntentLeads, "Priority quality", "/admin/leads?view=high_intent"],
+            ["Fresh", freshLeads, "New today", "/admin/leads?view=fresh"],
+            ["Aging", agingLeads, "1–2 days", "/admin/leads?view=aging"],
+            ["Stale", staleLeads, "3+ days", "/admin/leads?view=stale"],
+            ["Hot SLA", hotSlaLeads, "Hot + New", "/admin/leads?view=hot_sla"],
+            ["Untouched", untouchedLeads, "No follow-up", "/admin/leads?view=untouched"],
+            ["Hot Leads", hotLeads, "Priority follow-ups", "/admin/leads?view=hot"],
+            ["Booked", bookedLeads, "Closed wins", "/admin/leads?view=booked"],
+          ].map(([label, value, helper, href]) => (
+            <Link
+              key={String(label)}
+              to={String(href)}
+              className="rounded-[20px] border border-slate-200 bg-white p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-blue-100"
+            >
               <p className="text-3xl font-bold text-slate-950">{value}</p>
               <p className="mt-2 text-sm font-medium text-blue-600">{label}</p>
               <p className="mt-1 text-xs text-slate-400">{helper}</p>
-            </div>
+            </Link>
           ))}
         </section>
 
