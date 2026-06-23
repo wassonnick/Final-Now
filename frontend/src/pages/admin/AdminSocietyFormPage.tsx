@@ -22,8 +22,8 @@ import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { uploadAdminImage } from "@/lib/adminApi";
-import { societyPlaceholderImage } from "@/lib/societyImages";
+import { adminFetch, uploadAdminImage } from "@/lib/adminApi";
+import { googlePlacesSocietyPhotoUrl, societyPlaceholderImage } from "@/lib/societyImages";
 import {
   createEmptyAdminSociety,
   describeBrochureUpdate,
@@ -230,6 +230,8 @@ export function AdminSocietyFormPage() {
     useState<NearbyIntelligenceSuggestions | null>(null);
   const [message, setMessage] = useState("");
   const [saved, setSaved] = useState(false);
+  const [googleImageRightsConfirmed, setGoogleImageRightsConfirmed] = useState(false);
+  const [reviewingImage, setReviewingImage] = useState(false);
 
   useEffect(() => {
     async function loadSociety() {
@@ -462,6 +464,63 @@ export function AdminSocietyFormPage() {
 
     setMessage("Direct image marked approved for public display. Save only if rights/permission and attribution are verified.");
     setSaved(false);
+  };
+
+  const approveGooglePlacesImage = async () => {
+    const societyId = Number(society.id || 0);
+
+    if (!societyId) {
+      setError("Save the society first before approving a Google Places image.");
+      return;
+    }
+
+    if (society.imageStatus !== "google_places_reference_found" || !society.placeId) {
+      setError("Fetch a Google Places photo reference before approving Google display.");
+      return;
+    }
+
+    if (!googleImageRightsConfirmed) {
+      setError("Confirm Google attribution/display terms before approving this reference image.");
+      return;
+    }
+
+    try {
+      setReviewingImage(true);
+      setError("");
+      setMessage("");
+
+      const response = await adminFetch(`/admin/import/societies/${societyId}/image`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision: "approve", rights_confirmed: true }),
+      });
+      const json = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(json?.message || "Could not approve Google Places image.");
+      }
+
+      const approved = json?.data;
+
+      if (approved) {
+        setSociety((current) => ({
+          ...current,
+          imageApprovedByAdmin: Boolean(approved.image_approved_by_admin),
+          imageLicenseNotes: approved.image_license_notes || current.imageLicenseNotes,
+          imageStatus: approved.image_status || current.imageStatus,
+          imageCredit: approved.image_credit || current.imageCredit,
+        }));
+      }
+
+      setGoogleImageRightsConfirmed(false);
+      setMessage(json?.message || "Google Places image approved for attributed display after the society is published.");
+      setSaved(true);
+    } catch (err) {
+      console.error(err);
+      setError(friendlyFetchError(err, "Could not approve Google Places image."));
+    } finally {
+      setReviewingImage(false);
+    }
   };
 
   const keepImageAsReferenceOnly = () => {
@@ -748,7 +807,12 @@ export function AdminSocietyFormPage() {
 
 
   const mediaPreviewImage =
-    society.imageApprovedByAdmin && (society.coverImage || society.imageUrl)
+    society.imageApprovedByAdmin &&
+    society.imageStatus === "google_places_reference_found" &&
+    society.isPublished &&
+    ["Verified", "Premium"].includes(society.status)
+      ? googlePlacesSocietyPhotoUrl(society)
+      : society.imageApprovedByAdmin && (society.coverImage || society.imageUrl)
       ? society.coverImage || society.imageUrl
       : societyPlaceholderImage(society);
 
@@ -1454,6 +1518,36 @@ export function AdminSocietyFormPage() {
                 <div className="mt-3 rounded-2xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-700">
                   Approval is only for direct licensed/self-shot/developer-permitted image URLs. Google/map links must remain reference/display mode.
                 </div>
+
+                {referenceIsGoogle ? (
+                  <div className="mt-3 rounded-2xl border border-amber-100 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+                    <p className="font-bold">Google Places display approval</p>
+                    <p className="mt-1">
+                      This approves attributed Google Places display through SocietyFlats&apos; backend proxy. It does not mark the image as owned, and it still stays hidden from public pages until the society itself is published.
+                    </p>
+                    {!society.imageApprovedByAdmin ? (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <label className="flex items-center gap-2 font-semibold">
+                          <Checkbox
+                            checked={googleImageRightsConfirmed}
+                            onCheckedChange={(checked) => setGoogleImageRightsConfirmed(checked === true)}
+                          />
+                          Google attribution/display terms reviewed
+                        </label>
+                        <Button
+                          type="button"
+                          onClick={approveGooglePlacesImage}
+                          disabled={reviewingImage || !googleImageRightsConfirmed}
+                          className="h-9 rounded-full bg-emerald-600 px-3 text-xs font-black hover:bg-emerald-700"
+                        >
+                          {reviewingImage ? "Approving…" : "Approve Google display"}
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="mt-2 font-bold text-emerald-700">Approved for attributed Google Places display.</p>
+                    )}
+                  </div>
+                ) : null}
 
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <Button
