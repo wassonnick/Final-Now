@@ -86,13 +86,8 @@ export function Navbar() {
             width={512}
             height={512}
           />
-          <span className="leading-none">
-            <span className="block text-lg font-black uppercase tracking-tight text-navy-950 sm:text-xl lg:text-2xl">
-              Society<span className="text-blue-700">Flats</span>
-            </span>
-            <span className="hidden text-[8px] font-black uppercase tracking-[0.16em] text-navy-500 sm:block lg:text-[9px]">
-              Gurgaon’s society-first
-            </span>
+          <span className="text-lg font-black uppercase tracking-tight text-navy-950 sm:text-xl lg:text-2xl">
+            Society<span className="text-blue-700">Flats</span>
           </span>
         </Link>
 

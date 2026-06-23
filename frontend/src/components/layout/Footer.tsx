@@ -31,14 +31,17 @@ export function Footer() {
       <div className="container mx-auto px-4 pb-28 pt-8 md:pb-8 md:pt-12">
         <div className="grid gap-6 md:grid-cols-[1.15fr_0.8fr_0.8fr_1fr] md:gap-8">
           <div>
-            <Link to="/" className="inline-flex rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950" aria-label="SocietyFlats home">
+            <Link to="/" className="inline-flex items-center gap-2.5 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950" aria-label="SocietyFlats home">
               <img
-                src="/brand/societyflats-logo-white.png"
+                src="/brand/societyflats-icon-512.png"
                 alt="SocietyFlats"
-                className="h-12 w-auto max-w-[260px] object-contain sm:h-14 sm:max-w-[300px]"
-                width={1200}
-                height={300}
+                className="h-10 w-10 object-contain sm:h-11 sm:w-11"
+                width={512}
+                height={512}
               />
+              <span className="text-xl font-black uppercase tracking-tight text-white sm:text-2xl">
+                Society<span className="text-blue-400">Flats</span>
+              </span>
             </Link>
 
             <p className="mt-3 max-w-sm text-sm leading-6 text-navy-200 md:text-[15px] md:leading-7">
