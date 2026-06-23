@@ -214,8 +214,8 @@ export function HomePage() {
 
   useEffect(() => {
     setPublicSeo(
-      "SocietyFlats | Gurgaon’s Society-First Home Search",
-      "Find the right society before choosing the home. Explore Gurgaon societies and request verified rental or resale options.",
+      "Verified Gurgaon Societies & Premium Flats | SocietyFlats",
+      "Stop sorting through scattered, unverified listings. Discover Gurgaon’s premier residential societies using data-driven ratings for security, commute, and market trends.",
     );
     window.scrollTo(0, 0);
     fetchPublicSocieties()
@@ -1058,7 +1058,7 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
             <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-3xl">
               <span className="md:hidden">List your flat with verified buyers.</span>
               <span className="hidden md:inline">
-                Own a Gurgaon flat? Reach verified society-first buyers.
+                Own a premium apartment in Gurgaon? List your property directly.
               </span>
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500 md:text-[15px] md:leading-6">
@@ -1066,7 +1066,7 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
                 Get verified tenant and buyer enquiries from users already comparing societies.
               </span>
               <span className="hidden md:inline">
-                Reach serious tenants and buyers looking specifically inside verified Gurgaon societies. Add your property once and receive qualified enquiries with clearer requirement, budget and society context.
+                We match your home with pre-qualified buyers and tenants already researching your specific society. Skip endless broker calls and listing spam.
               </span>
             </p>
             <div className="mt-5 flex flex-wrap gap-3">

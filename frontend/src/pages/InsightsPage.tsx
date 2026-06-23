@@ -183,8 +183,8 @@ export function InsightsPage() {
 
   useEffect(() => {
     setPublicSeo(
-      "Gurgaon Market Insights | Rent Buy Sell Signals | SocietyFlats",
-      "Source-labelled Gurgaon rent, buy, resale and owner listing signals by locality and society-first market context.",
+      "Gurgaon Real Estate Market Insights | Property Values & Rental Trends",
+      "Track verified rental price bands, property demand shifts and long-term investment viability scores across Gurgaon’s key micro-markets.",
     );
     window.scrollTo(0, 0);
   }, []);
@@ -213,11 +213,11 @@ export function InsightsPage() {
               </span>
 
               <h1 className="mt-4 max-w-4xl font-display text-[36px] font-black leading-[0.98] tracking-[-0.045em] text-navy-950 md:text-[56px]">
-                Rent, buy and sell signals with clear verification labels.
+                Gurgaon real estate market insights with clear verification labels.
               </h1>
 
               <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-blue-500">
-                These insights are not final pricing. They are society-first guide ranges and demand signals to help users shortlist, compare and request verification.
+                Track verified rental price bands, demand shifts and investment context across Gurgaon’s key micro-markets before users shortlist, compare and request verification.
               </p>
 
               <div className="mt-5 flex flex-wrap gap-2">

@@ -8,9 +8,9 @@ const INDEX_PATH = path.join(DIST_DIR, "index.html");
 const routeMeta = [
   {
     path: "/",
-    title: "SocietyFlats Gurgaon | Verified Society-First Rentals & Resale",
+    title: "Verified Gurgaon Societies & Premium Flats | SocietyFlats",
     description:
-      "Search verified Gurgaon societies, live homes, owner listings and society-first property intelligence on SocietyFlats.",
+      "Stop sorting through scattered, unverified listings. Discover Gurgaon’s premier residential societies using data-driven ratings for security, commute, and market trends.",
     priority: "1.0",
     changefreq: "daily",
     schemaType: "WebSite",
@@ -385,12 +385,22 @@ function schemaFor(meta) {
   const canonical = canonicalFor(meta.path);
 
   const organization = {
-    "@type": "Organization",
+    "@type": "RealEstateAgent",
     name: "SocietyFlats",
     url: SITE_URL,
     areaServed: "Gurugram, Haryana, India",
     description:
-      "SocietyFlats helps users discover verified Gurgaon societies, live homes and society-first property intelligence.",
+      "Gurgaon's society-first real estate platform built around verified availability, structural intelligence, and assisted home search.",
+    telephone: "+91-99118-86222",
+    priceRange: "₹40000 - ₹2400000",
+    logo: `${SITE_URL}/brand/societyflats-icon-512.png`,
+    image: `${SITE_URL}/brand/societyflats-og-image.png`,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Gurgaon",
+      addressRegion: "Haryana",
+      addressCountry: "IN",
+    },
   };
 
   const website = {

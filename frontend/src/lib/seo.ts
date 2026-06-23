@@ -4,7 +4,7 @@ const SITE_NAME = "SocietyFlats";
 const SITE_URL = "https://www.societyflats.com";
 const DEFAULT_SOCIAL_IMAGE = "/brand/societyflats-og-image.png";
 const DEFAULT_DESCRIPTION =
-  "Find the right society before choosing the home. Explore Gurgaon societies and request verified rental or resale options.";
+  "Stop sorting through scattered, unverified listings. Discover Gurgaon’s premier residential societies using data-driven ratings for security, commute, and market trends.";
 
 type SeoInput =
   | boolean
@@ -171,12 +171,22 @@ function defaultJsonLd(title: string, description: string, canonical: string): u
       "@context": "https://schema.org",
       "@graph": [
         {
-          "@type": "Organization",
+          "@type": "RealEstateAgent",
           name: SITE_NAME,
           url: SITE_URL,
           areaServed: "Gurugram, Haryana, India",
-          description: DEFAULT_DESCRIPTION,
+          description:
+            "Gurgaon's society-first real estate platform built around verified availability, structural intelligence, and assisted home search.",
           logo: absoluteUrl("/brand/societyflats-icon-512.png"),
+          image: absoluteUrl(DEFAULT_SOCIAL_IMAGE),
+          telephone: "+91-99118-86222",
+          priceRange: "₹40000 - ₹2400000",
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: "Gurgaon",
+            addressRegion: "Haryana",
+            addressCountry: "IN",
+          },
         },
         {
           "@type": "WebSite",

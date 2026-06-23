@@ -330,7 +330,7 @@ export default function SocietyFlatsHero() {
           </h1>
 
           <p className="mt-4 max-w-[560px] text-base font-semibold leading-7 text-blue-500 sm:text-lg">
-            Compare verified societies, rentals, resale homes, commute strength and lifestyle fit before booking visits.
+            Compare verified residential societies, premium rental trends, resale data, commute times and true lifestyle fit before booking a site visit.
           </p>
 
           <div className="mt-6 rounded-[1.35rem] border border-blue-100 bg-white p-2.5 shadow-[0_18px_48px_rgba(37,99,235,0.10)]">

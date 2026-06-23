@@ -617,7 +617,7 @@ export function AIAdvisorPage() {
   useEffect(() => {
     setPublicSeo(
       "SocietyFlats AI Advisor | Smart Gurgaon Home Search",
-      "Answer in plain English and get personalized Gurgaon society and home recommendations by budget, commute, lifestyle and verified inventory.",
+      "Use our natural language AI tool to find the perfect home. Shortlist properties based on office commute times, preferred schools, monthly budget and lifestyle needs.",
     );
     window.scrollTo(0, 0);
   }, []);
@@ -720,11 +720,11 @@ export function AIAdvisorPage() {
               </span>
 
               <h1 className="mt-4 max-w-3xl font-display text-[34px] font-black leading-[0.98] tracking-[-0.045em] text-navy-950 md:text-[52px]">
-                Tell us what you need. Get a Gurgaon society shortlist.
+                Tailor your search in plain English.
               </h1>
 
               <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-blue-500 md:text-[17px]">
-                Continue your Gurgaon society shortlist. Continued from homepage, search, compare or map view. Continue from homepage search, society search, compare or map view. Search by budget, office, school, builder, pet needs, lifestyle or investment goal. Results open into society pages and full search.
+                Continue your Gurgaon society shortlist. Tell our intelligent engine exactly what your family needs. Skip repetitive filters and get a data-backed shortlist by budget, office, school, builder, pet needs, lifestyle or investment goal.
               </p>
 
               {resultSocieties.length ? (

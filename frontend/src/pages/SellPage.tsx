@@ -22,6 +22,7 @@ import { trackEvent, trackLeadIntent, trackLeadSubmitted } from "@/lib/analytics
 import { cleanLeadTrackingPayload } from "@/lib/leadTracking";
 import { createCustomerAccountSession } from "@/lib/customerAccount";
 import { fetchAccountByPhone, syncAccountToBackend } from "@/lib/accountApi";
+import { setPublicSeo } from "@/lib/seo";
 
 function cleanOwnerLeadPhone(value: string) {
   return String(value || "").replace(/\D/g, "").slice(0, 10);
@@ -76,7 +77,14 @@ export function SellPage() {
   const [accountCreated, setAccountCreated] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => window.scrollTo(0, 0), []);
+  useEffect(() => {
+    setPublicSeo(
+      "List Your Gurgaon Flat | Connect with Verified Buyers & Tenants Directly",
+      "Skip endless phone calls from unverified brokers. List your premium property directly on SocietyFlats to reach high-intent clients looking specifically inside your residential community.",
+      { canonical: "/sell" },
+    );
+    window.scrollTo(0, 0);
+  }, []);
 
   const updateForm = (field: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -239,10 +247,10 @@ export function SellPage() {
                 Owner listing
               </Badge>
               <h1 className="max-w-2xl text-3xl font-black tracking-[-0.045em] leading-[0.98] text-slate-950 md:text-5xl">
-                List your Gurgaon flat. Get verified buyers. No broker hassle.
+                Own a premium apartment in Gurgaon? List your property directly.
               </h1>
               <p className="mt-4 max-w-xl text-sm leading-6 text-slate-600 md:text-base md:leading-7">
-                Share your society, BHK, price expectation and callback time once. SocietyFlats verifies the owner lead, captures society context and routes serious buyer/tenant enquiries to the CRM.
+                We match your home with pre-qualified buyers and tenants who are already researching your specific society. Skip endless broker calls and listing spam.
               </p>
               <div className="mt-5 grid gap-2 sm:grid-cols-3">
                 {[
