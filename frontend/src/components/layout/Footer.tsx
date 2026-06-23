@@ -33,9 +33,9 @@ export function Footer() {
           <div>
             <Link to="/" className="inline-flex rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950" aria-label="SocietyFlats home">
               <img
-                src="/brand/societyflats-logo-dark.png"
+                src="/brand/societyflats-logo-white.png"
                 alt="SocietyFlats"
-                className="h-14 w-auto max-w-[232px] rounded-xl object-contain sm:h-16 sm:max-w-[268px]"
+                className="h-12 w-auto max-w-[260px] object-contain sm:h-14 sm:max-w-[300px]"
                 width={1200}
                 height={300}
               />

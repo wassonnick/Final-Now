@@ -78,14 +78,22 @@ export function Navbar() {
     <>
     <header className="sticky top-0 z-50 w-full bg-white/86 backdrop-blur-2xl border-b border-navy-100/80">
       <div className="container mx-auto px-4 h-[72px] flex items-center justify-between gap-3 sm:h-20 sm:gap-5">
-        <Link to="/" className="flex shrink-0 items-center rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4" aria-label="SocietyFlats home">
+        <Link to="/" className="flex shrink-0 items-center gap-2 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4 sm:gap-2.5" aria-label="SocietyFlats home">
           <img
-            src="/brand/societyflats-logo-light.png"
+            src="/brand/societyflats-icon-512.png"
             alt="SocietyFlats"
-            className="h-9 w-auto max-w-[148px] object-contain sm:h-10 sm:max-w-[178px] lg:h-12 lg:max-w-[214px]"
-            width={1200}
-            height={300}
+            className="h-9 w-9 object-contain sm:h-10 sm:w-10 lg:h-11 lg:w-11"
+            width={512}
+            height={512}
           />
+          <span className="leading-none">
+            <span className="block text-lg font-black uppercase tracking-tight text-navy-950 sm:text-xl lg:text-2xl">
+              Society<span className="text-blue-700">Flats</span>
+            </span>
+            <span className="hidden text-[8px] font-black uppercase tracking-[0.16em] text-navy-500 sm:block lg:text-[9px]">
+              Gurgaon’s society-first
+            </span>
+          </span>
         </Link>
 
         <nav className="hidden xl:flex items-center gap-1 rounded-full bg-ivory-200/70 border border-navy-100 px-2 py-1.5">

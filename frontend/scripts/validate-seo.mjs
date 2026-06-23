@@ -174,6 +174,7 @@ async function validatePublicFiles() {
   await fs.access(path.join(PUBLIC_DIR, "icon-512.png"));
   await fs.access(path.join(PUBLIC_DIR, "brand", "societyflats-logo-light.png"));
   await fs.access(path.join(PUBLIC_DIR, "brand", "societyflats-logo-dark.png"));
+  await fs.access(path.join(PUBLIC_DIR, "brand", "societyflats-logo-white.png"));
   await fs.access(path.join(PUBLIC_DIR, "brand", "societyflats-og-image.png"));
 }
 
