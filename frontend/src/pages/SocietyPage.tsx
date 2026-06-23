@@ -64,9 +64,50 @@ type LaravelPaginated<T> = {
   data?: T[];
 };
 
-function splitLines(value?: string | null) {
-  return String(value || "")
-    .split("\n")
+function readableStructuredValue(value: unknown): string {
+  if (value === undefined || value === null || value === false) return "";
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value).trim();
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map(readableStructuredValue)
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const preferred = [
+      record.name,
+      record.title,
+      record.label,
+      record.type,
+      record.distance,
+      record.distance_text,
+      record.travel_time,
+      record.time,
+      record.notes,
+      record.description,
+    ]
+      .map(readableStructuredValue)
+      .filter(Boolean);
+
+    if (preferred.length) return preferred.join(" — ");
+
+    return Object.values(record)
+      .map(readableStructuredValue)
+      .filter(Boolean)
+      .join(" — ");
+  }
+
+  return "";
+}
+
+function splitLines(value?: unknown) {
+  return readableStructuredValue(value)
+    .split(/\n+/)
     .map((item) => item.trim())
     .filter(Boolean);
 }
@@ -554,6 +595,7 @@ export function SocietyPage() {
       icon: Building2,
     },
   ];
+  const faqText = readableStructuredValue(field(society, "faq", "faq", ""));
 
   const nearbyFallbackCards = [
     {
@@ -590,35 +632,36 @@ export function SocietyPage() {
       primary: item.lines[0]?.replace(/\s+—\s+source:\s+Google Places/gi, "").trim() || "",
       extraCount: Math.max(item.lines.length - 1, 0),
     }));
-  const sourceUrl = field<string>(society, "sourceUrl", "source_url", "");
+  const sourceUrl = readableStructuredValue(field(society, "sourceUrl", "source_url", ""));
   const reraUrl =
-    field<string>(society, "reraSearchUrl", "rera_search_url", "") ||
+    readableStructuredValue(field(society, "reraSearchUrl", "rera_search_url", "")) ||
     (sourceUrl.toLowerCase().includes("rera") ? sourceUrl : "");
   const officialLinks = [
     [
       "Official Project Page",
-      field(society, "officialProjectUrl", "official_project_url", ""),
+      readableStructuredValue(field(society, "officialProjectUrl", "official_project_url", "")),
     ],
     [
       "Developer Website",
-      field(society, "officialDeveloperUrl", "official_developer_url", ""),
+      readableStructuredValue(field(society, "officialDeveloperUrl", "official_developer_url", "")),
     ],
     [
       "Brochure",
-      field(society, "officialBrochureUrl", "official_brochure_url", ""),
+      readableStructuredValue(field(society, "officialBrochureUrl", "official_brochure_url", "")),
     ],
     [
       "Floor Plan",
-      field(society, "officialFloorPlanUrl", "official_floor_plan_url", ""),
+      readableStructuredValue(field(society, "officialFloorPlanUrl", "official_floor_plan_url", "")),
     ],
     [
       "Gallery Reference",
-      field(society, "officialGalleryUrl", "official_gallery_url", ""),
+      readableStructuredValue(field(society, "officialGalleryUrl", "official_gallery_url", "")),
     ],
-    ["Google Maps", field(society, "googleMapsUrl", "google_maps_url", "")],
+    ["Google Maps", readableStructuredValue(field(society, "googleMapsUrl", "google_maps_url", ""))],
     ["RERA Search", reraUrl],
   ].filter(([, href]) => Boolean(href));
   const societyLocation = safeLocation(society);
+  const descriptionText = readableStructuredValue(society.description);
   const whatsappMessage = encodeURIComponent(
     `Hi, I am exploring homes in ${society.name}. Please share verified options.`,
   );
@@ -758,9 +801,9 @@ export function SocietyPage() {
                   </p>
                 </div>
               </div>
-              {society.description ? (
+              {descriptionText ? (
                 <p className="mt-2.5 line-clamp-2 text-sm leading-6 text-navy-600 md:mt-3 md:line-clamp-2 md:text-[15px]">
-                  {society.description}
+                  {descriptionText}
                 </p>
               ) : null}
               <div className="mt-2.5 grid grid-cols-2 gap-2 border-t border-navy-100 pt-2.5 md:mt-3 md:grid-cols-3">
@@ -954,7 +997,7 @@ export function SocietyPage() {
                 >
                   <p className="text-sm text-navy-400">{label}</p>
                   <p className="mt-1 font-semibold text-navy-900">
-                    {value || "Not added"}
+                    {readableStructuredValue(value) || "Not added"}
                   </p>
                 </div>
               ))}
@@ -967,9 +1010,9 @@ export function SocietyPage() {
               <h2 className="mt-2 text-xl font-bold text-navy-900">
                 Why consider {society.name}?
               </h2>
-              {society.description ? (
+              {descriptionText ? (
                 <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-navy-600">
-                  {society.description}
+                  {descriptionText}
                 </p>
               ) : (
                 <p className="mt-3 text-sm leading-relaxed text-navy-600">
@@ -1399,11 +1442,11 @@ export function SocietyPage() {
               )}
             </div>
 
-            {field(society, "faq", "faq", "") ? (
+            {faqText ? (
               <div className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm">
                 <h2 className="text-2xl font-bold text-navy-900">FAQ</h2>
                 <div className="mt-4 whitespace-pre-line leading-relaxed text-navy-600">
-                  {field(society, "faq", "faq", "")}
+                  {faqText}
                 </div>
               </div>
             ) : null}
