@@ -1000,6 +1000,7 @@ QUERY;
 
                 $suggestions = $result['suggestions'] ?? [];
                 $changed = [];
+                $scoreContext = [];
                 $nearbyText = function ($value): string {
                     if (is_array($value)) {
                         return trim(implode("\n", array_filter(array_map(fn ($item) => is_scalar($item) ? trim((string) $item) : trim(json_encode($item)), $value))));
@@ -1016,7 +1017,16 @@ QUERY;
                     $current = $nearbyText($society->{$field} ?? '');
 
                     if ($suggestion !== '' && $current === '') {
-                        $society->{$field} = $nearbyLines($suggestion);
+                        $lines = $nearbyLines($suggestion);
+                        $society->{$field} = $lines;
+                        $scoreContext[$field] = $lines;
+                        $changed[] = $field;
+                    }
+                }
+
+                if ((float) ($society->score ?? 0) <= 0) {
+                    foreach ($this->scorePayload($society, $scoreContext) as $field => $value) {
+                        $society->{$field} = $value;
                         $changed[] = $field;
                     }
                 }

@@ -169,6 +169,7 @@ class SocietySpreadsheetImportTest extends TestCase
             'is_published' => false,
             'latitude' => '28.39',
             'longitude' => '77.02',
+            'score' => 0,
             'nearby_schools' => [],
             'nearby_metro' => [],
             'nearby_hospitals' => [],
@@ -184,6 +185,7 @@ class SocietySpreadsheetImportTest extends TestCase
         $fresh = $society->fresh();
         $this->assertIsArray($fresh->nearby_schools);
         $this->assertNotEmpty($fresh->nearby_schools);
+        $this->assertGreaterThan(0, (float) $fresh->score);
     }
 
     public function test_empty_grounded_response_retries_once_without_grounding(): void
