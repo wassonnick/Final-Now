@@ -18,10 +18,6 @@ class GooglePlacesSocietyImageService
         $place = $this->resolvePlace($society, $apiKey);
         $photoReference = $place['photos'][0]['photo_reference'] ?? null;
 
-        if (!$photoReference) {
-            throw new \RuntimeException('No Google Places photo was found for this society.');
-        }
-
         $placeId = (string) ($place['place_id'] ?? $society->place_id ?? '');
         $placeName = (string) ($place['name'] ?? $society->name);
         $placeAddress = (string) ($place['formatted_address'] ?? $society->address ?? '');

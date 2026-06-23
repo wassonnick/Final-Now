@@ -150,6 +150,42 @@ class SocietySpreadsheetImportTest extends TestCase
             ->assertJsonPath('data.image_approved_by_admin', false);
     }
 
+    public function test_google_places_reference_without_photo_still_fills_place_coordinates(): void
+    {
+        config(['services.google_places_api_key' => 'google-test-key']);
+        Http::fake([
+            'maps.googleapis.com/maps/api/place/findplacefromtext/json*' => Http::response([
+                'status' => 'OK',
+                'candidates' => [
+                    ['place_id' => 'place-no-photo-123'],
+                ],
+            ]),
+            'maps.googleapis.com/maps/api/place/details/json*' => Http::response([
+                'status' => 'OK',
+                'result' => [
+                    'place_id' => 'place-no-photo-123',
+                    'name' => 'No Photo Society',
+                    'formatted_address' => 'Sector 71, Gurugram, Haryana',
+                    'url' => 'https://maps.google.com/?cid=456',
+                    'geometry' => ['location' => ['lat' => 28.4, 'lng' => 77.03]],
+                    'photos' => [],
+                ],
+            ]),
+        ]);
+
+        $society = Society::create(['name' => 'No Photo Society', 'slug' => 'no-photo-society', 'status' => 'Draft', 'verification_status' => 'Needs Review', 'is_published' => false, 'city' => 'Gurugram']);
+
+        $this->withToken('admin-test-token')
+            ->postJson("/api/admin/societies/{$society->id}/google-places-image-reference")
+            ->assertOk()
+            ->assertJsonPath('data.place_id', 'place-no-photo-123')
+            ->assertJsonPath('data.google_maps_url', 'https://maps.google.com/?cid=456')
+            ->assertJsonPath('data.latitude', '28.4')
+            ->assertJsonPath('data.longitude', '77.03')
+            ->assertJsonPath('data.image_status', 'google_places_place_reference_found')
+            ->assertJsonPath('data.image_approved_by_admin', false);
+    }
+
     public function test_bulk_nearby_autofill_accepts_existing_array_cast_fields(): void
     {
         config(['services.google_places_api_key' => 'google-test-key']);

@@ -134,10 +134,11 @@ class SocietyController extends Controller {
     }
 
     $placeLocation = $reference['geometry']['location'] ?? [];
+    $hasPhotoReference = ! empty($reference['photo_reference']);
     $updates = [
       'place_id' => $reference['place_id'] ?: $society->place_id,
       'image_reference_url' => $reference['safe_reference_url'],
-      'image_status' => 'google_places_reference_found',
+      'image_status' => $hasPhotoReference ? 'google_places_reference_found' : 'google_places_place_reference_found',
       'image_approved_by_admin' => false,
       'image_alt_text' => $society->image_alt_text ?: $society->name . ' residential society in Gurugram',
       'image_credit' => $reference['credit'],
@@ -159,7 +160,9 @@ class SocietyController extends Controller {
 
     return response()->json([
       'status' => 'ok',
-      'message' => 'Google Places photo reference saved for admin review. It is not approved for public display.',
+      'message' => $hasPhotoReference
+        ? 'Google Places photo reference saved for admin review. It is not approved for public display.'
+        : 'Google Places reference saved for admin review. No Places photo was returned.',
       'data' => $society->fresh(),
       'meta' => [
         'place_id' => $reference['place_id'],
@@ -224,10 +227,11 @@ class SocietyController extends Controller {
         }
 
         $placeLocation = $reference['geometry']['location'] ?? [];
+        $hasPhotoReference = ! empty($reference['photo_reference']);
         $updates = [
           'place_id' => $reference['place_id'] ?: $society->place_id,
           'image_reference_url' => $reference['safe_reference_url'],
-          'image_status' => 'google_places_reference_found',
+          'image_status' => $hasPhotoReference ? 'google_places_reference_found' : 'google_places_place_reference_found',
           'image_approved_by_admin' => false,
           'image_alt_text' => $society->image_alt_text ?: $society->name . ' residential society in Gurugram',
           'image_credit' => $reference['credit'],
