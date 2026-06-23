@@ -2,8 +2,9 @@ import { useEffect } from "react";
 
 const SITE_NAME = "SocietyFlats";
 const SITE_URL = "https://www.societyflats.com";
+const DEFAULT_SOCIAL_IMAGE = "/brand/societyflats-og-image.png";
 const DEFAULT_DESCRIPTION =
-  "SocietyFlats helps you discover verified Gurgaon societies, live homes, owner listings and society-first property intelligence.";
+  "Find the right society before choosing the home. Explore Gurgaon societies and request verified rental or resale options.";
 
 type SeoInput =
   | boolean
@@ -175,6 +176,7 @@ function defaultJsonLd(title: string, description: string, canonical: string): u
           url: SITE_URL,
           areaServed: "Gurugram, Haryana, India",
           description: DEFAULT_DESCRIPTION,
+          logo: absoluteUrl("/brand/societyflats-icon-512.png"),
         },
         {
           "@type": "WebSite",
@@ -240,10 +242,11 @@ export function setPublicSeo(title: string, description: string, input: SeoInput
   if (typeof document === "undefined") return;
 
   const options = typeof input === "boolean" ? { noindex: input } : input;
-  const cleanTitle = title?.trim() || "SocietyFlats | Gurgaon Society-First Homes";
+  const cleanTitle = title?.trim() || "SocietyFlats | Gurgaon’s Society-First Home Search";
   const cleanDescription = normalizeDescription(description);
   const canonical = absoluteUrl(options.canonical || canonicalFromLocation());
   const noindex = Boolean(options.noindex);
+  const imageUrl = absoluteUrl(options.image || DEFAULT_SOCIAL_IMAGE);
 
   document.title = cleanTitle;
 
@@ -257,15 +260,14 @@ export function setPublicSeo(title: string, description: string, input: SeoInput
   upsertMetaByProperty("og:type", options.type || "website");
   upsertMetaByProperty("og:url", canonical);
 
-  upsertMetaByName("twitter:card", options.image ? "summary_large_image" : "summary");
+  upsertMetaByName("twitter:card", "summary_large_image");
   upsertMetaByName("twitter:title", cleanTitle);
   upsertMetaByName("twitter:description", cleanDescription);
-
-  if (options.image) {
-    const imageUrl = absoluteUrl(options.image);
-    upsertMetaByProperty("og:image", imageUrl);
-    upsertMetaByName("twitter:image", imageUrl);
-  }
+  upsertMetaByProperty("og:image", imageUrl);
+  upsertMetaByProperty("og:image:width", "1024");
+  upsertMetaByProperty("og:image:height", "576");
+  upsertMetaByProperty("og:image:alt", "SocietyFlats Gurgaon society-first home search");
+  upsertMetaByName("twitter:image", imageUrl);
 
   upsertRobots(noindex);
 

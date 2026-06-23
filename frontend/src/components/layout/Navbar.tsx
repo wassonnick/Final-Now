@@ -78,15 +78,14 @@ export function Navbar() {
     <>
     <header className="sticky top-0 z-50 w-full bg-white/86 backdrop-blur-2xl border-b border-navy-100/80">
       <div className="container mx-auto px-4 h-[72px] flex items-center justify-between gap-3 sm:h-20 sm:gap-5">
-        <Link to="/" className="flex items-center gap-2 shrink-0 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4 sm:gap-3">
-          <div className="w-9 h-9 rounded-2xl bg-blue-700 flex items-center justify-center shadow-sm shadow-blue-700/20 sm:w-10 sm:h-10">
-            <Building2 className="w-4 h-4 text-white sm:w-5 sm:h-5" />
-          </div>
-          <div className="block leading-tight">
-            <span className="text-base font-extrabold tracking-tight text-navy-900 sm:text-2xl">Society</span>
-            <span className="text-base font-extrabold tracking-tight text-navy-600 sm:text-2xl">Flats</span>
-            <p className="-mt-1 hidden text-[10px] uppercase tracking-[0.2em] text-navy-400 sm:block">Intelligence first</p>
-          </div>
+        <Link to="/" className="flex shrink-0 items-center rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4" aria-label="SocietyFlats home">
+          <img
+            src="/brand/societyflats-logo-light.png"
+            alt="SocietyFlats"
+            className="h-9 w-auto max-w-[148px] object-contain sm:h-10 sm:max-w-[178px] lg:h-12 lg:max-w-[214px]"
+            width={1200}
+            height={300}
+          />
         </Link>
 
         <nav className="hidden xl:flex items-center gap-1 rounded-full bg-ivory-200/70 border border-navy-100 px-2 py-1.5">

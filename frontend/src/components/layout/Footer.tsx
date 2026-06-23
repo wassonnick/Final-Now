@@ -4,7 +4,7 @@ import { useState } from "react";
 // C85 public footer polish: cleaner SocietyFlats trust copy, tighter spacing and stronger internal links.
 // C70C footer copy: society-first trust, owner/broker paths and updated copyright.
 import { Link } from "react-router-dom";
-import { Building2, Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 
 const quickLinks = [
   { label: "Societies", href: "/search?tab=societies" },
@@ -31,18 +31,14 @@ export function Footer() {
       <div className="container mx-auto px-4 pb-28 pt-8 md:pb-8 md:pt-12">
         <div className="grid gap-6 md:grid-cols-[1.15fr_0.8fr_0.8fr_1fr] md:gap-8">
           <div>
-            <Link to="/" className="inline-flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600">
-                <Building2 className="h-5 w-5 text-white" />
-              </span>
-              <span>
-                <span className="block font-display text-lg font-bold text-white">
-                  SocietyFlats
-                </span>
-                <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-blue-200">
-                  Intelligence First
-                </span>
-              </span>
+            <Link to="/" className="inline-flex rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950" aria-label="SocietyFlats home">
+              <img
+                src="/brand/societyflats-logo-dark.png"
+                alt="SocietyFlats"
+                className="h-14 w-auto max-w-[232px] rounded-xl object-contain sm:h-16 sm:max-w-[268px]"
+                width={1200}
+                height={300}
+              />
             </Link>
 
             <p className="mt-3 max-w-sm text-sm leading-6 text-navy-200 md:text-[15px] md:leading-7">

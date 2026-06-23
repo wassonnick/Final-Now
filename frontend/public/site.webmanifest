@@ -1,7 +1,7 @@
 {
   "name": "SocietyFlats",
   "short_name": "SocietyFlats",
-  "description": "Verified Gurgaon society-first rentals, resale homes and property intelligence.",
+  "description": "Find the right society before choosing the home. Explore Gurgaon societies and request verified rental or resale options.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,15 +9,21 @@
   "theme_color": "#0f2a44",
   "icons": [
     {
-      "src": "/societyflats-icon.svg",
-      "sizes": "96x96",
-      "type": "image/svg+xml",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/societyflats-icon.svg",
-      "sizes": "96x96",
-      "type": "image/svg+xml",
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ]

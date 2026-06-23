@@ -214,8 +214,8 @@ export function HomePage() {
 
   useEffect(() => {
     setPublicSeo(
-      "Verified Gurgaon Societies & Flats | SocietyFlats",
-      "Choose the right Gurgaon society before the home. Compare verified societies, legal-ready homes, market insights and request expert callbacks.",
+      "SocietyFlats | Gurgaon’s Society-First Home Search",
+      "Find the right society before choosing the home. Explore Gurgaon societies and request verified rental or resale options.",
     );
     window.scrollTo(0, 0);
     fetchPublicSocieties()

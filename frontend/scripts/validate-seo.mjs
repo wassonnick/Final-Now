@@ -164,11 +164,17 @@ async function validatePublicFiles() {
   }
 
   const manifest = await fs.readFile(path.join(PUBLIC_DIR, "site.webmanifest"), "utf8");
-  if (!manifest.includes("SocietyFlats") || !manifest.includes("/societyflats-icon.svg")) {
+  if (!manifest.includes("SocietyFlats") || !manifest.includes("/icon-192.png") || !manifest.includes("/icon-512.png")) {
     throw new Error("site.webmanifest missing SocietyFlats branding/icon");
   }
 
-  await fs.access(path.join(PUBLIC_DIR, "societyflats-icon.svg"));
+  await fs.access(path.join(PUBLIC_DIR, "favicon-32.png"));
+  await fs.access(path.join(PUBLIC_DIR, "apple-touch-icon.png"));
+  await fs.access(path.join(PUBLIC_DIR, "icon-192.png"));
+  await fs.access(path.join(PUBLIC_DIR, "icon-512.png"));
+  await fs.access(path.join(PUBLIC_DIR, "brand", "societyflats-logo-light.png"));
+  await fs.access(path.join(PUBLIC_DIR, "brand", "societyflats-logo-dark.png"));
+  await fs.access(path.join(PUBLIC_DIR, "brand", "societyflats-og-image.png"));
 }
 
 async function main() {
