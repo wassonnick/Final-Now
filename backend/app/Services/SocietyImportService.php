@@ -572,6 +572,7 @@ class SocietyImportService
             'address' => trim(implode(', ', array_filter([$sector, $locality, 'Gurugram']))),
             'description' => "{$name} is imported as a draft society profile for SocietyFlats admin review. Verify builder, location, pricing, amenities, coordinates and official source before publishing.",
             'project_status' => 'Needs Review',
+            'possession_date' => 'Needs Review',
             'rent_range' => 'To be verified',
             'buy_range' => 'To be verified',
             'score' => 7.8,
@@ -626,6 +627,7 @@ class SocietyImportService
             'address',
             'description',
             'project_status',
+            'possession_date',
             'configuration',
             'project_area',
             'unit_size_range',
@@ -745,7 +747,7 @@ class SocietyImportService
 
     private function applyImportCompleteness(array &$base): void
     {
-        $fields = ['builder', 'sector', 'locality', 'address', 'description', 'project_status', 'configuration', 'project_area', 'unit_size_range', 'total_towers', 'total_units', 'rent_range', 'buy_range', 'rental_yield', 'average_rent', 'average_sale_price', 'price_per_sqft', 'amenities', 'nearby_schools', 'nearby_metro', 'nearby_hospitals', 'nearby_office_hubs', 'latitude', 'longitude', 'official_project_url', 'meta_title', 'meta_description'];
+        $fields = ['builder', 'sector', 'locality', 'address', 'description', 'project_status', 'possession_date', 'configuration', 'project_area', 'unit_size_range', 'total_towers', 'total_units', 'rent_range', 'buy_range', 'rental_yield', 'average_rent', 'average_sale_price', 'price_per_sqft', 'amenities', 'nearby_schools', 'nearby_metro', 'nearby_hospitals', 'nearby_office_hubs', 'latitude', 'longitude', 'official_project_url', 'meta_title', 'meta_description'];
         $complete = collect($fields)->filter(fn ($field) => isset($base[$field]) && $base[$field] !== null && $base[$field] !== '' && $base[$field] !== [] && ! in_array($base[$field], ['To be verified', 'Needs Review'], true))->count();
         $percent = (int) round(($complete / count($fields)) * 100);
         $base['source_confidence_score'] = min((int) ($base['source_confidence_score'] ?? $percent), max(35, $percent));

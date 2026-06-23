@@ -27,7 +27,7 @@ class SocietyBrochureExtractionService
     ];
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      * @return array{data: array<string, mixed>, warnings: string[], fields_to_verify: string[], diagnostics: array<string, mixed>}
      */
     public function fetchDraft(UploadedFile $file, array $context = []): array
@@ -49,6 +49,7 @@ class SocietyBrochureExtractionService
         $amenities = $this->amenitiesFromText($text);
         $reraNumber = $this->reraNumber($text);
         $projectStatus = $this->projectStatus($text);
+        $possessionDate = $this->possessionDate($text);
         $configuration = $this->configuration($text);
         $projectArea = $this->projectArea($text);
         $unitSizeRange = $this->unitSizeRange($text);
@@ -81,6 +82,7 @@ class SocietyBrochureExtractionService
             'address' => trim(implode(', ', array_filter([$sector, $locality, 'Gurugram']))),
             'description' => $description,
             'project_status' => $projectStatus,
+            'possession_date' => $possessionDate,
             'configuration' => $configuration,
             'project_area' => $projectArea,
             'unit_size_range' => $unitSizeRange,
@@ -242,7 +244,7 @@ class SocietyBrochureExtractionService
 
     private function description(string $name, string $builder, string $sector, string $locality, string $status, string $configuration): string
     {
-        if (!$name) {
+        if (! $name) {
             return '';
         }
 
@@ -262,7 +264,7 @@ class SocietyBrochureExtractionService
     {
         $match = $this->firstMatch('/(?:RERA|HRERA)[\s:\/-]*(?:registration|regn\.?|no\.?|number)?[\s:\/-]*([A-Z0-9\/-]{6,})/i', $text, 1);
 
-        if (!$match || !preg_match('/[0-9]/', $match)) {
+        if (! $match || ! preg_match('/[0-9]/', $match)) {
             return '';
         }
 
@@ -276,6 +278,21 @@ class SocietyBrochureExtractionService
             if (str_contains($lower, $status)) {
                 return Str::title($status);
             }
+        }
+
+        return '';
+    }
+
+    private function possessionDate(string $text): string
+    {
+        $lower = Str::lower($text);
+
+        if (preg_match('/(?:possession|completion|delivery|handover)[^a-z0-9]{0,20}(?:by|date|on|from|:)?[^a-z0-9]{0,10}((?:q[1-4]\s*)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*[\s,-]*20[0-9]{2}|q[1-4][\s,-]*20[0-9]{2}|20[0-9]{2})/i', $text, $matches)) {
+            return Str::headline(trim($matches[1]));
+        }
+
+        if (str_contains($lower, 'ready to move') || str_contains($lower, 'ready-to-move') || str_contains($lower, 'completed')) {
+            return 'Delivered';
         }
 
         return '';
@@ -331,7 +348,7 @@ class SocietyBrochureExtractionService
     }
 
     /**
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $values
      * @return string[]
      */
     private function fieldsToVerify(array $values): array

@@ -989,6 +989,26 @@ export function AdminSocietyFormPage() {
                   />
                 </label>
 
+                <label className="text-sm font-medium text-slate-700">
+                  Project Status
+                  <Input
+                    value={society.projectStatus}
+                    onChange={(event) => updateField("projectStatus", event.target.value)}
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder="Delivered / Ready to Move / Under Construction"
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Possession Date
+                  <Input
+                    value={society.possessionDate}
+                    onChange={(event) => updateField("possessionDate", event.target.value)}
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder="Delivered / Dec 2026 / Q4 2028"
+                  />
+                </label>
+
                 <label className="md:col-span-2 text-sm font-medium text-slate-700">
                   Description
                   <div className="mt-2 flex flex-col gap-2 sm:flex-row">

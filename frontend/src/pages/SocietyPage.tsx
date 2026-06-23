@@ -112,6 +112,44 @@ function splitLines(value?: unknown) {
     .filter(Boolean);
 }
 
+function deliveryStatusTone(status: string) {
+  const value = status.toLowerCase();
+
+  if (/delivered|ready|completed|complete|possession/i.test(value)) {
+    return {
+      badge: "border-emerald-100 bg-emerald-50 text-emerald-700",
+      card: "border-emerald-100 bg-emerald-50",
+      label: "Delivered / ready",
+      helper: "Still verify tower and unit-level possession before payment.",
+    };
+  }
+
+  if (/under construction|construction|ongoing/i.test(value)) {
+    return {
+      badge: "border-amber-100 bg-amber-50 text-amber-700",
+      card: "border-amber-100 bg-amber-50",
+      label: "Under construction",
+      helper: "Confirm RERA timeline, tower phase and grace period.",
+    };
+  }
+
+  if (/new launch|launch/i.test(value)) {
+    return {
+      badge: "border-blue-100 bg-blue-50 text-blue-700",
+      card: "border-blue-100 bg-blue-50",
+      label: "New launch",
+      helper: "Check launch approvals, RERA registration and payment plan.",
+    };
+  }
+
+  return {
+    badge: "border-slate-200 bg-slate-50 text-slate-700",
+    card: "border-slate-200 bg-slate-50",
+    label: "Needs review",
+    helper: "Delivery status is pending admin/source verification.",
+  };
+}
+
 function isPublicLiveProperty(property: any) {
   const rawStatus = String(
     property?.status ||
@@ -662,6 +700,14 @@ export function SocietyPage() {
   ].filter(([, href]) => Boolean(href));
   const societyLocation = safeLocation(society);
   const descriptionText = readableStructuredValue(society.description);
+  const projectStatusText =
+    readableStructuredValue(field(society, "projectStatus", "project_status", "")) ||
+    "Needs Review";
+  const possessionDateText =
+    readableStructuredValue(field(society, "possessionDate", "possession_date", "")) ||
+    readableStructuredValue(field(society, "yearBuilt", "year_built", "")) ||
+    "Needs Review";
+  const deliveryTone = deliveryStatusTone(`${projectStatusText} ${possessionDateText}`);
   const whatsappMessage = encodeURIComponent(
     `Hi, I am exploring homes in ${society.name}. Please share verified options.`,
   );
@@ -786,6 +832,9 @@ export function SocietyPage() {
                         Featured
                       </Badge>
                     ) : null}
+                    <Badge className={deliveryTone.badge}>
+                      {projectStatusText}
+                    </Badge>
                   </div>
                   <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 md:text-3xl">
                     {society.name}
@@ -806,7 +855,7 @@ export function SocietyPage() {
                   {descriptionText}
                 </p>
               ) : null}
-              <div className="mt-2.5 grid grid-cols-2 gap-2 border-t border-navy-100 pt-2.5 md:mt-3 md:grid-cols-3">
+              <div className="mt-2.5 grid grid-cols-2 gap-2 border-t border-navy-100 pt-2.5 md:mt-3 md:grid-cols-4">
                 <div className="rounded-2xl bg-blue-50 p-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">
                     Verified homes available
@@ -840,6 +889,22 @@ export function SocietyPage() {
                     resale guidance where available
                   </p>
                 </div>
+                <div className={cn("rounded-2xl border p-3", deliveryTone.card)}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-navy-500">
+                    Project status
+                  </p>
+                  <p className="mt-2 text-lg font-bold text-navy-900">
+                    {deliveryTone.label}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-navy-600">
+                    Possession: {possessionDateText}
+                  </p>
+                </div>
+              </div>
+
+              <div className={cn("mt-2.5 rounded-2xl border px-3 py-2 text-xs font-semibold leading-5", deliveryTone.card)}>
+                <span className="font-black text-navy-900">Delivery note:</span>{" "}
+                {deliveryTone.helper}
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
@@ -974,8 +1039,12 @@ export function SocietyPage() {
                   field(society, "totalUnits", "total_units", "Not added"),
                 ],
                 [
-                  "Year built",
-                  field(society, "yearBuilt", "year_built", "Not added"),
+                  "Possession",
+                  possessionDateText,
+                ],
+                [
+                  "Project status",
+                  projectStatusText,
                 ],
                 [
                   "Maintenance",

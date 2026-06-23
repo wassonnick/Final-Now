@@ -78,6 +78,7 @@ export interface AdminSociety {
   address: string;
   description: string;
   projectStatus: string;
+  possessionDate: string;
   configuration: string;
   projectArea: string;
   unitSizeRange: string;
@@ -232,6 +233,7 @@ export function createEmptyAdminSociety(): AdminSociety {
     address: '',
     description: '',
     projectStatus: '',
+    possessionDate: '',
     configuration: '',
     projectArea: '',
     unitSizeRange: '',
@@ -321,6 +323,7 @@ export function mapApiSociety(data: any): AdminSociety {
     address: data?.address || '',
     description: data?.description || '',
     projectStatus: data?.project_status || '',
+    possessionDate: data?.possession_date || '',
     configuration: data?.configuration || '',
     projectArea: data?.project_area || '',
     unitSizeRange: data?.unit_size_range || '',
@@ -405,6 +408,7 @@ export function toApiSocietyPayload(society: AdminSociety) {
     address: society.address,
     description: society.description,
     project_status: society.projectStatus,
+    possession_date: society.possessionDate,
     configuration: society.configuration,
     project_area: society.projectArea,
     unit_size_range: society.unitSizeRange,
@@ -654,6 +658,7 @@ export function mergeFetchedSocietyDraft(current: AdminSociety, patch: AdminSoci
     address: preferCurrent('address'),
     description: preferCurrent('description'),
     projectStatus: preferCurrent('projectStatus'),
+    possessionDate: preferCurrent('possessionDate'),
     configuration: preferCurrent('configuration'),
     projectArea: preferCurrent('projectArea'),
     unitSizeRange: preferCurrent('unitSizeRange'),
@@ -812,4 +817,3 @@ export async function fetchGooglePlacesSocietyImageReference(id: number): Promis
     meta: json?.meta || {},
   };
 }
-

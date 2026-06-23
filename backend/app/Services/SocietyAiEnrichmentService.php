@@ -176,6 +176,7 @@ Schema:
   "address": "string or null",
   "description": "120-220 words, factual and review-safe",
   "project_status": "Ready to Move | Under Construction | New Launch | Needs Review | null",
+  "possession_date": "Delivered | Ready to Move | Month YYYY | Quarter YYYY | YYYY | Needs Review | null",
   "configuration": "string or null",
   "project_area": "string or null",
   "unit_size_range": "string or null",
@@ -228,6 +229,7 @@ Rules:
 - Prefer Gurgaon/Gurugram context.
 - Coordinates: for known Gurgaon societies, provide latitude and longitude when reasonably confident. Use 4-6 decimal precision. Do not invent dummy coordinates. If exact coordinates are uncertain, provide a Google Maps search URL and add coordinates to fields_to_verify.
 - Scores: use differentiated one-decimal category scores. Do not return the same default score for every category unless strongly justified. Consider builder reputation, sector/locality, connectivity, lifestyle amenities, maintenance, security, and resale/rental demand.
+- Project status and possession: search official developer/RERA/listing source text for delivery status. Normalize completed/live projects as Ready to Move or Delivered. For under-construction projects, return possession_date as the clearest source-supported month/quarter/year. If only uncertain marketing text exists, use Needs Review and add possession_date to fields_to_verify.
 - Images: do not invent copyrighted image URLs. If an official/source image URL is visible in the supplied source text, return it as image_reference_url or image_url and mark image_status as needs_review or official_reference_found. Otherwise return null so the importer can create an admin review reference.
 - Image candidate mode: {$imageInstruction}
 - Search every major category before returning null. Populate project area, configurations, towers, units, market ranges, coordinates, nearby schools, hospitals, commute links, office hubs, official URLs and SEO whenever grounded evidence exists.

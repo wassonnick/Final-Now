@@ -54,7 +54,7 @@ class SocietySpreadsheetImportTest extends TestCase
             $this->assertArrayHasKey('google_search', $payload['tools'][0]);
             $this->assertArrayNotHasKey('responseMimeType', $payload['generationConfig']);
 
-            return Http::response(['candidates' => [['content' => ['parts' => [['text' => ''], ['text' => json_encode(['name' => 'Image Heights', 'city' => 'Gurugram', 'description' => 'A sufficiently detailed grounded society description for admin review.', 'project_area' => '20 acres', 'configuration' => '3 and 4 BHK', 'total_towers' => '12', 'total_units' => '800', 'rent_range' => '₹50,000 - ₹80,000', 'buy_range' => '₹3 Cr - ₹5 Cr', 'nearby_schools' => ['Example School - 2 km'], 'nearby_hospitals' => ['Example Hospital - 3 km'], 'nearby_metro' => ['Example Metro - 5 km'], 'nearby_office_hubs' => ['Cyber City - 20 km'], 'official_project_url' => 'https://developer.example.com/image-heights', 'official_developer_url' => 'https://developer.example.com', 'image_url' => 'https://developer.example.com/image-heights.jpg', 'image_status' => 'needs_review', 'image_credit' => 'Official developer', 'source_confidence_score' => 75, 'fields_to_verify' => ['image_rights']])]]]]]]);
+            return Http::response(['candidates' => [['content' => ['parts' => [['text' => ''], ['text' => json_encode(['name' => 'Image Heights', 'city' => 'Gurugram', 'description' => 'A sufficiently detailed grounded society description for admin review.', 'project_status' => 'Under Construction', 'possession_date' => 'Dec 2028', 'project_area' => '20 acres', 'configuration' => '3 and 4 BHK', 'total_towers' => '12', 'total_units' => '800', 'rent_range' => '₹50,000 - ₹80,000', 'buy_range' => '₹3 Cr - ₹5 Cr', 'nearby_schools' => ['Example School - 2 km'], 'nearby_hospitals' => ['Example Hospital - 3 km'], 'nearby_metro' => ['Example Metro - 5 km'], 'nearby_office_hubs' => ['Cyber City - 20 km'], 'official_project_url' => 'https://developer.example.com/image-heights', 'official_developer_url' => 'https://developer.example.com', 'image_url' => 'https://developer.example.com/image-heights.jpg', 'image_status' => 'needs_review', 'image_credit' => 'Official developer', 'source_confidence_score' => 75, 'fields_to_verify' => ['image_rights']])]]]]]]);
         });
         $csv = "society_name,city,builder\nImage Heights,Gurugram,Example Builder\n";
         $file = UploadedFile::fake()->createWithContent('images.csv', $csv);
@@ -63,12 +63,34 @@ class SocietySpreadsheetImportTest extends TestCase
         $society = Society::where('name', 'Image Heights')->firstOrFail();
         $this->assertFalse((bool) $society->image_approved_by_admin);
         $this->assertSame('needs_review', $society->image_status);
+        $this->assertSame('Under Construction', $society->project_status);
+        $this->assertSame('Dec 2028', $society->possession_date);
         $this->assertSame('20 acres', $society->project_area);
         $this->assertSame(['Example School - 2 km'], $society->nearby_schools);
         $this->assertSame('https://developer.example.com/image-heights', $society->official_project_url);
         $this->withToken('admin-test-token')->patchJson("/api/admin/import/societies/{$society->id}/image", ['decision' => 'approve', 'rights_confirmed' => false])->assertUnprocessable();
         $this->withToken('admin-test-token')->patchJson("/api/admin/import/societies/{$society->id}/image", ['decision' => 'approve', 'rights_confirmed' => true])->assertOk()->assertJsonPath('data.image_status', 'approved_for_live')->assertJsonPath('data.image_approved_by_admin', true);
         $this->getJson('/api/societies')->assertOk()->assertJsonPath('data.total', 0);
+    }
+
+    public function test_published_society_exposes_project_status_and_possession_date(): void
+    {
+        Society::create([
+            'name' => 'Possession Heights',
+            'slug' => 'possession-heights',
+            'city' => 'Gurugram',
+            'status' => 'Verified',
+            'verification_status' => 'Verified',
+            'is_published' => true,
+            'project_status' => 'Under Construction',
+            'possession_date' => 'Q4 2027',
+            'description' => 'Published society with clear delivery timeline.',
+        ]);
+
+        $this->getJson('/api/societies/possession-heights')
+            ->assertOk()
+            ->assertJsonPath('data.project_status', 'Under Construction')
+            ->assertJsonPath('data.possession_date', 'Q4 2027');
     }
 
     public function test_sparse_imported_draft_can_be_re_enriched_without_becoming_public(): void

@@ -37,7 +37,7 @@ class SocietyUrlEnrichmentService
             ])
             ->get($url);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             throw new \RuntimeException("Official page returned HTTP {$response->status()}.");
         }
 
@@ -102,6 +102,7 @@ class SocietyUrlEnrichmentService
             'address' => trim(implode(', ', array_filter([$sector, $locality, 'Gurugram']))),
             'description' => $description,
             'project_status' => $this->projectStatus($text),
+            'possession_date' => $this->possessionDate($text),
             'configuration' => $this->configuration($text),
             'project_area' => $this->projectArea($text),
             'unit_size_range' => $this->unitSizeRange($text),
@@ -170,7 +171,7 @@ class SocietyUrlEnrichmentService
 
     private function validateUrl(string $url): void
     {
-        if (!filter_var($url, FILTER_VALIDATE_URL) || !Str::startsWith($url, ['https://', 'http://'])) {
+        if (! filter_var($url, FILTER_VALIDATE_URL) || ! Str::startsWith($url, ['https://', 'http://'])) {
             throw new \InvalidArgumentException('Enter a valid official project URL.');
         }
 
@@ -200,7 +201,7 @@ class SocietyUrlEnrichmentService
                 $key = $this->htmlAttribute($attributes, 'name') ?: $this->htmlAttribute($attributes, 'property');
                 $content = $this->htmlAttribute($attributes, 'content');
 
-                if (!$key || !$content) {
+                if (! $key || ! $content) {
                     continue;
                 }
 
@@ -244,7 +245,7 @@ class SocietyUrlEnrichmentService
     {
         $links = [];
 
-        if (!preg_match_all('/<a\b([^>]*)>(.*?)<\/a>/is', $html, $matches, PREG_SET_ORDER)) {
+        if (! preg_match_all('/<a\b([^>]*)>(.*?)<\/a>/is', $html, $matches, PREG_SET_ORDER)) {
             return $links;
         }
 
@@ -252,7 +253,7 @@ class SocietyUrlEnrichmentService
             $href = $this->htmlAttribute($match[1], 'href');
             $url = $this->absoluteUrl($href, $baseUrl);
 
-            if (!$url) {
+            if (! $url) {
                 continue;
             }
 
@@ -265,7 +266,7 @@ class SocietyUrlEnrichmentService
 
     private function absoluteUrl(?string $url, string $baseUrl): ?string
     {
-        if (!$url || Str::startsWith($url, ['#', 'mailto:', 'tel:', 'javascript:'])) {
+        if (! $url || Str::startsWith($url, ['#', 'mailto:', 'tel:', 'javascript:'])) {
             return null;
         }
 
@@ -276,7 +277,7 @@ class SocietyUrlEnrichmentService
         $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?: 'https';
         $host = parse_url($baseUrl, PHP_URL_HOST);
 
-        if (!$host) {
+        if (! $host) {
             return null;
         }
 
@@ -291,14 +292,14 @@ class SocietyUrlEnrichmentService
     {
         $data = [];
 
-        if (!preg_match_all('/<script[^>]+type\s*=\s*(["\'])application\/ld\+json\1[^>]*>(.*?)<\/script>/is', $html, $matches)) {
+        if (! preg_match_all('/<script[^>]+type\s*=\s*(["\'])application\/ld\+json\1[^>]*>(.*?)<\/script>/is', $html, $matches)) {
             return $data;
         }
 
         foreach ($matches[2] as $json) {
             $decoded = json_decode(html_entity_decode(trim($json), ENT_QUOTES | ENT_HTML5), true);
 
-            if (!is_array($decoded)) {
+            if (! is_array($decoded)) {
                 continue;
             }
 
@@ -307,19 +308,19 @@ class SocietyUrlEnrichmentService
                 : [$decoded];
 
             foreach ($items as $item) {
-                if (!is_array($item)) {
+                if (! is_array($item)) {
                     continue;
                 }
 
-                if (empty($data['name']) && !empty($item['name']) && is_string($item['name'])) {
+                if (empty($data['name']) && ! empty($item['name']) && is_string($item['name'])) {
                     $data['name'] = $item['name'];
                 }
 
-                if (empty($data['description']) && !empty($item['description']) && is_string($item['description'])) {
+                if (empty($data['description']) && ! empty($item['description']) && is_string($item['description'])) {
                     $data['description'] = $item['description'];
                 }
 
-                if (empty($data['image']) && !empty($item['image'])) {
+                if (empty($data['image']) && ! empty($item['image'])) {
                     $image = is_array($item['image']) ? ($item['image'][0] ?? null) : $item['image'];
                     if (is_string($image)) {
                         $data['image'] = $image;
@@ -491,7 +492,7 @@ class SocietyUrlEnrichmentService
 
     private function isUsefulImageReference(?string $url, string $projectName): bool
     {
-        if (!$url) {
+        if (! $url) {
             return false;
         }
 
@@ -518,13 +519,13 @@ class SocietyUrlEnrichmentService
             return false;
         }
 
-        if (!preg_match('/\.(?:jpg|jpeg|png|webp)(?:$|\?)/i', $url)) {
+        if (! preg_match('/\.(?:jpg|jpeg|png|webp)(?:$|\?)/i', $url)) {
             return false;
         }
 
         $projectWords = collect(preg_split('/\s+/', Str::lower($projectName)) ?: [])
             ->map(fn ($word) => trim($word, '.,()[]{}'))
-            ->filter(fn ($word) => strlen($word) > 3 && !in_array($word, ['the', 'and', 'gurgaon', 'gurugram', 'sector'], true));
+            ->filter(fn ($word) => strlen($word) > 3 && ! in_array($word, ['the', 'and', 'gurgaon', 'gurugram', 'sector'], true));
 
         return $projectWords->contains(fn ($word) => str_contains($haystack, $word))
             || str_contains($haystack, 'project')
@@ -567,11 +568,26 @@ class SocietyUrlEnrichmentService
         return null;
     }
 
+    private function possessionDate(string $text): ?string
+    {
+        $haystack = Str::lower($text);
+
+        if (preg_match('/(?:possession|completion|delivery|handover)[^a-z0-9]{0,20}(?:by|date|on|from|:)?[^a-z0-9]{0,10}((?:q[1-4]\s*)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*[\s,-]*20[0-9]{2}|q[1-4][\s,-]*20[0-9]{2}|20[0-9]{2})/i', $text, $matches)) {
+            return Str::headline(trim($matches[1]));
+        }
+
+        if (str_contains($haystack, 'ready to move') || str_contains($haystack, 'ready-to-move') || str_contains($haystack, 'completed')) {
+            return 'Delivered';
+        }
+
+        return null;
+    }
+
     private function reraNumber(string $text): ?string
     {
         $match = $this->firstMatch('/(?:RERA|HRERA)[\s:\/-]*(?:registration|regn\.?|no\.?|number)?[\s:\/-]*([A-Z0-9\/-]{6,})/i', $text, 1);
 
-        if (!$match || !preg_match('/[0-9]/', $match)) {
+        if (! $match || ! preg_match('/[0-9]/', $match)) {
             return null;
         }
 
@@ -661,7 +677,7 @@ class SocietyUrlEnrichmentService
     }
 
     /**
-     * @param array<string, mixed> $fields
+     * @param  array<string, mixed>  $fields
      * @return string[]
      */
     private function fieldsToVerify(array $fields): array
@@ -682,7 +698,7 @@ class SocietyUrlEnrichmentService
         $missing = [];
 
         foreach ($fields as $field => $value) {
-            if (!$value && isset($labels[$field])) {
+            if (! $value && isset($labels[$field])) {
                 $missing[] = $labels[$field];
             }
         }
