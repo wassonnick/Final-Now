@@ -32,6 +32,8 @@ class GooglePlacesSocietyImageService
             'place_name' => $placeName ?: $society->name,
             'formatted_address' => $placeAddress ?: null,
             'place_url' => $placeUrl,
+            'url' => $placeUrl,
+            'geometry' => $place['geometry'] ?? null,
             'photo_reference' => $photoReference,
             'safe_reference_url' => $placeUrl ?: ($placeId ? 'https://www.google.com/maps/search/?api=1&query=Google&query_place_id=' . rawurlencode($placeId) : null),
             'credit' => 'Google Places',
@@ -117,7 +119,7 @@ class GooglePlacesSocietyImageService
         $response = Http::timeout(12)->get('https://maps.googleapis.com/maps/api/place/findplacefromtext/json', [
             'input' => $query,
             'inputtype' => 'textquery',
-            'fields' => 'place_id,name,formatted_address,photos',
+            'fields' => 'place_id,name,formatted_address,geometry,photos',
             'key' => $apiKey,
         ]);
 
@@ -139,7 +141,7 @@ class GooglePlacesSocietyImageService
     {
         $response = Http::timeout(12)->get('https://maps.googleapis.com/maps/api/place/details/json', [
             'place_id' => $placeId,
-            'fields' => 'place_id,name,formatted_address,photos,url',
+            'fields' => 'place_id,name,formatted_address,geometry,photos,url',
             'key' => $apiKey,
         ]);
 

@@ -109,6 +109,46 @@ class SocietySpreadsheetImportTest extends TestCase
         $this->withToken('admin-test-token')->patchJson("/api/admin/import/societies/{$society->id}/image", ['decision' => 'approve', 'rights_confirmed' => true])->assertOk()->assertJsonPath('data.image_status', 'google_places_reference_found')->assertJsonPath('data.image_approved_by_admin', true);
     }
 
+    public function test_google_places_reference_can_fill_draft_coordinates_and_map_url(): void
+    {
+        config(['services.google_places_api_key' => 'google-test-key']);
+        Http::fake([
+            'maps.googleapis.com/maps/api/place/findplacefromtext/json*' => Http::response([
+                'status' => 'OK',
+                'candidates' => [
+                    ['place_id' => 'place-draft-123'],
+                ],
+            ]),
+            'maps.googleapis.com/maps/api/place/details/json*' => Http::response([
+                'status' => 'OK',
+                'result' => [
+                    'place_id' => 'place-draft-123',
+                    'name' => 'Draft Google Society',
+                    'formatted_address' => 'Sector 70, Gurugram, Haryana',
+                    'url' => 'https://maps.google.com/?cid=123',
+                    'geometry' => ['location' => ['lat' => 28.39, 'lng' => 77.02]],
+                    'photos' => [
+                        ['photo_reference' => 'photo-reference-123'],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $society = Society::create(['name' => 'Draft Google Society', 'slug' => 'draft-google-society', 'status' => 'Draft', 'verification_status' => 'Needs Review', 'is_published' => false, 'city' => 'Gurugram']);
+
+        $this->withToken('admin-test-token')
+            ->postJson("/api/admin/societies/{$society->id}/google-places-image-reference")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'Draft')
+            ->assertJsonPath('data.is_published', false)
+            ->assertJsonPath('data.place_id', 'place-draft-123')
+            ->assertJsonPath('data.google_maps_url', 'https://maps.google.com/?cid=123')
+            ->assertJsonPath('data.latitude', '28.39')
+            ->assertJsonPath('data.longitude', '77.02')
+            ->assertJsonPath('data.image_status', 'google_places_reference_found')
+            ->assertJsonPath('data.image_approved_by_admin', false);
+    }
+
     public function test_empty_grounded_response_retries_once_without_grounding(): void
     {
         config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'test-model', 'services.google_places_api_key' => null]);

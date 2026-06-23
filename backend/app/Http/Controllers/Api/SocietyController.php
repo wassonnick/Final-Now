@@ -133,7 +133,8 @@ class SocietyController extends Controller {
       }
     }
 
-    $society->update([
+    $placeLocation = $reference['geometry']['location'] ?? [];
+    $updates = [
       'place_id' => $reference['place_id'] ?: $society->place_id,
       'image_reference_url' => $reference['safe_reference_url'],
       'image_status' => 'google_places_reference_found',
@@ -142,7 +143,19 @@ class SocietyController extends Controller {
       'image_credit' => $reference['credit'],
       'image_license_notes' => $reference['license_note'],
       'fields_to_verify' => array_values($fieldsToVerify),
-    ]);
+    ];
+
+    if (empty($society->google_maps_url) && ! empty($reference['url'])) {
+      $updates['google_maps_url'] = $reference['url'];
+    }
+    if (empty($society->latitude) && isset($placeLocation['lat'])) {
+      $updates['latitude'] = (string) $placeLocation['lat'];
+    }
+    if (empty($society->longitude) && isset($placeLocation['lng'])) {
+      $updates['longitude'] = (string) $placeLocation['lng'];
+    }
+
+    $society->update($updates);
 
     return response()->json([
       'status' => 'ok',
@@ -172,7 +185,7 @@ class SocietyController extends Controller {
     }
 
     $societies = Society::query()
-      ->where('is_published', true)
+      ->where('status', '!=', 'Archived')
       ->where(function ($query) {
         $query
           ->whereNull('place_id')
@@ -210,7 +223,8 @@ class SocietyController extends Controller {
           }
         }
 
-        $society->update([
+        $placeLocation = $reference['geometry']['location'] ?? [];
+        $updates = [
           'place_id' => $reference['place_id'] ?: $society->place_id,
           'image_reference_url' => $reference['safe_reference_url'],
           'image_status' => 'google_places_reference_found',
@@ -219,7 +233,19 @@ class SocietyController extends Controller {
           'image_credit' => $reference['credit'],
           'image_license_notes' => $reference['license_note'],
           'fields_to_verify' => array_values($fieldsToVerify),
-        ]);
+        ];
+
+        if (empty($society->google_maps_url) && ! empty($reference['url'])) {
+          $updates['google_maps_url'] = $reference['url'];
+        }
+        if (empty($society->latitude) && isset($placeLocation['lat'])) {
+          $updates['latitude'] = (string) $placeLocation['lat'];
+        }
+        if (empty($society->longitude) && isset($placeLocation['lng'])) {
+          $updates['longitude'] = (string) $placeLocation['lng'];
+        }
+
+        $society->update($updates);
 
         $fresh = $society->fresh();
 
