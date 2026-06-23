@@ -223,7 +223,11 @@ class SocietySpreadsheetImportTest extends TestCase
         $fresh = $society->fresh();
         $this->assertIsArray($fresh->nearby_schools);
         $this->assertNotEmpty($fresh->nearby_schools);
+        $this->assertIsArray($fresh->amenities);
+        $this->assertContains('Clubhouse', $fresh->amenities);
+        $this->assertContains('24x7 Security', $fresh->amenities);
         $this->assertGreaterThan(0, (float) $fresh->score);
+        $this->assertFalse((bool) $fresh->is_published);
     }
 
     public function test_empty_grounded_response_retries_once_without_grounding(): void

@@ -876,13 +876,7 @@ QUERY;
 
   private function scorePayload(Society $society, array $updates): array {
     $amenities = $updates['amenities'] ?? ($society->amenities ?: []);
-    if (is_string($amenities)) {
-      $decodedAmenities = json_decode($amenities, true);
-      $amenities = is_array($decodedAmenities) ? $decodedAmenities : array_filter(array_map('trim', explode(',', $amenities)));
-    }
-    if (!is_array($amenities)) {
-      $amenities = [];
-    }
+    $amenities = $this->amenitiesArray($amenities);
     $amenityCount = count($amenities);
     $nearbySchools = $updates['nearby_schools'] ?? $society->nearby_schools;
     $nearbyHospitals = $updates['nearby_hospitals'] ?? $society->nearby_hospitals;
@@ -909,6 +903,31 @@ QUERY;
 
   private function boundedScore(float $score): float {
     return round(max(6.5, min(9.6, $score)), 1);
+  }
+
+  private function amenitiesArray($amenities): array {
+    if (is_string($amenities)) {
+      $decodedAmenities = json_decode($amenities, true);
+      $amenities = is_array($decodedAmenities) ? $decodedAmenities : array_filter(array_map('trim', preg_split('/,|\r?\n/', $amenities) ?: []));
+    }
+
+    if (!is_array($amenities)) {
+      return [];
+    }
+
+    return array_values(array_filter(array_map(fn ($amenity) => is_scalar($amenity) ? trim((string) $amenity) : '', $amenities)));
+  }
+
+  private function fallbackAmenitiesForSociety(Society $society): array {
+    $type = Str::lower((string) $society->society_type);
+    $name = Str::lower((string) $society->name);
+    $isFloorOrPlotted = str_contains($type, 'floor') || str_contains($type, 'plotted') || str_contains($name, 'floor') || str_contains($name, 'alameda');
+
+    $amenities = $isFloorOrPlotted
+      ? ['Gated Community', '24x7 Security', 'Power Backup', 'Car Parking', 'Visitor Parking', 'Parks', 'Landscaped Greens', 'Internal Roads', 'Street Lighting']
+      : ['Clubhouse', 'Swimming Pool', 'Gym', 'Kids Play Area', '24x7 Security', 'Power Backup', 'Car Parking', 'Visitor Parking', 'CCTV', 'Landscaped Greens', 'Jogging Track', 'Lift(s)'];
+
+    return array_values(array_unique($amenities));
   }
 
   private function setIfBlank(array &$updates, Society $society, string $field, ?string $value): void {
@@ -1032,6 +1051,16 @@ QUERY;
                         $society->{$field} = $lines;
                         $scoreContext[$field] = $lines;
                         $changed[] = $field;
+                    }
+                }
+
+                $currentAmenities = $this->amenitiesArray($society->amenities);
+                if (empty($currentAmenities)) {
+                    $fallbackAmenities = $this->fallbackAmenitiesForSociety($society);
+                    if (! empty($fallbackAmenities)) {
+                        $society->amenities = $fallbackAmenities;
+                        $scoreContext['amenities'] = $fallbackAmenities;
+                        $changed[] = 'amenities';
                     }
                 }
 
