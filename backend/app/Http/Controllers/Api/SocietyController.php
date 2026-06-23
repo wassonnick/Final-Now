@@ -1000,13 +1000,23 @@ QUERY;
 
                 $suggestions = $result['suggestions'] ?? [];
                 $changed = [];
+                $nearbyText = function ($value): string {
+                    if (is_array($value)) {
+                        return trim(implode("\n", array_filter(array_map(fn ($item) => is_scalar($item) ? trim((string) $item) : trim(json_encode($item)), $value))));
+                    }
+
+                    return trim((string) ($value ?? ''));
+                };
+                $nearbyLines = function (string $value): array {
+                    return array_values(array_filter(array_map('trim', preg_split('/\r?\n/', $value) ?: [])));
+                };
 
                 foreach (['nearby_schools', 'nearby_metro', 'nearby_hospitals', 'nearby_office_hubs'] as $field) {
-                    $suggestion = trim((string) ($suggestions[$field] ?? ''));
-                    $current = trim((string) ($society->{$field} ?? ''));
+                    $suggestion = $nearbyText($suggestions[$field] ?? '');
+                    $current = $nearbyText($society->{$field} ?? '');
 
                     if ($suggestion !== '' && $current === '') {
-                        $society->{$field} = $suggestion;
+                        $society->{$field} = $nearbyLines($suggestion);
                         $changed[] = $field;
                     }
                 }

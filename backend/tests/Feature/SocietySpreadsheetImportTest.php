@@ -149,6 +149,43 @@ class SocietySpreadsheetImportTest extends TestCase
             ->assertJsonPath('data.image_approved_by_admin', false);
     }
 
+    public function test_bulk_nearby_autofill_accepts_existing_array_cast_fields(): void
+    {
+        config(['services.google_places_api_key' => 'google-test-key']);
+        Http::fake([
+            'maps.googleapis.com/maps/api/place/nearbysearch/json*' => Http::response([
+                'status' => 'OK',
+                'results' => [
+                    ['name' => 'Nearby Place', 'vicinity' => 'Sector 70', 'rating' => 4.2],
+                ],
+            ]),
+        ]);
+
+        $society = Society::create([
+            'name' => 'Nearby Draft Society',
+            'slug' => 'nearby-draft-society',
+            'status' => 'Draft',
+            'verification_status' => 'Needs Review',
+            'is_published' => false,
+            'latitude' => '28.39',
+            'longitude' => '77.02',
+            'nearby_schools' => [],
+            'nearby_metro' => [],
+            'nearby_hospitals' => [],
+            'nearby_office_hubs' => [],
+        ]);
+
+        $this->withToken('admin-test-token')
+            ->postJson('/api/admin/societies/nearby-intelligence/bulk-auto-fill', ['society_ids' => [$society->id]])
+            ->assertOk()
+            ->assertJsonPath('summary.updated', 1)
+            ->assertJsonPath('summary.failed', 0);
+
+        $fresh = $society->fresh();
+        $this->assertIsArray($fresh->nearby_schools);
+        $this->assertNotEmpty($fresh->nearby_schools);
+    }
+
     public function test_empty_grounded_response_retries_once_without_grounding(): void
     {
         config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'test-model', 'services.google_places_api_key' => null]);
