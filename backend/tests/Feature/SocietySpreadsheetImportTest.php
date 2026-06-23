@@ -93,12 +93,13 @@ class SocietySpreadsheetImportTest extends TestCase
             ->assertJsonPath('data.possession_date', 'Q4 2027');
     }
 
-    public function test_sparse_imported_draft_can_be_re_enriched_without_becoming_public(): void
+    public function test_sparse_unpublished_draft_can_be_re_enriched_without_becoming_public(): void
     {
         config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'test-model']);
-        $society = Society::create(['name' => 'Sparse Society', 'slug' => 'sparse-society', 'builder' => 'Known Builder', 'city' => 'Gurugram', 'status' => 'Draft', 'verification_status' => 'Needs Review', 'is_published' => false, 'imported_at' => now(), 'description' => 'Basic draft']);
+        $society = Society::create(['name' => 'Sparse Society', 'slug' => 'sparse-society', 'builder' => 'Known Builder', 'city' => 'Gurugram', 'status' => 'Draft', 'verification_status' => 'Needs Review', 'is_published' => false, 'description' => 'Basic draft']);
         Http::fake(fn () => Http::response(['candidates' => [['content' => ['parts' => [['text' => json_encode(['name' => 'Sparse Society', 'description' => 'A complete grounded description with project and location intelligence.', 'sector' => 'Sector 70', 'project_area' => '10 acres', 'total_towers' => '8', 'total_units' => '500', 'rent_range' => '₹40,000 - ₹60,000', 'buy_range' => '₹2 Cr - ₹3 Cr', 'nearby_schools' => ['School A'], 'nearby_metro' => ['Metro A'], 'nearby_hospitals' => ['Hospital A'], 'nearby_office_hubs' => ['Office A'], 'official_project_url' => 'https://builder.example.com/project', 'meta_title' => 'Sparse Society Gurgaon', 'meta_description' => 'Grounded project profile.', 'source_confidence_score' => 90])]]]]]]));
         $this->withToken('admin-test-token')->postJson("/api/admin/import/societies/{$society->id}/re-enrich", ['include_images' => false])->assertOk()->assertJsonPath('data.project_area', '10 acres')->assertJsonPath('data.status', 'Draft')->assertJsonPath('data.is_published', false)->assertJsonPath('data.builder', 'Known Builder');
+        $this->assertNotNull($society->fresh()->imported_at);
     }
 
     public function test_google_places_photo_requires_explicit_admin_display_approval(): void

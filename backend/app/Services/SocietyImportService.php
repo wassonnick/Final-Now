@@ -97,8 +97,8 @@ class SocietyImportService
 
     public function reEnrichDraft(Society $society, bool $includeImages = true): Society
     {
-        if ($society->is_published || ! $society->imported_at) {
-            throw new \InvalidArgumentException('Only unpublished imported drafts can be re-enriched.');
+        if ($society->is_published || $society->status !== 'Draft') {
+            throw new \InvalidArgumentException('Only unpublished draft societies can be re-enriched.');
         }
         $identity = $society->only(['name', 'slug', 'builder', 'sector', 'locality', 'city', 'state', 'google_maps_url']);
         $context = "Existing draft. Research and fill every missing or placeholder field while preserving the supplied identity fields:\n".json_encode($society->only($society->getFillable()), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -116,6 +116,7 @@ class SocietyImportService
         $merged['verification_status'] = 'Needs Review';
         $merged['is_published'] = false;
         $merged['published_at'] = null;
+        $merged['imported_at'] = $society->imported_at ?: now();
         $merged['image_approved_by_admin'] = false;
         $society->update($merged);
 
