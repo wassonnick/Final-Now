@@ -48,7 +48,7 @@ export const useAppStore = create<AppState>()(
         set({ compareList: [...current, society] });
       },
       removeFromCompare: (societyId) => {
-        set({ compareList: get().compareList.filter(s => s.id !== societyId) });
+        set({ compareList: get().compareList.filter(s => String(s.id) !== String(societyId)) });
       },
       clearCompare: () => set({ compareList: [] }),
 

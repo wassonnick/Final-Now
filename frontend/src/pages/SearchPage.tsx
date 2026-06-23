@@ -698,6 +698,14 @@ export function SearchPage() {
   const isSocietyCompared = (society: any) =>
     compareList.some((item: any) => String(item.id) === String(society?.id));
 
+  useEffect(() => {
+    compareList.forEach((item: any) => {
+      if (item?.id && !liveSocietyIds.has(String(item.id))) {
+        removeFromCompare(item.id);
+      }
+    });
+  }, [compareList, liveSocietyIds, removeFromCompare]);
+
   const toggleSocietyCompare = (society: any) => {
     if (!society?.id) return;
 
@@ -713,7 +721,7 @@ export function SearchPage() {
       return;
     }
 
-    if (compareList.length >= 3) {
+    if (liveCompareCount >= 3) {
       trackEvent("compare_limit_reached", {
         source: "search_page",
         search_query: query || "",
@@ -1274,10 +1282,10 @@ export function SearchPage() {
                                 : "h-8 w-full rounded-full border-blue-100 px-2 text-xs font-black text-blue-700 md:text-sm"
                             }
                             onClick={() => toggleSocietyCompare(society)}
-                            title={compareList.length >= 3 && !isSocietyCompared(society) ? "Compare limit reached. Remove one society first." : "Add society to compare"}
+                            title={liveCompareCount >= 3 && !isSocietyCompared(society) ? "Compare limit reached. Remove one society first." : "Add society to compare"}
                           >
                             <Scale className="mr-1.5 h-3.5 w-3.5" />
-                            {isSocietyCompared(society) ? "Added" : compareList.length >= 3 ? "Compare full" : "Compare"}
+                            {isSocietyCompared(society) ? "Added" : liveCompareCount >= 3 ? "Compare full" : "Compare"}
                           </Button>
 
                           <Button

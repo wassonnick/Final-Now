@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store";
 import { setPublicSeo } from "@/lib/seo";
-import { societyImage } from "@/lib/publicData";
+import { fetchPublicSocieties, societyImage } from "@/lib/publicData";
 import { societyPlaceholderImage } from "@/lib/societyImages";
 
 const comparisonRows = [
@@ -44,30 +44,6 @@ const amenityList = [
   ["senior_citizen_area", "Senior zone"],
   ["tennis_court", "Tennis"],
   ["party_hall", "Party hall"],
-];
-
-const previewSocieties = [
-  {
-    name: "DLF Crest",
-    locality: "Golf Course Road",
-    score: "9.2",
-    rent: "₹1.1L – ₹2.4L",
-    resale: "₹6Cr – ₹12Cr",
-  },
-  {
-    name: "M3M Golf Estate",
-    locality: "Sector 65",
-    score: "8.9",
-    rent: "₹85K – ₹1.8L",
-    resale: "₹4Cr – ₹9Cr",
-  },
-  {
-    name: "Tulip Crimson",
-    locality: "Sector 70A",
-    score: "9.0",
-    rent: "On request",
-    resale: "On request",
-  },
 ];
 
 function fieldValue(society: any, key: string, fallback: any = "—") {
@@ -285,8 +261,19 @@ function CompareCard({
 
 export function ComparePage() {
   const { compareList, removeFromCompare, clearCompare } = useAppStore();
-  const items = Array.isArray(compareList) ? compareList.slice(0, 3) : [];
+  const [publicSocieties, setPublicSocieties] = useState<any[]>([]);
+  const [publicSocietiesLoading, setPublicSocietiesLoading] = useState(true);
+  const [publicSocietiesError, setPublicSocietiesError] = useState("");
   const [compareSearchOpen, setCompareSearchOpen] = useState(false);
+  const publicSocietyIds = useMemo(
+    () => new Set(publicSocieties.map((society) => String(society?.id)).filter(Boolean)),
+    [publicSocieties],
+  );
+  const items = useMemo(
+    () => (Array.isArray(compareList) ? compareList.filter((item: any) => publicSocietyIds.has(String(item?.id))).slice(0, 3) : []),
+    [compareList, publicSocietyIds],
+  );
+  const previewSocieties = publicSocieties.slice(0, 3);
 
   const clearAndOpenSearch = () => {
     clearCompare();
@@ -302,6 +289,48 @@ export function ComparePage() {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+
+    async function loadPublicSocieties() {
+      try {
+        setPublicSocietiesLoading(true);
+        setPublicSocietiesError("");
+        const societies = await fetchPublicSocieties();
+
+        if (mounted) {
+          setPublicSocieties(societies);
+        }
+      } catch (err) {
+        console.error(err);
+        if (mounted) {
+          setPublicSocietiesError("Unable to verify live societies right now.");
+          setPublicSocieties([]);
+        }
+      } finally {
+        if (mounted) {
+          setPublicSocietiesLoading(false);
+        }
+      }
+    }
+
+    void loadPublicSocieties();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (publicSocietiesLoading) return;
+
+    compareList.forEach((item: any) => {
+      if (item?.id && !publicSocietyIds.has(String(item.id))) {
+        removeFromCompare(item.id);
+      }
+    });
+  }, [compareList, publicSocietiesLoading, publicSocietyIds, removeFromCompare]);
+
+  useEffect(() => {
     if (!items.length) setCompareSearchOpen(true);
   }, [items.length]);
 
@@ -309,6 +338,22 @@ export function ComparePage() {
     if (!items.length) return null;
     return [...items].sort((a, b) => scoreValue(b) - scoreValue(a))[0];
   }, [items]);
+
+  if (publicSocietiesLoading) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC]">
+        <section className="container mx-auto px-4 py-12">
+          <div className="rounded-[1.75rem] border border-blue-100 bg-white p-8 text-center shadow-sm">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+            <h1 className="mt-5 font-display text-3xl font-black text-navy-950">Checking live societies…</h1>
+            <p className="mt-2 text-sm font-semibold text-navy-500">
+              Compare only uses currently published society profiles.
+            </p>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   if (!items.length) {
     return (
@@ -325,8 +370,13 @@ export function ComparePage() {
                   Search societies here and build your comparison.
                 </h1>
                 <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-blue-500">
-                  Your compare list is empty. Use the open search panel below, search a society, tap Compare on society cards, and return here.
+                  Your compare list has no currently published societies. Search live society inventory, tap Compare on society cards, and return here.
                 </p>
+                {publicSocietiesError ? (
+                  <p className="mt-3 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
+                    {publicSocietiesError}
+                  </p>
+                ) : null}
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                   <Button asChild className="h-12 rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">
                     <Link to="/search?tab=societies">
@@ -346,7 +396,7 @@ export function ComparePage() {
                 <div className="mt-4 space-y-3">
                   {[
                     ["1", "Open society search"],
-                    ["2", "Add up to 3 societies"],
+                    ["2", "Add up to 3 published societies"],
                     ["3", "Compare score, price and fit"],
                   ].map(([step, label]) => (
                     <div key={step} className="flex items-center gap-3 rounded-2xl bg-blue-50 p-3">
@@ -366,7 +416,7 @@ export function ComparePage() {
               <div>
                 <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Preview</p>
                 <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950 md:text-[30px]">
-                  What your comparison will look like
+                  {previewSocieties.length ? "Live societies available to compare" : "No public society preview available"}
                 </h2>
               </div>
               <Button asChild variant="outline" className="rounded-full border-blue-100 font-black text-blue-700 hover:bg-blue-50">
@@ -402,28 +452,34 @@ export function ComparePage() {
               </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
-              {previewSocieties.map((society) => (
-                <div key={society.name} className="rounded-[1.35rem] border border-blue-100 bg-[#F8FAFC] p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">{society.locality}</p>
-                  <h3 className="mt-2 font-display text-xl font-black text-navy-950">{society.name}</h3>
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    <div className="rounded-xl bg-white p-2">
-                      <p className="text-[11px] font-bold text-blue-300">Score</p>
-                      <p className="font-black text-navy-950">{society.score}</p>
-                    </div>
-                    <div className="rounded-xl bg-white p-2">
-                      <p className="text-[11px] font-bold text-blue-300">Rent</p>
-                      <p className="truncate text-sm font-black text-navy-950">{society.rent}</p>
-                    </div>
-                    <div className="rounded-xl bg-white p-2">
-                      <p className="text-[11px] font-bold text-blue-300">Resale</p>
-                      <p className="truncate text-sm font-black text-navy-950">{society.resale}</p>
+            {previewSocieties.length ? (
+              <div className="grid gap-3 md:grid-cols-3">
+                {previewSocieties.map((society) => (
+                  <div key={society.id || society.slug || society.name} className="rounded-[1.35rem] border border-blue-100 bg-[#F8FAFC] p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">{localityName(society)}</p>
+                    <h3 className="mt-2 font-display text-xl font-black text-navy-950">{society.name}</h3>
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      <div className="rounded-xl bg-white p-2">
+                        <p className="text-[11px] font-bold text-blue-300">Score</p>
+                        <p className="font-black text-navy-950">{scoreDisplay(society)}</p>
+                      </div>
+                      <div className="rounded-xl bg-white p-2">
+                        <p className="text-[11px] font-bold text-blue-300">Rent</p>
+                        <p className="truncate text-sm font-black text-navy-950">{rentText(society)}</p>
+                      </div>
+                      <div className="rounded-xl bg-white p-2">
+                        <p className="text-[11px] font-bold text-blue-300">Resale</p>
+                        <p className="truncate text-sm font-black text-navy-950">{buyText(society)}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[1.35rem] border border-blue-100 bg-[#F8FAFC] p-5 text-sm font-bold text-navy-500">
+                No published societies are available for compare preview yet. Draft and unverified imports stay hidden.
+              </div>
+            )}
           </div>
         </section>
       </div>
