@@ -872,6 +872,13 @@ QUERY;
 
   private function scorePayload(Society $society, array $updates): array {
     $amenities = $updates['amenities'] ?? ($society->amenities ?: []);
+    if (is_string($amenities)) {
+      $decodedAmenities = json_decode($amenities, true);
+      $amenities = is_array($decodedAmenities) ? $decodedAmenities : array_filter(array_map('trim', explode(',', $amenities)));
+    }
+    if (!is_array($amenities)) {
+      $amenities = [];
+    }
     $amenityCount = count($amenities);
     $nearbySchools = $updates['nearby_schools'] ?? $society->nearby_schools;
     $nearbyHospitals = $updates['nearby_hospitals'] ?? $society->nearby_hospitals;

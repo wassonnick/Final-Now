@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Society;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -175,6 +176,7 @@ class SocietySpreadsheetImportTest extends TestCase
             'nearby_hospitals' => [],
             'nearby_office_hubs' => [],
         ]);
+        DB::table('societies')->where('id', $society->id)->update(['amenities' => '[]']);
 
         $this->withToken('admin-test-token')
             ->postJson('/api/admin/societies/nearby-intelligence/bulk-auto-fill', ['society_ids' => [$society->id]])
