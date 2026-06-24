@@ -352,7 +352,9 @@ class SocietyImportService
         if (! empty($aiData['_ai_error']) && $this->ai->isAvailable()) {
             $message = ! empty($aiData['_ai_quota_limited'])
                 ? 'AI quota/rate limit hit. Draft not created to avoid weak fallback data. Try again later or reduce bulk size.'
-                : 'AI enrichment failed: '.$aiData['_ai_error'].'. Draft not created to avoid weak fallback data.';
+                : (! empty($aiData['_ai_temporarily_unavailable'])
+                    ? 'Gemini is temporarily unavailable (HTTP 503). Draft not created to avoid weak fallback data. Retry this import in a minute.'
+                    : 'AI enrichment failed: '.$aiData['_ai_error'].'. Draft not created to avoid weak fallback data.');
 
             $this->log($job, $message);
 
@@ -500,7 +502,9 @@ class SocietyImportService
         if (! empty($aiData['_ai_error']) && $this->ai->isAvailable()) {
             $message = ! empty($aiData['_ai_quota_limited'])
                 ? 'AI quota/rate limit hit during URL extraction. Draft not created to avoid weak fallback data.'
-                : 'AI URL extraction failed: '.$aiData['_ai_error'].'. Draft not created to avoid weak fallback data.';
+                : (! empty($aiData['_ai_temporarily_unavailable'])
+                    ? 'Gemini is temporarily unavailable (HTTP 503) during URL extraction. Draft not created to avoid weak fallback data. Retry in a minute.'
+                    : 'AI URL extraction failed: '.$aiData['_ai_error'].'. Draft not created to avoid weak fallback data.');
 
             $this->log($job, $message);
 

@@ -88,7 +88,7 @@ class SocietyAiEnrichmentService
                     break;
                 }
 
-                if ($response->status() !== 429 || $attempt === 3) {
+                if (! in_array($response->status(), [429, 503], true) || $attempt === 3) {
                     break;
                 }
 
@@ -106,6 +106,7 @@ class SocietyAiEnrichmentService
                     '_ai_error' => 'Gemini HTTP '.$status,
                     '_ai_error_status' => $status,
                     '_ai_quota_limited' => $status === 429,
+                    '_ai_temporarily_unavailable' => $status === 503,
                 ];
             }
 
