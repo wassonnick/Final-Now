@@ -300,9 +300,9 @@ class AIController extends Controller
             $society->locality,
             $society->address,
             $society->description,
-            $society->nearby_metro,
-            $society->nearby_office_hubs,
-            $society->nearby_schools,
+            $society->nearby_metro ? implode(' ', (array) $society->nearby_metro) : '',
+            $society->nearby_office_hubs ? implode(' ', (array) $society->nearby_office_hubs) : '',
+            $society->nearby_schools ? implode(' ', (array) $society->nearby_schools) : '',
             $society->amenities ? implode(' ', (array) $society->amenities) : '',
         ])));
 
