@@ -16,7 +16,7 @@ return new class extends Migration {
         });
 
         Schema::table('properties', function (Blueprint $table) {
-            $table->index(['status', 'is_published'], 'properties_status_is_published_idx');
+            $table->index('status', 'properties_status_idx');
             $table->index('listing_type', 'properties_listing_type_idx');
             $table->index('created_at', 'properties_created_at_idx');
         });
@@ -40,7 +40,7 @@ return new class extends Migration {
         });
 
         Schema::table('properties', function (Blueprint $table) {
-            $table->dropIndex('properties_status_is_published_idx');
+            $table->dropIndex('properties_status_idx');
             $table->dropIndex('properties_listing_type_idx');
             $table->dropIndex('properties_created_at_idx');
         });
