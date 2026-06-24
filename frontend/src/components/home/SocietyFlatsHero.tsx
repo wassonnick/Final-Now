@@ -27,6 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { fetchPublicSocieties, formatPublicLocation } from "@/lib/publicData";
 import { slugifySociety, type AdminSociety } from "@/lib/adminSocietyStore";
+import { hasGooglePlacesDisplayPhoto } from "@/lib/societyImages";
 
 type Intent = "society" | "rent" | "buy" | "general";
 
@@ -231,7 +232,9 @@ export default function SocietyFlatsHero() {
     fetchPublicSocieties()
       .then((items) => {
         if (!mounted) return;
-        const cleanItems = items.filter((society) => !isBlockedHeroSociety(society.name));
+        const cleanItems = items.filter(
+          (society) => hasGooglePlacesDisplayPhoto(society) && !isBlockedHeroSociety(society.name),
+        );
         setHeroMapSocieties(cleanItems);
         if (cleanItems.length) setHeroMapCards(cleanItems.slice(0, 3));
       })

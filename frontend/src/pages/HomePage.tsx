@@ -49,7 +49,7 @@ import {
 } from "@/lib/publicData";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { setPublicSeo } from "@/lib/seo";
-import { societyImageAttribution } from "@/lib/societyImages";
+import { hasGooglePlacesDisplayPhoto, societyImageAttribution } from "@/lib/societyImages";
 
 const whySocietyFlats = [
   {
@@ -222,7 +222,7 @@ export function HomePage() {
     window.scrollTo(0, 0);
     fetchPublicSocieties()
       .then((items) => {
-        setSocieties(items);
+        setSocieties(items.filter(hasGooglePlacesDisplayPhoto));
         setSocietiesStatus("ready");
       })
       .catch((error) => {

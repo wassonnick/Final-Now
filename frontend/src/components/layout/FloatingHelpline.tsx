@@ -14,10 +14,10 @@ export function FloatingHelpline() {
   return (
     <>
       <div className="fixed right-3 top-1/2 z-40 hidden -translate-y-1/2 lg:block">
-        <div className="flex items-center overflow-hidden rounded-full border border-blue-100 bg-white/95 shadow-[0_14px_34px_rgba(15,23,42,0.14)] backdrop-blur">
+        <div className="flex flex-col gap-2">
           <a
             href={`tel:${PHONE_TEL}`}
-            className="inline-flex h-10 items-center gap-2 border-r border-blue-100 px-3 text-xs font-black text-blue-700 hover:bg-blue-50"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-blue-100 bg-white/95 px-4 text-xs font-black text-blue-700 shadow-[0_12px_28px_rgba(15,23,42,0.14)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-blue-50"
             aria-label={`Call SocietyFlats on ${PHONE_DISPLAY}`}
           >
             <Phone className="h-3.5 w-3.5" />
@@ -27,7 +27,7 @@ export function FloatingHelpline() {
             href={WHATSAPP_URL}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-10 items-center gap-2 px-3 text-xs font-black text-green-700 hover:bg-green-50"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-green-200 bg-white/95 px-4 text-xs font-black text-green-700 shadow-[0_12px_28px_rgba(15,23,42,0.14)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-green-50"
             aria-label="WhatsApp SocietyFlats"
           >
             <MessageCircle className="h-3.5 w-3.5" />
@@ -36,25 +36,25 @@ export function FloatingHelpline() {
         </div>
       </div>
 
-      <div className={`${hideMobileForPageCta ? "hidden" : "fixed"} inset-x-0 bottom-[calc(5.45rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 lg:hidden`}>
-        <div className="flex items-center overflow-hidden rounded-full border border-blue-100 bg-white/95 shadow-[0_12px_28px_rgba(15,23,42,0.16)] backdrop-blur">
+      <div className={`${hideMobileForPageCta ? "hidden" : "fixed"} right-3 bottom-[calc(5.45rem+env(safe-area-inset-bottom))] z-40 lg:hidden`}>
+        <div className="flex flex-col items-stretch gap-2">
           <a
             href={`tel:${PHONE_TEL}`}
-            className="inline-flex h-9 items-center gap-1.5 border-r border-blue-100 px-3 text-[11px] font-black text-blue-700"
+            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-blue-100 bg-white/95 px-3 text-[11px] font-black text-blue-700 shadow-[0_10px_24px_rgba(15,23,42,0.16)] backdrop-blur"
             aria-label={`Call SocietyFlats on ${PHONE_DISPLAY}`}
           >
             <Phone className="h-3.5 w-3.5" />
-            {PHONE_DISPLAY}
+            Call
           </a>
           <a
             href={WHATSAPP_URL}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-9 items-center gap-1.5 px-3 text-[11px] font-black text-green-700"
+            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-green-200 bg-white/95 px-3 text-[11px] font-black text-green-700 shadow-[0_10px_24px_rgba(15,23,42,0.16)] backdrop-blur"
             aria-label="WhatsApp SocietyFlats"
           >
             <MessageCircle className="h-3.5 w-3.5" />
-            WA
+            WhatsApp
           </a>
         </div>
       </div>
