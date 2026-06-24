@@ -33,10 +33,6 @@ It currently contains:
 - Brochure/PDF society extraction
 
 ## Known Partial Modules
-- Admin Leads frontend/backend wiring
-- Mobile homepage polish
-- Society detail page product polish
-- Sell/Owner listing backend submission
 - AI Advisor backend
 - Compare page workflow
 - Market Insights real data
@@ -48,15 +44,16 @@ It currently contains:
 - Admin users/settings/analytics
 
 ## Current Immediate Development Order
-1. Make frontend build pass cleanly.
-2. Fix Admin Leads to use backend API.
-3. Polish mobile homepage hero.
-4. Redesign Society Detail Page.
-5. Wire Sell/Owner Listing form.
-6. Add WhatsApp/callback/visit workflow.
-7. Add AI Advisor backend.
-8. Add SEO landing pages.
-9. Add partner/referral program.
+Done: frontend build clean, Admin Leads backend wiring, mobile homepage polish,
+Society Detail Page redesign, Sell/Owner Listing backend wiring, site-visit
+scheduling workflow (admin proposes slots, public /visit/:token confirms,
+lead status syncs, generic webhook hook for WhatsApp/notification delivery
+exists but is unconfigured pending a provider choice). AI Advisor backend
+500 bug fixed and confirmed working live. All verified against production
+API on 2026-06-24.
+
+1. Add SEO landing pages.
+2. Add partner/referral program.
 
 ## Files/Areas Not To Touch Unless Specifically Asked
 - Backend routing
