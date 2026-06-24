@@ -16,6 +16,8 @@ import {
   ArrowLeft,
   Building2,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink,
   FileText,
   Heart,
@@ -26,6 +28,7 @@ import {
   Scale,
   Shield,
   Train,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store";
@@ -298,6 +301,9 @@ export function SocietyPage() {
   const [callbackSource, setCallbackSource] = useState("society_page_callback");
   const [isSocietyShortlisted, setIsSocietyShortlisted] = useState(false);
   const [activeNearbyCategory, setActiveNearbyCategory] = useState("All");
+  const [activeImage, setActiveImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   // SEO validation marker: society_page_no_inventory_similar_options
   const [selectedLeadProperty, setSelectedLeadProperty] = useState<any | null>(
     null,
@@ -497,6 +503,12 @@ export function SocietyPage() {
       saved: result.saved,
     });
   };
+
+  useEffect(() => {
+    setActiveImage(0);
+    setLightboxOpen(false);
+    setDescriptionExpanded(false);
+  }, [slug]);
 
   // C16 society SEO route effect
   useEffect(() => {
@@ -745,7 +757,7 @@ export function SocietyPage() {
 
   return (
     <div className="min-h-screen bg-ivory-100 pb-28 md:pb-0">
-      {/* C45B visible society save CTA */}
+      {/* Floating save CTA */}
       <div className="fixed bottom-[5.75rem] right-4 z-40 md:bottom-6">
         <Button
           type="button"
@@ -761,13 +773,11 @@ export function SocietyPage() {
           {isSocietyShortlisted ? "Saved" : "Save society"}
         </Button>
       </div>
+
+      {/* Hero gallery */}
       <section className="bg-white">
-        <div className="container mx-auto px-4 py-2.5 md:py-3">
-          <Button
-            asChild
-            variant="ghost"
-            className="mb-2 rounded-full text-navy-600 md:mb-3"
-          >
+        <div className="container mx-auto px-4 py-3 md:py-4">
+          <Button asChild variant="ghost" className="mb-3 rounded-full text-navy-600">
             <Link to="/search?tab=societies">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to societies
             </Link>
@@ -779,37 +789,55 @@ export function SocietyPage() {
             </div>
           ) : null}
 
-          <div
-            className={`grid gap-3 ${
-              gallery.length > 1 ? "lg:grid-cols-[1.4fr_0.6fr]" : ""
-            }`}
-          >
-            <div className="relative h-[148px] overflow-hidden rounded-[1.1rem] bg-navy-50 sm:h-[220px] lg:h-[260px] lg:rounded-[1.45rem]">
+          <div className={cn("grid gap-3", gallery.length > 1 && "lg:grid-cols-[1fr_220px]")}>
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(true)}
+              aria-label="Open society photo gallery"
+              className="relative h-[220px] overflow-hidden rounded-[1.5rem] bg-navy-50 text-left sm:h-[320px] md:h-[440px]"
+            >
               <img
-                src={gallery[0]}
+                src={gallery[activeImage] || gallery[0]}
                 alt={society.name}
                 className="h-full w-full object-cover"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-navy-950/55 via-transparent to-transparent" />
+              <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+                <Badge className="border-0 bg-white/95 text-blue-700">
+                  {field(society, "status", "status", "Verified")}
+                </Badge>
+                {field<boolean>(society, "featured", "featured", false) ? (
+                  <Badge className="border-0 bg-amber-50/95 text-amber-700">Featured</Badge>
+                ) : null}
+                <Badge className={cn("border-0", deliveryTone.badge)}>{projectStatusText}</Badge>
+              </div>
               <span
-                className={`absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-semibold backdrop-blur ${societyImageAttributionClassName(societyImageAttribution(society).tone)}`}
+                className={`absolute bottom-3 left-4 rounded-full px-2.5 py-1 text-[10px] font-semibold backdrop-blur ${societyImageAttributionClassName(societyImageAttribution(society).tone)}`}
                 title={societyImageAttribution(society).title}
               >
                 {societyImageAttribution(society).label}
               </span>
-            </div>
+              {gallery.length > 1 ? (
+                <span className="absolute bottom-3 right-4 rounded-full bg-black/65 px-3 py-1.5 text-xs font-bold text-white">
+                  View gallery · {activeImage + 1}/{gallery.length}
+                </span>
+              ) : null}
+            </button>
+
             {gallery.length > 1 ? (
-              <div className="hidden gap-2.5 sm:grid sm:grid-cols-2 lg:grid-cols-1">
-                {gallery.slice(1, 3).map((image) => (
-                  <div
-                    key={image}
-                    className="overflow-hidden rounded-[1.25rem] bg-navy-50"
+              <div className="hidden gap-2.5 lg:grid lg:grid-rows-3">
+                {gallery.slice(0, 3).map((image, index) => (
+                  <button
+                    key={`${image}-${index}`}
+                    type="button"
+                    onClick={() => setActiveImage(index)}
+                    className={cn(
+                      "overflow-hidden rounded-2xl border-2 bg-navy-50",
+                      activeImage === index ? "border-blue-500" : "border-transparent",
+                    )}
                   >
-                    <img
-                      src={image}
-                      alt={society.name}
-                      className="h-full min-h-[105px] w-full object-cover lg:min-h-[126px]"
-                    />
-                  </div>
+                    <img src={image} alt={society.name} className="h-full min-h-[96px] w-full object-cover" />
+                  </button>
                 ))}
               </div>
             ) : null}
@@ -817,102 +845,130 @@ export function SocietyPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-2.5 md:py-4">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-5">
-          <div className="space-y-3 md:space-y-3.5">
-            <div className="rounded-[1.2rem] border border-blue-100 bg-white p-3.5 shadow-sm md:rounded-[1.35rem] md:p-4">
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      {lightboxOpen ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" role="dialog" aria-modal="true" aria-label="Society photo gallery">
+          <button type="button" onClick={() => setLightboxOpen(false)} aria-label="Close gallery" className="absolute right-5 top-5 rounded-full bg-white/10 p-3 text-white hover:bg-white/20">
+            <X className="h-6 w-6" />
+          </button>
+          {gallery.length > 1 ? (
+            <button
+              type="button"
+              onClick={() => setActiveImage((activeImage - 1 + gallery.length) % gallery.length)}
+              aria-label="Previous photo"
+              className="absolute left-3 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 md:left-8"
+            >
+              <ChevronLeft className="h-7 w-7" />
+            </button>
+          ) : null}
+          <img
+            src={gallery[activeImage] || gallery[0]}
+            alt={`${society.name} photo ${activeImage + 1}`}
+            className="max-h-[85vh] max-w-[88vw] rounded-2xl object-contain"
+          />
+          {gallery.length > 1 ? (
+            <button
+              type="button"
+              onClick={() => setActiveImage((activeImage + 1) % gallery.length)}
+              aria-label="Next photo"
+              className="absolute right-3 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 md:right-8"
+            >
+              <ChevronRight className="h-7 w-7" />
+            </button>
+          ) : null}
+          {gallery.length > 1 ? (
+            <span className="absolute bottom-5 rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white">
+              {activeImage + 1} / {gallery.length}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      <section className="container mx-auto px-4 py-5 md:py-7">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
+          <div className="space-y-7 md:space-y-9">
+            {/* Title, score, description, key stats */}
+            <div>
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <div className="mb-2.5 flex flex-wrap gap-2">
-                    <Badge className="border-blue-100 bg-blue-50 text-blue-700">
-                      {field(society, "status", "status", "Verified")}
-                    </Badge>
-                    {field<boolean>(society, "featured", "featured", false) ? (
-                      <Badge className="border-amber-100 bg-amber-50 text-amber-700">
-                        Featured
-                      </Badge>
-                    ) : null}
-                    <Badge className={deliveryTone.badge}>
-                      {projectStatusText}
-                    </Badge>
-                  </div>
-                  <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 md:text-3xl">
+                  <h1 className="font-display text-3xl font-black tracking-tight text-navy-950 md:text-[2.5rem]">
                     {society.name}
                   </h1>
-                  <p className="mt-1 flex items-center gap-2 text-sm text-navy-500 md:text-[15px]">
+                  <p className="mt-2 flex items-center gap-2 text-base text-navy-500">
                     <MapPin className="h-5 w-5" /> {societyLocation}
                   </p>
                 </div>
-                <div className="w-fit min-w-24 rounded-[1.05rem] bg-navy-600 px-3.5 py-2.5 text-center text-white md:min-w-28 md:rounded-[1.15rem] md:px-4 md:py-3">
-                  <p className="text-sm text-white/70">Society Score</p>
-                  <p className="mt-1 text-3xl font-bold">
-                    {field(society, "score", "score", "8.5")}
-                  </p>
+                <div className="flex w-fit shrink-0 items-center gap-3 rounded-2xl bg-navy-950 px-5 py-3 text-white">
+                  <div>
+                    <p className="text-xs text-white/60">Society score</p>
+                    <p className="text-2xl font-black">
+                      {field(society, "score", "score", "8.5")}
+                      <span className="text-sm font-semibold text-white/50">/10</span>
+                    </p>
+                  </div>
                 </div>
               </div>
+
               {descriptionText ? (
-                <p className="mt-2.5 line-clamp-2 text-sm leading-6 text-navy-600 md:mt-3 md:line-clamp-2 md:text-[15px]">
-                  {descriptionText}
-                </p>
-              ) : null}
-              <div className="mt-2.5 grid grid-cols-2 gap-2 border-t border-navy-100 pt-2.5 md:mt-3 md:grid-cols-4">
-                <div className="rounded-2xl bg-blue-50 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">
-                    Verified homes available
+                <div className="mt-4 max-w-3xl">
+                  <p className={cn("text-[15px] leading-7 text-navy-600", !descriptionExpanded && "line-clamp-3")}>
+                    {descriptionText}
                   </p>
-                  <p className="mt-2 text-2xl font-bold text-navy-900">
-                    {properties.length || "0"}
-                  </p>
-                  <p className="mt-1 text-xs text-navy-500">
-                    live option{properties.length === 1 ? "" : "s"} in database
-                  </p>
+                  {descriptionText.length > 220 ? (
+                    <button
+                      type="button"
+                      onClick={() => setDescriptionExpanded((value) => !value)}
+                      className="mt-1 text-sm font-bold text-blue-700 hover:text-blue-800"
+                    >
+                      {descriptionExpanded ? "Show less" : "Read more"}
+                    </button>
+                  ) : null}
                 </div>
-                <div className="rounded-2xl bg-[#F8FAFC] p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-navy-500">
-                    Rent range
-                  </p>
-                  <p className="mt-2 text-lg font-bold text-navy-900">
+              ) : null}
+
+              <div className="mt-6 grid grid-cols-2 gap-5 border-t border-navy-100 pt-5 md:grid-cols-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-navy-400">Live homes</p>
+                  <p className="mt-1.5 text-xl font-black text-navy-950">{properties.length || 0}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-navy-400">Rent range</p>
+                  <p className="mt-1.5 text-xl font-black text-navy-950">
                     {field(society, "rentRange", "rent_range", "On request")}
                   </p>
-                  <p className="mt-1 text-xs text-navy-500">
-                    subject to live availability
-                  </p>
                 </div>
-                <div className="hidden rounded-2xl bg-[#F8FAFC] p-3 md:block">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-navy-500">
-                    Buy range
-                  </p>
-                  <p className="mt-2 text-lg font-bold text-navy-900">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-navy-400">Buy range</p>
+                  <p className="mt-1.5 text-xl font-black text-navy-950">
                     {field(society, "buyRange", "buy_range", "On request")}
                   </p>
-                  <p className="mt-1 text-xs text-navy-500">
-                    resale guidance where available
-                  </p>
                 </div>
-                <div className={cn("rounded-2xl border p-3", deliveryTone.card)}>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-navy-500">
-                    Project status
-                  </p>
-                  <p className="mt-2 text-lg font-bold text-navy-900">
-                    {deliveryTone.label}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold text-navy-600">
-                    Possession: {possessionDateText}
-                  </p>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-navy-400">Project status</p>
+                  <p className="mt-1.5 text-xl font-black text-navy-950">{deliveryTone.label}</p>
+                  <p className="mt-0.5 text-xs text-navy-500">Possession: {possessionDateText}</p>
                 </div>
               </div>
 
-              <div className={cn("mt-2.5 rounded-2xl border px-3 py-2 text-xs font-semibold leading-5", deliveryTone.card)}>
-                <span className="font-black text-navy-900">Delivery note:</span>{" "}
-                {deliveryTone.helper}
+              <div className={cn("mt-4 rounded-2xl border px-4 py-2.5 text-xs font-semibold leading-5", deliveryTone.card)}>
+                <span className="font-black text-navy-900">Delivery note:</span> {deliveryTone.helper}
               </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+              <div className="mt-5 flex flex-wrap gap-2.5">
                 <Button
                   onClick={() => openSocietyCallback()}
-                  className="h-9 rounded-full bg-blue-600 text-sm font-bold hover:bg-blue-700"
+                  className="h-11 rounded-full bg-blue-700 px-6 text-sm font-bold hover:bg-blue-800"
                 >
                   <Phone className="mr-2 h-4 w-4" /> Request available homes
+                </Button>
+
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-11 rounded-full border-navy-200 text-sm font-bold"
+                >
+                  <Link to={`/search?tab=societies&q=${encodeURIComponent(society.name)}&intent=general`}>
+                    View verified homes
+                  </Link>
                 </Button>
 
                 <Button
@@ -920,7 +976,7 @@ export function SocietyPage() {
                   onClick={toggleSocietyCompare}
                   variant="outline"
                   className={cn(
-                    "h-9 rounded-full text-sm font-bold",
+                    "h-11 rounded-full text-sm font-bold",
                     isSocietyCompared
                       ? "border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                       : "border-blue-100 text-blue-700 hover:bg-blue-50",
@@ -934,36 +990,10 @@ export function SocietyPage() {
                 <Button
                   asChild
                   variant="outline"
-                  className="h-9 rounded-full border-navy-200 text-sm font-bold"
+                  className="hidden h-11 rounded-full border-navy-200 text-sm font-bold sm:inline-flex"
                 >
-                  <Link
-                    to={`/search?tab=societies&q=${encodeURIComponent(society.name)}&intent=general`}
-                  >
-                    View verified homes
-                  </Link>
-                </Button>
-
-                <Button
-                  asChild
-                  variant="outline"
-                  className="hidden rounded-full border-navy-200 sm:inline-flex"
-                >
-                  <Link
-                    to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}
-                  >
-                    Ask SocietyFlats AI for options
-                  </Link>
-                </Button>
-
-                <Button
-                  asChild
-                  variant="outline"
-                  className="hidden rounded-full border-navy-200 sm:inline-flex"
-                >
-                  <Link
-                    to={`/sell?society=${encodeURIComponent(society.name)}`}
-                  >
-                    List your property
+                  <Link to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}>
+                    Ask SocietyFlats AI
                   </Link>
                 </Button>
 
@@ -971,153 +1001,64 @@ export function SocietyPage() {
                   href={`https://wa.me/919911886222?text=${whatsappMessage}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="hidden items-center justify-center rounded-full border border-green-200 bg-green-50 px-5 py-2.5 text-sm font-semibold text-green-700 hover:bg-green-100 sm:inline-flex"
+                  className="hidden h-11 items-center justify-center rounded-full border border-green-200 bg-green-50 px-5 text-sm font-bold text-green-700 hover:bg-green-100 sm:inline-flex"
                 >
                   <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp us
                 </a>
               </div>
             </div>
 
-            <div className="hidden rounded-[1.4rem] border border-blue-100 bg-white p-4 shadow-sm md:block">
-              <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
-                    Decision snapshot
-                  </p>
-                  <h2 className="mt-2 text-2xl font-bold text-navy-900">
-                    Why people shortlist {society.name}
-                  </h2>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    onClick={toggleSocietyCompare}
-                    variant="outline"
-                    className={cn(
-                      "rounded-full",
-                      isSocietyCompared
-                        ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                        : "border-blue-100 text-blue-700",
-                    )}
-                  >
-                    <Scale className="mr-2 h-4 w-4" />
-                    {isSocietyCompared ? "Added" : "Add to compare"}
-                  </Button>
-                  <Button asChild variant="outline" className="rounded-full border-blue-100 text-blue-700">
-                    <Link to="/compare">Open compare</Link>
-                  </Button>
-                </div>
-              </div>
-              <div className="mt-3 grid gap-2.5 md:grid-cols-4">
+            {/* Decision snapshot */}
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">Decision snapshot</p>
+              <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950">
+                Why people shortlist {society.name}
+              </h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
                 {whyChoose.map((item) => {
                   const Icon = item.icon;
                   return (
-                    <div
-                      key={item.label}
-                      className="rounded-[1.05rem] bg-[#F8FAFC] p-3"
-                    >
+                    <div key={item.label} className="rounded-2xl border border-navy-100 bg-white p-4">
                       <Icon className="h-5 w-5 text-blue-600" />
-                      <p className="mt-3 text-sm text-navy-400">{item.label}</p>
-                      <p className="mt-1 text-sm font-bold text-navy-900">
-                        {item.value}
+                      <p className="mt-3 text-xs font-bold uppercase tracking-[0.08em] text-navy-400">
+                        {item.label}
                       </p>
+                      <p className="mt-1 text-sm font-bold text-navy-950">{item.value}</p>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            <div className="hidden gap-2.5 md:grid md:grid-cols-3">
-              {[
-                ["Builder", field(society, "builder", "builder", "Not added")],
-                [
-                  "Total towers",
-                  field(society, "totalTowers", "total_towers", "Not added"),
-                ],
-                [
-                  "Total units",
-                  field(society, "totalUnits", "total_units", "Not added"),
-                ],
-                [
-                  "Possession",
-                  possessionDateText,
-                ],
-                [
-                  "Project status",
-                  projectStatusText,
-                ],
-                [
-                  "Maintenance",
-                  field(
-                    society,
-                    "maintenanceCharges",
-                    "maintenance_charges",
-                    "Not added",
-                  ),
-                ],
-                [
-                  "Rental yield",
-                  field(society, "rentalYield", "rental_yield", "Not added"),
-                ],
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className="rounded-[1rem] border border-blue-100 bg-white p-2.5"
-                >
-                  <p className="text-sm text-navy-400">{label}</p>
-                  <p className="mt-1 font-semibold text-navy-900">
-                    {readableStructuredValue(value) || "Not added"}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:hidden">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
-                About this society
-              </p>
-              <h2 className="mt-2 text-xl font-bold text-navy-900">
-                Why consider {society.name}?
-              </h2>
-              {descriptionText ? (
-                <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-navy-600">
-                  {descriptionText}
-                </p>
-              ) : (
-                <p className="mt-3 text-sm leading-relaxed text-navy-600">
-                  This society profile is being verified. Request a callback to
-                  check live availability, rent fit and visit guidance before
-                  shortlisting.
-                </p>
-              )}
-              <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-blue-50 p-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
-                    Next step
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-navy-900">
-                    Check homes and availability
-                  </p>
-                </div>
-                <Button
-                  onClick={() => openSocietyCallback()}
-                  size="sm"
-                  className="rounded-full bg-blue-600 hover:bg-blue-700"
-                >
-                  Callback
-                </Button>
+            {/* Project facts */}
+            <div>
+              <h2 className="font-display text-2xl font-black text-navy-950">Project facts</h2>
+              <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-navy-100 bg-navy-100 sm:grid-cols-3">
+                {[
+                  ["Builder", field(society, "builder", "builder", "Not added")],
+                  ["Total towers", field(society, "totalTowers", "total_towers", "Not added")],
+                  ["Total units", field(society, "totalUnits", "total_units", "Not added")],
+                  ["Possession", possessionDateText],
+                  ["Project status", projectStatusText],
+                  ["Maintenance", field(society, "maintenanceCharges", "maintenance_charges", "Not added")],
+                  ["Rental yield", field(society, "rentalYield", "rental_yield", "Not added")],
+                ].map(([label, value]) => (
+                  <div key={label} className="bg-white p-4">
+                    <p className="text-xs text-navy-400">{label}</p>
+                    <p className="mt-1 text-sm font-bold text-navy-950">
+                      {readableStructuredValue(value) || "Not added"}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="rounded-[1.2rem] border border-blue-100 bg-white p-3.5 shadow-sm md:rounded-[1.35rem] md:p-4">
+            {/* Available homes */}
+            <div>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
-                    Live homes
-                  </p>
-                  <h2 className="mt-1.5 text-xl font-bold text-navy-900 md:text-2xl">
-                    Available inventory
-                  </h2>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">Live homes</p>
+                  <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950">Available inventory</h2>
                 </div>
                 <p className="text-sm text-navy-500">
                   {properties.length
@@ -1126,42 +1067,32 @@ export function SocietyPage() {
                 </p>
               </div>
 
-              <div className="mt-3 grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+              <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {properties.length ? (
                   properties.map((property) => {
                     const propertyUrl = safePropertyUrl(property);
-                    const listingType = field(
-                      property,
-                      "listingType",
-                      "listing_type",
-                      "Rent",
-                    );
-                    const bedrooms = field(
-                      property,
-                      "bedrooms",
-                      "bedrooms",
-                      "-",
-                    );
+                    const listingType = field(property, "listingType", "listing_type", "Rent");
+                    const bedrooms = field(property, "bedrooms", "bedrooms", "-");
                     const area = field(property, "areaSqft", "area_sqft", "-");
 
                     return (
                       <div
                         key={property.id || property.slug}
-                        className="overflow-hidden rounded-[1.15rem] border border-blue-100 bg-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
+                        className="group overflow-hidden rounded-[1.5rem] border border-navy-100 bg-white transition hover:-translate-y-1 hover:shadow-premium"
                       >
                         <Link to={propertyUrl} className="block">
-                          <div className="h-20 bg-navy-50 md:h-24">
+                          <div className="h-40 bg-navy-50 md:h-48">
                             <img
                               src={safePropertyImage(property)}
                               alt={property.title}
-                              className="h-full w-full object-cover"
+                              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                             />
                           </div>
                         </Link>
 
-                        <div className="p-2.5">
+                        <div className="p-4">
                           <div className="flex items-center justify-between gap-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
+                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">
                               {listingType}
                             </p>
                             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -1170,7 +1101,7 @@ export function SocietyPage() {
                           </div>
 
                           <Link to={propertyUrl} className="group/title block">
-                            <h3 className="mt-1.5 line-clamp-2 font-bold text-navy-900 group-hover/title:text-blue-700">
+                            <h3 className="mt-2 line-clamp-2 font-bold text-navy-950 group-hover/title:text-blue-700">
                               {property.title}
                             </h3>
                           </Link>
@@ -1179,26 +1110,18 @@ export function SocietyPage() {
                             {bedrooms} BHK • {area} sq.ft
                           </p>
 
-                          <div className="mt-2 flex items-center justify-between gap-3">
-                            <p className="text-lg font-bold text-navy-900">
-                              {property.price || "On request"}
-                            </p>
-                            <p className="hidden text-xs text-navy-400 sm:block">
-                              Visit-ready enquiry
-                            </p>
+                          <div className="mt-3 flex items-center justify-between gap-3">
+                            <p className="text-lg font-black text-navy-950">{property.price || "On request"}</p>
+                            <p className="hidden text-xs text-navy-400 sm:block">Visit-ready enquiry</p>
                           </div>
 
-                          <div className="mt-2 grid grid-cols-2 gap-1.5">
-                            <Button
-                              asChild
-                              variant="outline"
-                              className="rounded-full border-navy-200"
-                            >
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <Button asChild variant="outline" className="rounded-full border-navy-200">
                               <Link to={propertyUrl}>View details</Link>
                             </Button>
                             <Button
                               onClick={() => openPropertyCallback(property)}
-                              className="rounded-full bg-blue-600 hover:bg-blue-700"
+                              className="rounded-full bg-blue-700 hover:bg-blue-800"
                             >
                               Callback
                             </Button>
@@ -1208,32 +1131,24 @@ export function SocietyPage() {
                     );
                   })
                 ) : (
-                  <div className="rounded-[1.25rem] border border-blue-100 bg-blue-50 p-4 md:col-span-2">
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-700">
-                      Inventory check
-                    </p>
-                    <h3 className="mt-2 text-xl font-bold text-navy-900">
+                  <div className="rounded-[1.5rem] border border-blue-100 bg-blue-50 p-5 md:col-span-2 xl:col-span-3">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Inventory check</p>
+                    <h3 className="mt-2 text-xl font-bold text-navy-950">
                       No live verified homes are listed publicly yet.
                     </h3>
                     <p className="mt-2 text-sm leading-relaxed text-navy-600">
-                      Request a callback and we will check verified owner/broker
-                      availability for {society.name} before you spend time browsing other portals.
+                      Request a callback and we will check verified owner/broker availability for {society.name}{" "}
+                      before you spend time browsing other portals.
                     </p>
                     <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                       <Button
                         onClick={() => openSocietyCallback("society_page_no_inventory_similar_options")}
-                        className="rounded-full bg-blue-600 hover:bg-blue-700"
+                        className="rounded-full bg-blue-700 hover:bg-blue-800"
                       >
                         <Phone className="mr-2 h-4 w-4" /> Request similar homes
                       </Button>
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="rounded-full border-blue-200 text-blue-700"
-                      >
-                        <Link
-                          to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}
-                        >
+                      <Button asChild variant="outline" className="rounded-full border-blue-200 text-blue-700">
+                        <Link to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}>
                           Find similar homes
                         </Link>
                       </Button>
@@ -1243,20 +1158,19 @@ export function SocietyPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.2rem] border border-blue-100 bg-white p-3 shadow-sm">
-              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <h2 className="text-xl font-bold text-navy-900">Amenities</h2>
+            {/* Amenities */}
+            <div>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-display text-2xl font-black text-navy-950">Amenities</h2>
                 <span className="text-xs font-bold text-navy-400">{amenities.length || 0} listed</span>
               </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                 {amenities.length ? (
                   amenities.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700"
-                    >
-                      {item}
-                    </span>
+                    <div key={item} className="flex items-center gap-2.5 rounded-2xl border border-navy-100 bg-white p-3">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                      <span className="text-sm font-semibold text-navy-800">{item}</span>
+                    </div>
                   ))
                 ) : (
                   <p className="text-navy-500">No amenities added yet.</p>
@@ -1264,31 +1178,26 @@ export function SocietyPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.2rem] border border-blue-100 bg-white p-3 shadow-sm">
-              <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            {/* Location intelligence */}
+            <div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">
                     Location intelligence
                   </p>
-                  <h2 className="mt-1 text-xl font-bold text-navy-900 md:text-2xl">
+                  <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950">
                     Nearby intelligence, at a glance
                   </h2>
                 </div>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="w-fit rounded-full border-blue-100 text-blue-700"
-                >
+                <Button asChild variant="outline" size="sm" className="w-fit rounded-full border-blue-100 text-blue-700">
                   <Link to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}>
                     Ask AI for commute fit
                   </Link>
                 </Button>
               </div>
 
-              {/* C109 compact nearby cards */}
               {nearbyCompactCards.length ? (
-                <div className="mt-2.5 grid gap-2 md:grid-cols-2">
+                <div className="mt-4 grid gap-2.5 md:grid-cols-2">
                   {nearbyCompactCards.map((item) => {
                     const Icon = item.icon;
 
@@ -1298,7 +1207,7 @@ export function SocietyPage() {
                         type="button"
                         onClick={() => setActiveNearbyCategory(item.title)}
                         className={cn(
-                          "group rounded-2xl border p-2.5 text-left transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm",
+                          "group rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm",
                           activeNearbyCategory === item.title
                             ? "border-blue-300 bg-blue-50"
                             : "border-blue-100 bg-blue-50/60",
@@ -1333,11 +1242,11 @@ export function SocietyPage() {
                 </div>
               ) : null}
 
-              <p className="mt-2 rounded-2xl bg-blue-50 px-3 py-1.5 text-[11px] font-semibold leading-5 text-blue-700">
+              <p className="mt-3 rounded-2xl bg-blue-50 px-3 py-1.5 text-[11px] font-semibold leading-5 text-blue-700">
                 Nearby data is Google Places assisted and admin-reviewed. Tap a card to focus that category inside the map layer.
               </p>
 
-              <div className="mt-2.5">
+              <div className="mt-3 overflow-hidden rounded-[1.5rem] border border-navy-100">
                 <SocietyNearbyGoogleMap
                   key={activeNearbyCategory}
                   title={society.name}
@@ -1355,7 +1264,7 @@ export function SocietyPage() {
               </div>
 
               {!hasNearbyData ? (
-                <div className="mt-3 space-y-3">
+                <div className="mt-4 space-y-3">
                   <div className="flex flex-col gap-3 rounded-2xl border border-amber-100 bg-amber-50/80 p-3.5 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white text-amber-700 shadow-sm">
@@ -1373,7 +1282,7 @@ export function SocietyPage() {
                     <Button
                       onClick={() => openSocietyCallback("society_page_location_verification_callback")}
                       size="sm"
-                      className="shrink-0 rounded-full bg-blue-600 px-4 font-bold hover:bg-blue-700"
+                      className="shrink-0 rounded-full bg-blue-700 px-4 font-bold hover:bg-blue-800"
                     >
                       Verify on call
                     </Button>
@@ -1384,7 +1293,7 @@ export function SocietyPage() {
                       const Icon = item.icon;
 
                       return (
-                        <div key={item.title} className="rounded-[1.1rem] bg-blue-50/70 p-3.5">
+                        <div key={item.title} className="rounded-2xl bg-blue-50/70 p-3.5">
                           <Icon className="h-4 w-4 text-blue-600" />
                           <h3 className="mt-2 font-bold text-navy-900">{item.title}</h3>
                           <p className="mt-2 text-sm leading-5 text-navy-600">{item.text}</p>
@@ -1399,14 +1308,9 @@ export function SocietyPage() {
                     const Icon = item.icon;
                     const lines = splitLines(item.value);
                     return lines.length ? (
-                      <div
-                        key={item.title}
-                        className="rounded-[1.1rem] bg-blue-50/70 p-3.5"
-                      >
+                      <div key={item.title} className="rounded-2xl bg-blue-50/70 p-3.5">
                         <Icon className="h-4 w-4 text-blue-600" />
-                        <h3 className="mt-2 font-bold text-navy-900">
-                          {item.title}
-                        </h3>
+                        <h3 className="mt-2 font-bold text-navy-900">{item.title}</h3>
                         <ul className="mt-2 space-y-1 text-sm text-navy-600">
                           {lines.map((line) => (
                             <li key={line}>• {line}</li>
@@ -1419,72 +1323,45 @@ export function SocietyPage() {
               )}
             </div>
 
-            <div className="rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:hidden">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
-                You may also like
-              </p>
-              <h2 className="mt-2 text-xl font-bold text-navy-900">
-                Similar societies nearby
-              </h2>
+            {/* Similar societies - now shown on all breakpoints, not just mobile */}
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">You may also like</p>
+              <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950">Similar societies nearby</h2>
               <p className="mt-2 text-sm leading-relaxed text-navy-500">
                 Based on location, builder profile and live SocietyFlats data.
               </p>
 
               {similarSocieties.length ? (
-                <div className="mt-3 space-y-2">
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
                   {similarSocieties.map((item) => {
                     const itemSlug = field<string>(item, "slug", "slug", "");
                     const itemLocation =
-                      [
-                        field(item, "sector", "sector", ""),
-                        field(item, "locality", "locality", ""),
-                      ]
+                      [field(item, "sector", "sector", ""), field(item, "locality", "locality", "")]
                         .filter(Boolean)
                         .join(", ") || "Gurgaon";
 
                     return (
-                      <div
-                        key={itemSlug || item.name}
-                        className="rounded-2xl border border-blue-100 bg-[#F8FAFC] p-3"
-                      >
+                      <div key={itemSlug || item.name} className="rounded-2xl border border-navy-100 bg-white p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <h3 className="font-bold text-navy-900">
-                              {item.name}
-                            </h3>
+                            <h3 className="font-bold text-navy-950">{item.name}</h3>
                             <p className="mt-1 flex items-center gap-1 text-xs text-navy-500">
                               <MapPin className="h-3.5 w-3.5" /> {itemLocation}
                             </p>
                           </div>
                           <div className="rounded-xl bg-blue-50 px-3 py-2 text-center">
-                            <p className="text-[10px] uppercase text-blue-600">
-                              Score
-                            </p>
-                            <p className="text-sm font-bold text-navy-900">
-                              {field(item, "score", "score", "8.5")}
-                            </p>
+                            <p className="text-[10px] uppercase text-blue-600">Score</p>
+                            <p className="text-sm font-bold text-navy-950">{field(item, "score", "score", "8.5")}</p>
                           </div>
                         </div>
-                        <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-navy-100 pt-2.5">
+                        <div className="mt-3 flex items-center justify-between gap-3 border-t border-navy-100 pt-3">
                           <div>
-                            <p className="text-[11px] uppercase tracking-[0.12em] text-navy-400">
-                              Rent range
-                            </p>
-                            <p className="text-sm font-semibold text-navy-900">
-                              {field(
-                                item,
-                                "rentRange",
-                                "rent_range",
-                                "On request",
-                              )}
+                            <p className="text-[11px] uppercase tracking-[0.12em] text-navy-400">Rent range</p>
+                            <p className="text-sm font-semibold text-navy-950">
+                              {field(item, "rentRange", "rent_range", "On request")}
                             </p>
                           </div>
-                          <Button
-                            asChild
-                            size="sm"
-                            variant="outline"
-                            className="rounded-full border-blue-200 text-blue-700"
-                          >
+                          <Button asChild size="sm" variant="outline" className="rounded-full border-blue-200 text-blue-700">
                             <Link to={`/society/${itemSlug}`}>View</Link>
                           </Button>
                         </div>
@@ -1494,16 +1371,13 @@ export function SocietyPage() {
                 </div>
               ) : (
                 <div className="mt-4 rounded-2xl bg-blue-50 p-4">
-                  <p className="font-semibold text-navy-900">
-                    Want similar society suggestions?
-                  </p>
+                  <p className="font-semibold text-navy-950">Want similar society suggestions?</p>
                   <p className="mt-1.5 text-sm text-navy-500">
-                    Share your budget and requirement. We will shortlist
-                    matching Gurgaon societies for you.
+                    Share your budget and requirement. We will shortlist matching Gurgaon societies for you.
                   </p>
                   <Button
                     onClick={() => openSocietyCallback("society_page_similar_societies_shortlist")}
-                    className="mt-3 w-full rounded-full bg-blue-600 hover:bg-blue-700"
+                    className="mt-3 w-full rounded-full bg-blue-700 hover:bg-blue-800 sm:w-auto"
                   >
                     <Phone className="mr-2 h-4 w-4" /> Request similar homes
                   </Button>
@@ -1512,23 +1386,18 @@ export function SocietyPage() {
             </div>
 
             {faqText ? (
-              <div className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm">
-                <h2 className="text-2xl font-bold text-navy-900">FAQ</h2>
-                <div className="mt-4 whitespace-pre-line leading-relaxed text-navy-600">
-                  {faqText}
-                </div>
+              <div>
+                <h2 className="font-display text-2xl font-black text-navy-950">FAQ</h2>
+                <div className="mt-4 whitespace-pre-line leading-relaxed text-navy-600">{faqText}</div>
               </div>
             ) : null}
 
             {officialLinks.length ? (
-              <div className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm">
-                <h2 className="text-2xl font-bold text-navy-900">
-                  Official references
-                </h2>
+              <div>
+                <h2 className="font-display text-2xl font-black text-navy-950">Official references</h2>
                 <p className="mt-2 text-sm leading-relaxed text-navy-500">
-                  Project information is cross-checked from official/developer/RERA
-                  references where available and manually verified before being
-                  marked verified.
+                  Project information is cross-checked from official/developer/RERA references where available and
+                  manually verified before being marked verified.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {officialLinks.map(([label, href]) => (
@@ -1552,85 +1421,41 @@ export function SocietyPage() {
             ) : null}
           </div>
 
-          <aside className="hidden lg:sticky lg:top-24 lg:block lg:self-start"><div className="max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-soft">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">
-                Next step
-              </p>
-              <h3 className="mt-2 text-lg font-bold leading-tight text-navy-900">
+          <aside className="hidden lg:sticky lg:top-24 lg:block lg:self-start">
+            <div className="max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.5rem] border border-navy-100 bg-white p-4 shadow-soft">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Next step</p>
+              <h3 className="mt-2 text-lg font-bold leading-tight text-navy-950">
                 Get homes or similar options for {society.name}
               </h3>
 
-              <div className="mt-2 rounded-2xl bg-blue-50 p-2.5">
+              <div className="mt-3 rounded-2xl bg-blue-50 p-3">
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm font-medium text-blue-700">
-                    Live homes
-                  </span>
-                  <span className="text-lg font-bold text-navy-900">
-                    {properties.length || "0"}
-                  </span>
+                  <span className="text-sm font-medium text-blue-700">Live homes</span>
+                  <span className="text-lg font-bold text-navy-950">{properties.length || "0"}</span>
                 </div>
               </div>
 
-              <div className="mt-2 space-y-0.5">
+              <div className="mt-3 space-y-0.5">
                 {[
-                  [
-                    "Rent range",
-                    field(society, "rentRange", "rent_range", "On request"),
-                  ],
-                  [
-                    "Buy range",
-                    field(society, "buyRange", "buy_range", "On request"),
-                  ],
-                  [
-                    "Average rent",
-                    field(society, "averageRent", "average_rent", "Not added"),
-                  ],
-                  [
-                    "Average sale price",
-                    field(
-                      society,
-                      "averageSalePrice",
-                      "average_sale_price",
-                      "Not added",
-                    ),
-                  ],
-                  [
-                    "Price / sq ft",
-                    field(
-                      society,
-                      "pricePerSqft",
-                      "price_per_sqft",
-                      "Not added",
-                    ),
-                  ],
+                  ["Rent range", field(society, "rentRange", "rent_range", "On request")],
+                  ["Buy range", field(society, "buyRange", "buy_range", "On request")],
+                  ["Average rent", field(society, "averageRent", "average_rent", "Not added")],
+                  ["Average sale price", field(society, "averageSalePrice", "average_sale_price", "Not added")],
+                  ["Price / sq ft", field(society, "pricePerSqft", "price_per_sqft", "Not added")],
                 ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="flex items-center justify-between gap-4 border-b border-navy-100 py-1 last:border-0"
-                  >
+                  <div key={label} className="flex items-center justify-between gap-4 border-b border-navy-100 py-1.5 last:border-0">
                     <span className="text-xs text-navy-500">{label}</span>
-                    <span className="text-right text-sm font-semibold text-navy-900">
-                      {value || "Not added"}
-                    </span>
+                    <span className="text-right text-sm font-semibold text-navy-950">{value || "Not added"}</span>
                   </div>
                 ))}
               </div>
 
-              <Button
-                onClick={() => openSocietyCallback()}
-                className="mt-3 w-full rounded-full bg-blue-600 hover:bg-blue-700"
-              >
+              <Button onClick={() => openSocietyCallback()} className="mt-4 w-full rounded-full bg-blue-700 hover:bg-blue-800">
                 <Phone className="mr-2 h-4 w-4" /> Request available homes
               </Button>
 
-              <Button
-                asChild
-                variant="outline"
-                className="mt-2 w-full rounded-full border-blue-100"
-              >
-                <Link
-                  to={`/search?tab=societies&q=${encodeURIComponent(society.name)}&intent=general`}
-                >
+              <Button asChild variant="outline" className="mt-2 w-full rounded-full border-navy-100">
+                <Link to={`/search?tab=societies&q=${encodeURIComponent(society.name)}&intent=general`}>
                   View matching homes
                 </Link>
               </Button>
@@ -1650,20 +1475,15 @@ export function SocietyPage() {
                 {isSocietyCompared ? "Added to compare" : compareList.length >= 3 ? "Compare full" : "Add to compare"}
               </Button>
 
-              <Button
-                asChild
-                variant="ghost"
-                className="mt-1 w-full rounded-full text-blue-700 hover:bg-blue-50"
-              >
-                <Link
-                  to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}
-                >
+              <Button asChild variant="ghost" className="mt-1 w-full rounded-full text-blue-700 hover:bg-blue-50">
+                <Link to={`/ai-advisor?society=${encodeURIComponent(society.name)}`}>
                   Ask SocietyFlats AI for options
                 </Link>
               </Button>
             </div>
           </aside>
         </div>
+
         <RentHistoryChart societySlug={String(society.slug || slug || "")} />
         <OfficialAnnouncements societySlug={String(society.slug || slug || "")} />
         <ResidentReviews
