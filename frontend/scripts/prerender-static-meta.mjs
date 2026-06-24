@@ -2,8 +2,61 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const SITE_URL = "https://www.societyflats.com";
+const API_BASE = process.env.VITE_API_BASE_URL || process.env.API_BASE_URL || "https://final-now.onrender.com/api";
 const DIST_DIR = path.resolve(process.cwd(), "dist");
 const INDEX_PATH = path.join(DIST_DIR, "index.html");
+
+function slugify(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+}
+
+function readableFromSlug(value) {
+  return String(value || "")
+    .split("-")
+    .filter(Boolean)
+    .map((part) => (part.toUpperCase() === "DLF" ? "DLF" : part.charAt(0).toUpperCase() + part.slice(1)))
+    .join(" ");
+}
+
+function extractRows(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+  return [];
+}
+
+async function fetchLiveLocalities() {
+  try {
+    const response = await fetch(`${API_BASE}/societies?per_page=200`, {
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) return new Map();
+
+    const rows = extractRows(await response.json()).filter((society) =>
+      ["Verified", "Premium"].includes(String(society?.status || "")),
+    );
+
+    const counts = new Map();
+
+    for (const society of rows) {
+      const locality = society?.sector || society?.locality;
+      const slug = slugify(locality);
+
+      if (!slug) continue;
+
+      counts.set(slug, (counts.get(slug) || 0) + 1);
+    }
+
+    return counts;
+  } catch {
+    return new Map();
+  }
+}
 
 const routeMeta = [
   {
@@ -547,11 +600,36 @@ async function writeRouteHtml(baseHtml, meta) {
   return outputPath;
 }
 
+function derivedLocalityRoutes(localityCounts) {
+  const existing = new Set(routeMeta.map((meta) => meta.path));
+  const derived = [];
+
+  for (const [slug, count] of localityCounts.entries()) {
+    const routePath = `/gurgaon/${slug}`;
+    if (existing.has(routePath)) continue;
+
+    const label = readableFromSlug(slug);
+
+    derived.push({
+      path: routePath,
+      title: `Societies and Properties in ${label} Gurgaon | SocietyFlats`,
+      description: `Explore verified societies and live homes in ${label} Gurgaon with society-first intelligence, pricing context and callback support.`,
+      priority: count >= 3 ? "0.72" : "0.65",
+      changefreq: "weekly",
+      schemaType: "CollectionPage",
+    });
+  }
+
+  return derived;
+}
+
 async function main() {
   const baseHtml = await fs.readFile(INDEX_PATH, "utf8");
+  const localityCounts = await fetchLiveLocalities();
+  const allRoutes = [...routeMeta, ...derivedLocalityRoutes(localityCounts)];
   const written = [];
 
-  for (const meta of routeMeta) {
+  for (const meta of allRoutes) {
     written.push(await writeRouteHtml(baseHtml, meta));
   }
 
