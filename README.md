@@ -10,7 +10,7 @@ SocietyFlats is India's first Society Intelligence Platform that evaluates resid
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | React 19 + TypeScript + Vite + TailwindCSS + shadcn/ui |
+| **Frontend** | React 18 + TypeScript + Vite + TailwindCSS + shadcn/ui |
 | **Backend** | Laravel 12 + PHP 8.3 |
 | **Database** | PostgreSQL 15 + PostGIS |
 | **Search** | Meilisearch |
@@ -22,7 +22,7 @@ SocietyFlats is India's first Society Intelligence Platform that evaluates resid
 
 ```
 societyflats/
-├── frontend/                 # React 19 SPA
+├── frontend/                 # React 18 SPA
 │   ├── src/
 │   │   ├── components/       # Reusable UI components
 │   │   │   ├── ui/           # shadcn/ui primitives

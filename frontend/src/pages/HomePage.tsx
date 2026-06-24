@@ -188,6 +188,8 @@ function filterPublicLiveProperties(properties: any[]) {
 export function HomePage() {
   const [societies, setSocieties] = useState<any[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
+  const [societiesStatus, setSocietiesStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [propertiesStatus, setPropertiesStatus] = useState<"loading" | "ready" | "error">("loading");
   const [chatOpen, setChatOpen] = useState(false);
   const [floatingAiInput, setFloatingAiInput] = useState("");
   const [floatingAiQuery, setFloatingAiQuery] = useState("Best societies near Cyber City under Rs 1L");
@@ -219,11 +221,23 @@ export function HomePage() {
     );
     window.scrollTo(0, 0);
     fetchPublicSocieties()
-      .then((items) => setSocieties(items))
-      .catch((error) => console.error("Societies fetch failed:", error));
+      .then((items) => {
+        setSocieties(items);
+        setSocietiesStatus("ready");
+      })
+      .catch((error) => {
+        console.error("Societies fetch failed:", error);
+        setSocietiesStatus("error");
+      });
     fetchPublicProperties()
-      .then((items) => setProperties(filterPublicLiveProperties(items)))
-      .catch((error) => console.error("Properties fetch failed:", error));
+      .then((items) => {
+        setProperties(filterPublicLiveProperties(items));
+        setPropertiesStatus("ready");
+      })
+      .catch((error) => {
+        console.error("Properties fetch failed:", error);
+        setPropertiesStatus("error");
+      });
   }, []);
 
   const featuredSocieties = useMemo(() => societies.slice(0, 4), [societies]);
@@ -410,7 +424,30 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
             </Link>
           </div>
 
-          {featuredSocieties.length > 0 ? (
+          {societiesStatus === "loading" ? (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={`society-skeleton-${index}`}
+                  className="h-64 animate-pulse rounded-[1.25rem] border border-navy-100 bg-ivory-100"
+                />
+              ))}
+            </div>
+          ) : societiesStatus === "error" ? (
+            <div className="rounded-[1.5rem] border border-dashed border-red-200 bg-red-50 p-6 text-red-700">
+              <p className="font-black">Could not load Gurgaon societies right now.</p>
+              <p className="mt-1 text-sm font-semibold">
+                This is usually temporary. Please refresh, or try again in a moment.
+              </p>
+              <Button
+                variant="outline"
+                className="mt-3 h-9 rounded-full border-red-200 bg-white px-4 text-sm font-extrabold text-red-700 hover:bg-red-50"
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : featuredSocieties.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {featuredSocieties.map((society) => {
                 const imageAttribution = societyImageAttribution(society);
@@ -594,7 +631,7 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
         </div>
       </section>
 
-      {featuredProperties.length > 0 ? (
+      {propertiesStatus !== "ready" || featuredProperties.length > 0 ? (
         <section className="bg-white px-4 py-6 md:py-7">
           <div className="container mx-auto">
             <div className="mb-5 flex flex-col gap-4 md:mb-6 md:flex-row md:items-end md:justify-between">
@@ -621,6 +658,30 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
               </Link>
             </div>
 
+            {propertiesStatus === "loading" ? (
+              <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div
+                    key={`property-skeleton-${index}`}
+                    className="h-64 w-[17rem] shrink-0 animate-pulse rounded-[1.25rem] border border-navy-100 bg-ivory-100 md:w-[19rem]"
+                  />
+                ))}
+              </div>
+            ) : propertiesStatus === "error" ? (
+              <div className="rounded-[1.5rem] border border-dashed border-red-200 bg-red-50 p-6 text-red-700">
+                <p className="font-black">Could not load live homes right now.</p>
+                <p className="mt-1 text-sm font-semibold">
+                  This is usually temporary. Please refresh, or try again in a moment.
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-3 h-9 rounded-full border-red-200 bg-white px-4 text-sm font-extrabold text-red-700 hover:bg-red-50"
+                  onClick={() => window.location.reload()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : (
             <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
               {featuredProperties.map((property) => (
                 <div
@@ -694,6 +755,7 @@ scores.reduce((sum, score) => sum + score, 0) / scores.length
                 </div>
               ))}
             </div>
+            )}
           </div>
         </section>
       ) : (

@@ -146,6 +146,18 @@ services:
         sync: false
       - key: GEMINI_MODEL
         value: gemini-2.0-flash
+      - key: UPLOADS_DISK
+        value: r2
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_PUBLIC_URL
+        sync: false
 
   # Scheduler worker. Queue delivery is synchronous; this process runs due alert matching.
   - type: worker

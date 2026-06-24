@@ -587,10 +587,10 @@ export function AIAdvisorPage() {
 
   const resultSocieties = useMemo(() => {
     if (exactRankSocieties.length) return exactRankSocieties;
-    if (directSocietyMatches.length) return directSocietyMatches;
     if (apiSocieties.length) return apiSocieties;
+    if (directSocietyMatches.length) return directSocietyMatches;
     return fallbackSocieties;
-  }, [exactRankSocieties, directSocietyMatches, apiSocieties, fallbackSocieties]);
+  }, [exactRankSocieties, apiSocieties, directSocietyMatches, fallbackSocieties]);
 
   const suggestedProperties = useMemo(() => {
     const directRows = publicProperties
@@ -610,7 +610,7 @@ export function AIAdvisorPage() {
   }, [publicProperties, activeQuestion]);
 
   const topSociety = resultSocieties[0];
-  const resultSource: "api" | "fallback" = exactRankSocieties.length || directSocietyMatches.length || apiSocieties.length ? "api" : "fallback";
+  const resultSource: "api" | "fallback" = exactRankSocieties.length || apiSocieties.length ? "api" : "fallback";
   const focusLabel = isExactRankPrompt(activeQuestion) ? "selected societies" : queryFocusLabel(activeQuestion);
   const hasDirectSocietyMatches = exactRankSocieties.length > 0 || directSocietyMatches.length > 0;
 

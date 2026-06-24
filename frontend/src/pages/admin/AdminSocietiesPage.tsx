@@ -19,6 +19,8 @@ import {
 
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
+import { AdminBadge } from "@/components/admin/AdminBadge";
+import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
 import {
   backfillAdminSocietyPublishFields,
   bulkAutoFillNearbyIntelligence,
@@ -30,13 +32,6 @@ import type { AdminSociety, SocietyStatus } from "@/lib/adminSocietyStore";
 import { bulkFetchGooglePlacesSocietyImageReferences, type BulkGooglePlacesImageFetchSummary } from "@/lib/googlePlacesImageAdminApi";
 
 const filters = ["All", "Verified", "Premium", "Draft", "Archived"];
-
-const statusTone: Record<string, string> = {
-  Verified: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  Premium: "bg-blue-50 text-blue-700 border-blue-100",
-  Draft: "bg-slate-100 text-slate-600 border-slate-200",
-  Archived: "bg-rose-50 text-rose-700 border-rose-100",
-};
 
 function locationText(item: AdminSociety) {
   return [item.sector, item.locality].filter(Boolean).join(", ") || "Gurgaon";
@@ -59,11 +54,6 @@ function publishLabel(item: AdminSociety) {
   return item.isPublished || liveByStatus ? "Published" : "Unpublished";
 }
 
-function publishTone(item: AdminSociety) {
-  return publishLabel(item) === "Published"
-    ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-    : "border-slate-200 bg-slate-50 text-slate-600";
-}
 
 
 function cleanText(value: unknown) {
@@ -422,16 +412,7 @@ export function AdminSocietiesPage() {
             ["Featured", featuredCount, "Highlighted societies"],
             ["Avg. score", avgScore, "Society scoring"],
           ].map(([label, value, helper]) => (
-            <div
-              key={String(label)}
-              className="rounded-[18px] border border-slate-200 bg-white p-3.5 shadow-sm md:rounded-[22px] md:p-4"
-            >
-              <p className="text-sm font-medium text-slate-500">{label}</p>
-              <p className="mt-1.5 text-2xl font-bold text-slate-950 md:mt-2 md:text-3xl">
-                {loading ? "-" : value}
-              </p>
-              <p className="mt-1.5 text-xs font-semibold text-blue-600 md:text-sm">{helper}</p>
-            </div>
+            <AdminMetricCard key={String(label)} label={String(label)} value={loading ? "-" : value} helper={helper} />
           ))}
         </section>
 
@@ -723,14 +704,12 @@ export function AdminSocietiesPage() {
 
                           <div className="min-w-0">
                             <div className="flex flex-wrap gap-2">
-                              <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusTone[status] || statusTone.Draft}`}>
-                                {status}
-                              </span>
+                              <AdminBadge value={status}>{status}</AdminBadge>
 
-                              <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${publishTone(item)}`}>
+                              <AdminBadge value={publishLabel(item)}>
                                 <Globe2 className="mr-1 h-3 w-3" />
                                 {publishLabel(item)}
-                              </span>
+                              </AdminBadge>
 
                               {item.featured ? (
                                 <span className="inline-flex items-center rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">

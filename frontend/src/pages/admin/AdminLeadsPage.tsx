@@ -15,6 +15,8 @@ import {
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
+import { adminToneBgText, adminToneForValue } from "@/lib/adminColorTokens";
 import {
   AdminLead,
   LeadPriority,
@@ -178,35 +180,11 @@ function displayLeadStatusLabel(lead: AdminLead) {
 }
 
 function statusClass(status: LeadStatus) {
-  switch (status) {
-    case "New":
-      return "bg-blue-50 text-blue-700";
-    case "Contacted":
-      return "bg-sky-50 text-sky-700";
-    case "Site Visit":
-      return "bg-violet-50 text-violet-700";
-    case "Negotiation":
-      return "bg-amber-50 text-amber-700";
-    case "Booked":
-      return "bg-emerald-50 text-emerald-700";
-    case "Lost":
-      return "bg-rose-50 text-rose-700";
-    default:
-      return "bg-slate-100 text-slate-700";
-  }
+  return adminToneBgText(adminToneForValue(status, "slate"));
 }
 
 function priorityClass(priority: LeadPriority) {
-  switch (priority) {
-    case "Hot":
-      return "bg-rose-50 text-rose-700";
-    case "Warm":
-      return "bg-amber-50 text-amber-700";
-    case "Cold":
-      return "bg-slate-100 text-slate-600";
-    default:
-      return "bg-slate-100 text-slate-600";
-  }
+  return adminToneBgText(adminToneForValue(priority, "slate"));
 }
 
 function sourceLabel(source?: string) {
@@ -1028,6 +1006,17 @@ function leadSlaBadges(lead: AdminLead) {
   if (followUpState(lead) === "overdue") badges.push("SLA overdue");
 
   return badges;
+}
+
+const SLA_BADGE_TONE_CLASS: Record<string, string> = {
+  "Hot not contacted": "border-rose-100 bg-rose-50 text-rose-700",
+  "No follow-up": "border-amber-100 bg-amber-50 text-amber-700",
+  "Needs reactivation": "border-rose-100 bg-rose-50 text-rose-700",
+  "SLA overdue": "border-rose-100 bg-rose-50 text-rose-700",
+};
+
+function leadSlaBadgeClass(lead: AdminLead, badge: string) {
+  return SLA_BADGE_TONE_CLASS[badge] ?? leadAgeBadgeClass(lead);
 }
 
 function leadSlaSearchText(lead: AdminLead) {
@@ -1897,7 +1886,7 @@ export function AdminLeadsPage() {
                         </div>
                         <div className="mt-1 flex flex-wrap justify-end gap-1 xl:justify-start">
                           {leadSlaBadges(lead).map((badge) => (
-                            <span key={badge} className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${leadAgeBadgeClass(lead)}`}>
+                            <span key={badge} className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${leadSlaBadgeClass(lead, badge)}`}>
                               {badge}
                             </span>
                           ))}

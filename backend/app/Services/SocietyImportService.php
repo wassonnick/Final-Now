@@ -346,8 +346,8 @@ class SocietyImportService
         $this->log($job, 'AI provider: '.$this->ai->provider().' | available: '.($this->ai->isAvailable() ? 'yes' : 'no'));
 
         $context = $seed === [] ? '' : "Admin-provided spreadsheet identity fields (treat these as authoritative):\n".json_encode(array_intersect_key($seed, array_flip(['society_name', 'city', 'sector', 'locality', 'builder', 'google_maps_url'])), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        $includeImages = (bool) ($seed['include_images'] ?? false);
-        $aiData = $this->ai->enrichSociety($name, $context, $source, $includeImages, $seed !== []);
+        $includeImages = (bool) ($seed['include_images'] ?? true);
+        $aiData = $this->ai->enrichSociety($name, $context, $source, $includeImages, true);
 
         if (! empty($aiData['_ai_error']) && $this->ai->isAvailable()) {
             $message = ! empty($aiData['_ai_quota_limited'])
@@ -495,7 +495,7 @@ class SocietyImportService
 
         $this->log($job, 'AI provider: '.$this->ai->provider().' | available: '.($this->ai->isAvailable() ? 'yes' : 'no'));
 
-        $aiData = $this->ai->enrichSociety($name, $context, 'URL Import: '.$url);
+        $aiData = $this->ai->enrichSociety($name, $context, 'URL Import: '.$url, true, true);
 
         if (! empty($aiData['_ai_error']) && $this->ai->isAvailable()) {
             $message = ! empty($aiData['_ai_quota_limited'])
@@ -544,6 +544,26 @@ class SocietyImportService
         }
 
         $society = Society::create($data);
+
+        if (trim((string) config('services.google_places_api_key')) !== '') {
+            try {
+                $reference = $this->places->findImageReference($society);
+                $society->update([
+                    'place_id' => $reference['place_id'] ?: $society->place_id,
+                    'image_reference_url' => $reference['safe_reference_url'],
+                    'image_status' => 'google_places_reference_found',
+                    'image_approved_by_admin' => false,
+                    'image_alt_text' => $society->image_alt_text ?: $society->name.' residential society in Gurugram',
+                    'image_credit' => $reference['credit'],
+                    'image_license_notes' => $reference['license_note'],
+                ]);
+                $this->log($job, "Google Places image reference found for {$society->name}; admin approval is still required.");
+            } catch (\Throwable $exception) {
+                $this->log($job, "No Google Places image reference saved for {$society->name}: {$exception->getMessage()}");
+            }
+        }
+
+        $society->refresh();
 
         $this->log($job, "Draft created from URL: {$society->name} (ID {$society->id}).");
 
@@ -710,7 +730,12 @@ class SocietyImportService
             $base['source_confidence_score'] = $confidence;
         }
 
-        $groundingSources = collect($aiData['grounding_sources'] ?? [])->filter(fn ($source) => is_array($source) && ! empty($source['url']))->take(12)->map(fn ($source) => trim((string) ($source['title'] ?? 'Source')).': '.trim((string) $source['url']))->all();
+        $groundingSources = collect($aiData['grounding_sources'] ?? [])
+            ->filter(fn ($source) => is_array($source) && ! empty($source['url']))
+            ->reject(fn ($source) => $this->isLowSignalSourceDomain((string) $source['url']))
+            ->take(12)
+            ->map(fn ($source) => trim((string) ($source['title'] ?? 'Source')).': '.trim((string) $source['url']))
+            ->all();
         if ($groundingSources !== []) {
             $base['official_source_notes'] = 'Gemini grounded sources (admin verification required): '.implode(' | ', $groundingSources);
         }
@@ -877,6 +902,29 @@ class SocietyImportService
                 $base['image_license_notes'] = 'Admin review required before publishing image live.';
             }
         }
+    }
+
+    private function isLowSignalSourceDomain(string $url): bool
+    {
+        $host = mb_strtolower((string) (parse_url($url, PHP_URL_HOST) ?: ''));
+        $host = preg_replace('/^www\./', '', $host) ?: $host;
+
+        $denylist = [
+            'aarahnathinfratech.com',
+            'megarealtymax.com',
+            'propertyguides.com',
+            'ezyschooling.com',
+            'dcjainrealestate.com',
+            'gurgaonapartments.in',
+        ];
+
+        foreach ($denylist as $domain) {
+            if ($host === $domain || str_ends_with($host, '.'.$domain)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function extractCoordinatesFromUrl(string $url): ?array

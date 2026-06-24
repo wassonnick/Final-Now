@@ -24,7 +24,7 @@ Initial focus:
 
 ## Current Stack
 Frontend:
-- React 19
+- React 18
 - TypeScript
 - Vite
 - Tailwind CSS

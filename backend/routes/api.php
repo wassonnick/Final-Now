@@ -31,7 +31,7 @@ Route::get('/societies/{idOrSlug}/google-place-photo', [SocietyController::class
 Route::get('/societies/{slug}', [SocietyController::class, 'show']);
 Route::get('/properties', [PropertyController::class, 'index']);
 Route::get('/properties/{idOrSlug}', [PropertyController::class, 'show']);
-Route::post('/leads', [LeadController::class, 'store']);
+Route::post('/leads', [LeadController::class, 'store'])->middleware('throttle:10,1');
 Route::post('/ai/advisor', [AIController::class, 'advisor']);
 Route::post('/ai/chat', [AiChatController::class, 'store'])->middleware('throttle:10,1');
 Route::get('/ai/chat/{token}', [AiChatController::class, 'show'])->middleware('throttle:30,1');
@@ -87,8 +87,8 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
 
 Route::prefix('accounts')->group(function () {
     Route::post('/upsert', [AccountController::class, 'upsert']);
-    Route::post('/request-otp', [AccountController::class, 'requestOtp']);
-    Route::post('/verify-otp', [AccountController::class, 'verifyOtp']);
+    Route::post('/request-otp', [AccountController::class, 'requestOtp'])->middleware('throttle:5,1');
+    Route::post('/verify-otp', [AccountController::class, 'verifyOtp'])->middleware('throttle:10,1');
     Route::get('/me', [AccountController::class, 'me']);
     Route::get('/dashboard', [AccountController::class, 'dashboard']);
     Route::apiResource('saved-searches', SavedSearchController::class)->only(['index', 'store', 'update', 'destroy']);

@@ -464,14 +464,31 @@ export function SearchPage() {
   const [properties, setProperties] = useState<any[]>([]);
   const [aiMatches, setAiMatches] = useState<AdvisorMatch[]>([]);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [dataStatus, setDataStatus] = useState<"loading" | "ready" | "error">("loading");
 
   useEffect(() => {
-    fetchPublicSocieties()
-      .then(setSocieties)
-      .catch((error) => console.error("Societies fetch failed:", error));
-    fetchPublicProperties()
-      .then((items) => setProperties(filterPublicLiveProperties(items)))
-      .catch((error) => console.error("Properties fetch failed:", error));
+    let societiesFailed = false;
+    let propertiesFailed = false;
+
+    Promise.allSettled([fetchPublicSocieties(), fetchPublicProperties()]).then(
+      ([societiesResult, propertiesResult]) => {
+        if (societiesResult.status === "fulfilled") {
+          setSocieties(societiesResult.value);
+        } else {
+          societiesFailed = true;
+          console.error("Societies fetch failed:", societiesResult.reason);
+        }
+
+        if (propertiesResult.status === "fulfilled") {
+          setProperties(filterPublicLiveProperties(propertiesResult.value));
+        } else {
+          propertiesFailed = true;
+          console.error("Properties fetch failed:", propertiesResult.reason);
+        }
+
+        setDataStatus(societiesFailed && propertiesFailed ? "error" : "ready");
+      },
+    );
   }, []);
 
   useEffect(() => {
@@ -1186,7 +1203,30 @@ export function SearchPage() {
               </div>
             ) : null}
 
-            {visibleCount === 0 ? (
+            {dataStatus === "loading" && visibleCount === 0 ? (
+              <div className="grid gap-3 md:grid-cols-2 md:gap-3 xl:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div
+                    key={`search-skeleton-${index}`}
+                    className="h-56 animate-pulse rounded-[1.2rem] border border-blue-100 bg-blue-50/60"
+                  />
+                ))}
+              </div>
+            ) : dataStatus === "error" && visibleCount === 0 ? (
+              <div className="rounded-[1.5rem] border border-dashed border-red-200 bg-red-50 p-6 text-red-700">
+                <p className="font-black">Could not load live listings right now.</p>
+                <p className="mt-1 text-sm font-semibold">
+                  This is usually temporary. Please refresh, or try again in a moment.
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-3 h-9 rounded-full border-red-200 bg-white px-4 text-sm font-extrabold text-red-700 hover:bg-red-50"
+                  onClick={() => window.location.reload()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : visibleCount === 0 ? (
               <EmptyResults
                 activeTab={activeTab}
                 query={query}

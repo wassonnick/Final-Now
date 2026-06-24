@@ -66,50 +66,11 @@ function c13NormalizeInventoryStatus(property: any): AdminInventoryStatus {
   return ownerLinked ? "owner_draft" : "unknown";
 }
 
-function c13InventoryStatusLabel(status: AdminInventoryStatus) {
-  if (status === "published") return "Published";
-  if (status === "owner_draft") return "Owner Draft";
-  if (status === "draft") return "Draft";
-  if (status === "pending") return "Pending";
-  return "Unknown";
-}
-
-function c13InventoryStatusClass(status: AdminInventoryStatus) {
-  if (status === "published") return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  if (status === "owner_draft") return "border-blue-200 bg-blue-50 text-blue-700";
-  if (status === "draft") return "border-amber-200 bg-amber-50 text-amber-700";
-  if (status === "pending") return "border-purple-200 bg-purple-50 text-purple-700";
-  return "border-slate-200 bg-slate-50 text-slate-600";
-}
-
-function C13InventoryBadge({ property }: { property: any }) {
-  const status = c13NormalizeInventoryStatus(property);
-
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-bold ${c13InventoryStatusClass(status)}`}>
-{c13InventoryStatusLabel(status)}
-    </span>
-  );
-}
-
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
+import { AdminBadge } from "@/components/admin/AdminBadge";
+import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
 import { adminFetch, adminHeaders } from "@/lib/adminApi";
-
-const statusTone: Record<string, string> = {
-  Live: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  Verification: "bg-amber-50 text-amber-700 border-amber-100",
-  Draft: "bg-slate-100 text-slate-600 border-slate-200",
-  Archived: "bg-rose-50 text-rose-700 border-rose-100",
-};
-
-const typeTone: Record<string, string> = {
-  Rent: "bg-blue-50 text-blue-700 border-blue-100",
-  Sale: "bg-violet-50 text-violet-700 border-violet-100",
-  "Buy / Resale": "bg-violet-50 text-violet-700 border-violet-100",
-  "Sell Listing": "bg-amber-50 text-amber-700 border-amber-100",
-  "Builder Floor": "bg-slate-50 text-slate-700 border-slate-100",
-};
 
 function c14SourceLeadId(property: any) {
   return (
@@ -478,11 +439,7 @@ const [properties, setProperties] = useState<any[]>([]);
             ["Draft", stats.draft, "Hidden/admin only"],
             ["Featured", stats.featured, "Highlighted"],
           ].map(([label, value, helper]) => (
-            <div key={String(label)} className="rounded-[18px] border border-slate-200 bg-white p-3.5 shadow-sm md:rounded-[22px] md:p-4">
-              <p className="text-sm font-medium text-slate-500">{label}</p>
-              <p className="mt-1.5 text-2xl font-bold text-slate-950 md:mt-2 md:text-3xl">{loading ? "-" : value}</p>
-              <p className="mt-1.5 text-xs font-semibold text-blue-600 md:text-sm">{helper}</p>
-            </div>
+            <AdminMetricCard key={String(label)} label={String(label)} value={loading ? "-" : value} helper={helper} />
           ))}
         </section>
 
@@ -626,12 +583,8 @@ const [properties, setProperties] = useState<any[]>([]);
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                           <div className="min-w-0">
                             <div className="flex flex-wrap gap-2">
-                              <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusTone[itemStatus] || statusTone.Live}`}>
-                                {itemStatus}
-                              </span>
-                              <span className={`rounded-full border px-3 py-1 text-xs font-bold ${typeTone[listingType] || "bg-slate-50 text-slate-600 border-slate-100"}`}>
-                                {listingType}
-                              </span>
+                              <AdminBadge value={itemStatus}>{itemStatus}</AdminBadge>
+                              <AdminBadge value={listingType}>{listingType}</AdminBadge>
                               {item?.featured ? (
                                 <span className="rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
                                   Featured

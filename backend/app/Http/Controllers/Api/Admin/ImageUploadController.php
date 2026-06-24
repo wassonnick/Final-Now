@@ -17,13 +17,14 @@ class ImageUploadController extends Controller
         ]);
 
         $folder = preg_replace('/[^a-z0-9\-\/]/i', '', $validated['folder'] ?? 'uploads');
-        $path = $request->file('image')->store($folder, 'public');
+        $disk = config('filesystems.uploads_disk', 'public');
+        $path = $request->file('image')->store($folder, $disk);
 
         return response()->json([
             'status' => 'ok',
             'data' => [
                 'path' => $path,
-                'url' => Storage::disk('public')->url($path),
+                'url' => Storage::disk($disk)->url($path),
             ],
         ], 201);
     }
