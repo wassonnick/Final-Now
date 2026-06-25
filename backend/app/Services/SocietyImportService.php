@@ -358,16 +358,11 @@ class SocietyImportService
 
             $this->log($job, $message);
 
-            $job->update([
-                'status' => 'failed',
-                'failed_count' => (int) $job->failed_count + 1,
-                'results' => array_merge($job->results ?? [], [[
-                    'name' => $name,
-                    'status' => 'failed',
-                    'message' => $message,
-                ]]),
-                'completed_at' => now(),
-            ]);
+            // Caller-owned: processSingleNameJob sets status+results+completed_at from this
+            // return value right after calling importSingleFromName, and processNextPendingResult/
+            // completeBulkJob need the job to stay 'running' while other names are still pending.
+            // Mutating job-level status/completed_at here previously marked the *entire* bulk job
+            // failed after a single transient Gemini error, abandoning all remaining pending names.
 
             return [
                 'name' => $name,
