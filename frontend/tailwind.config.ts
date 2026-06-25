@@ -45,6 +45,37 @@ const config: Config = {
           average: "#eab308",
           poor: "#ef4444",
         },
+        // Redesign tokens (see design_handoff_societyflats/01-design-system.md).
+        // Namespaced separately from navy/ivory/gold so the legacy palette keeps working
+        // on pages that haven't been rebuilt yet.
+        paper: {
+          DEFAULT: "#F8F3EA",
+          alt: "#F6F1E8",
+          cream: "#FFFBF3",
+          sage: "#DDE7DC",
+          chip: "#F1ECE1",
+        },
+        pine: {
+          DEFAULT: "#123C32",
+          press: "#0F3B2E",
+          link: "#2A6147",
+        },
+        clay: {
+          DEFAULT: "#C2724E",
+          deep: "#B86F4B",
+        },
+        rdtext: {
+          DEFAULT: "#25302B",
+          forest: "#10251F",
+          muted: "#6E756E",
+          faint: "#8A8F89",
+        },
+        rdborder: "#E7DCCB",
+        trust: {
+          green: "#1F7A5A",
+          bg: "#E4F0E6",
+        },
+        rdstar: "#D9A21B",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -61,6 +92,9 @@ const config: Config = {
       fontFamily: {
         sans: ['DM Sans', 'Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
         display: ['Playfair Display', 'DM Sans', 'ui-serif', 'Georgia', 'serif'],
+        // Redesign typography (design_handoff_societyflats/01-design-system.md).
+        grotesk: ['Hanken Grotesk', 'DM Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        newsreader: ['Newsreader', 'Playfair Display', 'ui-serif', 'Georgia', 'serif'],
       },
       boxShadow: {
         soft: '0 18px 50px rgba(15, 23, 42, 0.08)',
