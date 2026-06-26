@@ -1274,16 +1274,6 @@ export function AdminSocietyFormPage() {
                   <span className="w-fit rounded-full border border-emerald-100 bg-white px-3 py-1.5 text-xs font-black text-emerald-700">
                     {nearbyResearchActions.filter((item) => item.status === "Added").length}/4 filled
                   </span>
-                  {isEdit ? (
-                    <Button
-                      type="button"
-                      onClick={handleNearbyAutoFill}
-                      disabled={nearbyAutoFillLoading}
-                      className="rounded-full bg-emerald-700 px-4 text-xs font-black text-white hover:bg-emerald-800"
-                    >
-                      {nearbyAutoFillLoading ? "Fetching..." : "Auto-fill via Google Places"}
-                    </Button>
-                  ) : null}
                 </div>
               </div>
 
@@ -1585,15 +1575,6 @@ export function AdminSocietyFormPage() {
                     className="h-10 rounded-full border-slate-200 text-sm font-bold"
                   >
                     Reference only
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={fetchGooglePlacesImageReference}
-                    className="col-span-2 h-10 rounded-full border-amber-200 text-sm font-bold text-amber-700"
-                  >
-                    <MapPin className="mr-2 h-4 w-4" />
-                    Fetch Google Places photo reference
                   </Button>
                   <Button
                     type="button"

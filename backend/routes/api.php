@@ -66,6 +66,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::patch('/import/societies/{society}/image', [SocietyImportController::class, 'imageDecision']);
     Route::post('/import/societies/{society}/image-candidates', [SocietyImportController::class, 'imageCandidateDecision']);
     Route::post('/import/societies/{society}/re-enrich', [SocietyImportController::class, 'reEnrich']);
+    Route::post('/import/societies/{society}/publish', [SocietyImportController::class, 'publish']);
     Route::post('/societies/nearby-intelligence/bulk-auto-fill', [SocietyController::class, 'bulkNearbyIntelligenceAutoFill']);
     Route::post('/societies/{society}/nearby-intelligence/auto-fill', [SocietyController::class, 'nearbyIntelligenceAutoFill']);
     Route::apiResource('societies', SocietyController::class)->except(['create', 'edit']);
