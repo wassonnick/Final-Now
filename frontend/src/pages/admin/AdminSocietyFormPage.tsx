@@ -1257,117 +1257,6 @@ export function AdminSocietyFormPage() {
               </div>
             </section>
 
-            <section className="rounded-[20px] border border-emerald-100 bg-emerald-50/60 p-4 shadow-sm md:p-5">
-              <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">
-                    C107 nearby filling workflow
-                  </p>
-                  <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-950">
-                    Research nearby data safely
-                  </h2>
-                  <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
-                    Use these links to verify nearby context, then manually add only checked data below.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="w-fit rounded-full border border-emerald-100 bg-white px-3 py-1.5 text-xs font-black text-emerald-700">
-                    {nearbyResearchActions.filter((item) => item.status === "Added").length}/4 filled
-                  </span>
-                </div>
-              </div>
-
-              {nearbyAutoFillMessage ? (
-                <div className="mt-4 rounded-2xl border border-emerald-100 bg-white px-3 py-2.5 text-xs font-semibold leading-5 text-emerald-700">
-                  {nearbyAutoFillMessage}
-                </div>
-              ) : null}
-
-              {nearbyAutoFillSuggestions ? (
-                <div className="mt-4 rounded-2xl border border-emerald-100 bg-white p-3">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="text-sm font-black text-slate-950">Google Places suggestions preview</p>
-                      <p className="mt-1 text-xs font-semibold text-slate-500">
-                        Review these before applying. Existing filled fields are not overwritten by blank suggestions.
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={applyNearbyAutoFillSuggestions}
-                      variant="outline"
-                      className="w-fit rounded-full border-emerald-100 text-emerald-700 hover:bg-emerald-50"
-                    >
-                      Apply suggestions
-                    </Button>
-                  </div>
-
-                  <div className="mt-3 grid gap-2 md:grid-cols-2">
-                    {[
-                      ["Schools", nearbyAutoFillSuggestions.nearby_schools],
-                      ["Metro / commute", nearbyAutoFillSuggestions.nearby_metro],
-                      ["Hospitals", nearbyAutoFillSuggestions.nearby_hospitals],
-                      ["Office hubs", nearbyAutoFillSuggestions.nearby_office_hubs],
-                    ].map(([label, value]) => (
-                      <div key={label} className="rounded-xl bg-emerald-50/70 p-3">
-                        <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-700">{label}</p>
-                        <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap text-xs leading-5 text-slate-700">
-                          {String(value || "No suggestion returned.")}
-                        </pre>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {nearbyResearchActions.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-emerald-100 bg-white p-3 shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-black text-slate-950">{item.label}</p>
-                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
-                          {item.helper}
-                        </p>
-                      </div>
-                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${
-                        item.status === "Added"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-amber-50 text-amber-700"
-                      }`}>
-                        {item.status}
-                      </span>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full border-emerald-100 text-emerald-700 hover:bg-emerald-50"
-                        onClick={() => openResearchUrl(googleSearchUrl(item.searchQuery))}
-                      >
-                        Google search
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full border-blue-100 text-blue-700 hover:bg-blue-50"
-                        onClick={() => openResearchUrl(googleMapsSearchUrl(item.mapsQuery))}
-                      >
-                        Maps search
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 rounded-2xl border border-emerald-100 bg-white px-3 py-2.5 text-xs font-semibold leading-5 text-slate-600">
-                Suggested format: <span className="font-black text-slate-950">Name — approx distance / drive time — source checked</span>. Keep one verified item per line.
-              </div>
-            </section>
-
             <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
               <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
                 <div>
@@ -1559,32 +1448,6 @@ export function AdminSocietyFormPage() {
                   </div>
                 ) : null}
 
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={approveReferenceImage}
-                    className="rounded-full border-blue-200 text-blue-700"
-                  >
-                    Approve direct image
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={keepImageAsReferenceOnly}
-                    className="h-10 rounded-full border-slate-200 text-sm font-bold"
-                  >
-                    Reference only
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={clearImageReference}
-                    className="col-span-2 h-10 rounded-full border-rose-200 text-sm font-bold text-rose-700"
-                  >
-                    Clear image reference
-                  </Button>
-                </div>
               </div>
 
               <div className="mt-4">
@@ -1618,22 +1481,6 @@ export function AdminSocietyFormPage() {
                   </div>
                 ) : null}
               </div>
-            </section>
-
-            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
-              <h2 className="text-base font-bold tracking-tight text-slate-950">Brochure extraction</h2>
-              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">Upload text-based PDF under 20 MB.</p>
-              <label className="mt-3 inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-100">
-                <FileText className="mr-2 h-4 w-4" />
-                {brochureExtracting ? "Extracting..." : "Upload brochure PDF"}
-                <input
-                  type="file"
-                  accept="application/pdf,.pdf"
-                  onChange={extractBrochure}
-                  className="hidden"
-                  disabled={brochureExtracting}
-                />
-              </label>
             </section>
 
             <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
