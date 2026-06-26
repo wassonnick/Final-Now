@@ -58,14 +58,13 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/import/jobs', [SocietyImportController::class, 'jobs']);
     Route::get('/import/jobs/{job}', [SocietyImportController::class, 'show']);
     Route::delete('/import/jobs/{job}', [SocietyImportController::class, 'destroy']);
-    Route::get('/import/suggestions', [SocietyImportController::class, 'suggestions']);
     Route::get('/import/ai-status', [SocietyImportController::class, 'aiStatus']);
-    Route::post('/import/by-name', [SocietyImportController::class, 'byName']);
-    Route::post('/import/by-url', [SocietyImportController::class, 'byUrl']);
+    Route::get('/import/place-photo', [SocietyImportController::class, 'placePhoto']);
+    Route::post('/import/single', [SocietyImportController::class, 'single']);
     Route::post('/import/bulk', [SocietyImportController::class, 'bulk']);
-    Route::post('/import/bulk-names', [SocietyImportController::class, 'bulkNames']);
     Route::post('/import/spreadsheet', [SocietyImportController::class, 'spreadsheet']);
     Route::patch('/import/societies/{society}/image', [SocietyImportController::class, 'imageDecision']);
+    Route::post('/import/societies/{society}/image-candidates', [SocietyImportController::class, 'imageCandidateDecision']);
     Route::post('/import/societies/{society}/re-enrich', [SocietyImportController::class, 'reEnrich']);
     Route::post('/societies/nearby-intelligence/bulk-auto-fill', [SocietyController::class, 'bulkNearbyIntelligenceAutoFill']);
     Route::post('/societies/{society}/nearby-intelligence/auto-fill', [SocietyController::class, 'nearbyIntelligenceAutoFill']);

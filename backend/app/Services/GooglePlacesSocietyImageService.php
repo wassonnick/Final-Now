@@ -39,17 +39,44 @@ class GooglePlacesSocietyImageService
 
     public function fetchDisplayPhoto(Society $society, int $maxWidth = 1400): array
     {
+        // Prefer an admin-chosen specific photo; otherwise resolve the place's primary photo.
+        $photoReference = trim((string) $society->image_photo_reference);
+        $placeId = (string) $society->place_id;
+        $credit = 'Google Places';
+
+        if ($photoReference === '') {
+            $reference = $this->findImageReference($society);
+            $photoReference = (string) ($reference['photo_reference'] ?? '');
+            $placeId = (string) ($reference['place_id'] ?? $placeId);
+            $credit = (string) ($reference['credit'] ?? $credit);
+        }
+
+        if ($photoReference === '') {
+            throw new \RuntimeException('No Google Places photo reference was found.');
+        }
+
+        return $this->fetchPhotoByReference($photoReference, $maxWidth) + [
+            'place_id' => $placeId ?: null,
+            'credit' => $credit,
+        ];
+    }
+
+    /**
+     * Fetch the raw image bytes for a single Google Places photo reference.
+     * The API key stays server-side; nothing is cached to disk.
+     *
+     * @return array{body: string, content_type: string}
+     */
+    public function fetchPhotoByReference(string $photoReference, int $maxWidth = 1200): array
+    {
         $apiKey = trim((string) config('services.google_places_api_key', ''));
 
         if ($apiKey === '') {
             throw new \InvalidArgumentException('Google Places API key is not configured.');
         }
 
-        $reference = $this->findImageReference($society);
-        $photoReference = (string) ($reference['photo_reference'] ?? '');
-
-        if ($photoReference === '') {
-            throw new \RuntimeException('No Google Places photo reference was found.');
+        if (trim($photoReference) === '') {
+            throw new \RuntimeException('A Google Places photo reference is required.');
         }
 
         $response = Http::timeout(18)->get('https://maps.googleapis.com/maps/api/place/photo', [
@@ -71,8 +98,6 @@ class GooglePlacesSocietyImageService
         return [
             'body' => $response->body(),
             'content_type' => $contentType,
-            'place_id' => $reference['place_id'] ?? $society->place_id,
-            'credit' => $reference['credit'] ?? 'Google Places',
         ];
     }
 
