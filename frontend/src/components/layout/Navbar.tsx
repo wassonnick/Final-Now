@@ -47,7 +47,6 @@ export function Navbar() {
   }, [location.pathname]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const { compareList, shortlist, isAuthenticated, user } = useAppStore();
-  const isPropertyOrSocietyPage = location.pathname.startsWith('/property/') || location.pathname.startsWith('/society/');
 
   const navLinks = [
     { label: 'Societies', href: '/search?tab=societies', icon: Building2 },
@@ -174,10 +173,7 @@ export function Navbar() {
       )}
 
     </header>
-    <nav className={cn(
-      "fixed bottom-[calc(0.65rem+env(safe-area-inset-bottom))] left-3 right-3 z-50 rounded-[1.25rem] border border-paper-300 bg-paper-50/95 p-2 shadow-editorial backdrop-blur-xl xl:hidden",
-      isPropertyOrSocietyPage && "hidden",
-    )}>
+    <nav className="fixed bottom-[calc(0.65rem+env(safe-area-inset-bottom))] left-3 right-3 z-50 rounded-[1.25rem] border border-paper-300 bg-paper-50/95 p-2 shadow-editorial backdrop-blur-xl xl:hidden">
       <div className="grid grid-cols-5 gap-1">
         {bottomActions.map((action) => {
           const Icon = action.icon;

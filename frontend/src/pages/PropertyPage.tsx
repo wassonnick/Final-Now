@@ -703,7 +703,7 @@ export function PropertyPage() {
     .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#F8F3EA] pb-24 md:pb-0">
+    <div className="min-h-screen bg-[#F8F3EA] pb-40 md:pb-0">
       <main className="mx-auto max-w-[1360px] px-4 py-6 md:px-10 md:pb-16">
         <div className="mb-4 flex items-center gap-1.5 text-[13px] text-[#6E756E]">
           <Link to={societySlug ? `/society/${societySlug}` : "/properties"}>{societyName || "Properties"}</Link>
@@ -714,12 +714,12 @@ export function PropertyPage() {
         <div className="grid items-start gap-9 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section>
             <div className="grid h-[250px] gap-3 sm:h-[320px] md:h-[360px] md:grid-cols-[2fr_1fr]">
-              <button type="button" onClick={() => setLightboxOpen(true)} className="relative overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left">
+              <button type="button" onClick={() => setLightboxOpen(true)} className="relative h-full min-h-0 overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left">
                 <img src={photos[0]} alt={title} className="h-full w-full object-cover" />
               </button>
-              <div className="hidden grid-rows-2 gap-3 md:grid">
+              <div className="hidden h-full min-h-0 grid-rows-2 gap-3 overflow-hidden md:grid">
                 {[photos[1] || photos[0], photos[2] || photos[0]].map((photo, index) => (
-                  <button key={`${photo}-${index}`} type="button" onClick={() => { setActiveImage(index + 1); setLightboxOpen(true); }} className="overflow-hidden rounded-[18px] bg-[#E5ECE5]">
+                  <button key={`${photo}-${index}`} type="button" onClick={() => { setActiveImage(index + 1); setLightboxOpen(true); }} className="h-full min-h-0 overflow-hidden rounded-[18px] bg-[#E5ECE5]">
                     <img src={photo} alt={`${title} ${index + 2}`} className="h-full w-full object-cover" />
                   </button>
                 ))}
@@ -778,6 +778,17 @@ export function PropertyPage() {
           </aside>
         </div>
       </main>
+
+      <div className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 lg:hidden">
+        <div className="flex items-center gap-2 rounded-[1.25rem] border border-[#E7E3DA] bg-white/95 p-2.5 shadow-[0_14px_36px_-26px_rgba(0,0,0,.4)] backdrop-blur-xl">
+          <div className="min-w-0 flex-1 pl-1.5">
+            <p className="truncate text-[11px] text-[#7A817D]">{listingType}</p>
+            <p className="truncate text-[15px] font-extrabold text-[#123C32]">{price}</p>
+          </div>
+          <button type="button" onClick={() => openLead("enquiry")} className="whitespace-nowrap rounded-[12px] bg-[#C8783F] px-3.5 py-2.5 text-[13px] font-bold text-white">{listedByValue.includes("owner") ? "Contact owner" : "Ask about this"}</button>
+          <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#449B4E] text-white"><MessageCircle className="h-4 w-4" /></a>
+        </div>
+      </div>
 
       {lightboxOpen ? (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" role="dialog" aria-modal="true">

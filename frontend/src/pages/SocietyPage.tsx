@@ -329,6 +329,7 @@ export function SocietyPage() {
   const [activeNearbyCategory, setActiveNearbyCategory] = useState("All");
   const [activeImage, setActiveImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   // SEO validation marker: society_page_no_inventory_similar_options
   const [selectedLeadProperty, setSelectedLeadProperty] = useState<any | null>(
@@ -813,7 +814,7 @@ export function SocietyPage() {
   ].filter(Boolean).slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-[#F8F3EA] pb-24 md:pb-0">
+    <div className="min-h-screen bg-[#F8F3EA] pb-40 md:pb-0">
       <main className="mx-auto max-w-[1360px] px-4 py-6 md:px-10 md:pb-16">
         <div className="mb-4 flex items-center gap-1.5 text-[13px] text-[#6E756E]">
           <Link to="/search?tab=societies">Societies</Link>
@@ -824,11 +825,11 @@ export function SocietyPage() {
         {error ? <div className="mb-4 rounded-xl border border-[#EBCFAE] bg-[#FFF4E8] px-4 py-3 text-sm text-[#8A552F]">{error}</div> : null}
 
         <section className="grid h-[250px] gap-3 sm:h-[320px] md:h-[380px] md:grid-cols-[2fr_1fr]">
-          <button type="button" onClick={() => setLightboxOpen(true)} className="relative overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left">
+          <button type="button" onClick={() => setLightboxOpen(true)} className="relative h-full min-h-0 overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left">
             <img src={gallery[0]} alt={society.name} className="h-full w-full object-cover" />
             <span className="absolute left-4 top-4 rounded-full bg-[#E8F7E9] px-3 py-1.5 text-xs font-bold text-[#2A6147]">✓ Verified by SocietyFlats</span>
           </button>
-          <div className="hidden grid-rows-2 gap-3 md:grid">
+          <div className="hidden h-full min-h-0 grid-rows-2 gap-3 overflow-hidden md:grid">
             {[gallery[1] || gallery[0], gallery[2] || gallery[0]].map((image, index) => (
               <button key={`${image}-${index}`} type="button" onClick={() => { setActiveImage(index + 1); setLightboxOpen(true); }} className="relative overflow-hidden rounded-[18px] bg-[#E5ECE5]">
                 <img src={image} alt={`${society.name} ${index + 2}`} className="h-full w-full object-cover" />
@@ -848,29 +849,32 @@ export function SocietyPage() {
               <span className="text-[12.5px]">{formatHandoffUpdated(updatedText)}</span>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-              {handoffQuickFacts.map(([label, value]) => (
-                <div key={label} className="rounded-[14px] border border-[#E7E3DA] bg-white p-4">
-                  <p className="text-xl font-bold text-[#25302B]">{String(value)}</p>
-                  <p className="mt-1 text-xs text-[#7A817D]">{label}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-[22px] rounded-[16px] border border-[#DDE7DC] bg-[#EEF5F1] p-5">
+            <div className="mt-6 rounded-[16px] border border-[#DDE7DC] bg-[#EEF5F1] p-5">
               <h2 className="text-sm font-bold text-[#2A6147]">✓ Verified facts · sources reviewed</h2>
-              <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-                {handoffVerifiedFacts.map(([label, value]) => (
-                  <div key={label}><p className="text-xs text-[#758078]">{label}</p><p className="mt-1 text-sm font-semibold text-[#25302B]">{String(value)}</p></div>
+              <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+                {[...handoffQuickFacts, ...handoffVerifiedFacts].map(([label, value]) => (
+                  <div key={label} className="rounded-[12px] bg-white p-3.5">
+                    <p className="text-base font-bold text-[#25302B]">{String(value)}</p>
+                    <p className="mt-1 text-xs text-[#7A817D]">{label}</p>
+                  </div>
                 ))}
               </div>
             </div>
 
             <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Amenities</h2>
             <div className="mt-3.5 flex flex-wrap gap-2.5">
-              {(amenities.length ? amenities : ["Amenities being reviewed"]).map((amenity) => (
+              {(amenities.length ? amenities : ["Amenities being reviewed"]).slice(0, showAllAmenities ? undefined : 8).map((amenity) => (
                 <span key={amenity} className="rounded-full border border-[#E7E3DA] bg-white px-4 py-2 text-[13.5px] text-[#35413B]">✓ {amenity}</span>
               ))}
+              {amenities.length > 8 ? (
+                <button
+                  type="button"
+                  onClick={() => setShowAllAmenities((value) => !value)}
+                  className="rounded-full border border-[#DDE7DC] bg-[#EEF5F1] px-4 py-2 text-[13.5px] font-semibold text-[#2A6147]"
+                >
+                  {showAllAmenities ? "Show less" : `+${amenities.length - 8} more`}
+                </button>
+              ) : null}
             </div>
 
             <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">About this society</h2>
@@ -893,19 +897,6 @@ export function SocietyPage() {
                 nearbyHospitals={field(society, "nearbyHospitals", "nearby_hospitals", "")}
                 nearbyOfficeHubs={field(society, "nearbyOfficeHubs", "nearby_office_hubs", "")}
               />
-            </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {(hasNearbyData ? nearby : nearbyFallbackCards).map((item: any) => {
-                const lines = splitLines(item.value || item.text);
-                return (
-                  <div key={item.title} className="rounded-[14px] border border-[#E7E3DA] bg-white p-4">
-                    <h3 className="text-xs font-bold uppercase tracking-[0.06em] text-[#3D6754]">{item.title}</h3>
-                    <div className="mt-2 space-y-2 text-[13.5px] text-[#4A534E]">
-                      {(lines.length ? lines.slice(0, 2) : ["Verification pending"]).map((line) => <p key={line}>{line}</p>)}
-                    </div>
-                  </div>
-                );
-              })}
             </div>
 
             <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -954,6 +945,17 @@ export function SocietyPage() {
           <div className="rounded-[16px] border border-dashed border-[#D8D4CA] bg-white p-6 text-sm text-[#6E756E]">No verified homes are listed right now. Request current availability and SocietyFlats will check owner or broker options.</div>
         )}
       </main>
+
+      <div className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 lg:hidden">
+        <div className="flex items-center gap-2 rounded-[1.25rem] border border-[#E7E3DA] bg-white/95 p-2.5 shadow-[0_14px_36px_-26px_rgba(0,0,0,.4)] backdrop-blur-xl">
+          <div className="min-w-0 flex-1 pl-1.5">
+            <p className="truncate text-[11px] text-[#7A817D]">Price range</p>
+            <p className="truncate text-[15px] font-extrabold text-[#123C32]">{buyTextForHandoff(society)}</p>
+          </div>
+          <button type="button" onClick={() => openSocietyCallback("society_page_availability")} className="whitespace-nowrap rounded-[12px] border-2 border-[#123C32] bg-white px-3.5 py-2.5 text-[13px] font-bold text-[#123C32]">Check availability</button>
+          <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#449B4E] text-white"><MessageCircle className="h-4 w-4" /></a>
+        </div>
+      </div>
 
       {lightboxOpen ? (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" role="dialog" aria-modal="true">

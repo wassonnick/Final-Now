@@ -9,9 +9,11 @@ const WHATSAPP_URL =
 export function FloatingHelpline() {
   const location = useLocation();
   const hideMobileForPageCta =
-    location.pathname.startsWith("/society/") || location.pathname.startsWith("/property/");
-  const hideDesktopForPageCta =
-    hideMobileForPageCta || location.pathname === "/ai-advisor" || location.pathname === "/compare";
+    location.pathname.startsWith("/society/") ||
+    location.pathname.startsWith("/property/") ||
+    location.pathname === "/ai-advisor" ||
+    location.pathname === "/compare";
+  const hideDesktopForPageCta = hideMobileForPageCta;
 
   return (
     <>
