@@ -71,6 +71,10 @@ class SocietyImportService
             'include_images' => $payload['include_images'] ?? true,
             'seed' => [],
             'source' => $job->source ?: 'Single Import',
+            // Single imports are one-off and admin-watched, so pay the latency cost for a real
+            // grounded Google Search call — this is what actually fills amenities/rent/buy/price
+            // for societies Gemini doesn't already know from training data alone.
+            'use_grounding' => true,
         ], $job);
 
         $job->update([
@@ -121,6 +125,10 @@ class SocietyImportService
                     'seed' => $seed,
                     'source' => $job->source ?: 'Bulk Import',
                     'row_number' => $item['row_number'] ?? null,
+                    // Bulk already spans multiple ticks, so the extra grounded-search latency
+                    // costs throughput, not reliability — worth it so amenities/rent/buy/price
+                    // actually get filled instead of left "To be verified" for every society.
+                    'use_grounding' => true,
                 ], $job);
             }
 
@@ -211,6 +219,10 @@ class SocietyImportService
             'seed' => $seed,
             'include_images' => $includeImages,
             'source' => 'Gemini Draft Re-enrichment',
+            // Re-enrich exists specifically to fill gaps the first pass left behind, so it must
+            // use a real grounded search rather than repeating the same fast, training-data-only
+            // call that already failed to find amenities/rent/buy/price for this society.
+            'use_grounding' => true,
         ]);
 
         if (($outcome['status'] ?? '') !== 'ok') {
