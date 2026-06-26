@@ -13,6 +13,7 @@ import {
   MapPin,
   Play,
   RefreshCw,
+  Rocket,
   ShieldCheck,
   Sparkles,
   TerminalSquare,
@@ -54,7 +55,7 @@ type ImportJob = {
   completed_at?: string;
 };
 
-type AiStatus = { provider?: string; available?: boolean; model?: string };
+type AiStatus = { provider?: string; available?: boolean; model?: string; grounding?: boolean };
 
 type FieldSource = { source?: string; confidence?: number };
 
@@ -85,6 +86,7 @@ type SocietyDraft = {
   slug?: string;
   status?: string;
   is_published?: boolean;
+  image_approved_by_admin?: boolean;
   score?: number | string;
   latitude?: string | null;
   longitude?: string | null;
@@ -172,6 +174,7 @@ export function AdminSocietyImportPage() {
 
   const [draft, setDraft] = useState<SocietyDraft | null>(null);
   const [loadingDraft, setLoadingDraft] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [rightsConfirmed, setRightsConfirmed] = useState<Record<number, boolean>>({});
   const [placePreviews, setPlacePreviews] = useState<Record<number, string>>({});
 
@@ -345,6 +348,24 @@ export function AdminSocietyImportPage() {
     }
   }
 
+  async function publishDraft() {
+    if (!draft) return;
+    if (!draft.image_approved_by_admin && !window.confirm("No cover image is approved yet. Publish this society live without an image?")) {
+      return;
+    }
+    setPublishing(true); setError(""); setNotice("");
+    try {
+      const json = await parseResponse(await adminFetch(`/admin/import/societies/${draft.id}/publish`, { method: "POST" }));
+      setNotice(json?.message || "Society published.");
+      setDraft(json?.data || draft);
+      await loadJobs();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not publish society.");
+    } finally {
+      setPublishing(false);
+    }
+  }
+
   async function candidateDecision(index: number, action: "approve" | "reject" | "cover") {
     if (!draft) return;
     setError(""); setNotice("");
@@ -474,7 +495,19 @@ export function AdminSocietyImportPage() {
                   {draft.latitude && draft.longitude ? (
                     <a href={`https://www.google.com/maps/search/?api=1&query=${draft.latitude},${draft.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50"><MapPin className="h-3.5 w-3.5" />Map</a>
                   ) : null}
-                  <Button asChild size="sm" className="rounded-full bg-blue-700 text-white hover:bg-blue-800"><RouterLink to={`/admin/societies/${draft.id}/edit`}>Open in editor</RouterLink></Button>
+                  {draft.is_published ? (
+                    <>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-700"><CheckCircle2 className="h-3.5 w-3.5" />Published</span>
+                      <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
+                        <a href={`/society/${draft.slug}`} target="_blank" rel="noreferrer">View live <ExternalLink className="ml-1 h-3.5 w-3.5" /></a>
+                      </Button>
+                    </>
+                  ) : (
+                    <Button type="button" size="sm" onClick={() => void publishDraft()} disabled={publishing} className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700">
+                      {publishing ? <RefreshCw className="mr-1.5 h-4 w-4 animate-spin" /> : <Rocket className="mr-1.5 h-4 w-4" />}Publish
+                    </Button>
+                  )}
+                  <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200"><RouterLink to={`/admin/societies/${draft.id}/edit`}>Open in editor</RouterLink></Button>
                 </div>
               </div>
 
@@ -585,7 +618,7 @@ export function AdminSocietyImportPage() {
         <aside className="space-y-5">
           <div className={`rounded-[28px] border px-4 py-3 text-sm ${aiStatus?.available ? "border-emerald-100 bg-emerald-50 text-emerald-800" : "border-amber-100 bg-amber-50 text-amber-800"}`}>
             <p className="font-black">AI enrichment: {aiStatus?.available ? "Active" : "Fallback mode"}</p>
-            <p className="mt-1 text-xs opacity-80">Provider {aiStatus?.provider || "gemini"} · Model {aiStatus?.model || "not configured"}</p>
+            <p className="mt-1 text-xs opacity-80">Provider {aiStatus?.provider || "gemini"} · Model {aiStatus?.model || "not configured"} · Grounding {aiStatus?.grounding ? "on" : "off (fast)"}</p>
             {!aiStatus?.available ? <p className="mt-1 text-xs opacity-80">Add GEMINI_API_KEY to enable grounded gap-fill. Imports still create safe drafts.</p> : null}
           </div>
 

@@ -274,6 +274,29 @@ class SocietyImportController extends Controller
         return response()->json(['message' => 'Image candidate approved. It can display only after the society is published.', 'data' => $society->fresh()]);
     }
 
+    /** Publish a reviewed draft straight from the importer: score + location required, image optional. */
+    public function publish(Society $society): JsonResponse
+    {
+        if ((float) $society->score <= 0) {
+            return response()->json(['message' => 'Set a society score before publishing.'], 422);
+        }
+        if (trim((string) $society->sector) === '' && trim((string) $society->locality) === '') {
+            return response()->json(['message' => 'Add a sector or locality before publishing.'], 422);
+        }
+
+        $society->update([
+            'status' => 'Verified',
+            'verification_status' => 'Verified',
+            'is_published' => true,
+            'published_at' => $society->published_at ?: now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Society published — it is now live on public pages.',
+            'data' => $society->fresh(),
+        ]);
+    }
+
     public function reEnrich(Request $request, Society $society): JsonResponse
     {
         try {

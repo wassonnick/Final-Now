@@ -49,7 +49,7 @@ class SocietySpreadsheetImportTest extends TestCase
 
     public function test_gemini_image_candidate_stays_private_until_admin_confirms_rights(): void
     {
-        config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'test-model', 'services.google_places_api_key' => null]);
+        config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'test-model', 'services.google_places_api_key' => null, 'services.gemini.import_grounding' => true]);
         Http::fake(function ($request) {
             $payload = $request->data();
             $this->assertArrayHasKey('google_search', $payload['tools'][0]);
@@ -232,7 +232,7 @@ class SocietySpreadsheetImportTest extends TestCase
 
     public function test_empty_grounded_response_retries_once_without_grounding(): void
     {
-        config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'test-model', 'services.google_places_api_key' => null]);
+        config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'test-model', 'services.google_places_api_key' => null, 'services.gemini.import_grounding' => true]);
         Http::fakeSequence()
             ->push(['candidates' => [['finishReason' => 'STOP', 'content' => ['parts' => []]]]])
             ->push(['candidates' => [['content' => ['parts' => [['text' => json_encode(['name' => 'Fallback Heights', 'city' => 'Gurugram', 'description' => 'Review-safe fallback profile.', 'fields_to_verify' => ['market_ranges', 'distances', 'image_rights']])]]]]]]);

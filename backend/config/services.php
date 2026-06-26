@@ -70,6 +70,11 @@ return [
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-2.0-flash'),
+        // Live Google Search grounding for imports. Off by default: the grounded call is the
+        // slow path (it times out from some hosts) and Google Places already supplies the
+        // authoritative facts, so the non-grounded call fills the soft fields far more
+        // reliably. Set GEMINI_IMPORT_GROUNDING=true to re-enable cited market research.
+        'import_grounding' => env('GEMINI_IMPORT_GROUNDING', false),
     ],
 
 ];

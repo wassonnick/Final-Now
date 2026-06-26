@@ -427,7 +427,7 @@ export function AdminSocietiesPage() {
               </h2>
             </div>
             <p className="text-xs font-semibold text-slate-500">
-              Use this before publishing or featuring society pages. C112E publish fields now sync status, verification and published_at. C112E-B backfill normalizes old records.
+              Track which societies have map coordinates and complete nearby intelligence before featuring them. New auto-imports fill this automatically.
             </p>
           </div>
 
@@ -485,53 +485,9 @@ export function AdminSocietiesPage() {
                 Refresh
               </Button>
 
-              {/* C112E-B-FIX2A visible backfill button */}
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-full border-emerald-200 bg-emerald-50 px-3 text-xs font-bold text-emerald-800 hover:bg-emerald-100 sm:text-sm"
-                onClick={() => void handlePublishFieldBackfill()}
-                disabled={publishBackfillLoading}
-                title="Backfills is_published, verification_status and published_at from current society status."
-              >
-                <RefreshCw className={`mr-2 h-4 w-4 ${publishBackfillLoading ? "animate-spin" : ""}`} />
-                {publishBackfillLoading ? "Backfilling..." : "Backfill publish fields"}
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-full border-amber-200 bg-amber-50 px-3 text-xs text-amber-800 hover:bg-amber-100 sm:text-sm"
-                onClick={() => void handleBulkGoogleImageFetch()}
-                disabled={googleImageFetchLoading}
-              >
-                <Image className={`mr-2 h-4 w-4 ${googleImageFetchLoading ? "animate-pulse" : ""}`} />
-                {googleImageFetchLoading ? "Fetching refs..." : "Fetch Google refs"}
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-full border-emerald-200 bg-emerald-50 px-3 text-xs font-bold text-emerald-800 hover:bg-emerald-100 sm:text-sm"
-                onClick={() => void handleBulkNearbyAutoFill()}
-                disabled={bulkNearbyAutoFillLoading || !selectedSocieties.length}
-                title="Select up to 5 societies with valid coordinates. Only empty nearby fields are filled."
-              >
-                <MapPin className={`mr-2 h-4 w-4 ${bulkNearbyAutoFillLoading ? "animate-pulse" : ""}`} />
-                {bulkNearbyAutoFillLoading ? "Filling nearby..." : "Auto-fill nearby"}
-              </Button>
-
-
-              <Button asChild variant="outline" className="rounded-full border-blue-100 bg-blue-50 px-3 text-xs text-blue-700 hover:bg-blue-100 sm:text-sm">
+              <Button asChild variant="outline" className="rounded-full border-blue-100 bg-blue-50 px-3 text-xs font-bold text-blue-700 hover:bg-blue-100 sm:text-sm">
                 <Link to="/admin/societies/import">
                   Auto Import
-                </Link>
-              </Button>
-
-              <Button asChild variant="outline" className="rounded-full border-slate-200 px-3 text-xs sm:text-sm">
-                <Link to="/admin/societies/new-from-url">
-                  <LinkIcon className="mr-2 h-4 w-4" />
-                  Add from URL
                 </Link>
               </Button>
 
@@ -803,13 +759,6 @@ export function AdminSocietiesPage() {
                           <Link to={`/admin/properties?society=${encodeURIComponent(item.name)}`}>
                             <Building2 className="mr-1.5 h-4 w-4" />
                             Properties
-                          </Link>
-                        </Button>
-
-                        <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
-                          <Link to={`/admin/societies/new-from-url?name=${encodeURIComponent(item.name)}`}>
-                            <LinkIcon className="mr-1.5 h-4 w-4" />
-                            Enrich URL
                           </Link>
                         </Button>
 

@@ -217,4 +217,68 @@ class SocietyImportPipelineTest extends TestCase
         $this->assertSame('Fallback Society', $data['name'] ?? null);
         $this->assertSame('Ready to Move', $data['project_status'] ?? null);
     }
+
+    public function test_imported_draft_can_be_published_from_the_review_panel(): void
+    {
+        $society = Society::create([
+            'name' => 'Publishable Society', 'slug' => 'publishable-society',
+            'status' => 'Draft', 'verification_status' => 'Needs Review', 'is_published' => false,
+            'sector' => 'Sector 54', 'city' => 'Gurugram', 'score' => 8.5, 'imported_at' => now(),
+        ]);
+
+        $this->getJson('/api/societies')->assertOk()->assertJsonPath('data.total', 0);
+
+        $this->withToken('admin-test-token')
+            ->postJson("/api/admin/import/societies/{$society->id}/publish")
+            ->assertOk()
+            ->assertJsonPath('data.is_published', true)
+            ->assertJsonPath('data.status', 'Verified');
+
+        $this->getJson('/api/societies')->assertOk()->assertJsonPath('data.total', 1);
+    }
+
+    public function test_import_uses_non_grounded_gemini_by_default(): void
+    {
+        config(['services.gemini.import_grounding' => false, 'services.google_places_api_key' => null]);
+
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), 'generativelanguage.googleapis.com')) {
+                // Default import call must be the fast, non-grounded path.
+                $this->assertArrayNotHasKey('tools', $request->data());
+                $this->assertSame('application/json', $request->data()['generationConfig']['responseMimeType'] ?? null);
+
+                return Http::response(['candidates' => [['content' => ['parts' => [['text' => json_encode([
+                    'name' => 'Non Grounded Society',
+                    'city' => 'Gurugram',
+                    'description' => 'A reliable non-grounded description for admin review.',
+                    'amenities' => ['Clubhouse', 'Gym', '24x7 Security'],
+                ])]]]]]]);
+            }
+
+            return Http::response([], 200);
+        });
+
+        $this->withToken('admin-test-token')
+            ->postJson('/api/admin/import/single', ['name' => 'Non Grounded Society', 'include_images' => false])
+            ->assertAccepted();
+        $this->withToken('admin-test-token')->getJson('/api/admin/import/jobs?limit=5')->assertOk();
+
+        $society = Society::where('name', 'Non Grounded Society')->first();
+        $this->assertNotNull($society);
+        $this->assertContains('Clubhouse', $society->amenities ?? []);
+    }
+
+    public function test_publish_is_blocked_without_a_score(): void
+    {
+        $society = Society::create([
+            'name' => 'No Score Society', 'slug' => 'no-score-society',
+            'status' => 'Draft', 'is_published' => false, 'sector' => 'Sector 54', 'score' => 0,
+        ]);
+
+        $this->withToken('admin-test-token')
+            ->postJson("/api/admin/import/societies/{$society->id}/publish")
+            ->assertStatus(422);
+
+        $this->assertFalse((bool) $society->fresh()->is_published);
+    }
 }

@@ -64,8 +64,8 @@ const featureConfigs: Record<FeatureKey, FeatureConfig> = {
     summary:
       'Use AI-assisted workflows for society profile drafts, brochure extraction, SEO copy, FAQ ideas and lead response drafts. Output must stay in admin review until verified.',
     primaryAction: {
-      label: 'Add society from URL',
-      href: '/admin/societies/new-from-url',
+      label: 'Auto import societies',
+      href: '/admin/societies/import',
     },
     metrics: [
       { label: 'Society creation', value: 'URL first', note: 'Official page to draft profile' },
@@ -1350,9 +1350,9 @@ export function AdminFeatureHubPage({ feature }: AdminFeatureHubPageProps) {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline" className="rounded-full">
-                <Link to="/admin/societies/new-from-url">
+                <Link to="/admin/societies/import">
                   <WandSparkles className="mr-2 h-4 w-4" />
-                  Society URL flow
+                  Auto import societies
                 </Link>
               </Button>
               <Button asChild variant="outline" className="rounded-full">
