@@ -25,4 +25,9 @@ RUN composer install --no-dev --optimize-autoloader
 
 EXPOSE 10000
 
+# The built-in server is single-process by default, so concurrent requests (e.g. the admin
+# dashboard firing several API calls at once) queue and appear to "hang". Forking workers lets
+# it serve requests in parallel. Kept modest for the 512MB free tier; raise on a bigger plan.
+ENV PHP_CLI_SERVER_WORKERS=4
+
 CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
