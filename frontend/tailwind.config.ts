@@ -11,6 +11,11 @@ const config: Config = {
           100: "#F8F3EA",
           200: "#F1E9DC",
           300: "#E7DCCB",
+          DEFAULT: "#F8F3EA",
+          alt: "#F6F1E8",
+          cream: "#FFFBF3",
+          sage: "#DDE7DC",
+          chip: "#F1ECE1",
         },
         pine: {
           50: "#EEF5F1",
@@ -24,6 +29,9 @@ const config: Config = {
           800: "#123C32",
           900: "#102F28",
           950: "#0A211C",
+          DEFAULT: "#123C32",
+          press: "#0F3B2E",
+          link: "#2A6147",
         },
         forest: {
           50: "#F5F8F6",
@@ -49,6 +57,8 @@ const config: Config = {
           700: "#80452F",
           800: "#693A2B",
           900: "#573226",
+          DEFAULT: "#C2724E",
+          deep: "#B86F4B",
         },
         sage: {
           50: "#F5F8F3",
@@ -100,25 +110,6 @@ const config: Config = {
           good: "#84cc16",
           average: "#eab308",
           poor: "#ef4444",
-        },
-        // Redesign tokens (see design_handoff_societyflats/01-design-system.md).
-        // Namespaced separately from navy/ivory/gold so the legacy palette keeps working
-        // on pages that haven't been rebuilt yet.
-        paper: {
-          DEFAULT: "#F8F3EA",
-          alt: "#F6F1E8",
-          cream: "#FFFBF3",
-          sage: "#DDE7DC",
-          chip: "#F1ECE1",
-        },
-        pine: {
-          DEFAULT: "#123C32",
-          press: "#0F3B2E",
-          link: "#2A6147",
-        },
-        clay: {
-          DEFAULT: "#C2724E",
-          deep: "#B86F4B",
         },
         rdtext: {
           DEFAULT: "#25302B",
