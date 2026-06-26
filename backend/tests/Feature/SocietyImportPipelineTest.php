@@ -190,4 +190,31 @@ class SocietyImportPipelineTest extends TestCase
         $this->assertContains('ai_enrichment_pending', $society->fields_to_verify ?? []);
         $this->assertFalse((bool) $society->is_published);
     }
+
+    public function test_grounded_timeout_falls_back_to_the_faster_non_grounded_call(): void
+    {
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), 'generativelanguage.googleapis.com')) {
+                if (isset($request->data()['tools'])) {
+                    throw new \Illuminate\Http\Client\ConnectionException('cURL error 28: Operation timed out');
+                }
+
+                return Http::response(['candidates' => [['content' => ['parts' => [['text' => json_encode([
+                    'name' => 'Fallback Society',
+                    'city' => 'Gurugram',
+                    'description' => 'A complete non-grounded description produced after the grounded call timed out.',
+                    'project_status' => 'Ready to Move',
+                ])]]]]]]);
+            }
+
+            return Http::response([], 200);
+        });
+
+        $data = app(\App\Services\SocietyAiEnrichmentService::class)
+            ->enrichSociety('Fallback Society', 'context', 'src', false, true);
+
+        $this->assertArrayNotHasKey('_ai_error', $data);
+        $this->assertSame('Fallback Society', $data['name'] ?? null);
+        $this->assertSame('Ready to Move', $data['project_status'] ?? null);
+    }
 }

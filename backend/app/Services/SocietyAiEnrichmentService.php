@@ -58,31 +58,41 @@ class SocietyAiEnrichmentService
 
         try {
             $response = null;
+            $lastError = null;
 
             foreach ([1, 2, 3] as $attempt) {
-                $response = Http::timeout(30)
-                    ->withHeaders([
-                        'x-goog-api-key' => $apiKey,
-                        'Content-Type' => 'application/json',
-                    ])
-                    ->post($endpoint, array_filter([
-                        'systemInstruction' => [
-                            'parts' => [[
-                                'text' => 'You are a careful Indian real-estate data extraction assistant for SocietyFlats. Return only factual, review-safe structured JSON. Never invent exact coordinates unless highly confident. Use null when unsure.',
+                try {
+                    $response = Http::timeout(30)
+                        ->withHeaders([
+                            'x-goog-api-key' => $apiKey,
+                            'Content-Type' => 'application/json',
+                        ])
+                        ->post($endpoint, array_filter([
+                            'systemInstruction' => [
+                                'parts' => [[
+                                    'text' => 'You are a careful Indian real-estate data extraction assistant for SocietyFlats. Return only factual, review-safe structured JSON. Never invent exact coordinates unless highly confident. Use null when unsure.',
+                                ]],
+                            ],
+                            'contents' => [[
+                                'role' => 'user',
+                                'parts' => [[
+                                    'text' => $prompt,
+                                ]],
                             ]],
-                        ],
-                        'contents' => [[
-                            'role' => 'user',
-                            'parts' => [[
-                                'text' => $prompt,
-                            ]],
-                        ]],
-                        'tools' => $useSearchGrounding ? [['google_search' => (object) []]] : null,
-                        'generationConfig' => array_filter([
-                            'temperature' => 0.2,
-                            'responseMimeType' => $useSearchGrounding ? null : 'application/json',
-                        ], fn ($value) => $value !== null),
-                    ], fn ($value) => $value !== null));
+                            'tools' => $useSearchGrounding ? [['google_search' => (object) []]] : null,
+                            'generationConfig' => array_filter([
+                                'temperature' => 0.2,
+                                'responseMimeType' => $useSearchGrounding ? null : 'application/json',
+                            ], fn ($value) => $value !== null),
+                        ], fn ($value) => $value !== null));
+                } catch (\Throwable $e) {
+                    // Connection error / timeout (e.g. cURL 28). The grounded + Google Search call
+                    // is the slow one, so don't burn more attempts on it — break and let the
+                    // grounding fallback below retry on the much faster non-grounded path.
+                    $lastError = $e;
+                    $response = null;
+                    break;
+                }
 
                 if ($response->successful()) {
                     break;
@@ -100,6 +110,14 @@ class SocietyAiEnrichmentService
 
                 if ($useSearchGrounding) {
                     return $this->enrichWithGemini($name, $context."\n\nGoogle Search grounding was unavailable. Produce the fullest review-safe draft from supplied context and model knowledge; mark unsupported market, distance, legal and image claims in fields_to_verify.", $source, $findImageCandidate, false);
+                }
+
+                if ($lastError) {
+                    return [
+                        '_ai_error' => $lastError->getMessage(),
+                        '_ai_error_status' => 0,
+                        '_ai_temporarily_unavailable' => true,
+                    ];
                 }
 
                 return [
