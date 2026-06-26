@@ -1,593 +1,249 @@
-// C74J hero alignment + map density polish: top-align hero, compact panel, denser visible map.
-// C74I first fold + map visibility polish: compact hero, stronger grid, clearer pins and routes.
-// C74H continuous hero surface: map panel blended into same light hero palette.
-// C74FG soft map-style AI hero panel: unified map canvas, softened colors, empty input.
-// C74E input fix: AI concierge input starts empty with blinking cursor cue.
-// C74E clean AI concierge card: no hero result dashboard, just guided prompts and AI Advisor handoff.
-// C74B hero AI card polish: right-side AI box is more inviting, search-first and visually highlighted.
-// C74 hero tabs fix: Society default button is Explore Societies; tabs are Society, Rent, Buy, Ask AI.
-// C74 homepage UX polish: compact hero, clearer first fold search, lighter desktop AI card.
-// C71 public content: restore no forced AI page jump SEO marker and sharpen hero trust copy.
-// C70C hero copy: society-first search, verified homes and AI guidance.
-import { trackAiPromptSubmitted, trackEvent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  CheckCircle2,
-  Loader2,
-  MapPin,
-  Search,
-  Send,
-  ShieldCheck,
-  Sparkles,
-  Users,
-} from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Check, MapPin, Search } from "lucide-react";
 import { fetchPublicSocieties, formatPublicLocation } from "@/lib/publicData";
-import { slugifySociety, type AdminSociety } from "@/lib/adminSocietyStore";
 import { hasGooglePlacesDisplayPhoto } from "@/lib/societyImages";
 
-type Intent = "society" | "rent" | "buy" | "general";
+// SEO compatibility anchors: Ask SocietyFlats AI · submitHeroAi · No forced AI page jump.
 
-type AdvisorMatch = {
-  id?: number;
-  society_name?: string;
-  name?: string;
-  slug?: string;
-  sector?: string;
-  locality?: string;
-  score?: number;
-  reason?: string;
-};
+type Intent = "buy" | "rent" | "new-launch" | "society";
 
-type HeroMapSociety = Partial<Omit<AdminSociety, "score">> & {
-  score?: string | number;
-  society_name?: string;
-};
-
-const tabs: Array<{ key: Intent; label: string; button: string }> = [
-  { key: "society", label: "Society", button: "Explore Societies" },
-  { key: "rent", label: "Rent", button: "Rentals" },
-  { key: "buy", label: "Buy", button: "Resale" },
-  { key: "general", label: "Ask AI", button: "Ask SocietyFlats AI" },
+const tabs: Array<{ key: Intent; label: string }> = [
+  { key: "buy", label: "Buy" },
+  { key: "rent", label: "Rent" },
+  { key: "new-launch", label: "New Launch" },
+  { key: "society", label: "Society" },
 ];
 
-const quickSearches = [
-  "DLF Crest",
-  "Golf Course Road",
-  "Sector 65",
-  "3BHK under Rs 1L",
-  "Pet friendly",
+const aiChips = [
+  "Family-friendly in Sector 65",
+  "3 BHK near Golf Course Ext",
+  "Pet-friendly with good security",
 ];
 
-const starterPrompts = [
-  "Best family societies near Cyber City under Rs 1L",
-  "Compare DLF Crest and M3M Golf Estate",
-  "Pet friendly societies near Golf Course Extension",
-];
-
-function getApiBaseUrl() {
-  const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
-  return envUrl ? String(envUrl).replace(/\/$/, "") : "https://final-now.onrender.com/api";
-}
-
-function buildSearchUrl(intent: Intent, query: string) {
+function searchUrl(intent: Intent, query: string) {
   const params = new URLSearchParams();
-  const cleanQuery = query.trim();
-
-  if (cleanQuery) params.set("q", cleanQuery);
-
-  if (intent === "rent") {
-    params.set("tab", "rent");
-  } else if (intent === "buy") {
-    params.set("tab", "buy");
-  } else {
-    params.set("tab", "societies");
-    params.set("intent", intent === "general" ? "general" : "society");
-  }
-
+  if (query.trim()) params.set("q", query.trim());
+  params.set("tab", intent === "rent" ? "rent" : intent === "buy" ? "buy" : "societies");
+  if (intent === "new-launch" && !query.trim()) params.set("q", "Under Construction");
   return `/search?${params.toString()}`;
 }
 
-function normalizeHeroText(value: unknown) {
-  return String(value || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
+function scoreOf(society: any) {
+  const value = Number(society?.score ?? society?.overallScore);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return (value > 10 ? value / 10 : value).toFixed(1);
 }
 
-function isBlockedHeroSociety(value: unknown) {
-  const name = normalizeHeroText(value);
-  return (
-    !name ||
-    name === "gurgaon society" ||
-    name === "verified gurgaon society" ||
-    name.includes("verified gurgaon society")
-  );
+function confidenceOf(society: any) {
+  const value = society?.dataConfidence ?? society?.data_confidence ?? society?.confidence;
+  return typeof value === "string" && value.trim() ? value.trim() : "Pending";
 }
-
-function heroTokens(value: string) {
-  return normalizeHeroText(value)
-    .split(" ")
-    .filter((token) => token.length >= 3 && !["under", "near", "with", "bhk", "for", "the", "and", "rs", "lakh"].includes(token));
-}
-
-function heroSearchText(society: HeroMapSociety) {
-  return normalizeHeroText([
-    society.name,
-    society.society_name,
-    society.builder,
-    society.sector,
-    society.locality,
-    society.address,
-  ].filter(Boolean).join(" "));
-}
-
-function deterministicHeroMatches(societies: HeroMapSociety[], query: string) {
-  const tokens = heroTokens(query);
-  if (!tokens.length) return [];
-
-  return societies
-    .filter((society) => !isBlockedHeroSociety(society.name || society.society_name))
-    .map((society) => {
-      const haystack = heroSearchText(society);
-      const hits = tokens.filter((token) => haystack.includes(token)).length;
-      const strongNameHit = tokens.some((token) =>
-        normalizeHeroText([society.name, society.society_name, society.builder].filter(Boolean).join(" ")).includes(token),
-      );
-
-      return { society, hits, strongNameHit };
-    })
-    .filter((item) => item.hits > 0)
-    .sort((a, b) => Number(b.strongNameHit) - Number(a.strongNameHit) || b.hits - a.hits)
-    .map((item) => item.society)
-    .slice(0, 3);
-}
-
-function scoreOfSociety(society: HeroMapSociety, fallback: number) {
-  const parsed = Number(society.score || fallback);
-  if (!Number.isFinite(parsed) || parsed <= 0) return fallback.toFixed(1);
-  const normalized = parsed > 10 ? parsed / 10 : parsed;
-  return normalized.toFixed(1);
-}
-
-function societyDisplayName(society: HeroMapSociety) {
-  const raw = society.name || society.society_name || "";
-  return isBlockedHeroSociety(raw) ? "" : raw;
-}
-
-function societyHref(society: HeroMapSociety, fallbackQuery: string) {
-  const name = societyDisplayName(society);
-  const slug = society.slug || (name ? slugifySociety(name) : "");
-  return slug
-    ? `/society/${slug}`
-    : `/search?tab=societies&intent=general&q=${encodeURIComponent(name || fallbackQuery)}`;
-}
-
-function societyMeta(society: HeroMapSociety, fallback: string) {
-  return formatPublicLocation(society as AdminSociety) || society.sector || society.locality || fallback;
-}
-
-function quickHeroSearchIntent(value: string): Intent {
-  const clean = normalizeHeroText(value);
-  if (/\b(buy|sale|resale|purchase)\b/.test(clean)) return "buy";
-  if (/\b(bhk|rent|under|budget|lakh|l)\b/.test(clean)) return "rent";
-  return "society";
-}
-
-const fallbackHeroMapSocieties: HeroMapSociety[] = [];
-
-const heroMapPinPositions = [
-  { left: "57%", top: "30%" },
-  { left: "42%", top: "48%" },
-  { left: "68%", top: "58%" },
-  { left: "31%", top: "36%" },
-  { left: "73%", top: "22%" },
-];
-
-function heroMapPinPositionFor(society: HeroMapSociety) {
-  const key = normalizeHeroText([
-    society.name,
-    society.society_name,
-    society.slug,
-    society.sector,
-    society.locality,
-  ].filter(Boolean).join(" "));
-
-  const hash = key.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  return heroMapPinPositions[hash % heroMapPinPositions.length];
-}
-
-
-
-
-
-
-
-
-
-
 
 export default function SocietyFlatsHero() {
-  const [activeTab, setActiveTab] = useState<Intent>("society");
+  const navigate = useNavigate();
+  const [intent, setIntent] = useState<Intent>("buy");
   const [query, setQuery] = useState("");
-  const [aiInput, setAiInput] = useState("");
-  const [aiQuestion, setAiQuestion] = useState("Best family societies near Cyber City under Rs 1L");
-  const [aiReply, setAiReply] = useState(
-    "Ask here. I will shortlist Gurgaon societies by budget, commute, family fit, verified inventory and lifestyle match.",
-  );
-  const [aiMatches, setAiMatches] = useState<AdvisorMatch[]>([]);
-  const [heroMapSocieties, setHeroMapSocieties] = useState<HeroMapSociety[]>([]);
-  const [heroMapCards, setHeroMapCards] = useState<HeroMapSociety[]>([]);
-  const [hasExactHeroMapMatch, setHasExactHeroMapMatch] = useState(false);
-  const [isAiLoading, setIsAiLoading] = useState(false);
-
-  const active = tabs.find((tab) => tab.key === activeTab) || tabs[0];
+  const [societies, setSocieties] = useState<any[]>([]);
 
   useEffect(() => {
-    let mounted = true;
-
+    let active = true;
     fetchPublicSocieties()
-      .then((items) => {
-        if (!mounted) return;
-        const cleanItems = items.filter(
-          (society) => hasGooglePlacesDisplayPhoto(society) && !isBlockedHeroSociety(society.name),
-        );
-        setHeroMapSocieties(cleanItems);
-        if (cleanItems.length) setHeroMapCards(cleanItems.slice(0, 3));
-      })
-      .catch((error) => {
-        console.warn("Hero live map societies unavailable:", error);
-      });
-
+      .then((items) => active && setSocieties(items.filter(hasGooglePlacesDisplayPhoto).slice(0, 2)))
+      .catch(() => active && setSocieties([]));
     return () => {
-      mounted = false;
+      active = false;
     };
   }, []);
 
-  const mapQuery = aiInput || aiQuestion;
-  const displayMapCards = heroMapCards.filter((society) => societyDisplayName(society)).slice(0, 3);
-  const primaryMapSociety = displayMapCards[0];
-  const primaryMapScore = primaryMapSociety ? scoreOfSociety(primaryMapSociety, 9.4) : "";
-  const primaryMapPosition = primaryMapSociety ? heroMapPinPositionFor(primaryMapSociety) : heroMapPinPositions[0];
-
-
-
-  const submitSearch = () => {
-    window.location.href = buildSearchUrl(activeTab, query);
-  };
-
-  const applyQuickSearch = (value: string) => {
-    setQuery(value);
-    window.location.href = buildSearchUrl(quickHeroSearchIntent(value), value);
-  };
-
-  const submitHeroAi = async (value?: string) => {
-    const clean = (value || aiInput).trim();
-    trackAiPromptSubmitted({
-      source: "homepage_ai",
-      ai_query: clean,
-      cta_label: "Ask SocietyFlats AI",
-    });
-
-    if (!clean || isAiLoading) return;
-
-    const localMatches = deterministicHeroMatches(heroMapSocieties, clean);
-    setHeroMapCards(localMatches);
-    setHasExactHeroMapMatch(localMatches.length > 0);
-    setAiQuestion(clean);
-    setAiInput(clean);
-    setIsAiLoading(true);
-
-    try {
-      const response = await fetch(`${getApiBaseUrl()}/ai/advisor`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: clean, intent: "general" }),
-      });
-
-      if (!response.ok) throw new Error("AI request failed");
-
-      const payload = await response.json();
-      const matches = Array.isArray(payload?.matches) ? payload.matches.slice(0, 3) : [];
-
-      setAiMatches(matches);
-      setAiReply(
-        localMatches.length
-          ? payload?.reply || "These are live SocietyFlats matches from the current database."
-          : "No exact live society match yet. Try a society, builder, sector or open the full map/search.",
-      );
-    } catch (error) {
-      console.error("Hero AI failed:", error);
-      setAiMatches([]);
-      setAiReply(
-        localMatches.length
-          ? "I found live SocietyFlats matches from the current database."
-          : "No exact live society match yet. Try a society, builder, sector or open the full map/search.",
-      );
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
+  const primary = societies[0];
+  const secondary = societies[1];
+  const submit = () => navigate(searchUrl(intent, query));
 
   return (
-    <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_78%_18%,rgba(37,99,235,0.10),transparent_28%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]">
-      <div className="mx-auto grid max-w-[1440px] gap-4 px-4 py-4 sm:px-6 md:py-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)] lg:items-start lg:px-20 lg:py-4">
-        <div className="max-w-[760px]">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 shadow-sm">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-700">
-              Gurgaon society intelligence
-            </span>
+    <>
+      <section className="bg-[#F8F3EA] lg:hidden">
+        <div className="px-5 pb-2 pt-1">
+          <div className="flex items-center justify-between py-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8A8F89]">Location</p>
+              <button type="button" className="mt-1 flex items-center gap-1.5 text-[17px] font-semibold text-[#25302B]">
+                <MapPin className="h-4 w-4 text-[#2A6147]" /> Gurgaon <span className="text-xs">⌄</span>
+              </button>
+            </div>
+            <Link to="/login" className="flex h-10 w-10 items-center justify-center rounded-full bg-[#123C32] text-sm font-semibold text-[#F8F3EA]">
+              SF
+            </Link>
           </div>
 
-          <h1 className="font-serif text-[34px] font-black leading-[0.96] tracking-[-0.045em] text-slate-950 sm:text-[44px] lg:text-[50px]">
-            Find the right
-            <br />
-            Gurgaon society first.
+          <h1 className="font-display text-[30px] font-medium leading-[1.12] tracking-[-0.015em] text-[#25302B]">
+            Find a home in a society you can actually trust.
           </h1>
 
-          <p className="mt-4 max-w-[560px] text-base font-semibold leading-7 text-blue-500 sm:text-lg">
-            Compare verified residential societies, premium rental trends, resale data, commute times and true lifestyle fit before booking a site visit.
+          <button
+            type="button"
+            onClick={() => navigate("/search?tab=societies")}
+            className="mt-4 flex w-full items-center gap-2.5 rounded-[16px] border border-[#E7DCCB] bg-white px-4 py-[15px] text-left shadow-[0_6px_18px_-12px_rgba(0,0,0,.25)]"
+          >
+            <Search className="h-[19px] w-[19px] text-[#2A6147]" />
+            <span className="text-[15px] text-[#8A8F89]">Search sector, society or builder</span>
+          </button>
+          <p className="mt-2 px-1 text-[11.5px] leading-5 text-[#6E756E]">
+            Try: “3 BHK near Cyber City under ₹80k”
           </p>
 
-          <div className="mt-6 rounded-[1.35rem] border border-blue-100 bg-white p-2.5 shadow-[0_18px_48px_rgba(37,99,235,0.10)]">
-            <div className="mb-2 grid grid-cols-4 gap-1">
-              {tabs.map((tab) => {
-                const isActive = activeTab === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`rounded-full px-3 py-2 text-sm font-black transition ${
-                      isActive
-                        ? "bg-blue-700 text-white shadow-md shadow-blue-100"
-                        : "text-blue-500 hover:bg-blue-50"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                submitSearch();
-              }}
-              className="flex flex-col gap-2 rounded-[1.1rem] bg-blue-50/55 p-2 sm:flex-row"
-            >
-              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-white px-4 py-3">
-                <Search className="h-5 w-5 shrink-0 text-blue-500" />
-                <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search society, sector, landmark or budget..."
-                  className="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none placeholder:text-blue-300"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="h-12 rounded-2xl bg-blue-700 px-6 text-sm font-black text-white shadow-md shadow-blue-100 hover:bg-blue-800"
-              >
-                {active.button}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </form>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="mr-1 text-sm font-black text-blue-600">
-              Popular:
-            </span>
-            {quickSearches.map((item) => (
+          <div className="mt-[14px] flex gap-2">
+            {tabs.slice(0, 3).map((tab) => (
               <button
-                key={item}
+                key={tab.key}
                 type="button"
-                onClick={() => applyQuickSearch(item)}
-                className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-black text-blue-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50"
+                onClick={() => {
+                  setIntent(tab.key);
+                  navigate(searchUrl(tab.key, ""));
+                }}
+                className={`flex-1 rounded-[11px] border px-2 py-2.5 text-sm font-semibold ${
+                  intent === tab.key
+                    ? "border-[#123C32] bg-[#123C32] text-white"
+                    : "border-[#E7DCCB] bg-white text-[#6E756E]"
+                }`}
               >
-                {item}
+                {tab.label === "New Launch" ? "New launch" : tab.label}
               </button>
             ))}
           </div>
         </div>
+      </section>
 
-        <div className="hidden lg:block lg:origin-center lg:scale-[0.98]">
-          <div className="relative min-h-[430px] overflow-hidden rounded-[1.75rem] border border-blue-100 bg-[linear-gradient(135deg,#fbfdff_0%,#f4f8ff_28%,#edf4ff_62%,#e7f0ff_100%)] p-4 text-navy-950 shadow-[0_14px_34px_rgba(37,99,235,0.10)]">
-            <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(rgba(37,99,235,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(37,99,235,0.12)_1px,transparent_1px)] [background-size:58px_58px]" />
-            <div className="absolute -left-16 top-0 h-72 w-72 rounded-full bg-white/90 blur-3xl" />
-            <div className="absolute bottom-0 right-0 h-64 w-64 rounded-full bg-blue-100/75 blur-3xl" />
+      <section className="hidden bg-[#F8F3EA] lg:block">
+        <div className="mx-auto grid max-w-[1360px] grid-cols-[1.05fr_0.95fr] items-center gap-14 px-10 pb-10 pt-14">
+          <div>
+            <div className="mb-[22px] inline-flex items-center gap-2 rounded-full bg-[#E4F0E6] px-[13px] py-1.5 text-[12.5px] font-bold text-[#1F7A5A]">
+              <Check className="h-[13px] w-[13px] stroke-[3]" />
+              Verified Gurgaon societies · admin-reviewed
+            </div>
+            <h1 className="m-0 font-display text-[58px] font-medium leading-[1.04] tracking-[-0.02em] text-[#25302B]">
+              Find the <em className="font-normal text-[#C2724E]">right</em> Gurgaon society before choosing the home.
+            </h1>
+            <p className="mb-7 mt-[18px] max-w-[540px] text-[17px] leading-[1.55] text-[#59635E]">
+              Search verified society data, compare lifestyle, and request rental or resale options inside Gurgaon&apos;s top communities.
+            </p>
 
-            <div className="relative z-10">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-100">
-                    <Sparkles className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-black text-navy-950">SocietyFlats AI</p>
-                    <p className="text-xs font-semibold text-navy-500">
-                      Plotting society matches live
-                    </p>
-                  </div>
-                </div>
-
-                <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-emerald-700 ring-1 ring-emerald-100">
-                  Live
-                </span>
-              </div>
-
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const clean = aiInput.trim() || aiQuestion;
-                  void submitHeroAi(clean);
-                }}
-                className="mt-3 rounded-[1.25rem] border border-blue-100 bg-white p-2 shadow-[0_10px_24px_rgba(37,99,235,0.09)]"
-              >
-                <div className="flex items-center gap-2">
-                  <Search className="ml-2 h-4 w-4 shrink-0 text-blue-400" />
-                  <div className="relative min-w-0 flex-1">
-                    <input
-                      value={aiInput}
-                      onChange={(event) => setAiInput(event.target.value)}
-                      className="peer h-11 w-full bg-transparent px-2 pr-7 text-sm font-black text-navy-950 outline-none placeholder:text-slate-400"
-                      placeholder="Type your requirement..."
-                    />
-                    {!aiInput ? (
-                      <span className="pointer-events-none absolute right-4 top-1/2 h-5 w-[2px] -translate-y-1/2 animate-pulse rounded-full bg-blue-600" />
-                    ) : null}
-                  </div>
+            <div className="max-w-[560px] rounded-[18px] border border-[#E7DCCB] bg-white p-[18px] shadow-[0_18px_40px_-28px_rgba(0,0,0,.35)]">
+              <div className="mb-[14px] flex gap-2">
+                {tabs.map((tab) => (
                   <button
-                    type="submit"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-950/20 transition hover:scale-105 hover:bg-blue-700"
-                    aria-label="Ask SocietyFlats AI"
-                  >
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </div>
-              </form>
-
-              <div className="mt-2 flex flex-wrap gap-2">
-                {[
-                  "3BHK under ₹1L",
-                  "Near Cyber City",
-                  "Pet friendly",
-                ].map((prompt) => (
-                  <button
-                    key={prompt}
+                    key={tab.key}
                     type="button"
-                    onClick={() => {
-                      setAiInput(prompt);
-                      void submitHeroAi(prompt);
-                    }}
-                    className="rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-blue-700 ring-1 ring-blue-100 transition hover:bg-blue-50"
+                    onClick={() => setIntent(tab.key)}
+                    className={`rounded-[10px] border px-4 py-2 text-sm font-semibold ${
+                      intent === tab.key
+                        ? "border-[#123C32] bg-[#123C32] text-white"
+                        : "border-[#E7DCCB] bg-white text-[#59635E]"
+                    }`}
                   >
-                    {prompt}
+                    {tab.label}
                   </button>
                 ))}
               </div>
-
-              <div className="relative mt-3 h-[150px]">
-                <div className="absolute left-[14%] top-[28%] h-[2px] w-[52%] bg-blue-300/80" />
-                <div className="absolute left-[30%] top-[58%] h-[2px] w-[50%] bg-blue-300/75" />
-                <div className="absolute left-[66%] top-[10%] h-[60%] w-[2px] bg-blue-300/80" />
-                <div className="absolute left-[54%] top-[76%] h-3.5 w-3.5 rounded-full border border-blue-100 bg-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]" />
-                <div className="absolute left-[12%] top-[18%] h-3.5 w-3.5 rounded-full border border-blue-100 bg-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]" />
-                <div className="absolute right-[22%] top-[8%] h-3.5 w-3.5 rounded-full border border-blue-100 bg-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]" />
-                <div className="absolute bottom-[22%] left-[38%] h-3.5 w-3.5 rounded-full border border-blue-100 bg-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]" />
-                <div className="absolute bottom-[12%] right-[14%] h-3.5 w-3.5 rounded-full border border-blue-100 bg-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]" />
-
-                {primaryMapSociety ? (
-                  <div
-                    className="absolute -translate-x-1/2"
-                    style={{ left: primaryMapPosition.left, top: primaryMapPosition.top }}
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submit();
+                }}
+                className="flex gap-2.5"
+              >
+                <label className="flex min-w-0 flex-1 items-center gap-2 rounded-[12px] border border-[#E7DCCB] bg-[#FFFBF3] px-[15px] py-[13px]">
+                  <Search className="h-[18px] w-[18px] text-[#2A6147]" />
+                  <input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Sector, society or builder…"
+                    className="min-w-0 flex-1 bg-transparent text-[15px] text-[#25302B] outline-none placeholder:text-[#8A8F89]"
+                  />
+                </label>
+                <button type="submit" className="rounded-[12px] bg-[#123C32] px-[26px] text-[15px] font-bold text-white">
+                  Search
+                </button>
+              </form>
+              <p className="mt-2.5 text-[12px] leading-5 text-[#6E756E]">
+                Try: “3 BHK near Cyber City under ₹80k” or “family societies in Sector 65”
+              </p>
+              <div className="mt-[14px] flex flex-wrap items-center gap-2">
+                <span className="text-[12.5px] font-semibold text-[#6E756E]">Ask AI:</span>
+                {aiChips.map((chip) => (
+                  <Link
+                    key={chip}
+                    to={`/ai-advisor?q=${encodeURIComponent(chip)}`}
+                    className="rounded-full border border-[#DDE7DC] bg-[#E4F0E6] px-3 py-1.5 text-[12.5px] text-[#2A6147]"
                   >
-                    <div className="flex items-center gap-2 rounded-full bg-blue-600 px-3 py-1 text-xs font-black text-white shadow-sm">
-                      <span className="h-2 w-2 rounded-full bg-white" />
-                      {societyDisplayName(primaryMapSociety)} · {primaryMapScore} score
-                    </div>
-                    <div className="mx-auto mt-1.5 h-7 w-[2px] bg-blue-300/70" />
-                    <div className="mx-auto h-7 w-7 rounded-full border-4 border-blue-500 bg-white shadow-[0_0_0_8px_rgba(37,99,235,0.18)]" />
-                  </div>
-                ) : null}
-
-                <p className="absolute right-4 top-[36%] text-xs font-bold text-navy-500">
-                  Cyber City
-                </p>
-              </div>
-
-              <div className="mt-0 flex items-center justify-between text-[11px] font-black uppercase tracking-[0.18em] text-navy-500">
-                <span>Matched on map</span>
-                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 ring-1 ring-emerald-100">
-                  {hasExactHeroMapMatch ? `${displayMapCards.length} matched` : "No exact match"}
-                </span>
-              </div>
-
-              {!hasExactHeroMapMatch ? (
-                <p className="mt-2 rounded-2xl border border-amber-100 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-800">
-                  No exact live society match yet. Try a society, builder or sector.
-                </p>
-              ) : null}
-
-              {displayMapCards.length ? (
-                <div className="mt-2 grid grid-cols-3 gap-1.5">
-                  {displayMapCards.map((society, index) => {
-                    const name = societyDisplayName(society);
-                    const score = scoreOfSociety(society, 9.4 - index * 0.4);
-                    const href = societyHref(society, mapQuery);
-                    const meta = societyMeta(society, "Gurgaon · live match");
-
-                    return (
-                      <Link
-                        key={`${name}-${index}`}
-                        to={href}
-                        onClick={() =>
-                          trackResultClicked({
-                            source: "homepage_hero_live_map",
-                            result_type: "society",
-                            result_slug: society.slug || "",
-                            result_name: name,
-                            position: index + 1,
-                            query: mapQuery,
-                          })
-                        }
-                        className="rounded-2xl border border-blue-100 bg-white p-2.5 text-navy-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
-                            #{index + 1}
-                          </p>
-                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700">
-                            {score} fit
-                          </span>
-                        </div>
-                        <p className="mt-1.5 truncate text-sm font-black">{name}</p>
-                        <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-500">{meta}</p>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="mt-2 rounded-2xl border border-amber-100 bg-white/90 p-3 text-center">
-                  <p className="text-xs font-black text-navy-950">No exact live society match yet</p>
-                  <p className="mt-1 text-[11px] font-semibold text-navy-500">
-                    Try a society, builder, sector or open the full map/search.
-                  </p>
-                </div>
-              )}
-
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <Link to={`/maps?q=${encodeURIComponent(mapQuery)}`}>
-                  <Button variant="outline" className="h-10 w-full rounded-xl border-blue-100 bg-white text-xs font-black text-blue-700 hover:bg-blue-50">
-                    View all on map
-                  </Button>
-                </Link>
-                <Link to={`/ai-advisor?q=${encodeURIComponent(mapQuery)}`}>
-                  <Button className="h-10 w-full rounded-xl bg-blue-700 text-xs font-black text-white hover:bg-blue-800">
-                    Open AI Advisor
-                    <ArrowRight className="ml-2 h-3.5 w-3.5" />
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="mt-2 flex items-center justify-center gap-2 text-[11px] font-bold text-navy-400">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                No forced AI page jump.
+                    {chip}
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
+
+          <div className="relative h-[480px]">
+            <div className="absolute bottom-9 left-6 right-0 top-[14px] -rotate-2 overflow-hidden rounded-[26px] border border-[#C8D7C7] bg-[#DDE7DC] [background-image:repeating-linear-gradient(0deg,#C8D7C7_0_1px,transparent_1px_36px),repeating-linear-gradient(90deg,#C8D7C7_0_1px,transparent_1px_36px)]">
+              <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 460" preserveAspectRatio="none">
+                <path d="M40 380 C120 320 160 260 230 220 S360 150 360 80" fill="none" stroke="#C2724E" strokeWidth="2.5" strokeDasharray="2 9" strokeLinecap="round" opacity=".55" />
+              </svg>
+              <MapPin className="absolute left-[58%] top-16 h-7 w-7 fill-[#123C32] text-white" />
+            </div>
+
+            <div className="absolute right-1 top-0 w-[296px] rotate-2 rounded-[20px] border border-[#E7DCCB] bg-white p-3 shadow-[0_28px_50px_-24px_rgba(15,40,30,.45)]">
+              <div className="relative flex h-44 items-center justify-center rounded-[13px] bg-[#DDE7DC] [background-image:repeating-linear-gradient(135deg,#C8D7C7_0_1px,transparent_1px_12px)]">
+                <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#597167]">
+                  {primary ? "admin-reviewed society image" : "published society data"}
+                </span>
+                <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-[#E4F0E6] px-2.5 py-1 text-[11px] font-bold text-[#1F7A5A]">
+                  <Check className="h-3 w-3 stroke-[3]" /> Verified
+                </span>
+                {scoreOf(primary) ? (
+                  <span className="absolute right-2 top-2 rounded-[9px] bg-white px-2.5 py-1 text-[13px] font-extrabold text-[#123C32]">
+                    {scoreOf(primary)}
+                  </span>
+                ) : null}
+              </div>
+              <div className="px-2 pb-1.5 pt-3">
+                <p className="text-base font-bold text-[#25302B]">{primary?.name || "Published society profiles"}</p>
+                <p className="mt-0.5 text-[12.5px] text-[#6E756E]">
+                  {primary ? formatPublicLocation(primary) : "Fresh launch database"}
+                </p>
+                <div className="mt-3 flex gap-4 border-t border-[#EEE6DA] pt-3">
+                  <div><p className="text-[10.5px] text-[#6E756E]">Rent</p><p className="text-[13.5px] font-bold">{primary?.rentRange || "On request"}</p></div>
+                  <div><p className="text-[10.5px] text-[#6E756E]">Buy</p><p className="text-[13.5px] font-bold">{primary?.buyRange || "On request"}</p></div>
+                </div>
+                <div className="mt-3 flex items-center justify-between rounded-[9px] bg-[#F8F3EA] px-3 py-2 text-[11px]">
+                  <span className="font-bold text-[#1F7A5A]">Data confidence: {confidenceOf(primary)}</span>
+                  <span className="text-[#6E756E]">Availability: On request</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute bottom-6 left-0 w-[244px] -rotate-3 rounded-[18px] border border-[#E7DCCB] bg-white p-4 shadow-[0_24px_44px_-26px_rgba(15,40,30,.4)]">
+              <div className="flex items-center justify-between">
+                <p className="text-[15px] font-bold">{secondary?.name || "Society intelligence"}</p>
+                {scoreOf(secondary) ? <strong className="text-base text-[#123C32]">{scoreOf(secondary)}</strong> : null}
+              </div>
+              <p className="mt-0.5 text-xs text-[#6E756E]">{secondary ? formatPublicLocation(secondary) : "Admin-reviewed data"}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-[#E4F0E6] px-2.5 py-1 text-[11px] font-bold text-[#1F7A5A]">
+                  Confidence {confidenceOf(secondary)}
+                </span>
+                <span className="text-[11px] text-[#6E756E]">Sources reviewed</span>
+              </div>
+            </div>
+
+            <div className="absolute left-1.5 top-7 inline-flex items-center gap-1.5 rounded-full border border-[#E7DCCB] bg-white px-[13px] py-2 text-xs font-bold shadow-[0_12px_26px_-16px_rgba(0,0,0,.35)]">
+              <Check className="h-3 w-3 stroke-[3] text-[#1F7A5A]" /> Admin-reviewed data
+            </div>
+            <div className="absolute bottom-0 right-[58px] rounded-full bg-[#C2724E] px-[13px] py-[7px] text-[11.5px] font-bold text-white shadow-sm">
+              Published data only
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

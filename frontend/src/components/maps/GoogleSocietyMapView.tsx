@@ -101,11 +101,11 @@ export function GoogleSocietyMapView({
         div.style.textOverflow = "ellipsis";
         div.style.padding = selected ? "9px 14px" : "8px 12px";
         div.style.borderRadius = "16px";
-        div.style.background = selected ? "#1d4ed8" : "rgba(255,255,255,0.98)";
-        div.style.border = selected ? "2px solid rgba(255,255,255,0.96)" : "1px solid rgba(219,234,254,1)";
-        div.style.boxShadow = selected ? "0 18px 38px rgba(29,78,216,0.38)" : "0 14px 30px rgba(15,23,42,0.16)";
-        div.style.color = selected ? "#ffffff" : "#0f172a";
-        div.style.fontFamily = "Inter, Arial, sans-serif";
+        div.style.background = selected ? "#123C32" : "rgba(255,251,243,0.98)";
+        div.style.border = selected ? "2px solid rgba(255,255,255,0.96)" : "1px solid #E7DCCB";
+        div.style.boxShadow = selected ? "0 18px 38px rgba(18,60,50,0.30)" : "0 14px 30px rgba(16,37,31,0.14)";
+        div.style.color = selected ? "#ffffff" : "#10251F";
+        div.style.fontFamily = "Hanken Grotesk, Arial, sans-serif";
         div.style.fontSize = selected ? "14px" : "13px";
         div.style.fontWeight = "900";
         div.style.lineHeight = "1";
@@ -213,7 +213,7 @@ export function GoogleSocietyMapView({
               ? {
                   path: window.google.maps.SymbolPath.CIRCLE,
                   scale: 14,
-                  fillColor: "#1d4ed8",
+                  fillColor: "#123C32",
                   fillOpacity: 1,
                   strokeColor: "#ffffff",
                   strokeWeight: 4,

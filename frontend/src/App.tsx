@@ -34,6 +34,7 @@ const SiteVisitConfirmationPage = lazy(() => import('@/pages/SiteVisitConfirmati
 const InvestmentCalculatorPage = lazy(() => import('@/pages/InvestmentCalculatorPage').then((module) => ({ default: module.InvestmentCalculatorPage })));
 const BuilderFloorsPage = lazy(() => import('@/pages/BuilderFloorsPage').then((module) => ({ default: module.BuilderFloorsPage })));
 const BuilderPortalPage = lazy(() => import('@/pages/BuilderPortalPage').then((module) => ({ default: module.BuilderPortalPage })));
+const PublicInfoPage = lazy(() => import('@/pages/PublicInfoPage').then((module) => ({ default: module.PublicInfoPage })));
 
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage').then((module) => ({ default: module.AdminLoginPage })));
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })));
@@ -52,8 +53,6 @@ const AdminFeatureHubPage = lazy(() => import('@/pages/admin/AdminFeatureHubPage
 const AdminSiteVisitsPage = lazy(() => import('@/pages/admin/AdminSiteVisitsPage').then((module) => ({ default: module.AdminSiteVisitsPage })));
 const AdminRentHistoryPage = lazy(() => import('@/pages/admin/AdminRentHistoryPage').then((module) => ({ default: module.AdminRentHistoryPage })));
 const AdminBuilderPortalPage = lazy(() => import('@/pages/admin/AdminBuilderPortalPage').then((module) => ({ default: module.AdminBuilderPortalPage })));
-
-const HomeRedesignPreview = lazy(() => import('@/pages/preview/HomeRedesignPreview').then((module) => ({ default: module.HomeRedesignPreview })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,7 +87,6 @@ function ProtectedAdminRoute({ children }: { children: ReactNode }) {
 function AppShell() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
-  const isDesignPreview = location.pathname.startsWith('/design-preview');
 
   useEffect(() => {
     if (isAdmin) {
@@ -101,8 +99,8 @@ function AppShell() {
   }, [isAdmin, location.pathname]);
 
   return (
-    <div className="min-h-screen bg-ivory-100 flex flex-col">
-      {!isAdmin && !isDesignPreview && <Navbar />}
+    <div className={`${isAdmin ? "admin-site" : "public-site"} min-h-screen bg-ivory-100 flex flex-col`}>
+      {!isAdmin && <Navbar />}
 
       <main className="flex-1">
         <Suspense fallback={<RouteLoader />}>
@@ -110,7 +108,6 @@ function AppShell() {
 
             {/* Public */}
             <Route path="/" element={<HomePage />} />
-            <Route path="/design-preview/home" element={<HomeRedesignPreview />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/search/" element={<SearchPage />} />
 
@@ -149,6 +146,9 @@ function AppShell() {
             <Route path="/investment-calculator" element={<InvestmentCalculatorPage />} />
             <Route path="/builder-floors" element={<BuilderFloorsPage />} />
             <Route path="/builder-portal" element={<BuilderPortalPage />} />
+            <Route path="/trust" element={<PublicInfoPage variant="trust" />} />
+            <Route path="/privacy" element={<PublicInfoPage variant="privacy" />} />
+            <Route path="/help" element={<PublicInfoPage variant="help" />} />
 
             {/* Admin */}
             <Route
@@ -212,8 +212,8 @@ function AppShell() {
         </Suspense>
       </main>
 
-      {!isAdmin && !isDesignPreview && <FloatingHelpline />}
-      {!isAdmin && !isDesignPreview && <Footer />}
+      {!isAdmin && <FloatingHelpline />}
+      {!isAdmin && <Footer />}
     </div>
   );
 }

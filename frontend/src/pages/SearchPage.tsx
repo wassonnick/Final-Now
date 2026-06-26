@@ -452,7 +452,9 @@ export function SearchPage() {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [query, setQuery] = useState(initialQuery);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [showMap, setShowMap] = useState(false);
+  const [showMap, setShowMap] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 1200px)").matches,
+  );
   const [leadName, setLeadName] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
   const [leadStatus, setLeadStatus] = useState<"idle" | "success" | "error">(
@@ -847,7 +849,7 @@ export function SearchPage() {
           : `Society enquiry for ${callbackTarget?.societyName || "this society"}`;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8F3EA]">
       <section className="sticky top-0 z-30 border-b border-navy-100 bg-white/95 backdrop-blur">
         <div className="container mx-auto px-3 py-2 md:px-4 md:py-2.5">
           <h1 className="sr-only">Search Gurgaon societies and homes</h1>
@@ -979,7 +981,10 @@ export function SearchPage() {
 
 
       <section className="container mx-auto px-3 pb-36 pt-2 md:px-4 md:pb-10 md:pt-3">
-        <div className="grid gap-3 lg:grid-cols-[220px_1fr] lg:gap-3">
+        <div className={cn(
+          "grid gap-3 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-4",
+          showMap && "xl:grid-cols-[240px_minmax(0,1fr)_minmax(330px,38vw)]",
+        )}>
           <aside className="hidden space-y-3 lg:sticky lg:top-[5.75rem] lg:block lg:self-start">
             <div className="rounded-[1.25rem] border border-navy-100 bg-white p-3.5 shadow-sm">
               <div className="flex items-center justify-between">
@@ -1140,8 +1145,8 @@ export function SearchPage() {
             </div>
 
             {showMap ? (
-              <div className="grid gap-4 rounded-[1.5rem] border border-navy-100 bg-white p-4 shadow-sm lg:grid-cols-[1fr_300px]">
-                <div className="min-h-[300px] rounded-[1.25rem] bg-[radial-gradient(circle_at_22%_25%,rgba(37,99,235,0.22),transparent_24%),linear-gradient(135deg,#e8f1ff,#f8fafc)] p-5">
+              <div className="grid gap-4 rounded-[1.5rem] border border-navy-100 bg-white p-4 shadow-sm lg:hidden">
+                <div className="min-h-[300px] rounded-[1.25rem] bg-[radial-gradient(circle_at_22%_25%,rgba(194,114,78,0.16),transparent_24%),linear-gradient(135deg,#DDE7DC,#F8F3EA)] p-5">
                   <div className="flex h-full flex-col justify-between gap-8">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
@@ -1204,7 +1209,10 @@ export function SearchPage() {
             ) : null}
 
             {dataStatus === "loading" && visibleCount === 0 ? (
-              <div className="grid gap-3 md:grid-cols-2 md:gap-3 xl:grid-cols-3">
+              <div className={cn(
+                "grid gap-3 md:grid-cols-2 md:gap-3",
+                showMap ? "xl:grid-cols-1 2xl:grid-cols-2" : "xl:grid-cols-3",
+              )}>
                 {Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={`search-skeleton-${index}`}
@@ -1239,7 +1247,10 @@ export function SearchPage() {
                 onSubmitLead={submitLead}
               />
             ) : activeTab === "societies" ? (
-              <div className="grid gap-3 md:grid-cols-2 md:gap-3 xl:grid-cols-3">
+              <div className={cn(
+                "grid gap-3 md:grid-cols-2 md:gap-3",
+                showMap ? "xl:grid-cols-1 2xl:grid-cols-2" : "xl:grid-cols-3",
+              )}>
                 {societyResults.map((society) => {
                   const imageAttribution = societyImageAttribution(society);
 
@@ -1353,7 +1364,7 @@ export function SearchPage() {
               <div
                 className={cn(
                   viewMode === "grid"
-                    ? "grid gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3"
+                    ? cn("grid gap-3 md:grid-cols-2 md:gap-4", showMap ? "xl:grid-cols-1 2xl:grid-cols-2" : "xl:grid-cols-3")
                     : "space-y-4",
                 )}
               >
@@ -1606,6 +1617,49 @@ export function SearchPage() {
               </div>
             </div>
           </div>
+
+          {showMap ? (
+            <aside className="sticky top-[5.75rem] hidden h-[calc(100vh-7rem)] self-start overflow-hidden rounded-[1.4rem] border border-[#E7DCCB] bg-white shadow-sm xl:flex xl:flex-col">
+              <div className="border-b border-[#E7DCCB] px-5 py-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#2A6147]">Live map intelligence</p>
+                <h2 className="mt-1 text-xl font-medium text-[#10251F]">Societies around your search</h2>
+                <p className="mt-1 text-xs leading-5 text-[#6E756E]">Select a result to inspect its location and published nearby context.</p>
+              </div>
+              <div className="relative min-h-0 flex-1 bg-[#DDE7DC] [background-image:repeating-linear-gradient(0deg,#C8D7C7_0_1px,transparent_1px_48px),repeating-linear-gradient(90deg,#C8D7C7_0_1px,transparent_1px_48px)]">
+                <div className="absolute inset-x-8 top-[22%] h-px rotate-[-16deg] bg-[#C2724E]/60" />
+                <div className="absolute inset-x-12 top-[58%] h-px rotate-[12deg] bg-[#2A6147]/35" />
+                {recommendedSocieties.slice(0, 3).map((society, index) => (
+                  <Link
+                    key={society.id}
+                    to={society.slug ? `/society/${society.slug}` : "/societies"}
+                    className={cn(
+                      "absolute max-w-[210px] rounded-[12px] border border-[#E7DCCB] bg-[#FFFBF3] p-3 shadow-[0_12px_30px_-18px_rgba(16,37,31,.4)]",
+                      index === 0 && "left-[8%] top-[12%]",
+                      index === 1 && "right-[6%] top-[42%]",
+                      index === 2 && "left-[14%] top-[70%]",
+                    )}
+                  >
+                    <span className="mb-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#123C32] text-[11px] font-black text-white">{index + 1}</span>
+                    <p className="line-clamp-1 text-sm font-bold text-[#10251F]">{society.name}</p>
+                    <p className="mt-0.5 line-clamp-1 text-[11px] text-[#6E756E]">{formatPublicLocation(society)}</p>
+                  </Link>
+                ))}
+                {!recommendedSocieties.length ? (
+                  <div className="absolute inset-0 flex items-center justify-center p-8 text-center">
+                    <div className="rounded-[16px] border border-[#E7DCCB] bg-[#FFFBF3] p-5">
+                      <MapPin className="mx-auto h-6 w-6 text-[#2A6147]" />
+                      <p className="mt-2 text-sm font-bold text-[#10251F]">Map results will appear here</p>
+                      <p className="mt-1 text-xs leading-5 text-[#6E756E]">Search a society, builder or sector to anchor the map.</p>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+              <div className="grid grid-cols-2 gap-2 border-t border-[#E7DCCB] p-3">
+                <Link to="/maps" className="rounded-[10px] border border-[#E7DCCB] px-3 py-2.5 text-center text-xs font-bold text-[#123C32]">Open full map</Link>
+                <Link to={`/ai-advisor?q=${encodeURIComponent(query || "Gurgaon societies")}`} className="rounded-[10px] bg-[#123C32] px-3 py-2.5 text-center text-xs font-bold text-white">Ask AI</Link>
+              </div>
+            </aside>
+          ) : null}
         </div>
       </section>
       <PublicLeadModal

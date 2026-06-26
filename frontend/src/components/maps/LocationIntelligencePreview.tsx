@@ -61,7 +61,7 @@ export function LocationIntelligencePreview({
   return (
     <div className="overflow-hidden rounded-[1.35rem] border border-blue-100 bg-gradient-to-br from-white via-blue-50/60 to-slate-50 shadow-sm">
       <div className="grid gap-0 md:grid-cols-[minmax(0,1.15fr)_minmax(270px,0.85fr)]">
-        <div className="relative min-h-[220px] overflow-hidden border-b border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#dbeafe_42%,#f8fafc_100%)] p-4 md:border-b-0 md:border-r">
+        <div className="relative min-h-[220px] overflow-hidden border-b border-blue-100 bg-[linear-gradient(135deg,#EEF5F1_0%,#DDE7DC_42%,#F8F3EA_100%)] p-4 md:border-b-0 md:border-r">
           <div className="absolute inset-0 opacity-70">
             <span className="absolute left-[12%] top-[32%] h-1 w-[72%] -rotate-12 rounded-full bg-white/80 shadow-sm" />
             <span className="absolute left-[18%] top-[58%] h-1 w-[66%] rotate-6 rounded-full bg-white/80 shadow-sm" />

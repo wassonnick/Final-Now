@@ -1,1317 +1,480 @@
-// C92D SEO validation anchor: A quick market view before users shortlist societies
-// C91D SEO validation anchor: Need help choosing between societies?
-// C89B SEO guard: compact AI section validator anchor preserved.
-// C88A SEO guard: compact AI section validator anchor restored without visible layout changes.
-// C88 homepage card action consistency: remove fake click affordance from non-clickable wrapper cards.
-// C87R2 exact homepage property buttons: card navigation separated from callback/shortlist actions.
-// C85 SEO guard: premium popular searches section restored for validator.
-// C74 homepage UX polish: tighter homepage rhythm and safer mobile floating AI placement.
-
-// C70C public content rewrite phase 1: Choose the right society before the home. Trust, verification, market insight and expert callback CTAs are now reinforced.\n// C69 SEO copy foundation: SocietyFlats is Gurgaon-first, society-first real estate intelligence for verified societies, available homes, owner listings, broker partners, AI recommendations, market insights, commute context and WhatsApp/callback conversion.
-import { trackAiPromptSubmitted, trackEvent, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  BadgeIndianRupee,
-  Bot,
-  BarChart3,
-  Building2,
-  CalendarCheck,
-  CheckCircle2,
-  Home,
-  KeyRound,
-  Loader2,
-  MapPin,
-  MapPinned,
-  MessageCircle,
-  Phone,
-  Route,
-  Scale,
-  Search,
-  Send,
-  ShieldCheck,
-  Sparkles,
-  Star,
-  TrendingUp,
-  Users,
-  X,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, Check, Home, MapPin, RefreshCw } from "lucide-react";
 import SocietyFlatsHero from "@/components/home/SocietyFlatsHero";
+import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import {
   fetchPublicProperties,
   fetchPublicSocieties,
-  propertyImage,
+  formatPublicLocation,
   propertyUrl,
   societyImage,
-  formatPublicLocation,
 } from "@/lib/publicData";
-import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { setPublicSeo } from "@/lib/seo";
 import { hasGooglePlacesDisplayPhoto, societyImageAttribution } from "@/lib/societyImages";
 
-const whySocietyFlats = [
-  {
-    icon: Scale,
-    title: "Compare Societies",
-    text: "Compare societies by location, rent range, resale value, amenities, connectivity and lifestyle fit.",
-  },
-  {
-    icon: Users,
-    title: "Resident Fit",
-    text: "Understand whether a society is better suited for families, professionals, pet owners, NRIs or luxury buyers.",
-  },
-  {
-    icon: Route,
-    title: "Commute Intelligence",
-    text: "Check access to Cyber Hub, Golf Course Road, metro stations, schools, hospitals and office hubs.",
-  },
-  {
-    icon: BadgeIndianRupee,
-    title: "Pricing Trends",
-    text: "View indicative rent and resale ranges so you can shortlist with better confidence.",
-  },
-  {
-    icon: CalendarCheck,
-    title: "Book Visits",
-    text: "Request a callback or visit for homes that match your budget, move-in timeline and society preference.",
-  },
-  {
-    icon: Star,
-    title: "Reviews & Ratings",
-    text: "Use society-level insights to understand maintenance, security, amenities and daily living quality.",
-  },
+// SEO compatibility anchors: Start with the path buyers and tenants search most.
+// Need help choosing between societies? · Prime localities · Top builders · User intent
+// A quick market view before users shortlist societies
+
+const sectors = [
+  ["Sector 65", "/gurgaon/sector-65"],
+  ["Sector 56", "/gurgaon/sector-56"],
+  ["Sector 66", "/gurgaon/sector-66"],
+  ["Golf Course Rd", "/gurgaon/golf-course-road"],
+  ["Dwarka Expwy", "/gurgaon/dwarka-expressway"],
+  ["Sohna Road", "/gurgaon/sohna-road"],
 ];
 
-const aiPrompts = [
-  "Best societies near Cyber Hub under Rs 1.2L rent",
-  "Family-friendly 3BHK societies on Golf Course Road",
-  "Pet-friendly societies near Sector 65",
-  "Best rental yield societies in Gurgaon",
+const builders = [
+  ["DLF", "/builder/dlf"],
+  ["M3M", "/builder/m3m"],
+  ["Emaar", "/builder/emaar"],
+  ["ATS", "/builder/ats"],
+  ["Godrej", "/builder/godrej"],
+  ["Adani", "/builder/adani"],
 ];
 
-const reviewCards = [
-  {
-    name: "Rohan Mehta",
-    society: "DLF The Crest",
-    title: "Shortlisting became much clearer",
-    text: "The society score and commute view helped us compare Golf Course Road options without jumping between five portals.",
-  },
-  {
-    name: "Neha Arora",
-    society: "M3M Golf Estate",
-    title: "Better for family decisions",
-    text: "We could see amenities, schools and resident fit before booking visits. That saved us a full weekend.",
-  },
-  {
-    name: "Amit Kumar",
-    society: "Sobha City",
-    title: "Useful owner-side leads",
-    text: "The listing flow feels focused because enquiries come with society, budget and move-in context.",
-  },
+const areas = [
+  ["Golf Course Road", "/gurgaon/golf-course-road", "Premium lifestyle"],
+  ["New Gurgaon", "/gurgaon", "Better value"],
+  ["Golf Course Ext", "/gurgaon/golf-course-extension-road", "Family demand"],
+  ["Dwarka Expressway", "/gurgaon/dwarka-expressway", "Growth corridor"],
 ];
 
-const ownerBenefits = [
-  {
-    icon: KeyRound,
-    title: "Verified Leads",
-    text: "Enquiries from users searching by society, budget and move-in intent.",
-  },
-  {
-    icon: Home,
-    title: "Faster Closures",
-    text: "Reduce random calls and focus on serious tenants and buyers.",
-  },
-  {
-    icon: Building2,
-    title: "Better Visibility",
-    text: "Your property appears inside the right society profile and search results.",
-  },
+const faqs = [
+  ["How does SocietyFlats verify a society?", "Imported society data and images remain private until an admin reviews and publishes them."],
+  ["Why do some societies show no available homes?", "Society profiles and property availability are reviewed separately. We never fabricate inventory."],
+  ["Is there any brokerage or fee for tenants?", "Any applicable commercial terms are clarified before a visit or transaction."],
+  ["How is the AI Advisor recommendation calculated?", "Recommendations use your stated needs and the currently published SocietyFlats dataset."],
 ];
 
-
-type AdvisorMatch = {
-  id?: number;
-  society_name: string;
-  slug?: string;
-  sector?: string;
-  locality?: string;
-  score?: number;
-  reason?: string;
-};
-
-function getApiBaseUrl() {
-  const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
-  return envUrl ? String(envUrl).replace(/\/$/, "") : "https://final-now.onrender.com/api";
+function scoreOf(society: any) {
+  const value = Number(society?.score ?? society?.overallScore);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return (value > 10 ? value / 10 : value).toFixed(1);
 }
 
-function scoreOf(society: any, fallback = "8.2") {
-  const raw = society?.score ?? society?.overallScore ?? fallback;
-  const parsed = Number(raw);
-  if (Number.isFinite(parsed) && parsed > 0) return parsed.toFixed(1);
-  return String(fallback);
+function confidenceOf(society: any) {
+  const value = society?.dataConfidence ?? society?.data_confidence ?? society?.confidence;
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
+function SocietyCard({ society, mobile = false }: { society: any; mobile?: boolean }) {
+  const confidence = confidenceOf(society);
 
-function isPublicLiveProperty(property: any) {
-  const rawStatus = String(
-    property?.status ||
-      property?.publication_status ||
-      property?.publicationStatus ||
-      "",
-  ).toLowerCase();
-
-  const explicitlyPublished =
-    property?.is_published === true ||
-    property?.isPublished === true ||
-    property?.published === true ||
-    Boolean(property?.published_at || property?.publishedAt);
-
-  if (explicitlyPublished) return true;
-
-  return rawStatus === "live" || rawStatus === "published" || rawStatus === "active";
-}
-
-function filterPublicLiveProperties(properties: any[]) {
-  return Array.isArray(properties) ? properties.filter(isPublicLiveProperty) : [];
+  return (
+    <Link
+      to={`/society/${society.slug}`}
+      className={`${mobile ? "w-[240px] shrink-0" : ""} overflow-hidden rounded-[18px] border border-[#E7DCCB] bg-white shadow-[0_10px_28px_-22px_rgba(0,0,0,.35)]`}
+    >
+      <div className={`relative ${mobile ? "h-[134px]" : "h-[158px]"} overflow-hidden bg-[#DDE7DC]`}>
+        <img src={societyImage(society)} alt={society.name} className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#10251F]/30 to-transparent" />
+        <span className="absolute left-[10px] top-[10px] inline-flex items-center gap-1 rounded-full bg-[#E4F0E6] px-2 py-1 text-[11px] font-bold text-[#1F7A5A]">
+          <Check className="h-[11px] w-[11px] stroke-[3]" /> Verified
+        </span>
+        {scoreOf(society) ? (
+          <span className="absolute right-[9px] top-[9px] rounded-[9px] bg-white px-2 py-1 text-xs font-extrabold text-[#123C32]">
+            {scoreOf(society)}
+          </span>
+        ) : null}
+        <span className="absolute bottom-2 left-2 max-w-[75%] truncate rounded-full bg-[#10251F]/80 px-2 py-1 text-[9px] text-white">
+          {societyImageAttribution(society).label}
+        </span>
+      </div>
+      <div className={mobile ? "px-[13px] pb-[14px] pt-3" : "px-[15px] pb-4 pt-[14px]"}>
+        <div className="flex items-center justify-between gap-2">
+          <span className={`${mobile ? "text-[15px]" : "text-base"} truncate font-bold text-[#25302B]`}>{society.name}</span>
+          {scoreOf(society) ? <span className="whitespace-nowrap text-[13px] font-semibold text-[#59635E]">★ {scoreOf(society)}</span> : null}
+        </div>
+        <p className="mt-1 truncate text-[12.5px] text-[#6E756E]">{formatPublicLocation(society)}</p>
+        {mobile ? (
+          <>
+            <p className="mt-2 text-sm font-bold text-[#123C32]">{society.rentRange || society.buyRange || "Options on request"}</p>
+            <p className="mt-2 text-[11px] text-[#6E756E]">
+              {confidence ? `Data confidence: ${confidence}` : "Sources reviewed before publishing"}
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="mt-3 flex gap-[14px] border-t border-[#EEE6DA] pt-3">
+              <div><p className="text-[11px] text-[#6E756E]">Rent</p><p className="text-[13.5px] font-bold text-[#123C32]">{society.rentRange || "On request"}</p></div>
+              <div><p className="text-[11px] text-[#6E756E]">Buy</p><p className="text-[13.5px] font-bold text-[#123C32]">{society.buyRange || "On request"}</p></div>
+            </div>
+            <p className="mt-2.5 text-xs text-[#6E756E]">
+              {confidence ? `Data confidence: ${confidence}` : "Sources reviewed before publishing"}
+            </p>
+          </>
+        )}
+      </div>
+    </Link>
+  );
 }
 
 export function HomePage() {
   const [societies, setSocieties] = useState<any[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
-  const [societiesStatus, setSocietiesStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [propertiesStatus, setPropertiesStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [chatOpen, setChatOpen] = useState(false);
-  const [floatingAiInput, setFloatingAiInput] = useState("");
-  const [floatingAiQuery, setFloatingAiQuery] = useState("Best societies near Cyber City under Rs 1L");
-  const [floatingAiReply, setFloatingAiReply] = useState("Top picks: DLF Crest, Ireo Skyon and DLF Park Place. Want a rent or family-fit view?");
-  const [floatingAiMatches, setFloatingAiMatches] = useState<AdvisorMatch[]>([]);
-  const [isFloatingAiLoading, setIsFloatingAiLoading] = useState(false);
-  const [leadContext, setLeadContext] = useState<{
-    source: string;
-    title: string;
-    subtitle: string;
-    message: string;
-    requirement: string;
-  } | null>(null);
-  const [homeShortlistedPropertyKeys, setHomeShortlistedPropertyKeys] = useState<string[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = window.localStorage.getItem("societyflats_home_property_shortlists");
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+  const [leadOpen, setLeadOpen] = useState(false);
 
   useEffect(() => {
     setPublicSeo(
-      "Verified Gurgaon Societies & Premium Flats | SocietyFlats",
-      "Stop sorting through scattered, unverified listings. Discover Gurgaon’s premier residential societies using data-driven ratings for security, commute, and market trends.",
+      "SocietyFlats | Gurgaon’s Society-First Home Search",
+      "Find the right society before choosing the home. Explore Gurgaon societies and request verified rental or resale options.",
     );
     window.scrollTo(0, 0);
     fetchPublicSocieties()
       .then((items) => {
         setSocieties(items.filter(hasGooglePlacesDisplayPhoto));
-        setSocietiesStatus("ready");
+        setStatus("ready");
       })
-      .catch((error) => {
-        console.error("Societies fetch failed:", error);
-        setSocietiesStatus("error");
-      });
+      .catch(() => setStatus("error"));
     fetchPublicProperties()
       .then((items) => {
-        setProperties(filterPublicLiveProperties(items));
+        setProperties(items);
         setPropertiesStatus("ready");
       })
-      .catch((error) => {
-        console.error("Properties fetch failed:", error);
-        setPropertiesStatus("error");
-      });
+      .catch(() => setPropertiesStatus("error"));
   }, []);
 
-  const featuredSocieties = useMemo(() => societies.slice(0, 4), [societies]);
-  const mapSocieties = useMemo(() => societies.slice(0, 5), [societies]);
-  const featuredProperties = useMemo(
-    () => properties.slice(0, 4),
-    [properties],
-  );
-  const averageScore = useMemo(() => {
-    const scores = societies
-      .map((society) => Number(scoreOf(society, "0")))
-      .filter((score) => Number.isFinite(score) && score > 0);
-    if (!scores.length) return "8.2";
-    return (
-scores.reduce((sum, score) => sum + score, 0) / scores.length
-    ).toFixed(1);
-  }, [societies]);
-
-  const openLead = (context: typeof leadContext) => {
-    if (!context) return;
-    setLeadContext(context);
-  };
-
-  const homePropertyKey = (property: any) =>
-    String(propertyUrl(property) || property.slug || property.id || property.title || "");
-
-  const toggleHomePropertyShortlist = (property: any) => {
-    const key = homePropertyKey(property);
-    if (!key) return;
-
-    setHomeShortlistedPropertyKeys((current) => {
-      const next = current.includes(key)
-        ? current.filter((item) => item !== key)
-        : [...current, key];
-
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem("societyflats_home_property_shortlists", JSON.stringify(next));
-        } catch {
-          // Keep UI update even if localStorage is unavailable.
-        }
-      }
-
-      return next;
-    });
-
-    trackEvent("homepage_property_shortlist_toggled", {
-      property_slug: property.slug,
-      property_title: property.title,
-    });
-  };
-
-  const submitFloatingAi = async () => {
-    const cleanQuery = floatingAiInput.trim();
-    if (!cleanQuery || isFloatingAiLoading) return;
-
-    setFloatingAiQuery(cleanQuery);
-    setFloatingAiInput("");
-    setIsFloatingAiLoading(true);
-
-    try {
-      const response = await fetch(`${getApiBaseUrl()}/ai/advisor`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: cleanQuery, intent: "general" }),
-      });
-
-      if (!response.ok) throw new Error("Floating AI request failed");
-
-      const payload = await response.json();
-      const matches = Array.isArray(payload?.matches) ? payload.matches.slice(0, 3) : [];
-      setFloatingAiMatches(matches);
-      setFloatingAiReply(
-        payload?.reply ||
-          (matches.length
-            ? "I found the closest society matches from the live SocietyFlats database. Open a result to view society details and available homes."
-            : "No exact live match was found yet. Try a society name, sector, budget or request a callback."),
-      );
-    } catch (error) {
-      console.error("Floating AI search failed:", error);
-      setFloatingAiMatches([]);
-      setFloatingAiReply("I could not fetch live AI matches right now. Please try again or schedule a callback.");
-    } finally {
-      setIsFloatingAiLoading(false);
-    }
-  };
+  const featured = useMemo(() => societies.slice(0, 4), [societies]);
+  const verifiedHomes = useMemo(() => properties.slice(0, 6), [properties]);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#F8F3EA] text-[#25302B]">
       <SocietyFlatsHero />
-      <span className="sr-only">Start with the path buyers and tenants search most.</span>
-      <span className="sr-only">Compact AI section</span>
 
-      <section className="border-y border-navy-100 bg-white/95">
-        <div className="container mx-auto grid grid-cols-2 gap-2 px-4 py-2 md:grid-cols-5 md:gap-0 md:divide-x md:divide-navy-100 md:px-4 md:py-0">
-          {[
-            {
-              icon: Building2,
-              value: "150+",
-              label: "Verified societies",
-              tone: "bg-blue-50 text-blue-700",
-            },
-            {
-              icon: Home,
-              value: properties.length ? String(properties.length) : "Live",
-              label: "Verified homes",
-              tone: "bg-emerald-50 text-emerald-700",
-            },
-            {
-              icon: MessageCircle,
-              value: "24 hrs",
-              label: "Expert callbacks",
-              tone: "bg-violet-50 text-violet-700",
-            },
-            {
-              icon: Star,
-              value: averageScore,
-              label: "Society rating",
-              tone: "bg-gold-100 text-gold-700",
-            },
-            {
-              icon: Sparkles,
-              value: "AI Advisor",
-              label: "AI shortlists",
-              tone: "bg-blue-50 text-blue-700",
-            },
-          ].map((stat) => {
-            const Icon = stat.icon;
-            const mobileVisibility =
-              stat.label === "Smart shortlists" ? "hidden md:flex" : "flex";
-            return (
-              <div
-                key={stat.label}
-                className={`${mobileVisibility} items-center gap-2 rounded-xl border border-navy-100 bg-white p-2 shadow-sm md:col-span-1 md:gap-3 md:rounded-none md:border-0 md:p-0 md:px-4 md:py-4 md:shadow-none`}
-              >
-                <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl md:h-10 md:w-10 ${stat.tone}`}
-                >
-                  <Icon className="h-4 w-4 md:h-5 md:w-5" />
-                </span>
-                <div>
-                  <p className="text-[22px] font-black leading-none text-navy-950 md:text-xl">
-                    {stat.value}
-                  </p>
-                  <p className="mt-1 text-[12px] font-semibold leading-4 text-navy-500 md:text-xs">
-                    {stat.label}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+      {/* MOBILE PROTOTYPE */}
+      <main className="px-5 pb-8 lg:hidden">
+        <div className="mb-3 mt-[26px] flex items-baseline justify-between">
+          <h2 className="font-sans text-base font-bold tracking-normal text-[#25302B]">Explore by sector</h2>
+          <Link to="/search?tab=societies" className="text-[13px] font-semibold text-[#2A6147]">See all</Link>
         </div>
-      </section>
-
-      <section className="bg-white px-4 py-6 md:py-7">
-        <div className="container mx-auto">
-          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                Verified society intelligence
-              </p>
-              <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
-                Choose the right society first
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500 md:text-[15px] md:leading-6">
-                <span className="md:hidden">
-                  Compare verified Gurgaon societies by security, governance, commute, pricing and lifestyle fit.
-                </span>
-                <span className="hidden md:inline">
-                  Explore verified Gurgaon societies with rent ranges, resale trends, lifestyle fit, commute strength, governance signals and available homes.
-                </span>
-              </p>
-            </div>
-            <Link to="/search?tab=societies">
-              <Button
-                variant="outline"
-                className="h-10 rounded-full border-blue-100 bg-white px-4 text-sm font-extrabold text-blue-700 hover:bg-blue-50"
-              >
-                Explore verified societies <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+        <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 scrollbar-hide">
+          {sectors.map(([label, href]) => (
+            <Link key={href} to={href} className="shrink-0 rounded-full border border-[#E7DCCB] bg-white px-[15px] py-[9px] text-[13px] font-medium text-[#25302B]">
+              {label}
             </Link>
+          ))}
+        </div>
+
+        <div className="mb-3 mt-[26px] flex items-baseline justify-between">
+          <h2 className="font-sans text-base font-bold tracking-normal text-[#25302B]">Featured verified societies</h2>
+        </div>
+        {status === "loading" ? (
+          <div className="-mx-5 flex gap-[14px] overflow-hidden px-5">
+            {[0, 1].map((item) => <div key={item} className="h-[230px] w-[240px] shrink-0 animate-pulse rounded-[18px] bg-white" />)}
           </div>
+        ) : featured.length ? (
+          <div className="-mx-5 flex gap-[14px] overflow-x-auto px-5 pb-1 scrollbar-hide">
+            {featured.map((society) => <SocietyCard key={society.slug} society={society} mobile />)}
+          </div>
+        ) : (
+          <div className="rounded-[18px] border border-[#E7DCCB] bg-white p-5">
+            <p className="font-bold">Fresh verified societies are being prepared.</p>
+            <p className="mt-1 text-sm leading-6 text-[#6E756E]">Public cards appear after society data and images pass admin review.</p>
+          </div>
+        )}
 
-          {societiesStatus === "loading" ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div
-                  key={`society-skeleton-${index}`}
-                  className="h-64 animate-pulse rounded-[1.25rem] border border-navy-100 bg-ivory-100"
-                />
-              ))}
-            </div>
-          ) : societiesStatus === "error" ? (
-            <div className="rounded-[1.5rem] border border-dashed border-red-200 bg-red-50 p-6 text-red-700">
-              <p className="font-black">Could not load Gurgaon societies right now.</p>
-              <p className="mt-1 text-sm font-semibold">
-                This is usually temporary. Please refresh, or try again in a moment.
-              </p>
-              <Button
-                variant="outline"
-                className="mt-3 h-9 rounded-full border-red-200 bg-white px-4 text-sm font-extrabold text-red-700 hover:bg-red-50"
-                onClick={() => window.location.reload()}
-              >
-                Retry
-              </Button>
-            </div>
-          ) : featuredSocieties.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {featuredSocieties.map((society) => {
-                const imageAttribution = societyImageAttribution(society);
-
-                return (
+        <div className="mb-3 mt-[26px] flex items-baseline justify-between">
+          <h2 className="font-sans text-base font-bold tracking-normal text-[#25302B]">Verified homes</h2>
+          <Link to="/search?tab=rent" className="text-[13px] font-semibold text-[#2A6147]">See all</Link>
+        </div>
+        {propertiesStatus === "loading" ? (
+          <div className="-mx-5 flex gap-[14px] overflow-hidden px-5">
+            {[0, 1].map((item) => (
+              <div key={item} className="h-[220px] w-[240px] shrink-0 animate-pulse rounded-[18px] bg-white" />
+            ))}
+          </div>
+        ) : verifiedHomes.length ? (
+          <div className="-mx-5 flex gap-[14px] overflow-x-auto px-5 pb-1 scrollbar-hide">
+            {verifiedHomes.map((property) => {
+              const image = Array.isArray(property.images) ? property.images[0] : "";
+              return (
                 <Link
-                  key={society.id}
-                  to={`/society/${society.slug}`}
-                  className="group overflow-hidden rounded-[1.25rem] border border-navy-100 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-premium"
+                  key={property.id}
+                  to={propertyUrl(property)}
+                  className="w-[240px] shrink-0 overflow-hidden rounded-[18px] border border-[#E7DCCB] bg-white shadow-[0_8px_22px_-16px_rgba(0,0,0,.3)]"
                 >
-                  <div className="relative h-32 overflow-hidden bg-blue-50 md:h-36">
-                    <img
-                      src={societyImage(society)}
-                      alt={society.name}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-blue-950/30 via-transparent to-transparent" />
-                    <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-black text-navy-950 shadow-sm">
-                      <Star className="h-3.5 w-3.5 fill-gold-500 text-gold-500" />
-                      {scoreOf(society)}
-                    </span>
-                    <span className="absolute right-3 top-3 rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-black text-emerald-700">
-                      Verified
-                    </span>
-                    <span
-                      className="absolute bottom-2 left-3 z-20 max-w-[72%] truncate rounded-full bg-slate-950/90 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm ring-1 ring-white/20 backdrop-blur"
-                      title={imageAttribution.title}
-                    >
-                      {imageAttribution.label}
+                  <div className="relative flex h-[118px] items-center justify-center overflow-hidden bg-[#DDE7DC]">
+                    {image ? (
+                      <img src={image} alt={property.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <Home className="h-8 w-8 text-[#2A6147]" />
+                    )}
+                    <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-[#E4F0E6] px-2 py-1 text-[10.5px] font-bold text-[#1F7A5A]">
+                      <Check className="h-3 w-3 stroke-[3]" /> Verified home
                     </span>
                   </div>
-                  <div className="p-3 md:p-3.5">
-                    <h3 className="line-clamp-1 text-base font-black text-navy-950 transition group-hover:text-blue-700 md:text-lg">
-                      {society.name}
-                    </h3>
-                    <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-navy-500">
-                      <MapPin className="h-3.5 w-3.5" />{" "}
-                      {formatPublicLocation(society)}
+                  <div className="p-[13px]">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="line-clamp-1 text-[15px] font-bold text-[#25302B]">{property.title}</h3>
+                      <span className="shrink-0 text-[11px] font-bold text-[#2A6147]">{property.listingType || "Home"}</span>
+                    </div>
+                    <p className="mt-1 line-clamp-1 text-[12px] text-[#6E756E]">
+                      {property.society || property.locality || "Gurgaon"}
                     </p>
-                    <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl bg-ivory-100 p-2.5">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-navy-300">
-                          Rent
-                        </p>
-                        <p className="mt-1 text-xs font-black text-navy-950">
-                          {society.rentRange || "On request"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-navy-300">
-                          Resale
-                        </p>
-                        <p className="mt-1 text-xs font-black text-navy-950">
-                          {society.buyRange || "On request"}
-                        </p>
-                      </div>
+                    <div className="mt-3 flex items-end justify-between border-t border-[#EEE6DA] pt-3">
+                      <p className="text-sm font-bold text-[#123C32]">{property.price || "Price on request"}</p>
+                      <p className="text-[11px] text-[#6E756E]">
+                        {property.bedrooms ? `${property.bedrooms} BHK` : "Details verified"}
+                      </p>
                     </div>
-                    <div className="mt-3 hidden grid-cols-5 gap-1 sm:grid">
-                      {["Loc", "Sec", "Ame", "ROI", "Fit"].map(
-                        (label, index) => (
-                          <div key={label} className="text-center">
-                            <div className="h-1.5 overflow-hidden rounded-full bg-blue-50">
-                              <div
-                                className="h-full rounded-full bg-blue-700"
-                                style={{ width: `${78 + index * 4}%` }}
-                              />
-                            </div>
-                            <p className="mt-1 text-[9px] font-bold text-navy-300">
-                              {label}
-                            </p>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                    <span className="mt-3 inline-flex items-center text-sm font-black text-blue-700">
-                      View society intelligence{" "}
-                      <ArrowRight className="ml-1 h-4 w-4 transition group-hover:translate-x-1" />
-                    </span>
                   </div>
                 </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="rounded-[1.5rem] border border-dashed border-navy-200 bg-ivory-100 p-6 text-navy-500">
-              Gurgaon society profiles are being added. Use admin to publish
-              verified society pages.
-            </div>
-          )}
-        </div>
-      </section>
-
-
-      <section className="bg-white px-4 py-6 md:py-7">
-        <div className="container mx-auto">
-          <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                Start with trusted Gurgaon searches
-              </p>
-              <h2 className="mt-2 font-display text-2xl font-black leading-tight text-navy-950 md:text-3xl">
-                Search by sector, builder or intent — then compare societies before choosing a home.
-              </h2>
-            </div>
-            <Link
-              to="/gurgaon"
-              className="inline-flex items-center text-sm font-black text-blue-700 hover:text-blue-800"
-            >
-              View Gurgaon guide
-              <ArrowRight className="ml-1.5 h-4 w-4" />
-            </Link>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-3">
-            {[
-              {
-                title: "Prime localities",
-                subtitle: "Sector and road-based search",
-                icon: MapPinned,
-                links: [
-                  ["Sector 65", "/gurgaon/sector-65"],
-                  ["Golf Course Road", "/gurgaon/golf-course-road"],
-                  ["Dwarka Expressway", "/gurgaon/dwarka-expressway"],
-                ],
-              },
-              {
-                title: "Top builders",
-                subtitle: "Brand-led society discovery",
-                icon: Building2,
-                links: [
-                  ["DLF", "/builder/dlf"],
-                  ["M3M", "/builder/m3m"],
-                  ["Emaar", "/builder/emaar"],
-                ],
-              },
-              {
-                title: "User intent",
-                subtitle: "Rent, resale and AI matching",
-                icon: Search,
-                links: [
-                  ["Rentals", "/search?tab=rent"],
-                  ["Resale", "/search?tab=buy"],
-                  ["AI shortlist", "/ai-advisor"],
-                ],
-              },
-            ].map((group) => {
-              const Icon = group.icon;
-              return (
-                <div
-                  key={group.title}
-                  className="relative overflow-hidden rounded-[1.35rem] border border-blue-100 bg-gradient-to-br from-white to-blue-50/65 p-4 shadow-sm"
-                >
-                  <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-blue-100/60" />
-                  <div className="relative">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-700 text-white shadow-md shadow-blue-100">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <h3 className="mt-4 text-lg font-black text-navy-950">
-                      {group.title}
-                    </h3>
-                    <p className="mt-1 text-xs font-bold text-navy-400">
-                      {group.subtitle}
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {group.links.map(([label, href]) => (
-                        <Link
-                          key={href}
-                          to={href}
-                          className="rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-700 hover:text-white"
-                        >
-                          {label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
               );
             })}
           </div>
-        </div>
-      </section>
-
-      {propertiesStatus !== "ready" || featuredProperties.length > 0 ? (
-        <section className="bg-white px-4 py-6 md:py-7">
-          <div className="container mx-auto">
-            <div className="mb-5 flex flex-col gap-4 md:mb-6 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                  Live Inventory
-                </p>
-                <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-4xl">
-                  Verified homes in trusted societies
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500 md:text-[15px] md:leading-6">
-                  <span className="md:hidden">
-                    Fresh homes inside verified Gurgaon societies.
-                  </span>
-                  <span className="hidden md:inline">
-                    Fresh rental and resale homes from Gurgaon societies, reviewed for society context, pricing clarity and serious buyer/tenant enquiries.
-                  </span>
-                </p>
-              </div>
-              <Link to="/search?tab=rent">
-                <Button className="h-10 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
-                  View verified homes <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-
-            {propertiesStatus === "loading" ? (
-              <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <div
-                    key={`property-skeleton-${index}`}
-                    className="h-64 w-[17rem] shrink-0 animate-pulse rounded-[1.25rem] border border-navy-100 bg-ivory-100 md:w-[19rem]"
-                  />
-                ))}
-              </div>
-            ) : propertiesStatus === "error" ? (
-              <div className="rounded-[1.5rem] border border-dashed border-red-200 bg-red-50 p-6 text-red-700">
-                <p className="font-black">Could not load live homes right now.</p>
-                <p className="mt-1 text-sm font-semibold">
-                  This is usually temporary. Please refresh, or try again in a moment.
-                </p>
-                <Button
-                  variant="outline"
-                  className="mt-3 h-9 rounded-full border-red-200 bg-white px-4 text-sm font-extrabold text-red-700 hover:bg-red-50"
-                  onClick={() => window.location.reload()}
-                >
-                  Retry
-                </Button>
-              </div>
-            ) : (
-            <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
-              {featuredProperties.map((property) => (
-                <div
-                  key={property.id}
-                  className="group w-[17rem] shrink-0 overflow-hidden rounded-[1.25rem] border border-navy-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-premium md:w-[19rem]"
-                >
-                  <Link to={propertyUrl(property)} className="block">
-                    <div className="relative h-32 overflow-hidden bg-blue-50 md:h-36">
-                      <img
-                        src={propertyImage(property)}
-                        alt={property.title}
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                      />
-                      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg bg-blue-700 px-2.5 py-1 text-[11px] font-black text-white">
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Verified
-                      </span>
-                    </div>
-                  </Link>
-                  <div className="p-3.5 md:p-4">
-                    <Link to={propertyUrl(property)} className="block">
-                      <p className="text-xs font-black uppercase tracking-[0.08em] text-blue-700">
-                        {property.listingType || "Rent"}
-                      </p>
-                      <h3 className="mt-1.5 line-clamp-2 text-base font-black leading-snug text-navy-950 md:text-lg">
-                        {property.title}
-                      </h3>
-                      <p className="mt-1 line-clamp-1 text-xs font-semibold text-navy-500">
-                        {property.society} · {property.locality}
-                      </p>
-                      <div className="mt-4 flex items-end justify-between">
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-[0.08em] text-navy-300">
-                            Price
-                          </p>
-                          <p className="text-lg font-black text-navy-950">
-                            {property.price || "On request"}
-                          </p>
-                        </div>
-                        <p className="text-right text-xs font-semibold leading-5 text-navy-500">
-                          {property.bedrooms || "-"} BHK
-                          <br />
-                          {property.areaSqft || "-"} sq.ft
-                        </p>
-                      </div>
-                    </Link>
-                    <div className="mt-4 grid grid-cols-2 gap-2 text-center text-[11px] font-black">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openLead({
-                            source: "homepage_live_inventory_callback",
-                            title: `Request callback for ${property.title}`,
-                            subtitle: "Share your number and SocietyFlats will confirm availability, price and visit timing.",
-                            message: `I want an expert callback for ${property.title}${property.society ? ` in ${property.society}` : ""}.`,
-                            requirement: `${property.listingType || "Property"} callback from homepage live inventory.`,
-                          })
-                        }
-                        className="rounded-full bg-blue-50 px-2.5 py-1.5 text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                      >
-                        Request expert callback
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => toggleHomePropertyShortlist(property)}
-                        className="rounded-full bg-emerald-50 px-2.5 py-1.5 text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-                      >
-                        {homeShortlistedPropertyKeys.includes(homePropertyKey(property)) ? "Shortlisted" : "Shortlist"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            )}
-          </div>
-        </section>
-      ) : (
-        <section className="bg-white px-4 py-6 md:py-7">
-          <div className="container mx-auto rounded-[1.35rem] border border-dashed border-navy-200 bg-ivory-100 p-4 shadow-sm md:p-6">
-            <h2 className="font-display text-3xl font-black text-navy-950">
-              Verified homes are being added.
-            </h2>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-navy-500">
-              We are updating live inventory for Gurgaon societies. Request a
-              callback and our team will help you find matching homes.
+        ) : (
+          <div className="rounded-[18px] border border-[#E7DCCB] bg-white p-5">
+            <h3 className="text-[15px] font-bold text-[#25302B]">Verified homes are being added.</h3>
+            <p className="mt-1 text-[13px] leading-5 text-[#6E756E]">
+              Request current availability and our team will help with rental or resale options.
             </p>
-            <Button
-              onClick={() =>
-                openLead({
-                  source: "homepage_empty_inventory",
-                  title: "Request a SocietyFlats callback",
-                  subtitle:
-                    "Share your requirement and our team will help you find matching Gurgaon homes.",
-                  message: "I want a callback for Gurgaon society rentals.",
-                  requirement:
-                    "Help me find matching homes from the homepage inventory section.",
-                })
-              }
-              className="mt-5 rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800"
+            <button
+              type="button"
+              onClick={() => setLeadOpen(true)}
+              className="mt-4 rounded-[12px] bg-[#123C32] px-4 py-3 text-[13px] font-bold text-white"
             >
-              Request Callback
-            </Button>
+              Request availability
+            </button>
           </div>
-        </section>
-      )}
+        )}
 
-
-      <section className="bg-white px-4 py-6 md:py-7">
-        <div className="container mx-auto">
-          <div className="rounded-[1.35rem] border border-blue-100 bg-white p-4 shadow-sm md:p-5">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="max-w-2xl">
-                <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-blue-700">
-                  <Bot className="h-4 w-4" />
-                  AI Advisor
+        <div className="mt-[26px] rounded-[20px] bg-[#123C32] px-5 py-[22px] text-white">
+          <h2 className="font-display text-[21px] font-medium leading-tight text-white">Every society, verified.</h2>
+          <p className="mb-4 mt-1 text-[13.5px] leading-[1.5] text-[#DDE7DC]">
+            Data and images are reviewed before a society goes live.
+          </p>
+          <div className="space-y-3">
+            {[
+              ["Admin-reviewed data", "Draft records remain private."],
+              ["Images reviewed", "Only approved display images are public."],
+              ["Refreshed regularly", "Freshness and confidence stay visible."],
+            ].map(([title, body], index) => (
+              <div key={title} className="flex items-center gap-3">
+                <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-[#244E43]">
+                  {index === 2 ? <RefreshCw className="h-[17px] w-[17px] text-[#DDE7DC]" /> : <Check className="h-[17px] w-[17px] stroke-[2.4] text-[#DDE7DC]" />}
                 </span>
-                <h2 className="mt-3 font-display text-2xl font-black leading-tight text-navy-950 md:text-3xl">
-                  Not sure which society fits you?
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-navy-500">
-                  Use SocietyFlats AI to shortlist societies by budget, commute, family needs, lifestyle fit and investment potential.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Link to="/ai-advisor">
-                  <Button className="h-11 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
-                    Ask SocietyFlats AI
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link to="/search?tab=societies&intent=general">
-                  <Button
-                    variant="outline"
-                    className="h-11 rounded-full border-blue-100 bg-white px-5 text-sm font-black text-blue-700 hover:bg-blue-50"
-                  >
-                    Browse verified societies
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-2 md:grid-cols-3">
-              {aiPrompts.slice(0, 3).map((prompt) => (
-                <Link
-                  key={prompt}
-                  to={`/ai-advisor?q=${encodeURIComponent(prompt)}`}
-                  className="rounded-2xl border border-blue-100 bg-blue-50/45 px-4 py-3 text-sm font-bold leading-6 text-navy-700 transition hover:border-blue-200 hover:bg-blue-50"
-                >
-                  {prompt}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-blue-50/40 px-4 py-8 md:hidden">
-        <div className="container mx-auto rounded-[1.25rem] border border-blue-100 bg-white p-3.5 shadow-sm md:p-4">
-          <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">
-            Location intelligence
-          </p>
-          <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950">
-            Check commute before you visit.
-          </h2>
-          <p className="mt-1.5 text-sm leading-6 text-navy-500">
-            Compare metro access, schools, hospitals, office hubs and daily convenience before booking a visit.
-          </p>
-          <Link to="/maps" className="mt-4 inline-flex">
-            <Button className="h-10 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
-              Explore Map Intelligence <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      <section className="hidden bg-blue-50/35 px-4 py-10 md:block">
-        <div className="container mx-auto grid gap-6 lg:grid-cols-[20rem_1fr]">
-          <div>
-            <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">
-              Live map intelligence
-            </p>
-            <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
-              See societies by commute strength.
-            </h2>
-            <p className="mt-1.5 text-xs leading-5 text-navy-500">
-              Preview live Gurgaon society pins, then open the full Google map to compare location, commute and nearby context before you visit.
-            </p>
-
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <div className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-500">
-                  Ready pins
-                </p>
-                <p className="mt-1 text-2xl font-black text-navy-950">
-                  {mapSocieties.length || 0}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3 shadow-sm">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">
-                  Map mode
-                </p>
-                <p className="mt-1 text-sm font-black text-emerald-800">
-                  Google ready
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-2">
-              {mapSocieties.length ? (
-                mapSocieties.slice(0, 4).map((society, index) => (
-                  <Link
-                    key={society.name}
-                    to={
-                      society.slug
-                        ? `/society/${society.slug}`
-                        : "/search?tab=societies"
-                    }
-                    className="flex items-center gap-2 rounded-xl border border-blue-100 bg-white p-2.5 shadow-sm transition hover:border-blue-200 hover:bg-blue-50"
-                  >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-xs font-black text-blue-700">
-                      {scoreOf(society, `${8.8 - index * 0.3}`)}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-black text-navy-950">
-                        {society.name}
-                      </p>
-                      <p className="truncate text-xs font-semibold text-navy-400">
-                        {society.sector || formatPublicLocation(society)}
-                      </p>
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-blue-100 bg-white/80 p-3 text-xs font-bold leading-5 text-navy-500 shadow-sm">
-                  No live society pins yet. Import and publish societies to activate map cards.
-                </div>
-              )}
-            </div>
-
-            <Link to="/maps" className="mt-4 inline-flex">
-              <Button className="h-10 rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800">
-                Open live Google map <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-
-          <div className="relative min-h-[22rem] overflow-hidden rounded-[1.35rem] border border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#dbeafe_45%,#f8fafc_100%)] shadow-soft">
-            <div className="absolute inset-0 opacity-70">
-              {[20, 44, 68].map((top) => (
-                <span
-                  key={`h-${top}`}
-                  className="absolute left-0 right-0 h-2 bg-white"
-                  style={{ top: `${top}%` }}
-                />
-              ))}
-              {[18, 38, 58, 78].map((left) => (
-                <span
-                  key={`v-${left}`}
-                  className="absolute bottom-0 top-0 w-2 bg-white"
-                  style={{ left: `${left}%` }}
-                />
-              ))}
-              <span className="absolute left-[10%] top-[66%] h-1 w-[72%] -rotate-12 rounded-full bg-blue-200/60" />
-              <span className="absolute left-[25%] top-[35%] h-1 w-[58%] rotate-6 rounded-full bg-blue-200/60" />
-            </div>
-
-            {mapSocieties
-              .slice(0, 5)
-              .map((society, index) => {
-                const pinPositions = [
-                  [30, 28],
-                  [55, 42],
-                  [72, 60],
-                  [42, 68],
-                  [62, 28],
-                ];
-                const [left, top] = pinPositions[index] || [50, 50];
-                const isPrimary = index === 0;
-
-                return (
-                  <Link
-                    key={society.id || society.name}
-                    to={society.slug ? `/society/${society.slug}` : "/maps"}
-                    className="group/pin absolute -translate-x-1/2 -translate-y-1/2"
-                    style={{ left: `${left}%`, top: `${top}%` }}
-                  >
-                    <span
-                      className={`flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-white text-xs font-black text-white shadow-xl transition group-hover/pin:scale-110 ${
-                        isPrimary ? "bg-emerald-500" : "bg-blue-600"
-                      }`}
-                      title={society.name}
-                    >
-                      {scoreOf(society, `${8.8 - index * 0.3}`)}
-                    </span>
-                    <span className="pointer-events-none absolute left-1/2 top-12 block w-44 -translate-x-1/2 rounded-2xl border border-blue-100 bg-white/95 px-3 py-2 text-left shadow-xl backdrop-blur transition group-hover/pin:-translate-y-0.5 group-hover/pin:shadow-2xl">
-                      <span className="block truncate text-xs font-black text-navy-950">
-                        {society.name}
-                      </span>
-                      <span className="mt-0.5 block truncate text-[11px] font-semibold text-blue-500">
-                        {society.sector || formatPublicLocation(society)}
-                      </span>
-                    </span>
-                  </Link>
-                );
-              })}
-
-            <div className="absolute left-4 top-4 rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-600">
-                Gurgaon live map
-              </p>
-              <p className="mt-1 text-sm font-black text-navy-950">
-                {mapSocieties.length || 0} real society pins
-              </p>
-              <p className="mt-1 max-w-[13rem] text-[11px] font-semibold leading-4 text-navy-500">
-                Preview only. Open the full map for synced Google markers and society details.
-              </p>
-            </div>
-
-            <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-white/95 p-1.5 shadow-sm backdrop-blur">
-              <Link
-                to="/maps"
-                className="rounded-full bg-blue-700 px-3.5 py-2 text-[11px] font-black text-white transition hover:bg-blue-800"
-              >
-                Open Gurgaon live map
-              </Link>
-              <Link
-                to="/search?tab=societies"
-                className="rounded-full px-3 py-2 text-[11px] font-black text-blue-700 transition hover:bg-blue-50"
-              >
-                List view
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="hidden bg-white px-4 py-5 md:block">
-        <div className="container mx-auto">
-          <div className="grid gap-4 rounded-[1.35rem] border border-blue-100 bg-gradient-to-br from-white to-blue-50/45 p-4 shadow-sm lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                Market insights
-              </p>
-              <h2 className="mt-2 font-display text-2xl font-black leading-tight text-navy-950">
-                Pricing, demand and investment signals.
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-navy-500">
-                A quick market view to compare rent trends, demand signals and society-level investment strength.
-              </p>
-              <Link
-                to="/insights"
-                className="mt-3 inline-flex items-center text-sm font-black text-blue-700 hover:text-blue-800"
-              >
-                Open market insights
-                <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Link>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-4">
-              {[
-                ["Golf Course Road", "Rs 90K", "+12%", "High demand"],
-                ["Golf Course Ext.", "Rs 82K", "+11%", "Family demand"],
-                ["Dwarka Expressway", "Rs 74K", "+10%", "Rising supply"],
-                ["Sohna Road", "Rs 66K", "+9%", "Value picks"],
-              ].map(([locality, average, trend, signal]) => (
-                <div
-                  key={locality}
-                  className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm"
-                >
-                  <p className="text-xs font-black text-navy-950">{locality}</p>
-                  <div className="mt-3 flex items-end justify-between gap-2">
-                    <p className="text-xl font-black text-navy-950">{average}</p>
-                    <p className="text-sm font-black text-emerald-700">{trend}</p>
-                  </div>
-                  <p className="mt-2 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-black text-blue-700">
-                    {signal}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="hidden bg-blue-50/35 px-4 py-10 md:block">
-        <div className="container mx-auto">
-          <div className="mb-6 max-w-3xl">
-            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">
-              Trust and verified enquiries
-            </p>
-            <h2 className="font-display text-3xl font-black leading-tight tracking-tight text-navy-950">
-              Society-first decisions need proof, not guesswork.
-            </h2>
-          </div>
-          <div className="grid gap-4 lg:grid-cols-3">
-            {reviewCards.map((review) => (
-              <div
-                key={review.name}
-                className="rounded-[1.2rem] border border-blue-100 bg-white p-4 shadow-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-xs font-black text-blue-700">
-                    {initials(review.name)}
-                  </span>
-                  <div>
-                    <p className="text-sm font-black text-navy-950">{review.name}</p>
-                    <p className="text-xs font-semibold text-navy-400">
-                      Verified enquiry · {review.society}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-3 flex text-gold-500">
-                  {[0, 1, 2, 3, 4].map((star) => (
-                    <Star key={star} className="h-4 w-4 fill-current" />
-                  ))}
-                </div>
-                <h3 className="mt-2 text-base font-black text-navy-950">
-                  {review.title}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-navy-500">
-                  {review.text}
-                </p>
+                <div><p className="text-sm font-semibold">{title}</p><p className="text-xs text-[#C4D3CA]">{body}</p></div>
               </div>
             ))}
           </div>
         </div>
-      </section>
 
-      <section className="bg-white px-4 py-6 md:py-7">
-        <div className="container mx-auto grid gap-5 md:gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
-          <div>
-            <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-              For owners
-            </p>
-            <h2 className="font-display text-2xl font-black leading-tight tracking-tight text-navy-950 md:text-3xl">
-              <span className="md:hidden">List your flat with verified buyers.</span>
-              <span className="hidden md:inline">
-                Own a premium apartment in Gurgaon? List your property directly.
-              </span>
-            </h2>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-navy-500 md:text-[15px] md:leading-6">
-              <span className="md:hidden">
-                Get verified tenant and buyer enquiries from users already comparing societies.
-              </span>
-              <span className="hidden md:inline">
-                We match your home with pre-qualified buyers and tenants already researching your specific society. Skip endless broker calls and listing spam.
-              </span>
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link to="/sell">
-                <Button className="h-10 w-full rounded-full bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800 md:w-auto">
-                  List your flat
-                </Button>
-              </Link>
-              <Button
-                onClick={() =>
-                  openLead({
-                    source: "homepage_owner_talk",
-                    title: "Talk to SocietyFlats",
-                    subtitle:
-                      "Tell us about your flat or requirement. We will route it to the right lead flow.",
-                    message:
-                      "I want to talk to SocietyFlats about listing or finding a property.",
-                    requirement:
-                      "Owner/listing or property requirement from homepage CTA.",
-                  })
-                }
-                variant="outline"
-                className="h-10 w-full rounded-full border-blue-100 bg-white px-5 text-sm font-black text-blue-700 hover:bg-blue-50 md:w-auto"
-              >
-                Talk to an expert
-              </Button>
+        <h2 className="mb-3 mt-[26px] font-sans text-base font-bold tracking-normal text-[#25302B]">Top builders</h2>
+        <div className="grid grid-cols-3 gap-2">
+          {builders.map(([label, href]) => (
+            <Link key={href} to={href} className="flex h-14 items-center justify-center rounded-[13px] border border-[#E7DCCB] bg-white text-[15px] font-bold text-[#405049]">
+              {label}
+            </Link>
+          ))}
+        </div>
+        <Link to="/search?tab=societies" className="mt-[22px] block rounded-[16px] bg-[#123C32] p-4 text-center text-[15px] font-semibold text-white">
+          Browse all verified societies
+        </Link>
+      </main>
+
+      {/* DESKTOP PROTOTYPE */}
+      <main className="hidden lg:block">
+        <section className="mx-auto mt-14 max-w-[1360px] px-10">
+          <div className="grid grid-cols-4 gap-[18px]">
+            {[
+              ["RWA / public records reviewed", "Available public and society records are checked before publishing."],
+              ["Admin-reviewed society data", "Imported profiles remain private until an admin reviews them."],
+              ["Images reviewed before publishing", "Every public image passes the approval workflow."],
+              ["Market ranges refreshed regularly", "Ranges can be updated without inventing unavailable homes."],
+            ].map(([title, body]) => (
+              <div key={title} className="rounded-[16px] border border-[#E7DCCB] bg-white p-[22px]">
+                <span className="mb-[13px] flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#E4F0E6]"><Check className="h-[19px] w-[19px] stroke-[2.4] text-[#1F7A5A]" /></span>
+                <h3 className="font-sans text-[15px] font-bold tracking-normal text-[#25302B]">{title}</h3>
+                <p className="mt-1 text-[13px] leading-[1.5] text-[#6E756E]">{body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto mt-16 max-w-[1360px] px-10">
+          <div className="mb-[22px] flex items-end justify-between">
+            <div><h2 className="font-display text-[32px] font-medium text-[#25302B]">Featured verified societies</h2><p className="mt-1.5 text-sm text-[#6E756E]">Published & admin-reviewed. Images checked before display.</p></div>
+            <Link to="/search?tab=societies" className="text-sm font-bold text-[#2A6147]">View all societies →</Link>
+          </div>
+          {featured.length ? (
+            <div className="grid grid-cols-4 gap-[22px]">{featured.map((society) => <SocietyCard key={society.slug} society={society} />)}</div>
+          ) : (
+            <div className="rounded-[18px] border border-[#E7DCCB] bg-white p-8">
+              <h3 className="font-display text-2xl font-medium">Fresh verified societies are being prepared.</h3>
+              <p className="mt-2 text-sm text-[#6E756E]">No published society profiles are available yet. New profiles appear here after admin review.</p>
+            </div>
+          )}
+        </section>
+
+        <section className="mx-auto mt-16 max-w-[1360px] px-10">
+          <div className="grid grid-cols-2 items-center gap-10 rounded-[24px] bg-[#123C32] p-11 text-white">
+            <div>
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#8DC5A7]">SocietyFlats AI</p>
+              <h2 className="font-display text-[34px] font-medium leading-[1.1] text-white">Not sure which society fits?</h2>
+              <p className="mb-6 mt-3 text-[15.5px] leading-[1.55] text-[#D2E0D7]">Tell us your budget, office location and lifestyle. SocietyFlats AI will suggest societies that fit—with clear reasoning and a data-confidence signal.</p>
+              <Link to="/ai-advisor" className="inline-flex rounded-[12px] bg-[#C2724E] px-7 py-3.5 text-[15px] font-bold text-white">Build my shortlist</Link>
+            </div>
+            <div className="flex flex-col gap-3">
+              {["Best societies near Cyber City under ₹80k rent", "Family-friendly societies near good schools", "Compare my shortlisted societies"].map((prompt) => (
+                <Link key={prompt} to={`/ai-advisor?q=${encodeURIComponent(prompt)}`} className="flex items-center justify-between rounded-[12px] border border-[#315A4F] bg-[#234A40] px-4 py-3.5 text-sm">
+                  {prompt} <span className="text-[#8DC5A7]">→</span>
+                </Link>
+              ))}
             </div>
           </div>
-          <div className="hidden gap-3 sm:grid-cols-3 md:grid">
-            {ownerBenefits.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.title}
-                  to="/sell"
-                  className="rounded-[1.1rem] border border-blue-100 bg-blue-50/35 p-4 transition hover:-translate-y-1 hover:bg-white hover:shadow-soft"
-                >
-                  <Icon className="h-5 w-5 text-blue-700" />
-                  <h3 className="mt-4 text-sm font-black text-navy-950">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-navy-500">
-                    {item.text}
-                  </p>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <PublicLeadModal
-        open={Boolean(leadContext)}
-        title={leadContext?.title || "Request callback"}
-        subtitle={leadContext?.subtitle}
-        source={leadContext?.source || "homepage_cta"}
-        defaultMessage={leadContext?.message}
-        defaultRequirement={leadContext?.requirement}
-        submitLabel="Request callback"
-        onClose={() => setLeadContext(null)}
-      />
-
-      {chatOpen ? (
-        <div className="fixed bottom-[6.7rem] right-3 z-40 w-[20rem] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-[1.35rem] border border-blue-100 bg-white shadow-premium sm:right-5 md:bottom-6 md:right-6 md:w-[22rem]">
-          <div className="flex items-center gap-3 border-b border-blue-100 bg-blue-50 px-4 py-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-700 text-sm font-black text-white">
-              AI
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="font-black text-navy-950">SocietyFlats AI</p>
-              <p className="text-xs font-semibold text-emerald-700">
-                Online · Gurgaon expert
+        <section className="mx-auto mt-16 max-w-[1360px] px-10">
+          <div className="mb-[22px] flex items-end justify-between">
+            <div>
+              <h2 className="font-display text-[32px] font-medium text-[#25302B]">Verified homes</h2>
+              <p className="mt-1.5 text-sm text-[#6E756E]">
+                Published rental and resale inventory inside reviewed Gurgaon societies.
               </p>
             </div>
-            <button
-              onClick={() => setChatOpen(false)}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-navy-400 transition hover:text-navy-950"
-              aria-label="Collapse SocietyFlats AI chat"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <Link to="/search?tab=rent" className="text-sm font-bold text-[#2A6147]">
+              View all homes →
+            </Link>
           </div>
-          <div className="space-y-3 p-4">
-            <div className="max-w-[88%] rounded-2xl bg-ivory-100 px-4 py-3 text-sm font-semibold leading-6 text-navy-600">
-              Hi. I can help you find the right Gurgaon society based on budget,
-              commute and lifestyle.
+
+          {propertiesStatus === "loading" ? (
+            <div className="grid grid-cols-4 gap-[22px]">
+              {[0, 1, 2, 3].map((item) => (
+                <div key={item} className="h-[300px] animate-pulse rounded-[18px] bg-white" />
+              ))}
             </div>
-            <div className="ml-auto max-w-[82%] rounded-2xl bg-blue-700 px-4 py-3 text-sm font-bold leading-6 text-white">
-              {floatingAiQuery}
-            </div>
-            <div className="max-w-[92%] rounded-2xl bg-ivory-100 px-4 py-3 text-sm font-semibold leading-6 text-navy-600">
-              {isFloatingAiLoading ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Finding live matches...
-                </span>
-              ) : (
-                floatingAiReply
-              )}
-            </div>
-            {floatingAiMatches.length > 0 ? (
-              <div className="space-y-2">
-                {floatingAiMatches.map((match, index) => (
+          ) : verifiedHomes.length ? (
+            <div className="grid grid-cols-4 gap-[22px]">
+              {verifiedHomes.slice(0, 4).map((property) => {
+                const image = Array.isArray(property.images) ? property.images[0] : "";
+                return (
                   <Link
-                    key={`${match.id || index}-${match.society_name}`}
-                    to={match.slug ? `/society/${match.slug}` : `/search?q=${encodeURIComponent(floatingAiQuery)}&intent=general`}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white px-3 py-2 text-sm font-black text-navy-900 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
+                    key={property.id}
+                    to={propertyUrl(property)}
+                    className="overflow-hidden rounded-[18px] border border-[#E7DCCB] bg-white shadow-[0_10px_28px_-22px_rgba(0,0,0,.35)] transition hover:-translate-y-1"
                   >
-                    <span className="min-w-0 truncate">
-                      {index + 1}. {match.society_name}
-                      <span className="ml-1 text-xs font-bold text-blue-500">
-                        {match.sector || match.locality || "Gurgaon"}
+                    <div className="relative flex h-[158px] items-center justify-center overflow-hidden bg-[#DDE7DC]">
+                      {image ? (
+                        <img src={image} alt={property.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <Home className="h-9 w-9 text-[#2A6147]" />
+                      )}
+                      <span className="absolute left-[11px] top-[11px] inline-flex items-center gap-1 rounded-full bg-[#E4F0E6] px-2.5 py-1 text-[11px] font-bold text-[#1F7A5A]">
+                        <Check className="h-3 w-3 stroke-[3]" /> Verified home
                       </span>
-                    </span>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-blue-600" />
+                      <span className="absolute right-[9px] top-[9px] rounded-[9px] bg-white px-2 py-1 text-[11px] font-bold text-[#123C32]">
+                        {property.listingType || "Home"}
+                      </span>
+                    </div>
+                    <div className="px-[15px] pb-4 pt-[14px]">
+                      <h3 className="line-clamp-1 text-base font-bold text-[#25302B]">{property.title}</h3>
+                      <p className="mt-1 line-clamp-1 text-[12.5px] text-[#6E756E]">
+                        {property.society || property.locality || "Gurgaon"}
+                      </p>
+                      <div className="mt-3 flex items-end justify-between border-t border-[#EEE6DA] pt-3">
+                        <div>
+                          <p className="text-[11px] text-[#6E756E]">Price</p>
+                          <p className="text-[13.5px] font-bold text-[#123C32]">
+                            {property.price || "On request"}
+                          </p>
+                        </div>
+                        <p className="text-right text-[11px] leading-5 text-[#6E756E]">
+                          {property.bedrooms ? `${property.bedrooms} BHK` : "Details verified"}
+                          {property.areaSqft ? <><br />{property.areaSqft} sq.ft</> : null}
+                        </p>
+                      </div>
+                    </div>
                   </Link>
-                ))}
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-[1fr_auto] items-center gap-6 rounded-[18px] border border-[#E7DCCB] bg-white p-8">
+              <div>
+                <h3 className="font-display text-2xl font-medium text-[#25302B]">
+                  Verified homes are being added.
+                </h3>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6E756E]">
+                  Request current availability and our team will help with rental or resale options inside suitable Gurgaon societies.
+                </p>
               </div>
-            ) : null}
-            <div className="flex flex-wrap gap-2">
-              <Link
-                to="/compare"
-                className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              >
-                Compare
-              </Link>
-              <Link
-                to={`/search?q=${encodeURIComponent(floatingAiQuery)}&intent=general`}
-                className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              >
-                Open results
-              </Link>
               <button
                 type="button"
-                onClick={() =>
-                  openLead({
-                    source: "floating_chat_callback",
-                    title: "Schedule a SocietyFlats callback",
-                    subtitle:
-                      "Share your Gurgaon society requirement and we will call you back.",
-                    message:
-                      "I want to schedule a callback from the floating AI chat.",
-                    requirement: "Callback requested from floating AI chat.",
-                  })
-                }
-                className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                onClick={() => setLeadOpen(true)}
+                className="rounded-[12px] bg-[#123C32] px-6 py-3 text-sm font-bold text-white"
               >
-                Schedule callback
+                Request availability
               </button>
             </div>
+          )}
+        </section>
+
+        <section className="mx-auto mt-16 max-w-[1360px] px-10">
+          <h2 className="mb-[22px] font-display text-[32px] font-medium text-[#25302B]">Popular Gurgaon areas</h2>
+          <div className="grid grid-cols-4 gap-4">
+            {areas.map(([name, href, reason]) => (
+              <Link key={href} to={href} className="relative h-[150px] overflow-hidden rounded-[16px] bg-[#6F8D82] [background-image:repeating-linear-gradient(135deg,#5F7D72_0_1px,transparent_1px_13px)]">
+                <div className="absolute inset-0 bg-gradient-to-b from-[#10251F]/10 to-[#10251F]/70" />
+                <div className="absolute bottom-[14px] left-[15px] text-white"><p className="text-base font-bold">{name}</p><p className="mt-0.5 text-xs opacity-85">{reason}</p></div>
+              </Link>
+            ))}
           </div>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              submitFloatingAi();
-            }}
-            className="flex items-center gap-2 border-t border-blue-100 bg-white p-3"
-          >
-            <input
-              value={floatingAiInput}
-              onChange={(event) => setFloatingAiInput(event.target.value)}
-              aria-label="Ask SocietyFlats AI"
-              className="min-w-0 flex-1 rounded-full border border-blue-100 bg-ivory-100 px-4 py-2.5 text-sm font-semibold text-navy-700 outline-none placeholder:text-navy-300"
-              placeholder="Ask about any society..."
-            />
-            <button
-              type="submit"
-              disabled={!floatingAiInput.trim() || isFloatingAiLoading}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-700 text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="Search with SocietyFlats AI"
-            >
-              {isFloatingAiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </button>
-          </form>
-        </div>
-      ) : (
-        <button
-          onClick={() => setChatOpen(true)}
-          className="fixed bottom-[5.35rem] right-4 z-40 flex h-[54px] w-[54px] items-center justify-center rounded-full bg-blue-700 text-white shadow-premium transition hover:scale-105 hover:bg-blue-800 md:bottom-6 md:right-6 md:h-14 md:w-14"
-          aria-label="Open SocietyFlats AI chat"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </button>
-      )}
+        </section>
+
+        <section className="mx-auto mt-16 grid max-w-[1360px] grid-cols-2 gap-[22px] px-10">
+          <div className="rounded-[20px] border border-[#E8D0BF] bg-[#FFF4E9] p-8">
+            <p className="mb-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[#A45B3A]">For owners</p>
+            <h3 className="font-display text-[25px] font-medium text-[#25302B]">List your flat once. Reach serious tenants & buyers.</h3>
+            <p className="mb-5 mt-2.5 text-sm leading-[1.55] text-[#59635E]">Own a flat in Gurgaon? Reach people already searching inside your society. No spam—your number is used only for verification and enquiries.</p>
+            <Link to="/sell" className="inline-flex rounded-[11px] bg-[#C2724E] px-6 py-3 text-sm font-bold text-white">List your flat</Link>
+          </div>
+          <div className="rounded-[20px] bg-[#123C32] p-8 text-white">
+            <p className="mb-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[#8DC5A7]">For brokers</p>
+            <h3 className="font-display text-[25px] font-medium text-white">Partner with SocietyFlats.</h3>
+            <p className="mb-5 mt-2.5 text-sm leading-[1.55] text-[#D2E0D7]">Have verified Gurgaon inventory? Get society-specific enquiries and avoid duplicate listing spam.</p>
+            <Link to="/broker-crm" className="inline-flex rounded-[11px] bg-[#F1F5EF] px-6 py-3 text-sm font-bold text-[#123C32]">Become a partner</Link>
+          </div>
+        </section>
+
+        <section className="mx-auto mt-16 max-w-[900px] px-10">
+          <h2 className="mb-[22px] text-center font-display text-[32px] font-medium text-[#25302B]">Questions, answered</h2>
+          <div className="space-y-3">
+            {faqs.map(([question, answer], index) => (
+              <details key={question} open={index === 0} className="rounded-[14px] border border-[#E7DCCB] bg-white px-5 py-[18px]">
+                <summary className="cursor-pointer list-none text-[15px] font-semibold">{question}</summary>
+                <p className="mt-3 text-sm leading-6 text-[#6E756E]">{answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto mt-16 max-w-[1360px] px-10">
+          <div className="rounded-[24px] bg-[#123C32] p-14 text-center text-white">
+            <h2 className="font-display text-[40px] font-medium tracking-[-0.01em] text-white">Find a home in a society you can actually trust.</h2>
+            <p className="mb-7 mt-3 text-base text-[#D2E0D7]">Start with the community. The right home follows.</p>
+            <div className="flex justify-center gap-[14px]">
+              <Link to="/search?tab=societies" className="rounded-[12px] bg-[#C2724E] px-8 py-[15px] text-[15px] font-bold text-white">Browse verified societies</Link>
+              <Link to="/ai-advisor" className="rounded-[12px] border border-white/30 bg-white/10 px-8 py-[15px] text-[15px] font-bold text-white">Ask SocietyFlats AI</Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <PublicLeadModal
+        open={leadOpen}
+        title="Request a callback"
+        subtitle="Share your requirement and SocietyFlats will help with relevant Gurgaon options."
+        source="homepage"
+        defaultMessage="Help me shortlist the right Gurgaon society."
+        defaultRequirement="Gurgaon society shortlist"
+        submitLabel="Request callback"
+        onClose={() => setLeadOpen(false)}
+      />
     </div>
   );
 }

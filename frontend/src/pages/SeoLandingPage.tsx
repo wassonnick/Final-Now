@@ -111,14 +111,15 @@ function readableFromSlug(value: string | undefined, fallback: string) {
     .join(" ");
 }
 
-function scoreNumber(society: any, fallback = 8.1) {
-  const parsed = Number(society?.score || society?.overallScore || society?.overall_score || fallback);
-  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+function scoreNumber(society: any) {
+  const parsed = Number(society?.score || society?.overallScore || society?.overall_score);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
   return parsed > 10 ? parsed / 10 : parsed;
 }
 
-function scoreOf(society: any, fallback = "8.1") {
-  return scoreNumber(society, Number(fallback)).toFixed(1);
+function scoreOf(society: any) {
+  const score = scoreNumber(society);
+  return score > 0 ? score.toFixed(1) : "—";
 }
 
 function compactText(value: unknown, fallback = "On request") {
@@ -341,7 +342,7 @@ function FeaturedSocietyCard({
   const attribution = societyImageAttribution(society);
 
   return (
-    <div className={`overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_48px_rgba(37,99,235,0.12)] ${compact ? "" : ""}`}>
+    <div className={`overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_48px_rgba(16,37,31,0.10)] ${compact ? "" : ""}`}>
       <div className="relative h-28 overflow-hidden bg-blue-50">
         <img src={societyImage(society)} alt={society.name} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-navy-950/70 via-navy-950/10 to-transparent" />
@@ -536,8 +537,8 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
   const pageLabel = landingLabel(variant, locality, builderSlug);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <section className="relative overflow-hidden border-b border-blue-50 bg-[radial-gradient(circle_at_82%_14%,rgba(37,99,235,0.14),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)]">
+    <div className="min-h-screen bg-[#F8F3EA]">
+      <section className="relative overflow-hidden border-b border-[#E7DCCB] bg-[radial-gradient(circle_at_82%_14%,rgba(194,114,78,0.10),transparent_30%),linear-gradient(180deg,#FFFBF3_0%,#F8F3EA_100%)]">
         <div className="container mx-auto px-4 py-6 md:py-8">
           <nav className="mb-5 flex items-center gap-2 text-xs font-black text-blue-300">
             <Link to="/" className="hover:text-blue-700">Home</Link>
@@ -693,7 +694,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                 )}
               </section>
 
-              <section className="rounded-[1.75rem] border border-blue-100 bg-[linear-gradient(135deg,#eff6ff,#ffffff)] p-4 shadow-sm md:p-5">
+              <section className="rounded-[1.75rem] border border-blue-100 bg-[linear-gradient(135deg,#EEF5F1,#FFFBF3)] p-4 shadow-sm md:p-5">
                 <p className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-700">SocietyFlats view</p>
                 <h2 className="mt-2 font-display text-3xl font-black text-navy-950">{copy.insightTitle}</h2>
                 <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-blue-500">{copy.insightText}</p>
@@ -721,7 +722,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                 />
 
                 <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="rounded-[1.5rem] border border-blue-100 bg-[#F8FAFC] p-4">
+                  <div className="rounded-[1.5rem] border border-blue-100 bg-[#FFFBF3] p-4">
                     <p className="flex items-center gap-2 text-sm font-black text-navy-950">
                       <MapPin className="h-4 w-4 text-blue-700" /> Localities
                     </p>
@@ -734,7 +735,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                     </div>
                   </div>
 
-                  <div className="rounded-[1.5rem] border border-blue-100 bg-[#F8FAFC] p-4">
+                  <div className="rounded-[1.5rem] border border-blue-100 bg-[#FFFBF3] p-4">
                     <p className="flex items-center gap-2 text-sm font-black text-navy-950">
                       <Building2 className="h-4 w-4 text-blue-700" /> Builders
                     </p>

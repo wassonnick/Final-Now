@@ -83,7 +83,7 @@ function backendPropertyMeta(property: AccountDashboardProperty) {
     property.bedrooms ? `${property.bedrooms} BHK` : "",
     property.area_sqft ? `${property.area_sqft} sq.ft.` : "",
     property.owner_verification_status ? `Owner review: ${property.owner_verification_status}` : "",
-    `Backend synced ${formatDate(property.updated_at || property.created_at || undefined)}`,
+    `Updated ${formatDate(property.updated_at || property.created_at || undefined)}`,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -93,7 +93,7 @@ function backendPropertyToDashboardItem(property: AccountDashboardProperty): Own
   return {
     title: property.title || `Owner property #${property.id}`,
     meta: backendPropertyMeta(property),
-    status: property.status || property.owner_verification_status || "Backend synced",
+    status: property.status || property.owner_verification_status || "In review",
     value: property.verified ? "Verified" : undefined,
   };
 }
@@ -108,7 +108,7 @@ function backendLeadMeta(lead: AccountDashboardLead) {
     lead.society_name ? `Society: ${lead.society_name}` : "",
     lead.requirement || "",
     lead.budget ? `Expected: ${lead.budget}` : "",
-    `Backend synced ${formatDate(lead.created_at || undefined)}`,
+    `Updated ${formatDate(lead.created_at || undefined)}`,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -118,7 +118,7 @@ function backendToDashboardItem(lead: AccountDashboardLead): OwnerDashboardItem 
   return {
     title: backendLeadTitle(lead),
     meta: backendLeadMeta(lead),
-    status: lead.status || "Backend synced",
+    status: lead.status || "In review",
   };
 }
 
@@ -294,7 +294,7 @@ export function OwnerDashboard() {
   const hasBackendDashboard = Boolean(backendDashboard?.scope?.privacy);
 
   const ownerStats = [
-    { label: "Submitted listings", value: String(backendOwnerLeadCount ?? listingSubmissions.length), helper: hasBackendDashboard ? "Backend protected" : "Local fallback", icon: Home },
+    { label: "Submitted listings", value: String(backendOwnerLeadCount ?? listingSubmissions.length), helper: hasBackendDashboard ? "Account verified" : "Saved to this account", icon: Home },
     { label: "Admin review", value: String(backendLinkedPropertyCount ?? listingSubmissions.length), helper: "Verification pipeline", icon: ShieldCheck },
     { label: "Safe lead updates", value: String(propertyLeadItems.length), helper: "Contact privacy locked", icon: MessageCircle },
     { label: "Other enquiries", value: String(enquirySubmissions.length), helper: "Search/society callbacks", icon: Phone },
@@ -306,8 +306,8 @@ export function OwnerDashboard() {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#f7fbff] pb-16">
-      <section className="border-b border-blue-100 bg-gradient-to-br from-white via-blue-50/80 to-slate-50">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#F8F3EA] pb-16">
+      <section className="border-b border-[#E7DCCB] bg-[#FFFBF3]">
         <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -363,8 +363,8 @@ export function OwnerDashboard() {
       </section>
 
       <main className="container mx-auto max-w-7xl px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="flex h-auto w-full max-w-full flex-wrap items-stretch justify-start gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:items-start lg:gap-6">
+          <TabsList className="flex h-auto w-full max-w-full flex-wrap items-stretch justify-start gap-2 rounded-3xl border border-[#E7DCCB] bg-[#FFFBF3] p-2 shadow-sm lg:sticky lg:top-24 lg:flex-col lg:rounded-[20px] lg:p-3">
             {[
               ["overview", "Overview", BarChart3],
               ["listings", "My Listings", Home],
@@ -376,7 +376,7 @@ export function OwnerDashboard() {
                 <TabsTrigger
                   key={String(value)}
                   value={String(value)}
-                  className="min-w-0 flex-1 basis-[calc(50%-0.25rem)] whitespace-normal rounded-2xl px-2 py-3 text-center text-xs font-bold leading-tight data-[state=active]:bg-blue-700 data-[state=active]:text-white xl:basis-0"
+                  className="min-w-0 flex-1 basis-[calc(50%-0.25rem)] justify-start whitespace-normal rounded-xl px-3 py-3 text-left text-xs font-bold leading-tight data-[state=active]:bg-[#123C32] data-[state=active]:text-white lg:w-full lg:flex-none"
                 >
                   <IconComponent className="mr-2 h-4 w-4" />
                   {String(label)}
@@ -418,18 +418,18 @@ export function OwnerDashboard() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-950">Admin-controlled visibility</h2>
-                  <p className="mt-1 text-sm text-slate-500">C112D-C protected backend dashboard with enriched owner property cards.</p>
+                  <p className="mt-1 text-sm text-slate-500">Protected owner dashboard with listing and enquiry updates.</p>
                 </div>
               </div>
               <p className="mt-5 rounded-3xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-                Owners can see their own submitted listing requests and privacy-safe lead update placeholders. Buyer/tenant contact details, negotiations and deal status remain controlled by SocietyFlats admin with C112D protected account APIs now connected when OTP token exists.
+                Owners can see their submitted listing requests and privacy-safe lead updates. Buyer or tenant contact details remain protected until SocietyFlats verifies the enquiry stage.
               </p>
               <div className="mt-5 grid gap-3">
                 {[
                   "Owner listings are linked by this login phone",
                   "Admin verifies ownership, photos, pricing and availability",
                   "Public publishing remains admin-approved",
-                  "Lead/contact visibility remains locked until a safe backend route exists",
+                  "Contact details are shared only after the enquiry is reviewed",
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700">
                     <CheckCircle2 className="h-5 w-5 text-blue-700" />
@@ -488,7 +488,7 @@ export function OwnerDashboard() {
                     Phone: {ownerPhone || "Not available"} · Role: Owner / Customer
                   </p>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                    C112D-B connects this dashboard to the protected backend account summary when OTP token exists; local activity remains as fallback.
+                    Your account keeps listing requests, verification updates and privacy-safe enquiry activity together.
                   </p>
                 </div>
               </div>
@@ -499,10 +499,10 @@ export function OwnerDashboard() {
         <section className="mt-8 rounded-[28px] border border-blue-100 bg-blue-50 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">C112D-C owner enriched dashboard</p>
-              <h2 className="mt-2 text-2xl font-black text-slate-950">Owner dashboard now shows protected backend property cards when available.</h2>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Owner listing dashboard</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">Keep every listing and enquiry update in one private place.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                This page shows owner-safe submitted listings and protected lead update placeholders without exposing buyer or tenant contact data.
+                Review submitted homes, verification progress and privacy-safe enquiry updates without exposing buyer or tenant contact details.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -513,9 +513,9 @@ export function OwnerDashboard() {
                 </Link>
               </Button>
               <Button asChild variant="outline" className="rounded-full border-blue-200 bg-white">
-                <Link to="/admin/users">
+                <Link to="/help">
                   <ShieldCheck className="mr-2 h-4 w-4" />
-                  Admin linkage
+                  How verification works
                 </Link>
               </Button>
             </div>

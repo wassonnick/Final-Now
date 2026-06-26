@@ -22,6 +22,9 @@ const staticRoutes = [
   { loc: "/investment-calculator", priority: "0.65", changefreq: "weekly" },
   { loc: "/builder-floors", priority: "0.7", changefreq: "weekly" },
   { loc: "/builder-portal", priority: "0.5", changefreq: "monthly" },
+  { loc: "/trust", priority: "0.5", changefreq: "monthly" },
+  { loc: "/privacy", priority: "0.4", changefreq: "monthly" },
+  { loc: "/help", priority: "0.5", changefreq: "monthly" },
 ];
 
 const preferredLocalityRoutes = [

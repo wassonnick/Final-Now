@@ -4,6 +4,7 @@ import { Building2, Loader2, MapPin, Search, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { societyDisplayImage, societyImageAttribution, societyImageAttributionClassName } from '@/lib/societyImages';
+import { setPublicSeo } from '@/lib/seo';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
 
@@ -61,6 +62,11 @@ export function SocietiesPage() {
 
   useEffect(() => {
     let mounted = true;
+    setPublicSeo(
+      'Verified Gurgaon Societies | SocietyFlats',
+      'Explore admin-reviewed Gurgaon society profiles, market ranges, location context and available published homes.',
+      { canonical: '/societies' },
+    );
 
     async function loadSocieties() {
       if (!API_BASE_URL) {
@@ -200,12 +206,12 @@ export function SocietiesPage() {
                     </div>
                     <div className="rounded-2xl bg-navy-600 px-4 py-3 text-center text-white">
                       <p className="text-xs text-white/70">Score</p>
-                      <p className="text-xl font-bold">{society.score || '8.5'}</p>
+                      <p className="text-xl font-bold">{society.score || '—'}</p>
                     </div>
                   </div>
 
                   <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-navy-500">
-                    {society.description || 'Verified Gurgaon society with live inventory and society intelligence.'}
+                    {society.description || 'Admin-reviewed Gurgaon society profile with published location and market context.'}
                   </p>
 
                   <div className="mt-5 grid grid-cols-2 gap-3">

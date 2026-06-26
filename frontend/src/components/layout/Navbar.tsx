@@ -3,7 +3,7 @@
 // C70C nav copy: clearer public CTAs for broker partnership and dashboard access.
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, Heart, Scale, MapPin, Building2, Sparkles, BarChart3, User, Home, KeyRound, BadgeIndianRupee, MessageCircle } from 'lucide-react';
+import { Search, Menu, X, Heart, Scale, MapPin, Building2, Sparkles, BarChart3, User, Home, KeyRound, BadgeIndianRupee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,7 @@ export function Navbar() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [accountDashboardPath, setAccountDashboardPath] = useState("");
+  const [headerQuery, setHeaderQuery] = useState("");
 
   useEffect(() => {
     const syncAccountPath = () => {
@@ -46,7 +47,6 @@ export function Navbar() {
   }, [location.pathname]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const { compareList, shortlist, isAuthenticated, user } = useAppStore();
-  const isHomePage = location.pathname === '/';
   const isPropertyOrSocietyPage = location.pathname.startsWith('/property/') || location.pathname.startsWith('/society/');
 
   const navLinks = [
@@ -60,41 +60,64 @@ export function Navbar() {
     { label: 'Compare', href: '/compare', icon: Scale, badge: compareList.length },
   ];
   const desktopLinks = [
-    { label: 'Societies', href: '/search?tab=societies' },
-    { label: 'Rent', href: '/search?tab=rent' },
-    { label: 'Buy', href: '/search?tab=buy' },
-    { label: 'Insights', href: '/insights' },
-    { label: 'Map', href: '/maps' },
-    { label: 'AI Advisor', href: '/ai-advisor', ai: true },
+    { label: 'Explore', href: '/search?tab=societies' },
+    { label: 'Compare', href: '/compare' },
+    { label: 'AI Advisor', href: '/ai-advisor' },
+    { label: 'Broker', href: '/broker-crm' },
   ];
   const bottomActions = [
-    { label: 'Search', href: '/search?tab=societies', icon: Search },
+    { label: 'Home', href: '/', icon: Home },
+    { label: 'Explore', href: '/search?tab=societies', icon: Search },
+    { label: 'Assistant', href: '/ai-advisor', icon: Sparkles },
     { label: 'Compare', href: '/compare', icon: Scale, badge: compareList.length },
-    { label: 'AI Match', href: '/ai-advisor', icon: Sparkles },
-    { label: 'Chat', href: '/chat', icon: MessageCircle },
+    { label: 'Account', href: accountDashboardPath || '/login', icon: User },
   ];
 
   return (
     <>
-    <header className="sticky top-0 z-50 w-full bg-white/86 backdrop-blur-2xl border-b border-navy-100/80">
-      <div className="container mx-auto px-4 h-[72px] flex items-center justify-between gap-3 sm:h-20 sm:gap-5">
-        <Link to="/" className="flex shrink-0 items-center gap-2 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4 sm:gap-2.5" aria-label="SocietyFlats home">
+    <header className="sticky top-0 z-50 w-full border-b border-[#E7DCCB] bg-[#F8F3EA]">
+      <div className="mx-auto flex h-[72px] max-w-[1360px] items-center justify-between gap-3 px-4 sm:h-20 sm:gap-5 lg:h-[74px] lg:px-8">
+        <Link to="/" className="flex shrink-0 items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-pine-500 focus-visible:ring-offset-4 lg:gap-[9px]" aria-label="SocietyFlats home">
           <img
             src="/brand/societyflats-icon-512.png"
             alt="SocietyFlats"
-            className="h-9 w-9 object-contain sm:h-10 sm:w-10 lg:h-11 lg:w-11"
+            className="h-9 w-9 object-contain sm:h-10 sm:w-10 lg:hidden"
             width={512}
             height={512}
           />
-          <span className="text-lg font-black uppercase tracking-tight text-navy-950 sm:text-xl lg:text-2xl">
-            Society<span className="text-blue-700">Flats</span>
+          <span className="hidden h-[30px] w-[30px] items-center justify-center rounded-[8px] bg-[#123C32] text-[#C2724E] lg:flex">
+            <Home className="h-4 w-4" />
+          </span>
+          <span className="text-lg font-black uppercase tracking-tight text-forest-950 sm:text-xl lg:hidden">
+            Society<span className="text-pine-700">Flats</span>
+          </span>
+          <span className="hidden font-display text-[21px] font-medium tracking-[-0.01em] text-[#123C32] lg:inline">
+            SocietyFlats
           </span>
         </Link>
 
-        <nav className="hidden xl:flex items-center gap-1 rounded-full bg-ivory-200/70 border border-navy-100 px-2 py-1.5">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            navigate(`/search?tab=societies&q=${encodeURIComponent(headerQuery.trim())}`);
+          }}
+          className="hidden min-w-[280px] max-w-[470px] flex-1 items-center gap-[9px] rounded-[11px] border border-[#E7DCCB] bg-white px-[14px] py-[9px] lg:flex"
+        >
+          <Search className="h-4 w-4 text-[#2A6147]" />
+          <input
+            value={headerQuery}
+            onChange={(event) => setHeaderQuery(event.target.value)}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+            placeholder="Search society, sector or builder"
+            className="min-w-0 flex-1 bg-transparent text-sm font-normal text-[#25302B] outline-none placeholder:text-[#6E756E]"
+          />
+          <span className={cn("h-2 w-2 rounded-full transition", isSearchFocused ? "bg-[#C2724E]" : "bg-transparent")} />
+        </form>
+
+        <nav className="hidden items-center gap-5 xl:flex">
           {desktopLinks.map((link) => (
-            <Link key={link.href} to={link.href} className={cn("relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-bold transition-colors", link.ai ? "text-blue-700 hover:bg-white" : "text-navy-600 hover:text-navy-900 hover:bg-white")}>
-              {link.ai ? <Sparkles className="w-4 h-4" /> : null}
+            <Link key={link.href} to={link.href} className="whitespace-nowrap text-sm font-semibold text-[#405049] transition-colors hover:text-[#123C32]">
               <span>{link.label}</span>
             </Link>
           ))}
@@ -103,56 +126,59 @@ export function Navbar() {
         
 
         <div className="flex items-center gap-2">
-          <Link to="/shortlist" className="relative p-2.5 rounded-full hover:bg-navy-50 transition-colors">
-            <Heart className="w-5 h-5 text-navy-700" />
+          <Link to="/shortlist" className="relative rounded-full p-2.5 transition-colors hover:bg-forest-50 lg:hidden">
+            <Heart className="w-5 h-5 text-forest-700" />
             {shortlist.length > 0 && <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">{shortlist.length}</span>}
           </Link>
 
           {isAuthenticated ? (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-navy-700 hidden md:block">{user?.first_name}</span>
-              <div className="w-9 h-9 bg-navy-100 rounded-full flex items-center justify-center"><User className="w-4 h-4 text-navy-600" /></div>
+            <div className="flex items-center gap-2 lg:hidden">
+              <span className="text-sm font-medium text-forest-700 hidden md:block">{user?.first_name}</span>
+              <div className="w-9 h-9 bg-forest-100 rounded-full flex items-center justify-center"><User className="w-4 h-4 text-forest-600" /></div>
             </div>
           ) : (
             <Button
               variant="ghost"
               size="sm"
-              className="hidden sm:flex rounded-full text-navy-700 hover:bg-navy-50"
+              className="hidden rounded-full text-forest-700 hover:bg-forest-50 sm:flex lg:hidden"
               onClick={() => navigate(accountDashboardPath || "/login")}
             >
               {accountDashboardPath ? "Dashboard" : "Sign In"}
             </Button>
           )}
 
-          <Link to="/broker-crm" className="hidden lg:block">
-            <Button size="sm" variant="outline" className="rounded-full border-orange-100 bg-white px-4 text-orange-700 shadow-sm hover:bg-orange-50">
-              Join as Broker Partner
-            </Button>
-          </Link>
-          <Link to="/sell" className="hidden lg:block"><Button size="sm" className="rounded-full bg-blue-700 px-4 text-white shadow-sm hover:bg-blue-800">List Your Flat</Button></Link>
-          <button className="xl:hidden p-2 rounded-full hover:bg-navy-50 transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}</button>
+          <Link to="/sell" className="hidden lg:block"><Button size="sm" className="h-auto rounded-[10px] bg-[#C2724E] px-4 py-[9px] text-[13.5px] font-bold text-white shadow-none hover:bg-[#B86F4B]">List Your Flat</Button></Link>
+          <button
+            type="button"
+            onClick={() => navigate(accountDashboardPath || "/login")}
+            className="hidden h-9 w-9 items-center justify-center rounded-full bg-[#E4F0E6] text-[13px] font-bold text-[#405049] lg:flex"
+            aria-label={accountDashboardPath ? "Open dashboard" : "Open account"}
+          >
+            {isAuthenticated && user?.first_name ? String(user.first_name).slice(0, 2).toUpperCase() : "AR"}
+          </button>
+          <button className="xl:hidden p-2 rounded-full hover:bg-forest-50 transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}</button>
         </div>
       </div>
 
       {isMenuOpen && (
-        <div className="xl:hidden border-t border-navy-100 bg-white">
+        <div className="xl:hidden border-t border-forest-100 bg-white">
           <div className="container mx-auto px-4 py-4 space-y-2">
-{navLinks.map((link) => <Link key={link.href} to={link.href} className="flex items-center gap-3 px-4 py-3 rounded-2xl text-navy-700 hover:bg-navy-50 transition-colors" onClick={() => setIsMenuOpen(false)}><link.icon className="w-5 h-5" /><span className="font-medium">{link.label}</span>{link.badge && link.badge > 0 ? <span className="ml-auto text-xs bg-navy-100 rounded-full px-2 py-0.5">{link.badge}</span> : null}</Link>)}
-            <Button variant="outline" className="w-full rounded-full border-blue-100 bg-white text-blue-700" onClick={() => { navigate(accountDashboardPath || '/login'); setIsMenuOpen(false); }}>
+{navLinks.map((link) => <Link key={link.href} to={link.href} className="flex items-center gap-3 px-4 py-3 rounded-2xl text-forest-700 hover:bg-forest-50 transition-colors" onClick={() => setIsMenuOpen(false)}><link.icon className="w-5 h-5" /><span className="font-medium">{link.label}</span>{link.badge && link.badge > 0 ? <span className="ml-auto text-xs bg-forest-100 rounded-full px-2 py-0.5">{link.badge}</span> : null}</Link>)}
+            <Button variant="outline" className="w-full rounded-full border-pine-100 bg-white text-pine-700" onClick={() => { navigate(accountDashboardPath || '/login'); setIsMenuOpen(false); }}>
               {accountDashboardPath ? "Dashboard" : "Login"}
             </Button>
-            <Button variant="outline" className="w-full rounded-full border-orange-100 bg-white text-sm font-bold text-orange-700" onClick={() => { navigate('/broker-crm'); setIsMenuOpen(false); }}>Join as Broker Partner</Button>
-            <Button className="w-full rounded-full bg-navy-600 text-sm font-bold text-white hover:bg-navy-700" onClick={() => { navigate('/sell'); setIsMenuOpen(false); }}>List Your Flat</Button>
+            <Button variant="outline" className="w-full rounded-full border-clay-100 bg-white text-sm font-bold text-clay-700" onClick={() => { navigate('/broker-crm'); setIsMenuOpen(false); }}>Join as Broker Partner</Button>
+            <Button className="w-full rounded-full bg-forest-600 text-sm font-bold text-white hover:bg-forest-700" onClick={() => { navigate('/sell'); setIsMenuOpen(false); }}>List Your Flat</Button>
           </div>
         </div>
       )}
 
     </header>
     <nav className={cn(
-      "fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 right-3 z-50 rounded-[1.15rem] border border-navy-100 bg-white/95 p-2 shadow-apple backdrop-blur-xl xl:hidden",
-      (isHomePage || isPropertyOrSocietyPage) && "hidden",
+      "fixed bottom-[calc(0.65rem+env(safe-area-inset-bottom))] left-3 right-3 z-50 rounded-[1.25rem] border border-paper-300 bg-paper-50/95 p-2 shadow-editorial backdrop-blur-xl xl:hidden",
+      isPropertyOrSocietyPage && "hidden",
     )}>
-      <div className="grid grid-cols-4 gap-1">
+      <div className="grid grid-cols-5 gap-1">
         {bottomActions.map((action) => {
           const Icon = action.icon;
           const isActive = location.pathname === action.href.split('?')[0];
@@ -162,7 +188,7 @@ export function Navbar() {
               to={action.href}
               className={cn(
                 'relative flex flex-col items-center justify-center rounded-2xl px-2 py-2 text-[11px] font-semibold transition',
-                isActive ? 'bg-navy-600 text-white' : 'text-navy-600 hover:bg-navy-50'
+                isActive ? 'bg-pine-800 text-white' : 'text-forest-600 hover:bg-sage-50'
               )}
             >
               <Icon className="mb-1 h-4 w-4" />

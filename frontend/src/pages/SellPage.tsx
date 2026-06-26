@@ -58,6 +58,7 @@ const steps = [
 export function SellPage() {
   const [searchParams] = useSearchParams();
   const [purpose, setPurpose] = useState<"rent" | "sell">("rent");
+  const [listingStep, setListingStep] = useState(1);
   const [form, setForm] = useState({
     name: "",
     society: searchParams.get("society") || "",
@@ -89,6 +90,13 @@ export function SellPage() {
   const updateForm = (field: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
+
+  const stepReady =
+    listingStep === 1 ? isValidOwnerLeadPhone(form.phone) :
+    listingStep === 2 ? Boolean(form.name.trim()) :
+    listingStep === 3 ? Boolean(form.society.trim()) :
+    listingStep === 5 ? Boolean(form.bhk.trim()) :
+    true;
 
   const submitOwnerLead = async (event: FormEvent) => {
     event.preventDefault();
@@ -236,8 +244,8 @@ export function SellPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7fbff]">
-      <section className="relative overflow-hidden border-b border-blue-100 bg-gradient-to-br from-white via-blue-50/80 to-slate-50">
+    <div className="min-h-screen bg-[#F8F3EA]">
+      <section className="relative overflow-hidden border-b border-[#E7DCCB] bg-gradient-to-br from-[#FFFBF3] via-[#F8F3EA] to-[#EEF5F1]">
         <div className="absolute left-[-12rem] top-[-10rem] h-96 w-96 rounded-full bg-blue-200/30 blur-3xl" />
         <div className="absolute right-[-10rem] top-24 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl" />
         <div className="relative container mx-auto px-4 py-8 md:py-12">
@@ -272,47 +280,21 @@ export function SellPage() {
             <div className="rounded-[1.5rem] border border-blue-100 bg-white p-4 text-navy-900 shadow-xl shadow-blue-100/60 md:p-5">
               <div className="mb-4 flex items-center gap-2">
                 <BadgeIndianRupee className="w-5 h-5 text-blue-700" />
-                <h2 className="text-xl font-display font-bold">
-                  List your flat
-                </h2>
+                <div>
+                  <h2 className="text-xl font-display font-bold">List your flat</h2>
+                  <p className="text-xs text-[#6E756E]">Step {listingStep} of 8</p>
+                </div>
               </div>
-              <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl bg-blue-50 p-1">
-                <button
-                  onClick={() => {
-                    trackEvent("owner_listing_purpose_changed", {
-                      source: "sell_page",
-                      lead_intent: "owner_listing_rent",
-                      cta_label: "For Rent",
-                    });
-                    setPurpose("rent");
-                  }}
-                  className={cn(
-                    "rounded-xl px-4 py-2.5 text-sm font-semibold transition-all",
-                    purpose === "rent"
-                      ? "bg-white shadow-sm text-navy-900"
-                      : "text-navy-500",
-                  )}
-                >
-                  For Rent
-                </button>
-                <button
-                  onClick={() => {
-                    trackEvent("owner_listing_purpose_changed", {
-                      source: "sell_page",
-                      lead_intent: "owner_listing_sale",
-                      cta_label: "For Sale",
-                    });
-                    setPurpose("sell");
-                  }}
-                  className={cn(
-                    "rounded-xl px-4 py-2.5 text-sm font-semibold transition-all",
-                    purpose === "sell"
-                      ? "bg-white shadow-sm text-navy-900"
-                      : "text-navy-500",
-                  )}
-                >
-                  For Sale
-                </button>
+              <div className="mb-5 grid grid-cols-8 gap-1.5">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <span
+                    key={index}
+                    className={cn(
+                      "h-1.5 rounded-full",
+                      index + 1 <= listingStep ? "bg-[#123C32]" : "bg-[#DDE7DC]",
+                    )}
+                  />
+                ))}
               </div>
               {success ? (
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-sm font-semibold leading-6 text-emerald-700">
@@ -324,7 +306,7 @@ export function SellPage() {
                         Your phone number is now linked to this listing. You can track it from your Customer Dashboard.
                       </p>
                       <p className="mt-2 text-xs font-semibold text-emerald-700">
-                        Backend OTP / WhatsApp welcome message will be connected in the next auth phase.
+                        Use the dashboard to track verification and listing updates.
                       </p>
                     </div>
                   ) : null}
@@ -333,139 +315,67 @@ export function SellPage() {
                   </Button>
                 </div>
               ) : (
-                <form onSubmit={submitOwnerLead} className="space-y-3">
-                  <Input
-                    required
-                    value={form.name}
-                    onChange={(event) => updateForm("name", event.target.value)}
-                    className="h-11 rounded-xl"
-                    placeholder="Your name"
-                  />
-                  <Input
-                    required
-                    value={form.society}
-                    onChange={(event) =>
-                      updateForm("society", event.target.value)
-                    }
-                    className="h-11 rounded-xl"
-                    placeholder="Society name e.g. DLF Park Place"
-                  />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Input
-                      value={form.tower}
-                      onChange={(event) =>
-                        updateForm("tower", event.target.value)
-                      }
-                      className="h-11 rounded-xl"
-                      placeholder="Tower / block"
-                    />
-                    <Input
-                      required
-                      value={form.bhk}
-                      onChange={(event) =>
-                        updateForm("bhk", event.target.value)
-                      }
-                      className="h-11 rounded-xl"
-                      placeholder="BHK e.g. 3 BHK"
-                    />
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Input
-                      value={form.size}
-                      onChange={(event) =>
-                        updateForm("size", event.target.value)
-                      }
-                      className="h-11 rounded-xl"
-                      placeholder="Size e.g. 1983 sq.ft."
-                    />
-                    <Input
-                      value={form.floor}
-                      onChange={(event) =>
-                        updateForm("floor", event.target.value)
-                      }
-                      className="h-11 rounded-xl"
-                      placeholder="Floor e.g. 12th"
-                    />
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Input
-                      value={form.furnishing}
-                      onChange={(event) =>
-                        updateForm("furnishing", event.target.value)
-                      }
-                      className="h-11 rounded-xl"
-                      placeholder="Furnishing e.g. Semi furnished"
-                    />
-                    <Input
-                      value={form.availability}
-                      onChange={(event) =>
-                        updateForm("availability", event.target.value)
-                      }
-                      className="h-11 rounded-xl"
-                      placeholder="Availability e.g. Immediate"
-                    />
-                  </div>
-
-                  <Input
-                    value={form.details}
-                    onChange={(event) =>
-                      updateForm("details", event.target.value)
-                    }
-                    className="h-11 rounded-xl"
-                    placeholder="Extra details optional"
-                  />
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Input
-                      value={form.expectation}
-                      onChange={(event) =>
-                        updateForm("expectation", event.target.value)
-                      }
-                      className="h-11 rounded-xl"
-                      placeholder={
-                        purpose === "rent"
-                          ? "Expected rent e.g. ₹85,000/month"
-                          : "Expected price e.g. ₹5.5 Cr"
-                      }
-                    />
-                    <Input
-                      value={form.preferredTime}
-                      onChange={(event) =>
-                        updateForm("preferredTime", event.target.value)
-                      }
-                      className="h-11 rounded-xl"
-                      placeholder="Best time to call e.g. Today evening"
-                    />
-                  </div>
-                  <Input
-                    required
-                    value={form.phone}
-                    onChange={(event) =>
-                      updateForm("phone", cleanOwnerLeadPhone(event.target.value))
-                    }
-                    inputMode="numeric"
-                    pattern="[6-9][0-9]{9}"
-                    maxLength={10}
-                    className="h-11 rounded-xl"
-                    placeholder="10-digit mobile number"
-                  />
-                  <p className="text-xs text-navy-400">
-                    {form.phone.length}/10 digits · India mobile number only
-                  </p>
+                <form onSubmit={submitOwnerLead} className="space-y-4">
+                  {listingStep === 1 ? (
+                    <div>
+                      <p className="mb-3 text-sm font-bold text-[#25302B]">Start with your mobile number</p>
+                      <Input required value={form.phone} onChange={(event) => updateForm("phone", cleanOwnerLeadPhone(event.target.value))} inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} className="h-12 rounded-xl" placeholder="10-digit mobile number" />
+                      <p className="mt-2 text-xs leading-5 text-[#6E756E]">No spam. Your number is used only for listing verification and enquiries.</p>
+                    </div>
+                  ) : null}
+                  {listingStep === 2 ? (
+                    <div><p className="mb-3 text-sm font-bold">What should we call you?</p><Input required value={form.name} onChange={(event) => updateForm("name", event.target.value)} className="h-12 rounded-xl" placeholder="Your name" /></div>
+                  ) : null}
+                  {listingStep === 3 ? (
+                    <div><p className="mb-3 text-sm font-bold">Which society is the flat in?</p><Input required value={form.society} onChange={(event) => updateForm("society", event.target.value)} className="h-12 rounded-xl" placeholder="Society name e.g. DLF Park Place" /></div>
+                  ) : null}
+                  {listingStep === 4 ? (
+                    <div>
+                      <p className="mb-3 text-sm font-bold">How would you like to list it?</p>
+                      <div className="grid grid-cols-2 gap-2 rounded-2xl bg-blue-50 p-1">
+                        {(["rent", "sell"] as const).map((item) => (
+                          <button key={item} type="button" onClick={() => { setPurpose(item); trackEvent("owner_listing_purpose_changed", { source: "sell_page", lead_intent: `owner_listing_${item}`, cta_label: item === "rent" ? "For Rent" : "For Sale" }); }} className={cn("rounded-xl px-4 py-3 text-sm font-semibold", purpose === item ? "bg-white shadow-sm text-navy-900" : "text-navy-500")}>{item === "rent" ? "For Rent" : "For Sale"}</button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {listingStep === 5 ? (
+                    <div className="space-y-3">
+                      <p className="text-sm font-bold">Tell us about the flat</p>
+                      <div className="grid gap-3 sm:grid-cols-2"><Input required value={form.bhk} onChange={(event) => updateForm("bhk", event.target.value)} className="h-11 rounded-xl" placeholder="BHK e.g. 3 BHK" /><Input value={form.size} onChange={(event) => updateForm("size", event.target.value)} className="h-11 rounded-xl" placeholder="Size e.g. 1983 sq.ft." /></div>
+                      <div className="grid gap-3 sm:grid-cols-2"><Input value={form.tower} onChange={(event) => updateForm("tower", event.target.value)} className="h-11 rounded-xl" placeholder="Tower / block" /><Input value={form.floor} onChange={(event) => updateForm("floor", event.target.value)} className="h-11 rounded-xl" placeholder="Floor e.g. 12th" /></div>
+                      <div className="grid gap-3 sm:grid-cols-2"><Input value={form.furnishing} onChange={(event) => updateForm("furnishing", event.target.value)} className="h-11 rounded-xl" placeholder="Furnishing" /><Input value={form.expectation} onChange={(event) => updateForm("expectation", event.target.value)} className="h-11 rounded-xl" placeholder={purpose === "rent" ? "Expected monthly rent" : "Expected sale price"} /></div>
+                    </div>
+                  ) : null}
+                  {listingStep === 6 ? (
+                    <div className="rounded-[18px] border border-dashed border-[#C6DACE] bg-[#EEF5F1] p-6 text-center">
+                      <Camera className="mx-auto h-8 w-8 text-[#2A6147]" /><p className="mt-3 font-bold">Photos are optional at this stage</p><p className="mt-1 text-xs leading-5 text-[#6E756E]">Our team can collect and review images before anything is published.</p>
+                    </div>
+                  ) : null}
+                  {listingStep === 7 ? (
+                    <div className="space-y-3"><p className="text-sm font-bold">When is the flat available?</p><Input value={form.availability} onChange={(event) => updateForm("availability", event.target.value)} className="h-11 rounded-xl" placeholder="Availability e.g. Immediate" /><Input value={form.preferredTime} onChange={(event) => updateForm("preferredTime", event.target.value)} className="h-11 rounded-xl" placeholder="Best time to call" /><Input value={form.details} onChange={(event) => updateForm("details", event.target.value)} className="h-11 rounded-xl" placeholder="Extra details optional" /></div>
+                  ) : null}
+                  {listingStep === 8 ? (
+                    <div>
+                      <p className="mb-3 text-sm font-bold">Review your listing request</p>
+                      <div className="grid gap-2 rounded-[16px] bg-[#EEF5F1] p-4 text-sm">
+                        {[["Owner", form.name], ["Phone", form.phone], ["Society", form.society], ["Intent", purpose === "rent" ? "Rent" : "Sale"], ["Flat", [form.bhk, form.size, form.furnishing].filter(Boolean).join(" · ") || "Details on request"], ["Expectation", form.expectation || "Discuss on call"], ["Availability", form.availability || "Discuss on call"]].map(([label, value]) => <div key={label} className="flex justify-between gap-4 border-b border-[#DDE7DC] pb-2 last:border-0 last:pb-0"><span className="text-[#6E756E]">{label}</span><strong className="text-right text-[#25302B]">{value}</strong></div>)}
+                      </div>
+                    </div>
+                  ) : null}
                   {error ? (
                     <div className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">
                       {error}
                     </div>
                   ) : null}
-                  <Button
-                    disabled={submitting || success}
-                    className="h-11 w-full rounded-xl bg-blue-700 font-semibold text-white shadow-lg shadow-blue-100 hover:bg-blue-800"
-                  >
-                    {success ? "Request sent" : submitting ? "Sending..." : "Continue"}{" "}
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+                  <div className="grid grid-cols-[auto_1fr] gap-2">
+                    {listingStep > 1 ? <Button type="button" variant="outline" className="h-11 rounded-xl px-5" onClick={() => setListingStep((step) => Math.max(1, step - 1))}>Back</Button> : <span />}
+                    {listingStep < 8 ? (
+                      <Button type="button" disabled={!stepReady} className="h-11 rounded-xl bg-blue-700 font-semibold text-white" onClick={() => setListingStep((step) => Math.min(8, step + 1))}>Continue <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                    ) : (
+                      <Button disabled={submitting || success} className="h-11 rounded-xl bg-blue-700 font-semibold text-white">{submitting ? "Sending..." : "Submit for verification"} <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                    )}
+                  </div>
                 </form>
               )}
               <p className="mt-3 text-center text-xs text-navy-400">

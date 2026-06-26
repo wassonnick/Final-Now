@@ -32,6 +32,7 @@ import {
   societyImage,
 } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
+import { useAppStore } from "@/store";
 
 type AdvisorMatch = {
   id?: number;
@@ -212,14 +213,43 @@ function propertyMatchLabel(property: any, query: string) {
   return "Broader home";
 }
 
-function scoreNumber(value: unknown, fallback = 8.1) {
+function scoreNumber(value: unknown, fallback = 0) {
   const parsed = Number(value || fallback);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
   return parsed > 10 ? parsed / 10 : parsed;
 }
 
 function societyScore(society: any) {
-  return scoreNumber(society?.score || society?.overallScore || society?.overall_score).toFixed(1);
+  const score = scoreNumber(society?.score || society?.overallScore || society?.overall_score);
+  return score ? score.toFixed(1) : "—";
+}
+
+function advisorRent(society: any) {
+  return compactText(society?.rentRange || society?.rent_range);
+}
+
+function advisorBuy(society: any) {
+  return compactText(society?.buyRange || society?.buy_range || society?.resaleRange);
+}
+
+function advisorConfidence(society: any) {
+  return compactText(society?.dataConfidence || society?.data_confidence, "Admin reviewed");
+}
+
+function advisorUpdated(society: any) {
+  const raw = society?.updatedAt || society?.updated_at;
+  if (!raw) return "Recently reviewed";
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return "Recently reviewed";
+  return `Updated ${date.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+}
+
+function advisorReason(society: any, query: string, source: "api" | "fallback") {
+  if (society?.reason) return society.reason;
+  const location = society?.sector || society?.locality || "Gurgaon";
+  return source === "api"
+    ? `matches your requirement for ${queryFocusLabel(query)} and is supported by the published ${location} society profile.`
+    : `is one of the closest published SocietyFlats matches for ${queryFocusLabel(query)} in ${location}.`;
 }
 
 function compactText(value: unknown, fallback = "On request") {
@@ -513,6 +543,7 @@ function InlineTopResult({
 
 export function AIAdvisorPage() {
   const [searchParams] = useSearchParams();
+  const { compareList, addToCompare, removeFromCompare } = useAppStore();
   const initialQuery = searchParams.get("q") || searchParams.get("society") || "";
 
   const [input, setInput] = useState(initialQuery);
@@ -700,9 +731,201 @@ export function AIAdvisorPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery]);
 
+  const handoffResults = resultSocieties.slice(0, 3);
+  const toggleCompare = (society: any) => {
+    const exists = compareList.some((item: any) => String(item?.id) === String(society?.id));
+    if (exists) removeFromCompare(society.id);
+    else addToCompare(society);
+  };
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <section className="border-b border-blue-100 bg-[radial-gradient(circle_at_80%_10%,rgba(37,99,235,0.14),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-6 md:py-8">
+    <div className="min-h-screen bg-[#F8F3EA]">
+      <main className="mx-auto max-w-[1360px] px-4 py-8 md:px-10 md:pb-16">
+        <h1 className="font-display text-[34px] font-medium leading-tight text-[#10251F]">
+          SocietyFlats AI Advisor
+        </h1>
+        <p className="mt-1.5 text-sm text-[#6E756E]">
+          A local expert that reasons from verified society data — not a black box.
+        </p>
+
+        <div className="mt-7 grid items-start gap-7 lg:grid-cols-[420px_minmax(0,1fr)]">
+          <section className="rounded-[20px] border border-[#E7E3DA] bg-white p-[22px] lg:sticky lg:top-[94px]">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[11px] bg-[#123C32]">
+                <span className="h-[11px] w-[11px] rounded-full bg-[#63C989]" />
+              </span>
+              <div>
+                <h2 className="text-[15px] font-bold text-[#25302B]">Tell me what you need</h2>
+                <p className="text-xs text-[#2A6147]">● Based on verified society data</p>
+              </div>
+            </div>
+
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                void submitAdvisor();
+              }}
+            >
+              <textarea
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                className="min-h-[96px] w-full resize-none rounded-[12px] border border-[#E7E3DA] bg-[#F8F7F2] p-4 text-sm leading-6 text-[#25302B] outline-none transition focus:border-[#2A6147]"
+                placeholder="e.g. Family of 4, ₹80k rent, office in Cyber City, need good schools..."
+              />
+
+              <div className="mt-3.5 flex flex-wrap gap-2">
+                {["Rent or buy?", "Budget", "Office location", "Schools nearby", "Family size", "Pet-friendly"].map((label) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setInput((current) => `${current}${current ? ", " : ""}${label}`)}
+                    className="rounded-full border border-[#DDE7DC] bg-[#EEF5F1] px-3.5 py-2 text-[12.5px] text-[#2A6147]"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-4 flex w-full items-center justify-center rounded-[12px] bg-[#123C32] px-5 py-3.5 text-[14.5px] font-bold text-white disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Build my shortlist
+              </button>
+            </form>
+          </section>
+
+          <section>
+            <div className="mb-[18px] inline-flex items-center gap-2 rounded-[12px] border border-[#DDE7DC] bg-[#EEF8EF] px-4 py-3 text-[13.5px] text-[#2A6147]">
+              <Sparkles className="h-4 w-4" />
+              {loading
+                ? "Finding societies that fit your requirement..."
+                : handoffResults.length
+                  ? `${handoffResults.length} societ${handoffResults.length === 1 ? "y matches" : "ies match"} your budget, commute and lifestyle.`
+                  : "Tell us your requirement to build a society-first shortlist."}
+            </div>
+
+            {handoffResults.length ? (
+              <div className="flex flex-col gap-4">
+                {handoffResults.map((society, index) => {
+                  const selected = compareList.some((item: any) => String(item?.id) === String(society?.id));
+                  return (
+                    <article
+                      key={`${matchName(society)}-${society?.id || society?.slug || index}`}
+                      className="grid items-center gap-[18px] rounded-[18px] border border-[#E7E3DA] bg-white p-5 md:grid-cols-[130px_minmax(0,1fr)_auto]"
+                    >
+                      <div className="relative h-[110px] overflow-hidden rounded-[13px] bg-[#E8EEE8]">
+                        {society?.slug || society?.coverImage || society?.imageUrl ? (
+                          <img src={societyImage(society)} alt={matchName(society)} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full bg-[repeating-linear-gradient(135deg,#DCE5DD_0_1px,transparent_1px_11px)]" />
+                        )}
+                        <span className="absolute left-2 top-2 rounded-[8px] bg-white px-2 py-1 text-[11px] font-extrabold text-[#123C32]">
+                          {societyScore(society)}
+                        </span>
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-[17px] font-bold text-[#25302B]">{matchName(society)}</h2>
+                          <span className="rounded-full bg-[#E8F7E9] px-2 py-1 text-[11px] font-bold text-[#2A6147]">✓ Verified</span>
+                        </div>
+                        <p className="mt-1 text-[13px] text-[#6E756E]">
+                          {society?.sector || society?.locality || "Gurgaon"} · Rent {advisorRent(society)} · Buy {advisorBuy(society)}
+                        </p>
+                        <p className="mt-2 text-[13px] leading-5 text-[#4A534E]">
+                          <strong className="text-[#2A6147]">Recommended because </strong>
+                          {advisorReason(society, activeQuestion, resultSource)}
+                        </p>
+                        <p className="mt-2 text-[11.5px] text-[#557064]">
+                          Confidence: <strong className="text-[#2A6147]">{advisorConfidence(society)}</strong> · {advisorUpdated(society)}
+                        </p>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Link
+                          to={toSocietyUrl(society)}
+                          className="whitespace-nowrap rounded-[10px] bg-[#123C32] px-[18px] py-2.5 text-center text-[13px] font-bold text-white"
+                        >
+                          Open society
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => toggleCompare(society)}
+                          className="rounded-[10px] border border-[#E7E3DA] px-[18px] py-2 text-[13px] font-bold text-[#2A6147]"
+                        >
+                          {selected ? "Remove" : "Compare"}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-[18px] border border-dashed border-[#D8D4CA] bg-white p-8 text-center">
+                <h2 className="font-display text-2xl font-medium text-[#10251F]">Your shortlist will appear here</h2>
+                <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[#6E756E]">
+                  Add your budget, office location and family needs. Only published society profiles are considered.
+                </p>
+              </div>
+            )}
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                to="/compare"
+                className="rounded-[11px] bg-[#C8783F] px-6 py-3 text-sm font-bold text-white"
+              >
+                Compare these {handoffResults.length || ""}
+              </Link>
+              <button
+                type="button"
+                onClick={() => setCallbackOpen(true)}
+                className="rounded-[11px] border border-[#E7E3DA] bg-white px-6 py-3 text-sm font-bold text-[#25302B]"
+              >
+                Request callback
+              </button>
+              <a
+                href={`https://wa.me/919911886222?text=${encodeURIComponent(`Hi SocietyFlats, please help with this shortlist: ${activeQuestion}`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center rounded-[11px] border border-[#E7E3DA] bg-white px-6 py-3 text-sm font-bold text-[#25302B]"
+              >
+                <MessageCircle className="mr-2 h-4 w-4 text-green-600" />
+                Send shortlist on WhatsApp
+              </a>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <PublicLeadModal
+        open={callbackOpen}
+        title="Request AI shortlist callback"
+        subtitle="Share your number and we will help shortlist societies and homes from your AI requirement."
+        source="ai_advisor_callback"
+        ctaLabel="Schedule expert callback"
+        leadIntent="ai_shortlist"
+        trackingContext={{
+          cta_label: "Schedule expert callback",
+          lead_intent: "ai_shortlist",
+          ai_query: activeQuestion,
+          entity_type: "ai_advisor",
+        }}
+        defaultMessage={`I want help with this AI shortlist requirement: ${activeQuestion}`}
+        defaultRequirement="AI shortlist callback"
+        submitLabel="Schedule expert callback"
+        successMessage="Request received. SocietyFlats will call with matching Gurgaon societies, verified homes and next steps."
+        onClose={() => setCallbackOpen(false)}
+      />
+    </div>
+  );
+
+  /*
+  return (
+    <div className="min-h-screen bg-[#F8F3EA]">
+      <section className="border-b border-[#E7DCCB] bg-[radial-gradient(circle_at_80%_10%,rgba(194,114,78,0.11),transparent_30%),linear-gradient(180deg,#FFFBF3_0%,#F8F3EA_100%)] px-4 py-6 md:py-8">
         <div className="container mx-auto">
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs font-bold text-navy-400">
             <Link to="/" className="hover:text-blue-700">Home</Link>
@@ -770,7 +993,7 @@ export function AIAdvisorPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.5rem] border border-blue-100 bg-white p-3 shadow-[0_18px_48px_rgba(37,99,235,0.10)] md:p-4">
+            <div className="rounded-[1.5rem] border border-blue-100 bg-white p-3 shadow-[0_18px_48px_rgba(16,37,31,0.10)] md:p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-700 text-white">
@@ -1095,6 +1318,7 @@ export function AIAdvisorPage() {
       />
     </div>
   );
+  */
 }
 
 export default AIAdvisorPage;

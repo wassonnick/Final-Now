@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Star,
 } from 'lucide-react';
+import { setPublicSeo } from '@/lib/seo';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
 
@@ -43,9 +44,6 @@ type ApiResponse = {
   } | Property[];
 };
 
-const fallbackImage =
-  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1400&q=80';
-
 function extractProperties(payload: ApiResponse): Property[] {
   if (Array.isArray(payload.data)) return payload.data;
   if (Array.isArray(payload.data?.data)) return payload.data.data;
@@ -57,7 +55,7 @@ function propertyImage(property: Property) {
     return property.images[0];
   }
 
-  return fallbackImage;
+  return '';
 }
 
 export function PropertiesPage() {
@@ -68,6 +66,11 @@ export function PropertiesPage() {
 
   useEffect(() => {
     let mounted = true;
+    setPublicSeo(
+      'Verified Gurgaon Homes | SocietyFlats',
+      'Browse published Gurgaon rental and resale homes inside SocietyFlats society profiles.',
+      { canonical: '/properties' },
+    );
 
     async function loadProperties() {
       if (!API_BASE_URL) {
@@ -172,18 +175,27 @@ export function PropertiesPage() {
           </div>
         ) : filteredProperties.length ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {filteredProperties.map((property) => (
+            {filteredProperties.map((property) => {
+              const image = propertyImage(property);
+
+              return (
               <Link
                 key={property.id}
                 to={`/property/${property.slug}`}
                 className="group overflow-hidden rounded-[2rem] border border-navy-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-soft"
               >
                 <div className="relative h-64 overflow-hidden bg-navy-50">
-                  <img
-                    src={propertyImage(property)}
-                    alt={property.title}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
+                  {image ? (
+                    <img
+                      src={image}
+                      alt={property.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-[#DDE7DC]">
+                      <Building2 className="h-10 w-10 text-[#2A6147]" />
+                    </div>
+                  )}
 
                   <div className="absolute left-4 top-4 flex gap-2">
                     <div className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-navy-700">
@@ -235,7 +247,7 @@ export function PropertiesPage() {
                       <Building2 className="mx-auto h-4 w-4 text-navy-500" />
                       <p className="mt-2 text-xs text-navy-400">Type</p>
                       <p className="font-bold text-navy-900">
-                        {property.property_type || 'Apartment'}
+                        {property.property_type || 'On request'}
                       </p>
                     </div>
 
@@ -250,7 +262,7 @@ export function PropertiesPage() {
 
                   <div className="mt-5 flex items-center justify-between border-t border-navy-100 pt-4">
                     <span className="text-sm text-navy-500">
-                      {property.furnished_status || 'Semi Furnished'}
+                      {property.furnished_status || 'Details on request'}
                     </span>
 
                     <div className="rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
@@ -259,7 +271,8 @@ export function PropertiesPage() {
                   </div>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-[2rem] border border-navy-100 bg-white p-10 text-center">
