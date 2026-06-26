@@ -53,6 +53,8 @@ const AdminSiteVisitsPage = lazy(() => import('@/pages/admin/AdminSiteVisitsPage
 const AdminRentHistoryPage = lazy(() => import('@/pages/admin/AdminRentHistoryPage').then((module) => ({ default: module.AdminRentHistoryPage })));
 const AdminBuilderPortalPage = lazy(() => import('@/pages/admin/AdminBuilderPortalPage').then((module) => ({ default: module.AdminBuilderPortalPage })));
 
+const HomeRedesignPreview = lazy(() => import('@/pages/preview/HomeRedesignPreview').then((module) => ({ default: module.HomeRedesignPreview })));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -86,6 +88,7 @@ function ProtectedAdminRoute({ children }: { children: ReactNode }) {
 function AppShell() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
+  const isDesignPreview = location.pathname.startsWith('/design-preview');
 
   useEffect(() => {
     if (isAdmin) {
@@ -99,7 +102,7 @@ function AppShell() {
 
   return (
     <div className="min-h-screen bg-ivory-100 flex flex-col">
-      {!isAdmin && <Navbar />}
+      {!isAdmin && !isDesignPreview && <Navbar />}
 
       <main className="flex-1">
         <Suspense fallback={<RouteLoader />}>
@@ -107,6 +110,7 @@ function AppShell() {
 
             {/* Public */}
             <Route path="/" element={<HomePage />} />
+            <Route path="/design-preview/home" element={<HomeRedesignPreview />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/search/" element={<SearchPage />} />
 
@@ -208,8 +212,8 @@ function AppShell() {
         </Suspense>
       </main>
 
-      {!isAdmin && <FloatingHelpline />}
-      {!isAdmin && <Footer />}
+      {!isAdmin && !isDesignPreview && <FloatingHelpline />}
+      {!isAdmin && !isDesignPreview && <Footer />}
     </div>
   );
 }

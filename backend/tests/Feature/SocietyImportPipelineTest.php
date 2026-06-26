@@ -1,0 +1,162 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Society;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
+
+class SocietyImportPipelineTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config([
+            'services.admin_api_token' => 'admin-test-token',
+            'services.gemini.api_key' => 'gemini-test-key',
+            'services.gemini.model' => 'test-model',
+            'services.google_places_api_key' => 'places-test-key',
+        ]);
+    }
+
+    public function test_single_import_assembles_authoritative_draft_with_scores_and_images(): void
+    {
+        Http::fake([
+            'maps.googleapis.com/maps/api/place/findplacefromtext/*' => Http::response([
+                'status' => 'OK', 'candidates' => [['place_id' => 'place-magnolias']],
+            ]),
+            'maps.googleapis.com/maps/api/place/details/*' => Http::response([
+                'status' => 'OK',
+                'result' => [
+                    'place_id' => 'place-magnolias',
+                    'name' => 'DLF Magnolias',
+                    'formatted_address' => 'Sector 42, Golf Course Road, Gurugram, Haryana 122002, India',
+                    'geometry' => ['location' => ['lat' => 28.4421, 'lng' => 77.1025]],
+                    'url' => 'https://maps.google.com/?cid=99',
+                    'website' => 'https://builder.example.com',
+                    'rating' => 4.5,
+                    'user_ratings_total' => 820,
+                    'photos' => [['photo_reference' => 'ref-1'], ['photo_reference' => 'ref-2']],
+                    'address_components' => [
+                        ['long_name' => 'Golf Course Road', 'types' => ['sublocality_level_1', 'sublocality']],
+                        ['long_name' => 'Gurugram', 'types' => ['locality']],
+                        ['long_name' => 'Haryana', 'types' => ['administrative_area_level_1']],
+                    ],
+                ],
+            ]),
+            'maps.googleapis.com/maps/api/place/nearbysearch/*' => Http::response([
+                'status' => 'OK',
+                'results' => [
+                    ['name' => 'Local POI', 'vicinity' => 'Sector 43', 'rating' => 4.2, 'geometry' => ['location' => ['lat' => 28.4450, 'lng' => 77.1040]]],
+                ],
+            ]),
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [['content' => ['parts' => [['text' => json_encode([
+                    'name' => 'DLF Magnolias',
+                    'builder' => 'DLF',
+                    'description' => 'A grounded, review-safe description of the society for admin verification before publishing.',
+                    'project_status' => 'Ready to Move',
+                    'possession_date' => 'Delivered',
+                    'year_built' => '2014',
+                    'amenities' => ['Clubhouse', 'Swimming Pool', 'Gym', 'Tennis Court', '24x7 Security', 'CCTV', 'Concierge'],
+                    'rent_range' => '₹2,50,000 - ₹4,00,000',
+                    'buy_range' => '₹12 Cr - ₹20 Cr',
+                    'rental_yield' => '3.2%',
+                    'official_project_url' => 'https://builder.example.com/magnolias',
+                    'meta_title' => 'DLF Magnolias Gurgaon',
+                    'meta_description' => 'Grounded project profile for review.',
+                    'source_confidence_score' => 82,
+                ])]]]]],
+            ]),
+            'builder.example.com/*' => Http::response(
+                '<html><head><meta property="og:image" content="https://builder.example.com/hero.jpg"></head><body><img src="/img/tower.jpg"><img src="logo.png"></body></html>',
+                200,
+                ['Content-Type' => 'text/html']
+            ),
+        ]);
+
+        $this->withToken('admin-test-token')
+            ->postJson('/api/admin/import/single', ['name' => 'DLF Magnolias', 'location' => 'Sector 42 Gurgaon', 'include_images' => true])
+            ->assertAccepted();
+
+        $this->withToken('admin-test-token')->getJson('/api/admin/import/jobs?limit=5')->assertOk();
+
+        $society = Society::where('name', 'DLF Magnolias')->firstOrFail();
+
+        // Authoritative facts from Google (never the LLM).
+        $this->assertSame('28.4421', (string) $society->latitude);
+        $this->assertSame('77.1025', (string) $society->longitude);
+        $this->assertSame('Gurugram', $society->city);
+        $this->assertSame('Haryana', $society->state);
+        $this->assertSame('place-magnolias', $society->place_id);
+
+        // Neighbourhood facts carry measured distances.
+        $this->assertIsArray($society->nearby_schools);
+        $this->assertNotEmpty($society->nearby_schools);
+        $this->assertStringContainsString('km', $society->nearby_schools[0]);
+
+        // Deterministic scores + auditable breakdown.
+        $this->assertGreaterThanOrEqual(5.5, (float) $society->score);
+        $this->assertLessThanOrEqual(9.6, (float) $society->score);
+        $this->assertIsArray($society->score_breakdown);
+        $this->assertArrayHasKey('overall', $society->score_breakdown);
+        $this->assertArrayHasKey('connectivity', $society->score_breakdown);
+
+        // Provenance tagging.
+        $this->assertSame('google_places', $society->field_sources['latitude']['source'] ?? null);
+
+        // Multi-source image candidates, none auto-published.
+        $this->assertIsArray($society->image_candidates);
+        $this->assertNotEmpty($society->image_candidates);
+        $sources = array_column($society->image_candidates, 'source');
+        $this->assertContains('official_url', $sources);
+        $this->assertFalse((bool) $society->image_approved_by_admin);
+
+        // Always a private draft.
+        $this->assertSame('Draft', $society->status);
+        $this->assertFalse((bool) $society->is_published);
+        $this->getJson('/api/societies')->assertOk()->assertJsonPath('data.total', 0);
+    }
+
+    public function test_admin_place_photo_proxy_returns_image_bytes(): void
+    {
+        Http::fake([
+            'maps.googleapis.com/maps/api/place/photo*' => Http::response('binary-image-bytes', 200, ['Content-Type' => 'image/jpeg']),
+        ]);
+
+        $response = $this->withToken('admin-test-token')->get('/api/admin/import/place-photo?reference=photo-ref-1&w=640');
+
+        $response->assertOk();
+        $this->assertSame('image/jpeg', $response->headers->get('Content-Type'));
+        $this->assertSame('binary-image-bytes', $response->getContent());
+    }
+
+    public function test_google_candidate_can_be_approved_as_cover_but_stays_private(): void
+    {
+        $society = Society::create([
+            'name' => 'Google Cover Society', 'slug' => 'google-cover-society',
+            'status' => 'Draft', 'verification_status' => 'Needs Review', 'is_published' => false,
+            'imported_at' => now(), 'place_id' => 'place-1',
+            'image_candidates' => [
+                ['url' => null, 'photo_reference' => 'ref-1', 'place_id' => 'place-1', 'source' => 'google_places', 'credit' => 'Google Places', 'approved' => false, 'is_cover' => false],
+            ],
+        ]);
+
+        $this->withToken('admin-test-token')
+            ->postJson("/api/admin/import/societies/{$society->id}/image-candidates", ['index' => 0, 'action' => 'cover', 'rights_confirmed' => false])
+            ->assertStatus(422);
+
+        $this->withToken('admin-test-token')
+            ->postJson("/api/admin/import/societies/{$society->id}/image-candidates", ['index' => 0, 'action' => 'cover', 'rights_confirmed' => true])
+            ->assertOk()
+            ->assertJsonPath('data.image_status', 'google_places_reference_found')
+            ->assertJsonPath('data.image_photo_reference', 'ref-1')
+            ->assertJsonPath('data.image_approved_by_admin', true)
+            ->assertJsonPath('data.image_candidates.0.is_cover', true);
+
+        $this->getJson('/api/societies')->assertOk()->assertJsonPath('data.total', 0);
+    }
+}
