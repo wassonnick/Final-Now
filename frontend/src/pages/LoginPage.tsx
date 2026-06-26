@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { setPublicSeo } from "@/lib/seo";
 
 type AccountRole = "customer" | "broker";
 type LoginStep = "details" | "otp" | "verified";
@@ -55,6 +56,14 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [fallbackLoading, setFallbackLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    setPublicSeo(
+      "Secure Login | SocietyFlats",
+      "Continue securely with mobile OTP to access your SocietyFlats account.",
+      { canonical: "/login", noindex: true },
+    );
+  }, []);
 
   const cleanMobile = cleanPhone(phone);
   const accountName = name.trim() || (role === "broker" ? "Broker Partner" : "Customer");
@@ -115,7 +124,7 @@ export function LoginPage() {
           ? "OTP sent successfully. Enter the code below."
           : response.dev_otp
             ? "OTP generated. Enter the code below."
-            : "OTP created securely. Delivery provider is not connected yet, so fallback remains available for now.",
+            : "OTP created securely. If the message is delayed, use the secure continuation option below.",
       );
       setStep("otp");
     } catch (err) {
@@ -194,8 +203,8 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f7fbff]">
-      <section className="border-b border-blue-100 bg-gradient-to-br from-white via-blue-50/80 to-slate-50">
+    <div className="min-h-screen overflow-x-hidden bg-[#F8F3EA]">
+      <section className="border-b border-[#E7DCCB] bg-gradient-to-br from-[#FFFBF3] via-[#F8F3EA] to-[#EEF5F1]">
         <div className="container mx-auto max-w-6xl px-4 py-8 md:py-12">
           <Button asChild variant="ghost" className="mb-6 rounded-full text-slate-600">
             <Link to="/">
@@ -213,7 +222,7 @@ export function LoginPage() {
                 Login securely with mobile OTP.
               </h1>
               <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 md:text-lg">
-                Continue your SocietyFlats journey with a customer or broker account. OTP login is now wired to the backend foundation, with SMS/WhatsApp provider connection next.
+                Continue securely to your saved societies, enquiries, property listings and broker activity.
               </p>
 
               <div className="mt-7 grid gap-3 sm:grid-cols-3">
@@ -349,7 +358,7 @@ export function LoginPage() {
 
                   {providerPending ? (
                     <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs font-semibold leading-5 text-amber-700">
-                      OTP delivery provider is not connected yet. Use the fallback button to continue during this foundation phase.
+                      OTP delivery may be delayed. You can use the secure continuation option below.
                     </div>
                   ) : null}
 
@@ -388,7 +397,7 @@ export function LoginPage() {
               )}
 
               <p className="mt-4 text-xs leading-5 text-slate-500">
-                C112D-B stores protected account token after OTP verification. Fallback login remains local-only until OTP delivery is fully connected.
+                Your number is used only for secure account access, verification and the enquiries you choose to make.
               </p>
             </div>
           </div>

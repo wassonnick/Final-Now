@@ -178,7 +178,7 @@ function MapsTool({ societies }: { societies: PublicSociety[] }) {
       </section>
 
       <section className="rounded-[2rem] border border-navy-100 bg-navy-900 p-5 text-white shadow-soft">
-        <div className="min-h-[420px] rounded-[1.5rem] border border-white/10 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.16),transparent_30%),linear-gradient(135deg,#15223a,#0f172a)] p-6">
+        <div className="min-h-[420px] rounded-[1.5rem] border border-white/10 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.14),transparent_30%),linear-gradient(135deg,#234A40,#10251F)] p-6">
           <div className="flex h-full flex-col justify-between gap-8">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gold-300">Location preview</p>
@@ -238,7 +238,7 @@ function RecommendationsTool({ societies }: { societies: PublicSociety[] }) {
         const text = searchableText(society.name, society.locality, society.sector, society.amenities.join(' '));
         const localityScore = locality && text.includes(locality.toLowerCase()) ? 20 : locality ? 0 : 10;
         const amenityScore = priorities.reduce((score, item) => score + (society.amenities.some((amenity) => amenity.toLowerCase() === item.toLowerCase()) ? 8 : 0), 0);
-        const dataScore = Number(society.score || 7) * 5;
+        const dataScore = Number(society.score || 0) * 5;
         const match = Math.min(98, Math.round(40 + localityScore + amenityScore + dataScore / 4));
         return { society, match };
       })
@@ -310,8 +310,14 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
     experience: '',
     reraNumber: '',
   });
+  const [brokerStep, setBrokerStep] = useState(1);
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [notice, setNotice] = useState('');
+  const brokerStepReady =
+    brokerStep === 1 ? /^[6-9]\d{9}$/.test(form.phone.replace(/\D/g, '').slice(-10)) :
+    brokerStep === 2 ? Boolean(form.name.trim()) :
+    brokerStep === 3 ? Boolean(form.workingAreas.trim()) :
+    true;
 
   const submit = async () => {
     if (state === 'loading' || state === 'success') return;
@@ -429,62 +435,69 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
               Grow your broker business with SocietyFlats.
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-navy-500">
-              Share working areas, office details, inventory strength and RERA/license information. Verified partners can receive matched buyer, tenant and owner opportunities through SocietyFlats.
+              Complete one clear step at a time. Verified partners can receive matched buyer, tenant and owner opportunities through SocietyFlats.
             </p>
+            <div className="mt-5 flex items-center justify-between text-xs font-bold text-[#6E756E]">
+              <span>Step {brokerStep} of 5</span>
+              <span>{Math.round((brokerStep / 5) * 100)}% complete</span>
+            </div>
+            <div className="mt-2 grid grid-cols-5 gap-2">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <span key={index} className={cn("h-1.5 rounded-full", index + 1 <= brokerStep ? "bg-[#C2724E]" : "bg-[#F4E3D8]")} />
+              ))}
+            </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label>
-              <span className="text-sm font-semibold text-navy-700">Full name</span>
-              <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Broker name" />
-            </label>
-
-            <label>
-              <span className="text-sm font-semibold text-navy-700">Mobile number</span>
-              <Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="9911886222" />
-            </label>
-
-            <label>
-              <span className="text-sm font-semibold text-navy-700">Email</span>
-              <Input value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Optional but recommended" />
-            </label>
-
-            <label>
-              <span className="text-sm font-semibold text-navy-700">Company / brand name</span>
-              <Input value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Your firm name" />
-            </label>
-
-            <label className="md:col-span-2">
-              <span className="text-sm font-semibold text-navy-700">Office address</span>
-              <Input value={form.officeAddress} onChange={(event) => setForm({ ...form, officeAddress: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Office address / locality" />
-            </label>
-
-            <label className="md:col-span-2">
-              <span className="text-sm font-semibold text-navy-700">Working areas / societies</span>
-              <Input value={form.workingAreas} onChange={(event) => setForm({ ...form, workingAreas: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Golf Course Road, DLF Crest, M3M Golf Estate, Sector 65..." />
-            </label>
-
-            <label>
-              <span className="text-sm font-semibold text-navy-700">Experience</span>
-              <Input value={form.experience} onChange={(event) => setForm({ ...form, experience: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Example: 8 years" />
-            </label>
-
-            <label>
-              <span className="text-sm font-semibold text-navy-700">RERA / license no.</span>
-              <Input value={form.reraNumber} onChange={(event) => setForm({ ...form, reraNumber: event.target.value })} className="mt-2 h-11 rounded-full" placeholder="Optional" />
-            </label>
-
-            <label className="md:col-span-2">
-              <span className="text-sm font-semibold text-navy-700">Inventory / client requirements</span>
-              <textarea value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} className="mt-2 min-h-[105px] w-full rounded-[1.25rem] border border-navy-100 bg-white p-3.5 text-navy-800 outline-none focus:border-orange-300 focus:ring-4 focus:ring-orange-100" placeholder="Tell us your active listings, buyer/tenant leads, preferred commission terms and top working societies..." />
-            </label>
+          <div className="min-h-[245px]">
+            {brokerStep === 1 ? (
+              <label className="block">
+                <span className="text-sm font-semibold text-navy-700">Verify your mobile number</span>
+                <Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value.replace(/\D/g, '').slice(0, 10) })} inputMode="numeric" className="mt-3 h-12 rounded-xl" placeholder="10-digit mobile number" />
+                <p className="mt-2 text-xs leading-5 text-[#6E756E]">No spam. This number is used for broker verification, account access and matched enquiries.</p>
+              </label>
+            ) : null}
+            {brokerStep === 2 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <label><span className="text-sm font-semibold text-navy-700">Full name</span><Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="mt-2 h-11 rounded-xl" placeholder="Broker name" /></label>
+                <label><span className="text-sm font-semibold text-navy-700">Company / brand</span><Input value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} className="mt-2 h-11 rounded-xl" placeholder="Your firm name" /></label>
+                <label><span className="text-sm font-semibold text-navy-700">Email</span><Input value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="mt-2 h-11 rounded-xl" placeholder="Optional" /></label>
+                <label><span className="text-sm font-semibold text-navy-700">Experience</span><Input value={form.experience} onChange={(event) => setForm({ ...form, experience: event.target.value })} className="mt-2 h-11 rounded-xl" placeholder="Example: 8 years" /></label>
+              </div>
+            ) : null}
+            {brokerStep === 3 ? (
+              <div className="space-y-4">
+                <label className="block"><span className="text-sm font-semibold text-navy-700">Operating sectors / societies</span><Input value={form.workingAreas} onChange={(event) => setForm({ ...form, workingAreas: event.target.value })} className="mt-2 h-12 rounded-xl" placeholder="Golf Course Road, Sector 65, DLF societies..." /></label>
+                <label className="block"><span className="text-sm font-semibold text-navy-700">Office address</span><Input value={form.officeAddress} onChange={(event) => setForm({ ...form, officeAddress: event.target.value })} className="mt-2 h-11 rounded-xl" placeholder="Office address / locality" /></label>
+              </div>
+            ) : null}
+            {brokerStep === 4 ? (
+              <div>
+                <p className="text-sm font-semibold text-navy-700">Inventory and verification</p>
+                <textarea value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} className="mt-3 min-h-[120px] w-full rounded-[1.25rem] border border-navy-100 bg-white p-3.5 text-navy-800 outline-none focus:border-orange-300 focus:ring-4 focus:ring-orange-100" placeholder="Rent, resale or both? Mention active inventory, client requirements and top societies." />
+                <label className="mt-4 block"><span className="text-sm font-semibold text-navy-700">RERA / license number</span><Input value={form.reraNumber} onChange={(event) => setForm({ ...form, reraNumber: event.target.value })} className="mt-2 h-11 rounded-xl" placeholder="Optional at submission; verified before activation" /></label>
+              </div>
+            ) : null}
+            {brokerStep === 5 ? (
+              <div>
+                <p className="text-sm font-semibold text-navy-700">Review application</p>
+                <div className="mt-3 grid gap-2 rounded-[16px] bg-[#FBF3EE] p-4 text-sm">
+                  {[["Name", form.name], ["Phone", form.phone], ["Company", form.companyName || "Independent broker"], ["Working areas", form.workingAreas], ["Experience", form.experience || "Not provided"], ["RERA / license", form.reraNumber || "To be verified"]].map(([label, value]) => <div key={label} className="flex justify-between gap-4 border-b border-[#F4E3D8] pb-2 last:border-0 last:pb-0"><span className="text-[#6E756E]">{label}</span><strong className="max-w-[65%] text-right text-[#25302B]">{value}</strong></div>)}
+                </div>
+                <p className="mt-3 text-xs leading-5 text-[#6E756E]">Submission creates a verification request. It does not automatically make the broker profile public or active.</p>
+              </div>
+            ) : null}
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
-            <Button disabled={state === 'loading' || state === 'success'} onClick={submit} className="h-10 rounded-full bg-orange-600 px-5 text-sm font-bold hover:bg-orange-700">
-              {state === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BriefcaseBusiness className="mr-2 h-4 w-4" />}
-              {state === 'success' ? 'Request sent' : state === 'loading' ? 'Sending...' : 'Submit broker application'}
-            </Button>
+            {brokerStep > 1 ? <Button type="button" variant="outline" onClick={() => setBrokerStep((step) => Math.max(1, step - 1))} className="h-10 rounded-xl px-5">Back</Button> : null}
+            {brokerStep < 5 ? (
+              <Button type="button" disabled={!brokerStepReady} onClick={() => setBrokerStep((step) => Math.min(5, step + 1))} className="h-10 rounded-xl bg-orange-600 px-5 text-sm font-bold hover:bg-orange-700">Continue <ArrowRight className="ml-2 h-4 w-4" /></Button>
+            ) : (
+              <Button disabled={state === 'loading' || state === 'success'} onClick={submit} className="h-10 rounded-xl bg-orange-600 px-5 text-sm font-bold hover:bg-orange-700">
+                {state === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BriefcaseBusiness className="mr-2 h-4 w-4" />}
+                {state === 'success' ? 'Request sent' : state === 'loading' ? 'Sending...' : 'Submit for verification'}
+              </Button>
+            )}
 
             {state === 'success' ? (
               <Button asChild variant="outline" className="rounded-full border-orange-100 bg-white text-orange-700">

@@ -303,6 +303,33 @@ const routeMeta = [
     schemaType: "WebPage",
   },
   {
+    path: "/trust",
+    title: "How SocietyFlats Verifies Society Data",
+    description:
+      "Understand SocietyFlats research, admin review, image approval, data confidence and public publishing workflow.",
+    priority: "0.5",
+    changefreq: "monthly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/privacy",
+    title: "Trust and Privacy | SocietyFlats",
+    description:
+      "Learn how SocietyFlats protects account, owner, broker and enquiry information.",
+    priority: "0.4",
+    changefreq: "monthly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/help",
+    title: "Help and FAQ | SocietyFlats",
+    description:
+      "Answers about society verification, live inventory, AI recommendations, owner listings and broker partners.",
+    priority: "0.5",
+    changefreq: "monthly",
+    schemaType: "FAQPage",
+  },
+  {
     path: "/chat",
     title: "Gurgaon Society AI Chat | SocietyFlats",
     description:

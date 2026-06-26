@@ -255,11 +255,7 @@ function getPhotos(property: Property): string[] {
     .map(String)
     .filter((value, index, self) => self.indexOf(value) === index);
 
-  return photos.length
-    ? photos
-    : [
-        "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1400&q=80",
-      ];
+  return photos.length ? photos : ["/brand/societyflats-icon-512.png"];
 }
 
 function safePropertyPath(property: Property): string {
@@ -367,6 +363,15 @@ export function PropertyPage() {
   const listingType = getField(property, "listingType", "listing_type", "Property");
   const listingSearchTab = searchTabForListingType(listingType);
   const propertyType = getField(property, "propertyType", "property_type", "Apartment");
+  const listedByValue = String(
+    getField(property, "listedBy", "listed_by", "") ||
+    getField(property, "sourceType", "source_type", ""),
+  ).toLowerCase();
+  const listingSourceLabel = listedByValue.includes("owner")
+    ? "Listed by owner"
+    : listedByValue.includes("broker")
+      ? "Broker partner"
+      : "Source reviewed";
   const areaSqft = getField(property, "areaSqft", "area_sqft", "-");
   const furnishedStatus = getField(property, "furnishedStatus", "furnished_status", "-");
   const amenities = useMemo(() => parseList(property?.amenities), [property?.amenities]);
@@ -682,6 +687,129 @@ export function PropertyPage() {
     );
   }
 
+  const handoffPropertyFacts = [
+    ["Carpet area", areaSqft && areaSqft !== "-" ? `${areaSqft} ft²` : "To be verified"],
+    ["Floor", property.floor || "To be verified"],
+    ["Facing", property.facing || "To be verified"],
+    ["Bathrooms", property.bathrooms || "To be verified"],
+    ["Furnishing", furnishedStatus || "To be verified"],
+    ["Parking", getField(property, "parking", "parking", "To be verified")],
+  ];
+  const ownerInitials = listingSourceLabel
+    .split(/\s+/)
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <div className="min-h-screen bg-[#F8F3EA] pb-24 md:pb-0">
+      <main className="mx-auto max-w-[1360px] px-4 py-6 md:px-10 md:pb-16">
+        <div className="mb-4 flex items-center gap-1.5 text-[13px] text-[#6E756E]">
+          <Link to={societySlug ? `/society/${societySlug}` : "/properties"}>{societyName || "Properties"}</Link>
+          <span>›</span>
+          <span className="font-semibold text-[#25302B]">{title}</span>
+        </div>
+
+        <div className="grid items-start gap-9 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <section>
+            <div className="grid h-[250px] gap-3 sm:h-[320px] md:h-[360px] md:grid-cols-[2fr_1fr]">
+              <button type="button" onClick={() => setLightboxOpen(true)} className="relative overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left">
+                <img src={photos[0]} alt={title} className="h-full w-full object-cover" />
+              </button>
+              <div className="hidden grid-rows-2 gap-3 md:grid">
+                {[photos[1] || photos[0], photos[2] || photos[0]].map((photo, index) => (
+                  <button key={`${photo}-${index}`} type="button" onClick={() => { setActiveImage(index + 1); setLightboxOpen(true); }} className="overflow-hidden rounded-[18px] bg-[#E5ECE5]">
+                    <img src={photo} alt={`${title} ${index + 2}`} className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              <span className="rounded-full bg-[#E8F7E9] px-3 py-1.5 text-xs font-bold text-[#2A6147]">✓ Verified listing</span>
+              <span className="rounded-full bg-[#F0F0EC] px-3 py-1.5 text-xs font-semibold text-[#59635E]">{listingSourceLabel}</span>
+              <span className="rounded-full bg-[#F0F0EC] px-3 py-1.5 text-xs font-semibold text-[#59635E]">{property.status || listingType}</span>
+            </div>
+
+            <h1 className="mt-3 font-display text-[34px] font-medium leading-tight text-[#10251F]">{title}</h1>
+            <p className="mt-1.5 text-[14.5px] text-[#6E756E]">{societyName || "Gurgaon"} · {societyLocality || property.locality || "Gurgaon"}</p>
+
+            <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3">
+              {handoffPropertyFacts.map(([label, value]) => (
+                <div key={label} className="rounded-[14px] border border-[#E7E3DA] bg-white p-[15px]">
+                  <p className="text-[11px] text-[#7A817D]">{label}</p>
+                  <p className="mt-1 text-base font-bold text-[#25302B]">{String(value)}</p>
+                </div>
+              ))}
+            </div>
+
+            <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">About this flat</h2>
+            <p className="mt-2.5 max-w-[760px] whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{publicPropertyDescription(property.description)}</p>
+
+            <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Floor plan</h2>
+            <div className="mt-3.5 flex h-[240px] items-center justify-center overflow-hidden rounded-[16px] border border-[#E7E3DA] bg-[repeating-linear-gradient(135deg,#E5EAE5_0_1px,transparent_1px_15px)]">
+              {floorPlanUrl ? <img src={floorPlanUrl} alt={`${title} floor plan`} className="h-full w-full object-contain" /> : <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#66716B]">Floor plan under review</span>}
+            </div>
+          </section>
+
+          <aside className="space-y-3.5 lg:sticky lg:top-[94px]">
+            <div className="rounded-[20px] border border-[#E7E3DA] bg-white p-[22px] shadow-[0_14px_36px_-26px_rgba(0,0,0,.4)]">
+              <p className="text-[28px] font-extrabold text-[#123C32]">{price}</p>
+              {saleListing && monthlyEmi > 0 ? <p className="mt-1 text-[13px] text-[#6E756E]">≈ ₹{(monthlyEmi / 100000).toFixed(1)} L/mo EMI</p> : <p className="mt-1 text-[13px] text-[#6E756E]">{listingType}</p>}
+              <div className="mt-4 flex items-center gap-3 rounded-[12px] bg-[#F1F3EF] p-3">
+                <span className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#DDE9DF] text-[13px] font-bold text-[#2A6147]">{ownerInitials || "SF"}</span>
+                <div><p className="text-sm font-semibold text-[#25302B]">{listingSourceLabel}</p><p className="text-[11.5px] text-[#2A6147]">{property.verified ? "Verified contact" : "Contact reviewed before sharing"}</p></div>
+              </div>
+              <div className="mt-4 grid gap-2.5">
+                <button type="button" onClick={() => openLead("enquiry")} className="rounded-[12px] bg-[#C8783F] px-5 py-3.5 text-[14.5px] font-bold text-white">{listedByValue.includes("owner") ? "Contact owner" : "Ask about this home"}</button>
+                <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-[12px] bg-[#449B4E] px-5 py-3 text-[14.5px] font-bold text-white"><MessageCircle className="mr-2 h-4 w-4" />WhatsApp</a>
+                <button type="button" onClick={() => openLead("callback")} className="rounded-[12px] border-2 border-[#123C32] bg-white px-5 py-3 text-[14.5px] font-bold text-[#123C32]">Request callback</button>
+              </div>
+              <p className="mt-3.5 rounded-[11px] bg-[#EEF5F1] p-3 text-[11.5px] leading-5 text-[#486154]">🛡 Never pay before visiting. SocietyFlats reviews listings, but always inspect in person.</p>
+            </div>
+
+            {societyName ? (
+              <Link to={societySlug ? `/society/${societySlug}` : `/search?q=${encodeURIComponent(societyName)}&tab=societies`} className="flex items-center gap-3 rounded-[16px] border border-[#E7E3DA] bg-white p-3.5">
+                <div className="h-[50px] w-[50px] rounded-[11px] bg-[repeating-linear-gradient(135deg,#DDE5DE_0_1px,transparent_1px_10px)]" />
+                <div className="min-w-0"><strong className="text-sm text-[#25302B]">{societyName}</strong><p className="mt-1 text-xs text-[#6E756E]">View society profile →</p></div>
+              </Link>
+            ) : null}
+          </aside>
+        </div>
+      </main>
+
+      {lightboxOpen ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" role="dialog" aria-modal="true">
+          <button type="button" onClick={() => setLightboxOpen(false)} className="absolute right-5 top-5 rounded-full bg-white/10 p-3 text-white"><X className="h-6 w-6" /></button>
+          <img src={photos[activeImage] || photos[0]} alt={title} className="max-h-[85vh] max-w-[88vw] rounded-2xl object-contain" />
+        </div>
+      ) : null}
+
+      {leadOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#10251F]/60 px-4">
+          <div className="w-full max-w-lg rounded-[24px] bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div><h3 className="font-display text-2xl font-medium text-[#10251F]">{leadType === "callback" ? "Check property availability" : "Ask about this property"}</h3><p className="mt-1 text-sm text-[#6E756E]">Share your details once. We will confirm availability, price and the next visit step.</p></div>
+              <button type="button" onClick={() => setLeadOpen(false)} className="rounded-full border border-[#E7E3DA] p-2 text-[#6E756E]"><X className="h-4 w-4" /></button>
+            </div>
+            {leadSuccess ? <div className="mt-6 rounded-2xl bg-[#EEF5F1] p-5 text-[#2A6147]"><strong>Request received</strong><p className="mt-2 text-sm">A SocietyFlats advisor will review your requirement and get back to you shortly.</p></div> : (
+              <form onSubmit={submitLead} className="mt-6 space-y-4">
+                <input required value={leadForm.name} onChange={(event) => setLeadForm({ ...leadForm, name: event.target.value })} placeholder="Your name" className="w-full rounded-xl border border-[#E7E3DA] px-4 py-3 outline-none" />
+                <input required value={leadForm.phone} inputMode="numeric" maxLength={10} onChange={(event) => setLeadForm({ ...leadForm, phone: cleanLeadPhone(event.target.value) })} placeholder="10-digit mobile number" className="w-full rounded-xl border border-[#E7E3DA] px-4 py-3 outline-none" />
+                <input type="email" value={leadForm.email} onChange={(event) => setLeadForm({ ...leadForm, email: event.target.value })} placeholder="Email optional" className="w-full rounded-xl border border-[#E7E3DA] px-4 py-3 outline-none" />
+                <textarea value={leadForm.message} onChange={(event) => setLeadForm({ ...leadForm, message: event.target.value })} placeholder="Message" rows={4} className="w-full rounded-xl border border-[#E7E3DA] px-4 py-3 outline-none" />
+                {leadError ? <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{leadError}</div> : null}
+                <Button disabled={leadSubmitting || leadSuccess} className="w-full rounded-xl bg-[#123C32] hover:bg-[#10251F]">{leadSubmitting ? "Sending..." : "Submit enquiry"}</Button>
+              </form>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+
+  /*
   return (
     <div className="min-h-screen bg-ivory-100 pb-20 md:pb-0">
       {/* C46D mobile property save CTA */}
@@ -766,6 +894,7 @@ export function PropertyPage() {
                   <div className="mb-2.5 flex flex-wrap gap-2">
                     <Badge className="border-blue-100 bg-blue-50 text-blue-700">{listingType}</Badge>
                     {property.status ? <Badge variant="outline">{property.status}</Badge> : null}
+                    <Badge className="border-[#E7DCCB] bg-[#FFFBF3] text-[#59635E]">{listingSourceLabel}</Badge>
                   </div>
 
                   <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 md:text-3xl">
@@ -1066,7 +1195,7 @@ export function PropertyPage() {
                   ["Type", propertyType],
                   ["Society", societyName || "Gurgaon"],
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-xl bg-[#F8FAFC] px-3 py-1.5">
+                  <div key={label} className="rounded-xl bg-[#EEF5F1] px-3 py-1.5">
                     <p className="text-[11px] text-navy-400">{label}</p>
                     <p className="mt-0.5 truncate text-sm font-semibold text-navy-900">
                       {value}
@@ -1080,6 +1209,9 @@ export function PropertyPage() {
                 <p className="mt-0.5 truncate text-sm font-semibold text-navy-900">
                   {societyLocality}
                 </p>
+              </div>
+              <div className="mt-2.5 rounded-xl bg-[#E4F0E6] px-3 py-2 text-xs font-semibold text-[#1F7A5A]">
+                {listingSourceLabel} · availability confirmed on request
               </div>
 
               <div className="mt-2.5 space-y-1.5">
@@ -1265,4 +1397,5 @@ export function PropertyPage() {
       ) : null}
     </div>
   );
+  */
 }

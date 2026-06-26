@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800;900&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&display=swap');
 
 /* C43B: prevent accidental horizontal page scroll from dashboard tabs/cards */
 html,
@@ -45,11 +45,11 @@ body,
   * { @apply border-border; }
 
   body {
-    @apply bg-ivory-100 text-navy-900 font-sans antialiased;
+    @apply bg-paper-100 text-forest-900 font-sans antialiased;
     letter-spacing: -0.011em;
   }
 
-  h1, h2, h3, h4, h5, h6 { @apply font-display text-navy-900 tracking-tight; }
+  h1, h2, h3, h4, h5, h6 { @apply font-display text-forest-950 tracking-tight; }
 }
 
 @layer components {
@@ -63,12 +63,158 @@ body,
   .score-poor { @apply bg-red-50 text-red-700 border border-red-200; }
   .intelligence-meter { @apply h-2 rounded-full bg-navy-100 overflow-hidden; }
   .intelligence-fill { @apply h-full rounded-full transition-all duration-700 ease-out; }
+  .public-paper { @apply bg-paper-100 text-forest-900; }
+  .public-section { @apply bg-paper-100 px-4 py-10 md:py-16; }
+  .public-section-cream { @apply bg-paper-50 px-4 py-10 md:py-16; }
+  .public-card { @apply rounded-[1.6rem] border border-paper-300 bg-paper-50 shadow-editorial; }
+  .public-eyebrow { @apply text-[11px] font-black uppercase tracking-[0.2em] text-clay-600; }
+  .public-heading { @apply font-display font-semibold leading-[1.02] tracking-[-0.035em] text-forest-950; }
+  .public-body { @apply font-medium leading-7 text-forest-600; }
+  .public-primary-button { @apply rounded-full bg-pine-800 font-extrabold text-white shadow-editorial transition hover:bg-pine-900; }
+  .public-secondary-button { @apply rounded-full border border-paper-300 bg-paper-50 font-extrabold text-forest-800 transition hover:border-pine-300 hover:bg-sage-50; }
+  .public-chip { @apply rounded-full border border-paper-300 bg-paper-50 px-3 py-1.5 text-xs font-extrabold text-forest-700 transition hover:border-pine-300 hover:bg-sage-50; }
 }
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
+}
+
+/* Public redesign bridge
+   Older public routes retain their proven markup and behavior while these
+   scoped aliases translate the former blue SaaS palette into the approved
+   SocietyFlats paper / pine / clay design system. Admin remains untouched. */
+.public-site {
+  background: #F8F3EA;
+  color: #25302B;
+}
+
+.public-site > main,
+.public-site main {
+  background-color: #F8F3EA;
+}
+
+.public-site h1,
+.public-site h2 {
+  color: #10251F;
+  font-family: "Newsreader", Georgia, serif;
+  font-weight: 500;
+  text-wrap: balance;
+}
+
+.public-site p {
+  text-wrap: pretty;
+}
+
+.public-site .container {
+  max-width: 1360px;
+}
+
+.public-site .bg-ivory-100,
+.public-site .bg-ivory-200 { background-color: #F8F3EA !important; }
+.public-site .bg-navy-50,
+.public-site .bg-blue-50,
+.public-site .bg-slate-50 { background-color: #EEF5F1 !important; }
+.public-site .bg-navy-100,
+.public-site .bg-blue-100,
+.public-site .bg-slate-100 { background-color: #DDE7DC !important; }
+.public-site .bg-navy-200,
+.public-site .bg-blue-200,
+.public-site .bg-slate-200 { background-color: #C6DACE !important; }
+.public-site .bg-blue-400 { background-color: #64A07F !important; }
+.public-site .bg-blue-500,
+.public-site .bg-navy-500 { background-color: #327B5D !important; }
+.public-site .bg-blue-600,
+.public-site .bg-navy-600 { background-color: #1F684E !important; }
+.public-site .bg-blue-700,
+.public-site .bg-navy-700 { background-color: #123C32 !important; }
+.public-site .bg-blue-800,
+.public-site .bg-navy-800 { background-color: #102F28 !important; }
+.public-site .bg-blue-900,
+.public-site .bg-navy-900,
+.public-site .bg-navy-950,
+.public-site .bg-slate-950 { background-color: #10251F !important; }
+.public-site .bg-orange-50 { background-color: #FBF3EE !important; }
+.public-site .bg-orange-600,
+.public-site .bg-orange-700 { background-color: #C2724E !important; }
+
+.public-site .text-navy-950,
+.public-site .text-navy-900,
+.public-site .text-slate-950,
+.public-site .text-slate-900 { color: #10251F !important; }
+.public-site .text-navy-800,
+.public-site .text-navy-700,
+.public-site .text-slate-800,
+.public-site .text-slate-700 { color: #25302B !important; }
+.public-site .text-navy-600,
+.public-site .text-navy-500,
+.public-site .text-slate-600,
+.public-site .text-slate-500 { color: #6E756E !important; }
+.public-site .text-navy-400,
+.public-site .text-slate-400 { color: #8A8F89 !important; }
+.public-site .text-blue-900,
+.public-site .text-blue-800,
+.public-site .text-blue-700 { color: #123C32 !important; }
+.public-site .text-blue-600,
+.public-site .text-blue-500,
+.public-site .text-blue-400 { color: #2A6147 !important; }
+.public-site .text-blue-300,
+.public-site .text-blue-200 { color: #9FC2AE !important; }
+.public-site .text-orange-900,
+.public-site .text-orange-700,
+.public-site .text-orange-600,
+.public-site .text-orange-500 { color: #B86F4B !important; }
+
+.public-site .border-blue-50,
+.public-site .border-blue-100,
+.public-site .border-blue-200,
+.public-site .border-navy-100,
+.public-site .border-navy-200,
+.public-site .border-slate-100,
+.public-site .border-slate-200 { border-color: #E7DCCB !important; }
+
+.public-site .from-blue-50 { --tw-gradient-from: #EEF5F1 var(--tw-gradient-from-position) !important; }
+.public-site .from-blue-700,
+.public-site .from-navy-700 { --tw-gradient-from: #123C32 var(--tw-gradient-from-position) !important; }
+.public-site .via-blue-50,
+.public-site .via-white { --tw-gradient-via: #FFFBF3 var(--tw-gradient-via-position) !important; }
+.public-site .to-blue-400 { --tw-gradient-to: #64A07F var(--tw-gradient-to-position) !important; }
+.public-site .to-slate-50,
+.public-site .to-white { --tw-gradient-to: #F8F3EA var(--tw-gradient-to-position) !important; }
+
+.public-site input,
+.public-site select,
+.public-site textarea {
+  border-color: #E7DCCB;
+  color: #25302B;
+}
+
+.public-site input:focus,
+.public-site select:focus,
+.public-site textarea:focus {
+  border-color: #9FC2AE;
+  box-shadow: 0 0 0 3px rgba(31, 104, 78, 0.10);
+}
+
+.public-site .shadow-sm,
+.public-site .shadow-soft,
+.public-site .shadow-premium {
+  box-shadow: 0 10px 28px -22px rgba(16, 37, 31, 0.38) !important;
+}
+
+.public-site a,
+.public-site button {
+  transition-duration: 200ms;
+}
+
+.public-site a:focus-visible,
+.public-site button:focus-visible,
+.public-site input:focus-visible,
+.public-site select:focus-visible,
+.public-site textarea:focus-visible {
+  outline: 2px solid #2A6147;
+  outline-offset: 3px;
 }
 
 /* =========================================================

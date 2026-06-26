@@ -273,8 +273,8 @@ export function MapsPage() {
 
           {!googleMapsApiKey ? (
             <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-              <span className="font-black">Google Maps key not connected.</span>{" "}
-              Showing SocietyFlats map preview with verified coordinate pins. Add VITE_GOOGLE_MAPS_API_KEY in frontend Render env to enable the live Google map.
+              <span className="font-black">Live map temporarily unavailable.</span>{" "}
+              SocietyFlats is showing a privacy-safe map preview. Published coordinate pins will return when the map service is available.
             </div>
           ) : null}
         </div>

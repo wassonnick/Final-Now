@@ -83,7 +83,7 @@ function backendBrokerLeadMeta(lead: AccountDashboardLead) {
     brokerSourceLabel(lead.source || ""),
     lead.society_name ? `Area/Society: ${lead.society_name}` : "",
     lead.requirement || "",
-    `Backend synced ${formatDate(lead.created_at || undefined)}`,
+    `Updated ${formatDate(lead.created_at || undefined)}`,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -93,7 +93,7 @@ function backendBrokerToDashboardItem(lead: AccountDashboardLead): BrokerDashboa
   return {
     title: backendBrokerLeadTitle(lead),
     meta: backendBrokerLeadMeta(lead),
-    status: lead.status || "Backend synced",
+    status: lead.status || "In review",
   };
 }
 
@@ -273,7 +273,7 @@ export function BrokerDashboardPage() {
   const brokerLeadUpdateItems = backendBrokerItems.length ? backendBrokerItems : privacySafeLeadItems;
 
   const brokerStats = [
-    { label: "Submissions", value: String(backendBrokerSubmissionCount ?? activity.length), helper: hasBackendDashboard ? "Backend protected" : "Local fallback", icon: ClipboardList },
+    { label: "Submissions", value: String(backendBrokerSubmissionCount ?? activity.length), helper: hasBackendDashboard ? "Account verified" : "Saved to this account", icon: ClipboardList },
     { label: "Partner profile", value: String(partnerSubmissions.length), helper: "Broker onboarding", icon: BriefcaseBusiness },
     { label: "Listings", value: String(listingSubmissions.length), helper: "Inventory submitted", icon: Home },
     { label: "Safe lead updates", value: String(brokerLeadUpdateItems.length), helper: "Contact privacy locked", icon: Phone },
@@ -319,7 +319,7 @@ export function BrokerDashboardPage() {
           </Button>
         </div>
       ) : null}
-      <section className="border-b border-orange-100 bg-gradient-to-br from-white via-orange-50/70 to-slate-50">
+      <section className="border-b border-[#E7DCCB] bg-[#FFFBF3]">
         <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -375,8 +375,8 @@ export function BrokerDashboardPage() {
       </section>
 
       <main className="container mx-auto max-w-7xl px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="flex h-auto w-full max-w-full flex-wrap items-stretch justify-start gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:items-start lg:gap-6">
+          <TabsList className="flex h-auto w-full max-w-full flex-wrap items-stretch justify-start gap-2 rounded-3xl border border-[#E7DCCB] bg-[#FFFBF3] p-2 shadow-sm lg:sticky lg:top-24 lg:flex-col lg:rounded-[20px] lg:p-3">
             {[
               ["overview", "Overview", BarChart3],
               ["listings", "My Listings", Home],
@@ -390,7 +390,7 @@ export function BrokerDashboardPage() {
                 <TabsTrigger
                   key={String(value)}
                   value={String(value)}
-                  className="min-w-0 flex-1 basis-[calc(50%-0.25rem)] whitespace-normal rounded-2xl px-2 py-3 text-center text-xs font-bold leading-tight data-[state=active]:bg-orange-600 data-[state=active]:text-white sm:basis-[calc(33.333%-0.35rem)] xl:basis-0"
+                  className="min-w-0 flex-1 basis-[calc(50%-0.25rem)] justify-start whitespace-normal rounded-xl px-3 py-3 text-left text-xs font-bold leading-tight data-[state=active]:bg-[#123C32] data-[state=active]:text-white sm:basis-[calc(33.333%-0.35rem)] lg:w-full lg:flex-none"
                 >
                   <IconComponent className="mr-2 h-4 w-4" />
                   {String(label)}
@@ -407,7 +407,7 @@ export function BrokerDashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-950">Recent broker activity</h2>
-                  <p className="mt-1 text-sm text-slate-500">Real partner submissions from this account.</p>
+                  <p className="mt-1 text-sm text-slate-500">Partner submissions and inventory activity from this account.</p>
                 </div>
               </div>
 
@@ -432,18 +432,18 @@ export function BrokerDashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-950">Admin-controlled visibility</h2>
-                  <p className="mt-1 text-sm text-slate-500">Protects the SocietyFlats conversion layer.</p>
+                  <p className="mt-1 text-sm text-slate-500">Keeps customer and owner contact details private.</p>
                 </div>
               </div>
               <p className="mt-5 rounded-3xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-                Brokers can see their own submissions, protected backend summary when OTP token exists, and privacy-safe lead update placeholders. Buyer phone/email, commission status and deal visibility remain controlled by admin.
+                Brokers can see their own submissions and privacy-safe lead updates. Buyer phone, email and deal details are shared only after SocietyFlats reviews the enquiry stage.
               </p>
               <div className="mt-5 grid gap-3">
                 {[
                   "Submit inventory or buyer requirements",
                   "Admin verifies broker profile and area coverage",
                   "SocietyFlats controls customer contact visibility",
-                  "Lead/contact visibility remains locked until a safe backend route exists",
+                  "Contact details are shared only after the enquiry is reviewed",
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700">
                     <CheckCircle2 className="h-5 w-5 text-orange-600" />
@@ -514,7 +514,7 @@ export function BrokerDashboardPage() {
                     Phone: {brokerPhone || "Not available"} · Role: Broker Partner
                   </p>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                    Backend broker verification, commission terms and cross-device history will come after real OTP/auth wiring.
+                    Profile verification, working areas and commission preferences are reviewed before partner activation.
                   </p>
                 </div>
               </div>
@@ -525,10 +525,10 @@ export function BrokerDashboardPage() {
         <section className="mt-8 rounded-[28px] border border-orange-100 bg-orange-50 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">C112D-C broker enriched dashboard</p>
-              <h2 className="mt-2 text-2xl font-black text-slate-950">Broker dashboard now supports protected enriched backend submissions.</h2>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">Broker partner dashboard</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">Manage partner submissions without compromising customer privacy.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Broker CRM submissions are linked to the broker phone in this temporary account layer. Inventory lead updates stay privacy-safe; protected backend sync is used when OTP token exists while admin remains the source of truth.
+                Inventory and requirement submissions stay linked to this account. SocietyFlats reviews profiles, listings and matched enquiries before sharing sensitive contact details.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">

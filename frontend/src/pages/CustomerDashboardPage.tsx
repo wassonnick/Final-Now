@@ -247,7 +247,7 @@ export function CustomerDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#f7fbff] pb-16">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#F8F3EA] pb-16">
       <section className="border-b border-blue-100 bg-gradient-to-br from-white via-blue-50/80 to-slate-50">
         <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -304,8 +304,8 @@ export function CustomerDashboardPage() {
       </section>
 
       <main className="container mx-auto max-w-7xl px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="flex h-auto w-full max-w-full flex-wrap items-stretch justify-start gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:items-start lg:gap-6">
+          <TabsList className="flex h-auto w-full max-w-full flex-wrap items-stretch justify-start gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm lg:sticky lg:top-24 lg:flex-col lg:rounded-[20px] lg:p-3">
             {[
               ["overview", "Overview", BarChart3],
               ["shortlist", "Shortlist", Heart],
@@ -320,7 +320,7 @@ export function CustomerDashboardPage() {
                 <TabsTrigger
                   key={String(value)}
                   value={String(value)}
-                  className="min-w-0 flex-1 basis-[calc(50%-0.25rem)] whitespace-normal rounded-2xl px-2 py-3 text-center text-xs font-bold leading-tight data-[state=active]:bg-blue-700 data-[state=active]:text-white sm:basis-[calc(33.333%-0.35rem)] xl:basis-0"
+                  className="min-w-0 flex-1 basis-[calc(50%-0.25rem)] whitespace-normal rounded-2xl px-2 py-3 text-center text-xs font-bold leading-tight data-[state=active]:bg-blue-700 data-[state=active]:text-white sm:basis-[calc(33.333%-0.35rem)] lg:w-full lg:flex-none lg:justify-start lg:px-4 lg:text-left xl:basis-auto"
                 >
                   <IconComponent className="mr-2 h-4 w-4" />
                   {String(label)}
@@ -509,10 +509,10 @@ export function CustomerDashboardPage() {
         <section className="mt-8 rounded-[28px] border border-blue-100 bg-blue-50 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">C45 shortlist and view history</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Shortlist and view history</p>
               <h2 className="mt-2 text-2xl font-black text-slate-950">Customer dashboard now tracks views, shortlist and submissions.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Viewed properties, viewed societies, shortlists and lead submissions are linked to the customer phone in this temporary account layer.
+                Viewed properties, society shortlists and enquiry activity stay linked to this private customer account.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">

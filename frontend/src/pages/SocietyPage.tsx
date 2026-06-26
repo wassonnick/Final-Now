@@ -115,6 +115,32 @@ function splitLines(value?: unknown) {
     .filter(Boolean);
 }
 
+function scoreValueForHandoff(value: unknown) {
+  const score = Number(value || 0);
+  if (!Number.isFinite(score) || score <= 0) return 0;
+  return score > 10 ? score / 10 : score;
+}
+
+function rentTextForHandoff(society: any) {
+  return readableStructuredValue(
+    society?.rentRange || society?.rent_range || society?.averageRent || society?.average_rent,
+  ) || "On request";
+}
+
+function buyTextForHandoff(society: any) {
+  return readableStructuredValue(
+    society?.buyRange || society?.buy_range || society?.resaleRange || society?.resale_range,
+  ) || "On request";
+}
+
+function formatHandoffUpdated(value: string) {
+  const date = new Date(value);
+  if (!Number.isNaN(date.getTime())) {
+    return `Updated ${date.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+  }
+  return value;
+}
+
 function deliveryStatusTone(status: string) {
   const value = status.toLowerCase();
 
@@ -248,7 +274,7 @@ function safePropertyImage(property: any) {
   try {
     return propertyImage(property);
   } catch {
-    return "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=80";
+    return "/brand/societyflats-icon-512.png";
   }
 }
 
@@ -712,6 +738,13 @@ export function SocietyPage() {
   ].filter(([, href]) => Boolean(href));
   const societyLocation = safeLocation(society);
   const descriptionText = readableStructuredValue(society.description);
+  const societyScore = Number(field(society, "score", "score", 0));
+  const confidenceText =
+    readableStructuredValue(field(society, "dataConfidence", "data_confidence", "")) ||
+    "Review pending";
+  const updatedText =
+    readableStructuredValue(field(society, "updatedAt", "updated_at", "")) ||
+    "Admin-reviewed profile";
   const projectStatusText =
     readableStructuredValue(field(society, "projectStatus", "project_status", "")) ||
     "Needs Review";
@@ -755,6 +788,189 @@ export function SocietyPage() {
     },
   ];
 
+  const handoffQuickFacts = [
+    ["Units", field(society, "totalUnits", "total_units", "To be reviewed")],
+    ["Towers", field(society, "totalTowers", "total_towers", "To be reviewed")],
+    ["Floors", field(society, "totalFloors", "total_floors", "To be reviewed")],
+    ["Possession", possessionDateText],
+  ];
+  const handoffVerifiedFacts = [
+    ["Project status", projectStatusText],
+    ["Maintenance", field(society, "maintenanceCharges", "maintenance_charges", "To be reviewed")],
+    ["Builder", field(society, "builder", "builder", "To be reviewed")],
+    ["Data confidence", confidenceText],
+  ];
+  const handoffPros = [
+    scoreValueForHandoff(field(society, "connectivityScore", "connectivity_score", 0)) >= 8 ? "Strong connectivity" : "",
+    amenities.length ? `${amenities.length} amenities recorded` : "",
+    hasNearbyData ? "Nearby intelligence available" : "",
+    properties.length ? "Live homes available" : "",
+  ].filter(Boolean).slice(0, 3);
+  const handoffCons = [
+    rentTextForHandoff(society) === "On request" ? "Rent range needs verification" : "",
+    buyTextForHandoff(society) === "On request" ? "Resale range needs verification" : "",
+    !hasNearbyData ? "Nearby context is still being reviewed" : "",
+  ].filter(Boolean).slice(0, 2);
+
+  return (
+    <div className="min-h-screen bg-[#F8F3EA] pb-24 md:pb-0">
+      <main className="mx-auto max-w-[1360px] px-4 py-6 md:px-10 md:pb-16">
+        <div className="mb-4 flex items-center gap-1.5 text-[13px] text-[#6E756E]">
+          <Link to="/search?tab=societies">Societies</Link>
+          <span>›</span>
+          <span className="font-semibold text-[#25302B]">{society.name}</span>
+        </div>
+
+        {error ? <div className="mb-4 rounded-xl border border-[#EBCFAE] bg-[#FFF4E8] px-4 py-3 text-sm text-[#8A552F]">{error}</div> : null}
+
+        <section className="grid h-[250px] gap-3 sm:h-[320px] md:h-[380px] md:grid-cols-[2fr_1fr]">
+          <button type="button" onClick={() => setLightboxOpen(true)} className="relative overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left">
+            <img src={gallery[0]} alt={society.name} className="h-full w-full object-cover" />
+            <span className="absolute left-4 top-4 rounded-full bg-[#E8F7E9] px-3 py-1.5 text-xs font-bold text-[#2A6147]">✓ Verified by SocietyFlats</span>
+          </button>
+          <div className="hidden grid-rows-2 gap-3 md:grid">
+            {[gallery[1] || gallery[0], gallery[2] || gallery[0]].map((image, index) => (
+              <button key={`${image}-${index}`} type="button" onClick={() => { setActiveImage(index + 1); setLightboxOpen(true); }} className="relative overflow-hidden rounded-[18px] bg-[#E5ECE5]">
+                <img src={image} alt={`${society.name} ${index + 2}`} className="h-full w-full object-cover" />
+                {index === 1 && gallery.length > 3 ? <span className="absolute inset-0 flex items-center justify-center bg-black/20"><span className="rounded-full bg-black/70 px-3 py-1.5 text-xs text-white">+{gallery.length - 3} photos</span></span> : null}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <div className="mt-7 grid items-start gap-9 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <section>
+            <h1 className="font-display text-[38px] font-medium leading-tight tracking-[-0.01em] text-[#10251F]">{society.name}</h1>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#6E756E]">
+              <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" />{societyLocation} · by {field(society, "builder", "builder", "Builder to be reviewed")}</span>
+              {societyScore > 0 ? <span className="font-bold text-[#25302B]">★ {(societyScore > 10 ? societyScore / 10 : societyScore).toFixed(1)}</span> : null}
+              <span className="rounded-full bg-[#E8F7E9] px-3 py-1 text-[12.5px] font-semibold text-[#2A6147]">Data confidence: {confidenceText}</span>
+              <span className="text-[12.5px]">{formatHandoffUpdated(updatedText)}</span>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+              {handoffQuickFacts.map(([label, value]) => (
+                <div key={label} className="rounded-[14px] border border-[#E7E3DA] bg-white p-4">
+                  <p className="text-xl font-bold text-[#25302B]">{String(value)}</p>
+                  <p className="mt-1 text-xs text-[#7A817D]">{label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-[22px] rounded-[16px] border border-[#DDE7DC] bg-[#EEF5F1] p-5">
+              <h2 className="text-sm font-bold text-[#2A6147]">✓ Verified facts · sources reviewed</h2>
+              <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+                {handoffVerifiedFacts.map(([label, value]) => (
+                  <div key={label}><p className="text-xs text-[#758078]">{label}</p><p className="mt-1 text-sm font-semibold text-[#25302B]">{String(value)}</p></div>
+                ))}
+              </div>
+            </div>
+
+            <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Amenities</h2>
+            <div className="mt-3.5 flex flex-wrap gap-2.5">
+              {(amenities.length ? amenities : ["Amenities being reviewed"]).map((amenity) => (
+                <span key={amenity} className="rounded-full border border-[#E7E3DA] bg-white px-4 py-2 text-[13.5px] text-[#35413B]">✓ {amenity}</span>
+              ))}
+            </div>
+
+            <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">About this society</h2>
+            <p className="mt-2.5 max-w-[760px] whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">
+              {descriptionText || `${society.name} is a published Gurgaon society profile. SocietyFlats is reviewing its project facts, pricing context, nearby intelligence and current availability.`}
+            </p>
+
+            <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Location intelligence</h2>
+            <div className="mt-3.5 overflow-hidden rounded-[16px] border border-[#DDE4DC] bg-[#E4EBE4]">
+              <SocietyNearbyGoogleMap society={society} />
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {(hasNearbyData ? nearby : nearbyFallbackCards).map((item: any) => {
+                const lines = splitLines(item.value || item.text);
+                return (
+                  <div key={item.title} className="rounded-[14px] border border-[#E7E3DA] bg-white p-4">
+                    <h3 className="text-xs font-bold uppercase tracking-[0.06em] text-[#3D6754]">{item.title}</h3>
+                    <div className="mt-2 space-y-2 text-[13.5px] text-[#4A534E]">
+                      {(lines.length ? lines.slice(0, 2) : ["Verification pending"]).map((line) => <p key={line}>{line}</p>)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              <div className="rounded-[16px] border border-[#E7E3DA] bg-white p-[18px]">
+                <h3 className="text-sm font-bold text-[#2A6147]">Pros</h3>
+                <div className="mt-3 space-y-2 text-[13.5px] text-[#4A534E]">{(handoffPros.length ? handoffPros : ["Published society context available"]).map((item) => <p key={item}>+ {item}</p>)}</div>
+              </div>
+              <div className="rounded-[16px] border border-[#E7E3DA] bg-white p-[18px]">
+                <h3 className="text-sm font-bold text-[#A45F32]">Cons</h3>
+                <div className="mt-3 space-y-2 text-[13.5px] text-[#4A534E]">{(handoffCons.length ? handoffCons : ["Verify tower and unit-level pricing before deciding"]).map((item) => <p key={item}>– {item}</p>)}</div>
+              </div>
+            </div>
+          </section>
+
+          <aside className="lg:sticky lg:top-[94px]">
+            <div className="rounded-[20px] border border-[#E7E3DA] bg-white p-[22px] shadow-[0_14px_36px_-26px_rgba(0,0,0,.4)]">
+              <p className="text-xs text-[#7A817D]">Price range</p>
+              <p className="mt-1 text-2xl font-extrabold text-[#123C32]">{buyTextForHandoff(society)}</p>
+              <p className="mt-1 text-[13px] text-[#6E756E]">Rent {rentTextForHandoff(society)} / month</p>
+              <div className="mt-[18px] grid gap-2.5">
+                <button type="button" onClick={() => openSocietyCallback("society_page_rent_options")} className="rounded-[12px] bg-[#123C32] px-5 py-3.5 text-[14.5px] font-bold text-white">Get rental options</button>
+                <button type="button" onClick={() => openSocietyCallback("society_page_availability")} className="rounded-[12px] border-2 border-[#123C32] bg-white px-5 py-3 text-[14.5px] font-bold text-[#123C32]">Check current availability</button>
+                <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-[12px] bg-[#449B4E] px-5 py-3 text-[14.5px] font-bold text-white"><MessageCircle className="mr-2 h-4 w-4" />WhatsApp SocietyFlats</a>
+                <button type="button" onClick={toggleSocietyCompare} className="px-4 py-2 text-[13.5px] font-semibold text-[#2A6147]">{isSocietyCompared ? "✓ Added to compare" : "+ Add to compare"}</button>
+              </div>
+              <p className="mt-3.5 border-t border-[#EEEAE1] pt-3.5 text-[11.5px] leading-5 text-[#7A817D]">We use your phone number only to verify your request and connect you with relevant options.</p>
+            </div>
+            <Link to={`/ai-advisor?q=${encodeURIComponent(`Compare ${society.name} with similar Gurgaon societies`)}`} className="mt-3.5 block rounded-[16px] border border-[#DDE7DC] bg-[#EEF5F1] p-4">
+              <strong className="text-sm text-[#123C32]">Not sure about this society?</strong>
+              <p className="mt-1 text-[12.5px] text-[#6E756E]">Ask SocietyFlats AI to compare it with similar options →</p>
+            </Link>
+          </aside>
+        </div>
+
+        <h2 className="mb-4 mt-11 text-[22px] font-bold text-[#25302B]">Available homes</h2>
+        {properties.length ? (
+          <div className="grid gap-[18px] md:grid-cols-3">
+            {properties.slice(0, 3).map((property) => (
+              <Link key={property.id || property.slug} to={safePropertyUrl(property)} className="overflow-hidden rounded-[16px] border border-[#E7E3DA] bg-white">
+                <div className="relative h-[150px] bg-[#E5ECE5]"><img src={safePropertyImage(property)} alt={property.title || "Available home"} className="h-full w-full object-cover" /><span className="absolute left-2.5 top-2.5 rounded-full bg-[#E8F7E9] px-2.5 py-1 text-[11px] font-bold text-[#2A6147]">Verified · {field(property, "listedBy", "listed_by", "Source reviewed")}</span></div>
+                <div className="p-4"><div className="flex items-center justify-between gap-3"><strong>{property.title || "Available home"}</strong><strong className="text-[#123C32]">{field(property, "price", "price", "On request")}</strong></div><p className="mt-1 text-[12.5px] text-[#6E756E]">{field(property, "areaSqft", "area_sqft", "Area on request")} sq.ft · {field(property, "floor", "floor", "Floor on request")} · {field(property, "furnishedStatus", "furnished_status", "Status on request")}</p></div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-[16px] border border-dashed border-[#D8D4CA] bg-white p-6 text-sm text-[#6E756E]">No verified homes are listed right now. Request current availability and SocietyFlats will check owner or broker options.</div>
+        )}
+      </main>
+
+      {lightboxOpen ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" role="dialog" aria-modal="true">
+          <button type="button" onClick={() => setLightboxOpen(false)} className="absolute right-5 top-5 rounded-full bg-white/10 p-3 text-white"><X className="h-6 w-6" /></button>
+          <img src={gallery[activeImage] || gallery[0]} alt={society.name} className="max-h-[85vh] max-w-[88vw] rounded-2xl object-contain" />
+        </div>
+      ) : null}
+
+      <PublicLeadModal
+        open={callbackOpen}
+        title={selectedLeadProperty ? `Check availability for ${selectedLeadProperty.title}` : `Request shortlist for ${society.name}`}
+        subtitle={selectedLeadProperty ? "Share your details and our team will help verify availability, pricing and visit timing for this home." : "Share your requirement and our team will help with rent, buy, visit planning or similar society options."}
+        source={callbackSource}
+        ctaLabel={selectedLeadProperty ? "Property callback" : "Request available homes"}
+        leadIntent={selectedLeadProperty ? "property_callback" : "general"}
+        trackingContext={{ entity_type: selectedLeadProperty ? "property" : "society", entity_slug: selectedLeadProperty?.slug || slug || "", entity_name: selectedLeadProperty?.title || society.name, cta_label: selectedLeadProperty ? "Property callback" : "Request available homes", lead_intent: selectedLeadProperty ? "property_callback" : "general" }}
+        societyName={society.name}
+        propertyTitle={selectedLeadProperty?.title}
+        propertySlug={selectedLeadProperty?.slug}
+        defaultMessage={selectedLeadProperty ? `I want a callback for ${selectedLeadProperty.title} in ${society.name}.` : `I want current availability for ${society.name}. Location: ${societyLocation || "Gurgaon"}.`}
+        defaultRequirement={selectedLeadProperty ? "Property callback" : "Society callback"}
+        submitLabel="Request available homes"
+        successMessage="Request received. Our team will call with matching homes, similar societies and visit-ready options."
+        onClose={() => { setCallbackOpen(false); setSelectedLeadProperty(null); setCallbackSource("society_page_callback"); }}
+      />
+    </div>
+  );
+
+  /*
   return (
     <div className="min-h-screen bg-ivory-100 pb-28 md:pb-0">
       {/* Floating save CTA */}
@@ -896,13 +1112,24 @@ export function SocietyPage() {
                   <p className="mt-2 flex items-center gap-2 text-base text-navy-500">
                     <MapPin className="h-5 w-5" /> {societyLocation}
                   </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-[#E4F0E6] px-3 py-1.5 text-xs font-bold text-[#1F7A5A]">
+                      Data confidence: {confidenceText}
+                    </span>
+                    <span className="rounded-full border border-[#E7DCCB] bg-[#FFFBF3] px-3 py-1.5 text-xs font-semibold text-[#6E756E]">
+                      {updatedText}
+                    </span>
+                    <span className="rounded-full border border-[#E7DCCB] bg-white px-3 py-1.5 text-xs font-semibold text-[#6E756E]">
+                      Sources reviewed
+                    </span>
+                  </div>
                 </div>
                 <div className="flex w-fit shrink-0 items-center gap-3 rounded-2xl bg-navy-950 px-5 py-3 text-white">
                   <div>
                     <p className="text-xs text-white/60">Society score</p>
                     <p className="text-2xl font-black">
-                      {field(society, "score", "score", "8.5")}
-                      <span className="text-sm font-semibold text-white/50">/10</span>
+                      {societyScore > 0 ? societyScore : "—"}
+                      {societyScore > 0 ? <span className="text-sm font-semibold text-white/50">/10</span> : null}
                     </p>
                   </div>
                 </div>
@@ -1590,4 +1817,5 @@ export function SocietyPage() {
       />
     </div>
   );
+  */
 }

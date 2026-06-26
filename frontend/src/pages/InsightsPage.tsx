@@ -202,8 +202,8 @@ export function InsightsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <section className="border-b border-blue-100 bg-[radial-gradient(circle_at_80%_10%,rgba(37,99,235,0.13),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f7fbff_100%)] px-4 py-8 md:py-10">
+    <div className="min-h-screen bg-[#F8F3EA]">
+      <section className="border-b border-[#E7DCCB] bg-[radial-gradient(circle_at_80%_10%,rgba(194,114,78,0.10),transparent_30%),linear-gradient(180deg,#FFFBF3_0%,#F8F3EA_100%)] px-4 py-8 md:py-10">
         <div className="container mx-auto">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-center">
             <div>
@@ -297,22 +297,22 @@ export function InsightsPage() {
             <table className="w-full min-w-[980px] border-separate border-spacing-y-2">
               <thead>
                 <tr>
-                  <th className="rounded-l-2xl bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
+                  <th className="rounded-l-2xl bg-[#EEF5F1] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
                     Locality
                   </th>
-                  <th className="bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
+                  <th className="bg-[#EEF5F1] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
                     {activeCopy.tableColumn}
                   </th>
-                  <th className="bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
+                  <th className="bg-[#EEF5F1] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
                     Demand
                   </th>
-                  <th className="bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
+                  <th className="bg-[#EEF5F1] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
                     Mode-specific signal
                   </th>
-                  <th className="bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
+                  <th className="bg-[#EEF5F1] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
                     Source / confidence
                   </th>
-                  <th className="rounded-r-2xl bg-[#F8FAFC] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
+                  <th className="rounded-r-2xl bg-[#EEF5F1] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
                     Action
                   </th>
                 </tr>
@@ -359,7 +359,7 @@ export function InsightsPage() {
 
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               {sourceStack.map(({ title, text, icon: Icon }) => (
-                <div key={title} className="rounded-[1.35rem] border border-blue-100 bg-[#F8FAFC] p-4">
+                <div key={title} className="rounded-[1.35rem] border border-blue-100 bg-[#FFFBF3] p-4">
                   <Icon className="h-5 w-5 text-blue-700" />
                   <h3 className="mt-3 font-black text-navy-950">{title}</h3>
                   <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">{text}</p>
