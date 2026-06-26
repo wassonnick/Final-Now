@@ -55,7 +55,7 @@ type ImportJob = {
   completed_at?: string;
 };
 
-type AiStatus = { provider?: string; available?: boolean; model?: string };
+type AiStatus = { provider?: string; available?: boolean; model?: string; grounding?: boolean };
 
 type FieldSource = { source?: string; confidence?: number };
 
@@ -618,7 +618,7 @@ export function AdminSocietyImportPage() {
         <aside className="space-y-5">
           <div className={`rounded-[28px] border px-4 py-3 text-sm ${aiStatus?.available ? "border-emerald-100 bg-emerald-50 text-emerald-800" : "border-amber-100 bg-amber-50 text-amber-800"}`}>
             <p className="font-black">AI enrichment: {aiStatus?.available ? "Active" : "Fallback mode"}</p>
-            <p className="mt-1 text-xs opacity-80">Provider {aiStatus?.provider || "gemini"} · Model {aiStatus?.model || "not configured"}</p>
+            <p className="mt-1 text-xs opacity-80">Provider {aiStatus?.provider || "gemini"} · Model {aiStatus?.model || "not configured"} · Grounding {aiStatus?.grounding ? "on" : "off (fast)"}</p>
             {!aiStatus?.available ? <p className="mt-1 text-xs opacity-80">Add GEMINI_API_KEY to enable grounded gap-fill. Imports still create safe drafts.</p> : null}
           </div>
 

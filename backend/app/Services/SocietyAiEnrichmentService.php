@@ -27,6 +27,7 @@ class SocietyAiEnrichmentService
             'provider' => $this->provider(),
             'available' => $this->isAvailable(),
             'model' => (string) config('services.gemini.model', 'gemini-2.0-flash'),
+            'grounding' => (bool) config('services.gemini.import_grounding', false),
         ];
     }
 

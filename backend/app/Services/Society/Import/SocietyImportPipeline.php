@@ -82,7 +82,8 @@ class SocietyImportPipeline
         $geminiUnavailable = false;
         if ($this->ai->isAvailable()) {
             $context = $this->geminiContext($place, $nearby, $seed, $urlText);
-            $aiData = $this->ai->enrichSociety($name, $context, $source, $includeImages, true);
+            $useGrounding = (bool) config('services.gemini.import_grounding', false);
+            $aiData = $this->ai->enrichSociety($name, $context, $source, $includeImages, $useGrounding);
 
             if (! empty($aiData['_ai_error'])) {
                 $reason = ! empty($aiData['_ai_quota_limited'])

@@ -237,6 +237,37 @@ class SocietyImportPipelineTest extends TestCase
         $this->getJson('/api/societies')->assertOk()->assertJsonPath('data.total', 1);
     }
 
+    public function test_import_uses_non_grounded_gemini_by_default(): void
+    {
+        config(['services.gemini.import_grounding' => false, 'services.google_places_api_key' => null]);
+
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), 'generativelanguage.googleapis.com')) {
+                // Default import call must be the fast, non-grounded path.
+                $this->assertArrayNotHasKey('tools', $request->data());
+                $this->assertSame('application/json', $request->data()['generationConfig']['responseMimeType'] ?? null);
+
+                return Http::response(['candidates' => [['content' => ['parts' => [['text' => json_encode([
+                    'name' => 'Non Grounded Society',
+                    'city' => 'Gurugram',
+                    'description' => 'A reliable non-grounded description for admin review.',
+                    'amenities' => ['Clubhouse', 'Gym', '24x7 Security'],
+                ])]]]]]]);
+            }
+
+            return Http::response([], 200);
+        });
+
+        $this->withToken('admin-test-token')
+            ->postJson('/api/admin/import/single', ['name' => 'Non Grounded Society', 'include_images' => false])
+            ->assertAccepted();
+        $this->withToken('admin-test-token')->getJson('/api/admin/import/jobs?limit=5')->assertOk();
+
+        $society = Society::where('name', 'Non Grounded Society')->first();
+        $this->assertNotNull($society);
+        $this->assertContains('Clubhouse', $society->amenities ?? []);
+    }
+
     public function test_publish_is_blocked_without_a_score(): void
     {
         $society = Society::create([
