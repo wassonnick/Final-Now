@@ -159,4 +159,35 @@ class SocietyImportPipelineTest extends TestCase
 
         $this->getJson('/api/societies')->assertOk()->assertJsonPath('data.total', 0);
     }
+
+    public function test_transient_gemini_failure_still_creates_google_anchored_draft(): void
+    {
+        Http::fake([
+            'maps.googleapis.com/maps/api/place/findplacefromtext/*' => Http::response(['status' => 'OK', 'candidates' => [['place_id' => 'place-anchor']]]),
+            'maps.googleapis.com/maps/api/place/details/*' => Http::response(['status' => 'OK', 'result' => [
+                'place_id' => 'place-anchor',
+                'name' => 'Anchor Heights',
+                'formatted_address' => 'Sector 65, Gurugram, Haryana',
+                'geometry' => ['location' => ['lat' => 28.4, 'lng' => 77.05]],
+                'address_components' => [
+                    ['long_name' => 'Gurugram', 'types' => ['locality']],
+                    ['long_name' => 'Haryana', 'types' => ['administrative_area_level_1']],
+                ],
+            ]]),
+            'maps.googleapis.com/maps/api/place/nearbysearch/*' => Http::response(['status' => 'OK', 'results' => []]),
+            'generativelanguage.googleapis.com/*' => Http::response(['error' => 'server error'], 500),
+        ]);
+
+        $this->withToken('admin-test-token')
+            ->postJson('/api/admin/import/single', ['name' => 'Anchor Heights', 'location' => 'Sector 65 Gurgaon', 'include_images' => false])
+            ->assertAccepted();
+        $this->withToken('admin-test-token')->getJson('/api/admin/import/jobs?limit=5')->assertOk();
+
+        $society = Society::where('name', 'Anchor Heights')->first();
+        $this->assertNotNull($society, 'Draft should still be created from Google data despite a Gemini failure.');
+        $this->assertSame('28.4', (string) $society->latitude);
+        $this->assertSame('Gurugram', $society->city);
+        $this->assertContains('ai_enrichment_pending', $society->fields_to_verify ?? []);
+        $this->assertFalse((bool) $society->is_published);
+    }
 }

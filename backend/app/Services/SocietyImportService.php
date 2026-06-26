@@ -168,14 +168,15 @@ class SocietyImportService
         $attr['slug'] = $this->uniqueSlug((string) ($attr['name'] ?? $name));
         $society = Society::create($attr);
 
-        $this->log($job, "Draft created: {$society->name} (ID {$society->id}). Review before publishing.");
+        $pending = ! empty($outcome['gemini_unavailable']);
+        $this->log($job, "Draft created: {$society->name} (ID {$society->id}). ".($pending ? 'Gemini was unavailable — re-enrich to complete soft fields.' : 'Review before publishing.'));
 
         return [
             'name' => $society->name,
             'status' => 'created',
             'id' => $society->id,
             'edit_url' => "/admin/societies/{$society->id}/edit",
-            'message' => 'Draft created',
+            'message' => $pending ? 'Draft created — Gemini gap-fill pending, re-enrich to complete' : 'Draft created',
             'row_number' => $input['row_number'] ?? null,
             'image_candidate_count' => is_array($society->image_candidates) ? count($society->image_candidates) : 0,
             'image_url' => $society->image_url,
