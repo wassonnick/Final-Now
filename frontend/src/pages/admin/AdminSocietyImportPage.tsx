@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Component, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import {
   AlertTriangle,
@@ -152,6 +152,58 @@ function directImageUrl(value?: string | null) {
 
 function confidencePct(value?: number) {
   return Math.round(Math.max(0, Math.min(1, Number(value || 0))) * 100);
+}
+
+// JSON columns can arrive as already-parsed values or as raw JSON strings depending on the
+// driver; coerce defensively so the review panel never throws on an unexpected shape.
+function asArray<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[];
+  if (typeof value === "string" && value.trim() !== "") {
+    try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? (parsed as T[]) : []; } catch { return []; }
+  }
+  return [];
+}
+
+function asRecord<T>(value: unknown): Record<string, T> {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, T>;
+  if (typeof value === "string" && value.trim() !== "") {
+    try { const parsed = JSON.parse(value); return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, T>) : {}; } catch { return {}; }
+  }
+  return {};
+}
+
+function normalizeDraft(data: unknown): SocietyDraft | null {
+  if (!data || typeof data !== "object") return null;
+  const raw = data as Record<string, unknown>;
+  return {
+    ...(raw as unknown as SocietyDraft),
+    image_candidates: asArray<ImageCandidate>(raw.image_candidates),
+    score_breakdown: asRecord<ScoreCategory & { raw?: number; confidence_penalty?: number }>(raw.score_breakdown),
+    field_sources: asRecord<FieldSource>(raw.field_sources),
+  };
+}
+
+// Keeps a render error in the review panel from white-screening the whole admin, and shows
+// the underlying message so issues are diagnosable instead of a blank page.
+class PanelErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <p className="font-black">This panel hit a render error.</p>
+          <p className="mt-1 break-words opacity-80">{this.state.error.message}</p>
+          <button type="button" onClick={() => this.setState({ error: null })} className="mt-2 rounded-full bg-rose-600 px-3 py-1 text-xs font-black text-white">Dismiss</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 export function AdminSocietyImportPage() {
@@ -340,7 +392,7 @@ export function AdminSocietyImportPage() {
     setLoadingDraft(true); setError("");
     try {
       const json = await parseResponse(await adminFetch(`/admin/societies/${societyId}`));
-      setDraft(json?.data || null);
+      setDraft(normalizeDraft(json?.data));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load draft.");
     } finally {
@@ -357,7 +409,7 @@ export function AdminSocietyImportPage() {
     try {
       const json = await parseResponse(await adminFetch(`/admin/import/societies/${draft.id}/publish`, { method: "POST" }));
       setNotice(json?.message || "Society published.");
-      setDraft(json?.data || draft);
+      setDraft(normalizeDraft(json?.data) || draft);
       await loadJobs();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not publish society.");
@@ -376,7 +428,7 @@ export function AdminSocietyImportPage() {
         body: JSON.stringify({ index, action, rights_confirmed: Boolean(rightsConfirmed[index]) }),
       }));
       setNotice(json?.message || "Image candidate updated.");
-      setDraft(json?.data || draft);
+      setDraft(normalizeDraft(json?.data) || draft);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update image candidate.");
     }
@@ -391,6 +443,7 @@ export function AdminSocietyImportPage() {
       title="Society Importer"
       subtitle="Authoritative facts from Google, grounded gaps from Gemini, deterministic scores. Imports create review-only drafts — never public inventory."
     >
+      <PanelErrorBoundary>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.8fr)]">
         <section className="space-y-5">
           {/* Setup */}
@@ -682,6 +735,7 @@ export function AdminSocietyImportPage() {
           </div>
         </aside>
       </div>
+      </PanelErrorBoundary>
     </AdminLayout>
   );
 }
