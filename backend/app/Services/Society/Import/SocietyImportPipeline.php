@@ -79,22 +79,33 @@ class SocietyImportPipeline
 
         // Stage 3–4: grounded Gemini gap-fill (reuses the tested enrichment service).
         $aiData = [];
+        $geminiUnavailable = false;
         if ($this->ai->isAvailable()) {
             $context = $this->geminiContext($place, $nearby, $seed, $urlText);
             $aiData = $this->ai->enrichSociety($name, $context, $source, $includeImages, true);
 
             if (! empty($aiData['_ai_error'])) {
-                $message = ! empty($aiData['_ai_quota_limited'])
-                    ? 'AI quota/rate limit hit. Draft not created to avoid weak fallback data. Try again later or reduce bulk size.'
+                $reason = ! empty($aiData['_ai_quota_limited'])
+                    ? 'AI quota/rate limit hit'
                     : (! empty($aiData['_ai_temporarily_unavailable'])
-                        ? 'Gemini is temporarily unavailable (HTTP 503). Draft not created to avoid weak fallback data. Retry shortly.'
-                        : 'AI enrichment failed: '.$aiData['_ai_error'].'. Draft not created to avoid weak fallback data.');
-                $logs[] = $message;
+                        ? 'Gemini temporarily unavailable (HTTP 503)'
+                        : 'AI enrichment failed: '.$aiData['_ai_error']);
 
-                return ['status' => 'ai_failed', 'message' => $message, 'logs' => $logs];
+                // Authoritative Google facts + deterministic scoring do not need Gemini, so a
+                // transient AI failure must NOT discard a good draft — build it and flag the soft
+                // fields for re-enrichment. Only abort when there is no solid anchor at all.
+                if (! ($place['matched'] ?? false)) {
+                    $logs[] = $reason.'. No Google Places match either — nothing reliable to import.';
+
+                    return ['status' => 'ai_failed', 'message' => $reason.' and no Google Places match — nothing reliable to import yet. Retry shortly.', 'logs' => $logs];
+                }
+
+                $logs[] = $reason.'. Building a Google-anchored draft; soft fields flagged for re-enrichment.';
+                $aiData = [];
+                $geminiUnavailable = true;
+            } else {
+                $logs[] = $aiData === [] ? 'Gemini returned no structured fields.' : 'Gemini gap-fill parsed into draft fields.';
             }
-
-            $logs[] = $aiData === [] ? 'Gemini returned no structured fields.' : 'Gemini gap-fill parsed into draft fields.';
         } else {
             $logs[] = 'Gemini not configured; draft built from authoritative + admin data only.';
         }
@@ -126,7 +137,15 @@ class SocietyImportPipeline
         $attr['fields_to_verify'] = $this->fieldsToVerify($attr, $place, $nearby, $aiData, $scored, $candidates);
         $attr['data_quality'] = $this->dataQuality($scored['confidence'], $place['matched'] ?? false);
 
-        return ['status' => 'ok', 'attributes' => $attr, 'image_candidates' => $candidates, 'logs' => $logs];
+        if ($geminiUnavailable) {
+            $attr['fields_to_verify'] = array_values(array_unique(array_merge(
+                $attr['fields_to_verify'],
+                ['description', 'amenities', 'market_ranges', 'ai_enrichment_pending'],
+            )));
+            $attr['data_quality'] = 'Google-anchored draft — Gemini gap-fill pending; re-enrich to complete soft fields. Admin verification required.';
+        }
+
+        return ['status' => 'ok', 'attributes' => $attr, 'image_candidates' => $candidates, 'logs' => $logs, 'gemini_unavailable' => $geminiUnavailable];
     }
 
     // ---- Assembly ---------------------------------------------------------
