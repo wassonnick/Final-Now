@@ -708,19 +708,29 @@ export function AdminSocietyImportPage() {
 
                   {job.results?.length ? (
                     <div className="mt-3 space-y-1">
-                      {job.results.slice(0, 6).map((result, index) => (
-                        <div key={`${result.name}-${index}`} className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-2.5 py-2 text-xs">
-                          <span className="line-clamp-1 font-semibold text-slate-700">{result.name || "Society"}{result.score ? ` · ${Number(result.score).toFixed(1)}` : ""}</span>
-                          {result.id ? (
-                            <span className="flex items-center gap-2">
-                              <button type="button" onClick={() => void openDraft(result.id!)} className="font-black text-blue-700">{loadingDraft && draft?.id !== result.id ? "…" : "Review"}</button>
-                              <button type="button" disabled={reenrichingId === result.id} onClick={() => void reEnrich(result)} className="font-black text-violet-700">{reenrichingId === result.id ? "…" : "Re-enrich"}</button>
-                            </span>
-                          ) : (
-                            <span className={`rounded-full border px-2 py-0.5 font-bold ${statusClass(result.status)}`}>{result.status}</span>
-                          )}
-                        </div>
-                      ))}
+                      {job.results.slice(0, 6).map((result, index) => {
+                        const aiPending = (result.message || "").toLowerCase().includes("gemini gap-fill pending");
+                        return (
+                          <div key={`${result.name}-${index}`} className="rounded-xl bg-slate-50 px-2.5 py-2 text-xs">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="line-clamp-1 font-semibold text-slate-700">{result.name || "Society"}{result.score ? ` · ${Number(result.score).toFixed(1)}` : ""}</span>
+                              {result.id ? (
+                                <span className="flex items-center gap-2">
+                                  <button type="button" onClick={() => void openDraft(result.id!)} className="font-black text-blue-700">{loadingDraft && draft?.id !== result.id ? "…" : "Review"}</button>
+                                  <button type="button" disabled={reenrichingId === result.id} onClick={() => void reEnrich(result)} className="font-black text-violet-700">{reenrichingId === result.id ? "…" : "Re-enrich"}</button>
+                                </span>
+                              ) : (
+                                <span className={`rounded-full border px-2 py-0.5 font-bold ${statusClass(result.status)}`}>{result.status}</span>
+                              )}
+                            </div>
+                            {aiPending ? (
+                              <p className="mt-1 rounded-lg bg-amber-50 px-2 py-1 font-bold text-amber-700">
+                                ⚠ Gemini gap-fill pending — likely AI quota/rate limit. Description, amenities and rent/buy ranges need Re-enrich once quota resets.
+                              </p>
+                            ) : null}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : null}
 
