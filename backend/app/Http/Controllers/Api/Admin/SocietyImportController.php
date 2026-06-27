@@ -6,14 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Society;
 use App\Models\SocietyImportJob;
 use App\Services\GooglePlacesSocietyImageService;
-use App\Services\Society\Import\PlaceResolverService;
-use App\Services\Society\Import\SocietyImageHarvestService;
 use App\Services\SocietyAiEnrichmentService;
 use App\Services\SocietyImportService;
 use App\Services\SocietySpreadsheetParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class SocietyImportController extends Controller
@@ -160,98 +157,6 @@ class SocietyImportController extends Controller
         ]);
 
         return response()->json(['status' => 'ok', 'message' => 'Spreadsheet validated. '.count($rows).' draft imports queued.', 'data' => $job, 'preview' => array_slice($rows, 0, 10)], 202);
-    }
-
-    /**
-     * Direct structured import: rows already carry full society fields (no AI gap-fill —
-     * the curated source already has description/scores/amenities/market ranges/SEO).
-     * Only Google Places is called per row, to (1) resolve authoritative coordinates and
-     * google_maps_url (spreadsheet lat/lng is frequently a placeholder, not measured) and
-     * (2) harvest + auto-approve a cover photo. Societies are created unpublished (Draft)
-     * so an admin still does a final visual check before anything goes live.
-     */
-    public function structuredImport(Request $request, PlaceResolverService $places, SocietyImageHarvestService $harvest): JsonResponse
-    {
-        $request->validate([
-            'rows' => ['required', 'array', 'min:1', 'max:100'],
-            'rows.*.name' => ['required', 'string', 'max:255'],
-        ]);
-
-        // validate() only returns keys with rules, stripping every other field on each row —
-        // read the raw payload instead so the full set of mapped society columns survives.
-        $rows = (array) $request->input('rows');
-
-        $results = [];
-
-        foreach ($rows as $row) {
-            $name = trim((string) $row['name']);
-            $slug = trim((string) ($row['slug'] ?? '')) ?: Str::slug($name);
-
-            $existing = Society::query()
-                ->where('slug', $slug)
-                ->orWhereRaw('LOWER(name) = ?', [mb_strtolower($name)])
-                ->first();
-
-            if ($existing) {
-                $results[] = ['name' => $name, 'status' => 'skipped_duplicate', 'society_id' => $existing->id];
-
-                continue;
-            }
-
-            $payload = $row;
-            $payload['name'] = $name;
-            $payload['slug'] = $slug;
-            $payload['imported_at'] = now();
-            $payload['is_published'] = false;
-            $payload['source_name'] = $payload['source_name'] ?? 'Direct structured import';
-
-            $place = $places->resolve($name, trim((string) ($row['locality'] ?? $row['sector'] ?? '')).' '.(string) ($row['city'] ?? 'Gurugram'));
-            $imageNote = 'Google Places not matched; images need manual review.';
-
-            if ($place['matched'] ?? false) {
-                $payload['latitude'] = $place['latitude'] !== null ? (string) $place['latitude'] : ($payload['latitude'] ?? null);
-                $payload['longitude'] = $place['longitude'] !== null ? (string) $place['longitude'] : ($payload['longitude'] ?? null);
-                $payload['google_maps_url'] = $place['google_maps_url'] ?? ($payload['google_maps_url'] ?? null);
-                $payload['place_id'] = $place['place_id'] ?? null;
-
-                $candidates = $harvest->harvest([
-                    'name' => $name,
-                    'photo_references' => $place['photo_references'] ?? [],
-                    'place_id' => $place['place_id'] ?? '',
-                ]);
-
-                if ($candidates !== []) {
-                    $candidates[0]['approved'] = true;
-                    $candidates[0]['is_cover'] = true;
-                    $candidates[0]['rights_confirmed'] = true;
-
-                    $payload['image_candidates'] = $candidates;
-                    $payload['image_photo_reference'] = $candidates[0]['photo_reference'] ?? null;
-                    $payload['image_status'] = 'google_places_reference_found';
-                    $payload['image_approved_by_admin'] = true;
-                    $payload['image_credit'] = 'Google Places';
-                    $payload['image_license_notes'] = 'Google Places photo served on demand via API with attribution; auto-approved during structured import.';
-                    $imageNote = count($candidates).' Google Places photo(s) harvested; cover auto-approved.';
-                } else {
-                    $imageNote = 'Google Places matched but returned no photos.';
-                }
-            }
-
-            try {
-                $society = Society::create($payload);
-                $results[] = ['name' => $name, 'status' => 'created', 'society_id' => $society->id, 'place_matched' => (bool) ($place['matched'] ?? false), 'image_note' => $imageNote];
-            } catch (\Throwable $e) {
-                $results[] = ['name' => $name, 'status' => 'failed', 'message' => $e->getMessage()];
-            }
-        }
-
-        $created = count(array_filter($results, fn ($r) => $r['status'] === 'created'));
-
-        return response()->json([
-            'status' => 'ok',
-            'message' => "{$created} of ".count($results).' societies created.',
-            'data' => $results,
-        ]);
     }
 
     /** Approve/reject the single cover image candidate (Gemini/Google Places reference flow). */

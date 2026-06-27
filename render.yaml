@@ -146,12 +146,6 @@ services:
         sync: false
       - key: GEMINI_MODEL
         value: gemini-2.0-flash
-      - key: AI_IMPORT_PROVIDER
-        value: gemini
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: ANTHROPIC_MODEL
-        value: claude-haiku-4-5
       - key: UPLOADS_DISK
         value: r2
       - key: R2_ACCESS_KEY_ID
