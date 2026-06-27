@@ -84,7 +84,7 @@ class SocietyImportPipeline
             $context = $this->geminiContext($place, $nearby, $seed, $urlText);
             $useGrounding = isset($input['use_grounding'])
                 ? (bool) $input['use_grounding']
-                : (bool) config('services.gemini.import_grounding', false);
+                : (bool) config('services.'.$this->ai->provider().'.import_grounding', false);
             $aiData = $this->ai->enrichSociety($name, $context, $source, $includeImages, $useGrounding);
 
             if (! empty($aiData['_ai_error'])) {

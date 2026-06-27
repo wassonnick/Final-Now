@@ -14,6 +14,10 @@ class SocietyAiEnrichmentService
 
     public function isAvailable(): bool
     {
+        if ($this->provider() === 'claude') {
+            return trim((string) config('services.claude.api_key', '')) !== '';
+        }
+
         if ($this->provider() !== 'gemini') {
             return false;
         }
@@ -23,6 +27,15 @@ class SocietyAiEnrichmentService
 
     public function status(): array
     {
+        if ($this->provider() === 'claude') {
+            return [
+                'provider' => 'claude',
+                'available' => $this->isAvailable(),
+                'model' => (string) config('services.claude.model', 'claude-haiku-4-5'),
+                'grounding' => (bool) config('services.claude.import_grounding', true),
+            ];
+        }
+
         return [
             'provider' => $this->provider(),
             'available' => $this->isAvailable(),
@@ -37,11 +50,102 @@ class SocietyAiEnrichmentService
             return [];
         }
 
+        if ($this->provider() === 'claude') {
+            return $this->enrichWithClaude($name, $context, $source, $findImageCandidate, $useSearchGrounding);
+        }
+
         if ($this->provider() !== 'gemini') {
             return [];
         }
 
         return $this->enrichWithGemini($name, $context, $source, $findImageCandidate, $useSearchGrounding);
+    }
+
+    private function enrichWithClaude(string $name, string $context = '', string $source = '', bool $findImageCandidate = false, bool $useSearchGrounding = false): array
+    {
+        $apiKey = trim((string) config('services.claude.api_key', ''));
+        $model = trim((string) config('services.claude.model', 'claude-haiku-4-5')) ?: 'claude-haiku-4-5';
+
+        if ($apiKey === '') {
+            return [];
+        }
+
+        $prompt = $this->buildPrompt($name, $context, $source, $findImageCandidate)
+            ."\n\nReturn ONLY the JSON object. No markdown fences, no commentary before or after.";
+
+        try {
+            $client = new \Anthropic\Client(apiKey: $apiKey);
+
+            $tools = $useSearchGrounding
+                ? [(new \Anthropic\Messages\WebSearchTool20260209())->withMaxUses(3)]
+                : null;
+
+            $message = $client->messages->create(
+                maxTokens: 4096,
+                messages: [['role' => 'user', 'content' => $prompt]],
+                model: $model,
+                system: 'You are a careful Indian real-estate data extraction assistant for SocietyFlats. Return only factual, review-safe structured JSON. Never invent exact coordinates unless highly confident. Use null when unsure.',
+                tools: $tools,
+            );
+        } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
+            $status = $e->status ?? 0;
+
+            if ($useSearchGrounding && in_array($status, [429, 503, 529], true)) {
+                return $this->enrichWithClaude($name, $context."\n\nWeb search grounding was unavailable. Produce the fullest review-safe draft from supplied context and model knowledge; mark unsupported market, distance, legal and image claims in fields_to_verify.", $source, $findImageCandidate, false);
+            }
+
+            return [
+                '_ai_error' => 'Claude HTTP '.$status.': '.$e->getMessage(),
+                '_ai_error_status' => $status,
+                '_ai_quota_limited' => $status === 429,
+                '_ai_temporarily_unavailable' => in_array($status, [503, 529], true),
+            ];
+        } catch (\Throwable $e) {
+            return [
+                '_ai_error' => $e->getMessage(),
+                '_ai_error_status' => 0,
+            ];
+        }
+
+        $text = '';
+        $sources = [];
+
+        foreach ($message->content as $block) {
+            if ($block->type === 'text') {
+                $text .= ($text === '' ? '' : "\n").$block->text;
+            } elseif ($block->type === 'web_search_tool_result' && is_array($block->content)) {
+                foreach ($block->content as $result) {
+                    $url = is_object($result) ? ($result->url ?? null) : ($result['url'] ?? null);
+                    $title = is_object($result) ? ($result->title ?? null) : ($result['title'] ?? null);
+
+                    if ($url) {
+                        $sources[] = ['title' => $title, 'url' => $url];
+                    }
+                }
+            }
+        }
+
+        if (trim($text) === '') {
+            $stopReason = (string) ($message->stopReason ?? 'unknown');
+
+            if ($useSearchGrounding) {
+                return $this->enrichWithClaude($name, $context."\n\nWeb search grounding returned no final text. Produce the fullest review-safe draft from supplied context and model knowledge; mark unsupported market, distance, legal and image claims in fields_to_verify.", $source, $findImageCandidate, false);
+            }
+
+            return [
+                '_ai_error' => "Claude returned empty text (stop reason: {$stopReason})",
+                '_ai_error_status' => 200,
+            ];
+        }
+
+        $data = $this->parseJson($text);
+
+        $sources = collect($sources)->unique('url')->values()->all();
+        if ($sources !== []) {
+            $data['grounding_sources'] = $sources;
+        }
+
+        return $data;
     }
 
     private function enrichWithGemini(string $name, string $context = '', string $source = '', bool $findImageCandidate = false, bool $useSearchGrounding = false): array

@@ -77,4 +77,12 @@ return [
         'import_grounding' => env('GEMINI_IMPORT_GROUNDING', false),
     ],
 
+    'claude' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-haiku-4-5'),
+        // Claude API has no free daily quota (unlike Gemini's 20/day), so grounded web search
+        // can stay on by default — cost is roughly $0.02-0.03 per society.
+        'import_grounding' => env('ANTHROPIC_IMPORT_GROUNDING', true),
+    ],
+
 ];
