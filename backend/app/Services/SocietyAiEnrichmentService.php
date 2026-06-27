@@ -61,6 +61,87 @@ class SocietyAiEnrichmentService
         return $this->enrichWithGemini($name, $context, $source, $findImageCandidate, $useSearchGrounding);
     }
 
+    /**
+     * Scoped market-data lookup: researches only rent/buy/psf/yield for one named
+     * project via Claude web-search grounding, with citations. Always uses Claude
+     * (no daily quota, unlike Gemini's 20/day) regardless of the configured
+     * AI_IMPORT_PROVIDER, since this is a narrow research task, not the main importer.
+     */
+    public function enrichMarketDataOnly(string $name, string $sector = '', string $city = 'Gurugram'): array
+    {
+        $apiKey = trim((string) config('services.claude.api_key', ''));
+        $model = trim((string) config('services.claude.model', 'claude-haiku-4-5')) ?: 'claude-haiku-4-5';
+
+        if ($apiKey === '') {
+            return ['_ai_error' => 'ANTHROPIC_API_KEY is not configured on the backend.'];
+        }
+
+        $location = trim($sector.' '.$city);
+        $prompt = <<<PROMPT
+Research current rental and resale market pricing for this specific residential project using web search. Do not reuse generic market averages from other projects — find data tied to this exact project name.
+
+Project: {$name}
+Location: {$location}
+
+Return ONLY this JSON object, no markdown fences, no commentary:
+{
+  "rent_range": "string e.g. ₹X - ₹Y per month, or null if no project-specific data found",
+  "buy_range": "string e.g. ₹X Cr - ₹Y Cr, or null",
+  "price_per_sqft": "string e.g. ₹X - ₹Y, or null",
+  "rental_yield": "string e.g. X.X%, or null",
+  "average_rent": "string single representative figure, or null",
+  "average_sale_price": "string single representative figure, or null",
+  "confidence": "high | medium | low",
+  "notes": "short note on data freshness/source quality"
+}
+
+Use null for any field you cannot support with search results for this specific project. Never invent numbers.
+PROMPT;
+
+        try {
+            $client = new \Anthropic\Client(apiKey: $apiKey);
+
+            $message = $client->messages->create(
+                maxTokens: 1024,
+                messages: [['role' => 'user', 'content' => $prompt]],
+                model: $model,
+                system: 'You are a careful Indian real-estate market research assistant. Only report figures you can support from search results for the exact named project. Use null when unsure.',
+                tools: [(new \Anthropic\Messages\WebSearchTool20260209())->withMaxUses(4)],
+            );
+        } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
+            return ['_ai_error' => 'Claude HTTP '.($e->status ?? 0).': '.$e->getMessage()];
+        } catch (\Throwable $e) {
+            return ['_ai_error' => $e->getMessage()];
+        }
+
+        $text = '';
+        $sources = [];
+
+        foreach ($message->content as $block) {
+            if ($block->type === 'text') {
+                $text .= ($text === '' ? '' : "\n").$block->text;
+            } elseif ($block->type === 'web_search_tool_result' && is_array($block->content)) {
+                foreach ($block->content as $result) {
+                    $url = is_object($result) ? ($result->url ?? null) : ($result['url'] ?? null);
+                    $title = is_object($result) ? ($result->title ?? null) : ($result['title'] ?? null);
+
+                    if ($url) {
+                        $sources[] = ['title' => $title, 'url' => $url];
+                    }
+                }
+            }
+        }
+
+        if (trim($text) === '') {
+            return ['_ai_error' => 'Claude returned empty text (stop reason: '.(string) ($message->stopReason ?? 'unknown').')'];
+        }
+
+        $data = $this->parseJson($text);
+        $data['market_sources'] = collect($sources)->unique('url')->values()->all();
+
+        return $data;
+    }
+
     private function enrichWithClaude(string $name, string $context = '', string $source = '', bool $findImageCandidate = false, bool $useSearchGrounding = false): array
     {
         $apiKey = trim((string) config('services.claude.api_key', ''));

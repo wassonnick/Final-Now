@@ -405,6 +405,51 @@ class SocietyImportController extends Controller
         return response()->json(['message' => 'Draft re-enriched with grounded data. Review every field before publishing.', 'data' => $draft]);
     }
 
+    /**
+     * Scoped market-data refresh: only researches rent/buy/psf/yield for this one
+     * project via Claude web-search grounding (no daily quota). Leaves description,
+     * scores, amenities, and everything else untouched — unlike reEnrich().
+     */
+    public function marketRefresh(Society $society): JsonResponse
+    {
+        $result = $this->ai->enrichMarketDataOnly($society->name, (string) $society->sector, (string) ($society->city ?: 'Gurugram'));
+
+        if (isset($result['_ai_error'])) {
+            return response()->json(['message' => $result['_ai_error']], 422);
+        }
+
+        $marketFields = ['rent_range', 'buy_range', 'price_per_sqft', 'rental_yield', 'average_rent', 'average_sale_price'];
+        $updates = [];
+
+        foreach ($marketFields as $field) {
+            if (array_key_exists($field, $result) && $result[$field] !== null && trim((string) $result[$field]) !== '') {
+                $updates[$field] = $result[$field];
+            }
+        }
+
+        $fieldSources = (array) ($society->field_sources ?? []);
+        $fieldSources['market'] = [
+            'confidence' => $result['confidence'] ?? null,
+            'notes' => $result['notes'] ?? null,
+            'sources' => $result['market_sources'] ?? [],
+            'refreshed_at' => now()->toIso8601String(),
+        ];
+        $updates['field_sources'] = $fieldSources;
+
+        $fieldsToVerify = collect((array) ($society->fields_to_verify ?? []))
+            ->reject(fn ($f) => in_array($f, $marketFields, true))
+            ->values()
+            ->all();
+        $updates['fields_to_verify'] = array_merge($fieldsToVerify, ['rent_range', 'buy_range', 'price_per_sqft', 'rental_yield']);
+
+        $society->update($updates);
+
+        return response()->json([
+            'message' => 'Market data refreshed with grounded search. Still review before publishing.',
+            'data' => $society->fresh(),
+        ]);
+    }
+
     /** @return array<int,array{name:string,location:?string}> */
     private function normalizeBulkItems(mixed $items): array
     {
