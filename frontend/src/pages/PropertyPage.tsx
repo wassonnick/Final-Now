@@ -711,7 +711,7 @@ export function PropertyPage() {
           <span className="font-semibold text-[#25302B]">{title}</span>
         </div>
 
-        <div className="grid items-start gap-9 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid items-stretch gap-9 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section>
             <div className="grid h-[250px] gap-3 sm:h-[320px] md:h-[360px] md:grid-cols-[2fr_1fr]">
               <button type="button" onClick={() => setLightboxOpen(true)} className="relative h-full min-h-0 overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left">
@@ -753,28 +753,30 @@ export function PropertyPage() {
             </div>
           </section>
 
-          <aside className="space-y-3.5 lg:sticky lg:top-[94px]">
-            <div className="rounded-[20px] border border-[#E7E3DA] bg-white p-[22px] shadow-[0_14px_36px_-26px_rgba(0,0,0,.4)]">
-              <p className="text-[28px] font-extrabold text-[#123C32]">{price}</p>
-              {saleListing && monthlyEmi > 0 ? <p className="mt-1 text-[13px] text-[#6E756E]">≈ ₹{(monthlyEmi / 100000).toFixed(1)} L/mo EMI</p> : <p className="mt-1 text-[13px] text-[#6E756E]">{listingType}</p>}
-              <div className="mt-4 flex items-center gap-3 rounded-[12px] bg-[#F1F3EF] p-3">
-                <span className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#DDE9DF] text-[13px] font-bold text-[#2A6147]">{ownerInitials || "SF"}</span>
-                <div><p className="text-sm font-semibold text-[#25302B]">{listingSourceLabel}</p><p className="text-[11.5px] text-[#2A6147]">{property.verified ? "Verified contact" : "Contact reviewed before sharing"}</p></div>
+          <aside>
+            <div className="space-y-3.5 lg:sticky lg:top-[94px]">
+              <div className="rounded-[20px] border border-[#E7E3DA] bg-white p-[22px] shadow-[0_14px_36px_-26px_rgba(0,0,0,.4)]">
+                <p className="text-[28px] font-extrabold text-[#123C32]">{price}</p>
+                {saleListing && monthlyEmi > 0 ? <p className="mt-1 text-[13px] text-[#6E756E]">≈ ₹{(monthlyEmi / 100000).toFixed(1)} L/mo EMI</p> : <p className="mt-1 text-[13px] text-[#6E756E]">{listingType}</p>}
+                <div className="mt-4 flex items-center gap-3 rounded-[12px] bg-[#F1F3EF] p-3">
+                  <span className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#DDE9DF] text-[13px] font-bold text-[#2A6147]">{ownerInitials || "SF"}</span>
+                  <div><p className="text-sm font-semibold text-[#25302B]">{listingSourceLabel}</p><p className="text-[11.5px] text-[#2A6147]">{property.verified ? "Verified contact" : "Contact reviewed before sharing"}</p></div>
+                </div>
+                <div className="mt-4 grid gap-2.5">
+                  <button type="button" onClick={() => openLead("enquiry")} className="rounded-[12px] bg-[#C8783F] px-5 py-3.5 text-[14.5px] font-bold text-white">{listedByValue.includes("owner") ? "Contact owner" : "Ask about this home"}</button>
+                  <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-[12px] bg-[#449B4E] px-5 py-3 text-[14.5px] font-bold text-white"><MessageCircle className="mr-2 h-4 w-4" />WhatsApp</a>
+                  <button type="button" onClick={() => openLead("callback")} className="rounded-[12px] border-2 border-[#123C32] bg-white px-5 py-3 text-[14.5px] font-bold text-[#123C32]">Request callback</button>
+                </div>
+                <p className="mt-3.5 rounded-[11px] bg-[#EEF5F1] p-3 text-[11.5px] leading-5 text-[#486154]">🛡 Never pay before visiting. SocietyFlats reviews listings, but always inspect in person.</p>
               </div>
-              <div className="mt-4 grid gap-2.5">
-                <button type="button" onClick={() => openLead("enquiry")} className="rounded-[12px] bg-[#C8783F] px-5 py-3.5 text-[14.5px] font-bold text-white">{listedByValue.includes("owner") ? "Contact owner" : "Ask about this home"}</button>
-                <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-[12px] bg-[#449B4E] px-5 py-3 text-[14.5px] font-bold text-white"><MessageCircle className="mr-2 h-4 w-4" />WhatsApp</a>
-                <button type="button" onClick={() => openLead("callback")} className="rounded-[12px] border-2 border-[#123C32] bg-white px-5 py-3 text-[14.5px] font-bold text-[#123C32]">Request callback</button>
-              </div>
-              <p className="mt-3.5 rounded-[11px] bg-[#EEF5F1] p-3 text-[11.5px] leading-5 text-[#486154]">🛡 Never pay before visiting. SocietyFlats reviews listings, but always inspect in person.</p>
-            </div>
 
-            {societyName ? (
-              <Link to={societySlug ? `/society/${societySlug}` : `/search?q=${encodeURIComponent(societyName)}&tab=societies`} className="flex items-center gap-3 rounded-[16px] border border-[#E7E3DA] bg-white p-3.5">
-                <div className="h-[50px] w-[50px] rounded-[11px] bg-[repeating-linear-gradient(135deg,#DDE5DE_0_1px,transparent_1px_10px)]" />
-                <div className="min-w-0"><strong className="text-sm text-[#25302B]">{societyName}</strong><p className="mt-1 text-xs text-[#6E756E]">View society profile →</p></div>
-              </Link>
-            ) : null}
+              {societyName ? (
+                <Link to={societySlug ? `/society/${societySlug}` : `/search?q=${encodeURIComponent(societyName)}&tab=societies`} className="flex items-center gap-3 rounded-[16px] border border-[#E7E3DA] bg-white p-3.5">
+                  <div className="h-[50px] w-[50px] rounded-[11px] bg-[repeating-linear-gradient(135deg,#DDE5DE_0_1px,transparent_1px_10px)]" />
+                  <div className="min-w-0"><strong className="text-sm text-[#25302B]">{societyName}</strong><p className="mt-1 text-xs text-[#6E756E]">View society profile →</p></div>
+                </Link>
+              ) : null}
+            </div>
           </aside>
         </div>
       </main>

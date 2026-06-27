@@ -839,7 +839,7 @@ export function SocietyPage() {
           </div>
         </section>
 
-        <div className="mt-7 grid items-start gap-9 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="mt-7 grid items-stretch gap-9 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section>
             <h1 className="font-display text-[38px] font-medium leading-tight tracking-[-0.01em] text-[#10251F]">{society.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#6E756E]">
@@ -911,23 +911,25 @@ export function SocietyPage() {
             </div>
           </section>
 
-          <aside className="lg:sticky lg:top-[94px]">
-            <div className="rounded-[20px] border border-[#E7E3DA] bg-white p-[22px] shadow-[0_14px_36px_-26px_rgba(0,0,0,.4)]">
-              <p className="text-xs text-[#7A817D]">Price range</p>
-              <p className="mt-1 text-2xl font-extrabold text-[#123C32]">{buyTextForHandoff(society)}</p>
-              <p className="mt-1 text-[13px] text-[#6E756E]">Rent {rentTextForHandoff(society)} / month</p>
-              <div className="mt-[18px] grid gap-2.5">
-                <button type="button" onClick={() => openSocietyCallback("society_page_rent_options")} className="rounded-[12px] bg-[#123C32] px-5 py-3.5 text-[14.5px] font-bold text-white">Get rental options</button>
-                <button type="button" onClick={() => openSocietyCallback("society_page_availability")} className="rounded-[12px] border-2 border-[#123C32] bg-white px-5 py-3 text-[14.5px] font-bold text-[#123C32]">Check current availability</button>
-                <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-[12px] bg-[#449B4E] px-5 py-3 text-[14.5px] font-bold text-white"><MessageCircle className="mr-2 h-4 w-4" />WhatsApp SocietyFlats</a>
-                <button type="button" onClick={toggleSocietyCompare} className="px-4 py-2 text-[13.5px] font-semibold text-[#2A6147]">{isSocietyCompared ? "✓ Added to compare" : "+ Add to compare"}</button>
+          <aside>
+            <div className="lg:sticky lg:top-[94px]">
+              <div className="rounded-[20px] border border-[#E7E3DA] bg-white p-[22px] shadow-[0_14px_36px_-26px_rgba(0,0,0,.4)]">
+                <p className="text-xs text-[#7A817D]">Price range</p>
+                <p className="mt-1 text-2xl font-extrabold text-[#123C32]">{buyTextForHandoff(society)}</p>
+                <p className="mt-1 text-[13px] text-[#6E756E]">Rent {rentTextForHandoff(society)} / month</p>
+                <div className="mt-[18px] grid gap-2.5">
+                  <button type="button" onClick={() => openSocietyCallback("society_page_rent_options")} className="rounded-[12px] bg-[#123C32] px-5 py-3.5 text-[14.5px] font-bold text-white">Get rental options</button>
+                  <button type="button" onClick={() => openSocietyCallback("society_page_availability")} className="rounded-[12px] border-2 border-[#123C32] bg-white px-5 py-3 text-[14.5px] font-bold text-[#123C32]">Check current availability</button>
+                  <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-[12px] bg-[#449B4E] px-5 py-3 text-[14.5px] font-bold text-white"><MessageCircle className="mr-2 h-4 w-4" />WhatsApp SocietyFlats</a>
+                  <button type="button" onClick={toggleSocietyCompare} className="px-4 py-2 text-[13.5px] font-semibold text-[#2A6147]">{isSocietyCompared ? "✓ Added to compare" : "+ Add to compare"}</button>
+                </div>
+                <p className="mt-3.5 border-t border-[#EEEAE1] pt-3.5 text-[11.5px] leading-5 text-[#7A817D]">We use your phone number only to verify your request and connect you with relevant options.</p>
               </div>
-              <p className="mt-3.5 border-t border-[#EEEAE1] pt-3.5 text-[11.5px] leading-5 text-[#7A817D]">We use your phone number only to verify your request and connect you with relevant options.</p>
+              <Link to={`/ai-advisor?q=${encodeURIComponent(`Compare ${society.name} with similar Gurgaon societies`)}`} className="mt-3.5 block rounded-[16px] border border-[#DDE7DC] bg-[#EEF5F1] p-4">
+                <strong className="text-sm text-[#123C32]">Not sure about this society?</strong>
+                <p className="mt-1 text-[12.5px] text-[#6E756E]">Ask SocietyFlats AI to compare it with similar options →</p>
+              </Link>
             </div>
-            <Link to={`/ai-advisor?q=${encodeURIComponent(`Compare ${society.name} with similar Gurgaon societies`)}`} className="mt-3.5 block rounded-[16px] border border-[#DDE7DC] bg-[#EEF5F1] p-4">
-              <strong className="text-sm text-[#123C32]">Not sure about this society?</strong>
-              <p className="mt-1 text-[12.5px] text-[#6E756E]">Ask SocietyFlats AI to compare it with similar options →</p>
-            </Link>
           </aside>
         </div>
 
