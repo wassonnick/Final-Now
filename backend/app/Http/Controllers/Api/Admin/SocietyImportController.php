@@ -407,15 +407,16 @@ class SocietyImportController extends Controller
 
     /**
      * Scoped market-data refresh: only researches rent/buy/psf/yield for this one
-     * project via Claude web-search grounding (no daily quota). Leaves description,
-     * scores, amenities, and everything else untouched — unlike reEnrich().
+     * project, with citations. Leaves description, scores, amenities, and everything
+     * else untouched — unlike reEnrich(). Uses Claude (no daily quota) when configured,
+     * otherwise falls back to Gemini grounded search (20 req/day free-tier quota).
      */
     public function marketRefresh(Society $society): JsonResponse
     {
         $result = $this->ai->enrichMarketDataOnly($society->name, (string) $society->sector, (string) ($society->city ?: 'Gurugram'));
 
         if (isset($result['_ai_error'])) {
-            return response()->json(['message' => $result['_ai_error']], 422);
+            return response()->json(['message' => $result['_ai_error']], ($result['_ai_quota_limited'] ?? false) ? 429 : 422);
         }
 
         $marketFields = ['rent_range', 'buy_range', 'price_per_sqft', 'rental_yield', 'average_rent', 'average_sale_price'];

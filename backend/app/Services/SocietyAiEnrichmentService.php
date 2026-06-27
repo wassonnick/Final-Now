@@ -61,23 +61,11 @@ class SocietyAiEnrichmentService
         return $this->enrichWithGemini($name, $context, $source, $findImageCandidate, $useSearchGrounding);
     }
 
-    /**
-     * Scoped market-data lookup: researches only rent/buy/psf/yield for one named
-     * project via Claude web-search grounding, with citations. Always uses Claude
-     * (no daily quota, unlike Gemini's 20/day) regardless of the configured
-     * AI_IMPORT_PROVIDER, since this is a narrow research task, not the main importer.
-     */
-    public function enrichMarketDataOnly(string $name, string $sector = '', string $city = 'Gurugram'): array
+    private function marketPrompt(string $name, string $sector, string $city): string
     {
-        $apiKey = trim((string) config('services.claude.api_key', ''));
-        $model = trim((string) config('services.claude.model', 'claude-haiku-4-5')) ?: 'claude-haiku-4-5';
-
-        if ($apiKey === '') {
-            return ['_ai_error' => 'ANTHROPIC_API_KEY is not configured on the backend.'];
-        }
-
         $location = trim($sector.' '.$city);
-        $prompt = <<<PROMPT
+
+        return <<<PROMPT
 Research current rental and resale market pricing for this specific residential project using web search. Do not reuse generic market averages from other projects — find data tied to this exact project name.
 
 Project: {$name}
@@ -97,6 +85,29 @@ Return ONLY this JSON object, no markdown fences, no commentary:
 
 Use null for any field you cannot support with search results for this specific project. Never invent numbers.
 PROMPT;
+    }
+
+    /**
+     * Scoped market-data lookup: researches only rent/buy/psf/yield for one named
+     * project, with citations, leaving every other field untouched. Prefers Claude
+     * (no daily quota) when ANTHROPIC_API_KEY is set; otherwise falls back to
+     * Gemini's grounded search, which is subject to its 20 req/day free-tier quota.
+     */
+    public function enrichMarketDataOnly(string $name, string $sector = '', string $city = 'Gurugram'): array
+    {
+        $claudeKey = trim((string) config('services.claude.api_key', ''));
+
+        if ($claudeKey !== '') {
+            return $this->enrichMarketDataOnlyClaude($name, $sector, $city, $claudeKey);
+        }
+
+        return $this->enrichMarketDataOnlyGemini($name, $sector, $city);
+    }
+
+    private function enrichMarketDataOnlyClaude(string $name, string $sector, string $city, string $apiKey): array
+    {
+        $model = trim((string) config('services.claude.model', 'claude-haiku-4-5')) ?: 'claude-haiku-4-5';
+        $prompt = $this->marketPrompt($name, $sector, $city);
 
         try {
             $client = new \Anthropic\Client(apiKey: $apiKey);
@@ -138,6 +149,60 @@ PROMPT;
 
         $data = $this->parseJson($text);
         $data['market_sources'] = collect($sources)->unique('url')->values()->all();
+
+        return $data;
+    }
+
+    private function enrichMarketDataOnlyGemini(string $name, string $sector, string $city): array
+    {
+        $apiKey = trim((string) config('services.gemini.api_key', ''));
+        $model = trim((string) config('services.gemini.model', 'gemini-2.0-flash')) ?: 'gemini-2.0-flash';
+
+        if ($apiKey === '') {
+            return ['_ai_error' => 'Neither ANTHROPIC_API_KEY nor GEMINI_API_KEY is configured on the backend.'];
+        }
+
+        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
+        $prompt = $this->marketPrompt($name, $sector, $city);
+
+        try {
+            $response = Http::timeout(30)
+                ->withHeaders(['x-goog-api-key' => $apiKey, 'Content-Type' => 'application/json'])
+                ->post($endpoint, [
+                    'systemInstruction' => [
+                        'parts' => [['text' => 'You are a careful Indian real-estate market research assistant. Only report figures you can support from search results for the exact named project. Use null when unsure.']],
+                    ],
+                    'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],
+                    'tools' => [['google_search' => (object) []]],
+                    'generationConfig' => ['temperature' => 0.2],
+                ]);
+        } catch (\Throwable $e) {
+            return ['_ai_error' => $e->getMessage()];
+        }
+
+        if (! $response->successful()) {
+            $status = $response->status();
+
+            return [
+                '_ai_error' => 'Gemini HTTP '.$status,
+                '_ai_quota_limited' => $status === 429,
+            ];
+        }
+
+        $text = collect(data_get($response->json(), 'candidates.0.content.parts', []))
+            ->pluck('text')->filter(fn ($part) => is_string($part) && trim($part) !== '')->join("\n");
+
+        if ($text === '') {
+            $finishReason = (string) data_get($response->json(), 'candidates.0.finishReason', 'unknown');
+
+            return ['_ai_error' => "Gemini returned empty text (finish: {$finishReason})"];
+        }
+
+        $data = $this->parseJson($text);
+        $sources = collect(data_get($response->json(), 'candidates.0.groundingMetadata.groundingChunks', []))
+            ->map(fn ($chunk) => ['title' => data_get($chunk, 'web.title'), 'url' => data_get($chunk, 'web.uri')])
+            ->filter(fn ($source) => $source['url'])->unique('url')->values()->all();
+        $data['market_sources'] = $sources;
 
         return $data;
     }
