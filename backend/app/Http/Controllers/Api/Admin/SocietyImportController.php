@@ -406,7 +406,11 @@ class SocietyImportController extends Controller
     public function reEnrich(Request $request, Society $society): JsonResponse
     {
         try {
-            $draft = $this->service->reEnrichDraft($society, $request->boolean('include_images', true));
+            $draft = $this->service->reEnrichDraft(
+                $society,
+                $request->boolean('include_images', true),
+                $request->boolean('confirm_unpublish', false),
+            );
         } catch (\InvalidArgumentException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         } catch (\Throwable $exception) {

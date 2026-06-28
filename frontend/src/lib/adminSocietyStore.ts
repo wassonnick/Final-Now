@@ -591,6 +591,27 @@ export async function enrichAdminSociety(id: number | string): Promise<{ society
   };
 }
 
+/**
+ * Re-runs the grounded import pipeline (Google Places + neighborhood intel + Claude/Gemini
+ * gap-fill + deterministic scoring) over an existing society. If the society is currently
+ * published, the backend requires confirmUnpublish=true and always returns it as an
+ * unpublished Draft flagged Needs Review — nothing AI-regenerated goes live without a fresh
+ * admin review and republish.
+ */
+export async function reEnrichAdminSociety(
+  id: number | string,
+  options: { includeImages?: boolean; confirmUnpublish?: boolean } = {},
+): Promise<AdminSociety> {
+  const json = await request(`/admin/import/societies/${id}/re-enrich`, {
+    method: 'POST',
+    body: JSON.stringify({
+      include_images: options.includeImages ?? true,
+      confirm_unpublish: options.confirmUnpublish ?? false,
+    }),
+  });
+  return mapApiSociety(json?.data || {});
+}
+
 export async function fetchSocietyDraftFromUrl(officialProjectUrl: string): Promise<{ society: AdminSociety; warnings: string[]; fieldsToVerify: string[]; diagnostics: Record<string, unknown> }> {
   const json = await request('/admin/societies/fetch-from-url', {
     method: 'POST',

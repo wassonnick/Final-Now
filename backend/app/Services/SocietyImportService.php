@@ -195,13 +195,17 @@ class SocietyImportService
     }
 
     /**
-     * Re-run the grounded pipeline over an existing unpublished draft, preserving
-     * its admin-set identity, slug and Draft/unpublished state.
+     * Re-run the grounded pipeline over an existing society, preserving its
+     * admin-set identity and slug. Drafts re-enrich freely; an already-published
+     * society requires explicit confirmation since the result always lands back
+     * in Draft/unpublished/Needs Review for a fresh admin review before it can
+     * go live again — nothing AI-regenerated is allowed to replace live content
+     * without a human re-approving it first.
      */
-    public function reEnrichDraft(Society $society, bool $includeImages = true): Society
+    public function reEnrichDraft(Society $society, bool $includeImages = true, bool $confirmUnpublish = false): Society
     {
-        if ($society->is_published || $society->status !== 'Draft') {
-            throw new \InvalidArgumentException('Only unpublished draft societies can be re-enriched.');
+        if ($society->is_published && ! $confirmUnpublish) {
+            throw new \InvalidArgumentException('This society is published. Confirm you want to unpublish it for re-enrichment review.');
         }
 
         $seed = array_filter([

@@ -35,6 +35,7 @@ import {
   fetchGooglePlacesSocietyImageReference,
   MAX_BROCHURE_UPLOAD_BYTES,
   mergeFetchedSocietyDraft,
+  reEnrichAdminSociety,
   saveAdminSociety,
   slugifySociety,
   societyAmenityOptions,
@@ -220,6 +221,7 @@ export function AdminSocietyFormPage() {
   const [saving, setSaving] = useState(false);
   const [saveMode, setSaveMode] = useState<"draft" | "publish" | null>(null);
   const [enriching, setEnriching] = useState(false);
+  const [reEnriching, setReEnriching] = useState(false);
   const [brochureExtracting, setBrochureExtracting] = useState(false);
   const [loadedSourceUrl, setLoadedSourceUrl] = useState("");
   const [error, setError] = useState("");
@@ -813,6 +815,38 @@ export function AdminSocietyFormPage() {
     }
   };
 
+  const handleReEnrich = async () => {
+    if (!isEdit || reEnriching) return;
+
+    if (society.isPublished) {
+      const confirmed = window.confirm(
+        "This society is published. Re-enriching will pull it off the public site and mark it Needs Review until you check the new fields and republish. Continue?",
+      );
+      if (!confirmed) return;
+    }
+
+    try {
+      setReEnriching(true);
+      setError("");
+      setMessage("");
+
+      const updated = await reEnrichAdminSociety(society.id, {
+        confirmUnpublish: society.isPublished,
+      });
+      setSociety(updated);
+      setSaved(false);
+      setMessage(
+        "Re-enriched with grounded research. Review every field below" +
+          (updated.isPublished ? "." : " before republishing — it's now an unpublished Draft."),
+      );
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Unable to re-enrich this society. Try again shortly.");
+    } finally {
+      setReEnriching(false);
+    }
+  };
+
   const generateDescription = () => {
     const location = [society.sector, society.locality].filter(Boolean).join(", ") || "Gurgaon";
     const text = `${society.name || "This society"} is a Gurgaon residential society in ${location}. The profile includes verified society context, amenities, nearby intelligence, rental/resale ranges and official references to help users shortlist before choosing a home.`;
@@ -870,6 +904,20 @@ export function AdminSocietyFormPage() {
               >
                 <Sparkles className="mr-2 h-4 w-4" />
                 {hasBeenEnriched && !sourceChanged ? "Already enriched" : enriching ? "Enriching..." : "Enrich profile"}
+              </Button>
+            ) : null}
+
+            {isEdit ? (
+              <Button
+                type="button"
+                onClick={handleReEnrich}
+                disabled={reEnriching}
+                variant="outline"
+                className="rounded-full border-violet-200 text-violet-700"
+                title="Re-runs Google Places + neighborhood + grounded AI research and deterministic scoring. Publishes societies are unpublished for review."
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                {reEnriching ? "Re-enriching..." : "Re-enrich with AI"}
               </Button>
             ) : null}
 
