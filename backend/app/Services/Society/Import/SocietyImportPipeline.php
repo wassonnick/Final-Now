@@ -237,6 +237,11 @@ class SocietyImportPipeline
             'possession_date' => 'Needs Review',
             'rent_range' => 'To be verified',
             'buy_range' => 'To be verified',
+            // Must default to null (not be left unset) — re-enrich relies on this so a
+            // rejected/garbled value from a prior run actually gets cleared when the AI
+            // doesn't return a usable figure this time, instead of the stale value
+            // silently surviving because the update payload never touched the column.
+            'maintenance_charges' => null,
             'amenities' => [],
             'latitude' => null,
             'longitude' => null,
