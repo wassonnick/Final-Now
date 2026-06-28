@@ -734,6 +734,11 @@ export function PropertyPage() {
 
             <h1 className="mt-3 font-display text-[34px] font-medium leading-tight text-[#10251F]">{title}</h1>
             <p className="mt-1.5 text-[14.5px] text-[#6E756E]">{societyName || "Gurgaon"} · {societyLocality || property.locality || "Gurgaon"}</p>
+            {societyName ? (
+              <Link to={societySlug ? `/society/${societySlug}` : `/search?q=${encodeURIComponent(societyName)}&tab=societies`} className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold text-[#2A6147] hover:underline">
+                Inside {societyName} → see security score, commute & resident fit
+              </Link>
+            ) : null}
 
             <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3">
               {handoffPropertyFacts.map(([label, value]) => (

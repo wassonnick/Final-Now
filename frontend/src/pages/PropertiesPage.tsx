@@ -67,7 +67,7 @@ export function PropertiesPage() {
   useEffect(() => {
     let mounted = true;
     setPublicSeo(
-      'Verified Gurgaon Homes | SocietyFlats',
+      'Homes Inside Societies SocietyFlats Has Already Reviewed | SocietyFlats',
       'Browse published Gurgaon rental and resale homes inside SocietyFlats society profiles.',
       { canonical: '/properties' },
     );
@@ -139,12 +139,12 @@ export function PropertiesPage() {
             </div>
 
             <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-navy-900 md:text-6xl">
-              Discover verified Gurgaon properties
+              Homes inside societies SocietyFlats has already reviewed
             </h1>
 
             <p className="mt-5 text-lg leading-relaxed text-navy-500">
-              Browse premium rental inventory backed by SocietyFlats intelligence,
-              verified societies and real pricing insights.
+              Every home below sits inside a society we've checked for security, access and maintenance —
+              not a random address.
             </p>
           </div>
 
