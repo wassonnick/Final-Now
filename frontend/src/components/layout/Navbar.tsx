@@ -1,13 +1,14 @@
 // C85 public navbar polish: cleaner desktop/mobile nav spacing and CTA hierarchy, routes unchanged.
 // C71 nav copy: owner CTA now uses List Your Flat and broker label remains clean.
 // C70C nav copy: clearer public CTAs for broker partnership and dashboard access.
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Menu, X, Heart, Scale, MapPin, Building2, Sparkles, BarChart3, User, Home, KeyRound, BadgeIndianRupee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { CUSTOMER_ACCOUNT_EVENT } from "@/lib/customerAccount";
+import { fetchPublicSocieties, formatPublicLocation, suggestSocieties } from '@/lib/publicData';
 
 export function Navbar() {
   const navigate = useNavigate();
@@ -46,7 +47,24 @@ export function Navbar() {
     };
   }, [location.pathname]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [headerSocieties, setHeaderSocieties] = useState<any[]>([]);
+  const [showHeaderSuggestions, setShowHeaderSuggestions] = useState(false);
   const { compareList, shortlist, isAuthenticated, user } = useAppStore();
+
+  useEffect(() => {
+    let active = true;
+    fetchPublicSocieties()
+      .then((items) => active && setHeaderSocieties(items))
+      .catch(() => active && setHeaderSocieties([]));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const headerSuggestions = useMemo(
+    () => suggestSocieties(headerSocieties, headerQuery),
+    [headerSocieties, headerQuery],
+  );
 
   const navLinks = [
     { label: 'Societies', href: '/search?tab=societies', icon: Building2 },
@@ -98,20 +116,54 @@ export function Navbar() {
         <form
           onSubmit={(event) => {
             event.preventDefault();
+            setShowHeaderSuggestions(false);
             navigate(`/search?tab=societies&q=${encodeURIComponent(headerQuery.trim())}`);
           }}
-          className="hidden min-w-[280px] max-w-[470px] flex-1 items-center gap-[9px] rounded-[11px] border border-[#E7DCCB] bg-white px-[14px] py-[9px] lg:flex"
+          className="relative hidden min-w-[280px] max-w-[470px] flex-1 items-center gap-[9px] rounded-[11px] border border-[#E7DCCB] bg-white px-[14px] py-[9px] lg:flex"
         >
           <Search className="h-4 w-4 text-[#2A6147]" />
           <input
             value={headerQuery}
-            onChange={(event) => setHeaderQuery(event.target.value)}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setIsSearchFocused(false)}
+            onChange={(event) => {
+              setHeaderQuery(event.target.value);
+              setShowHeaderSuggestions(true);
+            }}
+            onFocus={() => {
+              setIsSearchFocused(true);
+              setShowHeaderSuggestions(true);
+            }}
+            onBlur={() => {
+              setIsSearchFocused(false);
+              setTimeout(() => setShowHeaderSuggestions(false), 120);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setShowHeaderSuggestions(false);
+            }}
             placeholder="Search society, sector or builder"
             className="min-w-0 flex-1 bg-transparent text-sm font-normal text-[#25302B] outline-none placeholder:text-[#6E756E]"
           />
           <span className={cn("h-2 w-2 rounded-full transition", isSearchFocused ? "bg-[#C2724E]" : "bg-transparent")} />
+          {showHeaderSuggestions && headerQuery.trim() && headerSuggestions.length > 0 ? (
+            <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-72 overflow-y-auto rounded-2xl border border-[#E7DCCB] bg-white p-1.5 shadow-lg">
+              {headerSuggestions.map((society) => (
+                <li key={society.id}>
+                  <button
+                    type="button"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      setShowHeaderSuggestions(false);
+                      setHeaderQuery("");
+                      navigate(`/search?tab=societies&q=${encodeURIComponent(society.name)}`);
+                    }}
+                    className="flex w-full flex-col rounded-xl px-3 py-2 text-left hover:bg-[#F8F3EA]"
+                  >
+                    <span className="text-sm font-semibold text-[#25302B]">{society.name}</span>
+                    <span className="text-xs text-[#6E756E]">{formatPublicLocation(society)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </form>
 
         <nav className="hidden items-center gap-5 xl:flex">
