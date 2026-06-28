@@ -2,7 +2,18 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Check, MapPin, Search } from "lucide-react";
 import { fetchPublicSocieties, formatPublicLocation } from "@/lib/publicData";
-import { hasGooglePlacesDisplayPhoto } from "@/lib/societyImages";
+import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
+
+const GOOGLE_MAPS_API_KEY = String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();
+
+function heroMapCenter(society: any) {
+  const lat = Number(society?.latitude);
+  const lng = Number(society?.longitude);
+  if (Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0) {
+    return `${lat},${lng}`;
+  }
+  return "Gurugram, Haryana";
+}
 
 // SEO compatibility anchors: Ask SocietyFlats AI · submitHeroAi · No forced AI page jump.
 
@@ -184,18 +195,32 @@ export default function SocietyFlatsHero() {
           </div>
 
           <div className="relative h-[480px]">
-            <div className="absolute bottom-9 left-6 right-0 top-[14px] -rotate-2 overflow-hidden rounded-[26px] border border-[#C8D7C7] bg-[#DDE7DC] [background-image:repeating-linear-gradient(0deg,#C8D7C7_0_1px,transparent_1px_36px),repeating-linear-gradient(90deg,#C8D7C7_0_1px,transparent_1px_36px)]">
-              <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 460" preserveAspectRatio="none">
-                <path d="M40 380 C120 320 160 260 230 220 S360 150 360 80" fill="none" stroke="#C2724E" strokeWidth="2.5" strokeDasharray="2 9" strokeLinecap="round" opacity=".55" />
-              </svg>
-              <MapPin className="absolute left-[58%] top-16 h-7 w-7 fill-[#123C32] text-white" />
+            <div className="absolute bottom-9 left-6 right-0 top-[14px] -rotate-2 overflow-hidden rounded-[26px] border border-[#C8D7C7] bg-[#DDE7DC]">
+              {GOOGLE_MAPS_API_KEY ? (
+                <iframe
+                  title="Live Gurgaon societies map"
+                  className="h-full w-full rotate-2 scale-110 border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(GOOGLE_MAPS_API_KEY)}&q=${encodeURIComponent(heroMapCenter(primary))}&zoom=13`}
+                />
+              ) : (
+                <>
+                  <div className="absolute inset-0 [background-image:repeating-linear-gradient(0deg,#C8D7C7_0_1px,transparent_1px_36px),repeating-linear-gradient(90deg,#C8D7C7_0_1px,transparent_1px_36px)]" />
+                  <MapPin className="absolute left-[58%] top-16 h-7 w-7 fill-[#123C32] text-white" />
+                </>
+              )}
             </div>
 
             <div className="absolute right-1 top-0 w-[296px] rotate-2 rounded-[20px] border border-[#E7DCCB] bg-white p-3 shadow-[0_28px_50px_-24px_rgba(15,40,30,.45)]">
-              <div className="relative flex h-44 items-center justify-center rounded-[13px] bg-[#DDE7DC] [background-image:repeating-linear-gradient(135deg,#C8D7C7_0_1px,transparent_1px_12px)]">
-                <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#597167]">
-                  {primary ? "admin-reviewed society image" : "published society data"}
-                </span>
+              <div className="relative flex h-44 items-center justify-center overflow-hidden rounded-[13px] bg-[#DDE7DC] [background-image:repeating-linear-gradient(135deg,#C8D7C7_0_1px,transparent_1px_12px)]">
+                {primary && hasGooglePlacesDisplayPhoto(primary) ? (
+                  <img src={societyDisplayImage(primary)} alt={primary.name} className="absolute inset-0 h-full w-full object-cover" />
+                ) : (
+                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#597167]">
+                    {primary ? "admin-reviewed society image" : "published society data"}
+                  </span>
+                )}
                 <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-[#E4F0E6] px-2.5 py-1 text-[11px] font-bold text-[#1F7A5A]">
                   <Check className="h-3 w-3 stroke-[3]" /> Verified
                 </span>
