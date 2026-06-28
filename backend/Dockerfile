@@ -1,13 +1,16 @@
-FROM php:8.4-cli
+FROM php:8.4-fpm
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
+    nginx \
     libpq-dev \
     libzip-dev \
-    && docker-php-ext-install pdo pdo_pgsql zip
+    && docker-php-ext-install pdo pdo_pgsql zip \
+    && docker-php-ext-enable opcache \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN { \
     echo "upload_max_filesize=25M"; \
@@ -17,25 +20,33 @@ RUN { \
     echo "max_input_time=120"; \
   } > /usr/local/etc/php/conf.d/societyflats-uploads.ini
 
+RUN { \
+    echo "opcache.enable=1"; \
+    echo "opcache.memory_consumption=64"; \
+    echo "opcache.max_accelerated_files=10000"; \
+    echo "opcache.validate_timestamps=0"; \
+  } > /usr/local/etc/php/conf.d/societyflats-opcache.ini
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY . .
 
 RUN composer install --no-dev --optimize-autoloader
 
+RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
+
+COPY docker/nginx.conf.template /etc/nginx/conf.d/default.conf.template
+RUN rm -f /etc/nginx/sites-enabled/default
+
+COPY docker/start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+
 EXPOSE 10000
 
-# The built-in server is single-process by default, so concurrent requests (e.g. the admin
-# dashboard firing several API calls at once) queue and appear to "hang". Forking workers lets
-# it serve requests in parallel. PHP_CLI_SERVER_WORKERS is silently ignored unless --no-reload
-# is also passed (confirmed via Render logs: "Unable to respect... Only creating a single
-# server."), so --no-reload is required here for the worker count to actually take effect.
-# Bumped 4 -> 8: on the 0.5 CPU / 512MB Starter instance, 4 workers was exhausted easily by a
-# few concurrent tabs/admin widgets, queuing the 5th+ request behind any slow one (Google
-# Places/Gemini/Claude calls). 8 roughly doubles concurrency; kept conservative since each
-# worker is a separate process and 512MB total RAM is tight. NOTE: artisan serve is still not a
-# real production server (Laravel's own docs say dev-only) -- this is a mitigation, not a fix.
-# A proper fix means PHP-FPM+Nginx or Laravel Octane (FrankenPHP/Swoole).
-ENV PHP_CLI_SERVER_WORKERS=8
-
-CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000} --no-reload"]
+# Replaces the previous `php artisan serve` setup (Laravel's own docs: dev-only, not for
+# production). PHP-FPM + Nginx is the standard production pattern: Nginx serves as the single
+# foreground process (so Render's process supervision has something to watch), proxying PHP
+# requests to a PHP-FPM pool that reuses an OPcache-warmed process pool instead of re-bootstrapping
+# Laravel on every request. opcache.validate_timestamps=0 is safe here because each deploy is a
+# fresh container/image build, so there's no risk of stale cached bytecode from a previous deploy.
+CMD ["/usr/local/bin/start.sh"]
