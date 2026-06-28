@@ -812,7 +812,7 @@ export function AIAdvisorPage() {
               {loading
                 ? "Finding societies that fit your requirement..."
                 : handoffResults.length
-                  ? `${handoffResults.length} societ${handoffResults.length === 1 ? "y matches" : "ies match"} your budget, commute and lifestyle.`
+                  ? `${handoffResults.length} societ${handoffResults.length === 1 ? "y matches" : "ies match"} "${activeQuestion}".`
                   : "Tell us your requirement to build a society-first shortlist."}
             </div>
 
