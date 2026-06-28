@@ -195,6 +195,7 @@ body,
 .public-site textarea {
   border-color: #E7DCCB;
   color: #25302B;
+  -webkit-appearance: none;
 }
 
 .public-site input:focus,
@@ -202,6 +203,10 @@ body,
 .public-site textarea:focus {
   border-color: #9FC2AE;
   box-shadow: 0 0 0 3px rgba(31, 104, 78, 0.10);
+  /* Safari paints its own native focus ring on :focus regardless of :focus-visible
+     support, which doesn't respect border-radius on rounded pill inputs — kill it
+     here too, not just on :focus-visible below. */
+  outline: none;
 }
 
 .public-site .shadow-sm,
