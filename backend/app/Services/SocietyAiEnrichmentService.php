@@ -117,7 +117,7 @@ PROMPT;
                 messages: [['role' => 'user', 'content' => $prompt]],
                 model: $model,
                 system: 'You are a careful Indian real-estate market research assistant. Only report figures you can support from search results for the exact named project. Use null when unsure.',
-                tools: [(new \Anthropic\Messages\WebSearchTool20260209())->withMaxUses(4)],
+                tools: [(new \Anthropic\Messages\WebSearchTool20260209())->withMaxUses(4)->withAllowedCallers(['direct'])],
             );
         } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
             return ['_ai_error' => 'Claude HTTP '.($e->status ?? 0).': '.$e->getMessage()];
@@ -223,7 +223,7 @@ PROMPT;
             $client = new \Anthropic\Client(apiKey: $apiKey);
 
             $tools = $useSearchGrounding
-                ? [(new \Anthropic\Messages\WebSearchTool20260209())->withMaxUses(3)]
+                ? [(new \Anthropic\Messages\WebSearchTool20260209())->withMaxUses(3)->withAllowedCallers(['direct'])]
                 : null;
 
             $message = $client->messages->create(
