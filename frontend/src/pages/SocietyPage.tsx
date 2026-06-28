@@ -44,6 +44,7 @@ import {
   formatPublicLocation,
   getSocietyProperties,
   propertyImage,
+  slugify,
   societyImage,
 } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
@@ -859,7 +860,20 @@ export function SocietyPage() {
           <section>
             <h1 className="font-display text-[38px] font-medium leading-tight tracking-[-0.01em] text-[#10251F]">{society.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#6E756E]">
-              <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" />{societyLocation} · by {field(society, "builder", "builder", "Builder to be reviewed")}</span>
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="h-4 w-4" />
+                {field(society, "sector", "sector", "") ? (
+                  <Link to={`/gurgaon/${slugify(String(field(society, "sector", "sector", "")))}`} className="hover:underline">{societyLocation}</Link>
+                ) : (
+                  societyLocation
+                )}
+                {" · by "}
+                {field(society, "builder", "builder", "") ? (
+                  <Link to={`/builder/${slugify(String(field(society, "builder", "builder", "")))}`} className="hover:underline">{field(society, "builder", "builder", "")}</Link>
+                ) : (
+                  "Builder to be reviewed"
+                )}
+              </span>
               {societyScore > 0 ? <span className="font-bold text-[#25302B]">★ {(societyScore > 10 ? societyScore / 10 : societyScore).toFixed(1)}</span> : null}
               <span className="rounded-full bg-[#E8F7E9] px-3 py-1 text-[12.5px] font-semibold text-[#2A6147]">Data confidence: {confidenceText}</span>
               <span className="text-[12.5px]">{formatHandoffUpdated(updatedText)}</span>
