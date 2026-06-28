@@ -48,13 +48,13 @@ const featureIntro = {
     icon: BriefcaseBusiness,
   },
   chat: {
-    title: 'SocietyFlats AI Chat',
+    title: 'Ask anything about Gurgaon societies',
     eyebrow: 'Published-data assistant',
-    text: 'Ask follow-up questions and browse matches grounded in published SocietyFlats societies and live homes.',
+    text: 'Grounded in published SocietyFlats society profiles — it\'ll say "I don\'t have that yet" instead of inventing an answer.',
     icon: MessageSquareText,
   },
   recommendations: {
-    title: 'Recommendations',
+    title: 'Your shortlist',
     eyebrow: 'Match by fit',
     text: 'Use budget, locality and lifestyle priorities to get a ranked shortlist from live society data.',
     icon: Target,
