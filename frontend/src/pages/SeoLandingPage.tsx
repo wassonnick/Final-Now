@@ -153,6 +153,23 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
   const label = landingLabel(variant, localitySlug, builderSlug);
 
   if (variant === "builder") {
+    if (builderSlug === "m3m") {
+      return {
+        eyebrow: `${label} Gurgaon`,
+        title: `M3M built 22 of the societies SocietyFlats has reviewed in Gurgaon`,
+        description:
+          `From Golf Course Extension Road to Sector 113 — compare M3M's projects by security, connectivity and price before picking one.`,
+        canonical: `/builder/${builderSlug}`,
+        searchQuery: `${label} Gurgaon`,
+        primaryCta: `See which M3M societies fit your budget`,
+        secondaryCta: "Ask AI Advisor",
+        focusLabel: `${label} best match`,
+        insightTitle: `One builder, a wide range of projects`,
+        insightText:
+          `M3M's portfolio here spans ultra-luxury (Golfestate, Trump Towers) to mid-segment serviced suites (SkySuites, Polo Suites) — the same builder name covers a wide price range, so compare the society, not just the brand.`,
+      };
+    }
+
     return {
       eyebrow: `${label} Gurgaon`,
       title: `Best ${label} societies in Gurgaon`,
@@ -160,7 +177,7 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
         `Compare ${label} societies by location, score, rent range, resale range and available homes before booking a visit.`,
       canonical: `/builder/${builderSlug}`,
       searchQuery: `${label} Gurgaon`,
-      primaryCta: `Search ${label} societies`,
+      primaryCta: `See which ${label} societies fit your budget`,
       secondaryCta: "Ask AI Advisor",
       focusLabel: `${label} best match`,
       insightTitle: `Why shortlist ${label} societies first?`,
@@ -170,6 +187,23 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
   }
 
   if (variant === "locality") {
+    if (localitySlug === "sector-65") {
+      return {
+        eyebrow: `${label} Gurgaon`,
+        title: `Sector 65 has more reviewed M3M societies than anywhere else in Gurgaon`,
+        description:
+          `Golf Course Extension Road runs through Sector 65, which is why M3M concentrated nine projects here — but Golfestate, Skycity and Heights still differ by 9+ points on connectivity score. Compare them side by side before assuming "Sector 65" means one thing.`,
+        canonical: `/gurgaon/${localitySlug}`,
+        searchQuery: `${label} Gurgaon`,
+        primaryCta: `Search ${label}`,
+        secondaryCta: "Ask AI Advisor",
+        focusLabel: `${label} top society`,
+        insightTitle: `Why ${label} needs society-first comparison`,
+        insightText:
+          `Golf Course Extension Road runs through Sector 65, which is why M3M concentrated nine projects here — but they still differ sharply on connectivity, security and price.`,
+      };
+    }
+
     return {
       eyebrow: `${label} Gurgaon`,
       title: `Top societies near ${label}`,
@@ -678,9 +712,15 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                   </div>
                 ) : (
                   <div className="rounded-[1.5rem] border border-dashed border-blue-100 bg-blue-50/50 p-5">
-                    <p className="text-sm font-bold text-navy-700">No exact society cards attached yet.</p>
+                    <p className="text-sm font-bold text-navy-700">
+                      {variant === "builder"
+                        ? `SocietyFlats hasn't reviewed a ${pageLabel} society in Gurgaon yet.`
+                        : variant === "locality"
+                          ? `No reviewed societies in ${pageLabel} yet.`
+                          : "No exact society cards attached yet."}
+                    </p>
                     <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">
-                      Use search or AI Advisor for nearby Gurgaon matches while this page gets more admin-approved data.
+                      Tell us what you're looking for and we'll prioritize it — or use search or AI Advisor for nearby Gurgaon matches while this page gets more admin-approved data.
                     </p>
                   </div>
                 )}
