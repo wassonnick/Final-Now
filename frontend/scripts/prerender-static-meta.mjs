@@ -61,9 +61,9 @@ async function fetchLiveLocalities() {
 const routeMeta = [
   {
     path: "/",
-    title: "Verified Gurgaon Societies & Premium Flats | SocietyFlats",
+    title: "Verified Gurgaon Societies — Compare Before You Choose a Home | SocietyFlats",
     description:
-      "Stop sorting through scattered, unverified listings. Discover Gurgaon’s premier residential societies using data-driven ratings for security, commute, and market trends.",
+      "22+ Gurgaon societies reviewed field-by-field before publishing — real coordinates, real Google-sourced photos, no invented listings. Compare security, commute and price before you visit.",
     priority: "1.0",
     changefreq: "daily",
     schemaType: "WebSite",
