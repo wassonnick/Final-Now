@@ -90,6 +90,7 @@ export interface AdminSociety {
   latitude: string;
   longitude: string;
   placeId: string;
+  imagePhotoReference: string;
   status: SocietyStatus;
   verificationStatus: string;
   isPublished: boolean;
@@ -245,6 +246,7 @@ export function createEmptyAdminSociety(): AdminSociety {
     latitude: '',
     longitude: '',
     placeId: '',
+    imagePhotoReference: '',
     status: 'Draft',
     verificationStatus: 'needs_verification',
     isPublished: false,
@@ -335,6 +337,7 @@ export function mapApiSociety(data: any): AdminSociety {
     latitude: data?.latitude || '',
     longitude: data?.longitude || '',
     placeId: data?.place_id || '',
+    imagePhotoReference: data?.image_photo_reference || '',
     status: normalizeStatus(data?.status),
     verificationStatus: data?.verification_status || 'needs_verification',
     isPublished: Boolean(data?.is_published),

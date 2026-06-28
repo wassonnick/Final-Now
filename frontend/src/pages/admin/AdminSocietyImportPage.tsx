@@ -1,5 +1,5 @@
 import { Component, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -207,6 +207,7 @@ class PanelErrorBoundary extends Component<{ children: ReactNode }, { error: Err
 }
 
 export function AdminSocietyImportPage() {
+  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<ImportMode>("single");
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
@@ -266,6 +267,8 @@ export function AdminSocietyImportPage() {
   useEffect(() => {
     void loadJobs();
     void loadAiStatus();
+    const societyId = Number(searchParams.get("societyId"));
+    if (societyId > 0) void openDraft(societyId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

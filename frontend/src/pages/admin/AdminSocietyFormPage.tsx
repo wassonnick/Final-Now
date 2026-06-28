@@ -232,6 +232,34 @@ export function AdminSocietyFormPage() {
   const [saved, setSaved] = useState(false);
   const [googleImageRightsConfirmed, setGoogleImageRightsConfirmed] = useState(false);
   const [reviewingImage, setReviewingImage] = useState(false);
+  const [googlePlacesPreviewUrl, setGooglePlacesPreviewUrl] = useState("");
+
+  // Preview the cover photo via the admin proxy (works pre-publish, unlike the public
+  // google-place-photo route which only serves published Verified/Premium societies).
+  useEffect(() => {
+    if (society.imageStatus !== "google_places_reference_found" || !society.imagePhotoReference) {
+      setGooglePlacesPreviewUrl("");
+      return;
+    }
+    let cancelled = false;
+    let objectUrl = "";
+    void (async () => {
+      try {
+        const res = await adminFetch(`/admin/import/place-photo?reference=${encodeURIComponent(society.imagePhotoReference)}&w=900`);
+        if (!res.ok || cancelled) return;
+        const blob = await res.blob();
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setGooglePlacesPreviewUrl(objectUrl);
+      } catch {
+        if (!cancelled) setGooglePlacesPreviewUrl("");
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [society.imageStatus, society.imagePhotoReference]);
 
   useEffect(() => {
     async function loadSociety() {
@@ -807,11 +835,8 @@ export function AdminSocietyFormPage() {
 
 
   const mediaPreviewImage =
-    society.imageApprovedByAdmin &&
-    society.imageStatus === "google_places_reference_found" &&
-    society.isPublished &&
-    ["Verified", "Premium"].includes(society.status)
-      ? googlePlacesSocietyPhotoUrl(society)
+    society.imageStatus === "google_places_reference_found" && (googlePlacesPreviewUrl || googlePlacesSocietyPhotoUrl(society))
+      ? googlePlacesPreviewUrl || googlePlacesSocietyPhotoUrl(society)
       : society.imageApprovedByAdmin && (society.coverImage || society.imageUrl)
       ? society.coverImage || society.imageUrl
       : societyPlaceholderImage(society);
@@ -1445,6 +1470,13 @@ export function AdminSocietyFormPage() {
                     ) : (
                       <p className="mt-2 font-bold text-emerald-700">Approved for attributed Google Places display.</p>
                     )}
+                    {society.id ? (
+                      <Button asChild type="button" variant="outline" className="mt-3 h-8 rounded-full border-amber-200 px-3 text-xs font-bold text-amber-700">
+                        <Link to={`/admin/societies/import?societyId=${society.id}`}>
+                          Choose a different harvested photo
+                        </Link>
+                      </Button>
+                    ) : null}
                   </div>
                 ) : null}
 
