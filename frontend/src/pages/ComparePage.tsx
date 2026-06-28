@@ -787,7 +787,7 @@ export function ComparePage() {
               Ask AI to rank the comparison by commute, budget, school or lifestyle.
             </p>
             <Button asChild className="mt-4 h-10 w-full rounded-full bg-white font-black text-navy-950 hover:bg-blue-50">
-              <Link to={`/ai-advisor?q=${encodeURIComponent(compareRankPrompt(items))}`}>Open AI Advisor</Link>
+              <Link to={`/ai-advisor?q=${encodeURIComponent(compareRankPrompt(items))}`}>Ask AI Advisor</Link>
             </Button>
           </div>
         </div>

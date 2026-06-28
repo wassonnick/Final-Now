@@ -246,7 +246,7 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
       canonical: "/gurgaon/societies",
       searchQuery: "Gurgaon societies",
       primaryCta: "Search societies",
-      secondaryCta: "Open AI shortlist",
+      secondaryCta: "Ask AI Advisor",
       focusLabel: "Top Gurgaon society",
       insightTitle: "Choose the society before the flat",
       insightText:
@@ -860,7 +860,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
               </Button>
               <Button asChild variant="outline" className="h-12 rounded-full border-white/20 bg-white/10 font-black text-white hover:bg-white/15">
                 <Link to={aiHref}>
-                  Open AI shortlist <Sparkles className="ml-2 h-4 w-4" />
+                  Ask AI Advisor <Sparkles className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </div>

@@ -1066,7 +1066,7 @@ export function SearchPage() {
                 className="mt-3 h-9 w-full rounded-full bg-blue-600 text-xs font-black text-white hover:bg-blue-700"
               >
                 <Link to={`/ai-advisor?q=${encodeURIComponent(query)}`}>
-                  Open AI Advisor
+                  Ask AI Advisor
                 </Link>
               </Button>
             </div>

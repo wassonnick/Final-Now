@@ -249,7 +249,7 @@ export function HomePage() {
               onClick={() => setLeadOpen(true)}
               className="mt-4 rounded-[12px] bg-[#123C32] px-4 py-3 text-[13px] font-bold text-white"
             >
-              Request availability
+              Request live availability
             </button>
           </div>
         )}
@@ -419,7 +419,7 @@ export function HomePage() {
                 onClick={() => setLeadOpen(true)}
                 className="rounded-[12px] bg-[#123C32] px-6 py-3 text-sm font-bold text-white"
               >
-                Request availability
+                Request live availability
               </button>
             </div>
           )}
