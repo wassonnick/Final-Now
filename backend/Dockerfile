@@ -30,6 +30,12 @@ EXPOSE 10000
 # it serve requests in parallel. PHP_CLI_SERVER_WORKERS is silently ignored unless --no-reload
 # is also passed (confirmed via Render logs: "Unable to respect... Only creating a single
 # server."), so --no-reload is required here for the worker count to actually take effect.
-ENV PHP_CLI_SERVER_WORKERS=4
+# Bumped 4 -> 8: on the 0.5 CPU / 512MB Starter instance, 4 workers was exhausted easily by a
+# few concurrent tabs/admin widgets, queuing the 5th+ request behind any slow one (Google
+# Places/Gemini/Claude calls). 8 roughly doubles concurrency; kept conservative since each
+# worker is a separate process and 512MB total RAM is tight. NOTE: artisan serve is still not a
+# real production server (Laravel's own docs say dev-only) -- this is a mitigation, not a fix.
+# A proper fix means PHP-FPM+Nginx or Laravel Octane (FrankenPHP/Swoole).
+ENV PHP_CLI_SERVER_WORKERS=8
 
 CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000} --no-reload"]
