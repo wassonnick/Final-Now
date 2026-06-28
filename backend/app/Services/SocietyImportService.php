@@ -241,7 +241,9 @@ class SocietyImportService
         $attr['is_published'] = false;
         $attr['published_at'] = null;
         $attr['imported_at'] = $society->imported_at ?: now();
-        $attr['image_approved_by_admin'] = false;
+        // Don't blindly reset image_approved_by_admin here — the pipeline already decided it
+        // correctly (true only for an auto-approved Google Places cover, matching structured
+        // import; false otherwise pending admin review).
 
         $society->update($attr);
 
