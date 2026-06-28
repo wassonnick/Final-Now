@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Check, MapPin, Search } from "lucide-react";
 import { fetchPublicSocieties, formatPublicLocation, suggestSocieties } from "@/lib/publicData";
 import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
+import { loadGoogleMaps } from "@/components/maps/GoogleSocietyMapView";
 
 const GOOGLE_MAPS_API_KEY = String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();
 
@@ -10,9 +11,9 @@ function heroMapCenter(society: any) {
   const lat = Number(society?.latitude);
   const lng = Number(society?.longitude);
   if (Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0) {
-    return `${lat},${lng}`;
+    return { lat, lng };
   }
-  return "Gurugram, Haryana";
+  return { lat: 28.4595, lng: 77.0266 };
 }
 
 // SEO compatibility anchors: Ask SocietyFlats AI · submitHeroAi · No forced AI page jump.
@@ -81,6 +82,37 @@ export default function SocietyFlatsHero() {
   const secondary = societies[1];
   const suggestions = useMemo(() => suggestSocieties(allSocieties, query), [allSocieties, query]);
   const submit = (overrideQuery?: string) => navigate(searchUrl(intent, overrideQuery ?? query));
+
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!GOOGLE_MAPS_API_KEY || !mapRef.current) return;
+    let cancelled = false;
+    const center = heroMapCenter(primary);
+
+    loadGoogleMaps(GOOGLE_MAPS_API_KEY)
+      .then(() => {
+        if (cancelled || !window.google?.maps || !mapRef.current) return;
+        if (!mapInstanceRef.current) {
+          mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
+            center,
+            zoom: 13,
+            disableDefaultUI: true,
+            gestureHandling: "none",
+            keyboardShortcuts: false,
+          });
+        } else {
+          mapInstanceRef.current.setCenter(center);
+        }
+        new window.google.maps.Marker({ position: center, map: mapInstanceRef.current });
+      })
+      .catch((error: Error) => console.error("Hero map load failed", error));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [primary]);
 
   return (
     <>
@@ -237,13 +269,7 @@ export default function SocietyFlatsHero() {
           <div className="relative h-[480px]">
             <div className="absolute bottom-9 left-6 right-0 top-[14px] -rotate-2 overflow-hidden rounded-[26px] border border-[#C8D7C7] bg-[#DDE7DC]">
               {GOOGLE_MAPS_API_KEY ? (
-                <iframe
-                  title="Live Gurgaon societies map"
-                  className="h-full w-full rotate-2 scale-110 border-0"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  src={`https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(GOOGLE_MAPS_API_KEY)}&q=${encodeURIComponent(heroMapCenter(primary))}&zoom=13`}
-                />
+                <div ref={mapRef} role="img" aria-label="Live Gurgaon societies map" className="h-full w-full rotate-2 scale-110" />
               ) : (
                 <>
                   <div className="absolute inset-0 [background-image:repeating-linear-gradient(0deg,#C8D7C7_0_1px,transparent_1px_36px),repeating-linear-gradient(90deg,#C8D7C7_0_1px,transparent_1px_36px)]" />

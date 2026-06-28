@@ -32,7 +32,7 @@ function societyPath(society: AdminSociety) {
     : `/search?tab=societies&intent=general&q=${encodeURIComponent(society.name)}`;
 }
 
-function loadGoogleMaps(apiKey: string) {
+export function loadGoogleMaps(apiKey: string) {
   if (window.google?.maps) return Promise.resolve();
 
   if (window.societyFlatsGoogleMapsPromise) {
