@@ -429,7 +429,7 @@ export function SellPage() {
           <div className="grid gap-6 rounded-[1.5rem] bg-navy-900 p-6 text-white md:grid-cols-2 md:items-center md:p-8">
             <div>
               <UserRound className="w-10 h-10 text-gold-400 mb-4" />
-              <h2 className="text-3xl font-display font-bold">
+              <h2 className="text-3xl font-display font-bold text-white">
                 Owner dashboard and verified listing tools are next.
               </h2>
               <p className="text-navy-100 mt-3">

@@ -182,7 +182,7 @@ function MapsTool({ societies }: { societies: PublicSociety[] }) {
           <div className="flex h-full flex-col justify-between gap-8">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gold-300">Location preview</p>
-              <h2 className="mt-3 text-3xl font-bold">{selected?.name || 'Search a society'}</h2>
+              <h2 className="mt-3 text-3xl font-bold text-white">{selected?.name || 'Search a society'}</h2>
               <p className="mt-2 text-navy-200">{selected ? formatPublicLocation(selected) : 'Use the filters to inspect societies by locality.'}</p>
             </div>
 

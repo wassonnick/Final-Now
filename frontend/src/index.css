@@ -216,12 +216,18 @@ body,
 }
 
 .public-site a:focus-visible,
-.public-site button:focus-visible,
+.public-site button:focus-visible {
+  outline: 2px solid #2A6147;
+  outline-offset: 3px;
+}
+
+/* inputs/selects/textareas already get the rounded box-shadow ring above;
+   the rectangular outline doesn't respect border-radius and shows up as a
+   stray box around rounded search bars, so they're excluded here. */
 .public-site input:focus-visible,
 .public-site select:focus-visible,
 .public-site textarea:focus-visible {
-  outline: 2px solid #2A6147;
-  outline-offset: 3px;
+  outline: none;
 }
 
 /* =========================================================
