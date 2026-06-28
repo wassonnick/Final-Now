@@ -557,6 +557,7 @@ export function AIAdvisorPage() {
   const [loading, setLoading] = useState(false);
   const [callbackOpen, setCallbackOpen] = useState(false);
   const [apiReturned, setApiReturned] = useState(false);
+  const [hasSearched, setHasSearched] = useState(Boolean(initialQuery.trim()));
 
   const activeQuestion = question || input || "Gurgaon society shortlist";
   const searchUrl = `/search?q=${encodeURIComponent(activeQuestion)}&tab=societies&intent=general`;
@@ -617,13 +618,16 @@ export function AIAdvisorPage() {
   }, [matches, publicSocieties]);
 
   const resultSocieties = useMemo(() => {
+    if (!hasSearched) return [];
     if (exactRankSocieties.length) return exactRankSocieties;
     if (apiSocieties.length) return apiSocieties;
     if (directSocietyMatches.length) return directSocietyMatches;
     return fallbackSocieties;
-  }, [exactRankSocieties, apiSocieties, directSocietyMatches, fallbackSocieties]);
+  }, [hasSearched, exactRankSocieties, apiSocieties, directSocietyMatches, fallbackSocieties]);
 
   const suggestedProperties = useMemo(() => {
+    if (!hasSearched) return [];
+
     const directRows = publicProperties
       .map((property) => ({
         property,
@@ -638,7 +642,7 @@ export function AIAdvisorPage() {
     );
 
     return (directRows.length ? directRows : fallbackRows).slice(0, 4);
-  }, [publicProperties, activeQuestion]);
+  }, [hasSearched, publicProperties, activeQuestion]);
 
   const topSociety = resultSocieties[0];
   const resultSource: "api" | "fallback" = exactRankSocieties.length || apiSocieties.length ? "api" : "fallback";
@@ -674,6 +678,8 @@ export function AIAdvisorPage() {
   async function submitAdvisor(value?: string) {
     const clean = (value || input).trim();
     if (!clean || loading) return;
+
+    setHasSearched(true);
 
     trackAiPromptSubmitted({
       source: "ai_advisor_page",
