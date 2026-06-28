@@ -206,9 +206,9 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
   if (variant === "gurgaon-societies") {
     return {
       eyebrow: "Gurgaon society directory",
-      title: "Verified Gurgaon societies ranked for better shortlists",
+      title: "Every Gurgaon society SocietyFlats has reviewed, by sector",
       description:
-        "Compare Gurgaon societies by builder, sector, score, rent range, resale context and available homes in one clean flow.",
+        "Start from your sector or commute corridor, not an alphabetical list — compare builder, score, rent range and resale context in one flow.",
       canonical: "/gurgaon/societies",
       searchQuery: "Gurgaon societies",
       primaryCta: "Search societies",

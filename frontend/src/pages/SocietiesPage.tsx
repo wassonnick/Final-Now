@@ -63,7 +63,7 @@ export function SocietiesPage() {
   useEffect(() => {
     let mounted = true;
     setPublicSeo(
-      'Verified Gurgaon Societies | SocietyFlats',
+      'All Verified Gurgaon Societies — Scores, Rent & Resale Ranges | SocietyFlats',
       'Explore admin-reviewed Gurgaon society profiles, market ranges, location context and available published homes.',
       { canonical: '/societies' },
     );
@@ -132,8 +132,13 @@ export function SocietiesPage() {
               Explore verified societies in Gurgaon
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-navy-500">
-              Compare society scores, rent ranges, sale ranges, amenities and available inventory before shortlisting your next home.
+              {societies.length || 'Several'} societies, each scored on security, connectivity, lifestyle and maintenance — not just listed. Sort by what actually matters to you.
             </p>
+            {!loading && !error ? (
+              <p className="mt-2 text-sm font-semibold text-navy-400">
+                {societies.length} societies live · admin-reviewed
+              </p>
+            ) : null}
           </div>
 
           <div className="mt-8 flex max-w-2xl items-center gap-3 rounded-full border border-navy-100 bg-ivory-100 px-5 py-3 shadow-sm">
@@ -242,7 +247,13 @@ export function SocietiesPage() {
         ) : (
           <div className="rounded-[2rem] border border-navy-100 bg-white p-10 text-center">
             <h2 className="text-2xl font-bold text-navy-900">No societies found</h2>
-            <p className="mt-2 text-navy-500">Try a different society, builder, sector or locality.</p>
+            <p className="mt-2 text-navy-500">
+              Try a different society, builder, sector or locality, or{' '}
+              <Link to="/ai-advisor" className="font-semibold text-blue-700 hover:underline">
+                ask SocietyFlats AI for the closest match
+              </Link>
+              .
+            </p>
           </div>
         )}
       </section>
