@@ -115,3 +115,26 @@ export function formatPublicLocation(society: AdminSociety) {
 export function searchableText(...items: Array<string | undefined | null>) {
   return items.filter(Boolean).join(' ').toLowerCase();
 }
+
+export function suggestSocieties(societies: AdminSociety[], query: string, limit = 6) {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+
+  const startsWith: AdminSociety[] = [];
+  const contains: AdminSociety[] = [];
+
+  for (const society of societies) {
+    const name = (society.name || '').toLowerCase();
+    const sector = (society.sector || '').toLowerCase();
+    const locality = (society.locality || '').toLowerCase();
+    const builder = (society.builder || '').toLowerCase();
+
+    if (name.startsWith(q) || sector.startsWith(q) || locality.startsWith(q) || builder.startsWith(q)) {
+      startsWith.push(society);
+    } else if (name.includes(q) || sector.includes(q) || locality.includes(q) || builder.includes(q)) {
+      contains.push(society);
+    }
+  }
+
+  return [...startsWith, ...contains].slice(0, limit);
+}

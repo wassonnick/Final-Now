@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Check, MapPin, Search } from "lucide-react";
-import { fetchPublicSocieties, formatPublicLocation } from "@/lib/publicData";
+import { fetchPublicSocieties, formatPublicLocation, suggestSocieties } from "@/lib/publicData";
 import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
 
 const GOOGLE_MAPS_API_KEY = String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();
@@ -55,13 +55,23 @@ export default function SocietyFlatsHero() {
   const navigate = useNavigate();
   const [intent, setIntent] = useState<Intent>("society");
   const [query, setQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [societies, setSocieties] = useState<any[]>([]);
+  const [allSocieties, setAllSocieties] = useState<any[]>([]);
 
   useEffect(() => {
     let active = true;
     fetchPublicSocieties()
-      .then((items) => active && setSocieties(items.filter(hasGooglePlacesDisplayPhoto).slice(0, 2)))
-      .catch(() => active && setSocieties([]));
+      .then((items) => {
+        if (!active) return;
+        setAllSocieties(items);
+        setSocieties(items.filter(hasGooglePlacesDisplayPhoto).slice(0, 2));
+      })
+      .catch(() => {
+        if (!active) return;
+        setAllSocieties([]);
+        setSocieties([]);
+      });
     return () => {
       active = false;
     };
@@ -69,7 +79,8 @@ export default function SocietyFlatsHero() {
 
   const primary = societies[0];
   const secondary = societies[1];
-  const submit = () => navigate(searchUrl(intent, query));
+  const suggestions = useMemo(() => suggestSocieties(allSocieties, query), [allSocieties, query]);
+  const submit = (overrideQuery?: string) => navigate(searchUrl(intent, overrideQuery ?? query));
 
   return (
     <>
@@ -163,14 +174,43 @@ export default function SocietyFlatsHero() {
                 }}
                 className="flex gap-2.5"
               >
-                <label className="flex min-w-0 flex-1 items-center gap-2 rounded-[12px] border border-[#E7DCCB] bg-[#FFFBF3] px-[15px] py-[13px]">
+                <label className="relative flex min-w-0 flex-1 items-center gap-2 rounded-[12px] border border-[#E7DCCB] bg-[#FFFBF3] px-[15px] py-[13px]">
                   <Search className="h-[18px] w-[18px] text-[#2A6147]" />
                   <input
                     value={query}
-                    onChange={(event) => setQuery(event.target.value)}
+                    onChange={(event) => {
+                      setQuery(event.target.value);
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") setShowSuggestions(false);
+                    }}
                     placeholder="Sector, society or builder…"
                     className="min-w-0 flex-1 bg-transparent text-[15px] text-[#25302B] outline-none placeholder:text-[#8A8F89]"
                   />
+                  {showSuggestions && query.trim() && suggestions.length > 0 ? (
+                    <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-72 overflow-y-auto rounded-[14px] border border-[#E7DCCB] bg-white p-1.5 shadow-[0_18px_40px_-28px_rgba(0,0,0,.35)]">
+                      {suggestions.map((society) => (
+                        <li key={society.id}>
+                          <button
+                            type="button"
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => {
+                              setShowSuggestions(false);
+                              setQuery(society.name);
+                              submit(society.name);
+                            }}
+                            className="flex w-full flex-col rounded-[10px] px-3 py-2 text-left hover:bg-[#F8F3EA]"
+                          >
+                            <span className="text-sm font-semibold text-[#25302B]">{society.name}</span>
+                            <span className="text-xs text-[#6E756E]">{formatPublicLocation(society)}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </label>
                 <button type="submit" className="rounded-[12px] bg-[#123C32] px-[26px] text-[15px] font-bold text-white">
                   {intent === "society" ? "Search societies" : "Search"}

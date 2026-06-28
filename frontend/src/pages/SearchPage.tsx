@@ -33,6 +33,7 @@ import {
   propertyUrl,
   searchableText,
   societyImage,
+  suggestSocieties,
 } from "@/lib/publicData";
 import { cn } from "@/lib/utils";
 import { societyImageAttribution } from "@/lib/societyImages";
@@ -455,6 +456,7 @@ export function SearchPage() {
     searchParams.get("q") || searchParams.get("locality") || "";
   const [activeTab, setActiveTab] = useState(initialTab);
   const [query, setQuery] = useState(initialQuery);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showMap, setShowMap] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(min-width: 1200px)").matches,
@@ -560,6 +562,8 @@ export function SearchPage() {
 
     return sortedSearchResults(societies, query, expandedSocietySearchText);
   }, [query, societies]);
+
+  const searchSuggestions = useMemo(() => suggestSocieties(societies, query), [societies, query]);
 
   const aiSocietyResults = useMemo(
     () =>
@@ -887,11 +891,49 @@ export function SearchPage() {
                   <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-navy-400 md:left-5 md:h-5 md:w-5" />
                   <Input
                     value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    onKeyDown={(event) => event.key === "Enter" && submitSearch()}
+                    onChange={(event) => {
+                      setQuery(event.target.value);
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        setShowSuggestions(false);
+                        submitSearch();
+                      }
+                      if (event.key === "Escape") setShowSuggestions(false);
+                    }}
                     placeholder="Search society, sector or landmark..."
                     className="h-10 rounded-full border-blue-100 bg-blue-50/45 pl-10 text-sm font-semibold md:h-10 md:pl-12 md:text-base"
                   />
+                  {showSuggestions && query.trim() && searchSuggestions.length > 0 ? (
+                    <ul className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 max-h-72 overflow-y-auto rounded-2xl border border-blue-100 bg-white p-1.5 shadow-lg">
+                      {searchSuggestions.map((society) => (
+                        <li key={society.id}>
+                          <button
+                            type="button"
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => {
+                              setQuery(society.name);
+                              setShowSuggestions(false);
+                              trackSearchPerformed({
+                                source: "search_page",
+                                tab: activeTab,
+                                search_query: society.name,
+                                lead_intent: activeTab,
+                              });
+                              updateUrl(activeTab, society.name);
+                            }}
+                            className="flex w-full flex-col rounded-xl px-3 py-2 text-left hover:bg-blue-50"
+                          >
+                            <span className="text-sm font-semibold text-navy-900">{society.name}</span>
+                            <span className="text-xs text-navy-500">{formatPublicLocation(society)}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </div>
                 <Button
                   onClick={submitSearch}
