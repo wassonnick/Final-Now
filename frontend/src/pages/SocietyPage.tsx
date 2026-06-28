@@ -123,9 +123,10 @@ function scoreValueForHandoff(value: unknown) {
 }
 
 function rentTextForHandoff(society: any) {
-  return readableStructuredValue(
+  const raw = readableStructuredValue(
     society?.rentRange || society?.rent_range || society?.averageRent || society?.average_rent,
-  ) || "On request";
+  );
+  return raw ? raw.replace(/\s*(per\s*month|\/\s*month|pm)\s*$/i, "") : "On request";
 }
 
 function buyTextForHandoff(society: any) {
@@ -758,8 +759,7 @@ export function SocietyPage() {
     field(society, "sourceConfidenceScore", "source_confidence_score", 0),
   );
   const confidenceText =
-    readableStructuredValue(field(society, "dataQuality", "data_quality", "")) ||
-    (sourceConfidenceScore > 0 ? `${sourceConfidenceScore}% confidence` : "Review pending");
+    sourceConfidenceScore > 0 ? `${sourceConfidenceScore}% verified` : "Review pending";
   const updatedText =
     readableStructuredValue(field(society, "updatedAt", "updated_at", "")) ||
     "Admin-reviewed profile";
@@ -961,9 +961,16 @@ export function SocietyPage() {
           <aside>
             <div className="lg:sticky lg:top-[94px]">
               <div className="rounded-[20px] border border-[#E7E3DA] bg-white p-[22px] shadow-[0_14px_36px_-26px_rgba(0,0,0,.4)]">
-                <p className="text-xs text-[#7A817D]">Price range</p>
-                <p className="mt-1 text-2xl font-extrabold text-[#123C32]">{buyTextForHandoff(society)}</p>
-                <p className="mt-1 text-[13px] text-[#6E756E]">Rent {rentTextForHandoff(society)} / month</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8A8F89]">Resale price</p>
+                    <p className="mt-1 text-xl font-extrabold text-[#123C32]">{buyTextForHandoff(society)}</p>
+                  </div>
+                  <div className="border-l border-[#EEEAE1] pl-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8A8F89]">Rent / month</p>
+                    <p className="mt-1 text-xl font-extrabold text-[#123C32]">{rentTextForHandoff(society)}</p>
+                  </div>
+                </div>
                 <div className="mt-[18px] grid gap-2.5">
                   <button type="button" onClick={() => openSocietyCallback("society_page_rent_options")} className="rounded-[12px] bg-[#123C32] px-5 py-3.5 text-[14.5px] font-bold text-white">Get rental options</button>
                   <button type="button" onClick={() => openSocietyCallback("society_page_availability")} className="rounded-[12px] border-2 border-[#123C32] bg-white px-5 py-3 text-[14.5px] font-bold text-[#123C32]">Check current availability</button>
