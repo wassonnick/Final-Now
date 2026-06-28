@@ -453,7 +453,7 @@ Schema:
   "year_built": "string or null",
   "total_towers": "string or null",
   "total_units": "string or null",
-  "maintenance_charges": "string or null",
+  "maintenance_charges": "ONLY a concrete figure, e.g. '₹4.5 per sq.ft. per month' or '₹15,000 per month'; null if no specific number is found. Never a description of what amenities the maintenance covers.",
   "rent_range": "string or null",
   "buy_range": "string or null",
   "rental_yield": "string or null",

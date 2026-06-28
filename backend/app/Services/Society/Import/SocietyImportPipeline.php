@@ -121,6 +121,11 @@ class SocietyImportPipeline
             $attr[$field] = $value;
         }
         $attr['score_breakdown'] = $scored['breakdown'];
+        // Was hardcoded to a static 35 regardless of how well-anchored the data actually was —
+        // drive it from the same deterministic scoring confidence that data_quality already
+        // reports, so a well-matched, fully-scored society reads as high-confidence and a thin
+        // one is honestly flagged low, instead of every import showing the same fake number.
+        $attr['source_confidence_score'] = (int) round(($scored['confidence'] ?? 0) * 100);
         $logs[] = 'Deterministic scores computed (confidence '.$scored['confidence'].').';
 
         $candidates = [];
@@ -163,6 +168,15 @@ class SocietyImportPipeline
             if ($value !== null) {
                 $attr[$field] = $value;
             }
+        }
+
+        // Despite the prompt asking for a concrete figure, the model occasionally returns a
+        // descriptive sentence about what maintenance covers instead of an actual charge — drop
+        // anything that doesn't look like a number/currency figure rather than show it raw.
+        if (! empty($attr['maintenance_charges']) && ! preg_match('/[₹$]|\d/', (string) $attr['maintenance_charges'])) {
+            $attr['maintenance_charges'] = null;
+        } elseif (! empty($attr['maintenance_charges']) && mb_strlen((string) $attr['maintenance_charges']) > 60) {
+            $attr['maintenance_charges'] = null;
         }
         foreach (['amenities', 'nearby_schools', 'nearby_metro', 'nearby_hospitals', 'nearby_office_hubs'] as $field) {
             $value = $this->cleanStringArray($aiData[$field] ?? null);
@@ -236,7 +250,7 @@ class SocietyImportPipeline
             'show_in_hero' => false,
             'search_boost' => false,
             'source_name' => $source,
-            'source_confidence_score' => 35,
+            'source_confidence_score' => 0, // overwritten below once deterministic scoring confidence is computed
             'image_approved_by_admin' => false,
         ];
     }
