@@ -612,6 +612,32 @@ export async function reEnrichAdminSociety(
   return mapApiSociety(json?.data || {});
 }
 
+export const BULK_REENRICH_MAX = 5;
+
+/**
+ * Same as reEnrichAdminSociety but for up to BULK_REENRICH_MAX societies in one request —
+ * manually re-enriching one-by-one doesn't scale past a handful of societies. The server
+ * caps the batch independently, so this constant is just for UI messaging.
+ */
+export async function bulkReEnrichAdminSocieties(
+  ids: Array<number | string>,
+  options: { includeImages?: boolean; confirmUnpublish?: boolean } = {},
+): Promise<{ message: string; results: Array<Record<string, unknown>> }> {
+  const json = await request('/admin/import/societies/bulk-re-enrich', {
+    method: 'POST',
+    body: JSON.stringify({
+      society_ids: ids,
+      include_images: options.includeImages ?? true,
+      confirm_unpublish: options.confirmUnpublish ?? false,
+    }),
+  });
+
+  return {
+    message: json?.message || 'Bulk re-enrichment complete.',
+    results: Array.isArray(json?.results) ? json.results : [],
+  };
+}
+
 export async function fetchSocietyDraftFromUrl(officialProjectUrl: string): Promise<{ society: AdminSociety; warnings: string[]; fieldsToVerify: string[]; diagnostics: Record<string, unknown> }> {
   const json = await request('/admin/societies/fetch-from-url', {
     method: 'POST',

@@ -65,7 +65,11 @@ return [
         'msg91_country_code' => env('MSG91_COUNTRY_CODE', '91'),
     ],
 
-    'ai_import_provider' => env('AI_IMPORT_PROVIDER', 'gemini'),
+    // Claude by default: no daily quota (unlike Gemini's 20/day free tier, which silently
+    // degrades imports to Google-Places-only drafts once exhausted) and grounded web search
+    // stays on reliably, so single/bulk/spreadsheet imports and re-enrichment actually research
+    // each society instead of guessing from training data. Requires ANTHROPIC_API_KEY.
+    'ai_import_provider' => env('AI_IMPORT_PROVIDER', 'claude'),
 
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),

@@ -420,6 +420,25 @@ class SocietyImportController extends Controller
         return response()->json(['message' => 'Draft re-enriched with grounded data. Review every field before publishing.', 'data' => $draft]);
     }
 
+    public function bulkReEnrich(Request $request): JsonResponse
+    {
+        $data = $request->validate(['society_ids' => ['required', 'array', 'min:1']]);
+
+        $results = $this->service->bulkReEnrichDrafts(
+            $data['society_ids'],
+            $request->boolean('include_images', true),
+            $request->boolean('confirm_unpublish', false),
+        );
+
+        $ok = count(array_filter($results, fn ($r) => $r['status'] === 'ok'));
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => "{$ok} of ".count($results)." re-enriched (max ".\App\Services\SocietyImportService::BULK_REENRICH_MAX." per request).",
+            'results' => $results,
+        ]);
+    }
+
     /**
      * Scoped market-data refresh: only researches rent/buy/psf/yield for this one
      * project, with citations. Leaves description, scores, amenities, and everything

@@ -64,6 +64,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/import/bulk', [SocietyImportController::class, 'bulk']);
     Route::post('/import/spreadsheet', [SocietyImportController::class, 'spreadsheet']);
     Route::post('/import/structured', [SocietyImportController::class, 'structuredImport']);
+    Route::post('/import/societies/bulk-re-enrich', [SocietyImportController::class, 'bulkReEnrich']);
     Route::patch('/import/societies/{society}/image', [SocietyImportController::class, 'imageDecision']);
     Route::post('/import/societies/{society}/image-candidates', [SocietyImportController::class, 'imageCandidateDecision']);
     Route::post('/import/societies/{society}/re-enrich', [SocietyImportController::class, 'reEnrich']);

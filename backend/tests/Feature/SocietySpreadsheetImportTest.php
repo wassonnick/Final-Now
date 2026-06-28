@@ -16,7 +16,7 @@ class SocietySpreadsheetImportTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['services.admin_api_token' => 'admin-test-token', 'services.gemini.api_key' => null]);
+        config(['services.admin_api_token' => 'admin-test-token', 'services.ai_import_provider' => 'gemini', 'services.gemini.api_key' => null]);
     }
 
     public function test_admin_can_upload_excel_template_and_only_create_unpublished_draft(): void
@@ -122,6 +122,52 @@ class SocietySpreadsheetImportTest extends TestCase
             ->assertJsonPath('data.status', 'Draft')
             ->assertJsonPath('data.is_published', false)
             ->assertJsonPath('data.verification_status', 'Needs Review');
+    }
+
+    public function test_bulk_re_enrich_caps_batch_size_server_side(): void
+    {
+        config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'test-model']);
+
+        $draftIds = [];
+        for ($i = 1; $i <= 7; $i++) {
+            $draftIds[] = Society::create([
+                'name' => "Bulk Draft {$i}", 'slug' => "bulk-draft-{$i}", 'city' => 'Gurugram',
+                'status' => 'Draft', 'verification_status' => 'Needs Review', 'is_published' => false,
+            ])->id;
+        }
+
+        Http::fake(fn () => Http::response(['candidates' => [['content' => ['parts' => [['text' => json_encode(['name' => 'X', 'description' => 'A complete grounded description with project and location intelligence.'])]]]]]]));
+
+        $response = $this->withToken('admin-test-token')
+            ->postJson('/api/admin/import/societies/bulk-re-enrich', [
+                'society_ids' => $draftIds,
+                'include_images' => false,
+            ])
+            ->assertOk()
+            ->json();
+
+        $this->assertCount(5, $response['results'], 'server caps the batch at 5 regardless of how many ids were sent');
+    }
+
+    public function test_bulk_re_enrich_skips_published_society_without_confirmation(): void
+    {
+        config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'test-model']);
+
+        $published = Society::create([
+            'name' => 'Bulk Live', 'slug' => 'bulk-live', 'city' => 'Gurugram',
+            'status' => 'Verified', 'verification_status' => 'Verified', 'is_published' => true,
+        ]);
+
+        $response = $this->withToken('admin-test-token')
+            ->postJson('/api/admin/import/societies/bulk-re-enrich', [
+                'society_ids' => [$published->id],
+                'include_images' => false,
+            ])
+            ->assertOk()
+            ->json();
+
+        $this->assertSame('failed', $response['results'][0]['status']);
+        $this->assertTrue($published->fresh()->is_published, 'unconfirmed published society must stay live');
     }
 
     public function test_google_places_photo_requires_explicit_admin_display_approval(): void

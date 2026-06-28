@@ -16,6 +16,7 @@ class SocietyImportPipelineTest extends TestCase
         parent::setUp();
         config([
             'services.admin_api_token' => 'admin-test-token',
+            'services.ai_import_provider' => 'gemini',
             'services.gemini.api_key' => 'gemini-test-key',
             'services.gemini.model' => 'test-model',
             'services.google_places_api_key' => 'places-test-key',

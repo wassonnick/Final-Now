@@ -24,6 +24,8 @@ import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
 import {
   backfillAdminSocietyPublishFields,
   bulkAutoFillNearbyIntelligence,
+  bulkReEnrichAdminSocieties,
+  BULK_REENRICH_MAX,
   deleteAdminSociety,
   fetchAdminSocieties,
   updateAdminSocietyStatus,
@@ -146,6 +148,7 @@ export function AdminSocietiesPage() {
     useState<BulkGooglePlacesImageFetchSummary | null>(null);
   const [googleImageFetchError, setGoogleImageFetchError] = useState("");
   const [bulkNearbyAutoFillLoading, setBulkNearbyAutoFillLoading] = useState(false);
+  const [bulkReEnrichLoading, setBulkReEnrichLoading] = useState(false);
   const [publishBackfillLoading, setPublishBackfillLoading] = useState(false);
 
 
@@ -333,6 +336,54 @@ export function AdminSocietiesPage() {
       setError(err instanceof Error ? err.message : "Bulk nearby autofill failed.");
     } finally {
       setBulkNearbyAutoFillLoading(false);
+    }
+  };
+
+  const handleBulkReEnrich = async () => {
+    if (!selectedSocieties.length || bulkReEnrichLoading) return;
+
+    const batch = selectedSocieties.slice(0, BULK_REENRICH_MAX);
+    const publishedCount = batch.filter((item) => item.isPublished).length;
+    const warning = publishedCount
+      ? ` ${publishedCount} of them ${publishedCount === 1 ? "is" : "are"} published and will be unpublished, marked Needs Review, and require a manual republish after you check the new fields.`
+      : "";
+
+    if (
+      !window.confirm(
+        `Re-enrich ${batch.length} selected societ${batch.length === 1 ? "y" : "ies"} with grounded AI research?${warning}`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setBulkReEnrichLoading(true);
+      setError("");
+      setMessage("");
+
+      const result = await bulkReEnrichAdminSocieties(batch.map((item) => item.id), {
+        confirmUnpublish: publishedCount > 0,
+      });
+      const bulkResultDetails = result.results
+        .filter((item) => item.status === "failed")
+        .slice(0, 5)
+        .map((item) => {
+          const name = typeof item.name === "string" ? item.name : `ID ${item.id || ""}`;
+          const detail = typeof item.message === "string" ? item.message : "No detail returned.";
+          return `${name}: ${detail}`;
+        });
+
+      setMessage(
+        bulkResultDetails.length
+          ? `${result.message} ${bulkResultDetails.join(" | ")}`
+          : result.message,
+      );
+      await loadSocieties();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Bulk re-enrichment failed.");
+    } finally {
+      setBulkReEnrichLoading(false);
     }
   };
 
@@ -572,6 +623,20 @@ export function AdminSocietiesPage() {
                 disabled={!selectedIds.length || bulkWorking}
               >
                 {bulkWorking ? "Applying..." : "Apply status"}
+              </Button>
+
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="rounded-full border-violet-200 text-violet-700"
+                onClick={handleBulkReEnrich}
+                disabled={!selectedIds.length || bulkReEnrichLoading}
+                title={`Re-runs grounded AI research + scoring for up to ${BULK_REENRICH_MAX} selected societies per click. Published ones are unpublished for review.`}
+              >
+                {bulkReEnrichLoading
+                  ? "Re-enriching..."
+                  : `Re-enrich with AI${selectedIds.length > BULK_REENRICH_MAX ? ` (first ${BULK_REENRICH_MAX})` : ""}`}
               </Button>
             </div>
           </div>

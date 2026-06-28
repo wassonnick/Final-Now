@@ -248,6 +248,50 @@ class SocietyImportService
         return $society->fresh();
     }
 
+    // Hard server-side cap regardless of what the client sends — each re-enrich is several
+    // sequential network calls (Places, neighborhood, grounded AI, image harvest), so a larger
+    // batch risks the request outliving Render's gateway timeout.
+    public const BULK_REENRICH_MAX = 5;
+
+    /**
+     * Re-enrich up to BULK_REENRICH_MAX existing societies in one request. Manually clicking
+     * "Re-enrich with AI" one-by-one doesn't scale once more than a handful of societies need
+     * fixing, so this lets an admin select a batch from the societies list instead.
+     */
+    public function bulkReEnrichDrafts(array $societyIds, bool $includeImages, bool $confirmUnpublish): array
+    {
+        $ids = collect($societyIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->take(self::BULK_REENRICH_MAX)
+            ->values();
+
+        $societies = Society::query()->whereIn('id', $ids)->get()->keyBy('id');
+        $results = [];
+
+        foreach ($ids as $id) {
+            $society = $societies->get($id);
+
+            if (! $society) {
+                $results[] = ['id' => $id, 'status' => 'failed', 'message' => 'Society not found.'];
+
+                continue;
+            }
+
+            try {
+                $updated = $this->reEnrichDraft($society, $includeImages, $confirmUnpublish);
+                $results[] = ['id' => $society->id, 'name' => $society->name, 'status' => 'ok', 'is_published' => $updated->is_published];
+            } catch (\InvalidArgumentException $exception) {
+                $results[] = ['id' => $society->id, 'name' => $society->name, 'status' => 'failed', 'message' => $exception->getMessage()];
+            } catch (\Throwable $exception) {
+                $results[] = ['id' => $society->id, 'name' => $society->name, 'status' => 'failed', 'message' => 'Re-enrichment failed: '.$exception->getMessage()];
+            }
+        }
+
+        return $results;
+    }
+
     private function completeBulk(SocietyImportJob $job, array $results): SocietyImportJob
     {
         $pending = collect($results)->contains(fn ($item) => ($item['status'] ?? '') === 'pending');
