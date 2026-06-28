@@ -754,9 +754,12 @@ export function SocietyPage() {
     ["Maintenance", field<number>(society, "maintenanceScore", "maintenance_score", 0)],
     ["Investment", field<number>(society, "investmentScore", "investment_score", 0)],
   ].filter(([, value]) => Number(value) > 0) as [string, number][];
+  const sourceConfidenceScore = Number(
+    field(society, "sourceConfidenceScore", "source_confidence_score", 0),
+  );
   const confidenceText =
-    readableStructuredValue(field(society, "dataConfidence", "data_confidence", "")) ||
-    "Review pending";
+    readableStructuredValue(field(society, "dataQuality", "data_quality", "")) ||
+    (sourceConfidenceScore > 0 ? `${sourceConfidenceScore}% confidence` : "Review pending");
   const updatedText =
     readableStructuredValue(field(society, "updatedAt", "updated_at", "")) ||
     "Admin-reviewed profile";
@@ -806,7 +809,6 @@ export function SocietyPage() {
   const handoffQuickFacts = [
     ["Units", field(society, "totalUnits", "total_units", "To be reviewed")],
     ["Towers", field(society, "totalTowers", "total_towers", "To be reviewed")],
-    ["Floors", field(society, "totalFloors", "total_floors", "To be reviewed")],
     ["Possession", possessionDateText],
   ];
   const handoffVerifiedFacts = [

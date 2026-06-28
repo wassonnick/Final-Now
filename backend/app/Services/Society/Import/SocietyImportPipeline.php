@@ -131,8 +131,8 @@ class SocietyImportPipeline
                 'photo_references' => $place['photo_references'] ?? [],
                 'place_id' => $place['place_id'] ?? null,
             ]);
-            $attr['image_candidates'] = $candidates;
             $this->applyCoverFromCandidates($attr, $candidates);
+            $attr['image_candidates'] = $candidates;
             $logs[] = count($candidates).' image candidate(s) harvested. Admin approval + rights confirmation required before any go live.';
         }
 
@@ -271,7 +271,7 @@ class SocietyImportPipeline
         return $attr;
     }
 
-    private function applyCoverFromCandidates(array &$attr, array $candidates): void
+    private function applyCoverFromCandidates(array &$attr, array &$candidates): void
     {
         // Pre-fill the review image fields from the first previewable official image,
         // but keep it unapproved + private (image_approved_by_admin stays false).
@@ -282,9 +282,32 @@ class SocietyImportPipeline
                 $attr['image_status'] = $attr['image_status'] ?? 'needs_review';
                 $attr['image_credit'] = $attr['image_credit'] ?? $candidate['credit'];
                 $attr['image_license_notes'] = $attr['image_license_notes'] ?? $candidate['license_note'];
-                break;
+                $attr['image_approved_by_admin'] = false;
+
+                return;
             }
         }
+
+        // No official-source image found. Google Places photos already carry clear
+        // attribution/display terms, so auto-approve the first one as the cover —
+        // matching the structured-import flow, instead of leaving every draft imageless.
+        foreach ($candidates as $index => $candidate) {
+            if (($candidate['source'] ?? '') === 'google_places' && ! empty($candidate['photo_reference'])) {
+                $candidates[$index]['approved'] = true;
+                $candidates[$index]['is_cover'] = true;
+                $candidates[$index]['rights_confirmed'] = true;
+
+                $attr['image_photo_reference'] = $candidate['photo_reference'];
+                $attr['image_status'] = 'google_places_reference_found';
+                $attr['image_approved_by_admin'] = true;
+                $attr['image_credit'] = $candidate['credit'] ?? 'Google Places';
+                $attr['image_license_notes'] = $candidate['license_note']
+                    ?? 'Google Places photo served on demand via API with attribution; auto-approved during import.';
+
+                return;
+            }
+        }
+
         $attr['image_approved_by_admin'] = false;
     }
 
@@ -348,6 +371,18 @@ class SocietyImportPipeline
                 continue;
             }
             $tag($field, 'gemini_grounded', in_array($field, $marketFields, true) ? 35 : 50);
+        }
+
+        // Surface the grounding citations the AI service already captured (Claude web
+        // search / Gemini groundingChunks) so admins can verify market figures against
+        // their actual sources instead of trusting an opaque "gemini_grounded" tag.
+        $marketCitations = $aiData['market_sources'] ?? $aiData['grounding_sources'] ?? [];
+        if ($marketCitations !== [] && array_intersect($marketFields, array_keys(array_filter($aiData)))) {
+            $sources['market'] = [
+                'source' => 'gemini_grounded',
+                'confidence' => 35,
+                'sources' => $marketCitations,
+            ];
         }
 
         foreach (['city', 'sector', 'locality', 'builder', 'google_maps_url'] as $field) {

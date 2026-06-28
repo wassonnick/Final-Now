@@ -1288,6 +1288,34 @@ export function AdminSocietyFormPage() {
                   </label>
                 ))}
               </div>
+
+              {society.amenities.some((item) => !societyAmenityOptions.includes(item)) ? (
+                <div className="mt-4 border-t border-slate-100 pt-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Other amenities (not in the checklist above — AI-sourced or manually added)
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {society.amenities
+                      .filter((item) => !societyAmenityOptions.includes(item))
+                      .map((amenity) => (
+                        <span
+                          key={amenity}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm text-violet-700"
+                        >
+                          {amenity}
+                          <button
+                            type="button"
+                            onClick={() => toggleAmenity(amenity, false)}
+                            className="text-violet-400 hover:text-violet-700"
+                            aria-label={`Remove ${amenity}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              ) : null}
             </section>
 
             <section className="rounded-[20px] border border-blue-100 bg-blue-50/60 p-4 shadow-sm md:p-5">

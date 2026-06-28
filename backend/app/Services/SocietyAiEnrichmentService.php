@@ -504,7 +504,7 @@ Rules:
 - Image candidate mode: {$imageInstruction}
 - Search every major category before returning null. Populate project area, configurations, towers, units, market ranges, coordinates, nearby schools, hospitals, commute links, office hubs, official URLs and SEO whenever grounded evidence exists.
 - Do not return a generic basic profile when search grounding is available. Use null only after the searched sources do not support the field.
-- Prices/rent ranges can be broad market ranges but mark fields_to_verify.
+- Market ranges (rent_range, buy_range, average_rent, average_sale_price, price_per_sqft, rental_yield): search current listing/aggregator sources (e.g. 99acres, Square Yards, Magicbricks, Housing.com, Google AI Overview) specifically for THIS society/project, not a generic citywide or sector-wide range. Cite the exact pages used. If only stale or generic-area data is found, widen the range to cover it rather than picking one old/narrow figure, and add the field to fields_to_verify.
 - Keep all output review-first, not publicly guaranteed.
 - If unsure, use null and add the field to fields_to_verify.
 PROMPT;
