@@ -148,6 +148,8 @@ export interface AdminSociety {
   dataQuality: string;
   updatedAt: string;
   propertiesCount?: number;
+  fieldSources: Record<string, any>;
+  officialSourceLastCheckedAt: string;
 }
 
 const API_BASE =
@@ -222,6 +224,8 @@ function normalizeImageStatus(value: unknown): SocietyImageStatus {
 
 export function createEmptyAdminSociety(): AdminSociety {
   return {
+    fieldSources: {},
+    officialSourceLastCheckedAt: '',
     id: 0,
     name: '',
     slug: '',
@@ -395,6 +399,8 @@ export function mapApiSociety(data: any): AdminSociety {
     dataQuality: data?.data_quality || '',
     updatedAt: data?.updated_at ? new Date(data.updated_at).toLocaleDateString() : 'Just now',
     propertiesCount: Number(data?.properties_count || data?.properties?.length || 0),
+    fieldSources: data?.field_sources && typeof data.field_sources === 'object' ? data.field_sources : {},
+    officialSourceLastCheckedAt: data?.official_source_last_checked_at || '',
   };
 }
 

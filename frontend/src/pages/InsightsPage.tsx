@@ -18,101 +18,105 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { setPublicSeo } from "@/lib/seo";
+import { fetchPublicSocieties } from "@/lib/publicData";
+import type { AdminSociety } from "@/lib/adminSocietyStore";
 
 type InsightMode = "rent" | "buy" | "sell";
 
+type Confidence = "Admin reviewed" | "Guide range" | "Needs verification";
+
+type MarketInfo = {
+  confidence?: string;
+  notes?: string;
+  sources?: { title: string; url: string }[];
+  refreshed_at?: string;
+};
+
 type MarketRow = {
   locality: string;
+  societyCount: number;
   rent: string;
   buy: string;
-  sell: string;
-  rentSignal: string;
-  buySignal: string;
-  sellSignal: string;
-  demand: string;
+  confidence: Confidence;
   sourceLabel: string;
-  confidence: "Admin reviewed" | "Guide range" | "Needs verification";
+  sourcedDate: string;
+  sourceUrl: string;
   action: string;
   href: string;
 };
 
-const marketRows: MarketRow[] = [
-  {
-    locality: "Golf Course Road",
-    rent: "₹90K – ₹2.4L",
-    buy: "₹5.5Cr – ₹12Cr",
-    sell: "Premium resale depth",
-    rentSignal: "Corporate tenants, premium maintenance and luxury society demand.",
-    buySignal: "High-ticket resale market where society brand and tower quality drive pricing.",
-    sellSignal: "Works best with verified tower, floor, view and recent society-level buyer demand.",
-    demand: "Very high",
-    sourceLabel: "Admin guide + live society inventory signals",
-    confidence: "Guide range",
-    action: "Search Golf Course Road",
-    href: "/search?tab=societies&q=Golf%20Course%20Road&intent=society",
-  },
-  {
-    locality: "Golf Course Extension",
-    rent: "₹75K – ₹1.8L",
-    buy: "₹3.2Cr – ₹8Cr",
-    sell: "Strong family upgrade market",
-    rentSignal: "Family tenants compare commute, school access, amenities and maintenance.",
-    buySignal: "Resale strength depends heavily on builder, age, layout and society upkeep.",
-    sellSignal: "Good owner-listing zone when inventory is limited and pricing is realistic.",
-    demand: "High",
-    sourceLabel: "Admin guide + public society parameters",
-    confidence: "Guide range",
-    action: "Search Extension Road",
-    href: "/search?tab=societies&q=Golf%20Course%20Extension%20Road&intent=society",
-  },
-  {
-    locality: "Sector 65",
-    rent: "₹70K – ₹1.6L",
-    buy: "₹2.8Cr – ₹7.5Cr",
-    sell: "Builder-led premium cluster",
-    rentSignal: "Tenant demand often follows M3M / premium society recall and office commute.",
-    buySignal: "Buyer interest depends on exact project, tower, density and possession status.",
-    sellSignal: "Owner listings need strong photos, verified society context and price benchmarking.",
-    demand: "High",
-    sourceLabel: "Admin guide + builder/locality context",
-    confidence: "Guide range",
-    action: "Search Sector 65",
-    href: "/search?tab=societies&q=Sector%2065&intent=society",
-  },
-  {
-    locality: "Dwarka Expressway",
-    rent: "₹45K – ₹1.1L",
-    buy: "₹1.8Cr – ₹5Cr",
-    sell: "Infrastructure-led demand",
-    rentSignal: "Rental demand varies widely by connectivity, handover quality and live occupancy.",
-    buySignal: "Upside depends on micro-location, access, society delivery and future infrastructure.",
-    sellSignal: "Owner should position listing with society readiness and commute clarity.",
-    demand: "Rising",
-    sourceLabel: "Infrastructure-led guide range",
-    confidence: "Needs verification",
-    action: "Search Dwarka Expressway",
-    href: "/search?tab=societies&q=Dwarka%20Expressway&intent=society",
-  },
-  {
-    locality: "Sohna Road",
-    rent: "₹40K – ₹90K",
-    buy: "₹1.4Cr – ₹3.8Cr",
-    sell: "Value-sensitive family market",
-    rentSignal: "Renters compare budget, daily commute and society maintenance more closely.",
-    buySignal: "Resale works when pricing is value-led and society quality is easy to verify.",
-    sellSignal: "Owner listings need realistic pricing and clear comparison with nearby societies.",
-    demand: "Medium",
-    sourceLabel: "Admin guide + value-market context",
-    confidence: "Guide range",
-    action: "Search Sohna Road",
-    href: "/search?tab=societies&q=Sohna%20Road&intent=society",
-  },
-];
+function marketRank(market: MarketInfo | undefined) {
+  const level = String(market?.confidence || "").toLowerCase();
+  if (level === "high") return 3;
+  if (level === "medium") return 2;
+  if (level === "low") return 1;
+  return 0;
+}
+
+function confidenceLabel(market: MarketInfo | undefined): Confidence {
+  const rank = marketRank(market);
+  if (rank === 3) return "Admin reviewed";
+  if (rank >= 1) return "Guide range";
+  return "Needs verification";
+}
+
+function sourceLabelFor(market: MarketInfo | undefined) {
+  if (!market) return "Not yet sourced";
+  const count = market.sources?.length || 0;
+  return `Claude-grounded market research${count ? ` · ${count} sources` : ""}`;
+}
+
+function formatSourcedDate(iso: string | undefined) {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function buildMarketRows(societies: AdminSociety[]): MarketRow[] {
+  const groups = new Map<string, AdminSociety[]>();
+
+  for (const society of societies) {
+    const label = society.sector || society.locality || "Gurgaon";
+    const existing = groups.get(label) || [];
+    existing.push(society);
+    groups.set(label, existing);
+  }
+
+  const rows: MarketRow[] = [];
+
+  for (const [label, group] of groups.entries()) {
+    let best: { society: AdminSociety; market: MarketInfo | undefined } | null = null;
+
+    for (const society of group) {
+      if (!society.rentRange && !society.buyRange) continue;
+      const market = society.fieldSources?.market as MarketInfo | undefined;
+      if (!best || marketRank(market) > marketRank(best.market)) {
+        best = { society, market };
+      }
+    }
+
+    rows.push({
+      locality: label,
+      societyCount: group.length,
+      rent: best?.society.rentRange || "On request",
+      buy: best?.society.buyRange || "On request",
+      confidence: confidenceLabel(best?.market),
+      sourceLabel: sourceLabelFor(best?.market),
+      sourcedDate: formatSourcedDate(best?.market?.refreshed_at),
+      sourceUrl: best?.market?.sources?.[0]?.url || "",
+      action: `Search ${label}`,
+      href: `/search?tab=societies&q=${encodeURIComponent(label)}&intent=society`,
+    });
+  }
+
+  return rows.sort((a, b) => b.societyCount - a.societyCount);
+}
 
 const sourceStack = [
   {
     title: "Admin-reviewed society data",
-    text: "Rent range, buy range, price-per-sqft, rental yield and source confidence can later be pulled from enriched admin society fields.",
+    text: "Rent range, buy range and source confidence are pulled live from each published society's reviewed fields — not a static guide.",
     icon: ShieldCheck,
   },
   {
@@ -122,7 +126,7 @@ const sourceStack = [
   },
   {
     title: "Public source references",
-    text: "Future version should show source URLs, official/RERA references and last-reviewed date per locality or society.",
+    text: "Each row shows whether its range came from Claude-grounded research, an admin entry, or is still unverified — and when it was last checked.",
     icon: FileSearch,
   },
 ];
@@ -150,14 +154,15 @@ const modeCopy: Record<InsightMode, { title: string; description: string; cta: s
 
 function modeValue(row: MarketRow, mode: InsightMode) {
   if (mode === "rent") return row.rent;
-  if (mode === "buy") return row.buy;
-  return row.sell;
+  return row.buy;
 }
 
 function modeSignal(row: MarketRow, mode: InsightMode) {
-  if (mode === "rent") return row.rentSignal;
-  if (mode === "buy") return row.buySignal;
-  return row.sellSignal;
+  const plural = row.societyCount === 1 ? "society" : "societies";
+  if (mode === "sell") {
+    return `${row.societyCount} admin-reviewed ${plural} here — list yours to compare directly against them.`;
+  }
+  return `Based on ${row.societyCount} admin-reviewed ${plural} in ${row.locality}.`;
 }
 
 function modeHref(mode: InsightMode) {
@@ -166,13 +171,13 @@ function modeHref(mode: InsightMode) {
   return "/sell";
 }
 
-function confidenceClass(confidence: MarketRow["confidence"]) {
+function confidenceClass(confidence: Confidence) {
   if (confidence === "Admin reviewed") return "bg-emerald-50 text-emerald-700";
   if (confidence === "Guide range") return "bg-blue-50 text-blue-700";
   return "bg-amber-50 text-amber-700";
 }
 
-function confidenceText(confidence: MarketRow["confidence"]) {
+function confidenceText(confidence: Confidence) {
   if (confidence === "Admin reviewed") return "Admin reviewed";
   if (confidence === "Guide range") return "Guide range";
   return "Verify before use";
@@ -180,6 +185,9 @@ function confidenceText(confidence: MarketRow["confidence"]) {
 
 export function InsightsPage() {
   const [mode, setMode] = useState<InsightMode>("rent");
+  const [societies, setSocieties] = useState<AdminSociety[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     setPublicSeo(
@@ -187,18 +195,24 @@ export function InsightsPage() {
       "Track verified rental price bands, property demand shifts and long-term investment viability scores across Gurgaon’s key micro-markets.",
     );
     window.scrollTo(0, 0);
+
+    fetchPublicSocieties()
+      .then(setSocieties)
+      .catch(() => setError("Live data is temporarily unavailable. Please use search or request a callback."))
+      .finally(() => setLoading(false));
   }, []);
 
   const activeCopy = modeCopy[mode];
+  const marketRows = useMemo(() => buildMarketRows(societies), [societies]);
 
   const heroMetrics = useMemo(
     () => [
-      ["Data status", "Guide ranges", "Not final pricing"],
+      ["Data status", "Live society data", "Not final pricing"],
+      ["Societies covered", String(societies.length || 0), "Admin-reviewed only"],
       ["Signals covered", "Rent / Buy / Sell", "Separate decision lenses"],
-      ["Verification", "Admin + source path", "Future source URLs"],
       ["Next action", "Search or callback", "Society-specific decision"],
     ],
-    [],
+    [societies.length],
   );
 
   return (
@@ -249,7 +263,7 @@ export function InsightsPage() {
                   Source label
                 </p>
                 <p className="mt-1 text-sm font-semibold leading-6 text-navy-600">
-                  Current version uses SocietyFlats guide ranges. Future admin enrichment should attach source URLs, confidence score and last-reviewed date.
+                  Every range below is pulled live from published society profiles, with the actual source and confidence shown per row — nothing here is a static guess.
                 </p>
               </div>
 
@@ -282,7 +296,7 @@ export function InsightsPage() {
                 {activeCopy.title}
               </h2>
               <p className="mt-1.5 max-w-3xl text-sm font-semibold leading-6 text-navy-500">
-                Every row is labelled as a guide range or verification-needed signal. Final pricing must be checked against society, tower, floor, view, furnishing and live inventory.
+                Every row is grouped from real published societies by sector. Final pricing must still be checked against society, tower, floor, view, furnishing and live inventory.
               </p>
             </div>
 
@@ -293,18 +307,25 @@ export function InsightsPage() {
             </Button>
           </div>
 
+          {loading ? (
+            <p className="p-6 text-center text-navy-500">Loading live society data...</p>
+          ) : error ? (
+            <p className="rounded-2xl bg-amber-50 p-6 text-center text-amber-800">{error}</p>
+          ) : marketRows.length === 0 ? (
+            <p className="rounded-2xl bg-blue-50 p-6 text-center text-navy-600">No published societies yet — check back soon.</p>
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[980px] border-separate border-spacing-y-2">
               <thead>
                 <tr>
                   <th className="rounded-l-2xl bg-[#EEF5F1] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
-                    Locality
+                    Sector / locality
                   </th>
                   <th className="bg-[#EEF5F1] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
                     {activeCopy.tableColumn}
                   </th>
                   <th className="bg-[#EEF5F1] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
-                    Demand
+                    Coverage
                   </th>
                   <th className="bg-[#EEF5F1] p-3 text-left text-xs font-black uppercase tracking-[0.14em] text-navy-500">
                     Mode-specific signal
@@ -328,14 +349,25 @@ export function InsightsPage() {
                     </td>
                     <td className="bg-white p-3 font-black text-navy-950">{modeValue(row, mode)}</td>
                     <td className="bg-white p-3">
-                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">{row.demand}</span>
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
+                        {row.societyCount} {row.societyCount === 1 ? "society" : "societies"}
+                      </span>
                     </td>
                     <td className="bg-white p-3 text-sm font-semibold leading-6 text-navy-600">{modeSignal(row, mode)}</td>
                     <td className="bg-white p-3">
-                      <p className="text-xs font-black text-navy-800">{row.sourceLabel}</p>
+                      <p className="text-xs font-black text-navy-800">
+                        {row.sourceUrl ? (
+                          <a href={row.sourceUrl} target="_blank" rel="noreferrer" className="hover:underline">
+                            {row.sourceLabel}
+                          </a>
+                        ) : (
+                          row.sourceLabel
+                        )}
+                      </p>
                       <span className={`mt-1 inline-flex rounded-full px-3 py-1 text-[11px] font-black ${confidenceClass(row.confidence)}`}>
                         {confidenceText(row.confidence)}
                       </span>
+                      {row.sourcedDate ? <p className="mt-1 text-[11px] font-semibold text-navy-400">Sourced {row.sourcedDate}</p> : null}
                     </td>
                     <td className="rounded-r-2xl bg-white p-3">
                       <Link to={row.href} className="inline-flex items-center rounded-full border border-blue-100 px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-50">
@@ -348,6 +380,7 @@ export function InsightsPage() {
               </tbody>
             </table>
           </div>
+          )}
         </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
