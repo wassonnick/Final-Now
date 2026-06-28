@@ -213,7 +213,7 @@ export function InsightsPage() {
               </span>
 
               <h1 className="mt-4 max-w-4xl font-display text-[36px] font-black leading-[0.98] tracking-[-0.045em] text-navy-950 md:text-[56px]">
-                Gurgaon real estate market insights with clear verification labels.
+                Gurgaon rent and resale trends, labeled by how confident we actually are in each number.
               </h1>
 
               <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-blue-500">
