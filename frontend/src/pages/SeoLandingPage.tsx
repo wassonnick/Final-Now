@@ -531,7 +531,10 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
     return rows.slice(0, 6);
   }, [properties, variant, locality, builderSlug]);
 
-  const bestSociety = scopedSocieties[0] || societies[0];
+  // No fallback to the unscoped list: showing an unrelated society as the
+  // "best match" for a builder/locality with zero real coverage is worse
+  // than an honest empty state (FeaturedSocietyCard already handles undefined).
+  const bestSociety = variant === "builder" || variant === "locality" ? scopedSocieties[0] : scopedSocieties[0] || societies[0];
   const shownSocieties = scopedSocieties.slice(0, 6);
   const shownProperties = scopedProperties.slice(0, 4);
   const pageLabel = landingLabel(variant, locality, builderSlug);
@@ -590,8 +593,24 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
               </div>
 
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <MetricPill icon={Building2} label="Societies" value={String(scopedSocieties.length || societies.length || "Live")} />
-                <MetricPill icon={Home} label="Inventory" value={String(scopedProperties.length || properties.length || "Live")} />
+                <MetricPill
+                  icon={Building2}
+                  label="Societies"
+                  value={
+                    variant === "builder" || variant === "locality"
+                      ? scopedSocieties.length ? String(scopedSocieties.length) : "Coming soon"
+                      : String(scopedSocieties.length || societies.length || "Live")
+                  }
+                />
+                <MetricPill
+                  icon={Home}
+                  label="Inventory"
+                  value={
+                    variant === "builder" || variant === "locality"
+                      ? scopedProperties.length ? String(scopedProperties.length) : "Coming soon"
+                      : String(scopedProperties.length || properties.length || "Live")
+                  }
+                />
                 <MetricPill icon={ShieldCheck} label="Flow" value="Verified + AI" />
               </div>
             </div>

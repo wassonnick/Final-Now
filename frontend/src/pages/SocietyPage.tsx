@@ -53,7 +53,7 @@ import {
   rememberCustomerSavedItem,
   toggleCustomerShortlist,
 } from "@/lib/customerAccount";
-import { googlePlacesGalleryPhotoUrls, hasApprovedSocietyImage, societyImageAttribution, societyImageAttributionClassName, societyPlaceholderImage } from "@/lib/societyImages";
+import { googlePlacesGalleryPhotoUrls, hasApprovedSocietyImage, hasGooglePlacesDisplayPhoto, societyImageAttribution, societyImageAttributionClassName, societyPlaceholderImage } from "@/lib/societyImages";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
@@ -540,16 +540,21 @@ export function SocietyPage() {
   // C16 society SEO route effect
   useEffect(() => {
     const societyNameForSeo = society?.name || "SocietyFlats Society Profile";
+    const sectorForSeo = field<string>(society, "sector", "sector", "");
+    const securityScoreForSeo = field<string>(society, "securityScore", "security_score", "");
+    const connectivityScoreForSeo = field<string>(society, "connectivityScore", "connectivity_score", "");
+    const rentRangeForSeo = field<string>(society, "rentRange", "rent_range", "");
+    const buyRangeForSeo = field<string>(society, "buyRange", "buy_range", "");
 
     setPublicSeo(
       society?.name
-        ? `${society.name} Gurgaon | SocietyFlats`
+        ? `${society.name}${sectorForSeo ? `, ${sectorForSeo}` : ""} Gurgaon — Verified Profile, Price & Score | SocietyFlats`
         : "SocietyFlats Society Profile",
       society?.name
-        ? `Explore ${society.name} with live verified homes, society intelligence, location context and callback support on SocietyFlats.`
+        ? `${society.name} in ${sectorForSeo || "Gurgaon"}: security score ${securityScoreForSeo || "—"}/10, connectivity ${connectivityScoreForSeo || "—"}/10. ${rentRangeForSeo ? `Rent ${rentRangeForSeo}.` : ""} ${buyRangeForSeo ? `Resale ${buyRangeForSeo}.` : ""} Reviewed by SocietyFlats admin, sourced via Google Places.`
         : "Explore verified Gurgaon society profiles, live homes and society intelligence on SocietyFlats.",
     );
-  }, [society?.name]);
+  }, [society]);
 
   const similarSocieties = useMemo(() => {
     if (!society || !relatedSocieties.length) return [];
@@ -741,6 +746,13 @@ export function SocietyPage() {
   const societyLocation = safeLocation(society);
   const descriptionText = readableStructuredValue(society.description);
   const societyScore = Number(field(society, "score", "score", 0));
+  const subScores = [
+    ["Security", field<number>(society, "securityScore", "security_score", 0)],
+    ["Connectivity", field<number>(society, "connectivityScore", "connectivity_score", 0)],
+    ["Lifestyle", field<number>(society, "lifestyleScore", "lifestyle_score", 0)],
+    ["Maintenance", field<number>(society, "maintenanceScore", "maintenance_score", 0)],
+    ["Investment", field<number>(society, "investmentScore", "investment_score", 0)],
+  ].filter(([, value]) => Number(value) > 0) as [string, number][];
   const confidenceText =
     readableStructuredValue(field(society, "dataConfidence", "data_confidence", "")) ||
     "Review pending";
@@ -839,6 +851,9 @@ export function SocietyPage() {
             ))}
           </div>
         </section>
+        {hasGooglePlacesDisplayPhoto(society) ? (
+          <p className="mt-2.5 text-[12px] text-[#8A8F89]">Photos via Google Places, reviewed and approved before publishing — not stock images.</p>
+        ) : null}
 
         <div className="mt-7 grid items-stretch gap-9 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section>
@@ -861,6 +876,21 @@ export function SocietyPage() {
                 ))}
               </div>
             </div>
+
+            {subScores.length ? (
+              <div className="mt-6">
+                <h2 className="text-[19px] font-bold text-[#25302B]">How {society.name} scores</h2>
+                <p className="mt-1 text-[13px] text-[#6E756E]">Each number reflects amenities, builder reputation, locality tier and resident-fit signals reviewed for this society — not a single average.</p>
+                <div className="mt-3.5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+                  {subScores.map(([label, value]) => (
+                    <div key={label} className="rounded-[14px] border border-[#E7E3DA] bg-white p-3.5 text-center">
+                      <p className="text-xl font-extrabold text-[#123C32]">{Number(value).toFixed(1)}</p>
+                      <p className="mt-1 text-[11.5px] text-[#7A817D]">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Amenities</h2>
             <div className="mt-3.5 flex flex-wrap gap-2.5">

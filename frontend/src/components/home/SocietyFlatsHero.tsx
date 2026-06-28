@@ -125,7 +125,7 @@ export default function SocietyFlatsHero() {
               Find the <em className="font-normal text-[#C2724E]">right</em> Gurgaon society before choosing the home.
             </h1>
             <p className="mb-7 mt-[18px] max-w-[540px] text-[17px] leading-[1.55] text-[#59635E]">
-              Search verified society data, compare lifestyle, and request rental or resale options inside Gurgaon&apos;s top communities.
+              Every society here passed a manual review — real coordinates, Google-sourced photos, no invented listings. Search, compare, then request a visit.
             </p>
 
             <div className="max-w-[560px] rounded-[18px] border border-[#E7DCCB] bg-white p-[18px] shadow-[0_18px_40px_-28px_rgba(0,0,0,.35)]">

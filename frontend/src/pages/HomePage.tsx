@@ -121,8 +121,8 @@ export function HomePage() {
 
   useEffect(() => {
     setPublicSeo(
-      "SocietyFlats | Gurgaon’s Society-First Home Search",
-      "Find the right society before choosing the home. Explore Gurgaon societies and request verified rental or resale options.",
+      "Verified Gurgaon Societies — Compare Before You Choose a Home | SocietyFlats",
+      "22+ Gurgaon societies reviewed field-by-field before publishing — real coordinates, real Google-sourced photos, no invented listings. Compare security, commute and price before you visit.",
     );
     window.scrollTo(0, 0);
     fetchPublicSocieties()
@@ -145,6 +145,17 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-[#F8F3EA] text-[#25302B]">
       <SocietyFlatsHero />
+
+      {societies.length > 0 ? (
+        <div className="mx-auto max-w-[1360px] px-5 pt-5 lg:px-10">
+          <div className="rounded-[16px] border border-[#E7DCCB] bg-white px-5 py-4">
+            <p className="text-[15px] leading-6 text-[#25302B]">
+              <span className="font-bold">{societies.length} societies live. 0 fabricated.</span>{" "}
+              <span className="text-[#6E756E]">Every listing below has a Google-verified location, an admin-approved cover photo, and a visible data-confidence label. If something can&apos;t be confirmed yet, we say so instead of guessing.</span>
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {/* MOBILE PROTOTYPE */}
       <main className="px-5 pb-8 lg:hidden">
@@ -250,9 +261,9 @@ export function HomePage() {
           </p>
           <div className="space-y-3">
             {[
-              ["Admin-reviewed data", "Draft records remain private."],
-              ["Images reviewed", "Only approved display images are public."],
-              ["Refreshed regularly", "Freshness and confidence stay visible."],
+              ["Admin-reviewed data", "A person checks every field before it goes live — not just an algorithm."],
+              ["Images reviewed", "Cover photos come from Google Places or the builder, never stock images."],
+              ["Refreshed regularly", "Price ranges are re-researched with live web search, not copy-pasted once and forgotten."],
             ].map(([title, body], index) => (
               <div key={title} className="flex items-center gap-3">
                 <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-[#244E43]">
@@ -455,11 +466,11 @@ export function HomePage() {
 
         <section className="mx-auto mt-16 max-w-[1360px] px-10">
           <div className="rounded-[24px] bg-[#123C32] p-14 text-center text-white">
-            <h2 className="font-display text-[40px] font-medium tracking-[-0.01em] text-white">Find a home in a society you can actually trust.</h2>
-            <p className="mb-7 mt-3 text-base text-[#D2E0D7]">Start with the community. The right home follows.</p>
+            <h2 className="font-display text-[40px] font-medium tracking-[-0.01em] text-white">{societies.length || 22} societies in. Thousands more Gurgaon homes to compare.</h2>
+            <p className="mb-7 mt-3 text-base text-[#D2E0D7]">Tell us your budget and commute — SocietyFlats AI narrows it to 2–3 societies worth visiting.</p>
             <div className="flex justify-center gap-[14px]">
-              <Link to="/search?tab=societies" className="rounded-[12px] bg-[#C2724E] px-8 py-[15px] text-[15px] font-bold text-white">Browse verified societies</Link>
-              <Link to="/ai-advisor" className="rounded-[12px] border border-white/30 bg-white/10 px-8 py-[15px] text-[15px] font-bold text-white">Ask SocietyFlats AI</Link>
+              <Link to="/ai-advisor" className="rounded-[12px] bg-[#C2724E] px-8 py-[15px] text-[15px] font-bold text-white">Get my shortlist</Link>
+              <Link to="/search?tab=societies" className="rounded-[12px] border border-white/30 bg-white/10 px-8 py-[15px] text-[15px] font-bold text-white">Browse verified societies</Link>
             </div>
           </div>
         </section>

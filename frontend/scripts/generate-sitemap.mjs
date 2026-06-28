@@ -161,6 +161,15 @@ function isHighQualityProperty(property) {
   return hasContext && hasCommercialSignal;
 }
 
+function normalizeForMatch(value) {
+  return String(value || "").toLowerCase().replace(/-/g, " ").trim();
+}
+
+function societyMatchesNeedle(society, needle) {
+  const text = normalizeForMatch([society?.name, society?.sector, society?.locality, society?.address, society?.builder].filter(Boolean).join(" "));
+  return Boolean(needle) && text.includes(needle);
+}
+
 function addDerivedLandingRoutes(routes, societies) {
   const localitySlugs = new Set();
 
@@ -171,14 +180,27 @@ function addDerivedLandingRoutes(routes, societies) {
     if (localitySlug) localitySlugs.add(`/gurgaon/${localitySlug}`);
   }
 
-  for (const route of preferredLocalityRoutes) localitySlugs.add(route);
+  // Only add the curated locality/builder routes when at least one published
+  // society actually matches -- otherwise the page is empty/misleading and
+  // shouldn't be offered to search engines as a real landing page.
+  for (const route of preferredLocalityRoutes) {
+    const slug = route.split("/").pop();
+    const needle = normalizeForMatch(slug);
+    if (societies.some((society) => societyMatchesNeedle(society, needle))) {
+      localitySlugs.add(route);
+    }
+  }
 
   for (const loc of [...localitySlugs].slice(0, 40)) {
     routes.push({ loc, priority: "0.72", changefreq: "weekly" });
   }
 
-  for (const loc of preferredBuilderRoutes) {
-    routes.push({ loc, priority: "0.7", changefreq: "weekly" });
+  for (const route of preferredBuilderRoutes) {
+    const slug = route.split("/").pop();
+    const needle = normalizeForMatch(slug);
+    if (societies.some((society) => societyMatchesNeedle(society, needle))) {
+      routes.push({ loc: route, priority: "0.7", changefreq: "weekly" });
+    }
   }
 }
 
