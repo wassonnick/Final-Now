@@ -53,7 +53,7 @@ function confidenceOf(society: any) {
 
 export default function SocietyFlatsHero() {
   const navigate = useNavigate();
-  const [intent, setIntent] = useState<Intent>("buy");
+  const [intent, setIntent] = useState<Intent>("society");
   const [query, setQuery] = useState("");
   const [societies, setSocieties] = useState<any[]>([]);
 
@@ -173,7 +173,7 @@ export default function SocietyFlatsHero() {
                   />
                 </label>
                 <button type="submit" className="rounded-[12px] bg-[#123C32] px-[26px] text-[15px] font-bold text-white">
-                  Search
+                  {intent === "society" ? "Search societies" : "Search"}
                 </button>
               </form>
               <p className="mt-2.5 text-[12px] leading-5 text-[#6E756E]">
