@@ -322,7 +322,7 @@ export function ComparePage() {
 
   useEffect(() => {
     setPublicSeo(
-      "Compare Gurgaon Societies | SocietyFlats",
+      "Compare Gurgaon Societies Side-by-Side — Score, Rent, Resale | SocietyFlats",
       "Compare Gurgaon societies by score, location, amenities, rent range, resale range and next actions before choosing a home.",
     );
     window.scrollTo(0, 0);
@@ -404,6 +404,7 @@ export function ComparePage() {
         <main className="mx-auto max-w-[1360px] px-4 py-8 md:px-10 md:pb-16">
           <h1 className="font-display text-[34px] font-medium text-[#10251F]">Compare societies</h1>
           <p className="mt-1.5 text-sm text-[#6E756E]">Side by side across the things that actually decide where you live.</p>
+          <p className="mt-1.5 text-[13px] font-semibold text-[#2A6147]">Every column below comes from the same admin-reviewed dataset — nothing here is estimated on the spot.</p>
 
           <div className="mt-7 rounded-[16px] bg-[#123C32] px-[22px] py-[18px] text-[#F1F5EF] md:flex md:items-center md:gap-6">
             <span className="text-xs font-bold uppercase tracking-[0.08em] text-[#8BCB9E]">AI summary</span>
@@ -450,12 +451,19 @@ export function ComparePage() {
         <h1 className="font-display text-[34px] font-medium text-[#10251F]">Compare societies</h1>
         <p className="mt-1.5 text-sm text-[#6E756E]">Side by side across the things that actually decide where you live.</p>
 
-        <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-[16px] bg-[#123C32] px-[22px] py-[18px] text-[#F1F5EF]">
-          <span className="text-xs font-bold uppercase tracking-[0.08em] text-[#8BCB9E]">AI summary</span>
-          <span className="text-sm"><strong>Best for families:</strong> {familyWinner?.name || "Needs review"}</span>
-          <span className="text-sm"><strong>Best for commute:</strong> {commuteWinner?.name || "Needs review"}</span>
-          <span className="text-sm"><strong>Best value:</strong> {valueWinner?.name || "Needs review"}</span>
-        </div>
+        {items.length < 2 ? (
+          <div className="mt-7 rounded-[16px] border border-dashed border-[#C8783F]/40 bg-[#FBF1E8] px-[22px] py-[18px]">
+            <p className="text-sm font-bold text-[#25302B]">Pick a second society to compare.</p>
+            <Link to="/search?tab=societies" className="mt-2 inline-block rounded-[11px] bg-[#C8783F] px-[18px] py-2.5 text-sm font-bold text-white">Add another society</Link>
+          </div>
+        ) : (
+          <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-[16px] bg-[#123C32] px-[22px] py-[18px] text-[#F1F5EF]">
+            <span className="text-xs font-bold uppercase tracking-[0.08em] text-[#8BCB9E]">AI summary</span>
+            <span className="text-sm"><strong>Best for families:</strong> {familyWinner?.name || "Needs review"}</span>
+            <span className="text-sm"><strong>Best for commute:</strong> {commuteWinner?.name || "Needs review"}</span>
+            <span className="text-sm"><strong>Best value:</strong> {valueWinner?.name || "Needs review"}</span>
+          </div>
+        )}
 
         <div className="mt-[22px] flex flex-wrap gap-3">
           <Link to={`/ai-advisor?q=${encodeURIComponent(compareRankPrompt(items))}`} className="rounded-[11px] bg-[#C8783F] px-[22px] py-3 text-sm font-bold text-white">Help me choose</Link>
