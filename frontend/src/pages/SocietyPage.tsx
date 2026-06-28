@@ -53,7 +53,7 @@ import {
   rememberCustomerSavedItem,
   toggleCustomerShortlist,
 } from "@/lib/customerAccount";
-import { hasApprovedSocietyImage, societyImageAttribution, societyImageAttributionClassName, societyPlaceholderImage } from "@/lib/societyImages";
+import { googlePlacesGalleryPhotoUrls, hasApprovedSocietyImage, societyImageAttribution, societyImageAttributionClassName, societyPlaceholderImage } from "@/lib/societyImages";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
@@ -643,6 +643,7 @@ export function SocietyPage() {
     ...(imageApproved
       ? listField(society, "galleryImages", "gallery_images")
       : []),
+    ...googlePlacesGalleryPhotoUrls(society),
   ]
     .filter(Boolean)
     .filter((value, index, self) => self.indexOf(value) === index)

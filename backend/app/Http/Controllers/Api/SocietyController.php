@@ -35,8 +35,25 @@ class SocietyController extends Controller {
       return response()->json(['status' => 'error', 'message' => 'Google Places photo is not available for this society.'], 404);
     }
 
+    $width = (int) request()->integer('w', 1400);
+    $galleryReference = trim((string) request()->query('reference', ''));
+
     try {
-      $photo = $places->fetchDisplayPhoto($society, (int) request()->integer('w', 1400));
+      if ($galleryReference !== '') {
+        $approvedReferences = collect(is_array($society->image_candidates) ? $society->image_candidates : [])
+          ->filter(fn ($candidate) => ($candidate['approved'] ?? false) && ($candidate['source'] ?? '') === 'google_places')
+          ->pluck('photo_reference')
+          ->filter()
+          ->all();
+
+        if (! in_array($galleryReference, $approvedReferences, true)) {
+          return response()->json(['status' => 'error', 'message' => 'That photo has not been approved for this society.'], 404);
+        }
+
+        $photo = $places->fetchPhotoByReference($galleryReference, $width) + ['credit' => 'Google Places'];
+      } else {
+        $photo = $places->fetchDisplayPhoto($society, $width);
+      }
     } catch (\Throwable $exception) {
       return response()->json([
         'status' => 'error',

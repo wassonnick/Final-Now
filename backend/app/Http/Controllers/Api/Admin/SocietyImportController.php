@@ -313,6 +313,17 @@ class SocietyImportController extends Controller
         // proxy serves it live on demand (with attribution), never cached.
         $candidate = $candidates[$index];
         if (($candidate['source'] ?? '') === 'google_places' && ! empty($candidate['photo_reference'])) {
+            if ($data['action'] === 'approve') {
+                // Approve for the gallery only — does not disturb the existing cover or
+                // any other candidate's approval, so multiple Google photos can be live.
+                $candidates[$index]['approved'] = true;
+                $candidates[$index]['rights_confirmed'] = true;
+
+                $society->update(['image_candidates' => array_values($candidates)]);
+
+                return response()->json(['message' => 'Google Places photo approved for the gallery. It is served with attribution and only after the society is published.', 'data' => $society->fresh()]);
+            }
+
             foreach ($candidates as $i => $entry) {
                 $candidates[$i]['is_cover'] = $i === $index;
                 $candidates[$i]['approved'] = ($candidates[$i]['approved'] ?? false) || $i === $index;

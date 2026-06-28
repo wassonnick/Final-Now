@@ -651,7 +651,7 @@ export function AdminSocietyImportPage() {
                               </label>
                               <div className="flex flex-wrap gap-1.5">
                                 <button type="button" onClick={() => void candidateDecision(index, "cover")} className="rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-black text-white">Set cover</button>
-                                {directUrl ? <button type="button" onClick={() => void candidateDecision(index, "approve")} className="rounded-full bg-blue-600 px-2.5 py-1 text-[11px] font-black text-white">Add to gallery</button> : null}
+                                {directUrl || isGoogle ? <button type="button" onClick={() => void candidateDecision(index, "approve")} className="rounded-full bg-blue-600 px-2.5 py-1 text-[11px] font-black text-white">Add to gallery</button> : null}
                                 <button type="button" onClick={() => void candidateDecision(index, "reject")} className="rounded-full bg-rose-500/80 px-2.5 py-1 text-[11px] font-black text-white">Reject</button>
                               </div>
                             </div>

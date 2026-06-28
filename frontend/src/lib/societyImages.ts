@@ -89,6 +89,22 @@ export function googlePlacesSocietyPhotoUrl(society: any, width = 1400) {
   return `${API_BASE}/societies/${slugOrId}/google-place-photo?w=${width}`;
 }
 
+export function googlePlacesGalleryPhotoUrls(society: any, width = 1400): string[] {
+  if (!hasGooglePlacesDisplayPhoto(society)) return [];
+
+  const slugOrId = encodeURIComponent(
+    firstText(field<string>(society, 'slug', 'slug', ''), field<string>(society, 'id', 'id', '')),
+  );
+  if (!slugOrId) return [];
+
+  const candidates = field<any[]>(society, 'imageCandidates', 'image_candidates', []);
+  if (!Array.isArray(candidates)) return [];
+
+  return candidates
+    .filter((c) => c && c.approved && !c.is_cover && c.source === 'google_places' && c.photo_reference)
+    .map((c) => `${API_BASE}/societies/${slugOrId}/google-place-photo?w=${width}&reference=${encodeURIComponent(c.photo_reference)}`);
+}
+
 export function societyPlaceholderImage(input: any, locationOverride = '') {
   const name = typeof input === 'string'
     ? input
