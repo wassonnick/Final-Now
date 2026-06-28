@@ -316,6 +316,9 @@ export function SellPage() {
                 </div>
               ) : (
                 <form onSubmit={submitOwnerLead} className="space-y-4">
+                  <p className="rounded-[11px] bg-[#EEF5F1] p-3 text-[12.5px] leading-5 text-[#486154]">
+                    🛡 Your number is shared only when a verified enquiry matches your listing — never sold, never bulk-shared.
+                  </p>
                   {listingStep === 1 ? (
                     <div>
                       <p className="mb-3 text-sm font-bold text-[#25302B]">Start with your mobile number</p>
