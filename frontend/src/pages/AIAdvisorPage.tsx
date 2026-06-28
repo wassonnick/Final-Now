@@ -747,6 +747,9 @@ export function AIAdvisorPage() {
         <p className="mt-1.5 text-sm text-[#6E756E]">
           A local expert that reasons from verified society data — not a black box.
         </p>
+        <p className="mt-1.5 text-[13px] font-semibold text-[#2A6147]">
+          It only recommends from the {publicSocieties.length || "published"} societies SocietyFlats has published and reviewed — it will tell you when nothing fits well, instead of forcing a match.
+        </p>
 
         <div className="mt-7 grid items-start gap-7 lg:grid-cols-[420px_minmax(0,1fr)]">
           <section className="rounded-[20px] border border-[#E7E3DA] bg-white p-[22px] lg:sticky lg:top-[94px]">
