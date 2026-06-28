@@ -144,6 +144,17 @@ function cleanEntityName(title: string): string {
     .trim();
 }
 
+function breadcrumbList(sectionLabel: string, sectionPath: string, entityName: string, canonical: string): unknown {
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: sectionLabel, item: absoluteUrl(sectionPath) },
+      { "@type": "ListItem", position: 3, name: entityName, item: canonical },
+    ],
+  };
+}
+
 function defaultJsonLd(title: string, description: string, canonical: string): unknown {
   const kind = pageKindFromPath();
   const entityName = cleanEntityName(title);
@@ -220,6 +231,7 @@ function defaultJsonLd(title: string, description: string, canonical: string): u
             addressCountry: "IN",
           },
         },
+        breadcrumbList("Societies", "/societies", entityName, canonical),
       ],
     };
   }
@@ -241,6 +253,7 @@ function defaultJsonLd(title: string, description: string, canonical: string): u
             addressCountry: "IN",
           },
         },
+        breadcrumbList("Properties", "/properties", entityName, canonical),
       ],
     };
   }
