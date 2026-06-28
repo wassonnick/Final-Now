@@ -47,6 +47,8 @@ const faqs = [
   ["Why do some societies show no available homes?", "Society profiles and property availability are reviewed separately. We never fabricate inventory."],
   ["Is there any brokerage or fee for tenants?", "Any applicable commercial terms are clarified before a visit or transaction."],
   ["How is the AI Advisor recommendation calculated?", "Recommendations use your stated needs and the currently published SocietyFlats dataset."],
+  ["Can owners list a flat for rent or resale?", "Yes. Owners can list a flat for rent or resale and listings are reviewed before publishing or sharing with users."],
+  ["Can brokers partner with SocietyFlats?", "Yes. Brokers with verified Gurgaon inventory can partner with SocietyFlats and share society-specific rental or resale options."],
 ];
 
 function scoreOf(society: any) {
