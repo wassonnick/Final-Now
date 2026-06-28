@@ -433,6 +433,7 @@ export function HomePage() {
             {areas.map(([name, href, reason]) => (
               <Link key={href} to={href} className="relative h-[150px] overflow-hidden rounded-[16px] bg-[#6F8D82] [background-image:repeating-linear-gradient(135deg,#5F7D72_0_1px,transparent_1px_13px)]">
                 <div className="absolute inset-0 bg-gradient-to-b from-[#10251F]/10 to-[#10251F]/70" />
+                <MapPin className="absolute right-3 top-3 h-5 w-5 text-white/70" />
                 <div className="absolute bottom-[14px] left-[15px] text-white"><p className="text-base font-bold">{name}</p><p className="mt-0.5 text-xs opacity-85">{reason}</p></div>
               </Link>
             ))}
