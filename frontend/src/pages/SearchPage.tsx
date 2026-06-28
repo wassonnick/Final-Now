@@ -38,6 +38,10 @@ import { cn } from "@/lib/utils";
 import { societyImageAttribution } from "@/lib/societyImages";
 import { setPublicSeo } from "@/lib/seo";
 import { SaveSearchButton } from "@/components/search/SaveSearchButton";
+import { GoogleSocietyMapView } from "@/components/maps/GoogleSocietyMapView";
+import { getValidMapSocieties } from "@/components/maps/SocietyMapView";
+
+const GOOGLE_MAPS_API_KEY = String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();
 
 const tabs = [
   { key: "societies", label: "Societies", mobileLabel: "Society", icon: Building2 },
@@ -1625,34 +1629,18 @@ export function SearchPage() {
                 <h2 className="mt-1 text-xl font-medium text-[#10251F]">Societies around your search</h2>
                 <p className="mt-1 text-xs leading-5 text-[#6E756E]">Select a result to inspect its location and published nearby context.</p>
               </div>
-              <div className="relative min-h-0 flex-1 bg-[#DDE7DC] [background-image:repeating-linear-gradient(0deg,#C8D7C7_0_1px,transparent_1px_48px),repeating-linear-gradient(90deg,#C8D7C7_0_1px,transparent_1px_48px)]">
-                <div className="absolute inset-x-8 top-[22%] h-px rotate-[-16deg] bg-[#C2724E]/60" />
-                <div className="absolute inset-x-12 top-[58%] h-px rotate-[12deg] bg-[#2A6147]/35" />
-                {recommendedSocieties.slice(0, 3).map((society, index) => (
-                  <Link
-                    key={society.id}
-                    to={society.slug ? `/society/${society.slug}` : "/societies"}
-                    className={cn(
-                      "absolute max-w-[210px] rounded-[12px] border border-[#E7DCCB] bg-[#FFFBF3] p-3 shadow-[0_12px_30px_-18px_rgba(16,37,31,.4)]",
-                      index === 0 && "left-[8%] top-[12%]",
-                      index === 1 && "right-[6%] top-[42%]",
-                      index === 2 && "left-[14%] top-[70%]",
-                    )}
-                  >
-                    <span className="mb-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#123C32] text-[11px] font-black text-white">{index + 1}</span>
-                    <p className="line-clamp-1 text-sm font-bold text-[#10251F]">{society.name}</p>
-                    <p className="mt-0.5 line-clamp-1 text-[11px] text-[#6E756E]">{formatPublicLocation(society)}</p>
-                  </Link>
-                ))}
-                {!recommendedSocieties.length ? (
-                  <div className="absolute inset-0 flex items-center justify-center p-8 text-center">
+              <div className="relative min-h-0 flex-1 overflow-y-auto bg-[#DDE7DC]">
+                {GOOGLE_MAPS_API_KEY && getValidMapSocieties(societyResults).length ? (
+                  <GoogleSocietyMapView societies={societyResults} apiKey={GOOGLE_MAPS_API_KEY} query={query} />
+                ) : (
+                  <div className="flex h-full items-center justify-center p-8 text-center">
                     <div className="rounded-[16px] border border-[#E7DCCB] bg-[#FFFBF3] p-5">
                       <MapPin className="mx-auto h-6 w-6 text-[#2A6147]" />
                       <p className="mt-2 text-sm font-bold text-[#10251F]">Map results will appear here</p>
                       <p className="mt-1 text-xs leading-5 text-[#6E756E]">Search a society, builder or sector to anchor the map.</p>
                     </div>
                   </div>
-                ) : null}
+                )}
               </div>
               <div className="grid grid-cols-2 gap-2 border-t border-[#E7DCCB] p-3">
                 <Link to="/maps" className="rounded-[10px] border border-[#E7DCCB] px-3 py-2.5 text-center text-xs font-bold text-[#123C32]">Open full map</Link>
