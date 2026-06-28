@@ -28,6 +28,7 @@ const verificationSteps = [
   ["Admin review", "Name, location, project context, images and public-safe fields are checked before publishing.", ShieldCheck],
   ["Images reviewed", "Only approved display images or clearly labelled references appear publicly.", Image],
   ["Availability separated", "A society profile can be published even when no verified home is currently listed.", RefreshCw],
+  ["Coverage is still growing", "We'd rather show fewer, real societies than pad listings with unreviewed ones.", CheckCircle2],
 ];
 
 const faqs = [
@@ -36,6 +37,7 @@ const faqs = [
   ["How does AI make recommendations?", "The advisor uses the requirement you provide and currently published SocietyFlats data. Recommendations should be opened and reviewed before deciding."],
   ["What happens after I request availability?", "Your requirement becomes a private enquiry for the SocietyFlats team to review and follow up by phone or WhatsApp."],
   ["How are owner and broker listings handled?", "They remain requests or drafts until the relevant details and publishing status are reviewed."],
+  ["Why does a builder or area page show no societies?", "We only publish what's been reviewed — empty means not reviewed yet, not unavailable. Tell us what you need and we'll prioritize it."],
 ];
 
 export function PublicInfoPage({ variant }: { variant: InfoVariant }) {
