@@ -94,7 +94,7 @@ export function Navbar() {
     <>
     <header className="sticky top-0 z-50 w-full border-b border-[#E7DCCB] bg-[#F8F3EA]">
       <div className="mx-auto flex h-[72px] max-w-[1360px] items-center justify-between gap-3 px-4 sm:h-20 sm:gap-5 lg:h-[74px] lg:px-8">
-        <Link to="/" className="flex shrink-0 items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-pine-500 focus-visible:ring-offset-4 lg:gap-[9px]" aria-label="SocietyFlats home">
+        <Link to="/" className="flex shrink-0 items-center gap-2 rounded-lg focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pine-500 focus-visible:ring-offset-4 lg:gap-[9px]" aria-label="SocietyFlats home">
           <img
             src="/brand/societyflats-icon-512.png"
             alt="SocietyFlats"

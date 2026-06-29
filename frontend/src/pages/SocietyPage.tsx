@@ -122,7 +122,17 @@ function scoreValueForHandoff(value: unknown) {
   return score > 10 ? score / 10 : score;
 }
 
+// Renting out an under-construction unit isn't possible yet, so a rental range only makes
+// sense once the project is actually ready to move into / delivered.
+function isRentEligible(society: any) {
+  const status = String(society?.projectStatus ?? society?.project_status ?? "").toLowerCase();
+  if (!status) return true;
+  if (/under construction|new launch/.test(status)) return false;
+  return true;
+}
+
 function rentTextForHandoff(society: any) {
+  if (!isRentEligible(society)) return "Available after possession";
   const raw = readableStructuredValue(
     society?.rentRange || society?.rent_range || society?.averageRent || society?.average_rent,
   );

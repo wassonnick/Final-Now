@@ -58,8 +58,16 @@ function scoreOf(society: any) {
 }
 
 function confidenceOf(society: any) {
-  const value = society?.dataConfidence ?? society?.data_confidence ?? society?.confidence;
-  return typeof value === "string" && value.trim() ? value.trim() : null;
+  const value = Number(society?.sourceConfidenceScore ?? society?.source_confidence_score ?? 0);
+  return value > 0 ? `${value}% verified` : null;
+}
+
+// Renting out an under-construction unit isn't possible yet, so a rental range only makes
+// sense once the project is actually ready to move into / delivered.
+function rentTextOf(society: any) {
+  const status = String(society?.projectStatus ?? society?.project_status ?? "").toLowerCase();
+  if (/under construction|new launch/.test(status)) return "Available after possession";
+  return society?.rentRange || "On request";
 }
 
 function SocietyCard({ society, mobile = false }: { society: any; mobile?: boolean }) {
@@ -93,7 +101,7 @@ function SocietyCard({ society, mobile = false }: { society: any; mobile?: boole
         <p className="mt-1 truncate text-[12.5px] text-[#6E756E]">{formatPublicLocation(society)}</p>
         {mobile ? (
           <>
-            <p className="mt-2 text-sm font-bold text-[#123C32]">{society.rentRange || society.buyRange || "Options on request"}</p>
+            <p className="mt-2 text-sm font-bold text-[#123C32]">{rentTextOf(society) !== "On request" ? rentTextOf(society) : (society.buyRange || "Options on request")}</p>
             <p className="mt-2 text-[11px] text-[#6E756E]">
               {confidence ? `Data confidence: ${confidence}` : "Sources reviewed before publishing"}
             </p>
@@ -101,7 +109,7 @@ function SocietyCard({ society, mobile = false }: { society: any; mobile?: boole
         ) : (
           <>
             <div className="mt-3 flex gap-[14px] border-t border-[#EEE6DA] pt-3">
-              <div><p className="text-[11px] text-[#6E756E]">Rent</p><p className="text-[13.5px] font-bold text-[#123C32]">{society.rentRange || "On request"}</p></div>
+              <div><p className="text-[11px] text-[#6E756E]">Rent</p><p className="text-[13.5px] font-bold text-[#123C32]">{rentTextOf(society)}</p></div>
               <div><p className="text-[11px] text-[#6E756E]">Buy</p><p className="text-[13.5px] font-bold text-[#123C32]">{society.buyRange || "On request"}</p></div>
             </div>
             <p className="mt-2.5 text-xs text-[#6E756E]">

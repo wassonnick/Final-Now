@@ -1,7 +1,7 @@
 // C78 owner listing UX polish: compact first fold, tighter form and clearer conversion sections.
 // C71 owner listing copy: stronger verified buyer, no broker hassle and verification flow language.
 import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, KeyboardEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -89,6 +89,16 @@ export function SellPage() {
 
   const updateForm = (field: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const advanceFrom = (step: number) => {
+    setListingStep((current) => (current === step ? Math.min(8, step + 1) : current));
+  };
+
+  const advanceOnEnter = (step: number, isReady: boolean) => (event: KeyboardEvent) => {
+    if (event.key !== "Enter" || !isReady) return;
+    event.preventDefault();
+    advanceFrom(step);
   };
 
   const stepReady =
@@ -322,22 +332,22 @@ export function SellPage() {
                   {listingStep === 1 ? (
                     <div>
                       <p className="mb-3 text-sm font-bold text-[#25302B]">Start with your mobile number</p>
-                      <Input required value={form.phone} onChange={(event) => updateForm("phone", cleanOwnerLeadPhone(event.target.value))} inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} className="h-12 rounded-xl" placeholder="10-digit mobile number" />
+                      <Input required autoFocus value={form.phone} onChange={(event) => { const cleaned = cleanOwnerLeadPhone(event.target.value); updateForm("phone", cleaned); if (isValidOwnerLeadPhone(cleaned)) advanceFrom(1); }} inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} className="h-12 rounded-xl" placeholder="10-digit mobile number" />
                       <p className="mt-2 text-xs leading-5 text-[#6E756E]">No spam. Your number is used only for listing verification and enquiries.</p>
                     </div>
                   ) : null}
                   {listingStep === 2 ? (
-                    <div><p className="mb-3 text-sm font-bold">What should we call you?</p><Input required value={form.name} onChange={(event) => updateForm("name", event.target.value)} className="h-12 rounded-xl" placeholder="Your name" /></div>
+                    <div><p className="mb-3 text-sm font-bold">What should we call you?</p><Input required autoFocus value={form.name} onChange={(event) => updateForm("name", event.target.value)} onKeyDown={advanceOnEnter(2, Boolean(form.name.trim()))} className="h-12 rounded-xl" placeholder="Your name" /></div>
                   ) : null}
                   {listingStep === 3 ? (
-                    <div><p className="mb-3 text-sm font-bold">Which society is the flat in?</p><Input required value={form.society} onChange={(event) => updateForm("society", event.target.value)} className="h-12 rounded-xl" placeholder="Society name e.g. DLF Park Place" /></div>
+                    <div><p className="mb-3 text-sm font-bold">Which society is the flat in?</p><Input required autoFocus value={form.society} onChange={(event) => updateForm("society", event.target.value)} onKeyDown={advanceOnEnter(3, Boolean(form.society.trim()))} className="h-12 rounded-xl" placeholder="Society name e.g. DLF Park Place" /></div>
                   ) : null}
                   {listingStep === 4 ? (
                     <div>
                       <p className="mb-3 text-sm font-bold">How would you like to list it?</p>
                       <div className="grid grid-cols-2 gap-2 rounded-2xl bg-blue-50 p-1">
                         {(["rent", "sell"] as const).map((item) => (
-                          <button key={item} type="button" onClick={() => { setPurpose(item); trackEvent("owner_listing_purpose_changed", { source: "sell_page", lead_intent: `owner_listing_${item}`, cta_label: item === "rent" ? "For Rent" : "For Sale" }); }} className={cn("rounded-xl px-4 py-3 text-sm font-semibold", purpose === item ? "bg-white shadow-sm text-navy-900" : "text-navy-500")}>{item === "rent" ? "For Rent" : "For Sale"}</button>
+                          <button key={item} type="button" onClick={() => { setPurpose(item); trackEvent("owner_listing_purpose_changed", { source: "sell_page", lead_intent: `owner_listing_${item}`, cta_label: item === "rent" ? "For Rent" : "For Sale" }); advanceFrom(4); }} className={cn("rounded-xl px-4 py-3 text-sm font-semibold", purpose === item ? "bg-white shadow-sm text-navy-900" : "text-navy-500")}>{item === "rent" ? "For Rent" : "For Sale"}</button>
                         ))}
                       </div>
                     </div>
@@ -345,7 +355,7 @@ export function SellPage() {
                   {listingStep === 5 ? (
                     <div className="space-y-3">
                       <p className="text-sm font-bold">Tell us about the flat</p>
-                      <div className="grid gap-3 sm:grid-cols-2"><Input required value={form.bhk} onChange={(event) => updateForm("bhk", event.target.value)} className="h-11 rounded-xl" placeholder="BHK e.g. 3 BHK" /><Input value={form.size} onChange={(event) => updateForm("size", event.target.value)} className="h-11 rounded-xl" placeholder="Size e.g. 1983 sq.ft." /></div>
+                      <div className="grid gap-3 sm:grid-cols-2"><Input required autoFocus value={form.bhk} onChange={(event) => updateForm("bhk", event.target.value)} onKeyDown={advanceOnEnter(5, Boolean(form.bhk.trim()))} className="h-11 rounded-xl" placeholder="BHK e.g. 3 BHK" /><Input value={form.size} onChange={(event) => updateForm("size", event.target.value)} onKeyDown={advanceOnEnter(5, Boolean(form.bhk.trim()))} className="h-11 rounded-xl" placeholder="Size e.g. 1983 sq.ft." /></div>
                       <div className="grid gap-3 sm:grid-cols-2"><Input value={form.tower} onChange={(event) => updateForm("tower", event.target.value)} className="h-11 rounded-xl" placeholder="Tower / block" /><Input value={form.floor} onChange={(event) => updateForm("floor", event.target.value)} className="h-11 rounded-xl" placeholder="Floor e.g. 12th" /></div>
                       <div className="grid gap-3 sm:grid-cols-2"><Input value={form.furnishing} onChange={(event) => updateForm("furnishing", event.target.value)} className="h-11 rounded-xl" placeholder="Furnishing" /><Input value={form.expectation} onChange={(event) => updateForm("expectation", event.target.value)} className="h-11 rounded-xl" placeholder={purpose === "rent" ? "Expected monthly rent" : "Expected sale price"} /></div>
                     </div>

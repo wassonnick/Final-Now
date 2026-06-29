@@ -86,7 +86,11 @@ function fallbackCompareImage(society: any) {
   return societyPlaceholderImage(society?.name || "Society", localityName(society));
 }
 
+// Renting out an under-construction unit isn't possible yet, so a rental range only makes
+// sense once the project is actually ready to move into / delivered.
 function rentText(society: any) {
+  const status = String(society?.projectStatus ?? society?.project_status ?? "").toLowerCase();
+  if (/under construction|new launch/.test(status)) return "Available after possession";
   return society?.rentRange || society?.rent_range || society?.locality?.avg_rent_3bhk || "On request";
 }
 
@@ -114,7 +118,7 @@ function societyPros(society: any) {
   if (scoreValue(society, "security_score") >= 80) pros.push("Security strength");
   if (scoreValue(society, "amenities_score") >= 80) pros.push("Amenity depth");
   if (scoreValue(society, "rental_demand_score") >= 80) pros.push("Rental demand");
-  if (!pros.length && rentText(society) !== "On request") pros.push("Rent range visible");
+  if (!pros.length && !["On request", "Available after possession"].includes(rentText(society))) pros.push("Rent range visible");
   if (!pros.length) pros.push("Good society context");
   return pros.slice(0, 3);
 }
@@ -122,6 +126,7 @@ function societyPros(society: any) {
 function societyWatchouts(society: any) {
   const watchouts = [];
   if (rentText(society) === "On request") watchouts.push("Rent needs verification");
+  else if (rentText(society) === "Available after possession") watchouts.push("Rent available after possession");
   if (buyText(society) === "On request") watchouts.push("Resale range pending");
   if (scoreValue(society, "maintenance_score") && scoreValue(society, "maintenance_score") < 70) watchouts.push("Check maintenance");
   if (scoreValue(society, "connectivity_score") && scoreValue(society, "connectivity_score") < 70) watchouts.push("Check commute");
@@ -147,7 +152,10 @@ function contextualValue(society: any, key: string) {
     hospitals: fieldValue(society, "nearby_hospitals", "Needs verification"),
     offices: fieldValue(society, "nearby_office_hubs", "Needs verification"),
     best_for: recommendedFor(society),
-    confidence: fieldValue(society, "data_confidence", "Review pending"),
+    confidence: (() => {
+      const value = Number(fieldValue(society, "source_confidence_score", 0));
+      return value > 0 ? `${value}% verified` : "Review pending";
+    })(),
     updated: fieldValue(society, "updated_at", "Admin-reviewed profile"),
   };
   const raw = values[key];
