@@ -159,15 +159,21 @@ function sortedSearchResults<T>(
   items: T[],
   query: string,
   buildText: (item: T) => string,
+  buildPriorityText?: (item: T) => string,
 ) {
   if (!query.trim()) return items;
 
   return items
-    .map((item, index) => ({
-      item,
-      index,
-      score: scoreSearchText(buildText(item), query),
-    }))
+    .map((item, index) => {
+      const score = scoreSearchText(buildText(item), query);
+      // A query like "DLF Crest" naturally also matches every other DLF-builder society
+      // (shared builder token) — without this, an exact name match like "DLF The Crest"
+      // ranks no higher than "DLF Carlton Estate", which only matched via the builder name.
+      // Weight a direct hit against the priority field (typically just the name) so the real
+      // match wins decisively, while builder-only matches still show up, just ranked lower.
+      const priorityScore = buildPriorityText ? scoreSearchText(buildPriorityText(item), query) : 0;
+      return { item, index, score: score + priorityScore * 50 };
+    })
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score || a.index - b.index)
     .map((entry) => entry.item);
@@ -252,7 +258,10 @@ function societySearchUrl(society: any, tab = "rent") {
 
 
 function compactValue(value: unknown, fallback = "On request") {
-  const text = String(value || "").trim();
+  // Some older AI-enriched records have a parenthetical aside baked into a price range
+  // ("...(apartments, smaller units); ₹X-₹Y (independent floors)") instead of a bare range —
+  // strip it so the result card doesn't blow out into several lines.
+  const text = String(value || "").replace(/\s*[(;].*$/, "").trim();
   return text || fallback;
 }
 
@@ -560,7 +569,7 @@ export function SearchPage() {
       return societies.filter((society) => societyMatchesSectorQuery(society, query));
     }
 
-    return sortedSearchResults(societies, query, expandedSocietySearchText);
+    return sortedSearchResults(societies, query, expandedSocietySearchText, (society: any) => searchableText(society?.name));
   }, [query, societies]);
 
   const searchSuggestions = useMemo(() => suggestSocieties(societies, query), [societies, query]);
