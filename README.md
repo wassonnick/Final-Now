@@ -107,7 +107,7 @@ docker-compose exec backend php artisan migrate --seed
 
 # Access the application
 # Frontend: http://localhost:3000
-# API: http://localhost:8000/api/v1
+# API: http://localhost:8000/api
 # Meilisearch: http://localhost:7700
 ```
 
@@ -161,40 +161,40 @@ Each society is scored on 8 weighted parameters:
 
 ### Societies
 ```
-GET    /api/v1/societies              # List societies with filters
-GET    /api/v1/societies/featured     # Featured societies
-GET    /api/v1/societies/{slug}       # Society details
-GET    /api/v1/societies/{id}/intelligence  # Intelligence scores
-GET    /api/v1/societies/{id}/properties    # Properties in society
-GET    /api/v1/societies/{id}/reviews       # Society reviews
+GET    /api/societies              # List societies with filters
+GET    /api/societies/featured     # Featured societies
+GET    /api/societies/{slug}       # Society details
+GET    /api/societies/{id}/intelligence  # Intelligence scores
+GET    /api/societies/{id}/properties    # Properties in society
+GET    /api/societies/{id}/reviews       # Society reviews
 ```
 
 ### Properties
 ```
-GET    /api/v1/properties             # List properties
-GET    /api/v1/properties/{slug}      # Property details
-GET    /api/v1/properties/{id}/similar # Similar properties
+GET    /api/properties             # List properties
+GET    /api/properties/{slug}      # Property details
+GET    /api/properties/{id}/similar # Similar properties
 ```
 
 ### Search
 ```
-GET    /api/v1/search                 # Search with filters
-GET    /api/v1/search/autocomplete    # Autocomplete suggestions
+GET    /api/search                 # Search with filters
+GET    /api/search/autocomplete    # Autocomplete suggestions
 ```
 
 ### AI
 ```
-POST   /api/v1/ai/recommendations    # AI-powered recommendations
-GET    /api/v1/ai/rent-estimate       # Rent estimation
+POST   /api/ai/recommendations    # AI-powered recommendations
+GET    /api/ai/rent-estimate       # Rent estimation
 ```
 
 ### Auth
 ```
-POST   /api/v1/auth/register        # User registration
-POST   /api/v1/auth/login           # Email/password login
-POST   /api/v1/auth/otp/send        # Send OTP
-POST   /api/v1/auth/otp/verify      # Verify OTP & login
-GET    /api/v1/user                 # Current user
+POST   /api/auth/register        # User registration
+POST   /api/auth/login           # Email/password login
+POST   /api/auth/otp/send        # Send OTP
+POST   /api/auth/otp/verify      # Verify OTP & login
+GET    /api/user                 # Current user
 ```
 
 ## 🎨 Design System

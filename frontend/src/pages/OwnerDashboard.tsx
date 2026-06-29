@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardProperty, type AccountDashboardResponse } from "@/lib/accountApi";
+import { setPublicSeo } from "@/lib/seo";
 import {
   CUSTOMER_ACCOUNT_EVENT,
   clearCustomerAccountSession,
@@ -202,6 +203,10 @@ export function OwnerDashboard() {
   const [activity, setActivity] = useState<CustomerActivityLead[]>([]);
   const [backendDashboard, setBackendDashboard] = useState<AccountDashboardResponse | null>(null);
   const session = getCustomerAccountSession();
+
+  useEffect(() => {
+    setPublicSeo("Private Owner Dashboard | SocietyFlats", "Private SocietyFlats owner listing and enquiry dashboard.", { canonical: "/owner/dashboard", noindex: true });
+  }, []);
 
   const refreshOwnerData = () => {
     setActivity(getCustomerLeadsForPhone(session?.phone));

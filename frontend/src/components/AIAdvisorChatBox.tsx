@@ -1,5 +1,6 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { Bot, MoreHorizontal, Send, Sparkles } from 'lucide-react';
+import { API_BASE_URL } from '@/config/api';
 
 type ChatRole = 'assistant' | 'user';
 
@@ -27,8 +28,6 @@ type AdvisorResponse = {
   reply?: string;
   matches?: AdvisorMatch[];
 };
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
 
 const demoMatches: AdvisorMatch[] = [
   {
@@ -98,7 +97,7 @@ export function AIAdvisorChatBox() {
     setMessages((current) => [...current, { id: `user-${Date.now()}`, role: 'user', text: message }]);
 
     try {
-      const response = await fetch(`${API_BASE}/ai/advisor`, {
+      const response = await fetch(`${API_BASE_URL}/ai/advisor`, {
         method: 'POST',
         headers: {
           Accept: 'application/json',

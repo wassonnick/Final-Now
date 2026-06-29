@@ -10,8 +10,9 @@ import {
   Star,
 } from 'lucide-react';
 import { setPublicSeo } from '@/lib/seo';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
+import { API_BASE_URL } from '@/config/api';
+import { PublicLeadModal } from '@/components/leads/PublicLeadModal';
+import { Button } from '@/components/ui/button';
 
 type Property = {
   id: number;
@@ -63,6 +64,7 @@ export function PropertiesPage() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(Boolean(API_BASE_URL));
   const [error, setError] = useState<string | null>(null);
+  const [availabilityOpen, setAvailabilityOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -277,15 +279,37 @@ export function PropertiesPage() {
         ) : (
           <div className="rounded-[2rem] border border-navy-100 bg-white p-10 text-center">
             <h2 className="text-2xl font-bold text-navy-900">
-              No properties found
+              {properties.length === 0 ? 'No verified homes are currently published' : 'No matching properties found'}
             </h2>
 
-            <p className="mt-2 text-navy-500">
-              Try searching with another locality or society.
+            <p className="mx-auto mt-2 max-w-2xl text-navy-500">
+              {properties.length === 0
+                ? 'We do not show fake listings. Request current availability and SocietyFlats will help you find rental or resale options.'
+                : 'Try searching with another locality or society.'}
             </p>
+
+            {properties.length === 0 ? (
+              <Button className="mt-5 rounded-full bg-blue-700 px-6 hover:bg-blue-800" onClick={() => setAvailabilityOpen(true)}>
+                Request current availability
+              </Button>
+            ) : null}
           </div>
         )}
       </section>
+
+      <PublicLeadModal
+        open={availabilityOpen}
+        title="Request current Gurgaon availability"
+        subtitle="Tell us whether you want to rent or buy. SocietyFlats will check reviewed society and owner or broker options."
+        source="properties_empty_inventory"
+        ctaLabel="Request current availability"
+        leadIntent="property_availability"
+        defaultRequirement="Rent or buy availability"
+        defaultMessage="I want current rental or resale availability in Gurgaon."
+        submitLabel="Request current availability"
+        successMessage="Request received. SocietyFlats will check current rental or resale options without inventing listings."
+        onClose={() => setAvailabilityOpen(false)}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import path from "node:path";
 const SITE_URL = "https://www.societyflats.com";
 const DIST_DIR = path.resolve(process.cwd(), "dist");
 const PUBLIC_DIR = path.resolve(process.cwd(), "public");
+const MIN_PUBLIC_SOCIETIES = Number.parseInt(process.env.SITEMAP_MIN_PUBLIC_SOCIETIES || "20", 10);
 
 const requiredRoutes = [
   "/",
@@ -17,6 +18,8 @@ const requiredRoutes = [
   "/investment-calculator",
   "/builder-floors",
   "/builder-portal",
+  "/broker-crm",
+  "/recommendations",
   "/chat",
   "/404",
 ];
@@ -107,6 +110,13 @@ async function validateC37ConversionCopy() {
   const hero = await fs.readFile(path.resolve(process.cwd(), "src/components/home/SocietyFlatsHero.tsx"), "utf8");
   const homePage = await fs.readFile(path.resolve(process.cwd(), "src/pages/HomePage.tsx"), "utf8");
   const aiAdvisor = await fs.readFile(path.resolve(process.cwd(), "src/pages/AIAdvisorPage.tsx"), "utf8");
+  const propertiesPage = await fs.readFile(path.resolve(process.cwd(), "src/pages/PropertiesPage.tsx"), "utf8");
+  const featureExperience = await fs.readFile(path.resolve(process.cwd(), "src/pages/FeatureExperiencePage.tsx"), "utf8");
+  const protectedPages = await Promise.all([
+    "OwnerDashboard.tsx",
+    "CustomerDashboardPage.tsx",
+    "BrokerDashboardPage.tsx",
+  ].map((file) => fs.readFile(path.resolve(process.cwd(), "src/pages", file), "utf8")));
 
   const checks = [
     [hero, "Ask SocietyFlats AI", "Hero missing real AI chat card"],
@@ -125,12 +135,25 @@ async function validateC37ConversionCopy() {
     [leadModal, "matching homes, similar societies and visit-ready next steps", "Lead modal success copy missing C37 wording"],
     [aiAdvisor, "Continue your Gurgaon society shortlist.", "AI Advisor page does not feel like continuation flow"],
     [aiAdvisor, "Open full search", "AI Advisor page missing return-to-search flow"],
+    [searchPage, "moreFromBuilderResults", "Search page missing builder grouping"],
+    [propertiesPage, "No verified homes are currently published", "Properties page missing honest zero-inventory copy"],
+    [propertiesPage, "Request current availability", "Properties page missing zero-inventory lead CTA"],
+    [featureExperience, "canonical: '/broker-crm'", "Broker CRM missing route-specific SEO"],
+    [featureExperience, "canonical: '/recommendations'", "Recommendations missing route-specific SEO"],
   ];
 
   for (const [source, needle, message] of checks) {
     if (!source.includes(needle)) {
       throw new Error(message);
     }
+  }
+
+  if ((hero.match(/<h1\b/g) || []).length !== 1) {
+    throw new Error("Homepage hero must render exactly one H1 in the DOM");
+  }
+
+  if (protectedPages.some((source) => !source.includes("noindex: true"))) {
+    throw new Error("Every protected account dashboard must set explicit noindex metadata");
   }
 }
 
@@ -161,6 +184,11 @@ async function validatePublicFiles() {
     if (pattern.test(sitemap)) {
       throw new Error(`sitemap.xml contains blocked pattern: ${pattern}`);
     }
+  }
+
+  const societyUrlCount = (sitemap.match(/<loc>https:\/\/www\.societyflats\.com\/society\//g) || []).length;
+  if (societyUrlCount < MIN_PUBLIC_SOCIETIES) {
+    throw new Error(`sitemap.xml has only ${societyUrlCount} society URLs; expected at least ${MIN_PUBLIC_SOCIETIES}`);
   }
 
   const manifest = await fs.readFile(path.join(PUBLIC_DIR, "site.webmanifest"), "utf8");

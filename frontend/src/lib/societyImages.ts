@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
+import { API_BASE_URL } from '@/config/api';
 
 const APPROVED_SOCIETY_IMAGE_STATUSES = [
   'licensed_uploaded',
@@ -86,7 +86,7 @@ export function googlePlacesSocietyPhotoUrl(society: any, width = 1400) {
 
   if (!slugOrId) return '';
 
-  return `${API_BASE}/societies/${slugOrId}/google-place-photo?w=${width}`;
+  return `${API_BASE_URL}/societies/${slugOrId}/google-place-photo?w=${width}`;
 }
 
 export function googlePlacesGalleryPhotoUrls(society: any, width = 1400): string[] {
@@ -102,7 +102,7 @@ export function googlePlacesGalleryPhotoUrls(society: any, width = 1400): string
 
   return candidates
     .filter((c) => c && c.approved && !c.is_cover && c.source === 'google_places' && c.photo_reference)
-    .map((c) => `${API_BASE}/societies/${slugOrId}/google-place-photo?w=${width}&reference=${encodeURIComponent(c.photo_reference)}`);
+    .map((c) => `${API_BASE_URL}/societies/${slugOrId}/google-place-photo?w=${width}&reference=${encodeURIComponent(c.photo_reference)}`);
 }
 
 export function societyPlaceholderImage(input: any, locationOverride = '') {

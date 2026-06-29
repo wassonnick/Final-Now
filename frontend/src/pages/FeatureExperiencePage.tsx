@@ -26,13 +26,12 @@ import { createCustomerAccountSession, rememberBrokerActivitySubmission } from '
 import { fetchAccountByPhone, syncAccountToBackend } from '@/lib/accountApi';
 import { AiChatTool } from '@/components/chat/AiChatTool';
 import { setPublicSeo } from '@/lib/seo';
+import { API_BASE_URL } from '@/config/api';
 
 type FeatureExperienceKey = 'maps' | 'broker-crm' | 'chat' | 'recommendations';
 
 type PublicSociety = Awaited<ReturnType<typeof fetchPublicSocieties>>[number];
 type PublicProperty = Awaited<ReturnType<typeof fetchPublicProperties>>[number];
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
 
 const featureIntro = {
   maps: {
@@ -65,7 +64,7 @@ const localityPresets = ['Golf Course Road', 'Dwarka Expressway', 'Sohna Road', 
 const priorityOptions = ['Clubhouse', 'Swimming Pool', 'Gym', '24x7 Security', 'Power Backup', 'Landscaped Greens'];
 
 function submitLead(payload: { name: string; phone: string; email?: string; message: string; society_name?: string; source: string; role?: string }) {
-  return fetch(`${API_BASE}/leads`, {
+  return fetch(`${API_BASE_URL}/leads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -612,7 +611,13 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (feature === 'chat') setPublicSeo('Gurgaon Society AI Chat | SocietyFlats', 'Ask a conversational assistant grounded in published SocietyFlats societies and live Gurgaon homes.', { canonical: '/chat' });
+    if (feature === 'chat') {
+      setPublicSeo('Gurgaon Society AI Chat | SocietyFlats', 'Ask a conversational assistant grounded in published SocietyFlats societies and live Gurgaon homes.', { canonical: '/chat' });
+    } else if (feature === 'broker-crm') {
+      setPublicSeo('Gurgaon Broker Partner Program | SocietyFlats', 'Apply to become a verified SocietyFlats broker partner for society-specific Gurgaon enquiries and reviewed inventory.', { canonical: '/broker-crm' });
+    } else if (feature === 'recommendations') {
+      setPublicSeo('Gurgaon Society Recommendations | SocietyFlats', 'Build a shortlist from published Gurgaon society profiles and live verified inventory without fabricated matches.', { canonical: '/recommendations' });
+    }
     fetchPublicSocieties().then(setSocieties).catch((error) => console.error('Societies fetch failed:', error));
     fetchPublicProperties().then(setProperties).catch((error) => console.error('Properties fetch failed:', error));
   }, [feature]);

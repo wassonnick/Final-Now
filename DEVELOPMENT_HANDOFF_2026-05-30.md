@@ -449,7 +449,7 @@ Current known issues:
 - Many developer sites have dynamic navigation or block automated requests.
 - Some project discovery results may still need manual review.
 - RERA URLs are search URLs, not always direct project certificate pages.
-- Some old docs still mention older placeholder service names and `/api/v1` paths; active app uses `/api`.
+- API configuration was standardized in C116A on `VITE_API_BASE_URL` with the active `/api` base.
 - `backend_old/` is not active and may confuse future work.
 - Public image fallback currently uses Unsplash placeholder; production should eventually use a branded/local placeholder asset.
 - There is a duplicate `POST /api/leads` route in `backend/routes/api.php`; harmless but should be cleaned.

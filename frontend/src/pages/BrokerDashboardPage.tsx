@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardResponse } from "@/lib/accountApi";
+import { setPublicSeo } from "@/lib/seo";
 import {
   CUSTOMER_ACCOUNT_EVENT,
   clearCustomerAccountSession,
@@ -181,6 +182,10 @@ export function BrokerDashboardPage() {
   const [activity, setActivity] = useState<BrokerActivityItem[]>([]);
   const [backendDashboard, setBackendDashboard] = useState<AccountDashboardResponse | null>(null);
   const session = getCustomerAccountSession();
+
+  useEffect(() => {
+    setPublicSeo("Private Broker Dashboard | SocietyFlats", "Private SocietyFlats broker activity and enquiry dashboard.", { canonical: "/broker/dashboard", noindex: true });
+  }, []);
 
   const refreshBrokerData = () => {
     setActivity(getBrokerActivityForPhone(session?.phone));

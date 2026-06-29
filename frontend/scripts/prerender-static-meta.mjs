@@ -63,7 +63,7 @@ const routeMeta = [
     path: "/",
     title: "Verified Gurgaon Societies — Compare Before You Choose a Home | SocietyFlats",
     description:
-      "22+ Gurgaon societies reviewed field-by-field before publishing — real coordinates, real Google-sourced photos, no invented listings. Compare security, commute and price before you visit.",
+      "40+ Gurgaon societies reviewed field-by-field before publishing — real coordinates, reviewed display images and no invented listings. Compare security, commute and price before you visit.",
     priority: "1.0",
     changefreq: "daily",
     schemaType: "WebSite",
@@ -328,6 +328,24 @@ const routeMeta = [
     priority: "0.5",
     changefreq: "monthly",
     schemaType: "FAQPage",
+  },
+  {
+    path: "/broker-crm",
+    title: "Gurgaon Broker Partner Program | SocietyFlats",
+    description:
+      "Apply to become a verified SocietyFlats broker partner for society-specific Gurgaon enquiries and reviewed inventory.",
+    priority: "0.6",
+    changefreq: "weekly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/recommendations",
+    title: "Gurgaon Society Recommendations | SocietyFlats",
+    description:
+      "Build a shortlist from published Gurgaon society profiles and live verified inventory without fabricated matches.",
+    priority: "0.6",
+    changefreq: "weekly",
+    schemaType: "WebPage",
   },
   {
     path: "/chat",

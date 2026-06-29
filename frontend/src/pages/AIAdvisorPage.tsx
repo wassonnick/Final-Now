@@ -33,6 +33,7 @@ import {
 } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
 import { useAppStore } from "@/store";
+import { API_BASE_URL } from "@/config/api";
 
 type AdvisorMatch = {
   id?: number;
@@ -44,11 +45,6 @@ type AdvisorMatch = {
   score?: number;
   reason?: string;
 };
-
-function getApiBaseUrl() {
-  const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
-  return envUrl ? String(envUrl).replace(/\/$/, "") : "https://final-now.onrender.com/api";
-}
 
 const promptChips = [
   "3BHK near Cyber City under Rs 1L",
@@ -693,7 +689,7 @@ export function AIAdvisorPage() {
     setApiReturned(false);
 
     try {
-      const response = await fetch(`${getApiBaseUrl()}/ai/advisor`, {
+      const response = await fetch(`${API_BASE_URL}/ai/advisor`, {
         method: "POST",
         headers: {
           Accept: "application/json",

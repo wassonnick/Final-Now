@@ -1,8 +1,5 @@
 import { getAdminToken } from '@/hooks/useAdminAuth';
-
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ||
-  'https://final-now.onrender.com/api';
+import { API_BASE_URL } from '@/config/api';
 
 export function adminHeaders(headers: HeadersInit = {}): HeadersInit {
   const token = getAdminToken();
@@ -15,7 +12,7 @@ export function adminHeaders(headers: HeadersInit = {}): HeadersInit {
 }
 
 export async function adminFetch(path: string, options: RequestInit = {}) {
-  return fetch(`${API_BASE}${path}`, {
+  return fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: adminHeaders(options.headers || {}),
   });

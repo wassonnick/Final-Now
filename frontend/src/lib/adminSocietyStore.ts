@@ -1,4 +1,5 @@
 import { adminFetch, adminHeaders } from '@/lib/adminApi';
+import { API_BASE_URL } from '@/config/api';
 
 
 const normalizeAdminText = (value: unknown): string => {
@@ -151,10 +152,6 @@ export interface AdminSociety {
   fieldSources: Record<string, any>;
   officialSourceLastCheckedAt: string;
 }
-
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ||
-  'https://final-now.onrender.com/api';
 
 export const MAX_BROCHURE_UPLOAD_BYTES = 20 * 1024 * 1024;
 
@@ -488,7 +485,7 @@ export function toApiSocietyPayload(society: AdminSociety) {
 }
 
 async function request(path: string, options?: RequestInit) {
-  const response = await fetchWithRetry(`${API_BASE}${path}`, {
+  const response = await fetchWithRetry(`${API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
       ...adminHeaders(),
@@ -660,7 +657,7 @@ export async function fetchSocietyDraftFromBrochure(file: File, context?: AdminS
     formData.append('context', JSON.stringify(toApiSocietyPayload(context)));
   }
 
-  const response = await fetchWithRetry(`${API_BASE}/admin/societies/fetch-from-brochure`, {
+  const response = await fetchWithRetry(`${API_BASE_URL}/admin/societies/fetch-from-brochure`, {
     method: 'POST',
     headers: adminHeaders(),
     body: formData,

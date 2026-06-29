@@ -30,9 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { adminFetch, adminHeaders, uploadAdminImage } from "@/lib/adminApi";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
+import { API_BASE_URL } from "@/config/api";
 
 const SOCIETYFLATS_GENERIC_PROPERTY_IMAGE =
   "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1400&q=80";

@@ -35,15 +35,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { setPublicSeo } from "@/lib/seo";
+import { API_BASE_URL } from "@/config/api";
 import {
   getCustomerAccountSession,
   isCustomerItemShortlisted,
   rememberCustomerSavedItem,
   toggleCustomerShortlist,
 } from "@/lib/customerAccount";
-
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
 
 interface SocietyRef {
   name?: string;
@@ -320,7 +318,7 @@ export function PropertyPage() {
         setLoading(true);
         setFetchError("");
         const cleanSlug = String(slug).replace(/^property\//, "");
-        const response = await fetch(`${API_BASE}/properties/${encodeURIComponent(cleanSlug)}`);
+        const response = await fetch(`${API_BASE_URL}/properties/${encodeURIComponent(cleanSlug)}`);
 
         if (!response.ok) {
           throw new Error(`Property API failed with status ${response.status}`);
@@ -497,7 +495,7 @@ export function PropertyPage() {
       }
 
       try {
-        const response = await fetch(`${API_BASE}/properties?q=${encodeURIComponent(searchTerm)}`);
+        const response = await fetch(`${API_BASE_URL}/properties?q=${encodeURIComponent(searchTerm)}`);
 
         if (!response.ok) throw new Error("Similar properties API failed");
 
@@ -619,7 +617,7 @@ export function PropertyPage() {
       .join("\n");
 
     try {
-      const response = await fetch(`${API_BASE}/leads`, {
+      const response = await fetch(`${API_BASE_URL}/leads`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

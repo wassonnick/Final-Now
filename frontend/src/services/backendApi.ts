@@ -1,10 +1,6 @@
 import { getAdminToken } from '@/hooks/useAdminAuth';
 import { rememberCustomerLeadSubmission } from '@/lib/customerAccount';
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_API_URL ||
-  'https://final-now.onrender.com/api';
+import { API_BASE_URL } from '@/config/api';
 
 function buildHeaders(path: string, headers: HeadersInit = {}): HeadersInit {
   const token = path.startsWith('/admin') ? getAdminToken() : '';

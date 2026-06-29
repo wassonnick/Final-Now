@@ -31,8 +31,8 @@
   APP_KEY=[generate with: php artisan key:generate --show]
   APP_ENV=production
   APP_DEBUG=false
-  APP_URL=https://societyflats-api.onrender.com
-  FRONTEND_URL=https://societyflats.onrender.com
+  APP_URL=https://final-now.onrender.com
+  FRONTEND_URL=https://www.societyflats.com
   ```
 
 ### 4. Deploy Frontend (React)
@@ -44,7 +44,7 @@
 - Plan: **Free**
 - Add Environment Variable:
   ```
-  VITE_API_URL=https://societyflats-api.onrender.com/api/v1
+  VITE_API_BASE_URL=https://final-now.onrender.com/api
   ```
 
 ### 5. Configure Custom Domain (Optional)
@@ -107,7 +107,7 @@ APP_NAME=SocietyFlats
 APP_ENV=production
 APP_KEY=base64:...
 APP_DEBUG=false
-APP_URL=https://societyflats-api.onrender.com
+APP_URL=https://final-now.onrender.com
 
 DB_CONNECTION=pgsql
 DB_HOST=...
@@ -129,7 +129,7 @@ MAIL_PASSWORD=...
 
 ### Frontend (.env.production)
 ```
-VITE_API_URL=https://societyflats-api.onrender.com/api/v1
+VITE_API_BASE_URL=https://final-now.onrender.com/api
 VITE_APP_NAME=SocietyFlats
 ```
 

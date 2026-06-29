@@ -1,9 +1,9 @@
 import { type AdminProperty } from '@/lib/adminPropertyStore';
 import { mapApiSociety, type AdminSociety } from '@/lib/adminSocietyStore';
 import { societyDisplayImage } from '@/lib/societyImages';
+import { API_BASE_URL } from '@/config/api';
 
 const fallbackImage = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=85';
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
 
 function extractItems(payload: any) {
   if (Array.isArray(payload?.data)) return payload.data;
@@ -16,7 +16,7 @@ export function getPublicSocieties() {
 }
 
 export async function fetchPublicSocieties() {
-  const response = await fetch(`${API_BASE}/societies?per_page=100`);
+  const response = await fetch(`${API_BASE_URL}/societies?per_page=100`);
   const json = await response.json().catch(() => ({}));
 
   if (!response.ok) throw new Error(json?.message || 'Unable to fetch societies');
@@ -59,7 +59,7 @@ function mapApiProperty(data: any): AdminProperty {
 }
 
 export async function fetchPublicProperties() {
-  const response = await fetch(`${API_BASE}/properties?per_page=100`);
+  const response = await fetch(`${API_BASE_URL}/properties?per_page=100`);
   const json = await response.json().catch(() => ({}));
 
   if (!response.ok) throw new Error(json?.message || 'Unable to fetch properties');

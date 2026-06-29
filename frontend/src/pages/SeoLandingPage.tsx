@@ -506,10 +506,6 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
   const aiHref = `/ai-advisor?q=${encodeURIComponent(copy.searchQuery)}`;
 
   useEffect(() => {
-    setPublicSeo(copy.title, copy.description, { canonical: copy.canonical });
-  }, [copy]);
-
-  useEffect(() => {
     let mounted = true;
     setLoading(true);
     setError("");
@@ -548,6 +544,19 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
 
     return sortByQuality(rows);
   }, [societies, variant, locality, builderSlug]);
+
+  const shouldNoindexEmptyLanding =
+    (variant === "locality" || variant === "builder") &&
+    !loading &&
+    !error &&
+    scopedSocieties.length === 0;
+
+  useEffect(() => {
+    setPublicSeo(copy.title, copy.description, {
+      canonical: copy.canonical,
+      noindex: shouldNoindexEmptyLanding,
+    });
+  }, [copy, shouldNoindexEmptyLanding]);
 
   const scopedProperties = useMemo(() => {
     let rows = properties;

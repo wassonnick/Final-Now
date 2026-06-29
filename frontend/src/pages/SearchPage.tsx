@@ -1,6 +1,6 @@
 // C75 search UX compact polish: sticky compact search, higher mobile results, tighter cards and helper AI block.
 import { trackEvent, trackLeadIntent, trackLeadSubmitted, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -41,6 +41,7 @@ import { setPublicSeo } from "@/lib/seo";
 import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 import { GoogleSocietyMapView } from "@/components/maps/GoogleSocietyMapView";
 import { getValidMapSocieties } from "@/components/maps/SocietyMapView";
+import { API_BASE_URL } from "@/config/api";
 
 const GOOGLE_MAPS_API_KEY = String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();
 
@@ -79,14 +80,6 @@ type AdvisorMatch = {
   tags?: string[];
 };
 
-function getApiBaseUrl() {
-  const envUrl =
-    import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
-  return envUrl
-    ? String(envUrl).replace(/\/$/, "")
-    : "https://final-now.onrender.com/api";
-}
-
 function safeJoin(value: unknown) {
   return Array.isArray(value) ? value.join(" ") : "";
 }
@@ -123,6 +116,23 @@ function normalizeSearchValue(value: unknown) {
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function normalizeBuilderKey(value: unknown) {
+  return normalizeSearchValue(value)
+    .split(" ")
+    .filter((token) => !["limited", "ltd", "private", "pvt"].includes(token))
+    .join(" ");
+}
+
+function isSameBuilder(candidate: unknown, primaryBuilderKey: string) {
+  const candidateKey = normalizeBuilderKey(candidate);
+  if (!candidateKey || !primaryBuilderKey) return false;
+  if (candidateKey === primaryBuilderKey) return true;
+
+  const [candidateBrand] = candidateKey.split(" ");
+  const [primaryBrand] = primaryBuilderKey.split(" ");
+  return candidateBrand.length >= 3 && candidateBrand === primaryBrand;
 }
 
 function searchTokens(value: string) {
@@ -534,7 +544,7 @@ export function SearchPage() {
     let cancelled = false;
     setIsAiLoading(true);
 
-    fetch(`${getApiBaseUrl()}/ai/advisor`, {
+    fetch(`${API_BASE_URL}/ai/advisor`, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -682,7 +692,7 @@ export function SearchPage() {
     setLeadStatus("idle");
 
     try {
-      const response = await fetch(`${getApiBaseUrl()}/leads`, {
+      const response = await fetch(`${API_BASE_URL}/leads`, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -781,6 +791,38 @@ export function SearchPage() {
       : filteredProperties.length;
   const selectedSociety = societyResults[0];
   const recommendedSocieties = societyResults.slice(0, 3);
+
+  // A query like "DLF The Crest" also matches every other DLF-builder society on the shared
+  // builder token, so without this every same-builder result reads as equally relevant. Split
+  // off the real name match(es) as the primary group and demote the rest under a "More from
+  // {builder}" heading — but only when there IS a clear name match; a generic query like
+  // "3 BHK in Sector 65" has no such split and stays a flat list.
+  const societyNameMatchThreshold = 30;
+  const hasSocietyNameMatch =
+    Boolean(query.trim()) &&
+    !isSectorLikeQuery(query) &&
+    societyResults.some((s: any) => scoreSearchText(searchableText(s?.name), query) >= societyNameMatchThreshold);
+  const primarySocietyResults = hasSocietyNameMatch
+    ? societyResults.filter((s: any) => scoreSearchText(searchableText(s?.name), query) >= societyNameMatchThreshold)
+    : societyResults;
+  const primaryBuilder = String(primarySocietyResults[0]?.builder || "").trim();
+  const primaryBuilderKey = normalizeBuilderKey(primaryBuilder);
+  const moreFromBuilderResults = hasSocietyNameMatch && primaryBuilderKey
+    ? societyResults.filter((society: any) => (
+        !primarySocietyResults.includes(society) &&
+        isSameBuilder(society?.builder, primaryBuilderKey)
+      ))
+    : [];
+  const broaderSocietyResults = hasSocietyNameMatch
+    ? societyResults.filter((society: any) => (
+        !primarySocietyResults.includes(society) &&
+        !moreFromBuilderResults.includes(society)
+      ))
+    : [];
+  const orderedSocietyResults = hasSocietyNameMatch
+    ? [...primarySocietyResults, ...moreFromBuilderResults, ...broaderSocietyResults]
+    : societyResults;
+  const moreFromBuilderLabel = primaryBuilder || moreFromBuilderResults[0]?.builder || "";
   const aiRecommendedSocieties = useMemo(() => {
     const base = societyResults.length > 0 ? societyResults : societies;
     return base.slice(0, 3);
@@ -1306,12 +1348,31 @@ export function SearchPage() {
                 "grid gap-3 md:grid-cols-2 md:gap-3",
                 showMap ? "xl:grid-cols-1 2xl:grid-cols-2" : "xl:grid-cols-3",
               )}>
-                {societyResults.map((society) => {
+                {orderedSocietyResults.map((society, societyIndex) => {
                   const imageAttribution = societyImageAttribution(society);
+                  const showMoreFromHeading =
+                    moreFromBuilderResults.length > 0 && societyIndex === primarySocietyResults.length;
+                  const showBroaderResultsHeading =
+                    broaderSocietyResults.length > 0 &&
+                    societyIndex === primarySocietyResults.length + moreFromBuilderResults.length;
 
                   return (
+                  <Fragment key={society.id || society.slug}>
+                  {showMoreFromHeading ? (
+                    <div className="col-span-full mt-2 flex items-center gap-3 text-sm font-bold text-[#25302B]">
+                      <span className="h-px flex-1 bg-blue-100" />
+                      More from {moreFromBuilderLabel}
+                      <span className="h-px flex-1 bg-blue-100" />
+                    </div>
+                  ) : null}
+                  {showBroaderResultsHeading ? (
+                    <div className="col-span-full mt-2 flex items-center gap-3 text-sm font-bold text-[#25302B]">
+                      <span className="h-px flex-1 bg-blue-100" />
+                      Other matching societies
+                      <span className="h-px flex-1 bg-blue-100" />
+                    </div>
+                  ) : null}
                   <article
-                    key={society.id}
                     className="group overflow-hidden rounded-[1.2rem] border border-blue-100 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-apple"
                   >
                     <Link
@@ -1412,6 +1473,7 @@ export function SearchPage() {
                       </div>
                     </div>
                   </article>
+                  </Fragment>
                   );
                 })}
               </div>

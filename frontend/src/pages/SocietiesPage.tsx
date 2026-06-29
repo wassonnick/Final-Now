@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { societyDisplayImage, societyImageAttribution, societyImageAttributionClassName } from '@/lib/societyImages';
 import { setPublicSeo } from '@/lib/seo';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://final-now.onrender.com/api';
+import { API_BASE_URL } from '@/config/api';
 
 type Society = {
   id: number;

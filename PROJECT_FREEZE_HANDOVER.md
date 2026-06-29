@@ -142,8 +142,7 @@ Environment variable names found or expected include:
 
 Frontend:
 
-- `VITE_API_BASE_URL`
-- `VITE_API_URL`
+- `VITE_API_BASE_URL` (current standard)
 - `VITE_ADMIN_API_TOKEN`
 - `VITE_ADMIN_EMAIL`
 - `VITE_ADMIN_PASSWORD`

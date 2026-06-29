@@ -48,6 +48,7 @@ import {
   societyImage,
 } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
+import { API_BASE_URL } from "@/config/api";
 import {
   getCustomerAccountSession,
   isCustomerItemShortlisted,
@@ -55,9 +56,6 @@ import {
   toggleCustomerShortlist,
 } from "@/lib/customerAccount";
 import { googlePlacesGalleryPhotoUrls, hasApprovedSocietyImage, hasGooglePlacesDisplayPhoto, societyImageAttribution, societyImageAttributionClassName, societyPlaceholderImage } from "@/lib/societyImages";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
 
 type ApiResponse<T> = {
   status?: string;

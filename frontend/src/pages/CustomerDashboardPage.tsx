@@ -30,6 +30,7 @@ import {
   type CustomerSavedItem,
 } from "@/lib/customerAccount";
 import { SavedSearchesPanel } from "@/components/search/SavedSearchesPanel";
+import { setPublicSeo } from "@/lib/seo";
 
 type DashboardItem = {
   title: string;
@@ -180,6 +181,10 @@ export function CustomerDashboardPage() {
   const [viewedItems, setViewedItems] = useState<CustomerSavedItem[]>([]);
   const [shortlistedItems, setShortlistedItems] = useState<CustomerSavedItem[]>([]);
   const session = getCustomerAccountSession();
+
+  useEffect(() => {
+    setPublicSeo("Private Customer Dashboard | SocietyFlats", "Private SocietyFlats shortlist, saved-search and enquiry dashboard.", { canonical: "/customer/dashboard", noindex: true });
+  }, []);
 
   useEffect(() => {
     setActivity(getCustomerLeadsForPhone(session?.phone));

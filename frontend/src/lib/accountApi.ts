@@ -1,6 +1,5 @@
 import { cleanAccountPhone, type CustomerAccountRole } from "./customerAccount";
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://final-now.onrender.com/api";
+import { API_BASE_URL } from "@/config/api";
 
 export type AccountSyncPayload = {
   role: CustomerAccountRole;
@@ -44,7 +43,7 @@ export type AccountResponse = {
 };
 
 async function postJson<T>(path: string, payload: Record<string, unknown>): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -108,7 +107,7 @@ export async function fetchAccountByPhone(phone: string) {
   if (!cleanPhone) return null;
 
   try {
-    const response = await fetch(`${API_BASE}/accounts/me?phone=${encodeURIComponent(cleanPhone)}`, {
+    const response = await fetch(`${API_BASE_URL}/accounts/me?phone=${encodeURIComponent(cleanPhone)}`, {
       headers: {
         Accept: "application/json",
       },
@@ -186,7 +185,7 @@ export async function fetchAccountDashboard(accountAccessToken?: string | null) 
   if (!token) return null;
 
   try {
-    const response = await fetch(`${API_BASE}/accounts/dashboard`, {
+    const response = await fetch(`${API_BASE_URL}/accounts/dashboard`, {
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${token}`,

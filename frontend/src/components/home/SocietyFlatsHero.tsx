@@ -148,9 +148,9 @@ export default function SocietyFlatsHero() {
             </Link>
           </div>
 
-          <h1 className="font-display text-[30px] font-medium leading-[1.12] tracking-[-0.015em] text-[#25302B]">
+          <p className="font-display text-[30px] font-medium leading-[1.12] tracking-[-0.015em] text-[#25302B]">
             Find a home in a society you can actually trust.
-          </h1>
+          </p>
 
           <button
             type="button"

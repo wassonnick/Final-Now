@@ -1,3 +1,4 @@
 .DS_Store
+.claude/
 frontend/.env.local
 prelaunch-*-backup-*/

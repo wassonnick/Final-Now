@@ -5,6 +5,7 @@ const SITE_URL = "https://www.societyflats.com";
 const API_BASE = process.env.VITE_API_BASE_URL || process.env.API_BASE_URL || "https://final-now.onrender.com/api";
 const PUBLIC_DIR = path.resolve(process.cwd(), "public");
 const SITEMAP_PATH = path.join(PUBLIC_DIR, "sitemap.xml");
+const MIN_PUBLIC_SOCIETIES = Number.parseInt(process.env.SITEMAP_MIN_PUBLIC_SOCIETIES || "20", 10);
 
 const staticRoutes = [
   { loc: "/", priority: "1.0", changefreq: "daily" },
@@ -16,6 +17,7 @@ const staticRoutes = [
   { loc: "/gurgaon/properties", priority: "0.9", changefreq: "daily" },
   { loc: "/sell", priority: "0.7", changefreq: "weekly" },
   { loc: "/ai-advisor", priority: "0.6", changefreq: "weekly" },
+  { loc: "/broker-crm", priority: "0.6", changefreq: "weekly" },
   { loc: "/recommendations", priority: "0.6", changefreq: "weekly" },
   { loc: "/insights", priority: "0.5", changefreq: "weekly" },
   { loc: "/chat", priority: "0.6", changefreq: "weekly" },
@@ -101,13 +103,17 @@ async function fetchRows(endpoint) {
       const payload = await response.json();
       const rows = extractRows(payload);
 
-      if (rows.length) return rows;
+      return { rows, reachedApi: true };
     } catch {
-      // Keep sitemap generation resilient. Static fallback will still be written.
+      // Try the next compatible query shape before preserving the last healthy sitemap.
     }
   }
 
-  return [];
+  return { rows: [], reachedApi: false };
+}
+
+function countDetailUrls(xml, segment) {
+  return (String(xml).match(new RegExp(`<loc>${SITE_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/${segment}/`, "g")) || []).length;
 }
 
 function uniqueRoutes(routes) {
@@ -231,8 +237,19 @@ async function main() {
 
   const routes = [...staticRoutes];
 
-  const societies = (await fetchRows("/societies")).filter(isPublicSociety);
-  const properties = (await fetchRows("/properties")).filter(isHighQualityProperty);
+  const societyResult = await fetchRows("/societies");
+  const propertyResult = await fetchRows("/properties");
+
+  if (!societyResult.reachedApi || !propertyResult.reachedApi) {
+    throw new Error(`Could not reach the public API at ${API_BASE}.`);
+  }
+
+  const societies = societyResult.rows.filter(isPublicSociety);
+  const properties = propertyResult.rows.filter(isHighQualityProperty);
+
+  if (societies.length < MIN_PUBLIC_SOCIETIES) {
+    throw new Error(`Refusing to replace sitemap: public society count fell to ${societies.length}, below safety threshold ${MIN_PUBLIC_SOCIETIES}.`);
+  }
 
   addDerivedLandingRoutes(routes, societies);
 
@@ -268,9 +285,20 @@ async function main() {
 }
 
 main().catch(async (error) => {
-  console.warn("Sitemap API fetch failed. Writing static fallback sitemap.");
-  console.warn(error?.message || error);
+  console.warn(`Sitemap generation warning: ${error?.message || error}`);
 
-  await fs.mkdir(PUBLIC_DIR, { recursive: true });
-  await fs.writeFile(SITEMAP_PATH, buildXml([...staticRoutes, ...preferredLocalityRoutes.map((loc) => ({ loc, priority: "0.72", changefreq: "weekly" })), ...preferredBuilderRoutes.map((loc) => ({ loc, priority: "0.7", changefreq: "weekly" }))]), "utf8");
+  try {
+    const existing = await fs.readFile(SITEMAP_PATH, "utf8");
+    const existingSocieties = countDetailUrls(existing, "society");
+
+    if (existingSocieties >= MIN_PUBLIC_SOCIETIES) {
+      console.warn(`Preserved existing sitemap with ${existingSocieties} society URLs; no fallback sitemap was written.`);
+      return;
+    }
+  } catch {
+    // A missing/unreadable sitemap cannot be treated as a healthy fallback.
+  }
+
+  console.error("No healthy existing sitemap is available; failing the build instead of publishing a reduced sitemap.");
+  process.exitCode = 1;
 });

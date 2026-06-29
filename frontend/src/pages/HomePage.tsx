@@ -143,7 +143,7 @@ export function HomePage() {
   useEffect(() => {
     setPublicSeo(
       "Verified Gurgaon Societies — Compare Before You Choose a Home | SocietyFlats",
-      "22+ Gurgaon societies reviewed field-by-field before publishing — real coordinates, real Google-sourced photos, no invented listings. Compare security, commute and price before you visit.",
+      "40+ Gurgaon societies reviewed field-by-field before publishing — real coordinates, reviewed display images and no invented listings. Compare security, commute and price before you visit.",
     );
     window.scrollTo(0, 0);
     fetchPublicSocieties()
@@ -489,7 +489,7 @@ export function HomePage() {
 
         <section className="mx-auto mt-16 max-w-[1360px] px-10">
           <div className="rounded-[24px] bg-[#123C32] p-14 text-center text-white">
-            <h2 className="font-display text-[40px] font-medium tracking-[-0.01em] text-white">{societies.length || 22} societies in. Thousands more Gurgaon homes to compare.</h2>
+            <h2 className="font-display text-[40px] font-medium tracking-[-0.01em] text-white">{allSocietiesCount || societies.length || 40} societies in. Thousands more Gurgaon homes to compare.</h2>
             <p className="mb-7 mt-3 text-base text-[#D2E0D7]">Tell us your budget and commute — SocietyFlats AI narrows it to 2–3 societies worth visiting.</p>
             <div className="flex justify-center gap-[14px]">
               <Link to="/ai-advisor" className="rounded-[12px] bg-[#C2724E] px-8 py-[15px] text-[15px] font-bold text-white">Get my shortlist</Link>

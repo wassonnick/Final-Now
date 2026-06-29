@@ -6,8 +6,8 @@ services:
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
     envVars:
-      - key: VITE_API_URL
-        value: https://societyflats-api.onrender.com/api/v1
+      - key: VITE_API_BASE_URL
+        value: https://final-now.onrender.com/api
     routes:
       # C33 static SEO HTML rewrites. Keep these above the SPA fallback.
       - type: rewrite
@@ -79,6 +79,12 @@ services:
       - type: rewrite
         source: /properties
         destination: /properties/index.html
+      - type: rewrite
+        source: /broker-crm
+        destination: /broker-crm/index.html
+      - type: rewrite
+        source: /recommendations
+        destination: /recommendations/index.html
 
       - type: rewrite
         source: /404
@@ -105,9 +111,9 @@ services:
       - key: APP_DEBUG
         value: "false"
       - key: APP_URL
-        value: https://societyflats-api.onrender.com
+        value: https://final-now.onrender.com
       - key: FRONTEND_URL
-        value: https://societyflats.onrender.com
+        value: https://www.societyflats.com
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
