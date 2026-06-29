@@ -22,6 +22,7 @@ class Account extends Model
         'meta',
         'api_token_hash',
         'api_token_created_at',
+        'referral_code',
     ];
 
     protected $casts = [
@@ -44,5 +45,10 @@ class Account extends Model
     public function builderClaims(): HasMany
     {
         return $this->hasMany(BuilderClaim::class);
+    }
+
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(Referral::class, 'referrer_account_id');
     }
 }

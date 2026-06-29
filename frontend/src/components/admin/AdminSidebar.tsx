@@ -16,6 +16,7 @@ import {
   Users,
   CalendarCheck,
   ShieldCheck,
+  Gift,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ const links = [
   { label: "Societies", href: "/admin/societies", icon: Building2 },
   { label: "Properties", href: "/admin/properties", icon: Home },
   { label: "Leads", href: "/admin/leads", icon: MessageSquareText },
+  { label: "Referrals", href: "/admin/referrals", icon: Gift },
   { label: "Site Visits", href: "/admin/site-visits", icon: CalendarCheck },
   { label: "Rent Intelligence", href: "/admin/rent-history", icon: LineChart },
   { label: "Builder / RWA", href: "/admin/builder-portal", icon: ShieldCheck },

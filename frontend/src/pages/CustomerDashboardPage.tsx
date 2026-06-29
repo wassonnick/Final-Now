@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Sparkles,
   UserRound,
+  Gift,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -531,6 +532,12 @@ export function CustomerDashboardPage() {
                 <Link to="/sell">
                   <Building2 className="mr-2 h-4 w-4" />
                   List flat
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-full border-blue-200 bg-white">
+                <Link to="/referrals">
+                  <Gift className="mr-2 h-4 w-4" />
+                  Refer a friend
                 </Link>
               </Button>
             </div>

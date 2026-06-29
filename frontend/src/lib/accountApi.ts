@@ -200,3 +200,45 @@ export async function fetchAccountDashboard(accountAccessToken?: string | null) 
     return null;
   }
 }
+
+export type ReferralItem = {
+  id: number;
+  name: string;
+  phone_last4: string;
+  intent: "rent" | "buy" | "sell";
+  status: string;
+  reward_status: string;
+  created_at?: string | null;
+};
+
+export type ReferralResponse = {
+  referral_code?: string;
+  policy?: string;
+  summary?: { submitted?: number; qualified?: number; converted?: number };
+  data?: ReferralItem[];
+  message?: string;
+};
+
+export async function fetchReferrals(accountAccessToken?: string | null) {
+  const token = String(accountAccessToken || "").trim();
+  if (!token) throw new Error("Login with OTP to access referrals.");
+  const response = await fetch(`${API_BASE_URL}/accounts/referrals`, {
+    headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(String(json?.message || "Could not load referrals."));
+  return json as ReferralResponse;
+}
+
+export async function submitReferral(accountAccessToken: string | null | undefined, payload: { name: string; phone: string; intent: "rent" | "buy" | "sell"; notes?: string }) {
+  const token = String(accountAccessToken || "").trim();
+  if (!token) throw new Error("Login with OTP to submit a referral.");
+  const response = await fetch(`${API_BASE_URL}/accounts/referrals`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(String(json?.message || "Could not submit referral."));
+  return json as ReferralResponse;
+}

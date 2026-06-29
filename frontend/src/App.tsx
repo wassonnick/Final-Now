@@ -35,6 +35,7 @@ const InvestmentCalculatorPage = lazy(() => import('@/pages/InvestmentCalculator
 const BuilderFloorsPage = lazy(() => import('@/pages/BuilderFloorsPage').then((module) => ({ default: module.BuilderFloorsPage })));
 const BuilderPortalPage = lazy(() => import('@/pages/BuilderPortalPage').then((module) => ({ default: module.BuilderPortalPage })));
 const PublicInfoPage = lazy(() => import('@/pages/PublicInfoPage').then((module) => ({ default: module.PublicInfoPage })));
+const ReferralPage = lazy(() => import('@/pages/ReferralPage').then((module) => ({ default: module.ReferralPage })));
 
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage').then((module) => ({ default: module.AdminLoginPage })));
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })));
@@ -53,6 +54,7 @@ const AdminFeatureHubPage = lazy(() => import('@/pages/admin/AdminFeatureHubPage
 const AdminSiteVisitsPage = lazy(() => import('@/pages/admin/AdminSiteVisitsPage').then((module) => ({ default: module.AdminSiteVisitsPage })));
 const AdminRentHistoryPage = lazy(() => import('@/pages/admin/AdminRentHistoryPage').then((module) => ({ default: module.AdminRentHistoryPage })));
 const AdminBuilderPortalPage = lazy(() => import('@/pages/admin/AdminBuilderPortalPage').then((module) => ({ default: module.AdminBuilderPortalPage })));
+const AdminReferralsPage = lazy(() => import('@/pages/admin/AdminReferralsPage').then((module) => ({ default: module.AdminReferralsPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -138,6 +140,7 @@ function AppShell() {
             <Route path="/customer" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/shortlist" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/owner/dashboard" element={<ProtectedAccountRoute role="customer"><OwnerDashboard /></ProtectedAccountRoute>} />
+            <Route path="/referrals" element={<ProtectedAccountRoute role="customer"><ReferralPage /></ProtectedAccountRoute>} />
             <Route path="/broker/dashboard" element={<ProtectedAccountRoute role="broker"><BrokerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/broker" element={<ProtectedAccountRoute role="broker"><BrokerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/sell" element={<SellPage />} />
@@ -190,6 +193,7 @@ function AppShell() {
 
             <Route path="/admin/leads" element={<ProtectedAdminRoute><AdminLeadsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/leads/:id" element={<ProtectedAdminRoute><AdminLeadDetailPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/referrals" element={<ProtectedAdminRoute><AdminReferralsPage /></ProtectedAdminRoute>} />
 
             <Route path="/admin/reviews" element={<ProtectedAdminRoute><AdminReviewsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsersPage /></ProtectedAdminRoute>} />
