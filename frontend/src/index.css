@@ -209,6 +209,16 @@ body,
   outline: none;
 }
 
+/* search-bare-input: a borderless <input> nested inside its own rounded pill wrapper
+   (the wrapper carries the visible border/radius, not the input). The box-shadow ring
+   above renders around the input's own non-rounded bounding box instead, showing up as
+   a stray rectangle inside the rounded pill — suppress it here, the pill itself is
+   already the focus indicator. */
+.public-site .search-bare-input:focus {
+  border-color: transparent;
+  box-shadow: none;
+}
+
 .public-site .shadow-sm,
 .public-site .shadow-soft,
 .public-site .shadow-premium {

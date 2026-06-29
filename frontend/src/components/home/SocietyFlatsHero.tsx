@@ -228,7 +228,7 @@ export default function SocietyFlatsHero() {
                       if (event.key === "Escape") setShowSuggestions(false);
                     }}
                     placeholder="Sector, society or builder…"
-                    className="min-w-0 flex-1 bg-transparent text-[15px] text-[#25302B] outline-none placeholder:text-[#8A8F89]"
+                    className="search-bare-input min-w-0 flex-1 bg-transparent text-[15px] text-[#25302B] outline-none placeholder:text-[#8A8F89]"
                   />
                   {showSuggestions && query.trim() && suggestions.length > 0 ? (
                     <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-72 overflow-y-auto rounded-[14px] border border-[#E7DCCB] bg-white p-1.5 shadow-[0_18px_40px_-28px_rgba(0,0,0,.35)]">

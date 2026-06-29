@@ -75,7 +75,7 @@ export function HeroSearch() {
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={(event) => event.key === 'Enter' && handleSearch()}
                   placeholder="Search society, sector or landmark..."
-                  className="h-11 min-w-0 flex-1 border-0 bg-transparent text-base font-semibold text-navy-950 outline-none placeholder:text-navy-300"
+                  className="search-bare-input h-11 min-w-0 flex-1 border-0 bg-transparent text-base font-semibold text-navy-950 outline-none placeholder:text-navy-300"
                 />
               </div>
 

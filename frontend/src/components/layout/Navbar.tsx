@@ -140,7 +140,7 @@ export function Navbar() {
               if (event.key === "Escape") setShowHeaderSuggestions(false);
             }}
             placeholder="Search society, sector or builder"
-            className="min-w-0 flex-1 bg-transparent text-sm font-normal text-[#25302B] outline-none placeholder:text-[#6E756E]"
+            className="search-bare-input min-w-0 flex-1 bg-transparent text-sm font-normal text-[#25302B] outline-none placeholder:text-[#6E756E]"
           />
           <span className={cn("h-2 w-2 rounded-full transition", isSearchFocused ? "bg-[#C2724E]" : "bg-transparent")} />
           {showHeaderSuggestions && headerQuery.trim() && headerSuggestions.length > 0 ? (
