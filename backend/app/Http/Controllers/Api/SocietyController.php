@@ -72,7 +72,7 @@ class SocietyController extends Controller {
     $isAdmin = request()->is('api/admin/*');
     $properties = $isAdmin
         ? fn ($query) => $query
-        : fn ($query) => $query->where('status', 'Live');
+        : fn ($query) => $query->publiclyAvailable();
 
     $society = Society::with(['properties' => $properties])
         ->when(is_numeric($idOrSlug), fn ($query) => $query->where('id', $idOrSlug), fn ($query) => $query->where('slug', $idOrSlug))

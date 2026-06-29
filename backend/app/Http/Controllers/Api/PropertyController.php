@@ -8,18 +8,26 @@ use App\Models\Society;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PropertyController extends Controller
 {
+    private const INTERNAL_FIELDS = [
+        'source_lead_id',
+        'owner_name',
+        'owner_phone',
+        'owner_verification_status',
+        'owner_notes',
+        'source_lead',
+    ];
+
     public function index(Request $request): JsonResponse
     {
-        $q = Property::query()->with(['society', 'sourceLead']);
+        $isAdmin = $this->isAdminRequest($request);
+        $q = Property::query()->with($isAdmin ? ['society', 'sourceLead'] : ['society']);
 
-        if (!$this->isAdminRequest($request)) {
-            $q->where('status', 'Live')
-                ->whereHas('society', fn ($society) => $society
-                    ->where('is_published', true)
-                    ->whereIn('status', ['Verified', 'Premium']));
+        if (! $isAdmin) {
+            $q->publiclyAvailable();
         }
 
         if ($request->filled('q')) {
@@ -40,21 +48,24 @@ class PropertyController extends Controller
             $q->where('featured', true);
         }
 
+        $properties = $q->latest()->paginate($request->integer('per_page', 24));
+        if (! $isAdmin) {
+            $properties->getCollection()->each->makeHidden(self::INTERNAL_FIELDS);
+        }
+
         return response()->json([
             'status' => 'ok',
-            'data' => $q->latest()->paginate($request->integer('per_page', 24)),
+            'data' => $properties,
         ]);
     }
 
     public function show(Request $request, string $idOrSlug): JsonResponse
     {
-        $query = Property::with(['society', 'sourceLead']);
+        $isAdmin = $this->isAdminRequest($request);
+        $query = Property::with($isAdmin ? ['society', 'sourceLead'] : ['society']);
 
-        if (!$this->isAdminRequest($request)) {
-            $query->where('status', 'Live')
-                ->whereHas('society', fn ($society) => $society
-                    ->where('is_published', true)
-                    ->whereIn('status', ['Verified', 'Premium']));
+        if (! $isAdmin) {
+            $query->publiclyAvailable();
         }
 
     if (is_numeric($idOrSlug)) {
@@ -68,6 +79,10 @@ class PropertyController extends Controller
             'status' => 'error',
             'message' => 'Property not found',
         ], 404);
+    }
+
+    if (! $isAdmin) {
+        $property->makeHidden(self::INTERNAL_FIELDS);
     }
 
     $data = $property->toArray();
@@ -95,6 +110,8 @@ class PropertyController extends Controller
             $p['society_id'] = Society::where('name', $p['society'])->value('id');
         }
 
+        $p = $this->applyPublicationRules($p);
+
         $property = Property::create($p);
 
         return response()->json([
@@ -111,6 +128,8 @@ class PropertyController extends Controller
         if (!empty($p['society']) && empty($p['society_id'])) {
             $p['society_id'] = Society::where('name', $p['society'])->value('id');
         }
+
+        $p = $this->applyPublicationRules($p, $property);
 
         $property->update($p);
 
@@ -174,5 +193,64 @@ class PropertyController extends Controller
     private function isAdminRequest(Request $request): bool
     {
         return $request->is('api/admin/*') || $request->is('admin/*');
+    }
+
+    private function applyPublicationRules(array $payload, ?Property $property = null): array
+    {
+        $effective = array_merge($property?->toArray() ?? [], $payload);
+        $status = (string) ($effective['status'] ?? 'Draft');
+
+        if ($status !== 'Live') {
+            if (array_key_exists('status', $payload)) {
+                $payload['published_at'] = null;
+            }
+            if (array_key_exists('verified', $payload) && ! $payload['verified']) {
+                $payload['verified_at'] = null;
+                $payload['availability_checked_at'] = null;
+            }
+
+            return $payload;
+        }
+
+        $errors = [];
+        $society = ! empty($effective['society_id'])
+            ? Society::query()->find($effective['society_id'])
+            : null;
+
+        if (! $society || ! $society->is_published || ! in_array($society->status, ['Verified', 'Premium'], true)) {
+            $errors['society_id'][] = 'Choose a published, verified society before publishing this property.';
+        }
+        if (! ($effective['verified'] ?? false)) {
+            $errors['verified'][] = 'Verify the owner and property details before publishing.';
+        }
+        if (trim((string) ($effective['owner_name'] ?? '')) === '') {
+            $errors['owner_name'][] = 'Owner or authorised broker name is required before publishing.';
+        }
+        $phone = preg_replace('/\D+/', '', (string) ($effective['owner_phone'] ?? ''));
+        if (strlen($phone) < 10) {
+            $errors['owner_phone'][] = 'A valid owner or authorised broker phone is required before publishing.';
+        }
+
+        $images = array_values(array_filter((array) ($effective['images'] ?? [])));
+        if ($images === []) {
+            $errors['images'][] = 'Upload at least one real property photo before publishing.';
+        } elseif (collect($images)->contains(fn ($image) => str_contains((string) $image, 'images.unsplash.com/photo-1600607687939'))) {
+            $errors['images'][] = 'The stock placeholder cannot be published as a property photo.';
+        }
+
+        if (($effective['listing_type'] ?? null) === 'Rent' && trim((string) ($effective['security_deposit'] ?? '')) === '') {
+            $errors['security_deposit'][] = 'Security deposit is required before publishing a rental property.';
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        $payload['verified_at'] = $property?->verified_at ?: now();
+        $payload['availability_checked_at'] = now();
+        $payload['published_at'] = $property?->published_at ?: now();
+        $payload['owner_verification_status'] = 'Verified';
+
+        return $payload;
     }
 }

@@ -32,9 +32,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { adminFetch, adminHeaders, uploadAdminImage } from "@/lib/adminApi";
 import { API_BASE_URL } from "@/config/api";
 
-const SOCIETYFLATS_GENERIC_PROPERTY_IMAGE =
-  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1400&q=80";
-
 const localities = [
   "Sector 54, Gurgaon",
   "Golf Course Road, Gurgaon",
@@ -76,6 +73,9 @@ const emptyProperty = {
   images: [] as string[],
   featured: false,
   verified: false,
+  ownerName: "",
+  ownerPhone: "",
+  sourceLeadId: "",
 };
 
 type SocietyOption = {
@@ -85,6 +85,7 @@ type SocietyOption = {
   sector?: string;
   locality?: string;
   status?: string;
+  isPublished?: boolean;
 };
 
 function extractSocieties(payload: any): SocietyOption[] {
@@ -107,8 +108,9 @@ function extractSocieties(payload: any): SocietyOption[] {
       sector: item.sector || "",
       locality: item.locality || "",
       status: item.status || "",
+      isPublished: Boolean(item.is_published),
     }))
-    .filter((item: SocietyOption) => Boolean(item.name))
+    .filter((item: SocietyOption) => Boolean(item.name) && item.isPublished && ["Verified", "Premium"].includes(String(item.status)))
     .sort((a: SocietyOption, b: SocietyOption) => a.name.localeCompare(b.name));
 }
 
@@ -332,7 +334,7 @@ function ownerPublishQualityIssues(args: {
   const issues: string[] = [];
 
   if (!args.verified) issues.push("Mark as verified after confirming owner/property details.");
-  if (!args.images.length) issues.push("Add real photos or use the SocietyFlats generic image before publishing.");
+  if (!args.images.length) issues.push("Upload at least one real property photo before publishing.");
   if (!String(args.description || "").trim()) issues.push("Generate or write a clean public description.");
   if (!String(args.floor || "").trim()) issues.push("Confirm floor details before publishing.");
   if (!String(args.furnishedStatus || "").trim()) issues.push("Confirm furnishing status before publishing.");
@@ -480,6 +482,9 @@ export function AdminPropertyFormPage() {
           images: parseArray(data.images),
           featured: Boolean(data.featured),
           verified: Boolean(data.verified),
+          ownerName: data.owner_name || "",
+          ownerPhone: data.owner_phone || "",
+          sourceLeadId: data.source_lead_id ? String(data.source_lead_id) : "",
         });
       } catch (err) {
         console.error(err);
@@ -517,20 +522,24 @@ export function AdminPropertyFormPage() {
   }, [property, propertyImages.length]);
 
 
-  const sourceLeadId = useMemo(() => {
+  const sourceLeadIdParam = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return params.get("sourceLeadId") || "";
   }, [location.search]);
 
-  const ownerName = useMemo(() => {
+  const ownerNameParam = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return params.get("ownerName") || "";
   }, [location.search]);
 
-  const ownerPhone = useMemo(() => {
+  const ownerPhoneParam = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return params.get("ownerPhone") || "";
   }, [location.search]);
+
+  const sourceLeadId = String((property as any).sourceLeadId || sourceLeadIdParam);
+  const ownerName = String((property as any).ownerName || ownerNameParam);
+  const ownerPhone = String((property as any).ownerPhone || ownerPhoneParam);
 
 
   const labels = pricingLabels(property.listingType);
@@ -585,6 +594,11 @@ export function AdminPropertyFormPage() {
     if (!title) return "Property title is required before publishing.";
     if (!locality) return "Locality is required before publishing.";
     if (!price) return `${labels.price} is required before publishing.`;
+    if (!society) return "A published society is required before publishing.";
+    if (!String(ownerName || "").trim()) return "Owner or authorised broker name is required before publishing.";
+    if (String(ownerPhone || "").replace(/\D/g, "").length < 10) return "A valid owner or authorised broker phone is required before publishing.";
+    if (!property.verified) return "Verify the owner and property details before publishing.";
+    if (!propertyImages.length) return "Upload at least one real property photo before publishing.";
 
     if (rentalListing) {
       if (!society) return "Society is required before publishing a rent listing.";
@@ -607,6 +621,10 @@ export function AdminPropertyFormPage() {
     property.price,
     property.securityDeposit,
     property.areaSqft,
+    property.verified,
+    propertyImages.length,
+    ownerName,
+    ownerPhone,
     labels.price,
     rentalListing,
     saleListing,
@@ -694,23 +712,8 @@ export function AdminPropertyFormPage() {
     }));
   };
 
-  const useGenericPropertyImage = () => {
-    setProperty((current: any) => {
-      const currentImages = parseArray(current.images);
-      if (currentImages.includes(SOCIETYFLATS_GENERIC_PROPERTY_IMAGE)) return current;
-
-      return {
-        ...current,
-        images: [SOCIETYFLATS_GENERIC_PROPERTY_IMAGE, ...currentImages].slice(0, 8),
-      };
-    });
-
-    setSuccess("SocietyFlats generic property image added. Replace with real photos whenever available.");
-    setError("");
-  };
-
   const continueWithoutPhotos = () => {
-    setSuccess("Continuing without photos. Save Draft is allowed. Add real photos or generic image before publishing.");
+    setSuccess("Continuing without photos. Save Draft is allowed; publishing requires real property photos.");
     setError("");
   };
 
@@ -830,7 +833,7 @@ export function AdminPropertyFormPage() {
         source_lead_id: sourceLeadId ? Number(sourceLeadId) : undefined,
         owner_name: ownerName || undefined,
         owner_phone: ownerPhone || undefined,
-        owner_verification_status: sourceLeadId ? "Draft Created" : undefined,
+        owner_verification_status: status === "Live" ? "Verified" : sourceLeadId ? "Draft Created" : undefined,
         ...c13PublicationPayload(status),
         owner_notes: sourceLeadId
           ? [
@@ -997,6 +1000,9 @@ export function AdminPropertyFormPage() {
       bedrooms: current.bedrooms || parsedBhk,
       bathrooms: current.bathrooms || parsedBhk,
       areaSqft: parsedArea || current.areaSqft,
+      ownerName: current.ownerName || ownerName,
+      ownerPhone: current.ownerPhone || ownerPhone,
+      sourceLeadId: current.sourceLeadId || sourceLeadId,
       description: ownerDraftDescription({
         ownerName,
         ownerPhone,
@@ -1215,7 +1221,7 @@ export function AdminPropertyFormPage() {
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  Society {!builderFloorListing ? <span className="text-rose-500">*</span> : <span className="text-xs font-normal text-slate-400">(optional for builder floor)</span>}
+                  Society <span className="text-rose-500">*</span>
                   <select
                     value={property.society}
                     onChange={(event) => {
@@ -1247,6 +1253,27 @@ export function AdminPropertyFormPage() {
                         ? `${societyOptions.length} live societies loaded`
                         : "No live societies loaded"}
                   </span>
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Owner / authorised broker <span className="text-rose-500">*</span>
+                  <Input
+                    value={ownerName}
+                    onChange={(event) => updateField("ownerName", event.target.value)}
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder="Internal contact name"
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Contact phone <span className="text-rose-500">*</span>
+                  <Input
+                    value={ownerPhone}
+                    onChange={(event) => updateField("ownerPhone", event.target.value)}
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder="10-digit mobile number"
+                  />
+                  <span className="mt-1 block text-xs font-normal text-slate-400">Stored for admin verification; not shown publicly.</span>
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
@@ -1432,18 +1459,10 @@ export function AdminPropertyFormPage() {
             <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
               <h2 className="text-base font-bold tracking-tight text-slate-950">Media</h2>
               <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
-                Upload real photos, use a SocietyFlats generic image, or continue as draft without photos.
+                Upload real property photos, or continue as a private draft without photos.
               </p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={useGenericPropertyImage}
-                    className="rounded-full border-blue-100 bg-blue-50 text-xs font-semibold text-blue-700 hover:bg-blue-100"
-                  >
-                    Use SocietyFlats generic image
-                  </Button>
                   <Button
                     type="button"
                     variant="outline"

@@ -26,10 +26,7 @@ class AIController extends Controller
         $listingTypes = $this->listingTypesForIntent($intent);
 
         $properties = Property::query()
-            ->where('status', 'Live')
-            ->whereHas('society', fn ($query) => $query
-                ->where('is_published', true)
-                ->whereIn('status', ['Verified', 'Premium']))
+            ->publiclyAvailable()
             ->when($listingTypes, fn ($query) => $query->whereIn('listing_type', $listingTypes))
             ->get()
             ->groupBy('society_id');
@@ -38,7 +35,7 @@ class AIController extends Controller
             ->where('is_published', true)
             ->whereIn('status', ['Verified', 'Premium'])
             ->withCount(['properties as available_homes' => function ($query) use ($listingTypes) {
-                $query->where('status', 'Live');
+                $query->publiclyAvailable();
                 if ($listingTypes) {
                     $query->whereIn('listing_type', $listingTypes);
                 }

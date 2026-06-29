@@ -121,7 +121,7 @@ function c42PropertyQualityIssues(item: any) {
   }
 
   if (ownerLinked) {
-    if (!images.length) issues.push("photo or generic image missing");
+    if (!images.length) issues.push("real property photo missing");
     if (!description) issues.push("description missing");
     if (!item?.verified) issues.push("owner verification missing");
   }
@@ -136,7 +136,7 @@ function getPropertyImage(item: any) {
   if (item?.cover_image) return item.cover_image;
   if (item?.coverImage) return item.coverImage;
 
-  return "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80";
+  return "";
 }
 
 function getSocietyName(item: any) {
@@ -572,11 +572,15 @@ const [properties, setProperties] = useState<any[]>([]);
                       className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition hover:border-blue-100 hover:shadow-lg md:rounded-[28px] xl:grid xl:grid-cols-[220px_1fr]"
                     >
                       <Link to={propertyUrl} className="block h-28 bg-slate-100 sm:h-36 xl:h-full">
-                        <img
-                          src={getPropertyImage(item)}
-                          alt={item?.title || "Property"}
-                          className="h-full w-full object-cover"
-                        />
+                        {getPropertyImage(item) ? (
+                          <img
+                            src={getPropertyImage(item)}
+                            alt={item?.title || "Property"}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="flex h-full items-center justify-center text-xs font-semibold text-slate-400">No real photo uploaded</span>
+                        )}
                       </Link>
 
                       <div className="p-3.5 md:p-4">

@@ -48,7 +48,7 @@ class SavedSearchMatcher
     private function query(SavedSearch $search): Builder
     {
         $filters = $search->filters ?: [];
-        $query = Property::query()->with('society:id,name,slug')->where('status', 'Live')->whereHas('society', fn ($q) => $q->where('is_published', true)->whereIn('status', ['Verified', 'Premium']));
+        $query = Property::query()->with('society:id,name,slug')->publiclyAvailable();
         $tab = strtolower((string) ($filters['tab'] ?? ''));
         if ($tab === 'rent') {
             $query->where('listing_type', 'Rent');

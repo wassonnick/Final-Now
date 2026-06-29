@@ -59,7 +59,7 @@ class SocietyChatService
         if ($societies->isEmpty()) {
             $societies = Society::query()->where('is_published', true)->whereIn('status', ['Verified', 'Premium'])->orderByDesc('featured')->limit(5)->get();
         }
-        $properties = Property::query()->where('status', 'Live')->whereHas('society', fn ($q) => $q->where('is_published', true)->whereIn('status', ['Verified', 'Premium']))->when($societies->isNotEmpty(), fn ($q) => $q->whereIn('society_id', $societies->pluck('id')))->limit(8)->get();
+        $properties = Property::query()->publiclyAvailable()->when($societies->isNotEmpty(), fn ($q) => $q->whereIn('society_id', $societies->pluck('id')))->limit(8)->get();
         $entities = $societies->map(fn ($s) => ['type' => 'society', 'id' => $s->id, 'name' => $s->name, 'slug' => $s->slug, 'url' => '/society/'.$s->slug])->concat($properties->map(fn ($p) => ['type' => 'property', 'id' => $p->id, 'name' => $p->title, 'slug' => $p->slug, 'url' => '/property/'.$p->slug]))->values()->all();
         $lines = $societies->map(fn ($s) => 'SOCIETY | '.implode(' | ', array_filter([$s->name, $s->builder, $s->sector, $s->locality, $s->rent_range, $s->buy_range, $s->description])))->concat($properties->map(fn ($p) => 'LIVE PROPERTY | '.implode(' | ', array_filter([$p->title, $p->listing_type, $p->price, $p->bedrooms ? $p->bedrooms.' BHK' : null, $p->locality]))));
 

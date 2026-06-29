@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -37,6 +38,9 @@ class Property extends Model
         'floor_plan_url',
         'featured',
         'verified',
+        'verified_at',
+        'availability_checked_at',
+        'published_at',
     ];
 
     protected $casts = [
@@ -44,7 +48,23 @@ class Property extends Model
         'images' => 'array',
         'featured' => 'boolean',
         'verified' => 'boolean',
+        'verified_at' => 'datetime',
+        'availability_checked_at' => 'datetime',
+        'published_at' => 'datetime',
     ];
+
+    public function scopePubliclyAvailable(Builder $query): Builder
+    {
+        return $query
+            ->where('status', 'Live')
+            ->where('verified', true)
+            ->whereNotNull('verified_at')
+            ->whereNotNull('availability_checked_at')
+            ->whereNotNull('published_at')
+            ->whereHas('society', fn (Builder $society) => $society
+                ->where('is_published', true)
+                ->whereIn('status', ['Verified', 'Premium']));
+    }
 
     public function society(): BelongsTo
     {

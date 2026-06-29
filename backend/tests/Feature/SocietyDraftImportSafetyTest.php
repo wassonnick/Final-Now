@@ -47,6 +47,10 @@ class SocietyDraftImportSafetyTest extends TestCase
             'title' => 'Live Home',
             'slug' => 'live-home',
             'status' => 'Live',
+            'verified' => true,
+            'verified_at' => now(),
+            'availability_checked_at' => now(),
+            'published_at' => now(),
             'price' => '50000',
         ]);
 

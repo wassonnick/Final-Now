@@ -3,8 +3,6 @@ import { mapApiSociety, type AdminSociety } from '@/lib/adminSocietyStore';
 import { societyDisplayImage } from '@/lib/societyImages';
 import { API_BASE_URL } from '@/config/api';
 
-const fallbackImage = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=85';
-
 function extractItems(payload: any) {
   if (Array.isArray(payload?.data)) return payload.data;
   if (Array.isArray(payload?.data?.data)) return payload.data.data;
@@ -105,7 +103,7 @@ export function societyImage(society: AdminSociety) {
 }
 
 export function propertyImage(property: AdminProperty) {
-  return property.images?.[0] || fallbackImage;
+  return property.images?.[0] || '';
 }
 
 export function formatPublicLocation(society: AdminSociety) {

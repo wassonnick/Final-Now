@@ -26,7 +26,7 @@ class SavedSearchAlertsAndReviewResponsesTest extends TestCase
         $account = $this->account(str_repeat('x', 48));
         $published = Society::create(['name' => 'Published', 'slug' => 'published', 'status' => 'Verified', 'is_published' => true]);
         $draft = Society::create(['name' => 'Draft', 'slug' => 'draft', 'status' => 'Draft', 'is_published' => false]);
-        Property::create(['society_id' => $published->id, 'title' => 'Live home', 'slug' => 'live-home', 'listing_type' => 'Rent', 'status' => 'Live', 'price' => '50000']);
+        Property::create(['society_id' => $published->id, 'title' => 'Live home', 'slug' => 'live-home', 'listing_type' => 'Rent', 'status' => 'Live', 'verified' => true, 'verified_at' => now(), 'availability_checked_at' => now(), 'published_at' => now(), 'price' => '50000']);
         Property::create(['society_id' => $draft->id, 'title' => 'Hidden home', 'slug' => 'hidden-home', 'listing_type' => 'Rent', 'status' => 'Live', 'price' => '40000']);
         SavedSearch::create(['account_id' => $account->id, 'name' => 'Rent homes', 'filters' => ['tab' => 'rent'], 'alert_enabled' => true, 'alert_channel' => 'whatsapp', 'alert_frequency' => 'daily']);
 

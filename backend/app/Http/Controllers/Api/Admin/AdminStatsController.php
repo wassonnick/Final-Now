@@ -16,7 +16,7 @@ class AdminStatsController extends Controller
             'societies' => $this->countIfTableExists('societies', fn () => Society::count()),
             'featured_societies' => $this->countIfTableExists('societies', fn () => Society::where('featured', true)->count()),
             'properties' => $this->countIfTableExists('properties', fn () => Property::count()),
-            'live_properties' => $this->countIfTableExists('properties', fn () => Property::where('status', 'Live')->count()),
+            'live_properties' => $this->countIfTableExists('properties', fn () => Property::publiclyAvailable()->count()),
         ]);
     }
 
