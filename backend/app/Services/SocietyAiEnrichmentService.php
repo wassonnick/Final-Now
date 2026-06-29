@@ -73,8 +73,8 @@ Location: {$location}
 
 Return ONLY this JSON object, no markdown fences, no commentary:
 {
-  "rent_range": "string e.g. ₹X - ₹Y per month, or null if no project-specific data found",
-  "buy_range": "string e.g. ₹X Cr - ₹Y Cr, or null",
+  "rent_range": "ONLY a short range, e.g. '₹X - ₹Y per month'. Never add parenthetical context, configuration breakdowns or extra sentences. Null if no project-specific data found.",
+  "buy_range": "ONLY a short range, e.g. '₹X Cr - ₹Y Cr'. Never add parenthetical context, configuration breakdowns or extra sentences. Null if no project-specific data found.",
   "price_per_sqft": "string e.g. ₹X - ₹Y, or null",
   "rental_yield": "string e.g. X.X%, or null",
   "average_rent": "string single representative figure, or null",
@@ -454,8 +454,8 @@ Schema:
   "total_towers": "string or null",
   "total_units": "string or null",
   "maintenance_charges": "ONLY a concrete figure, e.g. '₹4.5 per sq.ft. per month' or '₹15,000 per month'; null if no specific number is found. Never a description of what amenities the maintenance covers.",
-  "rent_range": "string or null",
-  "buy_range": "string or null",
+  "rent_range": "ONLY a short range, e.g. '₹X - ₹Y per month'. Never add parenthetical context, configuration breakdowns or extra sentences — put that nuance in fields_to_verify instead.",
+  "buy_range": "ONLY a short range, e.g. '₹X Cr - ₹Y Cr'. Never add parenthetical context, configuration breakdowns or extra sentences — put that nuance in fields_to_verify instead.",
   "rental_yield": "string or null",
   "average_rent": "string or null",
   "average_sale_price": "string or null",

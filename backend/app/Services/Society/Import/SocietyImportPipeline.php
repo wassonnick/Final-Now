@@ -178,6 +178,20 @@ class SocietyImportPipeline
         } elseif (! empty($attr['maintenance_charges']) && mb_strlen((string) $attr['maintenance_charges']) > 60) {
             $attr['maintenance_charges'] = null;
         }
+
+        // Same problem on rent/buy ranges — the model sometimes appends a parenthetical aside
+        // ("...(resale market; primary launch from ₹X - ₹Y)") instead of a bare range, which
+        // blows out the sidebar's price box into several lines. Strip the aside; the leading
+        // range is still usable even when the commentary isn't.
+        foreach (['rent_range', 'buy_range'] as $field) {
+            if (empty($attr[$field])) {
+                continue;
+            }
+            $attr[$field] = trim(preg_replace('/\s*[(;].*$/u', '', (string) $attr[$field]));
+            if (mb_strlen($attr[$field]) > 50) {
+                $attr[$field] = null;
+            }
+        }
         foreach (['amenities', 'nearby_schools', 'nearby_metro', 'nearby_hospitals', 'nearby_office_hubs'] as $field) {
             $value = $this->cleanStringArray($aiData[$field] ?? null);
             if ($value !== []) {

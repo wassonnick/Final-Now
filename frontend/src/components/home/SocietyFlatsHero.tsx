@@ -52,12 +52,22 @@ function confidenceOf(society: any) {
   return value > 0 ? `${value}% verified` : "Pending";
 }
 
+// Some older AI-enriched records have a parenthetical aside baked into the range string
+// instead of a bare range — strip it so the card doesn't blow out into several lines.
+function stripRangeAside(value: string) {
+  return value.replace(/\s*[(;].*$/, "").trim();
+}
+
 // Renting out an under-construction unit isn't possible yet, so a rental range only makes
 // sense once the project is actually ready to move into / delivered.
 function rentTextOf(society: any) {
   const status = String(society?.projectStatus ?? society?.project_status ?? "").toLowerCase();
   if (/under construction|new launch/.test(status)) return "Available after possession";
-  return society?.rentRange || "On request";
+  return society?.rentRange ? stripRangeAside(society.rentRange) : "On request";
+}
+
+function buyTextOf(society: any) {
+  return society?.buyRange ? stripRangeAside(society.buyRange) : "On request";
 }
 
 export default function SocietyFlatsHero() {
@@ -311,7 +321,7 @@ export default function SocietyFlatsHero() {
                 </p>
                 <div className="mt-3 flex gap-4 border-t border-[#EEE6DA] pt-3">
                   <div><p className="text-[10.5px] text-[#6E756E]">Rent</p><p className="text-[13.5px] font-bold">{rentTextOf(primary)}</p></div>
-                  <div><p className="text-[10.5px] text-[#6E756E]">Buy</p><p className="text-[13.5px] font-bold">{primary?.buyRange || "On request"}</p></div>
+                  <div><p className="text-[10.5px] text-[#6E756E]">Buy</p><p className="text-[13.5px] font-bold">{buyTextOf(primary)}</p></div>
                 </div>
                 <div className="mt-3 flex items-center justify-between rounded-[9px] bg-[#F8F3EA] px-3 py-2 text-[11px]">
                   <span className="font-bold text-[#1F7A5A]">Data confidence: {confidenceOf(primary)}</span>

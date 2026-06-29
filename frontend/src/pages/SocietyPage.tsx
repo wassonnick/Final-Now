@@ -131,18 +131,26 @@ function isRentEligible(society: any) {
   return true;
 }
 
+// Some older AI-enriched records have a parenthetical aside baked into the range string
+// ("...(resale market; primary launch from ₹X - ₹Y)") instead of a bare range — strip it so
+// the sidebar's price box doesn't blow out into several lines for those records.
+function stripRangeAside(value: string) {
+  return value.replace(/\s*[(;].*$/, "").trim();
+}
+
 function rentTextForHandoff(society: any) {
   if (!isRentEligible(society)) return "Available after possession";
   const raw = readableStructuredValue(
     society?.rentRange || society?.rent_range || society?.averageRent || society?.average_rent,
   );
-  return raw ? raw.replace(/\s*(per\s*month|\/\s*month|pm)\s*$/i, "") : "On request";
+  return raw ? stripRangeAside(raw.replace(/\s*(per\s*month|\/\s*month|pm)\s*$/i, "")) : "On request";
 }
 
 function buyTextForHandoff(society: any) {
-  return readableStructuredValue(
+  const raw = readableStructuredValue(
     society?.buyRange || society?.buy_range || society?.resaleRange || society?.resale_range,
-  ) || "On request";
+  );
+  return raw ? stripRangeAside(raw) : "On request";
 }
 
 function formatHandoffUpdated(value: string) {

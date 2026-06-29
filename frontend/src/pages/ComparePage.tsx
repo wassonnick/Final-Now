@@ -86,16 +86,24 @@ function fallbackCompareImage(society: any) {
   return societyPlaceholderImage(society?.name || "Society", localityName(society));
 }
 
+// Some older AI-enriched records have a parenthetical aside baked into the range string
+// instead of a bare range — strip it so the card doesn't blow out into several lines.
+function stripRangeAside(value: string) {
+  return value.replace(/\s*[(;].*$/, "").trim();
+}
+
 // Renting out an under-construction unit isn't possible yet, so a rental range only makes
 // sense once the project is actually ready to move into / delivered.
 function rentText(society: any) {
   const status = String(society?.projectStatus ?? society?.project_status ?? "").toLowerCase();
   if (/under construction|new launch/.test(status)) return "Available after possession";
-  return society?.rentRange || society?.rent_range || society?.locality?.avg_rent_3bhk || "On request";
+  const raw = society?.rentRange || society?.rent_range || society?.locality?.avg_rent_3bhk;
+  return raw ? stripRangeAside(raw) : "On request";
 }
 
 function buyText(society: any) {
-  return society?.buyRange || society?.buy_range || society?.resaleRange || "On request";
+  const raw = society?.buyRange || society?.buy_range || society?.resaleRange;
+  return raw ? stripRangeAside(raw) : "On request";
 }
 
 function recommendedFor(society: any) {
