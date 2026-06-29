@@ -19,6 +19,7 @@ const staticRoutes = [
   { loc: "/ai-advisor", priority: "0.6", changefreq: "weekly" },
   { loc: "/broker-crm", priority: "0.6", changefreq: "weekly" },
   { loc: "/recommendations", priority: "0.6", changefreq: "weekly" },
+  { loc: "/nri-services", priority: "0.6", changefreq: "weekly" },
   { loc: "/insights", priority: "0.5", changefreq: "weekly" },
   { loc: "/chat", priority: "0.6", changefreq: "weekly" },
   { loc: "/investment-calculator", priority: "0.65", changefreq: "weekly" },

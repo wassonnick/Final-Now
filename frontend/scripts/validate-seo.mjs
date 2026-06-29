@@ -20,6 +20,7 @@ const requiredRoutes = [
   "/builder-portal",
   "/broker-crm",
   "/recommendations",
+  "/nri-services",
   "/chat",
   "/404",
 ];

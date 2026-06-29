@@ -348,6 +348,15 @@ const routeMeta = [
     schemaType: "WebPage",
   },
   {
+    path: "/nri-services",
+    title: "NRI Property Support in Gurgaon | SocietyFlats",
+    description:
+      "Request human-reviewed Gurgaon property support for buying, selling, renting out or local coordination from overseas.",
+    priority: "0.6",
+    changefreq: "weekly",
+    schemaType: "WebPage",
+  },
+  {
     path: "/chat",
     title: "Gurgaon Society AI Chat | SocietyFlats",
     description:

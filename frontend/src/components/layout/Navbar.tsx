@@ -3,7 +3,7 @@
 // C70C nav copy: clearer public CTAs for broker partnership and dashboard access.
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, Heart, Scale, MapPin, Building2, Sparkles, BarChart3, User, Home, KeyRound, BadgeIndianRupee } from 'lucide-react';
+import { Search, Menu, X, Heart, Scale, MapPin, Building2, Sparkles, BarChart3, User, Home, KeyRound, BadgeIndianRupee, Globe2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store';
 import { cn } from '@/lib/utils';
@@ -74,6 +74,7 @@ export function Navbar() {
     { label: 'Maps', href: '/maps', icon: MapPin },
     { label: 'Insights', href: '/insights', icon: BarChart3 },
     { label: 'AI Advisor', href: '/ai-advisor', icon: Sparkles },
+    { label: 'NRI', href: '/nri-services', icon: Globe2 },
     { label: 'Compare', href: '/compare', icon: Scale, badge: compareList.length },
   ];
   const desktopLinks = [
@@ -81,6 +82,7 @@ export function Navbar() {
     { label: 'Compare', href: '/compare' },
     { label: 'AI Advisor', href: '/ai-advisor' },
     { label: 'Broker', href: '/broker-crm' },
+    { label: 'NRI', href: '/nri-services' },
   ];
   const bottomActions = [
     { label: 'Home', href: '/', icon: Home },

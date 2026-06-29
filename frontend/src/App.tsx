@@ -36,6 +36,7 @@ const BuilderFloorsPage = lazy(() => import('@/pages/BuilderFloorsPage').then((m
 const BuilderPortalPage = lazy(() => import('@/pages/BuilderPortalPage').then((module) => ({ default: module.BuilderPortalPage })));
 const PublicInfoPage = lazy(() => import('@/pages/PublicInfoPage').then((module) => ({ default: module.PublicInfoPage })));
 const ReferralPage = lazy(() => import('@/pages/ReferralPage').then((module) => ({ default: module.ReferralPage })));
+const NriServicesPage = lazy(() => import('@/pages/NriServicesPage').then((module) => ({ default: module.NriServicesPage })));
 
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage').then((module) => ({ default: module.AdminLoginPage })));
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })));
@@ -55,6 +56,7 @@ const AdminSiteVisitsPage = lazy(() => import('@/pages/admin/AdminSiteVisitsPage
 const AdminRentHistoryPage = lazy(() => import('@/pages/admin/AdminRentHistoryPage').then((module) => ({ default: module.AdminRentHistoryPage })));
 const AdminBuilderPortalPage = lazy(() => import('@/pages/admin/AdminBuilderPortalPage').then((module) => ({ default: module.AdminBuilderPortalPage })));
 const AdminReferralsPage = lazy(() => import('@/pages/admin/AdminReferralsPage').then((module) => ({ default: module.AdminReferralsPage })));
+const AdminNriCasesPage = lazy(() => import('@/pages/admin/AdminNriCasesPage').then((module) => ({ default: module.AdminNriCasesPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -135,6 +137,8 @@ function AppShell() {
             <Route path="/broker-crm" element={<FeatureExperiencePage feature="broker-crm" />} />
             <Route path="/chat" element={<FeatureExperiencePage feature="chat" />} />
             <Route path="/recommendations" element={<FeatureExperiencePage feature="recommendations" />} />
+            <Route path="/nri-services" element={<NriServicesPage />} />
+            <Route path="/nri" element={<NriServicesPage />} />
 
             <Route path="/customer/dashboard" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/customer" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
@@ -194,6 +198,7 @@ function AppShell() {
             <Route path="/admin/leads" element={<ProtectedAdminRoute><AdminLeadsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/leads/:id" element={<ProtectedAdminRoute><AdminLeadDetailPage /></ProtectedAdminRoute>} />
             <Route path="/admin/referrals" element={<ProtectedAdminRoute><AdminReferralsPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/nri-cases" element={<ProtectedAdminRoute><AdminNriCasesPage /></ProtectedAdminRoute>} />
 
             <Route path="/admin/reviews" element={<ProtectedAdminRoute><AdminReviewsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsersPage /></ProtectedAdminRoute>} />
