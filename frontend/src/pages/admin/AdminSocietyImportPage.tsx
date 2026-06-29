@@ -228,6 +228,7 @@ export function AdminSocietyImportPage() {
   const [draft, setDraft] = useState<SocietyDraft | null>(null);
   const [loadingDraft, setLoadingDraft] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [rightsConfirmed, setRightsConfirmed] = useState<Record<number, boolean>>({});
   const [placePreviews, setPlacePreviews] = useState<Record<number, string>>({});
 
@@ -421,6 +422,25 @@ export function AdminSocietyImportPage() {
     }
   }
 
+  async function saveDraftReview() {
+    if (!draft) return;
+    setSavingDraft(true); setError(""); setNotice("");
+    try {
+      const json = await parseResponse(await adminFetch(`/admin/societies/${draft.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verification_status: "Reviewed" }),
+      }));
+      setNotice("Marked as reviewed — still a draft, not published.");
+      setDraft(normalizeDraft(json?.data) || draft);
+      await loadJobs();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save draft.");
+    } finally {
+      setSavingDraft(false);
+    }
+  }
+
   async function candidateDecision(index: number, action: "approve" | "reject" | "cover") {
     if (!draft) return;
     setError(""); setNotice("");
@@ -563,6 +583,9 @@ export function AdminSocietyImportPage() {
                       {publishing ? <RefreshCw className="mr-1.5 h-4 w-4 animate-spin" /> : <Rocket className="mr-1.5 h-4 w-4" />}Publish
                     </Button>
                   )}
+                  <Button type="button" size="sm" variant="outline" onClick={() => void saveDraftReview()} disabled={savingDraft} className="rounded-full border-slate-200">
+                    {savingDraft ? <RefreshCw className="mr-1.5 h-4 w-4 animate-spin" /> : null}Save Draft
+                  </Button>
                   <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200"><RouterLink to={`/admin/societies/${draft.id}/edit`}>Open in editor</RouterLink></Button>
                 </div>
               </div>

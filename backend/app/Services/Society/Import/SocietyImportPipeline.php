@@ -310,8 +310,17 @@ class SocietyImportPipeline
         // No official-source image found. Google Places photos already carry clear
         // attribution/display terms, so auto-approve the first one as the cover —
         // matching the structured-import flow, instead of leaving every draft imageless.
+        // Also auto-approve a few more into the gallery (same trust rationale, same terms)
+        // so the public page shows more than just a single photo — otherwise every gallery
+        // slot would need a separate manual "Add to gallery" click per society.
+        $coverSet = false;
+        $galleryApproved = 0;
         foreach ($candidates as $index => $candidate) {
-            if (($candidate['source'] ?? '') === 'google_places' && ! empty($candidate['photo_reference'])) {
+            if (($candidate['source'] ?? '') !== 'google_places' || empty($candidate['photo_reference'])) {
+                continue;
+            }
+
+            if (! $coverSet) {
                 $candidates[$index]['approved'] = true;
                 $candidates[$index]['is_cover'] = true;
                 $candidates[$index]['rights_confirmed'] = true;
@@ -322,9 +331,19 @@ class SocietyImportPipeline
                 $attr['image_credit'] = $candidate['credit'] ?? 'Google Places';
                 $attr['image_license_notes'] = $candidate['license_note']
                     ?? 'Google Places photo served on demand via API with attribution; auto-approved during import.';
+                $coverSet = true;
 
-                return;
+                continue;
             }
+
+            if ($galleryApproved < 3) {
+                $candidates[$index]['approved'] = true;
+                $candidates[$index]['rights_confirmed'] = true;
+                $galleryApproved++;
+            }
+        }
+        if ($coverSet) {
+            return;
         }
 
         $attr['image_approved_by_admin'] = false;

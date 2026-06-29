@@ -124,6 +124,7 @@ function SocietyCard({ society, mobile = false }: { society: any; mobile?: boole
 
 export function HomePage() {
   const [societies, setSocieties] = useState<any[]>([]);
+  const [allSocietiesCount, setAllSocietiesCount] = useState(0);
   const [properties, setProperties] = useState<any[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [propertiesStatus, setPropertiesStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -137,6 +138,7 @@ export function HomePage() {
     window.scrollTo(0, 0);
     fetchPublicSocieties()
       .then((items) => {
+        setAllSocietiesCount(items.length);
         setSocieties(items.filter(hasGooglePlacesDisplayPhoto));
         setStatus("ready");
       })
@@ -156,11 +158,11 @@ export function HomePage() {
     <div className="min-h-screen bg-[#F8F3EA] text-[#25302B]">
       <SocietyFlatsHero />
 
-      {societies.length > 0 ? (
+      {allSocietiesCount > 0 ? (
         <div className="mx-auto max-w-[1360px] px-5 pt-5 lg:px-10">
           <div className="rounded-[16px] border border-[#E7DCCB] bg-white px-5 py-4">
             <p className="text-[15px] leading-6 text-[#25302B]">
-              <span className="font-bold">{societies.length} societies live. 0 fabricated.</span>{" "}
+              <span className="font-bold">{allSocietiesCount} societies live. 0 fabricated.</span>{" "}
               <span className="text-[#6E756E]">Every listing below has a Google-verified location, an admin-approved cover photo, and a visible data-confidence label. If something can&apos;t be confirmed yet, we say so instead of guessing.</span>
             </p>
           </div>
