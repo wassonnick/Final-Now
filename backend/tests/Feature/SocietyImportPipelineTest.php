@@ -115,6 +115,11 @@ class SocietyImportPipelineTest extends TestCase
         $sources = array_column($society->image_candidates, 'source');
         $this->assertContains('official_url', $sources);
         $this->assertFalse((bool) $society->image_approved_by_admin);
+        foreach ($society->image_candidates as $candidate) {
+            $this->assertFalse((bool) ($candidate['approved'] ?? false));
+            $this->assertFalse((bool) ($candidate['rights_confirmed'] ?? false));
+            $this->assertFalse((bool) ($candidate['is_cover'] ?? false));
+        }
 
         // Always a private draft.
         $this->assertSame('Draft', $society->status);
@@ -150,13 +155,16 @@ class SocietyImportPipelineTest extends TestCase
             ->postJson("/api/admin/import/societies/{$society->id}/image-candidates", ['index' => 0, 'action' => 'cover', 'rights_confirmed' => false])
             ->assertStatus(422);
 
+        $society->update(['verification_status' => 'Reviewed']);
+
         $this->withToken('admin-test-token')
             ->postJson("/api/admin/import/societies/{$society->id}/image-candidates", ['index' => 0, 'action' => 'cover', 'rights_confirmed' => true])
             ->assertOk()
             ->assertJsonPath('data.image_status', 'google_places_reference_found')
             ->assertJsonPath('data.image_photo_reference', 'ref-1')
             ->assertJsonPath('data.image_approved_by_admin', true)
-            ->assertJsonPath('data.image_candidates.0.is_cover', true);
+            ->assertJsonPath('data.image_candidates.0.is_cover', true)
+            ->assertJsonPath('data.verification_status', 'Needs Review');
 
         $this->getJson('/api/societies')->assertOk()->assertJsonPath('data.total', 0);
     }
@@ -219,7 +227,7 @@ class SocietyImportPipelineTest extends TestCase
         $this->assertSame('Ready to Move', $data['project_status'] ?? null);
     }
 
-    public function test_imported_draft_can_be_published_from_the_review_panel(): void
+    public function test_imported_draft_requires_explicit_review_before_publish(): void
     {
         $society = Society::create([
             'name' => 'Publishable Society', 'slug' => 'publishable-society',
@@ -231,11 +239,41 @@ class SocietyImportPipelineTest extends TestCase
 
         $this->withToken('admin-test-token')
             ->postJson("/api/admin/import/societies/{$society->id}/publish")
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Mark this draft as Reviewed before publishing.');
+
+        $this->assertFalse((bool) $society->fresh()->is_published);
+
+        $this->withToken('admin-test-token')
+            ->putJson("/api/admin/societies/{$society->id}", ['verification_status' => 'Reviewed'])
+            ->assertOk()
+            ->assertJsonPath('data.verification_status', 'Reviewed');
+
+        $this->withToken('admin-test-token')
+            ->postJson("/api/admin/import/societies/{$society->id}/publish")
             ->assertOk()
             ->assertJsonPath('data.is_published', true)
             ->assertJsonPath('data.status', 'Verified');
 
         $this->getJson('/api/societies')->assertOk()->assertJsonPath('data.total', 1);
+    }
+
+    public function test_editing_a_reviewed_imported_draft_requires_a_fresh_review(): void
+    {
+        $society = Society::create([
+            'name' => 'Reviewed Society', 'slug' => 'reviewed-society',
+            'status' => 'Draft', 'verification_status' => 'Reviewed', 'is_published' => false,
+            'sector' => 'Sector 54', 'score' => 8.2, 'imported_at' => now(),
+        ]);
+
+        $this->withToken('admin-test-token')
+            ->putJson("/api/admin/societies/{$society->id}", ['description' => 'Updated after review.'])
+            ->assertOk()
+            ->assertJsonPath('data.verification_status', 'Needs Review');
+
+        $this->withToken('admin-test-token')
+            ->postJson("/api/admin/import/societies/{$society->id}/publish")
+            ->assertStatus(422);
     }
 
     public function test_import_uses_non_grounded_gemini_by_default(): void
@@ -273,7 +311,7 @@ class SocietyImportPipelineTest extends TestCase
     {
         $society = Society::create([
             'name' => 'No Score Society', 'slug' => 'no-score-society',
-            'status' => 'Draft', 'is_published' => false, 'sector' => 'Sector 54', 'score' => 0,
+            'status' => 'Draft', 'verification_status' => 'Reviewed', 'is_published' => false, 'sector' => 'Sector 54', 'score' => 0,
         ]);
 
         $this->withToken('admin-test-token')

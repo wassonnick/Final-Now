@@ -150,7 +150,7 @@ class SocietyImportPipeline
                 $attr['fields_to_verify'],
                 ['description', 'amenities', 'market_ranges', 'ai_enrichment_pending'],
             )));
-            $attr['data_quality'] = 'Google-anchored draft — Gemini gap-fill pending; re-enrich to complete soft fields. Admin verification required.';
+            $attr['data_quality'] = 'Google-anchored draft — AI gap-fill pending; re-enrich to complete soft fields. Admin verification required.';
         }
 
         return ['status' => 'ok', 'attributes' => $attr, 'image_candidates' => $candidates, 'logs' => $logs, 'gemini_unavailable' => $geminiUnavailable];
@@ -321,42 +321,18 @@ class SocietyImportPipeline
             }
         }
 
-        // No official-source image found. Google Places photos already carry clear
-        // attribution/display terms, so auto-approve the first one as the cover —
-        // matching the structured-import flow, instead of leaving every draft imageless.
-        // Also auto-approve a few more into the gallery (same trust rationale, same terms)
-        // so the public page shows more than just a single photo — otherwise every gallery
-        // slot would need a separate manual "Add to gallery" click per society.
-        $coverSet = false;
-        $galleryApproved = 0;
-        foreach ($candidates as $index => $candidate) {
+        // Google Places references are useful review candidates, but attribution terms
+        // are not a substitute for an explicit admin decision. Keep every candidate
+        // private and unapproved until rights/attribution are confirmed in the importer.
+        foreach ($candidates as $candidate) {
             if (($candidate['source'] ?? '') !== 'google_places' || empty($candidate['photo_reference'])) {
                 continue;
             }
-
-            if (! $coverSet) {
-                $candidates[$index]['approved'] = true;
-                $candidates[$index]['is_cover'] = true;
-                $candidates[$index]['rights_confirmed'] = true;
-
-                $attr['image_photo_reference'] = $candidate['photo_reference'];
-                $attr['image_status'] = 'google_places_reference_found';
-                $attr['image_approved_by_admin'] = true;
-                $attr['image_credit'] = $candidate['credit'] ?? 'Google Places';
-                $attr['image_license_notes'] = $candidate['license_note']
-                    ?? 'Google Places photo served on demand via API with attribution; auto-approved during import.';
-                $coverSet = true;
-
-                continue;
-            }
-
-            if ($galleryApproved < 3) {
-                $candidates[$index]['approved'] = true;
-                $candidates[$index]['rights_confirmed'] = true;
-                $galleryApproved++;
-            }
-        }
-        if ($coverSet) {
+            $attr['image_status'] = 'google_places_reference_found';
+            $attr['image_credit'] = $candidate['credit'] ?? 'Google Places';
+            $attr['image_license_notes'] = $candidate['license_note']
+                ?? 'Google Places photo candidate; rights and attribution require explicit admin review.';
+            $attr['image_approved_by_admin'] = false;
             return;
         }
 

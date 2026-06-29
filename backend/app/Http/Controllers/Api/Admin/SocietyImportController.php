@@ -167,8 +167,8 @@ class SocietyImportController extends Controller
      * the curated source already has description/scores/amenities/market ranges/SEO).
      * Only Google Places is called per row, to (1) resolve authoritative coordinates and
      * google_maps_url (spreadsheet lat/lng is frequently a placeholder, not measured) and
-     * (2) harvest + auto-approve a cover photo. Societies are created unpublished (Draft)
-     * so an admin still does a final visual check before anything goes live.
+     * (2) harvest private photo candidates. Societies and images remain unapproved until
+     * an admin explicitly completes review.
      */
     public function structuredImport(Request $request, PlaceResolverService $places, SocietyImageHarvestService $harvest): JsonResponse
     {
@@ -202,7 +202,11 @@ class SocietyImportController extends Controller
             $payload['name'] = $name;
             $payload['slug'] = $slug;
             $payload['imported_at'] = now();
+            $payload['status'] = 'Draft';
+            $payload['verification_status'] = 'Needs Review';
             $payload['is_published'] = false;
+            $payload['published_at'] = null;
+            $payload['image_approved_by_admin'] = false;
             $payload['source_name'] = $payload['source_name'] ?? 'Direct structured import';
 
             $place = $places->resolve($name, trim((string) ($row['locality'] ?? $row['sector'] ?? '')).' '.(string) ($row['city'] ?? 'Gurugram'));
@@ -221,17 +225,11 @@ class SocietyImportController extends Controller
                 ]);
 
                 if ($candidates !== []) {
-                    $candidates[0]['approved'] = true;
-                    $candidates[0]['is_cover'] = true;
-                    $candidates[0]['rights_confirmed'] = true;
-
                     $payload['image_candidates'] = $candidates;
-                    $payload['image_photo_reference'] = $candidates[0]['photo_reference'] ?? null;
                     $payload['image_status'] = 'google_places_reference_found';
-                    $payload['image_approved_by_admin'] = true;
                     $payload['image_credit'] = 'Google Places';
-                    $payload['image_license_notes'] = 'Google Places photo served on demand via API with attribution; auto-approved during structured import.';
-                    $imageNote = count($candidates).' Google Places photo(s) harvested; cover auto-approved.';
+                    $payload['image_license_notes'] = 'Google Places photo candidates require explicit admin rights and attribution review.';
+                    $imageNote = count($candidates).' Google Places photo candidate(s) harvested; pending admin review.';
                 } else {
                     $imageNote = 'Google Places matched but returned no photos.';
                 }
@@ -254,7 +252,7 @@ class SocietyImportController extends Controller
         ]);
     }
 
-    /** Approve/reject the single cover image candidate (Gemini/Google Places reference flow). */
+    /** Approve/reject the single cover image candidate (AI/Google Places reference flow). */
     public function imageDecision(Request $request, Society $society): JsonResponse
     {
         $data = $request->validate(['decision' => ['required', 'in:approve,reject'], 'rights_confirmed' => ['nullable', 'boolean']]);
@@ -262,7 +260,7 @@ class SocietyImportController extends Controller
             return response()->json(['message' => 'Only imported society image candidates can be reviewed here.'], 422);
         }
         if ($data['decision'] === 'reject') {
-            $society->update(['cover_image' => null, 'image_url' => null, 'image_status' => 'rejected', 'image_approved_by_admin' => false]);
+            $society->update(['cover_image' => null, 'image_url' => null, 'image_status' => 'rejected', 'image_approved_by_admin' => false, 'verification_status' => 'Needs Review']);
 
             return response()->json(['message' => 'Image candidate rejected and kept off public pages.', 'data' => $society->fresh()]);
         }
@@ -270,7 +268,7 @@ class SocietyImportController extends Controller
             return response()->json(['message' => 'Confirm image rights, permission and attribution before approval.'], 422);
         }
         if ($society->image_status === 'google_places_reference_found' && $society->place_id && str_contains(strtolower((string) $society->image_credit), 'google')) {
-            $society->update(['image_approved_by_admin' => true, 'image_license_notes' => $society->image_license_notes ?: 'Google Places attribution/display terms reviewed and approved by admin.']);
+            $society->update(['image_approved_by_admin' => true, 'image_license_notes' => $society->image_license_notes ?: 'Google Places attribution/display terms reviewed and approved by admin.', 'verification_status' => 'Needs Review']);
 
             return response()->json(['message' => 'Google Places image display approved with attribution. It remains hidden until the society is published.', 'data' => $society->fresh()]);
         }
@@ -278,7 +276,7 @@ class SocietyImportController extends Controller
         if (! $this->isDirectImageUrl($candidate)) {
             return response()->json(['message' => 'Only a direct JPG, PNG, WebP, GIF or AVIF URL can be approved. Keep Google Places/search/page links as references.'], 422);
         }
-        $society->update(['image_url' => $candidate, 'cover_image' => $candidate, 'image_status' => 'approved_for_live', 'image_approved_by_admin' => true, 'image_credit' => $society->image_credit ?: 'Admin-approved source', 'image_license_notes' => $society->image_license_notes ?: 'Rights/permission and attribution confirmed by admin.']);
+        $society->update(['image_url' => $candidate, 'cover_image' => $candidate, 'image_status' => 'approved_for_live', 'image_approved_by_admin' => true, 'image_credit' => $society->image_credit ?: 'Admin-approved source', 'image_license_notes' => $society->image_license_notes ?: 'Rights/permission and attribution confirmed by admin.', 'verification_status' => 'Needs Review']);
 
         return response()->json(['message' => 'Image approved. It can display only after the society itself is published.', 'data' => $society->fresh()]);
     }
@@ -300,7 +298,7 @@ class SocietyImportController extends Controller
 
         if ($data['action'] === 'reject') {
             array_splice($candidates, $index, 1);
-            $society->update(['image_candidates' => array_values($candidates)]);
+            $society->update(['image_candidates' => array_values($candidates), 'verification_status' => 'Needs Review']);
 
             return response()->json(['message' => 'Image candidate removed.', 'data' => $society->fresh()]);
         }
@@ -319,7 +317,7 @@ class SocietyImportController extends Controller
                 $candidates[$index]['approved'] = true;
                 $candidates[$index]['rights_confirmed'] = true;
 
-                $society->update(['image_candidates' => array_values($candidates)]);
+                $society->update(['image_candidates' => array_values($candidates), 'verification_status' => 'Needs Review']);
 
                 return response()->json(['message' => 'Google Places photo approved for the gallery. It is served with attribution and only after the society is published.', 'data' => $society->fresh()]);
             }
@@ -340,6 +338,7 @@ class SocietyImportController extends Controller
                 'cover_image' => null,
                 'image_url' => null,
                 'image_candidates' => array_values($candidates),
+                'verification_status' => 'Needs Review',
             ]);
 
             return response()->json(['message' => 'Google Places photo approved as cover. It is served with attribution and only after the society is published.', 'data' => $society->fresh()]);
@@ -375,6 +374,7 @@ class SocietyImportController extends Controller
         }
 
         $update['image_candidates'] = array_values($candidates);
+        $update['verification_status'] = 'Needs Review';
         $society->update($update);
 
         return response()->json(['message' => 'Image candidate approved. It can display only after the society is published.', 'data' => $society->fresh()]);
@@ -383,6 +383,9 @@ class SocietyImportController extends Controller
     /** Publish a reviewed draft straight from the importer: score + location required, image optional. */
     public function publish(Society $society): JsonResponse
     {
+        if (strcasecmp(trim((string) $society->verification_status), 'Reviewed') !== 0) {
+            return response()->json(['message' => 'Mark this draft as Reviewed before publishing.'], 422);
+        }
         if ((float) $society->score <= 0) {
             return response()->json(['message' => 'Set a society score before publishing.'], 422);
         }
@@ -414,7 +417,7 @@ class SocietyImportController extends Controller
         } catch (\InvalidArgumentException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         } catch (\Throwable $exception) {
-            return response()->json(['message' => 'Gemini could not complete draft re-enrichment.', 'detail' => $exception->getMessage()], 422);
+            return response()->json(['message' => 'AI enrichment could not complete draft re-enrichment.', 'detail' => $exception->getMessage()], 422);
         }
 
         return response()->json(['message' => 'Draft re-enriched with grounded data. Review every field before publishing.', 'data' => $draft]);
@@ -470,6 +473,7 @@ class SocietyImportController extends Controller
             'refreshed_at' => now()->toIso8601String(),
         ];
         $updates['field_sources'] = $fieldSources;
+        $updates['verification_status'] = 'Needs Review';
 
         $fieldsToVerify = collect((array) ($society->fields_to_verify ?? []))
             ->reject(fn ($f) => in_array($f, $marketFields, true))

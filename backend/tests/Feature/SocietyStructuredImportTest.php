@@ -20,7 +20,7 @@ class SocietyStructuredImportTest extends TestCase
         ]);
     }
 
-    public function test_structured_import_creates_unpublished_society_with_auto_approved_cover_image(): void
+    public function test_structured_import_creates_review_only_draft_with_unapproved_image_candidates(): void
     {
         Http::fake([
             'maps.googleapis.com/maps/api/place/findplacefromtext/*' => Http::response([
@@ -71,15 +71,20 @@ class SocietyStructuredImportTest extends TestCase
 
         $society = Society::where('slug', 'm3m-golfestate-sector-65-gurgaon')->first();
         $this->assertNotNull($society);
+        $this->assertSame('Draft', $society->status);
+        $this->assertSame('Needs Review', $society->verification_status);
         $this->assertFalse((bool) $society->is_published);
         $this->assertNotNull($society->imported_at);
         $this->assertSame('28.4115', $society->latitude);
         $this->assertSame('77.0705', $society->longitude);
         $this->assertSame('place-golfestate', $society->place_id);
-        $this->assertTrue((bool) $society->image_approved_by_admin);
+        $this->assertFalse((bool) $society->image_approved_by_admin);
         $this->assertSame('google_places_reference_found', $society->image_status);
         $this->assertNotEmpty($society->image_candidates);
-        $this->assertTrue((bool) $society->image_candidates[0]['approved']);
+        $this->assertFalse((bool) $society->image_candidates[0]['approved']);
+        $this->assertFalse((bool) $society->image_candidates[0]['rights_confirmed']);
+        $this->assertFalse((bool) $society->image_candidates[0]['is_cover']);
+        $this->assertNull($society->image_photo_reference);
     }
 
     public function test_structured_import_skips_existing_slug(): void

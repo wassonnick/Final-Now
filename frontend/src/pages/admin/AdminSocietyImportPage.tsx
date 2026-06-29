@@ -85,6 +85,7 @@ type SocietyDraft = {
   name: string;
   slug?: string;
   status?: string;
+  verification_status?: string;
   is_published?: boolean;
   image_approved_by_admin?: boolean;
   score?: number | string;
@@ -406,6 +407,10 @@ export function AdminSocietyImportPage() {
 
   async function publishDraft() {
     if (!draft) return;
+    if (String(draft.verification_status || "").toLowerCase() !== "reviewed") {
+      setError("Complete the review and mark this draft as Reviewed before publishing.");
+      return;
+    }
     if (!draft.image_approved_by_admin && !window.confirm("No cover image is approved yet. Publish this society live without an image?")) {
       return;
     }
@@ -422,7 +427,7 @@ export function AdminSocietyImportPage() {
     }
   }
 
-  async function saveDraftReview() {
+  async function markDraftReviewed() {
     if (!draft) return;
     setSavingDraft(true); setError(""); setNotice("");
     try {
@@ -435,7 +440,7 @@ export function AdminSocietyImportPage() {
       setDraft(normalizeDraft(json?.data) || draft);
       await loadJobs();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save draft.");
+      setError(err instanceof Error ? err.message : "Could not mark draft as reviewed.");
     } finally {
       setSavingDraft(false);
     }
@@ -464,7 +469,7 @@ export function AdminSocietyImportPage() {
   return (
     <AdminLayout
       title="Society Importer"
-      subtitle="Authoritative facts from Google, grounded gaps from Gemini, deterministic scores. Imports create review-only drafts — never public inventory."
+      subtitle="Authoritative facts from Google, grounded AI gap-fill, deterministic scores. Imports create review-only drafts — never public inventory."
     >
       <PanelErrorBoundary>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.8fr)]">
@@ -568,6 +573,9 @@ export function AdminSocietyImportPage() {
                   <p className="mt-1 text-xs text-slate-500">{draft.data_quality || "Imported draft — verify before publishing."}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-black ${String(draft.verification_status || "").toLowerCase() === "reviewed" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>
+                    {String(draft.verification_status || "Needs Review")}
+                  </span>
                   {draft.latitude && draft.longitude ? (
                     <a href={`https://www.google.com/maps/search/?api=1&query=${draft.latitude},${draft.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50"><MapPin className="h-3.5 w-3.5" />Map</a>
                   ) : null}
@@ -579,12 +587,12 @@ export function AdminSocietyImportPage() {
                       </Button>
                     </>
                   ) : (
-                    <Button type="button" size="sm" onClick={() => void publishDraft()} disabled={publishing} className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700">
+                    <Button type="button" size="sm" onClick={() => void publishDraft()} disabled={publishing || String(draft.verification_status || "").toLowerCase() !== "reviewed"} title={String(draft.verification_status || "").toLowerCase() !== "reviewed" ? "Mark this draft as Reviewed first" : undefined} className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700">
                       {publishing ? <RefreshCw className="mr-1.5 h-4 w-4 animate-spin" /> : <Rocket className="mr-1.5 h-4 w-4" />}Publish
                     </Button>
                   )}
-                  <Button type="button" size="sm" variant="outline" onClick={() => void saveDraftReview()} disabled={savingDraft} className="rounded-full border-slate-200">
-                    {savingDraft ? <RefreshCw className="mr-1.5 h-4 w-4 animate-spin" /> : null}Save Draft
+                  <Button type="button" size="sm" variant="outline" onClick={() => void markDraftReviewed()} disabled={savingDraft || draft.is_published || String(draft.verification_status || "").toLowerCase() === "reviewed"} className="rounded-full border-slate-200">
+                    {savingDraft ? <RefreshCw className="mr-1.5 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-1.5 h-4 w-4" />}Mark reviewed
                   </Button>
                   <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200"><RouterLink to={`/admin/societies/${draft.id}/edit`}>Open in editor</RouterLink></Button>
                 </div>
@@ -698,7 +706,7 @@ export function AdminSocietyImportPage() {
           <div className={`rounded-[28px] border px-4 py-3 text-sm ${aiStatus?.available ? "border-emerald-100 bg-emerald-50 text-emerald-800" : "border-amber-100 bg-amber-50 text-amber-800"}`}>
             <p className="font-black">AI enrichment: {aiStatus?.available ? "Active" : "Fallback mode"}</p>
             <p className="mt-1 text-xs opacity-80">Provider {aiStatus?.provider || "gemini"} · Model {aiStatus?.model || "not configured"} · Grounding {aiStatus?.grounding ? "on" : "off (fast)"}</p>
-            {!aiStatus?.available ? <p className="mt-1 text-xs opacity-80">Add GEMINI_API_KEY to enable grounded gap-fill. Imports still create safe drafts.</p> : null}
+            {!aiStatus?.available ? <p className="mt-1 text-xs opacity-80">Configure credentials for the selected AI provider to enable grounded gap-fill. Imports still create safe drafts.</p> : null}
           </div>
 
           <div className="rounded-[28px] border border-slate-900 bg-slate-950 p-4 shadow-sm md:p-5">
@@ -735,7 +743,7 @@ export function AdminSocietyImportPage() {
                   {job.results?.length ? (
                     <div className="mt-3 space-y-1">
                       {job.results.slice(0, 6).map((result, index) => {
-                        const aiPending = (result.message || "").toLowerCase().includes("gemini gap-fill pending");
+                        const aiPending = (result.message || "").toLowerCase().includes("gap-fill pending");
                         return (
                           <div key={`${result.name}-${index}`} className="rounded-xl bg-slate-50 px-2.5 py-2 text-xs">
                             <div className="flex items-center justify-between gap-2">
@@ -751,7 +759,7 @@ export function AdminSocietyImportPage() {
                             </div>
                             {aiPending ? (
                               <p className="mt-1 rounded-lg bg-amber-50 px-2 py-1 font-bold text-amber-700">
-                                ⚠ Gemini gap-fill pending — likely AI quota/rate limit. Description, amenities and rent/buy ranges need Re-enrich once quota resets.
+                                ⚠ AI gap-fill pending — likely provider quota/rate limit. Description, amenities and rent/buy ranges need Re-enrich once capacity resets.
                               </p>
                             ) : null}
                           </div>

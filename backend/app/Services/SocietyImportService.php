@@ -177,14 +177,14 @@ class SocietyImportService
         $society = Society::create($attr);
 
         $pending = ! empty($outcome['gemini_unavailable']);
-        $this->log($job, "Draft created: {$society->name} (ID {$society->id}). ".($pending ? 'Gemini was unavailable — re-enrich to complete soft fields.' : 'Review before publishing.'));
+        $this->log($job, "Draft created: {$society->name} (ID {$society->id}). ".($pending ? 'AI gap-fill was unavailable — re-enrich to complete soft fields.' : 'Review before publishing.'));
 
         return [
             'name' => $society->name,
             'status' => 'created',
             'id' => $society->id,
             'edit_url' => "/admin/societies/{$society->id}/edit",
-            'message' => $pending ? 'Draft created — Gemini gap-fill pending, re-enrich to complete' : 'Draft created',
+            'message' => $pending ? 'Draft created — AI gap-fill pending, re-enrich to complete' : 'Draft created',
             'row_number' => $input['row_number'] ?? null,
             'image_candidate_count' => is_array($society->image_candidates) ? count($society->image_candidates) : 0,
             'image_url' => $society->image_url,
@@ -222,7 +222,7 @@ class SocietyImportService
             'location' => trim(implode(' ', array_filter([$society->sector, $society->locality, $society->city]))),
             'seed' => $seed,
             'include_images' => $includeImages,
-            'source' => 'Gemini Draft Re-enrichment',
+            'source' => 'AI Draft Re-enrichment',
             // Re-enrich exists specifically to fill gaps the first pass left behind, so it must
             // use a real grounded search rather than repeating the same fast, training-data-only
             // call that already failed to find amenities/rent/buy/price for this society.
@@ -230,7 +230,7 @@ class SocietyImportService
         ]);
 
         if (($outcome['status'] ?? '') !== 'ok') {
-            throw new \RuntimeException($outcome['message'] ?? 'Gemini enrichment is unavailable.');
+            throw new \RuntimeException($outcome['message'] ?? 'AI enrichment is unavailable.');
         }
 
         $attr = $outcome['attributes'];
@@ -241,9 +241,8 @@ class SocietyImportService
         $attr['is_published'] = false;
         $attr['published_at'] = null;
         $attr['imported_at'] = $society->imported_at ?: now();
-        // Don't blindly reset image_approved_by_admin here — the pipeline already decided it
-        // correctly (true only for an auto-approved Google Places cover, matching structured
-        // import; false otherwise pending admin review).
+        // The pipeline never auto-approves harvested images. Re-enrichment also resets the
+        // content review state because generated fields require a fresh admin review.
 
         $society->update($attr);
 

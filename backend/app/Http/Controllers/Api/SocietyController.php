@@ -119,7 +119,24 @@ class SocietyController extends Controller {
           'data' => $s,
       ], 201);
   }
-  public function update(Request $request, Society $society): JsonResponse { $p=$this->withSocietyDefaults($this->payload($request,true), true); if(isset($p['name'])&&empty($p['slug'])) $p['slug']=Str::slug($p['name']); $society->update($p); return response()->json(['status'=>'ok','message'=>'Society updated successfully.','data'=>$society]); }
+  public function update(Request $request, Society $society): JsonResponse
+  {
+    $p = $this->withSocietyDefaults($this->payload($request, true), true);
+    if (isset($p['name']) && empty($p['slug'])) {
+      $p['slug'] = Str::slug($p['name']);
+    }
+
+    // Any content edit after an imported draft was reviewed makes that review stale.
+    // A verification_status-only request is the explicit "Mark reviewed" action.
+    $reviewOnly = count($p) === 1 && array_key_exists('verification_status', $p);
+    if ($society->imported_at && ! $society->is_published && ! $reviewOnly) {
+      $p['verification_status'] = 'Needs Review';
+    }
+
+    $society->update($p);
+
+    return response()->json(['status' => 'ok', 'message' => 'Society updated successfully.', 'data' => $society]);
+  }
   public function googlePlacesImageReference(Society $society, GooglePlacesSocietyImageService $places): JsonResponse
   {
     try {
