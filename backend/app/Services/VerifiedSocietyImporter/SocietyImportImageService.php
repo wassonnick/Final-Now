@@ -9,11 +9,20 @@ class SocietyImportImageService
     public function capture(int $jobId, int $societyId, array $data, int $confidence): array
     {
         $created = [];
+        $seen = [];
         if (! empty($data['cover_image_url']) && $this->safeRemoteUrl($data['cover_image_url'])) {
-            $created[] = $this->create($jobId,$societyId,'cover','excel_url',$data['cover_image_url'],$data,$confidence,0);
+            $seen[] = $data['cover_image_url'];
+            $created[] = $this->create($jobId,$societyId,'cover',$this->sourceType($data),$data['cover_image_url'],$data,$confidence,0);
+        }
+        if (! empty($data['image_reference_url']) && ! in_array($data['image_reference_url'],$seen,true) && $this->safeRemoteUrl($data['image_reference_url'])) {
+            $seen[] = $data['image_reference_url'];
+            $created[] = $this->create($jobId,$societyId,'reference',$this->sourceType($data),$data['image_reference_url'],$data,$confidence,count($created));
         }
         foreach (array_slice((array) ($data['gallery_image_urls'] ?? []),0,10) as $i=>$url) {
-            if ($this->safeRemoteUrl((string) $url)) $created[] = $this->create($jobId,$societyId,'gallery','excel_url',(string)$url,$data,$confidence,$i+1);
+            if (!in_array($url,$seen,true) && $this->safeRemoteUrl((string) $url)) {
+                $seen[] = $url;
+                $created[] = $this->create($jobId,$societyId,'gallery',$this->sourceType($data),(string)$url,$data,$confidence,$i+1);
+            }
         }
         if (! empty($data['google_photo_references']) && is_array($data['google_photo_references'])) {
             foreach (array_slice($data['google_photo_references'],0,10) as $i=>$reference) {
@@ -35,5 +44,14 @@ class SocietyImportImageService
     private function create(int $jobId,int $societyId,string $type,string $source,string $url,array $data,int $confidence,int $sort): VerifiedSocietyImportImage
     {
         return VerifiedSocietyImportImage::create(['import_job_id'=>$jobId,'society_id'=>$societyId,'image_type'=>$type,'source_type'=>$source,'source_url'=>$url,'alt_text'=>($data['display_name']??$data['name']).' in Gurugram','attribution'=>$data['image_attribution']??null,'sort_order'=>$sort,'confidence_score'=>$confidence,'needs_review'=>true]);
+    }
+
+    private function sourceType(array $data): string
+    {
+        return match ($data['source_type'] ?? null) {
+            'builder_website', 'builder_brochure', 'google_photos' => $data['source_type'],
+            'excel' => 'excel',
+            default => 'manual_admin',
+        };
     }
 }

@@ -16,6 +16,7 @@ class VerifiedSocietyImporterService
         private SocietyImportSourceRecorder $recorder,
         private SocietyImportDuplicateMatcher $duplicates,
         private SocietyImportImageService $images,
+        private SocietyImportProfileApplier $profileApplier,
     ) {}
 
     public function createJob(string $type, array $rows, array $options = [], ?string $fileName = null, ?string $createdBy = null): VerifiedSocietyImportJob
@@ -55,10 +56,18 @@ class VerifiedSocietyImporterService
         $data=$this->normalizer->normalize($input);
         if(mb_strlen($data['name'])<2) throw new \InvalidArgumentException('Missing society name.');
         foreach(['latitude','longitude'] as $coordinate) if(isset($data[$coordinate])&&$data[$coordinate]!==''&&!is_numeric($data[$coordinate])) throw new \InvalidArgumentException("Invalid {$coordinate}.");
+        foreach(['builder_url','developer_url','official_project_url','brochure_url','source_url','image_reference_url','cover_image_url'] as $urlField) {
+            if(!empty($data[$urlField])&&!filter_var($data[$urlField],FILTER_VALIDATE_URL)) throw new \InvalidArgumentException("Invalid {$urlField}.");
+        }
+        foreach(['image_reference_url','cover_image_url'] as $imageField) {
+            if(!empty($data[$imageField])&&!$this->images->safeRemoteUrl($data[$imageField])) throw new \InvalidArgumentException("Unsafe {$imageField}.");
+        }
+        foreach((array)($data['gallery_image_urls']??[]) as $url) if(!filter_var($url,FILTER_VALIDATE_URL)||!$this->images->safeRemoteUrl($url)) throw new \InvalidArgumentException('Invalid or unsafe gallery image URL.');
 
         $sourceType=(string)($data['source_type']??($job->job_type==='excel'?'excel':'manual_admin'));
         $allowed=['rera','hrera','dtcp','builder_website','builder_brochure','google_places','google_photos','portal_reference','manual_admin','excel','ai_extraction'];
         if(!in_array($sourceType,$allowed,true))$sourceType='excel';
+        $data['source_type']=$sourceType;
         $confidence=$this->scorer->forSource($sourceType,$data['confidence_score']??null);
         $duplicate=$this->duplicates->match($data);
         $warnings=[];
@@ -79,7 +88,7 @@ class VerifiedSocietyImporterService
             } else {
                 $attributes=$this->normalizer->societyAttributes($data);
                 $attributes['slug']=$this->uniqueSlug($attributes['slug']??Str::slug($data['name']));
-                $attributes+=['status'=>'Draft','verification_status'=>'Needs Review','is_published'=>false,'published_at'=>null,'featured'=>false,'show_in_hero'=>false,'search_boost'=>false,'image_approved_by_admin'=>false,'score'=>0,'source_name'=>'Verified Society Importer V2','source_confidence_score'=>$confidence,'data_quality'=>'Source-tracked V2 draft — admin review required.','imported_at'=>now()];
+                $attributes+=['status'=>'Draft','verification_status'=>'Needs Review','is_published'=>false,'published_at'=>null,'featured'=>false,'show_in_hero'=>false,'search_boost'=>false,'image_approved_by_admin'=>false,'score'=>7.0,'source_name'=>'Verified Society Importer V2','source_confidence_score'=>$confidence,'data_quality'=>'Source-tracked V2 draft — importer default score needs review.','imported_at'=>now()];
                 $society=Society::create($attributes);
             }
 
@@ -87,9 +96,13 @@ class VerifiedSocietyImporterService
             $this->recorder->source(['import_job_id'=>$job->id,'society_id'=>$society->id,'source_type'=>$sourceType,'source_name'=>$data['source_name']??ucwords(str_replace('_',' ',$sourceType)),'source_url'=>$primarySourceUrl,'confidence_score'=>$confidence,'raw_response'=>$input]);
             $this->recordDeclaredSources($job->id,$society->id,$data);
             foreach($data as $field=>$value) {
-                if(in_array($field,['row_number','source_type','source_url','source_name','confidence_score','cover_image_url','gallery_image_urls','image_attribution','notes','slug','normalized_name','builder_brand'],true)||$value===''||$value===[]||$value===null)continue;
+                if(in_array($field,['row_number','source_type','source_name','confidence_score','slug','normalized_name','builder_brand'],true)||$value===''||$value===[]||$value===null)continue;
                 $this->recorder->field($society->id,$job->id,$field,$value,$sourceType,$data['source_name']??null,$primarySourceUrl,$confidence,!$attached);
             }
+            if(!$attached&&(!array_key_exists('score',$data)||$data['score']==='')) {
+                $this->recorder->field($society->id,$job->id,'score',7.0,'manual_admin','Importer safe draft default',null,50,true);
+            }
+            if(!$attached) $this->profileApplier->apply($society,$data,true);
             $captured=$this->images->capture($job->id,$society->id,$data,$confidence);
             if((!empty($data['cover_image_url'])||!empty($data['gallery_image_urls']))&&$captured===[])$warnings[]='Image URL could not be validated';
 
@@ -100,7 +113,8 @@ class VerifiedSocietyImporterService
     private function refreshSummary(VerifiedSocietyImportJob $job,array $confidences=[]): VerifiedSocietyImportJob
     {
         $rows=$job->rows()->get();$failed=$rows->where('status','failed')->count();$created=$rows->where('status','created')->count();$updated=$rows->where('status','needs_review')->count();$skipped=$rows->whereIn('status',['duplicate','skipped'])->count();
-        $job->update(['processed_rows'=>$rows->count(),'created_societies_count'=>$created,'updated_societies_count'=>$updated,'skipped_count'=>$skipped,'failed_count'=>$failed,'overall_confidence'=>$confidences? (int)round(array_sum($confidences)/count($confidences)):($rows->avg('confidence_score')?:(null)),'status'=>$failed===$rows->count()&&$rows->count()>0?'failed':($failed>0?'partially_completed':'needs_review'),'summary'=>['pending_fields'=>$job->fieldSources()->where('needs_review',true)->count(),'pending_images'=>$job->images()->where('needs_review',true)->count()]]);
+        $appliedFields=$job->fieldSources()->where('is_selected_value',true)->pluck('field_name')->map(fn($field)=>$this->normalizer->societyColumn($field))->filter()->unique()->count();
+        $job->update(['processed_rows'=>$rows->count(),'created_societies_count'=>$created,'updated_societies_count'=>$updated,'skipped_count'=>$skipped,'failed_count'=>$failed,'overall_confidence'=>$confidences? (int)round(array_sum($confidences)/count($confidences)):($rows->avg('confidence_score')?:(null)),'status'=>$failed===$rows->count()&&$rows->count()>0?'failed':($failed>0?'partially_completed':'needs_review'),'summary'=>['applied_fields'=>$appliedFields,'pending_fields'=>$job->fieldSources()->where('needs_review',true)->count(),'pending_images'=>$job->images()->where('needs_review',true)->count(),'duplicate_status'=>$rows->contains('status','duplicate')?'warning':'none']]);
         return $job->fresh(['rows','sources','fieldSources','images']);
     }
 

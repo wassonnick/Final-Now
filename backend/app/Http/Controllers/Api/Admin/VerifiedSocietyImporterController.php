@@ -10,7 +10,7 @@ use App\Models\VerifiedSocietyImportJob;
 use App\Models\VerifiedSocietyImportRow;
 use App\Models\VerifiedSocietyImportSource;
 use App\Services\VerifiedSocietyImporter\SocietyImportExcelParser;
-use App\Services\VerifiedSocietyImporter\SocietyImportNormalizer;
+use App\Services\VerifiedSocietyImporter\SocietyImportProfileApplier;
 use App\Services\VerifiedSocietyImporter\VerifiedSocietyImporterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VerifiedSocietyImporterController extends Controller
 {
-    public function __construct(private VerifiedSocietyImporterService $service, private SocietyImportExcelParser $parser, private SocietyImportNormalizer $normalizer) {}
+    public function __construct(private VerifiedSocietyImporterService $service, private SocietyImportExcelParser $parser, private SocietyImportProfileApplier $profileApplier) {}
 
     public function jobs(Request $request): JsonResponse
     {
@@ -89,8 +89,9 @@ class VerifiedSocietyImporterController extends Controller
     public function approveField(Request $request, VerifiedSocietyFieldSource $field): JsonResponse
     {
         $data=$request->validate(['review_notes'=>['nullable','string','max:2000']]);
-        DB::transaction(function()use($field,$data){VerifiedSocietyFieldSource::where('society_id',$field->society_id)->where('field_name',$field->field_name)->update(['is_selected_value'=>false]);$field->update(['is_selected_value'=>true,'needs_review'=>false,'admin_approved'=>true,'admin_rejected'=>false,'confidence_score'=>max(90,(int)$field->confidence_score),'review_notes'=>$data['review_notes']??null]);$column=$this->normalizer->societyColumn($field->field_name);if($column&&($society=Society::find($field->society_id))){$value=$field->normalized_value;$decoded=json_decode((string)$value,true);$society->update([$column=>is_array($decoded)?$decoded:$value,'verification_status'=>'Needs Review']);}});
-        return response()->json(['message'=>'Field approved and selected. Society remains a draft.','data'=>$field->fresh()]);
+        $applied=[];
+        DB::transaction(function()use($field,$data,&$applied){VerifiedSocietyFieldSource::where('society_id',$field->society_id)->where('field_name',$field->field_name)->update(['is_selected_value'=>false]);$field->update(['is_selected_value'=>true,'needs_review'=>false,'admin_approved'=>true,'admin_rejected'=>false,'confidence_score'=>max(90,(int)$field->confidence_score),'review_notes'=>$data['review_notes']??null]);$applied=$this->profileApplier->applyFieldSource($field);});
+        return response()->json(['message'=>'Field approved and applied. Society remains a draft.','data'=>$field->fresh(),'applied_fields'=>$applied,'society'=>Society::find($field->society_id)]);
     }
 
     public function rejectField(Request $request, VerifiedSocietyFieldSource $field): JsonResponse
@@ -126,8 +127,18 @@ class VerifiedSocietyImporterController extends Controller
         return response()->json(['message'=>'Failed rows retried.','data'=>$this->service->retryFailed($job)]);
     }
 
+    public function applyHighConfidence(Society $society): JsonResponse
+    {
+        try {
+            $applied=$this->profileApplier->applyHighConfidence($society,80);
+        } catch (\InvalidArgumentException $exception) {
+            return response()->json(['message'=>$exception->getMessage()],422);
+        }
+        return response()->json(['message'=>count($applied).' high-confidence fields applied. Society remains a draft.','applied_fields'=>$applied,'data'=>$society->fresh()]);
+    }
+
     private function rowRules(): array
     {
-        return ['name'=>['required','string','min:2','max:255'],'display_name'=>['nullable','string','max:255'],'legal_name'=>['nullable','string','max:255'],'city'=>['nullable','string','max:100'],'sector'=>['nullable','string','max:100'],'builder_name'=>['nullable','string','max:255'],'rera_number'=>['nullable','string','max:120'],'google_place_id'=>['nullable','string','max:255'],'builder_url'=>['nullable','url','max:2000'],'brochure_url'=>['nullable','url','max:2000'],'source_url'=>['nullable','url','max:2000'],'source_type'=>['nullable','string','max:50'],'cover_image_url'=>['nullable','url','max:2000'],'gallery_image_urls'=>['nullable'],'notes'=>['nullable','string','max:3000'],'address'=>['nullable','string','max:500'],'description'=>['nullable','string','max:5000'],'amenities'=>['nullable'],'latitude'=>['nullable','numeric'],'longitude'=>['nullable','numeric'],'confidence_score'=>['nullable','integer','min:0','max:100']];
+        return ['name'=>['required','string','min:2','max:255'],'display_name'=>['nullable','string','max:255'],'legal_name'=>['nullable','string','max:255'],'city'=>['nullable','string','max:100'],'sector'=>['nullable','string','max:100'],'locality'=>['nullable','string','max:255'],'builder_name'=>['nullable','string','max:255'],'rera_number'=>['nullable','string','max:120'],'google_place_id'=>['nullable','string','max:255'],'google_maps_url'=>['nullable','url','max:2000'],'builder_url'=>['nullable','url','max:2000'],'developer_url'=>['nullable','url','max:2000'],'official_project_url'=>['nullable','url','max:2000'],'brochure_url'=>['nullable','url','max:2000'],'source_url'=>['nullable','url','max:2000'],'source_type'=>['nullable','string','max:50'],'cover_image_url'=>['nullable','url','max:2000'],'image_reference_url'=>['nullable','url','max:2000'],'gallery_image_urls'=>['nullable'],'google_photo_references'=>['nullable'],'image_attribution'=>['nullable','string','max:500'],'notes'=>['nullable','string','max:3000'],'address'=>['nullable','string','max:500'],'description'=>['nullable','string','max:5000'],'project_status'=>['nullable','string','max:100'],'possession_status'=>['nullable','string','max:100'],'possession_date'=>['nullable','string','max:100'],'amenities'=>['nullable'],'nearby_schools'=>['nullable'],'nearby_metro'=>['nullable'],'nearby_hospitals'=>['nullable'],'nearby_office_hubs'=>['nullable'],'rent_min'=>['nullable','string','max:100'],'rent_max'=>['nullable','string','max:100'],'resale_min'=>['nullable','string','max:100'],'resale_max'=>['nullable','string','max:100'],'maintenance_charges'=>['nullable','string','max:100'],'score'=>['nullable','numeric','min:0','max:10'],'security_score'=>['nullable','numeric','min:0','max:10'],'maintenance_score'=>['nullable','numeric','min:0','max:10'],'connectivity_score'=>['nullable','numeric','min:0','max:10'],'lifestyle_score'=>['nullable','numeric','min:0','max:10'],'investment_score'=>['nullable','numeric','min:0','max:10'],'latitude'=>['nullable','numeric'],'longitude'=>['nullable','numeric'],'confidence_score'=>['nullable','integer','min:0','max:100']];
     }
 }

@@ -19,4 +19,5 @@ export const approveVerifiedImportImage = (id: number) => adminFetch(`/admin/ver
 export const rejectVerifiedImportImage = (id: number) => adminFetch(`/admin/verified-importer/images/${id}/reject`, { method: "POST" }).then(json);
 export const setVerifiedImportCoverImage = (id: number) => adminFetch(`/admin/verified-importer/images/${id}/set-cover`, { method: "POST" }).then(json);
 export const retryVerifiedImportFailedRows = (id: number) => adminFetch(`/admin/verified-importer/jobs/${id}/retry-failed`, { method: "POST" }).then(json);
+export const applyVerifiedHighConfidenceFields = (societyId: number) => adminFetch(`/admin/verified-importer/societies/${societyId}/apply-high-confidence`, { method: "POST" }).then(json);
 export async function downloadVerifiedImportTemplate() { const response = await adminFetch("/admin/verified-importer/template"); if (!response.ok) throw new Error("Template download failed."); const url = URL.createObjectURL(await response.blob()); const link = document.createElement("a"); link.href = url; link.download = "verified-society-import-template.csv"; link.click(); URL.revokeObjectURL(url); }
