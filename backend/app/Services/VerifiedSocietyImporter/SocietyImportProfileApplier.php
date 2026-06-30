@@ -5,6 +5,7 @@ namespace App\Services\VerifiedSocietyImporter;
 use App\Models\Society;
 use App\Models\VerifiedSocietyFieldSource;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SocietyImportProfileApplier
 {
@@ -21,6 +22,10 @@ class SocietyImportProfileApplier
             if (!$column) continue;
             if ($column === 'image_reference_url' && $society->image_approved_by_admin) continue;
             if ($this->isScore($column) && (!$this->validScore($value))) continue;
+            if ($column === 'slug') {
+                $value=Str::slug((string)$value);
+                if ($value==='' || Society::where('slug',$value)->whereKeyNot($society->id)->exists()) continue;
+            }
 
             $updates[$column] = $this->databaseValue($column, $value);
             $appliedFields[] = (string) $field;
@@ -100,14 +105,16 @@ class SocietyImportProfileApplier
     public function mappedFields(): array
     {
         return [
-            'name', 'display_name', 'builder_name', 'city', 'sector', 'locality', 'address',
+            'name', 'display_name', 'slug', 'builder_name', 'city', 'state', 'sector', 'locality', 'address',
             'rera_number', 'project_status', 'possession_status', 'possession_date', 'property_type',
             'configurations', 'land_area', 'tower_count', 'unit_count', 'latitude', 'longitude',
             'google_place_id', 'google_maps_url', 'builder_url', 'official_project_url', 'developer_url',
             'brochure_url', 'description', 'amenities', 'nearby_schools', 'nearby_hospitals',
-            'nearby_metro', 'nearby_office_hubs', 'rent_min', 'rent_max', 'resale_min', 'resale_max',
+            'nearby_metro', 'nearby_office_hubs', 'rent_range', 'buy_range', 'rent_min', 'rent_max', 'resale_min', 'resale_max',
+            'average_rent', 'average_sale_price', 'price_per_sqft', 'rental_yield',
             'maintenance_charges', 'score', 'security_score', 'maintenance_score', 'connectivity_score',
             'lifestyle_score', 'investment_score', 'image_reference_url', 'cover_image_url', 'source_url',
+            'rera_search_url', 'meta_title', 'meta_description',
         ];
     }
 

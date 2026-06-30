@@ -85,6 +85,86 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->assertFalse($society->image_approved_by_admin);
     }
 
+    public function test_single_import_populates_the_complete_edit_profile(): void
+    {
+        $amenities = ['Clubhouse','Swimming Pool','Gym','Kids Play Area','Tennis Court','Badminton Court','Basketball Court','Jogging Track','Power Backup','Visitor Parking','Pet Friendly','24x7 Security','Concierge','CCTV','Landscaped Greens','Senior Citizen Area'];
+        $response = $this->admin()->postJson('/api/admin/verified-importer/single', [
+            'name' => 'Complete Profile Society',
+            'slug' => 'complete-profile-society-custom',
+            'builder_name' => 'Example Developer',
+            'description' => 'Source-backed complete profile description.',
+            'sector' => 'Sector-49',
+            'locality' => 'Sohna Road',
+            'city' => 'Gurgaon',
+            'state' => 'Haryana',
+            'address' => 'Sector 49, Gurugram, Haryana',
+            'google_maps_url' => 'https://maps.google.com/?q=28.418,77.052',
+            'latitude' => 28.418,
+            'longitude' => 77.052,
+            'score' => 8.1,
+            'security_score' => 8.2,
+            'maintenance_score' => 7.9,
+            'connectivity_score' => 8.3,
+            'lifestyle_score' => 8.0,
+            'investment_score' => 7.8,
+            'rent_range' => '₹70,000 - ₹95,000',
+            'buy_range' => '₹4.5 Cr - ₹6.0 Cr',
+            'average_rent' => '₹82,000',
+            'average_sale_price' => '₹5.2 Cr',
+            'price_per_sqft' => '₹24,000',
+            'rental_yield' => '3.1%',
+            'amenities' => $amenities,
+            'nearby_schools' => ['Example International School'],
+            'nearby_metro' => ['Millennium City Centre — 20 minutes'],
+            'nearby_hospitals' => ['Example Hospital'],
+            'nearby_office_hubs' => ['Golf Course Road — 15 minutes'],
+            'official_project_url' => 'https://example.com/complete-profile',
+            'developer_url' => 'https://example.com',
+            'rera_search_url' => 'https://example.com/rera-search',
+            'meta_title' => 'Complete Profile Society in Sector 49',
+            'meta_description' => 'Review-only SEO description from supplied source data.',
+        ]);
+
+        $response->assertCreated()->assertJsonPath('data.status', 'needs_review');
+        $society = Society::where('slug', 'complete-profile-society-custom')->firstOrFail();
+
+        $this->assertSame('Example Developer', $society->builder);
+        $this->assertSame('Source-backed complete profile description.', $society->description);
+        $this->assertSame('Sector 49', $society->sector);
+        $this->assertSame('Sohna Road', $society->locality);
+        $this->assertSame('Gurugram', $society->city);
+        $this->assertSame('Haryana', $society->state);
+        $this->assertSame('Sector 49, Gurugram, Haryana', $society->address);
+        $this->assertSame('https://maps.google.com/?q=28.418,77.052', $society->google_maps_url);
+        $this->assertSame('28.418', $society->latitude);
+        $this->assertSame('77.052', $society->longitude);
+        $this->assertSame('8.1', $society->score);
+        $this->assertSame('8.2', $society->security_score);
+        $this->assertSame('7.9', $society->maintenance_score);
+        $this->assertSame('8.3', $society->connectivity_score);
+        $this->assertSame('8.0', $society->lifestyle_score);
+        $this->assertSame('7.8', $society->investment_score);
+        $this->assertSame('₹70,000 - ₹95,000', $society->rent_range);
+        $this->assertSame('₹4.5 Cr - ₹6.0 Cr', $society->buy_range);
+        $this->assertSame('₹82,000', $society->average_rent);
+        $this->assertSame('₹5.2 Cr', $society->average_sale_price);
+        $this->assertSame('₹24,000', $society->price_per_sqft);
+        $this->assertSame('3.1%', $society->rental_yield);
+        $this->assertSame($amenities, $society->amenities);
+        $this->assertSame(['Example International School'], $society->nearby_schools);
+        $this->assertSame(['Millennium City Centre — 20 minutes'], $society->nearby_metro);
+        $this->assertSame(['Example Hospital'], $society->nearby_hospitals);
+        $this->assertSame(['Golf Course Road — 15 minutes'], $society->nearby_office_hubs);
+        $this->assertSame('https://example.com/complete-profile', $society->official_project_url);
+        $this->assertSame('https://example.com', $society->official_developer_url);
+        $this->assertSame('https://example.com/rera-search', $society->rera_search_url);
+        $this->assertSame('Complete Profile Society in Sector 49', $society->meta_title);
+        $this->assertSame('Review-only SEO description from supplied source data.', $society->meta_description);
+        $this->assertSame('Draft', $society->status);
+        $this->assertSame('Needs Review', $society->verification_status);
+        $this->assertFalse($society->is_published);
+    }
+
     public function test_exact_duplicate_is_skipped_by_default(): void
     {
         Society::create([
@@ -186,6 +266,11 @@ class VerifiedSocietyImporterTest extends TestCase
                 'official_project_url' => 'https://example.com/godrej-aristocrat',
                 'brochure_url' => 'https://example.com/godrej-aristocrat.pdf',
                 'office_hubs' => 'Cyber City|Golf Course Road',
+                'rent_range' => '₹75,000 - ₹90,000',
+                'price per sq ft' => '₹23,500',
+                'amenities' => 'Clubhouse|Gym|24x7 Security',
+                'seo_title' => 'Godrej Aristocrat Import Test Profile',
+                'seo_description' => 'Source-backed Excel SEO description.',
                 'cover_image_url' => 'https://example.com/image.jpg',
                 'source_type' => 'excel',
             ]],
@@ -200,6 +285,11 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->assertSame('https://example.com/godrej-aristocrat', $society->official_project_url);
         $this->assertSame('https://example.com/godrej-aristocrat.pdf', $society->official_brochure_url);
         $this->assertSame('https://example.com/image.jpg', $society->image_reference_url);
+        $this->assertSame('₹75,000 - ₹90,000', $society->rent_range);
+        $this->assertSame('₹23,500', $society->price_per_sqft);
+        $this->assertSame(['Clubhouse','Gym','24x7 Security'], $society->amenities);
+        $this->assertSame('Godrej Aristocrat Import Test Profile', $society->meta_title);
+        $this->assertSame('Source-backed Excel SEO description.', $society->meta_description);
         $this->assertFalse($society->is_published);
     }
 
