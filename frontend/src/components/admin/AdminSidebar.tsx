@@ -31,6 +31,7 @@ type AdminSidebarProps = {
 const links = [
   { label: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
   { label: "Societies", href: "/admin/societies", icon: Building2 },
+  { label: "Verified Importer", href: "/admin/verified-society-importer", icon: ShieldCheck },
   { label: "Properties", href: "/admin/properties", icon: Home },
   { label: "Leads", href: "/admin/leads", icon: MessageSquareText },
   { label: "Referrals", href: "/admin/referrals", icon: Gift },
