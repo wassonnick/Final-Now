@@ -465,6 +465,7 @@ export function SocietyPage() {
   }, [slug]);
 
   const society = apiSociety || fallbackSociety;
+  const seoContent = society?.seo_content?.status === "published" ? society.seo_content : null;
 
   const { compareList, addToCompare, removeFromCompare } = useAppStore();
   const isSocietyCompared = Boolean(
@@ -564,15 +565,38 @@ export function SocietyPage() {
     const rentRangeForSeo = field<string>(society, "rentRange", "rent_range", "");
     const buyRangeForSeo = field<string>(society, "buyRange", "buy_range", "");
 
-    setPublicSeo(
-      society?.name
-        ? `${society.name}${sectorForSeo ? `, ${sectorForSeo}` : ""} Gurgaon — Verified Profile, Price & Score | SocietyFlats`
-        : "SocietyFlats Society Profile",
-      society?.name
-        ? `${society.name} in ${sectorForSeo || "Gurgaon"}: security score ${securityScoreForSeo || "—"}/10, connectivity ${connectivityScoreForSeo || "—"}/10. ${rentRangeForSeo ? `Rent ${rentRangeForSeo}.` : ""} ${buyRangeForSeo ? `Resale ${buyRangeForSeo}.` : ""} Reviewed by SocietyFlats admin, sourced via Google Places.`
-        : "Explore verified Gurgaon society profiles, live homes and society intelligence on SocietyFlats.",
-    );
-  }, [society]);
+    const title = seoContent?.seo_title || (society?.name
+      ? `${society.name}${sectorForSeo ? `, ${sectorForSeo}` : ""} Gurgaon — Verified Profile, Price & Score | SocietyFlats`
+      : "SocietyFlats Society Profile");
+    const description = seoContent?.seo_description || (society?.name
+      ? `${society.name} in ${sectorForSeo || "Gurgaon"}: security score ${securityScoreForSeo || "—"}/10, connectivity ${connectivityScoreForSeo || "—"}/10. ${rentRangeForSeo ? `Rent ${rentRangeForSeo}.` : ""} ${buyRangeForSeo ? `Resale ${buyRangeForSeo}.` : ""} Reviewed by SocietyFlats admin, sourced via Google Places.`
+      : "Explore verified Gurgaon society profiles, live homes and society intelligence on SocietyFlats.");
+
+    const visibleFaqs = Array.isArray(seoContent?.faq_json)
+      ? seoContent.faq_json.filter((item: any) => item?.question && item?.answer)
+      : [];
+    const canonical = `https://www.societyflats.com/society/${encodeURIComponent(String(field(society, "slug", "slug", slug || "")))}`;
+    const graph: any[] = [
+      { "@type": "WebPage", name: title, description, url: canonical },
+      {
+        "@type": "ApartmentComplex",
+        name: societyNameForSeo,
+        url: canonical,
+        ...(field(society, "address", "address", "") ? { address: { "@type": "PostalAddress", streetAddress: field(society, "address", "address", ""), addressLocality: "Gurugram", addressRegion: "Haryana", addressCountry: "IN" } } : {}),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://www.societyflats.com" },
+          { "@type": "ListItem", position: 2, name: "Societies", item: "https://www.societyflats.com/societies" },
+          { "@type": "ListItem", position: 3, name: societyNameForSeo, item: canonical },
+        ],
+      },
+    ];
+    if (visibleFaqs.length) graph.push({ "@type": "FAQPage", mainEntity: visibleFaqs.map((faq: any) => ({ "@type": "Question", name: faq.question, acceptedAnswer: { "@type": "Answer", text: faq.answer } })) });
+
+    setPublicSeo(title, description, { jsonLd: { "@context": "https://schema.org", "@graph": graph } });
+  }, [society, seoContent, slug]);
 
   const similarSocieties = useMemo(() => {
     if (!society || !relatedSocieties.length) return [];
@@ -763,6 +787,14 @@ export function SocietyPage() {
   ].filter(([, href]) => Boolean(href));
   const societyLocation = safeLocation(society);
   const descriptionText = readableStructuredValue(society.description);
+  const seoFaqs = Array.isArray(seoContent?.faq_json) ? seoContent.faq_json.filter((item: any) => item?.question && item?.answer) : [];
+  const seoPros = Array.isArray(seoContent?.pros_json) ? seoContent.pros_json.filter(Boolean) : [];
+  const seoCons = Array.isArray(seoContent?.cons_json) ? seoContent.cons_json.filter(Boolean) : [];
+  const seoBestFor = Array.isArray(seoContent?.best_for_json) ? seoContent.best_for_json.filter(Boolean) : [];
+  const seoNearbyHighlights = Array.isArray(seoContent?.nearby_highlights_json) ? seoContent.nearby_highlights_json.filter(Boolean) : [];
+  const seoInternalLinks = (Array.isArray(seoContent?.internal_link_suggestions_json) ? seoContent.internal_link_suggestions_json : [])
+    .map((item: any) => typeof item === "string" ? { label: item, url: item.startsWith("/") ? item : "" } : { label: item?.label || item?.title || "", url: item?.url || item?.path || "" })
+    .filter((item: any) => item.label && /^\/[a-z0-9][a-z0-9/_?=&.-]*$/i.test(item.url));
   const societyScore = Number(field(society, "score", "score", 0));
   const subScores = [
     ["Security", field<number>(society, "securityScore", "security_score", 0)],
@@ -876,7 +908,7 @@ export function SocietyPage() {
 
         <div className="mt-7 grid items-stretch gap-9 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section>
-            <h1 className="font-display text-[38px] font-medium leading-tight tracking-[-0.01em] text-[#10251F]">{society.name}</h1>
+            <h1 className="font-display text-[38px] font-medium leading-tight tracking-[-0.01em] text-[#10251F]">{seoContent?.seo_h1 || society.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#6E756E]">
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="h-4 w-4" />
@@ -908,6 +940,8 @@ export function SocietyPage() {
                 ))}
               </div>
             </div>
+
+            {seoContent?.intro_summary ? <p className="mt-6 rounded-[16px] border border-[#E7E3DA] bg-white p-5 text-[15px] leading-7 text-[#35413B]">{seoContent.intro_summary}</p> : null}
 
             {subScores.length ? (
               <div className="mt-6">
@@ -942,8 +976,10 @@ export function SocietyPage() {
 
             <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">About this society</h2>
             <p className="mt-2.5 max-w-[760px] whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">
-              {descriptionText || `${society.name} is a published Gurgaon society profile. SocietyFlats is reviewing its project facts, pricing context, nearby intelligence and current availability.`}
+              {seoContent?.about_content || descriptionText || `${society.name} is a published Gurgaon society profile. SocietyFlats is reviewing its project facts, pricing context, nearby intelligence and current availability.`}
             </p>
+
+            {seoContent?.location_content ? <><h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Location & connectivity</h2><p className="mt-2.5 whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{seoContent.location_content}</p></> : null}
 
             <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Location intelligence</h2>
             <div className="mt-3.5 overflow-hidden rounded-[16px] border border-[#DDE4DC] bg-[#E4EBE4]">
@@ -965,13 +1001,22 @@ export function SocietyPage() {
             <div className="mt-8 grid gap-4 md:grid-cols-2">
               <div className="rounded-[16px] border border-[#E7E3DA] bg-white p-[18px]">
                 <h3 className="text-sm font-bold text-[#2A6147]">Pros</h3>
-                <div className="mt-3 space-y-2 text-[13.5px] text-[#4A534E]">{(handoffPros.length ? handoffPros : ["Published society context available"]).map((item) => <p key={item}>+ {item}</p>)}</div>
+                <div className="mt-3 space-y-2 text-[13.5px] text-[#4A534E]">{(seoPros.length ? seoPros : handoffPros.length ? handoffPros : ["Published society context available"]).map((item: string) => <p key={item}>+ {item}</p>)}</div>
               </div>
               <div className="rounded-[16px] border border-[#E7E3DA] bg-white p-[18px]">
                 <h3 className="text-sm font-bold text-[#A45F32]">Cons</h3>
-                <div className="mt-3 space-y-2 text-[13.5px] text-[#4A534E]">{(handoffCons.length ? handoffCons : ["Verify tower and unit-level pricing before deciding"]).map((item) => <p key={item}>– {item}</p>)}</div>
+                <div className="mt-3 space-y-2 text-[13.5px] text-[#4A534E]">{(seoCons.length ? seoCons : handoffCons.length ? handoffCons : ["Verify tower and unit-level pricing before deciding"]).map((item: string) => <p key={item}>– {item}</p>)}</div>
               </div>
             </div>
+
+            {seoContent ? <div className="mt-8 space-y-7">
+              {seoContent.rent_content ? <section><h2 className="text-[19px] font-bold text-[#25302B]">Rent in {society.name}</h2><p className="mt-2.5 whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{seoContent.rent_content}</p></section> : null}
+              {seoContent.sale_content ? <section><h2 className="text-[19px] font-bold text-[#25302B]">Flats for sale or resale in {society.name}</h2><p className="mt-2.5 whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{seoContent.sale_content}</p></section> : null}
+              {seoContent.amenities_content ? <section><h2 className="text-[19px] font-bold text-[#25302B]">Amenities & lifestyle</h2><p className="mt-2.5 whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{seoContent.amenities_content}</p></section> : null}
+              {seoContent.investment_content ? <section><h2 className="text-[19px] font-bold text-[#25302B]">Investment and end-use suitability</h2><p className="mt-2.5 whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{seoContent.investment_content}</p></section> : null}
+              {seoBestFor.length ? <section><h2 className="text-[19px] font-bold text-[#25302B]">Best for</h2><div className="mt-3 flex flex-wrap gap-2">{seoBestFor.map((item: string) => <span key={item} className="rounded-full border border-[#DDE7DC] bg-[#EEF5F1] px-3 py-1.5 text-sm text-[#2A6147]">{item}</span>)}</div></section> : null}
+              {seoNearbyHighlights.length ? <section><h2 className="text-[19px] font-bold text-[#25302B]">Nearby highlights</h2><ul className="mt-3 space-y-2 text-[14.5px] text-[#4A534E]">{seoNearbyHighlights.map((item: string) => <li key={item}>• {item}</li>)}</ul></section> : null}
+            </div> : null}
           </section>
 
           <aside>
@@ -1016,6 +1061,10 @@ export function SocietyPage() {
         ) : (
           <div className="rounded-[16px] border border-dashed border-[#D8D4CA] bg-white p-6 text-sm text-[#6E756E]">No verified homes are listed right now. Request current availability and SocietyFlats will check owner or broker options.</div>
         )}
+
+        {seoInternalLinks.length ? <section className="mt-11"><h2 className="text-[22px] font-bold text-[#25302B]">Explore similar Gurgaon societies</h2><div className="mt-4 flex flex-wrap gap-3">{seoInternalLinks.map((item: any) => <Link key={`${item.url}-${item.label}`} to={item.url} className="rounded-full border border-[#DDE7DC] bg-white px-4 py-2 text-sm font-semibold text-[#2A6147]">{item.label}</Link>)}</div></section> : null}
+
+        {seoFaqs.length ? <section className="mt-11"><h2 className="text-[22px] font-bold text-[#25302B]">Frequently asked questions</h2><div className="mt-4 space-y-3">{seoFaqs.map((faq: any) => <details key={faq.question} className="rounded-[16px] border border-[#E7E3DA] bg-white p-4"><summary className="cursor-pointer font-bold text-[#25302B]">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#4A534E]">{faq.answer}</p></details>)}</div></section> : null}
       </main>
 
       <div className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 lg:hidden">

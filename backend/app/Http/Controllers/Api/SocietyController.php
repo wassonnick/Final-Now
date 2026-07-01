@@ -75,7 +75,12 @@ class SocietyController extends Controller {
         ? fn ($query) => $query
         : fn ($query) => $query->publiclyAvailable();
 
-    $society = Society::with(['properties' => $properties])
+    $relations = ['properties' => $properties];
+    if (!$isAdmin) {
+        $relations['seoContent'] = fn ($query) => $query->where('status', 'published');
+    }
+
+    $society = Society::with($relations)
         ->when(is_numeric($idOrSlug), fn ($query) => $query->where('id', $idOrSlug), fn ($query) => $query->where('slug', $idOrSlug))
         ->first();
 
