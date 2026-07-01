@@ -35,4 +35,9 @@ class Society extends Model
     {
         return $this->hasMany(SocietyAnnouncement::class);
     }
+
+    public function verifiedImportImages(): HasMany
+    {
+        return $this->hasMany(VerifiedSocietyImportImage::class);
+    }
 }

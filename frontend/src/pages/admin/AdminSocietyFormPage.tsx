@@ -107,15 +107,20 @@ function friendlyFetchError(err: unknown, fallback: string) {
 function completionScore(society: AdminSociety) {
   const checks = [
     Boolean(society.name.trim()),
-    Boolean(society.slug.trim()),
+    Boolean(society.city.trim()),
     Boolean(society.sector.trim() || society.locality.trim()),
+    Boolean(society.address.trim()),
+    isValidLatLng(society.latitude, society.longitude),
+    Boolean(society.googleMapsUrl.trim()),
+    Boolean(society.builder.trim()),
+    Boolean(society.reraNumber.trim()),
+    society.amenities.length > 0,
+    Boolean(society.nearbySchools.trim() || society.nearbyMetro.trim() || society.nearbyHospitals.trim() || society.nearbyOfficeHubs.trim()),
+    Boolean(society.pendingImportImagesCount || society.coverImage.trim() || society.imageUrl.trim() || society.imageReferenceUrl.trim() || society.galleryImages.length),
     Boolean(society.description.trim()),
+    Boolean(society.metaTitle.trim() && society.metaDescription.trim()),
     Boolean(society.score.trim()),
     Boolean(society.rentRange.trim() || society.buyRange.trim()),
-    society.amenities.length > 0,
-    Boolean(society.nearbySchools.trim() || society.nearbyMetro.trim() || society.nearbyHospitals.trim()),
-    Boolean(society.officialProjectUrl.trim() || society.sourceUrl.trim()),
-    Boolean(society.coverImage.trim() || society.imageUrl.trim() || society.imageReferenceUrl.trim()),
   ];
 
   const done = checks.filter(Boolean).length;

@@ -149,6 +149,7 @@ export interface AdminSociety {
   dataQuality: string;
   updatedAt: string;
   propertiesCount?: number;
+  pendingImportImagesCount?: number;
   fieldSources: Record<string, any>;
   officialSourceLastCheckedAt: string;
 }
@@ -396,6 +397,7 @@ export function mapApiSociety(data: any): AdminSociety {
     dataQuality: data?.data_quality || '',
     updatedAt: data?.updated_at ? new Date(data.updated_at).toLocaleDateString() : 'Just now',
     propertiesCount: Number(data?.properties_count || data?.properties?.length || 0),
+    pendingImportImagesCount: Number(data?.pending_import_images_count || 0),
     fieldSources: data?.field_sources && typeof data.field_sources === 'object' ? data.field_sources : {},
     officialSourceLastCheckedAt: data?.official_source_last_checked_at || '',
   };

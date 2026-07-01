@@ -85,6 +85,10 @@ class SocietyController extends Controller {
         ], 404);
     }
 
+    if ($isAdmin) {
+        $society->loadCount(['verifiedImportImages as pending_import_images_count' => fn ($query) => $query->where('needs_review', true)->where('admin_rejected', false)]);
+    }
+
     return response()->json([
         'status' => 'ok',
         'data' => $society,

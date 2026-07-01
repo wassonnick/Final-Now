@@ -26,7 +26,7 @@ class SocietyImportImageService
         }
         if (! empty($data['google_photo_references']) && is_array($data['google_photo_references'])) {
             foreach (array_slice($data['google_photo_references'],0,10) as $i=>$reference) {
-                $created[] = VerifiedSocietyImportImage::create(['import_job_id'=>$jobId,'society_id'=>$societyId,'image_type'=>$i===0?'cover':'gallery','source_type'=>'google_photos','google_photo_reference'=>(string)$reference,'attribution'=>$data['image_attribution']??'Google Places','sort_order'=>$i,'confidence_score'=>80,'needs_review'=>true]);
+                $created[] = VerifiedSocietyImportImage::firstOrCreate(['society_id'=>$societyId,'google_photo_reference'=>(string)$reference],['import_job_id'=>$jobId,'image_type'=>$i===0?'cover':'gallery','source_type'=>'google_photos','attribution'=>$data['image_attribution']??'Google Places','sort_order'=>$i,'confidence_score'=>80,'needs_review'=>true]);
             }
         }
         return $created;
@@ -43,7 +43,7 @@ class SocietyImportImageService
 
     private function create(int $jobId,int $societyId,string $type,string $source,string $url,array $data,int $confidence,int $sort): VerifiedSocietyImportImage
     {
-        return VerifiedSocietyImportImage::create(['import_job_id'=>$jobId,'society_id'=>$societyId,'image_type'=>$type,'source_type'=>$source,'source_url'=>$url,'alt_text'=>($data['display_name']??$data['name']).' in Gurugram','attribution'=>$data['image_attribution']??null,'sort_order'=>$sort,'confidence_score'=>$confidence,'needs_review'=>true]);
+        return VerifiedSocietyImportImage::firstOrCreate(['society_id'=>$societyId,'source_url'=>$url],['import_job_id'=>$jobId,'image_type'=>$type,'source_type'=>$source,'alt_text'=>($data['display_name']??$data['name']).' in Gurugram','attribution'=>$data['image_attribution']??null,'sort_order'=>$sort,'confidence_score'=>$confidence,'needs_review'=>true]);
     }
 
     private function sourceType(array $data): string

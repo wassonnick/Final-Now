@@ -360,6 +360,11 @@ class VerifiedSocietyImporterTest extends TestCase
                 'rental_yield' => '2.8%',
                 'maintenance_charges' => '₹5 per sq ft per month',
                 'market_notes' => 'Imported broker worksheet; verify before approval.',
+                'registration_date' => '2026-01-15',
+                'oc_cc_pcc_url' => 'https://example.com/oc-certificate.pdf',
+                'nearby_malls' => 'Example Mall',
+                'nearby_markets' => 'Example Market',
+                'commute_notes' => 'Verify commute estimates manually.',
                 'source_type' => 'excel',
             ]],
         ])->assertCreated();
@@ -383,6 +388,77 @@ class VerifiedSocietyImporterTest extends TestCase
             'society_id' => $society->id,
             'field_name' => 'market_notes',
         ]);
+        foreach (['registration_date','oc_cc_pcc_url','nearby_malls','nearby_markets','commute_notes'] as $field) {
+            $this->assertDatabaseHas('verified_society_field_sources', ['society_id'=>$society->id,'field_name'=>$field]);
+        }
+    }
+
+    public function test_rera_source_layer_applies_supported_fields_and_tracks_legal_metadata(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single', ['name'=>'RERA Layer Draft'])->assertCreated();
+        $society=Society::where('name','RERA Layer Draft')->firstOrFail();
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/source-layers/rera",[
+            'rera_number'=>'GGM/RERA/LAYER/1','rera_url'=>'https://example.com/rera/layer-1','legal_name'=>'RERA Layer Legal Name',
+            'promoter_name'=>'Layer Promoter','rera_status'=>'Registered','registration_date'=>'2026-01-01','registration_validity'=>'2030-12-31',
+        ])->assertOk()->assertJsonPath('layer.confidence',95);
+        $society->refresh();
+        $this->assertSame('GGM/RERA/LAYER/1',$society->rera_number);
+        $this->assertSame('Registered',$society->rera_status);
+        $this->assertSame('https://example.com/rera/layer-1',$society->official_rera_source_url);
+        $this->assertDatabaseHas('verified_society_field_sources',['society_id'=>$society->id,'field_name'=>'promoter_name','source_type'=>'rera','confidence_score'=>95,'needs_review'=>true]);
+        $this->assertFalse($society->is_published);
+    }
+
+    public function test_builder_layer_applies_builder_amenities_description_and_deduped_images(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single', ['name'=>'Builder Layer Draft'])->assertCreated();
+        $society=Society::where('name','Builder Layer Draft')->firstOrFail();
+        $payload=[
+            'builder_name'=>'Example Builder','official_project_url'=>'https://example.com/builder-layer','brochure_url'=>'https://example.com/builder-layer.pdf',
+            'project_status'=>'Under Construction','amenities'=>'clubhouse|pool|security','description_source_text'=>'Official brochure source text.',
+            'cover_image_url'=>'https://images.example.com/builder-cover.jpg','gallery_image_urls'=>'https://images.example.com/builder-gallery.jpg|https://images.example.com/builder-cover.jpg',
+        ];
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/source-layers/builder",$payload)->assertOk();
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/source-layers/builder",$payload)->assertOk();
+        $society->refresh();
+        $this->assertSame('Example Builder',$society->builder);
+        $this->assertSame(['Clubhouse','Swimming Pool','24x7 Security'],$society->amenities);
+        $this->assertSame('Official brochure source text.',$society->description);
+        $this->assertSame(2,VerifiedSocietyImportImage::where('society_id',$society->id)->count());
+        $this->assertFalse($society->image_approved_by_admin);
+        $this->assertFalse($society->is_published);
+    }
+
+    public function test_nearby_source_layer_applies_supported_fields_and_tracks_extra_categories(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single', ['name'=>'Nearby Layer Draft'])->assertCreated();
+        $society=Society::where('name','Nearby Layer Draft')->firstOrFail();
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/source-layers/nearby",[
+            'nearby_schools'=>'School One|School Two','nearby_hospitals'=>'Hospital One','nearby_metro'=>'Metro One — verify distance',
+            'office_hubs'=>'Cyber City','nearby_malls'=>'Mall One','nearby_markets'=>'Market One','commute_notes'=>'Manual source; verify travel time.',
+        ])->assertOk();
+        $society->refresh();
+        $this->assertSame(['School One','School Two'],$society->nearby_schools);
+        $this->assertSame(['Hospital One'],$society->nearby_hospitals);
+        $this->assertSame(['Cyber City'],$society->nearby_office_hubs);
+        $this->assertDatabaseHas('verified_society_field_sources',['society_id'=>$society->id,'field_name'=>'nearby_malls','needs_review'=>true]);
+        $this->assertFalse($society->is_published);
+    }
+
+    public function test_market_source_layer_applies_ranges_as_unverified_estimates(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single', ['name'=>'Market Layer Draft'])->assertCreated();
+        $society=Society::where('name','Market Layer Draft')->firstOrFail();
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/source-layers/market",[
+            'rent_min'=>'₹45,000','rent_max'=>'₹60,000','resale_min'=>'₹2.2 Cr','resale_max'=>'₹2.8 Cr','average_rent'=>'₹52,000',
+            'market_notes'=>'Market estimate — needs review','source_type'=>'portal_reference','source_url'=>'https://example.com/market-reference',
+        ])->assertOk();
+        $society->refresh();
+        $this->assertSame('₹45,000 - ₹60,000',$society->rent_range);
+        $this->assertSame('₹2.2 Cr - ₹2.8 Cr',$society->buy_range);
+        $this->assertDatabaseHas('verified_society_field_sources',['society_id'=>$society->id,'field_name'=>'rent_min','source_type'=>'portal_reference','confidence_score'=>70,'needs_review'=>true,'admin_approved'=>false]);
+        $this->assertSame('Draft',$society->status);
+        $this->assertFalse($society->is_published);
     }
 
     public function test_description_generator_uses_present_fields_without_inventing_rera_or_prices(): void

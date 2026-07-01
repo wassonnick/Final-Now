@@ -12,6 +12,7 @@ use App\Models\VerifiedSocietyImportSource;
 use App\Services\VerifiedSocietyImporter\SocietyImportExcelParser;
 use App\Services\VerifiedSocietyImporter\SocietyImportDraftGenerator;
 use App\Services\VerifiedSocietyImporter\SocietyImportProfileApplier;
+use App\Services\VerifiedSocietyImporter\SocietyImportLayerService;
 use App\Services\VerifiedSocietyImporter\VerifiedSocietyImporterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VerifiedSocietyImporterController extends Controller
 {
-    public function __construct(private VerifiedSocietyImporterService $service, private SocietyImportExcelParser $parser, private SocietyImportProfileApplier $profileApplier, private SocietyImportDraftGenerator $generator) {}
+    public function __construct(private VerifiedSocietyImporterService $service, private SocietyImportExcelParser $parser, private SocietyImportProfileApplier $profileApplier, private SocietyImportDraftGenerator $generator, private SocietyImportLayerService $layers) {}
 
     public function jobs(Request $request): JsonResponse
     {
@@ -73,7 +74,7 @@ class VerifiedSocietyImporterController extends Controller
 
     public function downloadTemplate(): StreamedResponse
     {
-        $headers=['name','slug','builder_name','legal_name','description','city','state','sector','locality','address','google_maps_url','latitude','longitude','rera_number','rera_url','promoter_name','rera_status','registration_validity','certificate_url','amenities','score','security_score','maintenance_score','connectivity_score','lifestyle_score','investment_score','rent_min','rent_max','rent_range','resale_min','resale_max','buy_range','average_rent','average_sale_price','price_per_sqft','rental_yield','maintenance_charges','market_notes','nearby_schools','nearby_metro','nearby_hospitals','nearby_office_hubs','official_project_url','developer_url','rera_search_url','meta_title','meta_description','brochure_url','cover_image_url','gallery_image_urls','image_reference_url','source_type','source_url','confidence_score','notes'];
+        $headers=['name','slug','builder_name','legal_name','description','city','state','sector','locality','address','google_maps_url','latitude','longitude','rera_number','rera_url','promoter_name','rera_status','registration_date','registration_validity','certificate_url','oc_cc_pcc_url','builder_url','official_project_url','brochure_url','project_status','possession_status','possession_date','configurations','land_area','tower_count','unit_count','amenities','cover_image_url','gallery_image_urls','nearby_schools','nearby_hospitals','nearby_metro','office_hubs','nearby_malls','nearby_markets','commute_notes','rent_min','rent_max','rent_range','resale_min','resale_max','buy_range','average_rent','average_sale_price','price_per_sqft','rental_yield','maintenance_charges','market_notes','score','security_score','maintenance_score','connectivity_score','lifestyle_score','investment_score','seo_title','seo_description','image_reference_url','source_type','source_url','confidence_score','notes'];
         return response()->streamDownload(function()use($headers){$h=fopen('php://output','wb');fputcsv($h,$headers);$example=array_fill(0,count($headers),'');foreach(['name'=>'DLF Example','builder_name'=>'DLF','city'=>'Gurugram','state'=>'Haryana','sector'=>'Sector 54','status'=>'Draft','source_type'=>'manual_admin'] as $field=>$value){$index=array_search($field,$headers,true);if($index!==false)$example[$index]=$value;}fputcsv($h,$example);fclose($h);},'verified-society-import-template.csv',['Content-Type'=>'text/csv']);
     }
 
@@ -83,7 +84,7 @@ class VerifiedSocietyImporterController extends Controller
         $images=VerifiedSocietyImportImage::query()->where('needs_review',true)->where('admin_rejected',false)->latest()->limit(200)->get();
         $ids=$fields->pluck('society_id')->merge($images->pluck('society_id'))->filter()->unique();
         $sources=VerifiedSocietyImportSource::whereIn('society_id',$ids)->get();
-        $societies=Society::whereIn('id',$ids)->get()->map(function($society)use($fields,$images,$sources){return ['id'=>$society->id,'name'=>$society->name,'slug'=>$society->slug,'builder'=>$society->builder,'sector'=>$society->sector,'city'=>$society->city,'status'=>$society->status,'is_published'=>$society->is_published,'overall_confidence'=>$society->source_confidence_score,'source_count'=>$sources->where('society_id',$society->id)->count(),'field_count'=>$fields->where('society_id',$society->id)->count(),'image_count'=>$images->where('society_id',$society->id)->count()];});
+        $societies=Society::whereIn('id',$ids)->get()->map(function($society)use($fields,$images,$sources){return ['id'=>$society->id,'name'=>$society->name,'slug'=>$society->slug,'builder'=>$society->builder,'sector'=>$society->sector,'city'=>$society->city,'status'=>$society->status,'is_published'=>$society->is_published,'overall_confidence'=>$society->source_confidence_score,'source_count'=>$sources->where('society_id',$society->id)->count(),'field_count'=>$fields->where('society_id',$society->id)->count(),'image_count'=>$images->where('society_id',$society->id)->count(),'layers'=>$this->layers->summary($society)];});
         $duplicates=VerifiedSocietyImportRow::where('status','duplicate')->latest()->limit(100)->get();
         $lowConfidence=VerifiedSocietyImportRow::whereNotNull('confidence_score')->where('confidence_score','<',70)->latest()->limit(100)->get();
         return response()->json(['data'=>['societies'=>$societies->values(),'fields'=>$fields,'images'=>$images,'duplicates'=>$duplicates,'low_confidence'=>$lowConfidence]]);
@@ -143,6 +144,20 @@ class VerifiedSocietyImporterController extends Controller
     public function enrichExistingDraft(Society $society): JsonResponse
     {
         try{$result=$this->service->enrichExistingDraft($society);}
+        catch(\InvalidArgumentException $exception){return response()->json(['message'=>$exception->getMessage()],422);}
+        return response()->json($result);
+    }
+
+    public function importSourceLayer(Request $request, Society $society, string $layer): JsonResponse
+    {
+        $data=$request->validate([
+            'rera_number'=>['nullable','string','max:120'],'rera_url'=>['nullable','url','max:2000'],'legal_name'=>['nullable','string','max:255'],'promoter_name'=>['nullable','string','max:255'],'rera_status'=>['nullable','string','max:120'],'registration_date'=>['nullable','string','max:120'],'registration_validity'=>['nullable','string','max:255'],'certificate_url'=>['nullable','url','max:2000'],'oc_cc_pcc_url'=>['nullable','url','max:2000'],
+            'builder_name'=>['nullable','string','max:255'],'builder_url'=>['nullable','url','max:2000'],'official_project_url'=>['nullable','url','max:2000'],'brochure_url'=>['nullable','url','max:2000'],'project_status'=>['nullable','string','max:120'],'possession_status'=>['nullable','string','max:120'],'possession_date'=>['nullable','string','max:120'],'configurations'=>['nullable','string','max:255'],'land_area'=>['nullable','string','max:120'],'tower_count'=>['nullable','string','max:120'],'unit_count'=>['nullable','string','max:120'],'amenities'=>['nullable'],'description_source_text'=>['nullable','string','max:5000'],'replace_description'=>['nullable','boolean'],'cover_image_url'=>['nullable','url','max:2000'],'gallery_image_urls'=>['nullable'],
+            'nearby_schools'=>['nullable'],'nearby_hospitals'=>['nullable'],'nearby_metro'=>['nullable'],'office_hubs'=>['nullable'],'nearby_malls'=>['nullable'],'nearby_markets'=>['nullable'],'commute_notes'=>['nullable','string','max:3000'],
+            'rent_min'=>['nullable','string','max:120'],'rent_max'=>['nullable','string','max:120'],'rent_range'=>['nullable','string','max:120'],'resale_min'=>['nullable','string','max:120'],'resale_max'=>['nullable','string','max:120'],'buy_range'=>['nullable','string','max:120'],'average_rent'=>['nullable','string','max:120'],'average_sale_price'=>['nullable','string','max:120'],'price_per_sqft'=>['nullable','string','max:120'],'rental_yield'=>['nullable','string','max:120'],'maintenance_charges'=>['nullable','string','max:120'],'market_notes'=>['nullable','string','max:3000'],
+            'source_url'=>['nullable','url','max:2000'],'source_type'=>['nullable',Rule::in(['manual_admin','excel','portal_reference'])],'confidence_score'=>['nullable','integer','min:0','max:100'],'notes'=>['nullable','string','max:3000'],
+        ]);
+        try{$result=$this->layers->import($society,$layer,$data);}
         catch(\InvalidArgumentException $exception){return response()->json(['message'=>$exception->getMessage()],422);}
         return response()->json($result);
     }
