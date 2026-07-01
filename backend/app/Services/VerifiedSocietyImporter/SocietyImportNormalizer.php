@@ -13,6 +13,9 @@ class SocietyImportNormalizer
         'builder_name' => ['builder_name','builder name','builder','developer'], 'city' => ['city'], 'state' => ['state'],
         'sector' => ['sector','sector/location'], 'locality' => ['locality','location'], 'address' => ['address'],
         'rera_number' => ['rera_number','rera number','rera no','rera id'], 'rera_url' => ['rera_url','rera url'],
+        'promoter_name' => ['promoter_name','promoter name'], 'rera_status' => ['rera_status','rera status'],
+        'registration_validity' => ['registration_validity','registration validity'],
+        'certificate_url' => ['certificate_url','certificate url','rera certificate url'],
         'dtcp_license_number' => ['dtcp_license_number','dtcp license number'], 'dtcp_url' => ['dtcp_url','dtcp url'],
         'project_status' => ['project_status','project status'], 'possession_status' => ['possession_status','possession status'],
         'possession_date' => ['possession_date','possession date'],
@@ -32,6 +35,7 @@ class SocietyImportNormalizer
         'average_rent' => ['average_rent','average rent'], 'average_sale_price' => ['average_sale_price','average sale price'],
         'price_per_sqft' => ['price_per_sqft','price per sqft','price per sq ft'], 'rental_yield' => ['rental_yield','rental yield'],
         'maintenance_charges' => ['maintenance_charges','maintenance charges'],
+        'market_notes' => ['market_notes','market notes'],
         'cover_image_url' => ['cover_image_url','cover image url','cover photo'],
         'gallery_image_urls' => ['gallery_image_urls','gallery image urls','image urls','photos'],
         'image_reference_url' => ['image_reference_url','image reference url'],
@@ -75,7 +79,7 @@ class SocietyImportNormalizer
         $out['builder_name'] = $this->builder((string) ($out['builder_name'] ?? ''));
         $out['builder_brand'] = $this->builderBrand($out['builder_name']);
         $out['slug'] = Str::slug((string) ($out['slug'] ?? trim($out['display_name'].' '.$out['sector'].' '.$out['city'])));
-        $out['amenities'] = $this->list($out['amenities'] ?? []);
+        $out['amenities'] = $this->amenities($out['amenities'] ?? []);
         $out['gallery_image_urls'] = array_slice($this->list($out['gallery_image_urls'] ?? []), 0, 10);
         $out['google_photo_references'] = array_slice($this->list($out['google_photo_references'] ?? []), 0, 10);
         foreach (['nearby_schools','nearby_metro','nearby_hospitals','nearby_office_hubs'] as $nearbyField) {
@@ -91,7 +95,8 @@ class SocietyImportNormalizer
         return array_filter([
             'name'=>$data['display_name'] ?: $data['name'], 'slug'=>$data['slug'], 'builder'=>$data['builder_name'] ?: null,
             'city'=>$data['city'], 'state'=>$data['state'] ?? 'Haryana', 'sector'=>$data['sector'] ?: null, 'locality'=>$data['locality'] ?? null, 'address'=>$data['address'] ?? null,
-            'rera_number'=>$data['rera_number'] ?? null, 'project_status'=>$data['project_status'] ?? null,
+            'rera_number'=>$data['rera_number'] ?? null, 'rera_status'=>$data['rera_status'] ?? null,
+            'official_rera_source_url'=>$data['rera_url'] ?? null, 'project_status'=>$data['project_status'] ?? null,
             'possession_date'=>$data['possession_date'] ?? ($data['possession_status'] ?? null), 'society_type'=>$data['property_type'] ?? null,
             'configuration'=>$data['configurations'] ?? null, 'project_area'=>$data['land_area'] ?? null,
             'total_towers'=>$data['tower_count'] ?? null, 'total_units'=>$data['unit_count'] ?? null,
@@ -117,7 +122,7 @@ class SocietyImportNormalizer
 
     public function societyColumn(string $field): ?string
     {
-        return ['slug'=>'slug','display_name'=>'name','name'=>'name','builder_name'=>'builder','city'=>'city','state'=>'state','sector'=>'sector','locality'=>'locality','address'=>'address','rera_number'=>'rera_number','project_status'=>'project_status','possession_status'=>'possession_date','possession_date'=>'possession_date','property_type'=>'society_type','configurations'=>'configuration','land_area'=>'project_area','tower_count'=>'total_towers','unit_count'=>'total_units','latitude'=>'latitude','longitude'=>'longitude','google_place_id'=>'place_id','google_maps_url'=>'google_maps_url','builder_url'=>'official_project_url','official_project_url'=>'official_project_url','developer_url'=>'official_developer_url','brochure_url'=>'official_brochure_url','description'=>'description','amenities'=>'amenities','nearby_schools'=>'nearby_schools','nearby_hospitals'=>'nearby_hospitals','nearby_metro'=>'nearby_metro','nearby_office_hubs'=>'nearby_office_hubs','rent_range'=>'rent_range','buy_range'=>'buy_range','rent_min'=>'rent_range','rent_max'=>'rent_range','resale_min'=>'buy_range','resale_max'=>'buy_range','average_rent'=>'average_rent','average_sale_price'=>'average_sale_price','price_per_sqft'=>'price_per_sqft','rental_yield'=>'rental_yield','maintenance_charges'=>'maintenance_charges','score'=>'score','security_score'=>'security_score','maintenance_score'=>'maintenance_score','connectivity_score'=>'connectivity_score','lifestyle_score'=>'lifestyle_score','investment_score'=>'investment_score','image_reference_url'=>'image_reference_url','cover_image_url'=>'image_reference_url','source_url'=>'source_url','rera_search_url'=>'rera_search_url','meta_title'=>'meta_title','meta_description'=>'meta_description'][$field] ?? null;
+        return ['slug'=>'slug','display_name'=>'name','name'=>'name','builder_name'=>'builder','city'=>'city','state'=>'state','sector'=>'sector','locality'=>'locality','address'=>'address','rera_number'=>'rera_number','rera_url'=>'official_rera_source_url','rera_status'=>'rera_status','project_status'=>'project_status','possession_status'=>'possession_date','possession_date'=>'possession_date','property_type'=>'society_type','configurations'=>'configuration','land_area'=>'project_area','tower_count'=>'total_towers','unit_count'=>'total_units','latitude'=>'latitude','longitude'=>'longitude','google_place_id'=>'place_id','google_maps_url'=>'google_maps_url','builder_url'=>'official_project_url','official_project_url'=>'official_project_url','developer_url'=>'official_developer_url','brochure_url'=>'official_brochure_url','description'=>'description','amenities'=>'amenities','nearby_schools'=>'nearby_schools','nearby_hospitals'=>'nearby_hospitals','nearby_metro'=>'nearby_metro','nearby_office_hubs'=>'nearby_office_hubs','rent_range'=>'rent_range','buy_range'=>'buy_range','rent_min'=>'rent_range','rent_max'=>'rent_range','resale_min'=>'buy_range','resale_max'=>'buy_range','average_rent'=>'average_rent','average_sale_price'=>'average_sale_price','price_per_sqft'=>'price_per_sqft','rental_yield'=>'rental_yield','maintenance_charges'=>'maintenance_charges','score'=>'score','security_score'=>'security_score','maintenance_score'=>'maintenance_score','connectivity_score'=>'connectivity_score','lifestyle_score'=>'lifestyle_score','investment_score'=>'investment_score','image_reference_url'=>'image_reference_url','cover_image_url'=>'image_reference_url','source_url'=>'source_url','rera_search_url'=>'rera_search_url','meta_title'=>'meta_title','meta_description'=>'meta_description'][$field] ?? null;
     }
 
     public function normalizedName(string $value): string { return trim(preg_replace('/\s+/', ' ', Str::lower(preg_replace('/\b(project|residency|apartments?|floors?|gurgaon|gurugram|sector)\b/i', ' ', $value)))); }
@@ -125,6 +130,23 @@ class SocietyImportNormalizer
     private function sector(string $v): string { $v=trim($v); if (preg_match('/(?:sector|sec)[\s-]*(\d+[a-z]?)/i',$v,$m)) return 'Sector '.strtoupper($m[1]); return $v; }
     private function builder(string $v): string { return preg_replace('/^DLF\s+Ltd\.?$/i','DLF',trim($v)); }
     private function builderBrand(string $v): string { return preg_match('/\bDLF\b/i',$v) ? 'DLF' : trim($v); }
+    private function amenities(mixed $value): array
+    {
+        $known = [
+            'clubhouse'=>'Clubhouse', 'swimming pool'=>'Swimming Pool', 'pool'=>'Swimming Pool', 'gym'=>'Gym',
+            'kids play area'=>'Kids Play Area', 'children play area'=>'Kids Play Area', 'tennis court'=>'Tennis Court',
+            'badminton court'=>'Badminton Court', 'basketball court'=>'Basketball Court', 'jogging track'=>'Jogging Track',
+            'power backup'=>'Power Backup', 'visitor parking'=>'Visitor Parking', 'pet friendly'=>'Pet Friendly',
+            '24x7 security'=>'24x7 Security', '24/7 security'=>'24x7 Security', 'security'=>'24x7 Security',
+            'concierge'=>'Concierge', 'cctv'=>'CCTV', 'landscaped greens'=>'Landscaped Greens',
+            'senior citizen area'=>'Senior Citizen Area',
+        ];
+        return array_values(array_unique(array_map(function(string $amenity) use($known) {
+            $key = trim(preg_replace('/[_-]+/', ' ', mb_strtolower($amenity)));
+            $key = trim(preg_replace('/\s+/', ' ', $key));
+            return $known[$key] ?? trim($amenity);
+        }, $this->list($value))));
+    }
     private function list(mixed $v): array { if (is_array($v)) return array_values(array_unique(array_filter(array_map('trim',$v)))); return array_values(array_unique(array_filter(array_map('trim',preg_split('/[,;|\r\n]+/',(string)$v) ?: [])))); }
     private function header(string $v): string { return trim(preg_replace('/\s+/', ' ', Str::lower(str_replace(['-','_'], ' ', $v)))); }
     private function canonicalKey(string $key): string { $h=$this->header($key); foreach(self::ALIASES as $c=>$aliases) if(in_array($h,array_map([$this,'header'],$aliases),true)) return $c; return Str::snake($key); }

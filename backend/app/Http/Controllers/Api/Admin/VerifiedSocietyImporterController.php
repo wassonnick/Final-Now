@@ -10,6 +10,7 @@ use App\Models\VerifiedSocietyImportJob;
 use App\Models\VerifiedSocietyImportRow;
 use App\Models\VerifiedSocietyImportSource;
 use App\Services\VerifiedSocietyImporter\SocietyImportExcelParser;
+use App\Services\VerifiedSocietyImporter\SocietyImportDraftGenerator;
 use App\Services\VerifiedSocietyImporter\SocietyImportProfileApplier;
 use App\Services\VerifiedSocietyImporter\VerifiedSocietyImporterService;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +21,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VerifiedSocietyImporterController extends Controller
 {
-    public function __construct(private VerifiedSocietyImporterService $service, private SocietyImportExcelParser $parser, private SocietyImportProfileApplier $profileApplier) {}
+    public function __construct(private VerifiedSocietyImporterService $service, private SocietyImportExcelParser $parser, private SocietyImportProfileApplier $profileApplier, private SocietyImportDraftGenerator $generator) {}
 
     public function jobs(Request $request): JsonResponse
     {
@@ -51,7 +52,7 @@ class VerifiedSocietyImporterController extends Controller
         $data=$request->validate(['items'=>['required'],'default_city'=>['nullable','string','max:100'],'duplicate_action'=>['nullable',Rule::in(['skip','attach','create_anyway'])]]);
         $lines=is_array($data['items'])?$data['items']:(preg_split('/\r\n|\r|\n/',(string)$data['items'])?:[]);
         $rows=[];
-        foreach($lines as $line){if(is_array($line)){$rows[]=$line;continue;}$line=trim((string)$line);if($line==='')continue;$parts=array_map('trim',preg_split('/\s*[|\t,]\s*/',$line,3)?:[]);$rows[]=['name'=>$parts[0]??'','sector'=>$parts[1]??'','builder_name'=>$parts[2]??'','city'=>$data['default_city']??'Gurugram'];}
+        foreach($lines as $line){if(is_array($line)){$rows[]=$line;continue;}$line=trim((string)$line);if($line==='')continue;$parts=array_map('trim',preg_split('/\s*[|\t,]\s*/',$line,4)?:[]);$rows[]=['name'=>$parts[0]??'','sector'=>$parts[1]??'','builder_name'=>$parts[2]??'','amenities'=>$parts[3]??'','city'=>$data['default_city']??'Gurugram'];}
         if(count($rows)>100)return response()->json(['message'=>'A maximum of 100 bulk rows is allowed.'],422);
         $job=$this->service->createJob('bulk',$rows,['duplicate_action'=>$data['duplicate_action']??'skip'],null,$request->header('X-Admin-Email')?:'admin');
         return response()->json(['message'=>'Bulk verified import processed; every created society remains a draft.','data'=>$job],201);
@@ -72,7 +73,7 @@ class VerifiedSocietyImporterController extends Controller
 
     public function downloadTemplate(): StreamedResponse
     {
-        $headers=['name','slug','builder_name','description','city','state','sector','locality','address','google_maps_url','latitude','longitude','score','security_score','maintenance_score','connectivity_score','lifestyle_score','investment_score','rent_range','buy_range','average_rent','average_sale_price','price_per_sqft','rental_yield','amenities','nearby_schools','nearby_metro','nearby_hospitals','nearby_office_hubs','official_project_url','developer_url','rera_number','rera_search_url','meta_title','meta_description','brochure_url','cover_image_url','gallery_image_urls','image_reference_url','source_type','source_url','confidence_score','notes'];
+        $headers=['name','slug','builder_name','legal_name','description','city','state','sector','locality','address','google_maps_url','latitude','longitude','rera_number','rera_url','promoter_name','rera_status','registration_validity','certificate_url','amenities','score','security_score','maintenance_score','connectivity_score','lifestyle_score','investment_score','rent_min','rent_max','rent_range','resale_min','resale_max','buy_range','average_rent','average_sale_price','price_per_sqft','rental_yield','maintenance_charges','market_notes','nearby_schools','nearby_metro','nearby_hospitals','nearby_office_hubs','official_project_url','developer_url','rera_search_url','meta_title','meta_description','brochure_url','cover_image_url','gallery_image_urls','image_reference_url','source_type','source_url','confidence_score','notes'];
         return response()->streamDownload(function()use($headers){$h=fopen('php://output','wb');fputcsv($h,$headers);$example=array_fill(0,count($headers),'');foreach(['name'=>'DLF Example','builder_name'=>'DLF','city'=>'Gurugram','state'=>'Haryana','sector'=>'Sector 54','status'=>'Draft','source_type'=>'manual_admin'] as $field=>$value){$index=array_search($field,$headers,true);if($index!==false)$example[$index]=$value;}fputcsv($h,$example);fclose($h);},'verified-society-import-template.csv',['Content-Type'=>'text/csv']);
     }
 
@@ -139,8 +140,39 @@ class VerifiedSocietyImporterController extends Controller
         return response()->json(['message'=>count($applied).' high-confidence fields applied. Society remains a draft.','applied_fields'=>$applied,'data'=>$society->fresh()]);
     }
 
+    public function generateDescription(Request $request, Society $society): JsonResponse
+    {
+        $data=$request->validate(['replace'=>['nullable','boolean']]);
+        try{$result=$this->generator->description($society,(bool)($data['replace']??false));}
+        catch(\InvalidArgumentException $exception){return response()->json(['message'=>$exception->getMessage()],422);}
+        return response()->json($result+['society'=>$society->fresh()]);
+    }
+
+    public function generateSeo(Request $request, Society $society): JsonResponse
+    {
+        $data=$request->validate(['replace'=>['nullable','boolean']]);
+        try{$result=$this->generator->seo($society,(bool)($data['replace']??false));}
+        catch(\InvalidArgumentException $exception){return response()->json(['message'=>$exception->getMessage()],422);}
+        return response()->json($result+['society'=>$society->fresh()]);
+    }
+
+    public function generateScores(Request $request, Society $society): JsonResponse
+    {
+        $data=$request->validate(['replace'=>['nullable','boolean']]);
+        try{$result=$this->generator->scores($society,(bool)($data['replace']??false));}
+        catch(\InvalidArgumentException $exception){return response()->json(['message'=>$exception->getMessage()],422);}
+        return response()->json($result+['society'=>$society->fresh()]);
+    }
+
+    public function applyMarketData(Society $society): JsonResponse
+    {
+        try{$result=$this->generator->applyMarketData($society);}
+        catch(\InvalidArgumentException $exception){return response()->json(['message'=>$exception->getMessage()],422);}
+        return response()->json($result+['society'=>$society->fresh()]);
+    }
+
     private function rowRules(): array
     {
-        return ['name'=>['required','string','min:2','max:255'],'display_name'=>['nullable','string','max:255'],'legal_name'=>['nullable','string','max:255'],'slug'=>['nullable','string','max:255'],'city'=>['nullable','string','max:100'],'state'=>['nullable','string','max:100'],'sector'=>['nullable','string','max:100'],'locality'=>['nullable','string','max:255'],'builder_name'=>['nullable','string','max:255'],'rera_number'=>['nullable','string','max:120'],'rera_search_url'=>['nullable','url','max:2000'],'google_place_id'=>['nullable','string','max:255'],'google_maps_url'=>['nullable','url','max:2000'],'builder_url'=>['nullable','url','max:2000'],'developer_url'=>['nullable','url','max:2000'],'official_project_url'=>['nullable','url','max:2000'],'brochure_url'=>['nullable','url','max:2000'],'source_url'=>['nullable','url','max:2000'],'source_type'=>['nullable','string','max:50'],'cover_image_url'=>['nullable','url','max:2000'],'image_reference_url'=>['nullable','url','max:2000'],'gallery_image_urls'=>['nullable'],'google_photo_references'=>['nullable'],'image_attribution'=>['nullable','string','max:500'],'notes'=>['nullable','string','max:3000'],'address'=>['nullable','string','max:500'],'description'=>['nullable','string','max:5000'],'project_status'=>['nullable','string','max:100'],'possession_status'=>['nullable','string','max:100'],'possession_date'=>['nullable','string','max:100'],'amenities'=>['nullable','array','max:50'],'nearby_schools'=>['nullable'],'nearby_metro'=>['nullable'],'nearby_hospitals'=>['nullable'],'nearby_office_hubs'=>['nullable'],'rent_range'=>['nullable','string','max:100'],'buy_range'=>['nullable','string','max:100'],'rent_min'=>['nullable','string','max:100'],'rent_max'=>['nullable','string','max:100'],'resale_min'=>['nullable','string','max:100'],'resale_max'=>['nullable','string','max:100'],'average_rent'=>['nullable','string','max:100'],'average_sale_price'=>['nullable','string','max:100'],'price_per_sqft'=>['nullable','string','max:100'],'rental_yield'=>['nullable','string','max:100'],'maintenance_charges'=>['nullable','string','max:100'],'meta_title'=>['nullable','string','max:255'],'meta_description'=>['nullable','string','max:1000'],'score'=>['nullable','numeric','min:0','max:10'],'security_score'=>['nullable','numeric','min:0','max:10'],'maintenance_score'=>['nullable','numeric','min:0','max:10'],'connectivity_score'=>['nullable','numeric','min:0','max:10'],'lifestyle_score'=>['nullable','numeric','min:0','max:10'],'investment_score'=>['nullable','numeric','min:0','max:10'],'latitude'=>['nullable','numeric','between:-90,90'],'longitude'=>['nullable','numeric','between:-180,180'],'confidence_score'=>['nullable','integer','min:0','max:100']];
+        return ['name'=>['required','string','min:2','max:255'],'display_name'=>['nullable','string','max:255'],'legal_name'=>['nullable','string','max:255'],'slug'=>['nullable','string','max:255'],'city'=>['nullable','string','max:100'],'state'=>['nullable','string','max:100'],'sector'=>['nullable','string','max:100'],'locality'=>['nullable','string','max:255'],'builder_name'=>['nullable','string','max:255'],'rera_number'=>['nullable','string','max:120'],'rera_url'=>['nullable','url','max:2000'],'promoter_name'=>['nullable','string','max:255'],'rera_status'=>['nullable','string','max:120'],'registration_validity'=>['nullable','string','max:255'],'certificate_url'=>['nullable','url','max:2000'],'rera_search_url'=>['nullable','url','max:2000'],'google_place_id'=>['nullable','string','max:255'],'google_maps_url'=>['nullable','url','max:2000'],'builder_url'=>['nullable','url','max:2000'],'developer_url'=>['nullable','url','max:2000'],'official_project_url'=>['nullable','url','max:2000'],'brochure_url'=>['nullable','url','max:2000'],'source_url'=>['nullable','url','max:2000'],'source_type'=>['nullable','string','max:50'],'cover_image_url'=>['nullable','url','max:2000'],'image_reference_url'=>['nullable','url','max:2000'],'gallery_image_urls'=>['nullable'],'google_photo_references'=>['nullable'],'image_attribution'=>['nullable','string','max:500'],'notes'=>['nullable','string','max:3000'],'address'=>['nullable','string','max:500'],'description'=>['nullable','string','max:5000'],'project_status'=>['nullable','string','max:100'],'possession_status'=>['nullable','string','max:100'],'possession_date'=>['nullable','string','max:100'],'amenities'=>['nullable','array','max:50'],'nearby_schools'=>['nullable'],'nearby_metro'=>['nullable'],'nearby_hospitals'=>['nullable'],'nearby_office_hubs'=>['nullable'],'rent_range'=>['nullable','string','max:100'],'buy_range'=>['nullable','string','max:100'],'rent_min'=>['nullable','string','max:100'],'rent_max'=>['nullable','string','max:100'],'resale_min'=>['nullable','string','max:100'],'resale_max'=>['nullable','string','max:100'],'average_rent'=>['nullable','string','max:100'],'average_sale_price'=>['nullable','string','max:100'],'price_per_sqft'=>['nullable','string','max:100'],'rental_yield'=>['nullable','string','max:100'],'maintenance_charges'=>['nullable','string','max:100'],'market_notes'=>['nullable','string','max:3000'],'meta_title'=>['nullable','string','max:255'],'meta_description'=>['nullable','string','max:1000'],'score'=>['nullable','numeric','min:0','max:10'],'security_score'=>['nullable','numeric','min:0','max:10'],'maintenance_score'=>['nullable','numeric','min:0','max:10'],'connectivity_score'=>['nullable','numeric','min:0','max:10'],'lifestyle_score'=>['nullable','numeric','min:0','max:10'],'investment_score'=>['nullable','numeric','min:0','max:10'],'latitude'=>['nullable','numeric','between:-90,90'],'longitude'=>['nullable','numeric','between:-180,180'],'confidence_score'=>['nullable','integer','min:0','max:100']];
     }
 }

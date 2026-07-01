@@ -257,6 +257,164 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->assertNull($society->place_id);
     }
 
+    public function test_single_import_applies_rera_and_normalized_amenities_while_preserving_extra_provenance(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single', [
+            'name' => 'RERA Amenity Draft',
+            'rera_number' => 'GGM/TEST/2026/001',
+            'rera_url' => 'https://example.com/rera/project-001',
+            'promoter_name' => 'Example Promoter Private Limited',
+            'rera_status' => 'Registered',
+            'registration_validity' => 'December 2030',
+            'certificate_url' => 'https://example.com/rera/project-001-certificate.pdf',
+            'amenities' => ['clubhouse', 'pool', 'security', 'cctv', 'power_backup'],
+            'source_type' => 'rera',
+        ])->assertCreated();
+
+        $society = Society::where('name', 'RERA Amenity Draft')->firstOrFail();
+        $this->assertSame('GGM/TEST/2026/001', $society->rera_number);
+        $this->assertSame('Registered', $society->rera_status);
+        $this->assertSame('https://example.com/rera/project-001', $society->official_rera_source_url);
+        $this->assertSame(['Clubhouse','Swimming Pool','24x7 Security','CCTV','Power Backup'], $society->amenities);
+        $this->assertDatabaseHas('verified_society_field_sources', [
+            'society_id' => $society->id,
+            'field_name' => 'promoter_name',
+            'source_type' => 'rera',
+            'needs_review' => true,
+        ]);
+        $this->assertSame('Draft', $society->status);
+        $this->assertFalse($society->is_published);
+    }
+
+    public function test_excel_import_applies_amenities_and_market_ranges_with_review_confidence(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/excel/import', [
+            'file_name' => 'market-layer.csv',
+            'rows' => [[
+                'name' => 'Excel Market Draft',
+                'amenities' => 'Gym|Kids Play Area;visitor_parking',
+                'rent_min' => '₹40,000',
+                'rent_max' => '₹55,000',
+                'resale_min' => '₹2.0 Cr',
+                'resale_max' => '₹2.6 Cr',
+                'average_rent' => '₹47,000',
+                'average_sale_price' => '₹2.3 Cr',
+                'price_per_sqft' => '₹15,000',
+                'rental_yield' => '2.8%',
+                'maintenance_charges' => '₹5 per sq ft per month',
+                'market_notes' => 'Imported broker worksheet; verify before approval.',
+                'source_type' => 'excel',
+            ]],
+        ])->assertCreated();
+
+        $society = Society::where('name', 'Excel Market Draft')->firstOrFail();
+        $this->assertSame(['Gym','Kids Play Area','Visitor Parking'], $society->amenities);
+        $this->assertSame('₹40,000 - ₹55,000', $society->rent_range);
+        $this->assertSame('₹2.0 Cr - ₹2.6 Cr', $society->buy_range);
+        $this->assertSame('₹47,000', $society->average_rent);
+        $this->assertSame('₹2.3 Cr', $society->average_sale_price);
+        $this->assertSame('₹15,000', $society->price_per_sqft);
+        $this->assertSame('2.8%', $society->rental_yield);
+        $this->assertSame('₹5 per sq ft per month', $society->maintenance_charges);
+        $this->assertDatabaseHas('verified_society_field_sources', [
+            'society_id' => $society->id,
+            'field_name' => 'average_rent',
+            'confidence_score' => 60,
+            'needs_review' => true,
+        ]);
+        $this->assertDatabaseHas('verified_society_field_sources', [
+            'society_id' => $society->id,
+            'field_name' => 'market_notes',
+        ]);
+    }
+
+    public function test_description_generator_uses_present_fields_without_inventing_rera_or_prices(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single', [
+            'name' => 'Description Rule Draft',
+            'builder_name' => 'Example Builder',
+            'sector' => 'Sector 70',
+            'amenities' => ['Clubhouse', 'Gym'],
+        ])->assertCreated();
+        $society = Society::where('name', 'Description Rule Draft')->firstOrFail();
+
+        $response = $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/generate-description");
+        $response->assertOk();
+        $description = (string) $response->json('description');
+        $this->assertStringContainsString('Example Builder', $description);
+        $this->assertStringContainsString('Clubhouse, Gym', $description);
+        $this->assertStringNotContainsString('RERA', $description);
+        $this->assertStringNotContainsString('rent range', $description);
+        $this->assertStringNotContainsString('resale range', $description);
+        $this->assertDatabaseHas('verified_society_field_sources', [
+            'society_id' => $society->id,
+            'field_name' => 'description',
+            'source_type' => 'internal_generator',
+            'confidence_score' => 65,
+            'needs_review' => true,
+        ]);
+        $this->assertFalse($society->fresh()->is_published);
+    }
+
+    public function test_seo_generator_changes_availability_copy_only_when_market_data_exists(): void
+    {
+        foreach ([['SEO Without Market', null], ['SEO With Market', '₹50,000 - ₹65,000']] as [$name, $rent]) {
+            $payload = ['name' => $name, 'sector' => 'Sector 65'];
+            if ($rent) $payload['rent_range'] = $rent;
+            $this->admin()->postJson('/api/admin/verified-importer/single', $payload)->assertCreated();
+        }
+        $without = Society::where('name', 'SEO Without Market')->firstOrFail();
+        $with = Society::where('name', 'SEO With Market')->firstOrFail();
+
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$without->id}/generate-seo")->assertOk();
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$with->id}/generate-seo")->assertOk();
+
+        $this->assertStringContainsString('upcoming verified rental/resale listings', $without->fresh()->meta_description);
+        $this->assertStringContainsString('imported rental/resale information', $with->fresh()->meta_description);
+        $this->assertStringNotContainsString('upcoming verified', $with->fresh()->meta_description);
+        $this->assertFalse($without->is_published);
+        $this->assertFalse($with->is_published);
+    }
+
+    public function test_draft_score_generator_is_deterministic_capped_and_review_pending(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single', [
+            'name' => 'Score Rule Draft',
+            'latitude' => 28.4,
+            'longitude' => 77.0,
+            'google_maps_url' => 'https://maps.google.com/?q=28.4,77.0',
+            'nearby_schools' => ['School'],
+            'nearby_hospitals' => ['Hospital'],
+            'nearby_metro' => ['Metro'],
+            'nearby_office_hubs' => ['Office Hub'],
+            'amenities' => ['Clubhouse','Gym','24x7 Security','CCTV','Power Backup'],
+            'rera_number' => 'RERA-SCORE-1',
+            'official_project_url' => 'https://example.com/score-rule',
+            'rent_range' => '₹50,000 - ₹60,000',
+            'maintenance_charges' => '₹5 per sq ft',
+        ])->assertCreated();
+        $society = Society::where('name', 'Score Rule Draft')->firstOrFail();
+
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/generate-scores", ['replace' => true])->assertOk();
+        $society->refresh();
+        $this->assertSame('8.9', $society->score);
+        $this->assertLessThanOrEqual(9.2, (float) $society->score);
+        $this->assertSame('8.3', $society->connectivity_score);
+        $this->assertSame('7.6', $society->lifestyle_score);
+        $this->assertSame('7.5', $society->security_score);
+        $this->assertSame('7.0', $society->maintenance_score);
+        $this->assertSame('7.0', $society->investment_score);
+        $this->assertDatabaseHas('verified_society_field_sources', [
+            'society_id' => $society->id,
+            'field_name' => 'score',
+            'source_type' => 'importer_rule_engine',
+            'confidence_score' => 65,
+            'needs_review' => true,
+        ]);
+        $this->assertSame('Draft', $society->status);
+        $this->assertFalse($society->is_published);
+    }
+
     public function test_exact_duplicate_is_skipped_by_default(): void
     {
         Society::create([

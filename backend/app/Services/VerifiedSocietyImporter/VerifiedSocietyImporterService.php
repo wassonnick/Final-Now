@@ -79,7 +79,7 @@ class VerifiedSocietyImporterService
         foreach(['score','security_score','maintenance_score','connectivity_score','lifestyle_score','investment_score'] as $scoreField) {
             if(isset($data[$scoreField])&&$data[$scoreField]!==''&&(!is_numeric($data[$scoreField])||(float)$data[$scoreField]<0||(float)$data[$scoreField]>10)) throw new \InvalidArgumentException("{$scoreField} must be between 0 and 10.");
         }
-        foreach(['builder_url','developer_url','official_project_url','brochure_url','source_url','rera_search_url','image_reference_url','cover_image_url'] as $urlField) {
+        foreach(['builder_url','developer_url','official_project_url','brochure_url','source_url','rera_url','certificate_url','rera_search_url','image_reference_url','cover_image_url'] as $urlField) {
             if(!empty($data[$urlField])&&!filter_var($data[$urlField],FILTER_VALIDATE_URL)) throw new \InvalidArgumentException("Invalid {$urlField}.");
         }
         foreach(['image_reference_url','cover_image_url'] as $imageField) {
@@ -129,7 +129,7 @@ class VerifiedSocietyImporterService
                 $fieldSource=$isGoogle?(in_array($field,['google_photo_references','image_attribution'],true)?'google_photos':'google_places'):$sourceType;
                 $fieldName=$isGoogle?($fieldSource==='google_photos'?'Google Places photos':'Google Places'):($data['source_name']??null);
                 $fieldUrl=$isGoogle?($data['google_maps_url']??null):$primarySourceUrl;
-                $fieldConfidence=$isGoogle?$this->scorer->forSource($fieldSource):$confidence;
+                $fieldConfidence=$isGoogle?$this->scorer->forSource($fieldSource):$this->fieldConfidence($field,$sourceType,$confidence);
                 $this->recorder->field($society->id,$job->id,$field,$value,$fieldSource,$fieldName,$fieldUrl,$fieldConfidence,!$attached);
             }
             if(!$attached&&(!array_key_exists('score',$data)||$data['score']==='')) {
@@ -159,6 +159,13 @@ class VerifiedSocietyImporterService
     private function emptyValue(mixed $value): bool
     {
         return $value === null || $value === '' || $value === [];
+    }
+
+    private function fieldConfidence(string $field, string $sourceType, int $confidence): int
+    {
+        $marketFields=['rent_min','rent_max','rent_range','resale_min','resale_max','buy_range','average_rent','average_sale_price','price_per_sqft','rental_yield','maintenance_charges','market_notes'];
+        if(!in_array($field,$marketFields,true))return $confidence;
+        return match($sourceType){'manual_admin'=>min($confidence,75),'excel'=>min($confidence,60),'portal_reference'=>min($confidence,60),default=>min($confidence,75)};
     }
 
     private function recordDeclaredSources(int $jobId, int $societyId, array $data): void

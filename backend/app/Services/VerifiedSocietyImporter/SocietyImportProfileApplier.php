@@ -106,7 +106,7 @@ class SocietyImportProfileApplier
     {
         return [
             'name', 'display_name', 'slug', 'builder_name', 'city', 'state', 'sector', 'locality', 'address',
-            'rera_number', 'project_status', 'possession_status', 'possession_date', 'property_type',
+            'rera_number', 'rera_url', 'rera_status', 'project_status', 'possession_status', 'possession_date', 'property_type',
             'configurations', 'land_area', 'tower_count', 'unit_count', 'latitude', 'longitude',
             'google_place_id', 'google_maps_url', 'builder_url', 'official_project_url', 'developer_url',
             'brochure_url', 'description', 'amenities', 'nearby_schools', 'nearby_hospitals',
