@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Society;
 use App\Models\SocietySeoContent;
+use App\Models\Property;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -91,12 +92,30 @@ class SocietySeoContentTest extends TestCase
             'candidates' => [['content' => ['parts' => [['text' => json_encode($this->completePayload())]]]]],
         ])]);
         $society = $this->society();
+        $society->update(['status' => 'Verified', 'is_published' => true]);
+        Property::create([
+            'society_id' => $society->id,
+            'title' => 'Published SEO context home',
+            'slug' => 'published-seo-context-home',
+            'listing_type' => 'Rent',
+            'status' => 'Live',
+            'verified' => true,
+            'verified_at' => now(),
+            'availability_checked_at' => now(),
+            'published_at' => now(),
+        ]);
 
         $this->admin()->postJson("/api/admin/societies/{$society->id}/seo-content/generate-ai-draft")
             ->assertOk()
             ->assertJsonPath('data.status', 'needs_review')
             ->assertJsonPath('data.generated_by', 'ai')
             ->assertJsonPath('data.published_at', null);
+
+        Http::assertSent(function ($request) {
+            $prompt = (string) data_get($request->data(), 'contents.0.parts.0.text', '');
+
+            return str_contains($prompt, '"published_inventory_count":1');
+        });
 
         $content = $society->seoContent()->firstOrFail();
         $content->update(['status' => 'published', 'published_at' => now()]);

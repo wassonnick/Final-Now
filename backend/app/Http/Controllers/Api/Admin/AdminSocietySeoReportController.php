@@ -110,7 +110,7 @@ class AdminSocietySeoReportController extends Controller
             } catch (\Throwable $exception) {
                 report($exception);
                 $summary['failed']++;
-                $summary['items'][] = ['society_id' => $society->id, 'name' => $society->name, 'error' => $exception->getMessage()];
+                $summary['items'][] = ['society_id' => $society->id, 'name' => $society->name, 'error' => 'SEO draft generation failed for this society.'];
             }
         }
 

@@ -64,7 +64,10 @@ class SocietySeoAiDraftService
 
     private function facts(Society $society): array
     {
-        $society->loadMissing(['properties' => fn ($query) => $query->select('id', 'society_id', 'listing_type', 'status', 'is_published')]);
+        // Properties use the publication audit timestamps and verified flag; there is no
+        // properties.is_published column. Reuse the canonical public-inventory scope so this
+        // remains aligned with PropertyController and the live PostgreSQL schema.
+        $publishedInventoryCount = $society->properties()->publiclyAvailable()->count();
 
         return [
             'name' => $society->name,
@@ -90,7 +93,7 @@ class SocietySeoAiDraftService
             'existing_description' => $society->description,
             'official_project_url' => $society->official_project_url,
             'official_rera_source_url' => $society->official_rera_source_url,
-            'published_inventory_count' => $society->properties->filter(fn ($property) => $property->is_published || in_array(strtolower((string) $property->status), ['live', 'published', 'active'], true))->count(),
+            'published_inventory_count' => $publishedInventoryCount,
         ];
     }
 

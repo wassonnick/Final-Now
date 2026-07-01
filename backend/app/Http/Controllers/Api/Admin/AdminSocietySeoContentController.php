@@ -141,8 +141,16 @@ class AdminSocietySeoContentController extends Controller
 
         try {
             $result = $this->ai->generate($society, $mode, $content?->only(SocietySeoAiDraftService::OUTPUT_KEYS) ?: []);
-        } catch (\Throwable $exception) {
+        } catch (\RuntimeException $exception) {
             return response()->json(['status' => 'error', 'message' => $exception->getMessage(), 'warnings' => $this->ai->missingFacts($society)], 422);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The SEO draft could not be generated. No content was saved or published.',
+                'warnings' => $this->ai->missingFacts($society),
+            ], 422);
         }
 
         $content = $society->seoContent()->firstOrNew();
