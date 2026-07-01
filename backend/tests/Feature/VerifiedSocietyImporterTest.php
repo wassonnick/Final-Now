@@ -208,6 +208,7 @@ class VerifiedSocietyImporterTest extends TestCase
         $society = Society::where('name', 'Google Enriched Society')->firstOrFail();
         $this->assertSame('ChIJ-google-test', $society->place_id);
         $this->assertSame('https://maps.google.com/?cid=12345', $society->google_maps_url);
+        $this->assertSame('https://maps.google.com/?cid=12345', $society->source_url);
         $this->assertSame('Sector 49, Gurugram, Haryana 122018, India', $society->address);
         $this->assertSame('Sector 49', $society->sector);
         $this->assertSame('28.4181234', $society->latitude);

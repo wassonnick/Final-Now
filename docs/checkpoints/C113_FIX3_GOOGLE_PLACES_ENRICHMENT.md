@@ -10,7 +10,7 @@ The Verified Society Importer accepted the complete profile schema, but **Create
 ## Change
 
 - Connected the V2 importer to the existing server-side Google Places resolver.
-- A reliable match can now fill blank Google-owned fields: place ID, Maps URL, coordinates, formatted address, sector/locality/city/state, place website and up to ten photo references.
+- A reliable match can now fill blank Google-owned fields: place ID, Maps/source URL, coordinates, formatted address, sector/locality/city/state, place website and up to ten photo references.
 - Admin-entered values always win; Google enrichment only fills blank fields.
 - Google Places and Google Photos values receive their own source records, field provenance and confidence values.
 - Photo references enter the existing image review queue and are never approved or published automatically.

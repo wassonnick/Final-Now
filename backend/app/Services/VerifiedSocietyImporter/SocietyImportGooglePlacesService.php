@@ -52,6 +52,7 @@ class SocietyImportGooglePlacesService
         $data = [
             'google_place_id' => $place['place_id'] ?? null,
             'google_maps_url' => $place['google_maps_url'] ?? null,
+            'source_url' => $place['google_maps_url'] ?? null,
             'latitude' => $place['latitude'] ?? null,
             'longitude' => $place['longitude'] ?? null,
             'address' => $place['formatted_address'] ?? null,
