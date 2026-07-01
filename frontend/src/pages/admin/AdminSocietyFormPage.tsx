@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { VerifiedImportImageCard, type VerifiedImportImage } from "@/components/admin/VerifiedImportImageCard";
+import { SocietySeoStudio } from "@/components/admin/SocietySeoStudio";
 import { adminFetch, uploadAdminImage } from "@/lib/adminApi";
 import { googlePlacesSocietyPhotoUrl, societyPlaceholderImage } from "@/lib/societyImages";
 import {
@@ -1459,6 +1460,8 @@ export function AdminSocietyFormPage() {
                 </label>
               </div>
             </section>
+
+            {isEdit && society.id ? <SocietySeoStudio society={society} /> : null}
           </div>
 
           <aside className="space-y-4 md:space-y-5">
