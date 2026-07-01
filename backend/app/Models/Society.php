@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Society extends Model
 {
@@ -39,5 +40,10 @@ class Society extends Model
     public function verifiedImportImages(): HasMany
     {
         return $this->hasMany(VerifiedSocietyImportImage::class);
+    }
+
+    public function seoContent(): HasOne
+    {
+        return $this->hasOne(SocietySeoContent::class);
     }
 }
