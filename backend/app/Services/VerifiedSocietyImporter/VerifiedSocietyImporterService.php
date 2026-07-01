@@ -5,6 +5,8 @@ namespace App\Services\VerifiedSocietyImporter;
 use App\Models\Society;
 use App\Models\VerifiedSocietyImportJob;
 use App\Models\VerifiedSocietyImportRow;
+use App\Models\VerifiedSocietyFieldSource;
+use App\Models\VerifiedSocietyImportSource;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -50,6 +52,43 @@ class VerifiedSocietyImporterService
         $failed->each->delete();
         $job->update(['status'=>'running']);
         return $this->process($job,$rows,(array)($job->input_payload['options']??[]));
+    }
+
+    public function enrichExistingDraft(Society $society): array
+    {
+        if($society->source_name!=='Verified Society Importer V2')throw new \InvalidArgumentException('This action is limited to Verified Importer drafts.');
+        $enrichment=$this->googlePlaces->enrich([
+            'name'=>$society->name,'sector'=>$society->sector,'locality'=>$society->locality,
+            'address'=>$society->address,'city'=>$society->city,'state'=>$society->state,
+            'google_place_id'=>$society->place_id,
+        ]);
+        if(($enrichment['status']??null)!=='enriched')return ['message'=>$enrichment['message']??'Google Places returned no reliable match.','applied_fields'=>[],'pending_images'=>0];
+
+        $fields=[];
+        foreach((array)($enrichment['data']??[]) as $field=>$value) {
+            $column=$this->normalizer->societyColumn((string)$field);
+            if($column&&$this->emptyValue($society->{$column}))$fields[(string)$field]=$value;
+            elseif(in_array($field,['google_photo_references','image_attribution'],true)&&!$this->emptyValue($value))$fields[(string)$field]=$value;
+        }
+        if($fields===[])return ['message'=>'This draft already contains all available Google Places fields.','applied_fields'=>[],'pending_images'=>0];
+
+        $jobId=(int)(VerifiedSocietyImportSource::where('society_id',$society->id)->whereNotNull('import_job_id')->latest()->value('import_job_id')
+            ?:VerifiedSocietyFieldSource::where('society_id',$society->id)->whereNotNull('import_job_id')->latest()->value('import_job_id'));
+        if(!$jobId)throw new \InvalidArgumentException('No verified importer job is linked to this society.');
+        $confidence=$this->scorer->forSource('google_places');
+
+        return DB::transaction(function() use($society,$fields,$jobId,$confidence,$enrichment) {
+            $mapsUrl=$fields['google_maps_url']??$society->google_maps_url;
+            $this->recorder->source(['import_job_id'=>$jobId,'society_id'=>$society->id,'source_type'=>'google_places','source_name'=>'Google Places','source_url'=>$mapsUrl,'confidence_score'=>$confidence,'raw_response'=>(array)($enrichment['raw_response']??[])]);
+            foreach($fields as $field=>$value) {
+                $sourceType=in_array($field,['google_photo_references','image_attribution'],true)?'google_photos':'google_places';
+                VerifiedSocietyFieldSource::where('society_id',$society->id)->where('field_name',$field)->update(['is_selected_value'=>false]);
+                $this->recorder->field($society->id,$jobId,$field,$value,$sourceType,$sourceType==='google_photos'?'Google Places photos':'Google Places',$mapsUrl,$this->scorer->forSource($sourceType),true);
+            }
+            $applied=$this->profileApplier->apply($society,$fields,true);
+            $captured=$this->images->capture($jobId,$society->id,$fields,$confidence);
+            return ['message'=>'Existing draft enriched with '.count($applied).' Google Places profile fields. Society remains unpublished.','applied_fields'=>$applied,'pending_images'=>count($captured),'data'=>$society->fresh()];
+        });
     }
 
     private function processOne(VerifiedSocietyImportJob $job,array $input,int $rowNumber,array $options): VerifiedSocietyImportRow

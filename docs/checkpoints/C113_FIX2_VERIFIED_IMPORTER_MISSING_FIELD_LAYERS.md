@@ -38,6 +38,10 @@ There are no dedicated society columns for legal name, promoter name, registrati
 
 Generated description/SEO fields use `internal_generator`; generated scores use `importer_rule_engine`. Both use confidence 65 and remain `needs_review` until an admin approves them.
 
+## Existing sparse draft backfill
+
+Drafts created before real Google enrichment can now use **Enrich Existing Draft with Google** from the Review Queue. It fills only blank Google-backed profile fields, preserves manual values, records Google field provenance, captures photo references for review, and keeps the society unpublished. Description and SEO controls are explicitly labelled Generate/Refresh so an admin can regenerate them after better source fields arrive.
+
 ## Safety
 
 - All importer-created societies remain `Draft`, `Needs Review`, unpublished and without `published_at`.

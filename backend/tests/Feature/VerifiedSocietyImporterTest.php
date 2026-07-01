@@ -257,6 +257,63 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->assertNull($society->place_id);
     }
 
+    public function test_existing_sparse_importer_draft_can_be_backfilled_from_google_without_overwriting_manual_values(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single', [
+            'name' => 'Legacy Sparse Google Draft',
+            'address' => 'Admin supplied address',
+        ])->assertCreated();
+        $society = Society::where('name', 'Legacy Sparse Google Draft')->firstOrFail();
+
+        config(['services.google_places_api_key' => 'test-google-key']);
+        Http::fake([
+            'https://maps.googleapis.com/maps/api/place/findplacefromtext/json*' => Http::response([
+                'status' => 'OK', 'candidates' => [['place_id' => 'ChIJ-existing-draft']],
+            ]),
+            'https://maps.googleapis.com/maps/api/place/details/json*' => Http::response([
+                'status' => 'OK',
+                'result' => [
+                    'place_id' => 'ChIJ-existing-draft',
+                    'name' => 'Legacy Sparse Google Draft',
+                    'formatted_address' => 'Sector 88, Gurugram, Haryana, India',
+                    'geometry' => ['location' => ['lat' => 28.44, 'lng' => 77.04]],
+                    'url' => 'https://maps.google.com/?cid=legacy-draft',
+                    'photos' => [['photo_reference' => 'legacy-draft-photo']],
+                    'address_components' => [
+                        ['long_name' => 'Sector 88', 'types' => ['sublocality_level_1']],
+                        ['long_name' => 'Gurugram', 'types' => ['locality']],
+                        ['long_name' => 'Haryana', 'types' => ['administrative_area_level_1']],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $response = $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/enrich-google");
+        $response->assertOk()->assertJsonPath('pending_images', 1);
+
+        $society->refresh();
+        $this->assertSame('Admin supplied address', $society->address);
+        $this->assertSame('Sector 88', $society->sector);
+        $this->assertSame('ChIJ-existing-draft', $society->place_id);
+        $this->assertSame('https://maps.google.com/?cid=legacy-draft', $society->google_maps_url);
+        $this->assertSame('https://maps.google.com/?cid=legacy-draft', $society->source_url);
+        $this->assertSame('28.44', $society->latitude);
+        $this->assertSame('77.04', $society->longitude);
+        $this->assertSame('Draft', $society->status);
+        $this->assertFalse($society->is_published);
+        $this->assertDatabaseHas('verified_society_field_sources', [
+            'society_id' => $society->id,
+            'field_name' => 'sector',
+            'source_type' => 'google_places',
+            'needs_review' => true,
+        ]);
+        $this->assertDatabaseHas('verified_society_import_images', [
+            'society_id' => $society->id,
+            'google_photo_reference' => 'legacy-draft-photo',
+            'needs_review' => true,
+        ]);
+    }
+
     public function test_single_import_applies_rera_and_normalized_amenities_while_preserving_extra_provenance(): void
     {
         $this->admin()->postJson('/api/admin/verified-importer/single', [

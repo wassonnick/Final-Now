@@ -140,6 +140,13 @@ class VerifiedSocietyImporterController extends Controller
         return response()->json(['message'=>count($applied).' high-confidence fields applied. Society remains a draft.','applied_fields'=>$applied,'data'=>$society->fresh()]);
     }
 
+    public function enrichExistingDraft(Society $society): JsonResponse
+    {
+        try{$result=$this->service->enrichExistingDraft($society);}
+        catch(\InvalidArgumentException $exception){return response()->json(['message'=>$exception->getMessage()],422);}
+        return response()->json($result);
+    }
+
     public function generateDescription(Request $request, Society $society): JsonResponse
     {
         $data=$request->validate(['replace'=>['nullable','boolean']]);

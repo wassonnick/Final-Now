@@ -92,6 +92,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
         Route::post('/images/{image}/set-cover', [VerifiedSocietyImporterController::class, 'setCoverImage']);
         Route::post('/jobs/{job}/retry-failed', [VerifiedSocietyImporterController::class, 'retryFailedRows']);
         Route::post('/societies/{society}/apply-high-confidence', [VerifiedSocietyImporterController::class, 'applyHighConfidence']);
+        Route::post('/societies/{society}/enrich-google', [VerifiedSocietyImporterController::class, 'enrichExistingDraft']);
         Route::post('/societies/{society}/generate-description', [VerifiedSocietyImporterController::class, 'generateDescription']);
         Route::post('/societies/{society}/generate-seo', [VerifiedSocietyImporterController::class, 'generateSeo']);
         Route::post('/societies/{society}/generate-scores', [VerifiedSocietyImporterController::class, 'generateScores']);
