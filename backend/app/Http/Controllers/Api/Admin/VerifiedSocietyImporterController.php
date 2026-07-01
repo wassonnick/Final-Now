@@ -102,7 +102,9 @@ class VerifiedSocietyImporterController extends Controller
 
     public function rejectField(Request $request, VerifiedSocietyFieldSource $field): JsonResponse
     {
-        $data=$request->validate(['review_notes'=>['nullable','string','max:2000']]);$field->update(['needs_review'=>false,'admin_rejected'=>true,'admin_approved'=>false,'is_selected_value'=>false,'review_notes'=>$data['review_notes']??null]);return response()->json(['message'=>'Field value rejected.','data'=>$field->fresh()]);
+        $data=$request->validate(['review_notes'=>['nullable','string','max:2000']]);
+        $cleared=$this->profileApplier->rejectFieldSource($field,$data['review_notes']??null);
+        return response()->json(['message'=>'Field value rejected and removed from the draft where it was still applied.','data'=>$field->fresh(),'cleared_fields'=>$cleared,'society'=>Society::find($field->society_id)]);
     }
 
     public function approveImage(VerifiedSocietyImportImage $image): JsonResponse
@@ -120,17 +122,18 @@ class VerifiedSocietyImporterController extends Controller
 
     public function rejectImage(VerifiedSocietyImportImage $image): JsonResponse
     {
-        $society=Society::findOrFail($image->society_id);$this->assertImporterImageDraft($society);
+        $society=Society::findOrFail($image->society_id);$enforceDraft=$society->source_name==='Verified Society Importer V2';
         DB::transaction(function()use($image,$society){
             $candidates=array_values(array_filter($society->image_candidates?:[],fn($candidate)=>is_array($candidate)&&!$this->sameSocietyImageCandidate($candidate,$image)));
             $gallery=array_values(array_filter($society->approved_gallery_image_urls?:[],fn($url)=>$url!==$image->source_url));
-            $update=['image_candidates'=>$candidates,'approved_gallery_image_urls'=>$gallery,'status'=>'Draft','verification_status'=>'Needs Review','is_published'=>false,'published_at'=>null];
+            $update=['image_candidates'=>$candidates,'approved_gallery_image_urls'=>$gallery,'verification_status'=>'Needs Review'];
+            if($society->source_name==='Verified Society Importer V2')$update+=['status'=>'Draft','is_published'=>false,'published_at'=>null];
             $isCover=($image->google_photo_reference&&$society->image_photo_reference===$image->google_photo_reference)||($image->source_url&&in_array($image->source_url,[$society->cover_image,$society->image_url],true));
             if($isCover)$update+=['cover_image'=>null,'image_url'=>null,'image_photo_reference'=>null,'image_approved_by_admin'=>false,'image_status'=>'placeholder'];
             elseif($gallery===[]&&!collect($candidates)->contains(fn($candidate)=>$candidate['approved']??false)&&blank($society->cover_image)&&blank($society->image_photo_reference))$update['image_approved_by_admin']=false;
             $society->update($update);$image->update(['needs_review'=>false,'admin_rejected'=>true,'admin_approved'=>false]);
         });
-        return response()->json(['message'=>'Image rejected and removed from public-use fields.','data'=>$image->fresh(),'society'=>$society->fresh()]);
+        return response()->json(['message'=>'Image rejected and removed from public-use fields.'.($enforceDraft?' Society remains unpublished.':''),'data'=>$image->fresh(),'society'=>$society->fresh()]);
     }
 
     public function setCoverImage(Request $request, VerifiedSocietyImportImage $image): JsonResponse

@@ -69,6 +69,51 @@ class SocietyImportProfileApplier
         return $this->apply($society, [$field->field_name => $value], $enforceDraft);
     }
 
+    public function rejectFieldSource(VerifiedSocietyFieldSource $field, ?string $reviewNotes = null): array
+    {
+        return DB::transaction(function () use ($field, $reviewNotes) {
+            $society = Society::findOrFail($field->society_id);
+            $column = $this->normalizer->societyColumn($field->field_name);
+            $wasSelected = $field->is_selected_value;
+            $rejectedValue = $column ? $this->databaseValue($column, $this->decodedValue($field->normalized_value)) : null;
+
+            $field->update([
+                'needs_review' => false,
+                'admin_rejected' => true,
+                'admin_approved' => false,
+                'is_selected_value' => false,
+                'review_notes' => $reviewNotes,
+            ]);
+
+            // A rejection must remove the applied importer value, but it must never
+            // overwrite a newer manual admin edit or clear a required identity field.
+            if (! $wasSelected || ! $column || in_array($column, ['name', 'slug', 'city', 'state', 'score'], true)) return [];
+            if (! $this->equivalent($society->{$column}, $rejectedValue)) return [];
+
+            $replacement = VerifiedSocietyFieldSource::query()
+                ->where('society_id', $society->id)
+                ->where('admin_rejected', false)
+                ->where('is_selected_value', true)
+                ->whereKeyNot($field->id)
+                ->orderByDesc('admin_approved')
+                ->orderByDesc('confidence_score')
+                ->orderByDesc('id')
+                ->get()
+                ->first(fn (VerifiedSocietyFieldSource $candidate) => $this->normalizer->societyColumn($candidate->field_name) === $column);
+
+            $value = $replacement
+                ? $this->databaseValue($column, $this->decodedValue($replacement->normalized_value))
+                : null;
+            $updates = [$column => $value, 'verification_status' => 'Needs Review'];
+            if ($society->source_name === 'Verified Society Importer V2') {
+                $updates += ['status' => 'Draft', 'is_published' => false, 'published_at' => null];
+            }
+            $society->update($updates);
+
+            return [$column];
+        });
+    }
+
     public function applyHighConfidence(Society $society, int $minimum = 80): array
     {
         if ($society->source_name !== 'Verified Society Importer V2') {
@@ -131,6 +176,15 @@ class SocietyImportProfileApplier
     {
         $decoded = json_decode((string) $value, true);
         return json_last_error() === JSON_ERROR_NONE ? $decoded : $value;
+    }
+
+    private function equivalent(mixed $current, mixed $expected): bool
+    {
+        if (is_array($current) || is_array($expected)) {
+            return json_encode($current, JSON_UNESCAPED_UNICODE) === json_encode($expected, JSON_UNESCAPED_UNICODE);
+        }
+        if (is_numeric($current) && is_numeric($expected)) return (float) $current === (float) $expected;
+        return trim((string) $current) === trim((string) $expected);
     }
 
     private function range(mixed $minimum, mixed $maximum): ?string

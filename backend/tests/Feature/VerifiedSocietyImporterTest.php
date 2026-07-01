@@ -793,6 +793,36 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->assertNull($society->cover_image);$this->assertFalse($society->image_approved_by_admin);$this->assertTrue($image->admin_rejected);$this->assertFalse($society->is_published);
     }
 
+    public function test_rejecting_an_applied_field_removes_it_without_overwriting_manual_edits(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single',['name'=>'Reject Field Draft','builder_name'=>'Imported Builder'])->assertCreated();
+        $society=Society::where('name','Reject Field Draft')->firstOrFail();
+        $field=VerifiedSocietyFieldSource::where('society_id',$society->id)->where('field_name','builder_name')->firstOrFail();
+
+        $this->admin()->postJson("/api/admin/verified-importer/fields/{$field->id}/reject")
+            ->assertOk()->assertJsonPath('cleared_fields.0','builder');
+        $this->assertNull($society->fresh()->builder);
+
+        $replacement=VerifiedSocietyFieldSource::create($field->only(['import_job_id','society_id','field_name','source_type','source_name','confidence_score'])+[
+            'field_value'=>'Second Imported Builder','raw_value'=>'Second Imported Builder','normalized_value'=>'Second Imported Builder',
+            'is_selected_value'=>true,'needs_review'=>true,'admin_approved'=>false,'admin_rejected'=>false,
+        ]);
+        $society->update(['builder'=>'Manual Admin Builder']);
+        $this->admin()->postJson("/api/admin/verified-importer/fields/{$replacement->id}/reject")->assertOk()->assertJsonCount(0,'cleared_fields');
+        $this->assertSame('Manual Admin Builder',$society->fresh()->builder);
+    }
+
+    public function test_rejecting_attached_import_image_works_without_unpublishing_existing_society(): void
+    {
+        $society=Society::create(['name'=>'Existing Published Society','slug'=>'existing-published-society','city'=>'Gurugram','state'=>'Haryana','status'=>'Verified','verification_status'=>'Verified','is_published'=>true,'published_at'=>now(),'score'=>8.0,'source_name'=>'Legacy Admin']);
+        $job=\App\Models\VerifiedSocietyImportJob::create(['job_type'=>'single','status'=>'needs_review','total_rows'=>1,'processed_rows'=>1]);
+        $image=VerifiedSocietyImportImage::create(['import_job_id'=>$job->id,'society_id'=>$society->id,'image_type'=>'gallery','source_type'=>'manual_admin','source_url'=>'https://images.example.com/attached.jpg','needs_review'=>true,'admin_approved'=>false,'admin_rejected'=>false]);
+
+        $this->admin()->postJson("/api/admin/verified-importer/images/{$image->id}/reject")
+            ->assertOk()->assertJsonPath('data.admin_rejected',true)->assertJsonPath('society.is_published',true);
+        $this->assertTrue($society->fresh()->is_published);
+    }
+
     public function test_replacing_an_approved_cover_requires_confirmation(): void
     {
         $this->admin()->postJson('/api/admin/verified-importer/single',['name'=>'Cover Confirmation Draft','cover_image_url'=>'https://images.example.com/cover-one.jpg','gallery_image_urls'=>['https://images.example.com/cover-two.jpg']])->assertCreated();
