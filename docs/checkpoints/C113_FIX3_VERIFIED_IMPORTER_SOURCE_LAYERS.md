@@ -11,7 +11,7 @@ Verified Importer drafts now have separate, review-gated source layers for RERA/
 ## Existing-draft imports
 
 - **RERA / Legal:** RERA number/status/source URL apply to existing society columns. Legal name, promoter, registration dates/validity and certificate/OC-CC-PCC references remain field-level provenance where no society column exists.
-- **Builder / Brochure:** builder, official URLs, project/possession facts, configuration, area, tower/unit counts, normalized amenities and optional source text apply to the draft. Cover/gallery URLs create deduplicated pending image candidates and never overwrite an approved image.
+- **Builder / Brochure:** builder, official URLs, project/possession facts, configuration, area, tower/unit counts, normalized amenities and optional source text apply to the draft. `builder_url` also fills Developer URL, while `rera_url` fills both the official RERA source and RERA Search URL. Cover/gallery URLs create deduplicated pending image candidates and never overwrite an approved image.
 - **Nearby Places:** manual and Excel schools, hospitals, metro and office hubs apply to existing nearby fields. Malls, markets and commute notes remain provenance-only because the society table has no matching columns.
 - **Market:** rent/resale ranges, averages, price per square foot, yield and maintenance apply as estimates. Confidence is constrained to 55–75 and portal references are never auto-verified.
 
@@ -48,6 +48,6 @@ Admin profile readiness now measures 15 independent data groups: identity/city, 
 ## Validation
 
 - Focused Verified Importer suite: **24 tests, 252 assertions — passed**.
-- Full backend suite: **78 tests, 634 assertions — passed**.
+- Full backend suite: **78 tests, 639 assertions — passed**.
 - Frontend production build — passed.
 - SEO validation — passed.

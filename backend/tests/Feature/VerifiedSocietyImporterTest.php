@@ -405,6 +405,8 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->assertSame('GGM/RERA/LAYER/1',$society->rera_number);
         $this->assertSame('Registered',$society->rera_status);
         $this->assertSame('https://example.com/rera/layer-1',$society->official_rera_source_url);
+        $this->assertSame('https://example.com/rera/layer-1',$society->rera_search_url);
+        $this->assertDatabaseHas('verified_society_field_sources',['society_id'=>$society->id,'field_name'=>'rera_search_url','source_type'=>'rera','confidence_score'=>95,'needs_review'=>true]);
         $this->assertDatabaseHas('verified_society_field_sources',['society_id'=>$society->id,'field_name'=>'promoter_name','source_type'=>'rera','confidence_score'=>95,'needs_review'=>true]);
         $this->assertFalse($society->is_published);
     }
@@ -414,7 +416,7 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->admin()->postJson('/api/admin/verified-importer/single', ['name'=>'Builder Layer Draft'])->assertCreated();
         $society=Society::where('name','Builder Layer Draft')->firstOrFail();
         $payload=[
-            'builder_name'=>'Example Builder','official_project_url'=>'https://example.com/builder-layer','brochure_url'=>'https://example.com/builder-layer.pdf',
+            'builder_name'=>'Example Builder','builder_url'=>'https://example.com/builder','official_project_url'=>'https://example.com/builder-layer','brochure_url'=>'https://example.com/builder-layer.pdf',
             'project_status'=>'Under Construction','amenities'=>'clubhouse|pool|security','description_source_text'=>'Official brochure source text.',
             'cover_image_url'=>'https://images.example.com/builder-cover.jpg','gallery_image_urls'=>'https://images.example.com/builder-gallery.jpg|https://images.example.com/builder-cover.jpg',
         ];
@@ -422,6 +424,9 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/source-layers/builder",$payload)->assertOk();
         $society->refresh();
         $this->assertSame('Example Builder',$society->builder);
+        $this->assertSame('https://example.com/builder',$society->official_developer_url);
+        $this->assertSame('https://example.com/builder-layer',$society->official_project_url);
+        $this->assertDatabaseHas('verified_society_field_sources',['society_id'=>$society->id,'field_name'=>'developer_url','source_type'=>'builder_brochure','needs_review'=>true]);
         $this->assertSame(['Clubhouse','Swimming Pool','24x7 Security'],$society->amenities);
         $this->assertSame('Official brochure source text.',$society->description);
         $this->assertSame(2,VerifiedSocietyImportImage::where('society_id',$society->id)->count());

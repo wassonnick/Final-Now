@@ -36,6 +36,8 @@ class SocietyImportLayerService
             if(!array_key_exists($field,$normalized)||$this->empty($normalized[$field]))continue;
             $fields[$field]=$normalized[$field];
         }
+        if($layer==='rera'&&isset($fields['rera_url']))$fields['rera_search_url']=$fields['rera_url'];
+        if($layer==='builder'&&isset($fields['builder_url']))$fields['developer_url']=$fields['builder_url'];
         if($layer==='builder'&&isset($fields['description'])&&filled($society->description)&&!($input['replace_description']??false))unset($fields['description']);
         if($fields===[])throw new \InvalidArgumentException('Add at least one source-backed field before importing this layer.');
 
