@@ -6,13 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Society;
 use App\Models\SocietySeoContent;
 use App\Services\SocietySeoScoringService;
+use App\Services\SocietySeoAiDraftService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class AdminSocietySeoContentController extends Controller
 {
-    public function __construct(private readonly SocietySeoScoringService $scoring)
+    public function __construct(
+        private readonly SocietySeoScoringService $scoring,
+        private readonly SocietySeoAiDraftService $ai,
+    )
     {
     }
 
@@ -95,6 +99,16 @@ class AdminSocietySeoContentController extends Controller
         ]);
     }
 
+    public function generateAiDraft(Request $request, Society $society): JsonResponse
+    {
+        return $this->generateWithAi($request, $society, 'generate');
+    }
+
+    public function improveAiDraft(Request $request, Society $society): JsonResponse
+    {
+        return $this->generateWithAi($request, $society, 'improve');
+    }
+
     private function save(Request $request, Society $society, bool $creating): JsonResponse
     {
         $data = $this->validated($request);
@@ -113,6 +127,41 @@ class AdminSocietySeoContentController extends Controller
             'data' => $this->payload($content->fresh()),
             'score' => $score,
         ], $creating && $content->wasRecentlyCreated ? 201 : 200);
+    }
+
+    private function generateWithAi(Request $request, Society $society, string $mode): JsonResponse
+    {
+        $content = $society->seoContent;
+        if ($content?->status === 'published') {
+            return response()->json(['status' => 'error', 'message' => 'Published SEO content was not overwritten. Unpublish it explicitly before creating a replacement draft.'], 409);
+        }
+        if ($content && ! $request->boolean('confirm_replace')) {
+            return response()->json(['status' => 'error', 'message' => 'Confirm replacement before regenerating the existing SEO draft.'], 409);
+        }
+
+        try {
+            $result = $this->ai->generate($society, $mode, $content?->only(SocietySeoAiDraftService::OUTPUT_KEYS) ?: []);
+        } catch (\Throwable $exception) {
+            return response()->json(['status' => 'error', 'message' => $exception->getMessage(), 'warnings' => $this->ai->missingFacts($society)], 422);
+        }
+
+        $content = $society->seoContent()->firstOrNew();
+        $content->fill($result['content']);
+        $content->status = 'needs_review';
+        $content->generated_by = 'ai';
+        $content->reviewed_by = null;
+        $content->published_at = null;
+        $content->save();
+        $score = $this->scoring->update($content);
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'AI SEO draft generated for admin review. Nothing was published.',
+            'data' => $this->payload($content->fresh()),
+            'warnings' => $result['warnings'],
+            'provider' => $result['provider'],
+            'score' => $score,
+        ]);
     }
 
     private function validated(Request $request): array
