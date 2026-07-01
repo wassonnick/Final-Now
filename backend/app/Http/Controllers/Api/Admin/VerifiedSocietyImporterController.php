@@ -39,7 +39,9 @@ class VerifiedSocietyImporterController extends Controller
         unset($data['duplicate_action'],$data['fetch_google']);
         $job=$this->service->createJob('single',[$data],$options,null,$request->header('X-Admin-Email')?:'admin');
         $message = $options['fetch_google']
-            ? 'Review-only draft created. Google enrichment is a disabled foundation placeholder and no external facts were fetched.'
+            ? (($job->summary['google_enriched'] ?? false)
+                ? 'Review-only draft created and enriched with Google Places location and photo-reference facts.'
+                : ($job->rows->first()?->warnings[0] ?? 'Review-only draft created, but Google Places returned no reliable match.'))
             : 'Verified import completed as a review-only draft job.';
         return response()->json(['message'=>$message,'data'=>$job],201);
     }

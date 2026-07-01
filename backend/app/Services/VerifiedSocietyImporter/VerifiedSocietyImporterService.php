@@ -17,6 +17,7 @@ class VerifiedSocietyImporterService
         private SocietyImportDuplicateMatcher $duplicates,
         private SocietyImportImageService $images,
         private SocietyImportProfileApplier $profileApplier,
+        private SocietyImportGooglePlacesService $googlePlaces,
     ) {}
 
     public function createJob(string $type, array $rows, array $options = [], ?string $fileName = null, ?string $createdBy = null): VerifiedSocietyImportJob
@@ -55,6 +56,23 @@ class VerifiedSocietyImporterService
     {
         $data=$this->normalizer->normalize($input);
         if(mb_strlen($data['name'])<2) throw new \InvalidArgumentException('Missing society name.');
+        $googleFields=[];
+        $googleRaw=[];
+        $googleStatus=null;
+        $enrichmentMessage=null;
+        if((bool)($options['fetch_google']??false)) {
+            $enrichment=$this->googlePlaces->enrich($data);
+            $googleStatus=(string)($enrichment['status']??'not_matched');
+            $enrichmentMessage=(string)($enrichment['message']??'Google Places enrichment did not return any fields.');
+            $googleRaw=(array)($enrichment['raw_response']??[]);
+            foreach((array)($enrichment['data']??[]) as $field=>$value) {
+                if($this->emptyValue($data[$field]??null)) {
+                    $data[$field]=$value;
+                    $googleFields[]=(string)$field;
+                }
+            }
+            $data=$this->normalizer->normalize($data);
+        }
         foreach(['latitude','longitude'] as $coordinate) if(isset($data[$coordinate])&&$data[$coordinate]!==''&&!is_numeric($data[$coordinate])) throw new \InvalidArgumentException("Invalid {$coordinate}.");
         if(isset($data['latitude'])&&$data['latitude']!==''&&((float)$data['latitude'] < -90 || (float)$data['latitude'] > 90)) throw new \InvalidArgumentException('Latitude must be between -90 and 90.');
         if(isset($data['longitude'])&&$data['longitude']!==''&&((float)$data['longitude'] < -180 || (float)$data['longitude'] > 180)) throw new \InvalidArgumentException('Longitude must be between -180 and 180.');
@@ -76,6 +94,7 @@ class VerifiedSocietyImporterService
         $confidence=$this->scorer->forSource($sourceType,$data['confidence_score']??null);
         $duplicate=$this->duplicates->match($data);
         $warnings=[];
+        if($enrichmentMessage!==null)$warnings[]=$enrichmentMessage;
         if(empty($data['rera_number']))$warnings[]='No RERA number provided';
         if(empty($data['google_place_id']))$warnings[]='No Google Place ID provided';
         if($confidence<70)$warnings[]='Low confidence source';
@@ -86,7 +105,7 @@ class VerifiedSocietyImporterService
             return VerifiedSocietyImportRow::create(['import_job_id'=>$job->id,'row_number'=>$rowNumber,'input_data'=>$input,'normalized_data'=>$data,'matched_society_id'=>$duplicate['matched_society_id'],'status'=>'duplicate','confidence_score'=>$confidence,'warnings'=>$warnings]);
         }
 
-        return DB::transaction(function() use($job,$input,$data,$rowNumber,$sourceType,$confidence,$duplicate,$warnings,$action) {
+        return DB::transaction(function() use($job,$input,$data,$rowNumber,$sourceType,$confidence,$duplicate,$warnings,$action,$googleFields,$googleRaw,$googleStatus) {
             $attached=$duplicate['matched_society_id']&&$action==='attach';
             if($attached) {
                 $society=Society::findOrFail($duplicate['matched_society_id']);
@@ -100,10 +119,18 @@ class VerifiedSocietyImporterService
 
             $primarySourceUrl=$data['source_url']??($data['rera_url']??null);
             $this->recorder->source(['import_job_id'=>$job->id,'society_id'=>$society->id,'source_type'=>$sourceType,'source_name'=>$data['source_name']??ucwords(str_replace('_',' ',$sourceType)),'source_url'=>$primarySourceUrl,'confidence_score'=>$confidence,'raw_response'=>$input]);
+            if($googleStatus==='enriched') {
+                $this->recorder->source(['import_job_id'=>$job->id,'society_id'=>$society->id,'source_type'=>'google_places','source_name'=>'Google Places','source_url'=>$data['google_maps_url']??null,'confidence_score'=>$this->scorer->forSource('google_places'),'raw_response'=>$googleRaw]);
+            }
             $this->recordDeclaredSources($job->id,$society->id,$data);
             foreach($data as $field=>$value) {
                 if(in_array($field,['row_number','source_type','source_name','confidence_score','normalized_name','builder_brand'],true)||$value===''||$value===[]||$value===null)continue;
-                $this->recorder->field($society->id,$job->id,$field,$value,$sourceType,$data['source_name']??null,$primarySourceUrl,$confidence,!$attached);
+                $isGoogle=in_array($field,$googleFields,true);
+                $fieldSource=$isGoogle?(in_array($field,['google_photo_references','image_attribution'],true)?'google_photos':'google_places'):$sourceType;
+                $fieldName=$isGoogle?($fieldSource==='google_photos'?'Google Places photos':'Google Places'):($data['source_name']??null);
+                $fieldUrl=$isGoogle?($data['google_maps_url']??null):$primarySourceUrl;
+                $fieldConfidence=$isGoogle?$this->scorer->forSource($fieldSource):$confidence;
+                $this->recorder->field($society->id,$job->id,$field,$value,$fieldSource,$fieldName,$fieldUrl,$fieldConfidence,!$attached);
             }
             if(!$attached&&(!array_key_exists('score',$data)||$data['score']==='')) {
                 $this->recorder->field($society->id,$job->id,'score',7.0,'manual_admin','Importer safe draft default',null,50,true);
@@ -120,13 +147,18 @@ class VerifiedSocietyImporterService
     {
         $rows=$job->rows()->get();$failed=$rows->where('status','failed')->count();$created=$rows->where('status','created')->count();$updated=$rows->where('status','needs_review')->count();$skipped=$rows->whereIn('status',['duplicate','skipped'])->count();
         $appliedFields=$job->fieldSources()->where('is_selected_value',true)->pluck('field_name')->map(fn($field)=>$this->normalizer->societyColumn($field))->filter()->unique()->count();
-        $job->update(['processed_rows'=>$rows->count(),'created_societies_count'=>$created,'updated_societies_count'=>$updated,'skipped_count'=>$skipped,'failed_count'=>$failed,'overall_confidence'=>$confidences? (int)round(array_sum($confidences)/count($confidences)):($rows->avg('confidence_score')?:(null)),'status'=>$failed===$rows->count()&&$rows->count()>0?'failed':($failed>0?'partially_completed':'needs_review'),'summary'=>['applied_fields'=>$appliedFields,'pending_fields'=>$job->fieldSources()->where('needs_review',true)->count(),'pending_images'=>$job->images()->where('needs_review',true)->count(),'duplicate_status'=>$rows->contains('status','duplicate')?'warning':'none']]);
+        $job->update(['processed_rows'=>$rows->count(),'created_societies_count'=>$created,'updated_societies_count'=>$updated,'skipped_count'=>$skipped,'failed_count'=>$failed,'overall_confidence'=>$confidences? (int)round(array_sum($confidences)/count($confidences)):($rows->avg('confidence_score')?:(null)),'status'=>$failed===$rows->count()&&$rows->count()>0?'failed':($failed>0?'partially_completed':'needs_review'),'summary'=>['applied_fields'=>$appliedFields,'pending_fields'=>$job->fieldSources()->where('needs_review',true)->count(),'pending_images'=>$job->images()->where('needs_review',true)->count(),'duplicate_status'=>$rows->contains('status','duplicate')?'warning':'none','google_enriched'=>$job->sources()->where('source_type','google_places')->exists()]]);
         return $job->fresh(['rows','sources','fieldSources','images']);
     }
 
     private function uniqueSlug(string $base): string
     {
         $base=$base?:'society-draft';$slug=$base;$i=2;while(Society::where('slug',$slug)->exists())$slug=$base.'-'.$i++;return $slug;
+    }
+
+    private function emptyValue(mixed $value): bool
+    {
+        return $value === null || $value === '' || $value === [];
     }
 
     private function recordDeclaredSources(int $jobId, int $societyId, array $data): void

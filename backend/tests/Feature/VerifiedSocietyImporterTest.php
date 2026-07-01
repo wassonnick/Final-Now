@@ -7,6 +7,7 @@ use App\Models\VerifiedSocietyFieldSource;
 use App\Models\VerifiedSocietyImportImage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class VerifiedSocietyImporterTest extends TestCase
@@ -163,6 +164,96 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->assertSame('Draft', $society->status);
         $this->assertSame('Needs Review', $society->verification_status);
         $this->assertFalse($society->is_published);
+    }
+
+    public function test_google_enrichment_populates_only_google_backed_fields_with_provenance(): void
+    {
+        config(['services.google_places_api_key' => 'test-google-key']);
+        Http::fake([
+            'https://maps.googleapis.com/maps/api/place/findplacefromtext/json*' => Http::response([
+                'status' => 'OK',
+                'candidates' => [['place_id' => 'ChIJ-google-test']],
+            ]),
+            'https://maps.googleapis.com/maps/api/place/details/json*' => Http::response([
+                'status' => 'OK',
+                'result' => [
+                    'place_id' => 'ChIJ-google-test',
+                    'name' => 'Google Enriched Society',
+                    'formatted_address' => 'Sector 49, Gurugram, Haryana 122018, India',
+                    'geometry' => ['location' => ['lat' => 28.4181234, 'lng' => 77.0525678]],
+                    'url' => 'https://maps.google.com/?cid=12345',
+                    'website' => 'https://example.com/google-enriched-society',
+                    'photos' => [
+                        ['photo_reference' => 'photo-reference-one'],
+                        ['photo_reference' => 'photo-reference-two'],
+                    ],
+                    'address_components' => [
+                        ['long_name' => 'Sector 49', 'types' => ['sublocality_level_1']],
+                        ['long_name' => 'Gurugram', 'types' => ['locality']],
+                        ['long_name' => 'Haryana', 'types' => ['administrative_area_level_1']],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $response = $this->admin()->postJson('/api/admin/verified-importer/single', [
+            'name' => 'Google Enriched Society',
+            'fetch_google' => true,
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.summary.google_enriched', true)
+            ->assertJsonPath('data.summary.pending_images', 2);
+
+        $society = Society::where('name', 'Google Enriched Society')->firstOrFail();
+        $this->assertSame('ChIJ-google-test', $society->place_id);
+        $this->assertSame('https://maps.google.com/?cid=12345', $society->google_maps_url);
+        $this->assertSame('Sector 49, Gurugram, Haryana 122018, India', $society->address);
+        $this->assertSame('Sector 49', $society->sector);
+        $this->assertSame('28.4181234', $society->latitude);
+        $this->assertSame('77.0525678', $society->longitude);
+        $this->assertSame('https://example.com/google-enriched-society', $society->official_project_url);
+        $this->assertNull($society->security_score);
+        $this->assertNull($society->average_rent);
+        $this->assertSame('Draft', $society->status);
+        $this->assertFalse($society->is_published);
+
+        $this->assertDatabaseHas('verified_society_import_sources', [
+            'society_id' => $society->id,
+            'source_type' => 'google_places',
+        ]);
+        $this->assertDatabaseHas('verified_society_field_sources', [
+            'society_id' => $society->id,
+            'field_name' => 'latitude',
+            'source_type' => 'google_places',
+            'confidence_score' => 88,
+        ]);
+        $this->assertDatabaseHas('verified_society_import_images', [
+            'society_id' => $society->id,
+            'google_photo_reference' => 'photo-reference-one',
+            'source_type' => 'google_photos',
+            'needs_review' => true,
+        ]);
+    }
+
+    public function test_google_enrichment_without_configuration_still_creates_manual_draft(): void
+    {
+        config(['services.google_places_api_key' => null]);
+
+        $response = $this->admin()->postJson('/api/admin/verified-importer/single', [
+            'name' => 'Manual Fallback Society',
+            'fetch_google' => true,
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.summary.google_enriched', false)
+            ->assertJsonPath('data.created_societies_count', 1);
+        $this->assertStringContainsString('not configured', (string) $response->json('message'));
+
+        $society = Society::where('name', 'Manual Fallback Society')->firstOrFail();
+        $this->assertSame('Draft', $society->status);
+        $this->assertFalse($society->is_published);
+        $this->assertNull($society->place_id);
     }
 
     public function test_exact_duplicate_is_skipped_by_default(): void
