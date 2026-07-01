@@ -21,6 +21,7 @@ import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { AdminBadge } from "@/components/admin/AdminBadge";
 import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
+import { SocietySeoReadinessPanel } from "@/components/admin/SocietySeoReadinessPanel";
 import {
   backfillAdminSocietyPublishFields,
   bulkAutoFillNearbyIntelligence,
@@ -500,6 +501,8 @@ export function AdminSocietiesPage() {
             ))}
           </div>
         </section>
+
+        <SocietySeoReadinessPanel />
 
         {message ? (
           <div className="rounded-2xl bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-700">
