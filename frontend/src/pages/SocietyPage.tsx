@@ -114,6 +114,16 @@ function splitLines(value?: unknown) {
     .filter(Boolean);
 }
 
+function safeSeoList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => readableStructuredValue(item))
+    .flatMap((item) => item.split(/\n+/))
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function scoreValueForHandoff(value: unknown) {
   const score = Number(value || 0);
   if (!Number.isFinite(score) || score <= 0) return 0;
@@ -788,12 +798,12 @@ export function SocietyPage() {
   const societyLocation = safeLocation(society);
   const descriptionText = readableStructuredValue(society.description);
   const seoFaqs = Array.isArray(seoContent?.faq_json) ? seoContent.faq_json.filter((item: any) => item?.question && item?.answer) : [];
-  const seoPros = Array.isArray(seoContent?.pros_json) ? seoContent.pros_json.filter(Boolean) : [];
-  const seoCons = Array.isArray(seoContent?.cons_json) ? seoContent.cons_json.filter(Boolean) : [];
-  const seoBestFor = Array.isArray(seoContent?.best_for_json) ? seoContent.best_for_json.filter(Boolean) : [];
-  const seoNearbyHighlights = Array.isArray(seoContent?.nearby_highlights_json) ? seoContent.nearby_highlights_json.filter(Boolean) : [];
+  const seoPros = safeSeoList(seoContent?.pros_json);
+  const seoCons = safeSeoList(seoContent?.cons_json);
+  const seoBestFor = safeSeoList(seoContent?.best_for_json);
+  const seoNearbyHighlights = safeSeoList(seoContent?.nearby_highlights_json);
   const seoInternalLinks = (Array.isArray(seoContent?.internal_link_suggestions_json) ? seoContent.internal_link_suggestions_json : [])
-    .map((item: any) => typeof item === "string" ? { label: item, url: item.startsWith("/") ? item : "" } : { label: item?.label || item?.title || "", url: item?.url || item?.path || "" })
+    .map((item: any) => typeof item === "string" ? { label: item, url: item.startsWith("/") ? item : "" } : { label: item?.label || item?.title || item?.anchor || "", url: item?.url || item?.path || "" })
     .filter((item: any) => item.label && /^\/[a-z0-9][a-z0-9/_?=&.-]*$/i.test(item.url));
   const societyScore = Number(field(society, "score", "score", 0));
   const subScores = [

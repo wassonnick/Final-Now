@@ -88,8 +88,12 @@ class SocietySeoContentTest extends TestCase
     public function test_ai_generation_is_review_only_and_refuses_to_overwrite_published_content(): void
     {
         config(['services.ai_import_provider' => 'gemini', 'services.gemini.api_key' => 'test-key']);
+        $aiPayload = array_merge($this->completePayload(), [
+            'nearby_highlights_json' => [['category' => 'Schools', 'highlights' => ['Example School — 1 km']]],
+            'internal_link_suggestions_json' => [['anchor' => 'Sector guide', 'path' => '/gurgaon/sector-104']],
+        ]);
         Http::fake(['https://generativelanguage.googleapis.com/*' => Http::response([
-            'candidates' => [['content' => ['parts' => [['text' => json_encode($this->completePayload())]]]]],
+            'candidates' => [['content' => ['parts' => [['text' => json_encode($aiPayload)]]]]],
         ])]);
         $society = $this->society();
         $society->update(['status' => 'Verified', 'is_published' => true]);
@@ -109,6 +113,9 @@ class SocietySeoContentTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.status', 'needs_review')
             ->assertJsonPath('data.generated_by', 'ai')
+            ->assertJsonPath('data.nearby_highlights_json.0', 'Schools: Example School — 1 km')
+            ->assertJsonPath('data.internal_link_suggestions_json.0.label', 'Sector guide')
+            ->assertJsonPath('data.internal_link_suggestions_json.0.url', '/gurgaon/sector-104')
             ->assertJsonPath('data.published_at', null);
 
         Http::assertSent(function ($request) {

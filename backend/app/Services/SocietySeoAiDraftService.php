@@ -151,10 +151,41 @@ class SocietySeoAiDraftService
     {
         $draft = [];
         foreach (self::OUTPUT_KEYS as $key) $draft[$key] = $raw[$key] ?? (str_ends_with($key, '_json') ? [] : null);
-        foreach (['pros_json', 'cons_json', 'best_for_json', 'nearby_highlights_json', 'faq_json', 'internal_link_suggestions_json'] as $key) {
-            if (! is_array($draft[$key])) $draft[$key] = [];
+        foreach (['pros_json', 'cons_json', 'best_for_json', 'nearby_highlights_json'] as $key) {
+            $draft[$key] = collect(is_array($draft[$key]) ? $draft[$key] : [])
+                ->map(fn ($item) => $this->listItemText($item))
+                ->filter()
+                ->values()
+                ->all();
         }
+        $draft['faq_json'] = collect(is_array($draft['faq_json']) ? $draft['faq_json'] : [])
+            ->filter(fn ($item) => is_array($item) && filled($item['question'] ?? null) && filled($item['answer'] ?? null))
+            ->map(fn ($item) => ['question' => trim((string) $item['question']), 'answer' => trim((string) $item['answer'])])
+            ->values()->all();
+        $draft['internal_link_suggestions_json'] = collect(is_array($draft['internal_link_suggestions_json']) ? $draft['internal_link_suggestions_json'] : [])
+            ->map(function ($item) {
+                if (is_string($item)) return str_starts_with($item, '/') ? ['label' => $item, 'url' => $item] : null;
+                if (! is_array($item)) return null;
+                $label = trim((string) ($item['label'] ?? $item['title'] ?? $item['anchor'] ?? ''));
+                $url = trim((string) ($item['url'] ?? $item['path'] ?? ''));
+                return $label !== '' && str_starts_with($url, '/') ? ['label' => $label, 'url' => $url] : null;
+            })->filter()->values()->all();
         if (! is_array($draft['schema_json'])) $draft['schema_json'] = [];
         return $draft;
+    }
+
+    private function listItemText(mixed $item): string
+    {
+        if (is_string($item) || is_numeric($item)) return trim((string) $item);
+        if (! is_array($item)) return '';
+
+        $label = trim((string) ($item['category'] ?? $item['label'] ?? $item['title'] ?? $item['name'] ?? ''));
+        $details = $item['highlights'] ?? $item['items'] ?? $item['description'] ?? $item['notes'] ?? [];
+        if (is_array($details)) {
+            $details = collect($details)->map(fn ($detail) => $this->listItemText($detail))->filter()->implode('; ');
+        }
+        $details = trim((string) $details);
+
+        return trim($label.($label !== '' && $details !== '' ? ': ' : '').$details);
     }
 }
