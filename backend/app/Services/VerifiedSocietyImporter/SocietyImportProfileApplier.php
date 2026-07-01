@@ -38,6 +38,7 @@ class SocietyImportProfileApplier
         }
 
         $buyRange = $this->range($fields['resale_min'] ?? null, $fields['resale_max'] ?? null);
+        if ($buyRange === null) $buyRange = $this->range($fields['buy_min'] ?? null, $fields['buy_max'] ?? null);
         if ($buyRange !== null) {
             $updates['buy_range'] = $buyRange;
             $appliedFields = [...$appliedFields, 'resale_min', 'resale_max'];
@@ -110,7 +111,7 @@ class SocietyImportProfileApplier
             'configurations', 'land_area', 'tower_count', 'unit_count', 'latitude', 'longitude',
             'google_place_id', 'google_maps_url', 'builder_url', 'official_project_url', 'developer_url',
             'brochure_url', 'description', 'amenities', 'nearby_schools', 'nearby_hospitals',
-            'nearby_metro', 'nearby_office_hubs', 'rent_range', 'buy_range', 'rent_min', 'rent_max', 'resale_min', 'resale_max',
+            'nearby_metro', 'nearby_office_hubs', 'rent_range', 'buy_range', 'rent_min', 'rent_max', 'buy_min', 'buy_max', 'resale_min', 'resale_max',
             'average_rent', 'average_sale_price', 'price_per_sqft', 'rental_yield',
             'maintenance_charges', 'score', 'security_score', 'maintenance_score', 'connectivity_score',
             'lifestyle_score', 'investment_score', 'image_reference_url', 'cover_image_url', 'source_url',

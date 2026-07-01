@@ -35,6 +35,7 @@ class SocietyImportNormalizer
         'commute_notes' => ['commute_notes','commute notes'],
         'rent_range' => ['rent_range','rent range'], 'buy_range' => ['buy_range','buy range','sale_range','sale range'],
         'rent_min' => ['rent_min','rent min'], 'rent_max' => ['rent_max','rent max'],
+        'buy_min' => ['buy_min','buy min'], 'buy_max' => ['buy_max','buy max'],
         'resale_min' => ['resale_min','resale min'], 'resale_max' => ['resale_max','resale max'],
         'average_rent' => ['average_rent','average rent'], 'average_sale_price' => ['average_sale_price','average sale price'],
         'price_per_sqft' => ['price_per_sqft','price per sqft','price per sq ft'], 'rental_yield' => ['rental_yield','rental yield'],
@@ -45,7 +46,7 @@ class SocietyImportNormalizer
         'image_reference_url' => ['image_reference_url','image reference url'],
         'google_photo_references' => ['google_photo_references','google photo references','google_photo_reference','google photo reference'],
         'image_attribution' => ['image_attribution','image attribution'], 'notes' => ['notes'],
-        'source_url' => ['source_url','source url'], 'source_type' => ['source_type','source type'],
+        'source_url' => ['source_url','source url','market_source_url','market source url'], 'source_type' => ['source_type','source type','market_source_type','market source type'],
         'confidence_score' => ['confidence_score','confidence score'],
         'rera_search_url' => ['rera_search_url','rera search url'],
         'meta_title' => ['meta_title','meta title','seo_title','seo title'],
@@ -95,7 +96,7 @@ class SocietyImportNormalizer
     public function societyAttributes(array $data): array
     {
         $rent = $data['rent_range'] ?? trim(implode(' - ', array_filter([$data['rent_min'] ?? null, $data['rent_max'] ?? null])));
-        $buy = $data['buy_range'] ?? trim(implode(' - ', array_filter([$data['resale_min'] ?? null, $data['resale_max'] ?? null])));
+        $buy = $data['buy_range'] ?? trim(implode(' - ', array_filter([$data['buy_min'] ?? $data['resale_min'] ?? null, $data['buy_max'] ?? $data['resale_max'] ?? null])));
         return array_filter([
             'name'=>$data['display_name'] ?: $data['name'], 'slug'=>$data['slug'], 'builder'=>$data['builder_name'] ?: null,
             'city'=>$data['city'], 'state'=>$data['state'] ?? 'Haryana', 'sector'=>$data['sector'] ?: null, 'locality'=>$data['locality'] ?? null, 'address'=>$data['address'] ?? null,
@@ -126,7 +127,7 @@ class SocietyImportNormalizer
 
     public function societyColumn(string $field): ?string
     {
-        return ['slug'=>'slug','display_name'=>'name','name'=>'name','builder_name'=>'builder','city'=>'city','state'=>'state','sector'=>'sector','locality'=>'locality','address'=>'address','rera_number'=>'rera_number','rera_url'=>'official_rera_source_url','rera_status'=>'rera_status','project_status'=>'project_status','possession_status'=>'possession_date','possession_date'=>'possession_date','property_type'=>'society_type','configurations'=>'configuration','land_area'=>'project_area','tower_count'=>'total_towers','unit_count'=>'total_units','latitude'=>'latitude','longitude'=>'longitude','google_place_id'=>'place_id','google_maps_url'=>'google_maps_url','builder_url'=>'official_project_url','official_project_url'=>'official_project_url','developer_url'=>'official_developer_url','brochure_url'=>'official_brochure_url','description'=>'description','amenities'=>'amenities','nearby_schools'=>'nearby_schools','nearby_hospitals'=>'nearby_hospitals','nearby_metro'=>'nearby_metro','nearby_office_hubs'=>'nearby_office_hubs','rent_range'=>'rent_range','buy_range'=>'buy_range','rent_min'=>'rent_range','rent_max'=>'rent_range','resale_min'=>'buy_range','resale_max'=>'buy_range','average_rent'=>'average_rent','average_sale_price'=>'average_sale_price','price_per_sqft'=>'price_per_sqft','rental_yield'=>'rental_yield','maintenance_charges'=>'maintenance_charges','score'=>'score','security_score'=>'security_score','maintenance_score'=>'maintenance_score','connectivity_score'=>'connectivity_score','lifestyle_score'=>'lifestyle_score','investment_score'=>'investment_score','image_reference_url'=>'image_reference_url','cover_image_url'=>'image_reference_url','source_url'=>'source_url','rera_search_url'=>'rera_search_url','meta_title'=>'meta_title','meta_description'=>'meta_description'][$field] ?? null;
+        return ['slug'=>'slug','display_name'=>'name','name'=>'name','builder_name'=>'builder','city'=>'city','state'=>'state','sector'=>'sector','locality'=>'locality','address'=>'address','rera_number'=>'rera_number','rera_url'=>'official_rera_source_url','rera_status'=>'rera_status','project_status'=>'project_status','possession_status'=>'possession_date','possession_date'=>'possession_date','property_type'=>'society_type','configurations'=>'configuration','land_area'=>'project_area','tower_count'=>'total_towers','unit_count'=>'total_units','latitude'=>'latitude','longitude'=>'longitude','google_place_id'=>'place_id','google_maps_url'=>'google_maps_url','builder_url'=>'official_project_url','official_project_url'=>'official_project_url','developer_url'=>'official_developer_url','brochure_url'=>'official_brochure_url','description'=>'description','amenities'=>'amenities','nearby_schools'=>'nearby_schools','nearby_hospitals'=>'nearby_hospitals','nearby_metro'=>'nearby_metro','nearby_office_hubs'=>'nearby_office_hubs','rent_range'=>'rent_range','buy_range'=>'buy_range','rent_min'=>'rent_range','rent_max'=>'rent_range','buy_min'=>'buy_range','buy_max'=>'buy_range','resale_min'=>'buy_range','resale_max'=>'buy_range','average_rent'=>'average_rent','average_sale_price'=>'average_sale_price','price_per_sqft'=>'price_per_sqft','rental_yield'=>'rental_yield','maintenance_charges'=>'maintenance_charges','score'=>'score','security_score'=>'security_score','maintenance_score'=>'maintenance_score','connectivity_score'=>'connectivity_score','lifestyle_score'=>'lifestyle_score','investment_score'=>'investment_score','image_reference_url'=>'image_reference_url','cover_image_url'=>'image_reference_url','source_url'=>'source_url','rera_search_url'=>'rera_search_url','meta_title'=>'meta_title','meta_description'=>'meta_description'][$field] ?? null;
     }
 
     public function normalizedName(string $value): string { return trim(preg_replace('/\s+/', ' ', Str::lower(preg_replace('/\b(project|residency|apartments?|floors?|gurgaon|gurugram|sector)\b/i', ' ', $value)))); }

@@ -127,7 +127,7 @@ class VerifiedSocietyImporterService
         foreach((array)($data['gallery_image_urls']??[]) as $url) if(!filter_var($url,FILTER_VALIDATE_URL)||!$this->images->safeRemoteUrl($url)) throw new \InvalidArgumentException('Invalid or unsafe gallery image URL.');
 
         $sourceType=(string)($data['source_type']??($job->job_type==='excel'?'excel':'manual_admin'));
-        $allowed=['rera','hrera','dtcp','builder_website','builder_brochure','google_places','google_photos','portal_reference','manual_admin','excel','ai_extraction'];
+        $allowed=['rera','hrera','dtcp','builder_website','builder_brochure','google_places','google_photos','google_places_nearby','portal_reference','broker_input','manual_admin','excel','ai_extraction'];
         if(!in_array($sourceType,$allowed,true))$sourceType='excel';
         $data['source_type']=$sourceType;
         $confidence=$this->scorer->forSource($sourceType,$data['confidence_score']??null);

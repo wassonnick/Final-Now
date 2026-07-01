@@ -8,6 +8,7 @@ use App\Models\VerifiedSocietyImportImage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class VerifiedSocietyImporterTest extends TestCase
@@ -535,13 +536,13 @@ class VerifiedSocietyImporterTest extends TestCase
 
         $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/generate-scores", ['replace' => true])->assertOk();
         $society->refresh();
-        $this->assertSame('8.9', $society->score);
+        $this->assertSame('9.2', $society->score);
         $this->assertLessThanOrEqual(9.2, (float) $society->score);
         $this->assertSame('8.3', $society->connectivity_score);
         $this->assertSame('7.6', $society->lifestyle_score);
-        $this->assertSame('7.5', $society->security_score);
-        $this->assertSame('7.0', $society->maintenance_score);
-        $this->assertSame('7.0', $society->investment_score);
+        $this->assertSame('8.0', $society->security_score);
+        $this->assertSame('7.5', $society->maintenance_score);
+        $this->assertSame('7.5', $society->investment_score);
         $this->assertDatabaseHas('verified_society_field_sources', [
             'society_id' => $society->id,
             'field_name' => 'score',
@@ -731,6 +732,84 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->assertSame('Draft', $society->status);
         $this->assertSame('Needs Review', $society->verification_status);
         $this->assertFalse($society->is_published);
+    }
+
+    public function test_google_nearby_is_admin_triggered_cached_and_source_tracked(): void
+    {
+        Cache::flush();config(['services.google_places_api_key'=>'google-test-key']);
+        Http::fake(['maps.googleapis.com/*'=>Http::response(['status'=>'OK','results'=>[ ['name'=>'Nearby Place','vicinity'=>'Sector 104','rating'=>4.2,'geometry'=>['location'=>['lat'=>28.49,'lng'=>77.01]]] ]],200)]);
+        $this->admin()->postJson('/api/admin/verified-importer/single',['name'=>'Nearby Google Draft','latitude'=>28.4833,'longitude'=>77.002,'google_maps_url'=>'https://maps.google.com/?q=28.4833,77.002'])->assertCreated();
+        $society=Society::where('name','Nearby Google Draft')->firstOrFail();
+        $url="/api/admin/verified-importer/societies/{$society->id}/nearby-google";
+        $this->admin()->postJson($url)->assertOk()->assertJsonPath('layer.confidence',85);
+        $this->admin()->postJson($url)->assertOk();
+        Http::assertSentCount(5);
+        $society->refresh();
+        $this->assertCount(1,$society->nearby_schools);$this->assertCount(1,$society->nearby_hospitals);$this->assertCount(1,$society->nearby_metro);$this->assertCount(1,$society->nearby_office_hubs);
+        $this->assertDatabaseHas('verified_society_field_sources',['society_id'=>$society->id,'field_name'=>'nearby_schools','source_type'=>'google_places_nearby','confidence_score'=>85,'needs_review'=>true]);
+        $this->assertFalse($society->is_published);
+    }
+
+    public function test_score_increases_after_nearby_and_market_layers(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single',['name'=>'Score Growth Draft','builder_name'=>'Builder','latitude'=>28.4,'longitude'=>77.0,'google_place_id'=>'place-score','google_maps_url'=>'https://maps.google.com/?q=28.4,77.0','rera_number'=>'RERA-GROWTH','official_project_url'=>'https://example.com/growth','amenities'=>['Clubhouse','Gym','Swimming Pool','Tennis Court','Basketball Court']])->assertCreated();
+        $society=Society::where('name','Score Growth Draft')->firstOrFail();
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/generate-scores",['replace'=>true])->assertOk();
+        $before=(float)$society->fresh()->score;
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/source-layers/nearby",['nearby_schools'=>'School','nearby_hospitals'=>'Hospital','nearby_metro'=>'Metro','office_hubs'=>'Office','nearby_malls'=>'Mall'])->assertOk();
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/source-layers/market",['rent_min'=>'85000','rent_max'=>'120000','buy_min'=>'3.5 Cr','buy_max'=>'5.2 Cr','price_per_sqft'=>'22000','maintenance_charges'=>'5 per sq ft','market_source_type'=>'broker_input'])->assertOk();
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/generate-scores",['replace'=>true])->assertOk();
+        $society->refresh();
+        $this->assertGreaterThan($before,(float)$society->score);$this->assertSame('9.2',$society->score);$this->assertSame('8.0',$society->investment_score);$this->assertSame('7.5',$society->maintenance_score);
+        $this->assertSame('85000 - 120000',$society->rent_range);$this->assertSame('3.5 Cr - 5.2 Cr',$society->buy_range);
+        $this->assertDatabaseHas('verified_society_field_sources',['society_id'=>$society->id,'field_name'=>'buy_min','source_type'=>'broker_input','needs_review'=>true,'admin_approved'=>false]);
+        $this->assertFalse($society->is_published);
+    }
+
+    public function test_imported_images_are_listed_and_can_be_approved_to_cover_and_gallery(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single',['name'=>'Image Review Draft','cover_image_url'=>'https://images.example.com/cover.jpg','gallery_image_urls'=>['https://images.example.com/gallery.jpg'],'google_photo_references'=>['google-photo-one','google-photo-two'],'image_attribution'=>'Google Places'])->assertCreated();
+        $society=Society::where('name','Image Review Draft')->firstOrFail();
+        $this->admin()->getJson("/api/admin/societies/{$society->id}")->assertOk()->assertJsonCount(4,'data.verified_import_images');
+        $direct=VerifiedSocietyImportImage::where('society_id',$society->id)->where('source_url','https://images.example.com/gallery.jpg')->firstOrFail();
+        $google=VerifiedSocietyImportImage::where('society_id',$society->id)->where('google_photo_reference','google-photo-two')->firstOrFail();
+        $cover=VerifiedSocietyImportImage::where('society_id',$society->id)->where('source_url','https://images.example.com/cover.jpg')->firstOrFail();
+        $this->admin()->postJson("/api/admin/verified-importer/images/{$direct->id}/approve")->assertOk();
+        $this->admin()->postJson("/api/admin/verified-importer/images/{$google->id}/approve")->assertOk();
+        $this->admin()->postJson("/api/admin/verified-importer/images/{$cover->id}/set-cover")->assertOk();
+        $society->refresh();
+        $this->assertContains('https://images.example.com/gallery.jpg',$society->approved_gallery_image_urls);
+        $this->assertTrue(collect($society->image_candidates)->contains(fn($item)=>($item['photo_reference']??null)==='google-photo-two'&&($item['approved']??false)));
+        $this->assertSame('https://images.example.com/cover.jpg',$society->cover_image);$this->assertTrue($society->image_approved_by_admin);$this->assertFalse($society->is_published);
+    }
+
+    public function test_rejecting_an_approved_image_removes_it_from_public_use(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single',['name'=>'Reject Image Draft','cover_image_url'=>'https://images.example.com/reject.jpg'])->assertCreated();
+        $society=Society::where('name','Reject Image Draft')->firstOrFail();$image=VerifiedSocietyImportImage::where('society_id',$society->id)->firstOrFail();
+        $this->admin()->postJson("/api/admin/verified-importer/images/{$image->id}/set-cover")->assertOk();
+        $this->admin()->postJson("/api/admin/verified-importer/images/{$image->id}/reject")->assertOk();
+        $society->refresh();$image->refresh();
+        $this->assertNull($society->cover_image);$this->assertFalse($society->image_approved_by_admin);$this->assertTrue($image->admin_rejected);$this->assertFalse($society->is_published);
+    }
+
+    public function test_replacing_an_approved_cover_requires_confirmation(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single',['name'=>'Cover Confirmation Draft','cover_image_url'=>'https://images.example.com/cover-one.jpg','gallery_image_urls'=>['https://images.example.com/cover-two.jpg']])->assertCreated();
+        $society=Society::where('name','Cover Confirmation Draft')->firstOrFail();$one=VerifiedSocietyImportImage::where('source_url','https://images.example.com/cover-one.jpg')->firstOrFail();$two=VerifiedSocietyImportImage::where('source_url','https://images.example.com/cover-two.jpg')->firstOrFail();
+        $this->admin()->postJson("/api/admin/verified-importer/images/{$one->id}/set-cover")->assertOk();
+        $this->admin()->postJson("/api/admin/verified-importer/images/{$two->id}/set-cover")->assertStatus(409)->assertJsonPath('requires_confirmation',true);
+        $this->assertSame('https://images.example.com/cover-one.jpg',$society->fresh()->cover_image);
+        $this->admin()->postJson("/api/admin/verified-importer/images/{$two->id}/set-cover",['replace'=>true])->assertOk();
+        $this->assertSame('https://images.example.com/cover-two.jpg',$society->fresh()->cover_image);$this->assertFalse($society->is_published);
+    }
+
+    public function test_google_photo_preview_uses_authenticated_proxy(): void
+    {
+        config(['services.google_places_api_key'=>'google-test-key']);Http::fake(['maps.googleapis.com/*'=>Http::response('image-bytes',200,['Content-Type'=>'image/jpeg'])]);
+        $this->admin()->postJson('/api/admin/verified-importer/single',['name'=>'Preview Image Draft','google_photo_references'=>['preview-reference']])->assertCreated();
+        $image=VerifiedSocietyImportImage::where('google_photo_reference','preview-reference')->firstOrFail();
+        $this->admin()->get("/api/admin/verified-importer/images/{$image->id}/preview")->assertOk()->assertHeader('Content-Type','image/jpeg');
     }
 
     public function test_template_download_is_available_to_admin(): void

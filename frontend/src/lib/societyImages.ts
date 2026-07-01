@@ -90,7 +90,9 @@ export function googlePlacesSocietyPhotoUrl(society: any, width = 1400) {
 }
 
 export function googlePlacesGalleryPhotoUrls(society: any, width = 1400): string[] {
-  if (!hasGooglePlacesDisplayPhoto(society)) return [];
+  const approvedByAdmin = Boolean(field<boolean>(society, 'imageApprovedByAdmin', 'image_approved_by_admin', false));
+  const placeId = firstText(field<string>(society, 'placeId', 'place_id', ''));
+  if (!approvedByAdmin || !placeId) return [];
 
   const slugOrId = encodeURIComponent(
     firstText(field<string>(society, 'slug', 'slug', ''), field<string>(society, 'id', 'id', '')),

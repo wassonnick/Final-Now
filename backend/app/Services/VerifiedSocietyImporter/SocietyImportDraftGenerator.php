@@ -79,20 +79,28 @@ class SocietyImportDraftGenerator
     {
         $this->assertImporterDraft($society);
         $hasCoordinates = $this->validCoordinates($society);
-        $hasAmenities = count($this->values($society->amenities)) >= 5;
-        $hasSecurity = collect($this->values($society->amenities))->contains(fn ($item) => in_array($item, ['24x7 Security','CCTV','Power Backup'], true));
+        $amenityCount = count($this->values($society->amenities));
+        $hasAmenities = $amenityCount >= 5;
+        $securitySignals = collect($this->values($society->amenities))->filter(fn ($item) => in_array($item, ['24x7 Security','CCTV','Power Backup'], true))->unique()->count();
         $hasMarket = collect(self::MARKET_VALUE_FIELDS)->contains(fn ($field) => filled($society->{$field}));
+        $hasMarketsOrMalls = $this->hasSourceValue($society,['nearby_malls','nearby_markets']);
+        $hasRent=filled($society->rent_range);$hasBuy=filled($society->buy_range);$hasPrice=filled($society->price_per_sqft);
 
         $overall = 7.0
             + ($hasCoordinates ? 0.3 : 0)
             + (filled($society->google_maps_url) ? 0.2 : 0)
+            + (filled($society->place_id) ? 0.2 : 0)
             + ($this->hasValues($society->nearby_schools) ? 0.2 : 0)
             + ($this->hasValues($society->nearby_hospitals) ? 0.2 : 0)
             + ($this->hasValues($society->nearby_office_hubs) ? 0.2 : 0)
             + ($this->hasValues($society->nearby_metro) ? 0.2 : 0)
+            + ($hasMarketsOrMalls ? 0.1 : 0)
+            + (filled($society->builder) ? 0.2 : 0)
             + ($hasAmenities ? 0.2 : 0)
-            + (filled($society->rera_number) ? 0.2 : 0)
-            + (filled($society->official_project_url) || filled($society->official_developer_url) ? 0.2 : 0);
+            + ($amenityCount>=8 ? 0.1 : 0)
+            + (filled($society->rera_number) || filled($society->official_rera_source_url) ? 0.2 : 0)
+            + (filled($society->official_project_url) || filled($society->official_developer_url) ? 0.2 : 0)
+            + ($hasRent ? 0.2 : 0) + ($hasBuy ? 0.2 : 0) + (filled($society->maintenance_charges) ? 0.1 : 0);
         $connectivity = 7.0
             + ($hasCoordinates ? 0.3 : 0)
             + (filled($society->google_maps_url) ? 0.2 : 0)
@@ -100,17 +108,18 @@ class SocietyImportDraftGenerator
             + ($this->hasValues($society->nearby_hospitals) ? 0.2 : 0)
             + ($this->hasValues($society->nearby_office_hubs) ? 0.2 : 0)
             + ($this->hasValues($society->nearby_metro) ? 0.2 : 0);
-        $lifestyle = 7.0 + ($hasAmenities ? 0.2 : 0)
+        $lifestyle = 7.0 + ($hasAmenities ? 0.2 : 0) + ($amenityCount>=8 ? 0.1 : 0)
             + ($this->hasValues($society->nearby_schools) ? 0.2 : 0)
-            + ($this->hasValues($society->nearby_hospitals) ? 0.2 : 0);
+            + ($this->hasValues($society->nearby_hospitals) ? 0.2 : 0)
+            + ($hasMarketsOrMalls ? 0.1 : 0);
 
         $candidates = [
             'score' => min(9.2, round($overall, 1)),
             'connectivity_score' => min(9.2, round($connectivity, 1)),
             'lifestyle_score' => min(9.2, round($lifestyle, 1)),
-            'security_score' => $hasSecurity ? 7.5 : null,
-            'maintenance_score' => filled($society->maintenance_charges) ? 7.0 : null,
-            'investment_score' => $hasMarket ? 7.0 : null,
+            'security_score' => $securitySignals>=2 ? 8.0 : ($securitySignals===1 ? 7.5 : null),
+            'maintenance_score' => filled($society->maintenance_charges) ? 7.5 : null,
+            'investment_score' => $hasMarket ? (($hasRent&&$hasBuy&&$hasPrice)?8.0:7.5) : null,
         ];
         $fields = array_filter($candidates, function ($value, $field) use ($society, $replace) {
             if ($value === null) return false;
@@ -195,5 +204,10 @@ class SocietyImportDraftGenerator
         if (! is_numeric($society->latitude) || ! is_numeric($society->longitude)) return false;
         $latitude=(float)$society->latitude;$longitude=(float)$society->longitude;
         return !($latitude===0.0&&$longitude===0.0)&&$latitude>=-90&&$latitude<=90&&$longitude>=-180&&$longitude<=180;
+    }
+
+    private function hasSourceValue(Society $society,array $fields): bool
+    {
+        return VerifiedSocietyFieldSource::where('society_id',$society->id)->whereIn('field_name',$fields)->where('admin_rejected',false)->whereNotNull('normalized_value')->where('normalized_value','!=','')->exists();
     }
 }

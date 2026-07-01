@@ -22,6 +22,7 @@ import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { VerifiedImportImageCard, type VerifiedImportImage } from "@/components/admin/VerifiedImportImageCard";
 import { adminFetch, uploadAdminImage } from "@/lib/adminApi";
 import { googlePlacesSocietyPhotoUrl, societyPlaceholderImage } from "@/lib/societyImages";
 import {
@@ -41,6 +42,7 @@ import {
   societyAmenityOptions,
 } from "@/lib/adminSocietyStore";
 import type { AdminSociety, SocietyStatus } from "@/lib/adminSocietyStore";
+import { approveVerifiedImportImage, rejectVerifiedImportImage, setVerifiedImportCoverImage } from "@/lib/verifiedImporterApi";
 
 const statusOptions: SocietyStatus[] = ["Draft", "Verified", "Premium", "Archived"];
 
@@ -105,22 +107,29 @@ function friendlyFetchError(err: unknown, fallback: string) {
 }
 
 function completionScore(society: AdminSociety) {
+  const importedImages = society.importedImages || [];
   const checks = [
     Boolean(society.name.trim()),
+    Boolean(society.builder.trim()),
     Boolean(society.city.trim()),
     Boolean(society.sector.trim() || society.locality.trim()),
     Boolean(society.address.trim()),
     isValidLatLng(society.latitude, society.longitude),
     Boolean(society.googleMapsUrl.trim()),
-    Boolean(society.builder.trim()),
-    Boolean(society.reraNumber.trim()),
+    Boolean(society.placeId.trim()),
+    Boolean(society.reraNumber.trim() || society.officialReraSourceUrl.trim()),
     society.amenities.length > 0,
-    Boolean(society.nearbySchools.trim() || society.nearbyMetro.trim() || society.nearbyHospitals.trim() || society.nearbyOfficeHubs.trim()),
-    Boolean(society.pendingImportImagesCount || society.coverImage.trim() || society.imageUrl.trim() || society.imageReferenceUrl.trim() || society.galleryImages.length),
+    Boolean(society.nearbySchools.trim()),
+    Boolean(society.nearbyHospitals.trim()),
+    Boolean(society.nearbyMetro.trim()),
+    Boolean(society.nearbyOfficeHubs.trim()),
+    Boolean(society.coverImage.trim() || society.imageUrl.trim() || society.imagePhotoReference.trim() || importedImages.some((image) => image.image_type === "cover")),
+    Boolean(society.galleryImages.length || society.approvedGalleryImageUrls.length || importedImages.some((image) => image.image_type === "gallery")),
     Boolean(society.description.trim()),
     Boolean(society.metaTitle.trim() && society.metaDescription.trim()),
     Boolean(society.score.trim()),
     Boolean(society.rentRange.trim() || society.buyRange.trim()),
+    Boolean(society.maintenanceCharges.trim()),
   ];
 
   const done = checks.filter(Boolean).length;
@@ -348,6 +357,25 @@ export function AdminSocietyFormPage() {
     setError("");
     setMessage("");
     setSaved(false);
+  };
+
+  const reviewImportedImage = async (image: VerifiedImportImage, action: "cover" | "gallery" | "reject") => {
+    if (!id) return;
+    const hasApprovedCover = society.imageApprovedByAdmin && Boolean(society.coverImage || society.imageUrl || society.imagePhotoReference);
+    const replace = action === "cover" && hasApprovedCover
+      ? window.confirm("An approved cover already exists. Replace it with this imported candidate?")
+      : false;
+    if (action === "cover" && hasApprovedCover && !replace) return;
+    try {
+      setReviewingImage(true); setError("");
+      if (action === "cover") await setVerifiedImportCoverImage(image.id, replace);
+      if (action === "gallery") await approveVerifiedImportImage(image.id);
+      if (action === "reject") await rejectVerifiedImportImage(image.id);
+      const loadedSociety = await fetchAdminSociety(id);
+      setSociety(loadedSociety);
+      setMessage(action === "cover" ? "Imported image approved as cover. Society remains unpublished." : action === "gallery" ? "Imported image approved to gallery. Society remains unpublished." : "Imported image rejected and removed from public-use fields.");
+    } catch (err) { setError(err instanceof Error ? err.message : "Could not review imported image."); }
+    finally { setReviewingImage(false); }
   };
 
   const toggleAmenity = (amenity: string, checked: boolean | "indeterminate") => {
@@ -1595,6 +1623,11 @@ export function AdminSocietyFormPage() {
                 ) : null}
               </div>
             </section>
+
+            {society.importedImages?.length ? <section className="rounded-[20px] border border-blue-100 bg-blue-50 p-4 shadow-sm md:p-5">
+              <div className="flex items-start justify-between gap-3"><div><h2 className="text-base font-bold tracking-tight text-slate-950">Imported Image Candidates</h2><p className="mt-1 text-xs leading-5 text-slate-600">Review Google photo references and builder image URLs. Nothing is approved automatically.</p></div><span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-blue-700">{society.importedImages.length} candidates</span></div>
+              <div className="mt-4 grid gap-3">{society.importedImages.map((image) => <VerifiedImportImageCard key={image.id} image={image} busy={reviewingImage} onCover={(item) => void reviewImportedImage(item,"cover")} onGallery={(item) => void reviewImportedImage(item,"gallery")} onReject={(item) => void reviewImportedImage(item,"reject")} />)}</div>
+            </section> : null}
 
             <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
               <h2 className="text-base font-bold tracking-tight text-slate-950">Publishing Controls</h2>

@@ -90,10 +90,12 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
         Route::post('/images/{image}/approve', [VerifiedSocietyImporterController::class, 'approveImage']);
         Route::post('/images/{image}/reject', [VerifiedSocietyImporterController::class, 'rejectImage']);
         Route::post('/images/{image}/set-cover', [VerifiedSocietyImporterController::class, 'setCoverImage']);
+        Route::get('/images/{image}/preview', [VerifiedSocietyImporterController::class, 'previewImage']);
         Route::post('/jobs/{job}/retry-failed', [VerifiedSocietyImporterController::class, 'retryFailedRows']);
         Route::post('/societies/{society}/apply-high-confidence', [VerifiedSocietyImporterController::class, 'applyHighConfidence']);
         Route::post('/societies/{society}/enrich-google', [VerifiedSocietyImporterController::class, 'enrichExistingDraft']);
         Route::post('/societies/{society}/source-layers/{layer}', [VerifiedSocietyImporterController::class, 'importSourceLayer']);
+        Route::post('/societies/{society}/nearby-google', [VerifiedSocietyImporterController::class, 'importGoogleNearby']);
         Route::post('/societies/{society}/generate-description', [VerifiedSocietyImporterController::class, 'generateDescription']);
         Route::post('/societies/{society}/generate-seo', [VerifiedSocietyImporterController::class, 'generateSeo']);
         Route::post('/societies/{society}/generate-scores', [VerifiedSocietyImporterController::class, 'generateScores']);

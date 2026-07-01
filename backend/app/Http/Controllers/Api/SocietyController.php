@@ -31,7 +31,7 @@ class SocietyController extends Controller {
       return response()->json(['status' => 'error', 'message' => 'Society not found'], 404);
     }
 
-    if ($society->image_status !== 'google_places_reference_found' || empty($society->place_id) || !$society->image_approved_by_admin) {
+    if (empty($society->place_id) || !$society->image_approved_by_admin) {
       return response()->json(['status' => 'error', 'message' => 'Google Places photo is not available for this society.'], 404);
     }
 
@@ -52,6 +52,7 @@ class SocietyController extends Controller {
 
         $photo = $places->fetchPhotoByReference($galleryReference, $width) + ['credit' => 'Google Places'];
       } else {
+        if ($society->image_status !== 'google_places_reference_found') return response()->json(['status' => 'error', 'message' => 'No Google Places cover is approved for this society.'], 404);
         $photo = $places->fetchDisplayPhoto($society, $width);
       }
     } catch (\Throwable $exception) {
@@ -87,6 +88,7 @@ class SocietyController extends Controller {
 
     if ($isAdmin) {
         $society->loadCount(['verifiedImportImages as pending_import_images_count' => fn ($query) => $query->where('needs_review', true)->where('admin_rejected', false)]);
+        $society->load(['verifiedImportImages' => fn ($query) => $query->where('admin_rejected', false)->orderBy('sort_order')->orderBy('id')->limit(20)]);
     }
 
     return response()->json([

@@ -1,5 +1,6 @@
 import { adminFetch, adminHeaders } from '@/lib/adminApi';
 import { API_BASE_URL } from '@/config/api';
+import type { VerifiedImportImage } from '@/components/admin/VerifiedImportImageCard';
 
 
 const normalizeAdminText = (value: unknown): string => {
@@ -150,6 +151,7 @@ export interface AdminSociety {
   updatedAt: string;
   propertiesCount?: number;
   pendingImportImagesCount?: number;
+  importedImages?: VerifiedImportImage[];
   fieldSources: Record<string, any>;
   officialSourceLastCheckedAt: string;
 }
@@ -398,6 +400,7 @@ export function mapApiSociety(data: any): AdminSociety {
     updatedAt: data?.updated_at ? new Date(data.updated_at).toLocaleDateString() : 'Just now',
     propertiesCount: Number(data?.properties_count || data?.properties?.length || 0),
     pendingImportImagesCount: Number(data?.pending_import_images_count || 0),
+    importedImages: Array.isArray(data?.verified_import_images) ? data.verified_import_images : [],
     fieldSources: data?.field_sources && typeof data.field_sources === 'object' ? data.field_sources : {},
     officialSourceLastCheckedAt: data?.official_source_last_checked_at || '',
   };
