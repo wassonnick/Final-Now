@@ -19,6 +19,7 @@ import {
   Shield,
   SlidersHorizontal,
   Sparkles,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store";
@@ -480,6 +481,7 @@ export function SearchPage() {
   const [showMap, setShowMap] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(min-width: 1200px)").matches,
   );
+  const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [leadName, setLeadName] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
   const [leadStatus, setLeadStatus] = useState<"idle" | "success" | "error">(
@@ -1763,6 +1765,38 @@ export function SearchPage() {
           ) : null}
         </div>
       </section>
+
+      {activeTab === "societies" && GOOGLE_MAPS_API_KEY && getValidMapSocieties(societyResults).length ? (
+        <button
+          type="button"
+          onClick={() => setMobileMapOpen(true)}
+          className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-1/2 z-40 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-[#25302B] px-4 py-2.5 text-[13px] font-bold text-white shadow-lg xl:hidden"
+        >
+          <MapPinned className="h-4 w-4" />
+          Map
+        </button>
+      ) : null}
+
+      {mobileMapOpen ? (
+        <div className="fixed inset-0 z-[95] flex flex-col bg-[#F8F3EA] xl:hidden" role="dialog" aria-modal="true" aria-label="Societies map">
+          <div className="flex items-center justify-between border-b border-[#E7DCCB] bg-white px-4 py-3">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#2A6147]">Live map</p>
+              <p className="text-[15px] font-medium text-[#10251F]">{getValidMapSocieties(societyResults).length} societies around your search</p>
+            </div>
+            <button type="button" onClick={() => setMobileMapOpen(false)} aria-label="Close map" className="rounded-full border border-[#E7DCCB] bg-white p-2.5 text-[#25302B]">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="relative min-h-0 flex-1 bg-[#DDE7DC]">
+            <GoogleSocietyMapView societies={societyResults} apiKey={GOOGLE_MAPS_API_KEY} query={query} />
+          </div>
+          <div className="grid grid-cols-2 gap-2 border-t border-[#E7DCCB] bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+            <Link to="/maps" className="rounded-[10px] border border-[#E7DCCB] px-3 py-2.5 text-center text-xs font-bold text-[#123C32]">Open full map</Link>
+            <Link to={`/ai-advisor?q=${encodeURIComponent(query || "Gurgaon societies")}`} className="rounded-[10px] bg-[#123C32] px-3 py-2.5 text-center text-xs font-bold text-white">Ask AI</Link>
+          </div>
+        </div>
+      ) : null}
       <PublicLeadModal
         open={Boolean(callbackTarget)}
         title={callbackTitle}
