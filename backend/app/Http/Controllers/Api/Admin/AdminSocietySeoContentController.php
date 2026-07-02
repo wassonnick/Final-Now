@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Society;
 use App\Models\SocietySeoContent;
+use App\Models\SeoChangeLog;
+use App\Models\SeoPage;
+use App\Models\SeoTask;
 use App\Services\SocietySeoScoringService;
 use App\Services\SocietySeoAiDraftService;
 use Illuminate\Http\JsonResponse;
@@ -54,10 +57,12 @@ class AdminSocietySeoContentController extends Controller
     public function approve(Request $request, Society $society): JsonResponse
     {
         $content = $society->seoContent()->firstOrFail();
+        $before = $content->toArray();
         $content->update([
             'status' => 'approved',
             'reviewed_by' => $request->user()?->getAuthIdentifier(),
         ]);
+        $this->logChange($request,$society,$content,'approved',$before,$content->fresh()->toArray());
 
         return response()->json(['status' => 'ok', 'message' => 'SEO content approved. It is not public until published.', 'data' => $this->payload($content->fresh())]);
     }
@@ -70,19 +75,24 @@ class AdminSocietySeoContentController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Approve SEO content before publishing it.'], 422);
         }
 
-        $content->update([
+        $before=$content->toArray();$content->update([
             'status' => 'published',
             'reviewed_by' => $content->reviewed_by ?: $request->user()?->getAuthIdentifier(),
             'published_at' => now(),
         ]);
+        $this->logChange($request,$society,$content,'published',$before,$content->fresh()->toArray());
+        $page=SeoPage::where('page_key','society:'.$society->id)->first();
+        SeoTask::updateOrCreate(['seo_page_id'=>$page?->id,'task_type'=>'sitemap_refresh_after_publish','status'=>'open'],['priority'=>'high','title'=>'Refresh and validate sitemap after SEO publication','description'=>'Confirm this public URL remains included and the sitemap does not shrink.','source'=>'workflow']);
 
         return response()->json(['status' => 'ok', 'message' => 'SEO content published.', 'data' => $this->payload($content->fresh())]);
     }
 
-    public function unpublish(Society $society): JsonResponse
+    public function unpublish(Request $request, Society $society): JsonResponse
     {
         $content = $society->seoContent()->firstOrFail();
+        $before=$content->toArray();
         $content->update(['status' => 'unpublished', 'published_at' => null]);
+        $this->logChange($request,$society,$content,'unpublished',$before,$content->fresh()->toArray());
 
         return response()->json(['status' => 'ok', 'message' => 'SEO content removed from the public society page.', 'data' => $this->payload($content->fresh())]);
     }
@@ -224,5 +234,10 @@ class AdminSocietySeoContentController extends Controller
             'readability_score' => 0,
             'score_label' => 'Weak',
         ]);
+    }
+
+    private function logChange(Request $request,Society $society,SocietySeoContent $content,string $action,array $before,array $after): void
+    {
+        SeoChangeLog::create(['seo_page_id'=>SeoPage::where('page_key','society:'.$society->id)->value('id'),'society_seo_content_id'=>$content->id,'action'=>$action,'actor'=>$request->header('X-Admin-Email')?:'admin','before_content'=>$before,'after_content'=>$after,'ai_model'=>$content->generated_by==='ai'?(config('services.ai_import_provider').':'.config('services.'.config('services.ai_import_provider').'.model')):null]);
     }
 }

@@ -27,6 +27,7 @@ import {
 } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
 import { societyImageAttribution } from "@/lib/societyImages";
+import { fetchPublishedSeoOverride, type PublishedSeoOverride } from "@/lib/publishedSeoOverride";
 
 type LandingVariant =
   | "gurgaon"
@@ -500,6 +501,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [seoOverride, setSeoOverride] = useState<PublishedSeoOverride | null>(null);
 
   const searchTab = variant === "gurgaon-properties" ? "rent" : "societies";
   const searchHref = `/search?tab=${searchTab}&q=${encodeURIComponent(copy.searchQuery)}${searchTab === "societies" ? "&intent=society" : ""}`;
@@ -552,11 +554,21 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
     scopedSocieties.length === 0;
 
   useEffect(() => {
-    setPublicSeo(copy.title, copy.description, {
-      canonical: copy.canonical,
+    let active = true;
+    setSeoOverride(null);
+    fetchPublishedSeoOverride(copy.canonical)
+      .then((value) => { if (active) setSeoOverride(value); })
+      .catch(() => { if (active) setSeoOverride(null); });
+    return () => { active = false; };
+  }, [copy.canonical]);
+
+  useEffect(() => {
+    setPublicSeo(seoOverride?.seo_title || copy.title, seoOverride?.seo_description || copy.description, {
+      canonical: seoOverride?.canonical_url || copy.canonical,
       noindex: shouldNoindexEmptyLanding,
+      jsonLd: seoOverride?.schema,
     });
-  }, [copy, shouldNoindexEmptyLanding]);
+  }, [copy, seoOverride, shouldNoindexEmptyLanding]);
 
   const scopedProperties = useMemo(() => {
     let rows = properties;
@@ -602,11 +614,11 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
               </div>
 
               <h1 className="mt-4 max-w-4xl font-display text-[34px] font-black leading-[0.96] tracking-[-0.05em] text-navy-950 md:text-[52px]">
-                {copy.title}
+                {seoOverride?.seo_h1 || copy.title}
               </h1>
 
               <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-blue-500 md:text-[17px] md:leading-7">
-                {copy.description}
+                {seoOverride?.intro_summary || seoOverride?.seo_description || copy.description}
               </p>
 
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">

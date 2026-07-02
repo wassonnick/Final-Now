@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Gift,
   Globe2,
+  Gauge,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ const links = [
   { label: "Rent Intelligence", href: "/admin/rent-history", icon: LineChart },
   { label: "Builder / RWA", href: "/admin/builder-portal", icon: ShieldCheck },
   { label: "AI Features", href: "/admin/ai", icon: Bot },
+  { label: "SEO Autopilot", href: "/admin/seo-autopilot", icon: Gauge },
   { label: "Maps", href: "/admin/maps", icon: MapPinned },
   { label: "Broker CRM", href: "/admin/broker-crm", icon: BriefcaseBusiness },
   { label: "Owner CRM", href: "/admin/owner-crm", icon: BriefcaseBusiness },

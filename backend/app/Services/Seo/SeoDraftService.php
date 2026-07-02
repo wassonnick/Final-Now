@@ -1,0 +1,54 @@
+<?php
+namespace App\Services\Seo;
+use App\Models\SeoChangeLog;
+use App\Models\SeoDraft;
+use App\Models\SeoPage;
+use App\Models\SeoTask;
+use App\Models\Society;
+use App\Models\SocietySeoContent;
+use Illuminate\Support\Str;
+class SeoDraftService
+{
+    public function __construct(private SeoAutopilotAiService $ai){}
+
+    public function generate(SeoPage $page): SeoDraft
+    {
+        $meta=$page->metadata?:[];$count=(int)($meta['approved_society_count']??count((array)($meta['societies']??[])));
+        if($page->page_type==='society'&&($meta['seo_status']??null)==='published')throw new \InvalidArgumentException('Published society SEO was not overwritten. Unpublish it explicitly before generating a replacement draft.');
+        if(in_array($page->page_type,['sector','builder'],true)&&$count<2){SeoTask::updateOrCreate(['seo_page_id'=>$page->id,'task_type'=>'insufficient_approved_societies','status'=>'open'],['priority'=>'high','title'=>'Not enough approved societies for SEO landing page','description'=>'At least two published, approved societies are required before generating this page.','source'=>'generator']);throw new \InvalidArgumentException('Not enough approved societies to generate a safe landing-page draft.');}
+        $name=(string)($meta['name']??$meta['sector']??$meta['builder']??$page->h1??'Gurgaon');$societies=array_values((array)($meta['societies']??[]));
+        $fallback=['seo_title'=>$this->title($page,$name),'seo_description'=>$this->description($page,$name,$count),'seo_h1'=>$this->h1($page,$name),'intro_summary'=>$this->intro($page,$name,$count),'internal_links'=>$this->links($page,$societies),'faq'=>$this->faqs($page,$name),'schema'=>$this->schema($page,$name)];
+        try{$suggested=$this->ai->improve($page,$fallback);$suggested['schema']=$fallback['schema'];$usedAi=$this->ai->available();}catch(\Throwable $e){report($e);$suggested=$fallback;$usedAi=false;$suggested['risk_warnings'][]='AI provider failed; deterministic verified-data fallback used.';}
+        return SeoDraft::create(['seo_page_id'=>$page->id,'status'=>'needs_review','current_version'=>['seo_title'=>$page->title,'seo_description'=>$page->meta_description,'seo_h1'=>$page->h1],'suggested_version'=>$suggested,'reason'=>$suggested['reason']??'Improve metadata, local intent, internal linking and schema using verified first-party page inventory.','confidence_score'=>$usedAi?82:($page->page_type==='society'?85:80),'data_sources'=>['seo_pages registry','published SocietyFlats society records'],'risk_warnings'=>array_values(array_unique(array_filter(['Admin review required before publication.',...($suggested['risk_warnings']??[]),empty($societies)&&in_array($page->page_type,['sector','builder'],true)?'Society list is empty; do not publish.':null,'Prices, distances, RERA and legal claims are intentionally omitted unless already verified.']))),'generated_by'=>$usedAi?'ai':'system','ai_model'=>$usedAi?$this->ai->model():null]);
+    }
+    public function update(SeoDraft $draft,array $suggested,string $actor): SeoDraft
+    {
+        if($draft->status!=='needs_review')throw new \InvalidArgumentException('Only review-pending drafts can be edited.');
+        $before=$draft->suggested_version?:[];$page=$draft->page;$name=(string)(($page->metadata?:[])['name']??($page->metadata?:[])['sector']??($page->metadata?:[])['builder']??$page->h1??'Gurgaon');
+        $safe=array_merge($before,array_filter($suggested,fn($value)=>$value!==null));
+        $safe['schema']=$this->schema($page,$name);
+        $draft->update(['suggested_version'=>$safe,'reason'=>$suggested['reason']??$draft->reason,'reviewed_by'=>null,'reviewed_at'=>null]);
+        SeoChangeLog::create(['seo_page_id'=>$draft->seo_page_id,'action'=>'draft_edited','actor'=>$actor,'before_content'=>$before,'after_content'=>$safe,'ai_model'=>$draft->ai_model,'metadata'=>['draft_id'=>$draft->id,'publicly_visible'=>false]]);
+        return $draft->fresh();
+    }
+    public function approve(SeoDraft $draft,string $actor): SeoDraft
+    {
+        if($draft->status!=='needs_review')throw new \InvalidArgumentException('Only review-pending drafts can be approved.');$page=$draft->page;$before=$draft->current_version;$suggested=$draft->suggested_version;
+        if($page->entity_type===Society::class&&$page->entity_id){$content=SocietySeoContent::firstOrNew(['society_id'=>$page->entity_id]);if($content->exists&&$content->status==='published')throw new \InvalidArgumentException('Published society SEO was not overwritten. Unpublish it explicitly before approving a replacement draft.');$content->fill(['seo_title'=>$suggested['seo_title']??null,'seo_description'=>$suggested['seo_description']??null,'seo_h1'=>$suggested['seo_h1']??null,'intro_summary'=>$suggested['intro_summary']??null,'internal_link_suggestions_json'=>$suggested['internal_links']??[],'faq_json'=>$suggested['faq']??[],'schema_json'=>$suggested['schema']??[]]);$content->status='approved';$content->generated_by=$content->exists?'ai_plus_admin':'system';$content->published_at=null;$content->save();$contentId=$content->id;}else{$page->update(['title'=>$suggested['seo_title']??$page->title,'meta_description'=>$suggested['seo_description']??$page->meta_description,'h1'=>$suggested['seo_h1']??$page->h1,'metadata'=>array_merge($page->metadata?:[],['approved_draft_id'=>$draft->id])]);$contentId=null;}
+        $draft->update(['status'=>'approved','reviewed_by'=>$actor,'reviewed_at'=>now()]);SeoChangeLog::create(['seo_page_id'=>$page->id,'society_seo_content_id'=>$contentId,'action'=>'draft_approved','actor'=>$actor,'before_content'=>$before,'after_content'=>$suggested,'ai_model'=>$draft->ai_model,'metadata'=>['draft_id'=>$draft->id,'publicly_visible'=>false]]);SeoTask::updateOrCreate(['seo_page_id'=>$page->id,'task_type'=>'sitemap_refresh_after_publish','status'=>'open'],['priority'=>'low','title'=>'Refresh sitemap after this SEO content is published','description'=>'Approval does not publish. Refresh and validate sitemap only after explicit publication.','source'=>'workflow']);return $draft->fresh();
+    }
+    public function reject(SeoDraft $draft,string $actor,?string $reason=null): SeoDraft{$draft->update(['status'=>'rejected','reviewed_by'=>$actor,'reviewed_at'=>now(),'risk_warnings'=>array_values(array_filter([...(array)$draft->risk_warnings,$reason]))]);SeoChangeLog::create(['seo_page_id'=>$draft->seo_page_id,'action'=>'draft_rejected','actor'=>$actor,'before_content'=>$draft->current_version,'after_content'=>$draft->suggested_version,'metadata'=>['draft_id'=>$draft->id,'reason'=>$reason]]);return $draft->fresh();}
+    public function publish(SeoDraft $draft,string $actor): SeoDraft
+    {
+        if($draft->status!=='approved')throw new \InvalidArgumentException('Approve the SEO draft before publishing it.');$page=$draft->page;$contentId=null;
+        if($page->entity_type===Society::class&&$page->entity_id){$content=SocietySeoContent::where('society_id',$page->entity_id)->firstOrFail();if($content->status!=='approved')throw new \InvalidArgumentException('The linked society SEO content is not approved.');$content->update(['status'=>'published','published_at'=>now()]);$contentId=$content->id;}
+        $draft->update(['status'=>'published','published_at'=>now(),'reviewed_by'=>$draft->reviewed_by?:$actor,'reviewed_at'=>$draft->reviewed_at?:now()]);SeoChangeLog::create(['seo_page_id'=>$page->id,'society_seo_content_id'=>$contentId,'action'=>'draft_published','actor'=>$actor,'before_content'=>$draft->current_version,'after_content'=>$draft->suggested_version,'ai_model'=>$draft->ai_model,'metadata'=>['draft_id'=>$draft->id]]);SeoTask::updateOrCreate(['seo_page_id'=>$page->id,'task_type'=>'sitemap_refresh_after_publish','status'=>'open'],['priority'=>'high','title'=>'Refresh and validate sitemap after SEO publication','description'=>'Confirm the live sitemap retains every public URL and does not add unpublished property URLs.','source'=>'workflow']);return $draft->fresh();
+    }
+    private function title(SeoPage $p,string $n): string{return Str::limit(match($p->page_type){'sector'=>"Best Societies in {$n}, Gurgaon | SocietyFlats",'builder'=>"{$n} Societies in Gurgaon | SocietyFlats",'rent'=>"Verified Flats for Rent in Gurgaon | SocietyFlats",'buy'=>"Verified Flats for Sale in Gurgaon | SocietyFlats",'comparison'=>"Compare Gurgaon Societies | SocietyFlats",default=>"{$n} Gurgaon Society Guide | SocietyFlats"},65,'');}
+    private function description(SeoPage $p,string $n,int $c): string{$prefix=$c>0?"Compare {$c} published societies":"Explore verified SocietyFlats information";return Str::limit("{$prefix} for {$n}, with reviewed location, lifestyle and availability context. Request current rental or resale options without fake listings.",165,'');}
+    private function h1(SeoPage $p,string $n): string{return match($p->page_type){'sector'=>"Best Societies in {$n}, Gurgaon",'builder'=>"{$n} Societies in Gurgaon",'rent'=>'Flats for Rent in Gurgaon','buy'=>'Flats for Sale in Gurgaon','comparison'=>'Compare Gurgaon Societies',default=>$n};}
+    private function intro(SeoPage $p,string $n,int $c): string{return ($c?"This page compares {$c} currently published SocietyFlats society profiles":"This page uses currently published SocietyFlats records")." for {$n}. Availability and market information must be confirmed before users make a decision.";}
+    private function links(SeoPage $p,array $societies): array{$links=[['label'=>'Browse verified Gurgaon societies','url'=>'/societies'],['label'=>'Compare societies','url'=>'/compare']];foreach(array_slice($societies,0,6) as $name)$links[]=['label'=>$name,'url'=>'/search?tab=societies&q='.rawurlencode((string)$name)];return $links;}
+    private function faqs(SeoPage $p,string $n): array{return [['question'=>"How does SocietyFlats review {$n}?",'answer'=>'SocietyFlats uses published society records and admin-reviewed source fields. Missing facts remain marked for verification.'],['question'=>'Are rental or resale homes guaranteed to be available?','answer'=>'No. Current availability must be requested and confirmed; SocietyFlats does not show fabricated inventory.']];}
+    private function schema(SeoPage $p,string $n): array{return ['@context'=>'https://schema.org','@type'=>'WebPage','name'=>$this->h1($p,$n),'url'=>'https://www.societyflats.com'.(str_contains($p->canonical_url,'?')?strstr($p->canonical_url,'?',true):$p->canonical_url)];}
+}

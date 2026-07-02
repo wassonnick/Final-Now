@@ -38,6 +38,11 @@ return [
     'admin_api_token' => env('ADMIN_API_TOKEN'),
     'google_places_api_key' => env('GOOGLE_PLACES_API_KEY'),
 
+    'search_console' => [
+        'site_url' => env('GOOGLE_SEARCH_CONSOLE_SITE_URL', 'https://www.societyflats.com'),
+        'access_token' => env('GOOGLE_SEARCH_CONSOLE_ACCESS_TOKEN'),
+    ],
+
     'lead_notifications' => [
         'enabled' => env('LEAD_NOTIFICATION_ENABLED', false),
         'webhook_url' => env('LEAD_NOTIFICATION_WEBHOOK_URL'),

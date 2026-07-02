@@ -58,6 +58,7 @@ const AdminRentHistoryPage = lazy(() => import('@/pages/admin/AdminRentHistoryPa
 const AdminBuilderPortalPage = lazy(() => import('@/pages/admin/AdminBuilderPortalPage').then((module) => ({ default: module.AdminBuilderPortalPage })));
 const AdminReferralsPage = lazy(() => import('@/pages/admin/AdminReferralsPage').then((module) => ({ default: module.AdminReferralsPage })));
 const AdminNriCasesPage = lazy(() => import('@/pages/admin/AdminNriCasesPage').then((module) => ({ default: module.AdminNriCasesPage })));
+const AdminSeoAutopilotPage = lazy(() => import('@/pages/admin/AdminSeoAutopilotPage').then((module) => ({ default: module.AdminSeoAutopilotPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -201,6 +202,7 @@ function AppShell() {
             <Route path="/admin/leads/:id" element={<ProtectedAdminRoute><AdminLeadDetailPage /></ProtectedAdminRoute>} />
             <Route path="/admin/referrals" element={<ProtectedAdminRoute><AdminReferralsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/nri-cases" element={<ProtectedAdminRoute><AdminNriCasesPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/seo-autopilot" element={<ProtectedAdminRoute><AdminSeoAutopilotPage /></ProtectedAdminRoute>} />
 
             <Route path="/admin/reviews" element={<ProtectedAdminRoute><AdminReviewsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsersPage /></ProtectedAdminRoute>} />
