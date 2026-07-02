@@ -232,13 +232,18 @@ export function Navbar() {
         {bottomActions.map((action) => {
           const Icon = action.icon;
           const isActive = location.pathname === action.href.split('?')[0];
+          const isSignatureTab = action.label === 'Assistant';
           return (
             <Link
               key={action.href}
               to={action.href}
               className={cn(
                 'relative flex flex-col items-center justify-center rounded-2xl px-2 py-2 text-[11px] font-semibold transition',
-                isActive ? 'bg-pine-800 text-white' : 'text-forest-600 hover:bg-sage-50'
+                isSignatureTab
+                  ? cn('bg-pine-800 text-white', isActive && 'ring-2 ring-pine-800/25')
+                  : isActive
+                    ? 'bg-pine-800 text-white'
+                    : 'text-forest-600 hover:bg-sage-50'
               )}
             >
               <Icon className="mb-1 h-4 w-4" />
