@@ -152,14 +152,64 @@ export default function SocietyFlatsHero() {
             Find a home in a society you can actually trust.
           </p>
 
-          <button
-            type="button"
-            onClick={() => navigate("/search?tab=societies")}
-            className="mt-4 flex w-full items-center gap-2.5 rounded-[16px] border border-[#E7DCCB] bg-white px-4 py-[15px] text-left shadow-[0_6px_18px_-12px_rgba(0,0,0,.25)]"
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              submit();
+            }}
+            className="relative mt-4"
           >
-            <Search className="h-[19px] w-[19px] text-[#2A6147]" />
-            <span className="text-[15px] text-[#8A8F89]">Search sector, society or builder</span>
-          </button>
+            <label className="flex w-full items-center gap-2.5 rounded-[16px] border border-[#E7DCCB] bg-white px-4 py-1.5 shadow-[0_6px_18px_-12px_rgba(0,0,0,.25)]">
+              <Search className="h-[19px] w-[19px] shrink-0 text-[#2A6147]" />
+              <input
+                type="search"
+                inputMode="search"
+                enterKeyHint="search"
+                autoComplete="off"
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setShowSuggestions(false);
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    submit();
+                  }
+                }}
+                placeholder="Search sector, society or builder"
+                aria-label="Search sector, society or builder"
+                className="search-bare-input min-w-0 flex-1 bg-transparent py-3 text-[15px] text-[#25302B] outline-none placeholder:text-[#8A8F89]"
+              />
+              <button type="submit" aria-label="Submit search" className="shrink-0 rounded-[10px] bg-[#123C32] px-3 py-2 text-xs font-bold text-white">
+                Search
+              </button>
+            </label>
+            {showSuggestions && query.trim() && suggestions.length > 0 ? (
+              <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-64 overflow-y-auto rounded-[14px] border border-[#E7DCCB] bg-white p-1.5 shadow-[0_18px_40px_-28px_rgba(0,0,0,.35)]">
+                {suggestions.map((society) => (
+                  <li key={society.id}>
+                    <button
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        setShowSuggestions(false);
+                        setQuery(society.name);
+                        submit(society.name);
+                      }}
+                      className="flex w-full flex-col rounded-[10px] px-3 py-2 text-left hover:bg-[#F8F3EA]"
+                    >
+                      <span className="text-sm font-semibold text-[#25302B]">{society.name}</span>
+                      <span className="text-xs text-[#6E756E]">{formatPublicLocation(society)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </form>
           <p className="mt-2 px-1 text-[11.5px] leading-5 text-[#6E756E]">
             Try: “3 BHK near Cyber City under ₹80k”
           </p>
