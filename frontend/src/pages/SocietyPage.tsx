@@ -898,12 +898,44 @@ export function SocietyPage() {
 
         {error ? <div className="mb-4 rounded-xl border border-[#EBCFAE] bg-[#FFF4E8] px-4 py-3 text-sm text-[#8A552F]">{error}</div> : null}
 
-        <section className="grid h-[250px] gap-3 sm:h-[320px] md:h-[380px] md:grid-cols-[2fr_1fr]">
+        <section className="relative h-[250px] md:hidden">
+          <div
+            className="flex h-full snap-x snap-mandatory gap-2 overflow-x-auto rounded-[18px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            onScroll={(event) => {
+              const el = event.currentTarget;
+              const index = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
+              if (index !== activeImage) setActiveImage(index);
+            }}
+          >
+            {gallery.map((image, index) => (
+              <button
+                key={`${image}-${index}`}
+                type="button"
+                onClick={() => { setActiveImage(index); setLightboxOpen(true); }}
+                className="relative h-full w-full flex-shrink-0 snap-center overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left"
+              >
+                <img src={image} alt={`${society.name} photo ${index + 1}`} className="h-full w-full object-cover" loading={index === 0 ? "eager" : "lazy"} />
+              </button>
+            ))}
+          </div>
+          <span className="pointer-events-none absolute left-3.5 top-3.5 rounded-full bg-[#E8F7E9] px-3 py-1.5 text-xs font-bold text-[#2A6147]">✓ Verified by SocietyFlats</span>
+          {gallery.length > 1 ? (
+            <>
+              <span className="pointer-events-none absolute right-3.5 top-3.5 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white">{Math.min(activeImage + 1, gallery.length)}/{gallery.length}</span>
+              <span className="pointer-events-none absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                {gallery.map((_, index) => (
+                  <span key={index} className={cn("h-1.5 w-1.5 rounded-full transition", index === activeImage ? "bg-white" : "bg-white/45")} />
+                ))}
+              </span>
+            </>
+          ) : null}
+        </section>
+        <section className="hidden h-[320px] gap-3 md:grid md:h-[380px] md:grid-cols-[2fr_1fr]">
           <button type="button" onClick={() => setLightboxOpen(true)} className="relative h-full min-h-0 overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left">
             <img src={gallery[0]} alt={society.name} className="h-full w-full object-cover" />
             <span className="absolute left-4 top-4 rounded-full bg-[#E8F7E9] px-3 py-1.5 text-xs font-bold text-[#2A6147]">✓ Verified by SocietyFlats</span>
           </button>
-          <div className="hidden h-full min-h-0 grid-rows-2 gap-3 overflow-hidden md:grid">
+          <div className="grid h-full min-h-0 grid-rows-2 gap-3 overflow-hidden">
             {[gallery[1] || gallery[0], gallery[2] || gallery[0]].map((image, index) => (
               <button key={`${image}-${index}`} type="button" onClick={() => { setActiveImage(index + 1); setLightboxOpen(true); }} className="relative overflow-hidden rounded-[18px] bg-[#E5ECE5]">
                 <img src={image} alt={`${society.name} ${index + 2}`} className="h-full w-full object-cover" />
@@ -957,13 +989,19 @@ export function SocietyPage() {
               <div className="mt-6">
                 <h2 className="text-[19px] font-bold text-[#25302B]">How {society.name} scores</h2>
                 <p className="mt-1 text-[13px] text-[#6E756E]">Each number reflects amenities, builder reputation, locality tier and resident-fit signals reviewed for this society — not a single average.</p>
-                <div className="mt-3.5 grid grid-cols-2 gap-3 sm:grid-cols-5">
-                  {subScores.map(([label, value]) => (
-                    <div key={label} className="rounded-[14px] border border-[#E7E3DA] bg-white p-3.5 text-center">
-                      <p className="text-xl font-extrabold text-[#123C32]">{Number(value).toFixed(1)}</p>
-                      <p className="mt-1 text-[11.5px] text-[#7A817D]">{label}</p>
-                    </div>
-                  ))}
+                <div className="mt-3.5 space-y-2.5 rounded-[14px] border border-[#E7E3DA] bg-white p-4">
+                  {subScores.map(([label, value]) => {
+                    const score = Number(value) > 10 ? Number(value) / 10 : Number(value);
+                    return (
+                      <div key={label} className="flex items-center gap-3">
+                        <span className="w-[92px] shrink-0 text-[12.5px] text-[#6E756E]">{label}</span>
+                        <span className="h-[6px] min-w-0 flex-1 overflow-hidden rounded-full bg-[#EEE9DE]">
+                          <span className="block h-full rounded-full bg-[#2A6147]" style={{ width: `${Math.min(100, Math.max(0, score * 10))}%` }} />
+                        </span>
+                        <span className="w-8 shrink-0 text-right text-[13.5px] font-extrabold text-[#123C32]">{score.toFixed(1)}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ) : null}
