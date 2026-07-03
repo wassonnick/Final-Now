@@ -761,7 +761,9 @@ export function AIAdvisorPage() {
               </span>
               <div>
                 <h2 className="text-[15px] font-bold text-[#25302B]">Tell me what you need</h2>
-                <p className="text-xs text-[#2A6147]">● Based on verified society data</p>
+                <p className="text-xs text-[#2A6147]">
+                  ● {publicSocieties.length > 0 ? `Grounded in ${publicSocieties.length} verified societies` : "Based on verified society data"} — no invented listings
+                </p>
               </div>
             </div>
 

@@ -498,16 +498,24 @@ export function ComparePage() {
                 </div>
               ))}
             </div>
-            {handoffRows.map(([label, getter], rowIndex) => (
+            {handoffRows.map(([label, getter], rowIndex) => {
+              const scoreKey = ({ Connectivity: "connectivity_score", Security: "security_score", Maintenance: "maintenance_score" } as Record<string, string>)[label];
+              const bestScore = scoreKey && items.length > 1 ? Math.max(...items.map((society) => scoreValue(society, scoreKey))) : 0;
+              return (
               <div key={label} className="grid border-b border-[#EEEAE1] last:border-b-0" style={{ gridTemplateColumns: `200px repeat(${items.length}, minmax(190px, 1fr))` }}>
                 <div className={rowIndex % 2 === 0 ? "bg-[#F6F4EE] px-5 py-4 text-[13px] font-bold text-[#4A534E]" : "bg-white px-5 py-4 text-[13px] font-bold text-[#4A534E]"}>{label}</div>
-                {items.map((society) => (
-                  <div key={`${label}-${society.id || society.slug}`} className="border-l border-[#EEEAE1] px-5 py-4 text-sm font-medium text-[#25302B]">
+                {items.map((society) => {
+                  const isWinner = Boolean(scoreKey) && bestScore > 0 && scoreValue(society, scoreKey as string) === bestScore;
+                  return (
+                  <div key={`${label}-${society.id || society.slug}`} className={`border-l border-[#EEEAE1] px-5 py-4 text-sm font-medium text-[#25302B] ${isWinner ? "bg-[#EEF5F1]" : ""}`}>
                     {getter(society)}
+                    {isWinner ? <span className="ml-2 rounded-full bg-[#E8F7E9] px-2 py-0.5 text-[10px] font-bold text-[#2A6147]">Best</span> : null}
                   </div>
-                ))}
+                  );
+                })}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </main>
