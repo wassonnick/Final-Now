@@ -14,9 +14,18 @@ const desktopColumns = [
     heading: "Platform",
     links: [
       ["AI Advisor", "/ai-advisor"],
+      ["AI chat", "/chat"],
       ["Compare societies", "/compare"],
-      ["List your flat", "/sell"],
-      ["Broker partner", "/broker-crm"],
+      ["Map intelligence", "/maps"],
+    ],
+  },
+  {
+    heading: "Services",
+    links: [
+      ["NRI services", "/nri-services"],
+      ["Builder & RWA", "/builder-portal"],
+      ["Builder floors", "/builder-floors"],
+      ["Referral partner", "/referrals"],
     ],
   },
   {
@@ -41,7 +50,7 @@ export function Footer() {
           Gurgaon&apos;s society-first real estate intelligence platform. Verified data, no fake inventory.
         </p>
         <div className="mt-6 grid grid-cols-2 gap-6">
-          {desktopColumns.slice(0, 2).map((column) => (
+          {desktopColumns.map((column) => (
             <div key={column.heading}>
               <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-[#405049]">
                 {column.heading}
@@ -63,7 +72,7 @@ export function Footer() {
 
       <footer className="mt-16 hidden border-t border-[#E7DCCB] bg-[#F8F3EA] lg:block">
         <div className="mx-auto max-w-[1360px] px-10 py-10">
-          <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-8">
+          <div className="grid grid-cols-[1.3fr_1fr_1fr_1fr_1fr] gap-8">
             <div>
               <Link to="/" className="font-display text-xl font-medium text-[#123C32]">
                 SocietyFlats

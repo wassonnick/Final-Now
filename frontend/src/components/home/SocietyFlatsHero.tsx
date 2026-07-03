@@ -397,9 +397,9 @@ export default function SocietyFlatsHero() {
             <div className="absolute left-1.5 top-7 inline-flex items-center gap-1.5 rounded-full border border-[#E7DCCB] bg-white px-[13px] py-2 text-xs font-bold shadow-[0_12px_26px_-16px_rgba(0,0,0,.35)]">
               <Check className="h-3 w-3 stroke-[3] text-[#1F7A5A]" /> Admin-reviewed data
             </div>
-            <div className="absolute bottom-0 right-[58px] rounded-full bg-[#C2724E] px-[13px] py-[7px] text-[11.5px] font-bold text-white shadow-sm">
-              Published data only
-            </div>
+            <Link to="/maps" className="absolute bottom-0 right-[58px] rounded-full bg-[#C2724E] px-[13px] py-[7px] text-[11.5px] font-bold text-white shadow-sm">
+              Open map intelligence →
+            </Link>
           </div>
         </div>
       </section>

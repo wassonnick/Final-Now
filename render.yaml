@@ -80,9 +80,6 @@ services:
         source: /properties
         destination: /properties/index.html
       - type: rewrite
-        source: /explore
-        destination: /explore/index.html
-      - type: rewrite
         source: /broker-crm
         destination: /broker-crm/index.html
       - type: rewrite

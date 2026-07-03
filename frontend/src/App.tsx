@@ -37,7 +37,6 @@ const BuilderPortalPage = lazy(() => import('@/pages/BuilderPortalPage').then((m
 const PublicInfoPage = lazy(() => import('@/pages/PublicInfoPage').then((module) => ({ default: module.PublicInfoPage })));
 const ReferralPage = lazy(() => import('@/pages/ReferralPage').then((module) => ({ default: module.ReferralPage })));
 const NriServicesPage = lazy(() => import('@/pages/NriServicesPage').then((module) => ({ default: module.NriServicesPage })));
-const AppHubPage = lazy(() => import('@/pages/AppHubPage').then((module) => ({ default: module.AppHubPage })));
 
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage').then((module) => ({ default: module.AdminLoginPage })));
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })));
@@ -117,7 +116,6 @@ function AppShell() {
             <Route path="/" element={<HomePage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/search/" element={<SearchPage />} />
-            <Route path="/explore" element={<AppHubPage />} />
 
             <Route path="/societies" element={<SocietiesPage />} />
             <Route path="/societies/" element={<SocietiesPage />} />

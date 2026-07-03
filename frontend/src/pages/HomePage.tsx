@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, Home, MapPin, RefreshCw } from "lucide-react";
 import SocietyFlatsHero from "@/components/home/SocietyFlatsHero";
-import { ProductJourneyPreview } from "@/components/home/ProductJourneyPreview";
+import { DecisionGuideStrip, PropertyToolsStrip, SpecialistServicesStrip } from "@/components/home/ContextualJourneys";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import {
   fetchPublicProperties,
@@ -168,7 +168,6 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-[#F8F3EA] text-[#25302B]">
       <SocietyFlatsHero />
-      <ProductJourneyPreview />
 
       {allSocietiesCount > 0 ? (
         <div className="mx-auto max-w-[1360px] px-5 pt-5 lg:px-10">
@@ -212,6 +211,8 @@ export function HomePage() {
             <p className="mt-1 text-sm leading-6 text-[#6E756E]">Public cards appear after society data and images pass admin review.</p>
           </div>
         )}
+
+        <DecisionGuideStrip mobile />
 
         <div className="mb-3 mt-[26px] flex items-baseline justify-between">
           <h2 className="font-sans text-base font-bold tracking-normal text-[#25302B]">Verified homes</h2>
@@ -278,6 +279,8 @@ export function HomePage() {
           </div>
         )}
 
+        <PropertyToolsStrip mobile />
+
         <div className="mt-[26px] rounded-[20px] bg-[#123C32] px-5 py-[22px] text-white">
           <h2 className="font-display text-[21px] font-medium leading-tight text-white">Every society, verified.</h2>
           <p className="mb-4 mt-1 text-[13.5px] leading-[1.5] text-[#DDE7DC]">
@@ -310,6 +313,7 @@ export function HomePage() {
         <Link to="/search?tab=societies" className="mt-[22px] block rounded-[16px] bg-[#123C32] p-4 text-center text-[15px] font-semibold text-white">
           Browse all verified societies
         </Link>
+        <SpecialistServicesStrip mobile />
       </main>
 
       {/* DESKTOP PROTOTYPE */}
@@ -347,21 +351,7 @@ export function HomePage() {
         </section>
 
         <section className="mx-auto mt-16 max-w-[1360px] px-10">
-          <div className="grid grid-cols-2 items-center gap-10 rounded-[24px] bg-[#123C32] p-11 text-white">
-            <div>
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#8DC5A7]">SocietyFlats AI</p>
-              <h2 className="font-display text-[34px] font-medium leading-[1.1] text-white">Not sure which society fits?</h2>
-              <p className="mb-6 mt-3 text-[15.5px] leading-[1.55] text-[#D2E0D7]">Tell us your budget, office location and lifestyle. SocietyFlats AI will suggest societies that fit—with clear reasoning and a data-confidence signal.</p>
-              <Link to="/ai-advisor" className="inline-flex rounded-[12px] bg-[#C2724E] px-7 py-3.5 text-[15px] font-bold text-white">Build my shortlist</Link>
-            </div>
-            <div className="flex flex-col gap-3">
-              {["Best societies near Cyber City under ₹80k rent", "Family-friendly societies near good schools", "Compare my shortlisted societies"].map((prompt) => (
-                <Link key={prompt} to={`/ai-advisor?q=${encodeURIComponent(prompt)}`} className="flex items-center justify-between rounded-[12px] border border-[#315A4F] bg-[#234A40] px-4 py-3.5 text-sm">
-                  {prompt} <span className="text-[#8DC5A7]">→</span>
-                </Link>
-              ))}
-            </div>
-          </div>
+          <DecisionGuideStrip />
         </section>
 
         <section className="mx-auto mt-16 max-w-[1360px] px-10">
@@ -449,8 +439,12 @@ export function HomePage() {
           )}
         </section>
 
+        <section className="mx-auto max-w-[1360px] px-10">
+          <PropertyToolsStrip />
+        </section>
+
         <section className="mx-auto mt-16 max-w-[1360px] px-10">
-          <h2 className="mb-[22px] font-display text-[32px] font-medium text-[#25302B]">Popular Gurgaon areas</h2>
+          <div className="mb-[22px] flex items-end justify-between"><h2 className="font-display text-[32px] font-medium text-[#25302B]">Popular Gurgaon areas</h2><Link to="/maps" className="text-sm font-bold text-[#2A6147]">Explore all on map →</Link></div>
           <div className="grid grid-cols-4 gap-4">
             {areas.map(([name, href, reason]) => (
               <Link key={href} to={href} className="relative h-[150px] overflow-hidden rounded-[16px] bg-[#6F8D82] [background-image:repeating-linear-gradient(135deg,#5F7D72_0_1px,transparent_1px_13px)]">
@@ -475,6 +469,10 @@ export function HomePage() {
             <p className="mb-5 mt-2.5 text-sm leading-[1.55] text-[#D2E0D7]">Have verified Gurgaon inventory? Get society-specific enquiries and avoid duplicate listing spam.</p>
             <Link to="/broker-crm" className="inline-flex rounded-[11px] bg-[#F1F5EF] px-6 py-3 text-sm font-bold text-[#123C32]">Become a partner</Link>
           </div>
+        </section>
+
+        <section className="mx-auto mt-10 max-w-[1360px] px-10">
+          <SpecialistServicesStrip />
         </section>
 
         <section className="mx-auto mt-16 max-w-[900px] px-10">
