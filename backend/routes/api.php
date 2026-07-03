@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Admin\AdminReviewController;
 use App\Http\Controllers\Api\Admin\AdminReferralController;
 use App\Http\Controllers\Api\Admin\AdminNriCaseController;
 use App\Http\Controllers\Api\Admin\AdminSiteVisitController;
+use App\Http\Controllers\Api\Admin\AdminOpsController;
 use App\Http\Controllers\Api\Admin\AdminSeoAutopilotController;
 use App\Http\Controllers\Api\Admin\AdminStatsController;
 use App\Http\Controllers\Api\Admin\AdminSocietySeoContentController;
@@ -58,6 +59,7 @@ Route::get('/site-visits/{token}', [SiteVisitController::class, 'show']);
 Route::post('/site-visits/{token}/confirm', [SiteVisitController::class, 'confirm']);
 Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/stats', AdminStatsController::class);
+    Route::get('/ops/action-inbox', [AdminOpsController::class, 'actionInbox']);
     Route::post('/uploads/images', [ImageUploadController::class, 'store']);
     Route::prefix('seo-autopilot')->group(function () {
         Route::get('/dashboard', [AdminSeoAutopilotController::class, 'dashboard']);
