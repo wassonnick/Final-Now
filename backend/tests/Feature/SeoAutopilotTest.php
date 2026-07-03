@@ -70,6 +70,34 @@ class SeoAutopilotTest extends TestCase
         $this->assertDatabaseCount('seo_search_console_metrics',1);
     }
 
+    public function test_search_console_refreshes_oauth_token_before_scheduled_import(): void
+    {
+        config(['services.search_console'=>[
+            'site_url'=>'sc-domain:societyflats.com',
+            'access_token'=>'stale-access-token',
+            'client_id'=>'test-client-id',
+            'client_secret'=>'test-client-secret',
+            'refresh_token'=>'test-refresh-token',
+        ]]);
+        Http::fake([
+            'https://oauth2.googleapis.com/token'=>Http::response(['access_token'=>'fresh-access-token','expires_in'=>3600],200),
+            'https://searchconsole.googleapis.com/*'=>Http::response(['rows'=>[[
+                'keys'=>['2026-07-03','https://www.societyflats.com/gurgaon','gurgaon societies'],
+                'clicks'=>4,'impressions'=>120,'ctr'=>0.033,'position'=>5.2,
+            ]]],200),
+        ]);
+
+        $this->admin()->postJson('/api/admin/seo-autopilot/search-console/fetch')
+            ->assertOk()->assertJsonPath('count',1)->assertJsonPath('configured',true);
+
+        Http::assertSent(fn($request)=>$request->url()==='https://oauth2.googleapis.com/token'
+            && $request['grant_type']==='refresh_token'
+            && $request['refresh_token']==='test-refresh-token');
+        Http::assertSent(fn($request)=>str_starts_with($request->url(),'https://searchconsole.googleapis.com/')
+            && $request->hasHeader('Authorization','Bearer fresh-access-token'));
+        $this->assertDatabaseHas('seo_search_console_metrics',['query'=>'gurgaon societies','clicks'=>4]);
+    }
+
     public function test_society_draft_approval_updates_reviewable_fields_but_never_publishes(): void
     {
         $society=$this->society('Draft Society','draft-society');

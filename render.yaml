@@ -162,6 +162,12 @@ services:
         value: https://www.societyflats.com
       - key: GOOGLE_SEARCH_CONSOLE_ACCESS_TOKEN
         sync: false
+      - key: GOOGLE_SEARCH_CONSOLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_SEARCH_CONSOLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_SEARCH_CONSOLE_REFRESH_TOKEN
+        sync: false
       - key: UPLOADS_DISK
         value: r2
       - key: R2_ACCESS_KEY_ID
@@ -197,6 +203,12 @@ services:
       - key: GOOGLE_SEARCH_CONSOLE_SITE_URL
         value: https://www.societyflats.com
       - key: GOOGLE_SEARCH_CONSOLE_ACCESS_TOKEN
+        sync: false
+      - key: GOOGLE_SEARCH_CONSOLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_SEARCH_CONSOLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_SEARCH_CONSOLE_REFRESH_TOKEN
         sync: false
       - key: DB_CONNECTION
         value: pgsql

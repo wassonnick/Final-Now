@@ -41,6 +41,9 @@ return [
     'search_console' => [
         'site_url' => env('GOOGLE_SEARCH_CONSOLE_SITE_URL', 'https://www.societyflats.com'),
         'access_token' => env('GOOGLE_SEARCH_CONSOLE_ACCESS_TOKEN'),
+        'client_id' => env('GOOGLE_SEARCH_CONSOLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_SEARCH_CONSOLE_CLIENT_SECRET'),
+        'refresh_token' => env('GOOGLE_SEARCH_CONSOLE_REFRESH_TOKEN'),
     ],
 
     'lead_notifications' => [
