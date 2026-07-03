@@ -87,6 +87,30 @@ services:
         destination: /recommendations/index.html
 
       - type: rewrite
+        source: /builder-floors
+        destination: /builder-floors/index.html
+      - type: rewrite
+        source: /builder-portal
+        destination: /builder-portal/index.html
+      - type: rewrite
+        source: /chat
+        destination: /chat/index.html
+      - type: rewrite
+        source: /help
+        destination: /help/index.html
+      - type: rewrite
+        source: /investment-calculator
+        destination: /investment-calculator/index.html
+      - type: rewrite
+        source: /nri-services
+        destination: /nri-services/index.html
+      - type: rewrite
+        source: /privacy
+        destination: /privacy/index.html
+      - type: rewrite
+        source: /trust
+        destination: /trust/index.html
+      - type: rewrite
         source: /404
         destination: /404/index.html
 
