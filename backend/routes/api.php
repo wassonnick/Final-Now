@@ -60,6 +60,9 @@ Route::post('/site-visits/{token}/confirm', [SiteVisitController::class, 'confir
 Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/stats', AdminStatsController::class);
     Route::get('/ops/action-inbox', [AdminOpsController::class, 'actionInbox']);
+    Route::get('/ops/suggestions', [AdminOpsController::class, 'suggestions']);
+    Route::post('/ops/suggestions/{suggestion}/apply', [AdminOpsController::class, 'applySuggestion']);
+    Route::post('/ops/suggestions/{suggestion}/dismiss', [AdminOpsController::class, 'dismissSuggestion']);
     Route::post('/uploads/images', [ImageUploadController::class, 'store']);
     Route::prefix('seo-autopilot')->group(function () {
         Route::get('/dashboard', [AdminSeoAutopilotController::class, 'dashboard']);

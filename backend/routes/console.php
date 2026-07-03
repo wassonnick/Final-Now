@@ -1,11 +1,15 @@
 <?php
 
+use App\Jobs\RefreshSocietyMarketSuggestion;
 use App\Models\AiConversation;
 use App\Models\OpsDigest;
+use App\Models\OpsSuggestion;
 use App\Models\Property;
 use App\Models\SiteVisit;
+use App\Models\Society;
 use App\Services\LeadNotificationService;
 use App\Services\Ops\AdminOpsInboxService;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -105,9 +109,70 @@ Artisan::command('site-visits:send-reminders', function (LeadNotificationService
     $this->info("Sent {$due->count()} site-visit reminder(s).");
 })->purpose('Send T-1-day reminders for confirmed site visits through the notification webhook');
 
+Artisan::command('ops:queue-market-refresh {--limit=15}', function () {
+    $limit = max(1, min((int) $this->option('limit'), 30));
+
+    $pendingIds = OpsSuggestion::query()
+        ->where('kind', 'market_refresh')->where('status', 'pending')
+        ->pluck('society_id');
+
+    // Oldest market data first: societies whose field_sources.market.refreshed_at
+    // is missing sort ahead of recently refreshed ones.
+    $societies = Society::query()
+        ->where('is_published', true)
+        ->whereNotIn('id', $pendingIds)
+        ->get(['id', 'field_sources'])
+        ->sortBy(fn ($s) => data_get($s->field_sources, 'market.refreshed_at') ?? '1970-01-01')
+        ->take($limit);
+
+    foreach ($societies as $society) {
+        RefreshSocietyMarketSuggestion::dispatch($society->id);
+    }
+    $this->info("Queued market-refresh suggestions for {$societies->count()} societies (results land as pending suggestions, never auto-applied).");
+})->purpose('Queue grounded market-data refresh suggestions for the stalest published societies');
+
+Artisan::command('ops:validate-photo-references {--limit=60}', function () {
+    $base = rtrim((string) config('services.ops.public_api_url'), '/');
+    $societies = Society::query()
+        ->where('is_published', true)
+        ->where('image_approved_by_admin', true)
+        ->where('image_status', 'google_places_reference_found')
+        ->whereNotNull('place_id')
+        ->limit(max(1, min((int) $this->option('limit'), 200)))
+        ->get(['id', 'name', 'slug']);
+
+    $stale = 0;
+    foreach ($societies as $society) {
+        try {
+            $response = Http::timeout(15)->get("{$base}/societies/{$society->slug}/google-place-photo", ['w' => 64]);
+            $healthy = $response->successful();
+        } catch (\Throwable) {
+            $healthy = false;
+        }
+
+        if ($healthy) {
+            // A previously flagged cover that now loads again resolves itself.
+            OpsSuggestion::where('society_id', $society->id)->where('kind', 'cover_photo')->where('status', 'pending')
+                ->update(['status' => 'dismissed', 'resolved_at' => now()]);
+
+            continue;
+        }
+
+        $stale++;
+        OpsSuggestion::updateOrCreate(
+            ['society_id' => $society->id, 'kind' => 'cover_photo', 'status' => 'pending'],
+            ['payload' => ['reason' => 'Approved Google Places cover no longer loads — re-approve a fresh photo.', 'checked_at' => now()->toIso8601String()], 'created_by' => 'system'],
+        );
+    }
+    $this->info("Checked {$societies->count()} approved covers; {$stale} stale reference(s) flagged.");
+})->purpose('Detect approved Google Places cover photos whose references have gone stale');
+
 Schedule::command('saved-searches:match')->dailyAt('08:00')->withoutOverlapping();
 Schedule::command('ops:daily-digest')->dailyAt('07:30')->withoutOverlapping();
 Schedule::command('site-visits:send-reminders')->dailyAt('09:00')->withoutOverlapping();
+Schedule::command('ops:queue-market-refresh')->weeklyOn(1, '05:30')->withoutOverlapping();
+Schedule::command('ops:validate-photo-references')->weeklyOn(2, '05:00')->withoutOverlapping();
+Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=1')->everyMinute()->withoutOverlapping()->runInBackground();
 Schedule::call(fn () => AiConversation::query()->where('expires_at', '<', now())->delete())->dailyAt('03:15')->name('prune-expired-ai-conversations')->withoutOverlapping();
 Schedule::command('seo:autopilot-audit')->dailyAt('02:00')->withoutOverlapping();
 Schedule::command('seo:autopilot-keywords')->weeklyOn(1,'02:45')->withoutOverlapping();

@@ -89,6 +89,14 @@ return [
         'import_grounding' => env('GEMINI_IMPORT_GROUNDING', false),
     ],
 
+    'ops' => [
+        // Admin operations automation (Action Inbox, scheduled jobs).
+        'sitemap_url' => env('OPS_SITEMAP_URL', 'https://www.societyflats.com/sitemap.xml'),
+        'public_api_url' => env('OPS_PUBLIC_API_URL', 'https://final-now.onrender.com/api'),
+        // Daily cap on unattended AI calls (scheduled jobs only, not admin actions).
+        'ai_daily_call_cap' => env('OPS_AI_DAILY_CALL_CAP', 150),
+    ],
+
     'claude' => [
         'api_key' => env('ANTHROPIC_API_KEY'),
         'model' => env('ANTHROPIC_MODEL', 'claude-haiku-4-5'),

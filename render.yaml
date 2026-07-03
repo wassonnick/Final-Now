@@ -165,7 +165,7 @@ services:
       - key: SESSION_DRIVER
         value: database
       - key: QUEUE_CONNECTION
-        value: sync
+        value: database
       - key: LOG_CHANNEL
         value: stderr
       - key: MEILISEARCH_HOST

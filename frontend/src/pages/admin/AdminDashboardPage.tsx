@@ -449,6 +449,8 @@ export function AdminDashboardPage() {
   const [leadError, setLeadError] = useState("");
   const [inventoryError, setInventoryError] = useState("");
   const [inbox, setInbox] = useState<any>(null);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestionBusyId, setSuggestionBusyId] = useState<number | null>(null);
 
   const loadStats = async () => {
     try {
@@ -527,6 +529,23 @@ export function AdminDashboardPage() {
     } catch (err) {
       console.error(err);
       setInbox(null);
+    }
+    try {
+      const response = await adminFetch("/admin/ops/suggestions?status=pending");
+      const json = await response.json().catch(() => ({}));
+      setSuggestions(response.ok && Array.isArray(json?.data) ? json.data : []);
+    } catch {
+      setSuggestions([]);
+    }
+  };
+
+  const resolveSuggestion = async (id: number, action: "apply" | "dismiss") => {
+    setSuggestionBusyId(id);
+    try {
+      await adminFetch(`/admin/ops/suggestions/${id}/${action}`, { method: "POST" });
+      await loadInbox();
+    } finally {
+      setSuggestionBusyId(null);
     }
   };
 
@@ -853,6 +872,39 @@ export function AdminDashboardPage() {
                     {item.society_name ? ` · ${item.society_name}` : ""} · waiting {item.waiting_hours}h ({item.source})
                   </p>
                 ))}
+              </div>
+            ) : null}
+            {suggestions.length > 0 ? (
+              <div className="mt-3 rounded-2xl border border-blue-100 bg-blue-50/50 p-3">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Automation suggestions awaiting your decision</p>
+                <div className="mt-2 space-y-2">
+                  {suggestions.slice(0, 5).map((item: any) => (
+                    <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs">
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-800">
+                          {item.society_name}
+                          <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
+                            {item.kind === "market_refresh" ? "Market data" : "Cover photo"}
+                          </span>
+                        </p>
+                        <p className="mt-0.5 text-slate-500">
+                          {item.kind === "market_refresh"
+                            ? Object.entries(item.payload?.updates || {}).slice(0, 2).map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`).join(" · ")
+                            : item.payload?.reason || "Needs a fresh approved photo."}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 gap-1.5">
+                        {item.kind === "market_refresh" ? (
+                          <button type="button" disabled={suggestionBusyId === item.id} onClick={() => void resolveSuggestion(item.id, "apply")} className="rounded-full bg-emerald-600 px-3 py-1.5 text-[11px] font-black text-white disabled:opacity-50">Apply</button>
+                        ) : (
+                          <Link to={`/admin/societies/${item.society_id}/edit`} className="rounded-full bg-blue-600 px-3 py-1.5 text-[11px] font-black text-white">Fix image</Link>
+                        )}
+                        <button type="button" disabled={suggestionBusyId === item.id} onClick={() => void resolveSuggestion(item.id, "dismiss")} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-black text-slate-600 disabled:opacity-50">Dismiss</button>
+                      </div>
+                    </div>
+                  ))}
+                  {suggestions.length > 5 ? <p className="text-[11px] text-slate-500">+{suggestions.length - 5} more pending</p> : null}
+                </div>
               </div>
             ) : null}
           </section>

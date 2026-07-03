@@ -3,6 +3,7 @@
 namespace App\Services\Ops;
 
 use App\Models\Lead;
+use App\Models\OpsSuggestion;
 use App\Models\SiteVisit;
 use App\Models\Society;
 use App\Models\SocietySeoContent;
@@ -29,6 +30,23 @@ class AdminOpsInboxService
             'sitemap' => $includeSitemap ? $this->sitemapDrift() : ['status' => 'skipped'],
             'leads' => $this->leadSla(),
             'site_visits' => $this->siteVisits(),
+            'suggestions' => $this->pendingSuggestions(),
+        ];
+    }
+
+    /** Pending automation suggestions awaiting an admin decision. */
+    private function pendingSuggestions(): array
+    {
+        $counts = OpsSuggestion::query()
+            ->where('status', 'pending')
+            ->selectRaw('kind, count(*) as total')
+            ->groupBy('kind')
+            ->pluck('total', 'kind');
+
+        return [
+            'market_refresh' => (int) ($counts['market_refresh'] ?? 0),
+            'cover_photo' => (int) ($counts['cover_photo'] ?? 0),
+            'total' => (int) $counts->sum(),
         ];
     }
 
