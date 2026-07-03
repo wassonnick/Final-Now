@@ -69,6 +69,15 @@ const routeMeta = [
     schemaType: "WebSite",
   },
   {
+    path: "/explore",
+    title: "Explore SocietyFlats — AI, Maps, NRI, Builder & Home Services",
+    description:
+      "Access every SocietyFlats module in one place: verified society search, AI Advisor, chat, maps, compare, builder floors, NRI services, RWA tools and partner programs.",
+    priority: "0.85",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
     path: "/gurgaon",
     title: "Find the Right Society in Gurgaon Before Choosing the Home | SocietyFlats",
     description:

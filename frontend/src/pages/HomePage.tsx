@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, Home, MapPin, RefreshCw } from "lucide-react";
 import SocietyFlatsHero from "@/components/home/SocietyFlatsHero";
+import { ProductJourneyPreview } from "@/components/home/ProductJourneyPreview";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import {
   fetchPublicProperties,
@@ -167,6 +168,7 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-[#F8F3EA] text-[#25302B]">
       <SocietyFlatsHero />
+      <ProductJourneyPreview />
 
       {allSocietiesCount > 0 ? (
         <div className="mx-auto max-w-[1360px] px-5 pt-5 lg:px-10">

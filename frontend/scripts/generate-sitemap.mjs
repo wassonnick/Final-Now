@@ -11,6 +11,7 @@ const staticRoutes = [
   { loc: "/", priority: "1.0", changefreq: "daily" },
   { loc: "/gurgaon", priority: "0.95", changefreq: "daily" },
   { loc: "/search", priority: "0.9", changefreq: "daily" },
+  { loc: "/explore", priority: "0.85", changefreq: "weekly" },
   { loc: "/societies", priority: "0.9", changefreq: "daily" },
   { loc: "/properties", priority: "0.9", changefreq: "daily" },
   { loc: "/gurgaon/societies", priority: "0.9", changefreq: "daily" },

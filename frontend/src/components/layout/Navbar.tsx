@@ -3,7 +3,7 @@
 // C70C nav copy: clearer public CTAs for broker partnership and dashboard access.
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, Heart, Scale, MapPin, Building2, Sparkles, BarChart3, User, Home, KeyRound, BadgeIndianRupee, Globe2 } from 'lucide-react';
+import { Search, Menu, X, Heart, Scale, MapPin, Building2, Sparkles, BarChart3, User, Home, KeyRound, BadgeIndianRupee, Globe2, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store';
 import { cn } from '@/lib/utils';
@@ -67,6 +67,7 @@ export function Navbar() {
   );
 
   const navLinks = [
+    { label: 'All Services', href: '/explore', icon: LayoutGrid },
     { label: 'Societies', href: '/search?tab=societies', icon: Building2 },
     { label: 'Rent', href: '/search?tab=rent', icon: KeyRound },
     { label: 'Buy', href: '/search?tab=buy', icon: Home },
@@ -78,7 +79,7 @@ export function Navbar() {
     { label: 'Compare', href: '/compare', icon: Scale, badge: compareList.length },
   ];
   const desktopLinks = [
-    { label: 'Explore', href: '/search?tab=societies' },
+    { label: 'Explore', href: '/explore' },
     { label: 'Compare', href: '/compare' },
     { label: 'AI Advisor', href: '/ai-advisor' },
     { label: 'Broker', href: '/broker-crm' },
@@ -86,7 +87,7 @@ export function Navbar() {
   ];
   const bottomActions = [
     { label: 'Home', href: '/', icon: Home },
-    { label: 'Explore', href: '/search?tab=societies', icon: Search },
+    { label: 'Explore', href: '/explore', icon: LayoutGrid },
     { label: 'Assistant', href: '/ai-advisor', icon: Sparkles },
     { label: 'Compare', href: '/compare', icon: Scale, badge: compareList.length },
     { label: 'Account', href: accountDashboardPath || '/login', icon: User },
