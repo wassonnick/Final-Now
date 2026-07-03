@@ -448,6 +448,7 @@ export function AdminDashboardPage() {
   const [error, setError] = useState("");
   const [leadError, setLeadError] = useState("");
   const [inventoryError, setInventoryError] = useState("");
+  const [inbox, setInbox] = useState<any>(null);
 
   const loadStats = async () => {
     try {
@@ -517,10 +518,23 @@ export function AdminDashboardPage() {
     }
   };
 
+  const loadInbox = async () => {
+    try {
+      const response = await adminFetch("/admin/ops/action-inbox");
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json?.message || "Action inbox request failed");
+      setInbox(json?.data || null);
+    } catch (err) {
+      console.error(err);
+      setInbox(null);
+    }
+  };
+
   const refreshAll = () => {
     void loadStats();
     void loadLeads();
     void loadInventory();
+    void loadInbox();
   };
 
   const handleDashboardTomorrow = async (lead: AdminLead) => {
@@ -792,6 +806,57 @@ export function AdminDashboardPage() {
             Refresh
           </Button>
         </div>
+
+        {inbox?.live ? (
+          <section className="rounded-[24px] border border-slate-200 bg-white p-4 md:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Action inbox</p>
+                <p className="mt-1 text-sm text-slate-600">Automated daily checks — data quality, sitemap, lead SLA and visit reminders.</p>
+              </div>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600">
+                {inbox?.last_digest?.digest_date ? `Last digest ${inbox.last_digest.digest_date}` : "First digest runs 07:30"}
+              </span>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              <Link to="/admin/leads" className={`rounded-2xl border p-3 ${inbox.live.leads.breaches.count > 0 ? "border-rose-200 bg-rose-50" : "border-emerald-100 bg-emerald-50"}`}>
+                <p className={`text-2xl font-black ${inbox.live.leads.breaches.count > 0 ? "text-rose-700" : "text-emerald-700"}`}>{inbox.live.leads.breaches.count}</p>
+                <p className="mt-1 text-xs font-bold text-slate-700">Lead SLA breaches</p>
+                <p className="text-[11px] text-slate-500">{inbox.live.leads.escalations_over_72h.count} over 72h</p>
+              </Link>
+              <Link to="/admin/societies" className={`rounded-2xl border p-3 ${inbox.live.societies.missing_cover.count > 0 ? "border-amber-200 bg-amber-50" : "border-emerald-100 bg-emerald-50"}`}>
+                <p className={`text-2xl font-black ${inbox.live.societies.missing_cover.count > 0 ? "text-amber-700" : "text-emerald-700"}`}>{inbox.live.societies.missing_cover.count}</p>
+                <p className="mt-1 text-xs font-bold text-slate-700">Missing cover photo</p>
+                <p className="text-[11px] text-slate-500">published societies</p>
+              </Link>
+              <Link to="/admin/societies" className={`rounded-2xl border p-3 ${inbox.live.societies.missing_published_seo.count > 0 ? "border-amber-200 bg-amber-50" : "border-emerald-100 bg-emerald-50"}`}>
+                <p className={`text-2xl font-black ${inbox.live.societies.missing_published_seo.count > 0 ? "text-amber-700" : "text-emerald-700"}`}>{inbox.live.societies.missing_published_seo.count}</p>
+                <p className="mt-1 text-xs font-bold text-slate-700">No published SEO</p>
+                <p className="text-[11px] text-slate-500">content rollout backlog</p>
+              </Link>
+              <Link to="/admin/societies" className={`rounded-2xl border p-3 ${inbox.live.societies.low_confidence.count > 0 ? "border-rose-200 bg-rose-50" : "border-emerald-100 bg-emerald-50"}`}>
+                <p className={`text-2xl font-black ${inbox.live.societies.low_confidence.count > 0 ? "text-rose-700" : "text-emerald-700"}`}>{inbox.live.societies.low_confidence.count}</p>
+                <p className="mt-1 text-xs font-bold text-slate-700">Low confidence</p>
+                <p className="text-[11px] text-slate-500">below 60% verified</p>
+              </Link>
+              <Link to="/admin/site-visits" className={`rounded-2xl border p-3 ${inbox.live.site_visits.reminders_due > 0 ? "border-amber-200 bg-amber-50" : "border-emerald-100 bg-emerald-50"}`}>
+                <p className={`text-2xl font-black ${inbox.live.site_visits.reminders_due > 0 ? "text-amber-700" : "text-emerald-700"}`}>{inbox.live.site_visits.reminders_due}</p>
+                <p className="mt-1 text-xs font-bold text-slate-700">Visit reminders due</p>
+                <p className="text-[11px] text-slate-500">{inbox.live.site_visits.upcoming_48h} visits in 48h</p>
+              </Link>
+            </div>
+            {inbox.live.leads.breaches.count > 0 ? (
+              <div className="mt-3 rounded-2xl border border-rose-100 bg-rose-50/60 p-3 text-xs text-rose-800">
+                {inbox.live.leads.breaches.items.slice(0, 3).map((item: any) => (
+                  <p key={item.id} className="py-0.5">
+                    <span className="font-bold">{item.name}</span>
+                    {item.society_name ? ` · ${item.society_name}` : ""} · waiting {item.waiting_hours}h ({item.source})
+                  </p>
+                ))}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
 
         <section className="grid grid-cols-2 gap-3 xl:grid-cols-6">
           {[
