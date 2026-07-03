@@ -55,7 +55,7 @@ import {
   rememberCustomerSavedItem,
   toggleCustomerShortlist,
 } from "@/lib/customerAccount";
-import { googlePlacesGalleryPhotoUrls, hasApprovedSocietyImage, hasGooglePlacesDisplayPhoto, societyImageAttribution, societyImageAttributionClassName, societyPlaceholderImage } from "@/lib/societyImages";
+import { googlePlacesGalleryPhotoUrls, googlePlacesSocietyPhotoUrl, hasApprovedSocietyImage, hasGooglePlacesDisplayPhoto, societyImageAttribution, societyImageAttributionClassName, societyPlaceholderImage } from "@/lib/societyImages";
 
 type ApiResponse<T> = {
   status?: string;
@@ -588,12 +588,29 @@ export function SocietyPage() {
     const canonical = `https://www.societyflats.com/society/${encodeURIComponent(String(field(society, "slug", "slug", slug || "")))}`;
     const graph: any[] = [
       { "@type": "WebPage", name: title, description, url: canonical },
-      {
-        "@type": "ApartmentComplex",
-        name: societyNameForSeo,
-        url: canonical,
-        ...(field(society, "address", "address", "") ? { address: { "@type": "PostalAddress", streetAddress: field(society, "address", "address", ""), addressLocality: "Gurugram", addressRegion: "Haryana", addressCountry: "IN" } } : {}),
-      },
+      (() => {
+        const latitude = Number(field(society, "latitude", "latitude", 0));
+        const longitude = Number(field(society, "longitude", "longitude", 0));
+        const schemaImage = googlePlacesSocietyPhotoUrl(society);
+        const schemaAmenities = listField(society, "amenities", "amenities").slice(0, 12);
+        const unitCount = parseInt(String(field(society, "totalUnits", "total_units", "")).replace(/[^0-9]/g, ""), 10);
+        return {
+          "@type": "ApartmentComplex",
+          name: societyNameForSeo,
+          url: canonical,
+          ...(field(society, "address", "address", "") ? { address: { "@type": "PostalAddress", streetAddress: field(society, "address", "address", ""), addressLocality: "Gurugram", addressRegion: "Haryana", addressCountry: "IN" } } : {}),
+          ...(Number.isFinite(latitude) && Number.isFinite(longitude) && latitude !== 0 && longitude !== 0
+            ? { geo: { "@type": "GeoCoordinates", latitude, longitude } }
+            : {}),
+          ...(schemaImage ? { image: schemaImage } : {}),
+          ...(schemaAmenities.length
+            ? { amenityFeature: schemaAmenities.map((amenity: string) => ({ "@type": "LocationFeatureSpecification", name: amenity, value: true })) }
+            : {}),
+          ...(Number.isFinite(unitCount) && unitCount > 0
+            ? { numberOfAccommodationUnits: { "@type": "QuantitativeValue", value: unitCount } }
+            : {}),
+        };
+      })(),
       {
         "@type": "BreadcrumbList",
         itemListElement: [
