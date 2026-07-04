@@ -7,8 +7,10 @@ use App\Models\OpsSuggestion;
 use App\Models\Property;
 use App\Models\SiteVisit;
 use App\Models\Society;
+use App\Models\SocietyImportJob;
 use App\Services\LeadNotificationService;
 use App\Services\Ops\AdminOpsInboxService;
+use App\Services\SocietyImportService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -167,6 +169,28 @@ Artisan::command('ops:validate-photo-references {--limit=60}', function () {
     $this->info("Checked {$societies->count()} approved covers; {$stale} stale reference(s) flagged.");
 })->purpose('Detect approved Google Places cover photos whose references have gone stale');
 
+Artisan::command('imports:tick', function () {
+    // Advance any in-flight auto-import jobs from the background scheduler so a
+    // one-click bulk import completes on its own — the admin no longer has to keep
+    // the import page open and polling for every society to finish.
+    $jobs = SocietyImportJob::query()
+        ->whereIn('status', ['queued', 'running'])
+        ->orderBy('id')
+        ->limit(5)
+        ->get();
+
+    if ($jobs->isEmpty()) {
+        return;
+    }
+
+    $service = app(SocietyImportService::class);
+    foreach ($jobs as $job) {
+        $service->processJobTick($job);
+    }
+    $this->info("Advanced {$jobs->count()} in-flight import job(s).");
+})->purpose('Drive queued/running auto-import jobs to completion in the background');
+
+Schedule::command('imports:tick')->everyMinute()->withoutOverlapping();
 Schedule::command('saved-searches:match')->dailyAt('08:00')->withoutOverlapping();
 Schedule::command('ops:daily-digest')->dailyAt('07:30')->withoutOverlapping();
 Schedule::command('site-visits:send-reminders')->dailyAt('09:00')->withoutOverlapping();
