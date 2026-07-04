@@ -306,8 +306,45 @@ class SocietyImportPipeline
 
     private function applyCoverFromCandidates(array &$attr, array &$candidates): void
     {
-        // Pre-fill the review image fields from the first previewable official image,
-        // but keep it unapproved + private (image_approved_by_admin stays false).
+        // Google Places photos are served on demand through Google's own API with
+        // attribution, so they can be auto-approved as the cover for a true one-click
+        // import (this mirrors the structured-import flow). Auto-approve the first as
+        // cover and a few more into the gallery so the public page isn't left imageless.
+        $coverSet = false;
+        $galleryApproved = 0;
+        foreach ($candidates as $index => $candidate) {
+            if (($candidate['source'] ?? '') !== 'google_places' || empty($candidate['photo_reference'])) {
+                continue;
+            }
+
+            if (! $coverSet) {
+                $candidates[$index]['approved'] = true;
+                $candidates[$index]['is_cover'] = true;
+                $candidates[$index]['rights_confirmed'] = true;
+
+                $attr['image_photo_reference'] = $candidate['photo_reference'];
+                $attr['image_status'] = 'google_places_reference_found';
+                $attr['image_approved_by_admin'] = true;
+                $attr['image_credit'] = $candidate['credit'] ?? 'Google Places';
+                $attr['image_license_notes'] = $candidate['license_note']
+                    ?? 'Google Places photo served on demand via API with attribution; auto-approved during import.';
+                $coverSet = true;
+
+                continue;
+            }
+
+            if ($galleryApproved < 3) {
+                $candidates[$index]['approved'] = true;
+                $candidates[$index]['rights_confirmed'] = true;
+                $galleryApproved++;
+            }
+        }
+        if ($coverSet) {
+            return;
+        }
+
+        // No Google Places photo. Scraped official-site images carry real rights
+        // uncertainty, so only pre-fill them as a private preview — never auto-approved.
         foreach ($candidates as $candidate) {
             if (($candidate['source'] ?? '') === 'official_url' && ! empty($candidate['url'])) {
                 $attr['image_url'] = $attr['image_url'] ?? $candidate['url'];
@@ -315,25 +352,8 @@ class SocietyImportPipeline
                 $attr['image_status'] = $attr['image_status'] ?? 'needs_review';
                 $attr['image_credit'] = $attr['image_credit'] ?? $candidate['credit'];
                 $attr['image_license_notes'] = $attr['image_license_notes'] ?? $candidate['license_note'];
-                $attr['image_approved_by_admin'] = false;
-
-                return;
+                break;
             }
-        }
-
-        // Google Places references are useful review candidates, but attribution terms
-        // are not a substitute for an explicit admin decision. Keep every candidate
-        // private and unapproved until rights/attribution are confirmed in the importer.
-        foreach ($candidates as $candidate) {
-            if (($candidate['source'] ?? '') !== 'google_places' || empty($candidate['photo_reference'])) {
-                continue;
-            }
-            $attr['image_status'] = 'google_places_reference_found';
-            $attr['image_credit'] = $candidate['credit'] ?? 'Google Places';
-            $attr['image_license_notes'] = $candidate['license_note']
-                ?? 'Google Places photo candidate; rights and attribution require explicit admin review.';
-            $attr['image_approved_by_admin'] = false;
-            return;
         }
 
         $attr['image_approved_by_admin'] = false;

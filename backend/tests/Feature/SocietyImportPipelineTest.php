@@ -109,17 +109,26 @@ class SocietyImportPipelineTest extends TestCase
         // Provenance tagging.
         $this->assertSame('google_places', $society->field_sources['latitude']['source'] ?? null);
 
-        // Multi-source image candidates, none auto-published.
+        // Multi-source image candidates. A Google Places photo is auto-approved as the
+        // cover (served with attribution via Google's API) so a one-click import has a
+        // live-ready cover; scraped official-site images always stay unapproved.
         $this->assertIsArray($society->image_candidates);
         $this->assertNotEmpty($society->image_candidates);
         $sources = array_column($society->image_candidates, 'source');
         $this->assertContains('official_url', $sources);
-        $this->assertFalse((bool) $society->image_approved_by_admin);
+        $this->assertContains('google_places', $sources);
+        $this->assertTrue((bool) $society->image_approved_by_admin);
+        $this->assertSame('google_places_reference_found', $society->image_status);
         foreach ($society->image_candidates as $candidate) {
-            $this->assertFalse((bool) ($candidate['approved'] ?? false));
-            $this->assertFalse((bool) ($candidate['rights_confirmed'] ?? false));
-            $this->assertFalse((bool) ($candidate['is_cover'] ?? false));
+            if (($candidate['source'] ?? '') === 'official_url') {
+                $this->assertFalse((bool) ($candidate['approved'] ?? false), 'Official-site images must stay unapproved.');
+                $this->assertFalse((bool) ($candidate['is_cover'] ?? false));
+            }
         }
+        $cover = collect($society->image_candidates)->firstWhere('is_cover', true);
+        $this->assertNotNull($cover);
+        $this->assertSame('google_places', $cover['source']);
+        $this->assertTrue((bool) $cover['approved']);
 
         // Always a private draft.
         $this->assertSame('Draft', $society->status);
