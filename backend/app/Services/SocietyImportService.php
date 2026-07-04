@@ -337,10 +337,45 @@ class SocietyImportService
 
     private function findExisting(string $name): ?Society
     {
-        return Society::query()
-            ->where('slug', Str::slug($name))
-            ->orWhereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+        $slug = Str::slug($name);
+
+        // Fast exact paths: identical slug, identical name, or a stored slug that only
+        // differs by an appended sector/city suffix (e.g. "m3m-golfestate-sector-65-gurgaon").
+        $exact = Society::query()
+            ->where('slug', $slug)
+            ->orWhereRaw('LOWER(name) = ?', [mb_strtolower(trim($name))])
+            ->when($slug !== '', fn ($q) => $q->orWhere('slug', 'like', $slug.'-%'))
             ->first();
+        if ($exact) {
+            return $exact;
+        }
+
+        // Fuzzy path: compare a noise-stripped canonical key so real-world list
+        // variations ("DLF Crest" vs "DLF The Crest", "M3M Golf Estate" vs
+        // "M3M Golfestate", trailing "Gurgaon"/sector) still resolve to the same society.
+        $key = self::normalizeNameKey($name);
+        if ($key === '') {
+            return null;
+        }
+
+        return Society::query()
+            ->get(['id', 'name', 'slug', 'is_published', 'status', 'verification_status'])
+            ->first(fn (Society $society) => self::normalizeNameKey($society->name) === $key);
+    }
+
+    /**
+     * Canonical key for duplicate detection: lowercase, drop sector/city noise and the
+     * filler word "the", then strip every non-alphanumeric character (including spaces)
+     * so spacing and punctuation differences collapse to the same value.
+     */
+    public static function normalizeNameKey(string $name): string
+    {
+        $value = ' '.mb_strtolower(trim($name)).' ';
+        $value = preg_replace('/\bsector\s*\d+[a-z]?\b/u', ' ', $value) ?? $value;
+        $value = str_replace(['gurgaon', 'gurugram', 'haryana'], ' ', $value);
+        $value = preg_replace('/\bthe\b/u', ' ', $value) ?? $value;
+
+        return preg_replace('/[^a-z0-9]/u', '', $value) ?? '';
     }
 
     private function uniqueSlug(string $name): string

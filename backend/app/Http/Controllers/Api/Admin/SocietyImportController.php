@@ -190,7 +190,19 @@ class SocietyImportController extends Controller
             $existing = Society::query()
                 ->where('slug', $slug)
                 ->orWhereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+                ->when($slug !== '', fn ($q) => $q->orWhere('slug', 'like', $slug.'-%'))
                 ->first();
+
+            // Fuzzy fallback so list variations (spacing, "the", trailing sector/city)
+            // still resolve to an existing society instead of creating a duplicate.
+            if (! $existing) {
+                $key = \App\Services\SocietyImportService::normalizeNameKey($name);
+                if ($key !== '') {
+                    $existing = Society::query()
+                        ->get(['id', 'name'])
+                        ->first(fn ($society) => \App\Services\SocietyImportService::normalizeNameKey($society->name) === $key);
+                }
+            }
 
             if ($existing) {
                 $results[] = ['name' => $name, 'status' => 'skipped_duplicate', 'society_id' => $existing->id];
