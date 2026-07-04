@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, Home, MapPin, RefreshCw } from "lucide-react";
 import SocietyFlatsHero from "@/components/home/SocietyFlatsHero";
+import { JourneySpine } from "@/components/home/JourneySpine";
 import { DecisionGuideStrip, PropertyToolsStrip, SpecialistServicesStrip } from "@/components/home/ContextualJourneys";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import {
@@ -179,6 +180,8 @@ export function HomePage() {
           </div>
         </div>
       ) : null}
+
+      <JourneySpine />
 
       {/* MOBILE PROTOTYPE */}
       <main className="px-5 pb-8 lg:hidden">
