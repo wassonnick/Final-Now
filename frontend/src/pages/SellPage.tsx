@@ -1,6 +1,7 @@
 // C78 owner listing UX polish: compact first fold, tighter form and clearer conversion sections.
 // C71 owner listing copy: stronger verified buyer, no broker hassle and verification flow language.
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { fetchPublicSocieties, suggestSocieties } from "@/lib/publicData";
 import type { FormEvent, KeyboardEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -55,11 +56,36 @@ const steps = [
   },
 ];
 
+const SELL_WIZARD_STORAGE_KEY = "societyflats_sell_wizard_v1";
+
+type SellWizardForm = {
+  name: string; society: string; tower: string; bhk: string; size: string; floor: string;
+  furnishing: string; availability: string; details: string; expectation: string;
+  preferredTime: string; phone: string;
+};
+
+function restoreSellWizard(): { form: Partial<SellWizardForm>; step: number; purpose: "rent" | "sell" } | null {
+  try {
+    const raw = localStorage.getItem(SELL_WIZARD_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    return {
+      form: parsed.form && typeof parsed.form === "object" ? parsed.form : {},
+      step: Math.min(8, Math.max(1, Number(parsed.step) || 1)),
+      purpose: parsed.purpose === "sell" ? "sell" : "rent",
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function SellPage() {
   const [searchParams] = useSearchParams();
-  const [purpose, setPurpose] = useState<"rent" | "sell">("rent");
-  const [listingStep, setListingStep] = useState(1);
-  const [form, setForm] = useState({
+  const restored = useMemo(restoreSellWizard, []);
+  const [purpose, setPurpose] = useState<"rent" | "sell">(restored?.purpose || "rent");
+  const [listingStep, setListingStep] = useState(restored?.step || 1);
+  const [form, setForm] = useState<SellWizardForm>({
     name: "",
     society: searchParams.get("society") || "",
     tower: "",
@@ -72,7 +98,11 @@ export function SellPage() {
     expectation: "",
     preferredTime: "",
     phone: "",
+    ...(restored?.form || {}),
+    ...(searchParams.get("society") ? { society: searchParams.get("society") as string } : {}),
   });
+  const [societyOptions, setSocietyOptions] = useState<any[]>([]);
+  const [showSocietySuggestions, setShowSocietySuggestions] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [accountCreated, setAccountCreated] = useState(false);
@@ -85,7 +115,26 @@ export function SellPage() {
       { canonical: "/sell" },
     );
     window.scrollTo(0, 0);
+    fetchPublicSocieties().then((items) => setSocietyOptions(items)).catch(() => setSocietyOptions([]));
   }, []);
+
+  // Persist progress so an interrupted owner resumes where they left off.
+  useEffect(() => {
+    if (success) {
+      localStorage.removeItem(SELL_WIZARD_STORAGE_KEY);
+      return;
+    }
+    try {
+      localStorage.setItem(SELL_WIZARD_STORAGE_KEY, JSON.stringify({ form, step: listingStep, purpose }));
+    } catch {
+      // Storage full/blocked — the wizard still works without persistence.
+    }
+  }, [form, listingStep, purpose, success]);
+
+  const societySuggestions = useMemo(
+    () => (showSocietySuggestions ? suggestSocieties(societyOptions as any, form.society) : []),
+    [societyOptions, form.society, showSocietySuggestions],
+  );
 
   const updateForm = (field: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -340,7 +389,38 @@ export function SellPage() {
                     <div><p className="mb-3 text-sm font-bold">What should we call you?</p><Input required autoFocus value={form.name} onChange={(event) => updateForm("name", event.target.value)} onKeyDown={advanceOnEnter(2, Boolean(form.name.trim()))} className="h-12 rounded-xl" placeholder="Your name" /></div>
                   ) : null}
                   {listingStep === 3 ? (
-                    <div><p className="mb-3 text-sm font-bold">Which society is the flat in?</p><Input required autoFocus value={form.society} onChange={(event) => updateForm("society", event.target.value)} onKeyDown={advanceOnEnter(3, Boolean(form.society.trim()))} className="h-12 rounded-xl" placeholder="Society name e.g. DLF Park Place" /></div>
+                    <div className="relative">
+                      <p className="mb-3 text-sm font-bold">Which society is the flat in?</p>
+                      <Input
+                        required
+                        autoFocus
+                        value={form.society}
+                        onChange={(event) => { updateForm("society", event.target.value); setShowSocietySuggestions(true); }}
+                        onFocus={() => setShowSocietySuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowSocietySuggestions(false), 120)}
+                        onKeyDown={advanceOnEnter(3, Boolean(form.society.trim()))}
+                        className="h-12 rounded-xl"
+                        placeholder="Society name e.g. DLF Park Place"
+                      />
+                      {societySuggestions.length > 0 ? (
+                        <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-xl border border-[#E7DCCB] bg-white p-1.5 shadow-lg">
+                          {societySuggestions.map((option: any) => (
+                            <li key={option.id || option.slug}>
+                              <button
+                                type="button"
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => { updateForm("society", option.name); setShowSocietySuggestions(false); advanceFrom(3); }}
+                                className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-[#EEF5F1]"
+                              >
+                                <span className="font-semibold text-[#25302B]">{option.name}</span>
+                                <span className="truncate text-xs text-[#8A8F89]">{option.sector || option.locality || ""}</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      <p className="mt-2 text-xs text-[#6E756E]">Pick a verified society, or type any name — new societies are added after review.</p>
+                    </div>
                   ) : null}
                   {listingStep === 4 ? (
                     <div>
