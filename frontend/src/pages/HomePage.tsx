@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, Home, MapPin, RefreshCw } from "lucide-react";
 import SocietyFlatsHero from "@/components/home/SocietyFlatsHero";
-import { JourneySpine } from "@/components/home/JourneySpine";
-import { DecisionGuideStrip, PropertyToolsStrip } from "@/components/home/ContextualJourneys";
+import { DecisionGuideStrip, PropertyToolsStrip, SpecialistServicesStrip } from "@/components/home/ContextualJourneys";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import {
   fetchPublicProperties,
@@ -211,8 +210,6 @@ export function HomePage() {
         )}
       </section>
 
-      <JourneySpine />
-
       {/* MOBILE PROTOTYPE */}
       <main className="px-5 pb-8 lg:hidden">
         <div className="mb-3 mt-[26px] flex items-baseline justify-between">
@@ -325,6 +322,7 @@ export function HomePage() {
             </Link>
           ))}
         </div>
+        <SpecialistServicesStrip mobile />
         <Link to="/search?tab=societies" className="mt-[22px] block rounded-[16px] bg-[#233B6E] p-4 text-center text-[15px] font-semibold text-white">
           Browse all verified societies
         </Link>
@@ -451,6 +449,10 @@ export function HomePage() {
             <p className="mb-5 mt-2.5 text-sm leading-[1.55] text-[#D8DFEC]">Have verified Gurgaon inventory? Get society-specific enquiries and avoid duplicate listing spam.</p>
             <Link to="/broker-crm" className="inline-flex rounded-[11px] bg-white px-6 py-3 text-sm font-bold text-[#233B6E]">Become a partner</Link>
           </div>
+        </section>
+
+        <section className="mx-auto mt-10 max-w-[1360px] px-10">
+          <SpecialistServicesStrip />
         </section>
 
         <section className="mx-auto mt-12 max-w-[900px] px-10">

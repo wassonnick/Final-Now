@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
+  BarChart3,
   Bot,
   BriefcaseBusiness,
   Building2,
   Calculator,
+  CalendarCheck,
   Globe2,
   MapPinned,
   MessageCircle,
@@ -36,6 +38,7 @@ export function DecisionGuideStrip({ mobile = false }: { mobile?: boolean }) {
     ["Chat", "Ask a follow-up", "/chat", MessageCircle],
     ["Compare", "See differences clearly", "/compare", Scale],
     ["Recommendations", "Match priorities to societies", "/recommendations", Bot],
+    ["Plan a site visit", "Move from shortlist to an in-person visit", "/search?tab=societies", CalendarCheck],
   ] as const;
   return (
     <section className={`${mobile ? "mt-[26px] px-5 py-6" : "px-9 py-8"} rounded-[22px] border border-[#D8DFEC] bg-[#F7F9FD]`}>
@@ -56,12 +59,14 @@ export function PropertyToolsStrip({ mobile = false }: { mobile?: boolean }) {
     ["Explore on map", "See location and nearby context", "/maps", MapPinned],
     ["Builder floors", "A dedicated Gurgaon floor journey", "/builder-floors", Building2],
     ["Investment calculator", "Model ownership scenarios", "/investment-calculator", Calculator],
+    ["How verification works", "See what we check before publishing", "/trust", ShieldCheck],
+    ["Market insights", "Read practical Gurgaon market context", "/insights", BarChart3],
   ] as const;
   return (
     <section className={`${mobile ? "mt-[26px]" : "mt-10"} border-y border-[#DDD7CC] py-4`}>
       <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#8B6B32]">Useful at this stage</p>
-      <div className={`${mobile ? "divide-y divide-[#DDD7CC]" : "grid grid-cols-3 divide-x divide-[#DDD7CC]"}`}>
-        {links.map((item, index) => <div key={item[0]} className={mobile ? "" : index === 0 ? "pr-7" : index === 2 ? "pl-7" : "px-7"}><TextLink item={item} /></div>)}
+      <div className={`${mobile ? "divide-y divide-[#DDD7CC]" : "grid grid-cols-5 divide-x divide-[#DDD7CC]"}`}>
+        {links.map((item, index) => <div key={item[0]} className={mobile ? "" : index === 0 ? "pr-5" : index === links.length - 1 ? "pl-5" : "px-5"}><TextLink item={item} /></div>)}
       </div>
     </section>
   );
