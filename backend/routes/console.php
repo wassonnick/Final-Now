@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\AutoRefreshSocietyMarket;
 use App\Jobs\RefreshSocietyMarketSuggestion;
 use App\Models\AiConversation;
 use App\Models\OpsDigest;
@@ -133,6 +134,25 @@ Artisan::command('ops:queue-market-refresh {--limit=15}', function () {
     $this->info("Queued market-refresh suggestions for {$societies->count()} societies (results land as pending suggestions, never auto-applied).");
 })->purpose('Queue grounded market-data refresh suggestions for the stalest published societies');
 
+Artisan::command('market:auto-refresh {--limit=12} {--max-age-days=30}', function () {
+    $limit = max(1, min((int) $this->option('limit'), 30));
+    $maxAge = now()->subDays(max(1, (int) $this->option('max-age-days')))->toIso8601String();
+
+    // Fully automatic: refresh published societies whose market data is missing or older
+    // than the max age, oldest first, a batch per run. Applied directly to the live page.
+    $societies = Society::query()
+        ->where('is_published', true)
+        ->get(['id', 'field_sources'])
+        ->filter(fn ($s) => (data_get($s->field_sources, 'market.refreshed_at') ?? '1970-01-01') < $maxAge)
+        ->sortBy(fn ($s) => data_get($s->field_sources, 'market.refreshed_at') ?? '1970-01-01')
+        ->take($limit);
+
+    foreach ($societies as $society) {
+        AutoRefreshSocietyMarket::dispatch($society->id);
+    }
+    $this->info("Queued automatic market refresh for {$societies->count()} societies (rent/sale applied directly, no manual review).");
+})->purpose('Keep published societies current with the market — auto-fetch and apply rent/sale ranges');
+
 Artisan::command('ops:validate-photo-references {--limit=60}', function () {
     $base = rtrim((string) config('services.ops.public_api_url'), '/');
     $societies = Society::query()
@@ -194,7 +214,10 @@ Schedule::command('imports:tick')->everyMinute()->withoutOverlapping();
 Schedule::command('saved-searches:match')->dailyAt('08:00')->withoutOverlapping();
 Schedule::command('ops:daily-digest')->dailyAt('07:30')->withoutOverlapping();
 Schedule::command('site-visits:send-reminders')->dailyAt('09:00')->withoutOverlapping();
-Schedule::command('ops:queue-market-refresh')->weeklyOn(1, '05:30')->withoutOverlapping();
+// Fully-automatic daily market refresh keeps every published society's rent/sale ranges
+// current with no manual intervention. A daily batch of the stalest societies cycles the
+// whole catalogue through within a few days, then rotates as data ages past 30 days.
+Schedule::command('market:auto-refresh')->dailyAt('05:30')->withoutOverlapping();
 Schedule::command('ops:validate-photo-references')->weeklyOn(2, '05:00')->withoutOverlapping();
 Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=1')->everyMinute()->withoutOverlapping()->runInBackground();
 Schedule::call(fn () => AiConversation::query()->where('expires_at', '<', now())->delete())->dailyAt('03:15')->name('prune-expired-ai-conversations')->withoutOverlapping();

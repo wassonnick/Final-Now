@@ -92,4 +92,50 @@ class MarketSuggestionService
 
         return $society->fresh();
     }
+
+    /**
+     * Fully automatic refresh: fetch grounded market data and apply it directly to the
+     * society, keeping a published society published (no review gate). Only the market
+     * fields and field_sources.market provenance are touched — scores, description,
+     * amenities and everything else are left exactly as-is. Returns the applied updates,
+     * or null when the AI returned no usable market figure (society untouched).
+     */
+    public function refreshAndApply(Society $society): ?array
+    {
+        $result = $this->ai->enrichMarketDataOnly($society->name, (string) $society->sector, (string) ($society->city ?: 'Gurugram'));
+
+        if (isset($result['_ai_error'])) {
+            throw new \RuntimeException('Market fetch failed: '.$result['_ai_error']);
+        }
+
+        $updates = [];
+        foreach (self::MARKET_FIELDS as $field) {
+            $value = $result[$field] ?? null;
+            if ($value !== null && trim((string) $value) !== '') {
+                // Strip any parenthetical aside the model appends so ranges stay short/clean.
+                $clean = trim(preg_replace('/\s*[(;].*$/u', '', trim((string) $value)) ?? (string) $value);
+                if ($clean !== '' && mb_strlen($clean) <= 60) {
+                    $updates[$field] = $clean;
+                }
+            }
+        }
+
+        if ($updates === []) {
+            return null;
+        }
+
+        $fieldSources = (array) ($society->field_sources ?? []);
+        $fieldSources['market'] = [
+            'confidence' => $result['confidence'] ?? null,
+            'notes' => $result['notes'] ?? null,
+            'sources' => $result['market_sources'] ?? [],
+            'refreshed_at' => now()->toIso8601String(),
+            'auto_applied' => true,
+        ];
+        $updates['field_sources'] = $fieldSources;
+
+        $society->update($updates);
+
+        return $updates;
+    }
 }

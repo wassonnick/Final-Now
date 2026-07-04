@@ -144,6 +144,52 @@ class OpsSuggestionsTest extends TestCase
         $this->assertSame('dismissed', OpsSuggestion::where('society_id', $healthy->id)->where('kind', 'cover_photo')->firstOrFail()->status);
     }
 
+    public function test_auto_refresh_applies_market_data_directly_and_keeps_published(): void
+    {
+        $society = $this->society('Auto Fresh', 'auto-fresh', [
+            'rent_range' => '₹50,000 - ₹70,000 per month',
+            'buy_range' => '₹2 Cr - ₹3 Cr',
+            'verification_status' => 'Verified',
+        ]);
+
+        $this->mock(SocietyAiEnrichmentService::class)
+            ->shouldReceive('enrichMarketDataOnly')
+            ->once()
+            ->andReturn([
+                'rent_range' => '₹58,000 - ₹82,000 per month (updated)',
+                'buy_range' => '₹2.3 Cr - ₹3.6 Cr',
+                'confidence' => 'medium',
+                'market_sources' => [['title' => 'Portal', 'url' => 'https://example.test']],
+            ]);
+
+        $updates = app(\App\Services\Ops\MarketSuggestionService::class)->refreshAndApply($society);
+
+        $this->assertNotNull($updates);
+        $fresh = $society->fresh();
+        // Parenthetical aside stripped, applied directly, still published, still Verified.
+        $this->assertSame('₹58,000 - ₹82,000 per month', $fresh->rent_range);
+        $this->assertSame('₹2.3 Cr - ₹3.6 Cr', $fresh->buy_range);
+        $this->assertTrue($fresh->is_published);
+        $this->assertSame('Verified', $fresh->verification_status);
+        $this->assertTrue((bool) data_get($fresh->field_sources, 'market.auto_applied'));
+        $this->assertNotNull(data_get($fresh->field_sources, 'market.refreshed_at'));
+    }
+
+    public function test_auto_refresh_command_only_queues_stale_published_societies(): void
+    {
+        Queue::fake();
+        $stale = $this->society('Stale Market', 'stale-market'); // no field_sources.market
+        $fresh = $this->society('Fresh Market', 'fresh-market', [
+            'field_sources' => ['market' => ['refreshed_at' => now()->subDays(2)->toIso8601String()]],
+        ]);
+        $this->society('Draft One', 'draft-one', ['is_published' => false]);
+
+        Artisan::call('market:auto-refresh');
+
+        Queue::assertPushed(\App\Jobs\AutoRefreshSocietyMarket::class, 1);
+        Queue::assertPushed(\App\Jobs\AutoRefreshSocietyMarket::class, fn ($job) => $job->societyId === $stale->id);
+    }
+
     private function society(string $name, string $slug, array $overrides = []): Society
     {
         return Society::create(array_merge([
