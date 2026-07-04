@@ -935,7 +935,7 @@ export function SocietyPage() {
               </button>
             ))}
           </div>
-          <span className="pointer-events-none absolute left-3.5 top-3.5 rounded-full bg-[#E8F7E9] px-3 py-1.5 text-xs font-bold text-[#2A6147]">✓ Verified by SocietyFlats</span>
+          <span className="pointer-events-none absolute left-3.5 top-3.5 rounded-full bg-[#0B241D] px-3 py-1.5 text-xs font-bold text-[#D8B56C] shadow-[0_6px_16px_-8px_rgba(0,0,0,.6)]">✓ Verified by SocietyFlats</span>
           {gallery.length > 1 ? (
             <>
               <span className="pointer-events-none absolute right-3.5 top-3.5 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white">{Math.min(activeImage + 1, gallery.length)}/{gallery.length}</span>
@@ -950,7 +950,7 @@ export function SocietyPage() {
         <section className="hidden h-[320px] gap-3 md:grid md:h-[380px] md:grid-cols-[2fr_1fr]">
           <button type="button" onClick={() => setLightboxOpen(true)} className="relative h-full min-h-0 overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left">
             <img src={gallery[0]} alt={society.name} className="h-full w-full object-cover" />
-            <span className="absolute left-4 top-4 rounded-full bg-[#E8F7E9] px-3 py-1.5 text-xs font-bold text-[#2A6147]">✓ Verified by SocietyFlats</span>
+            <span className="absolute left-4 top-4 rounded-full bg-[#0B241D] px-3 py-1.5 text-xs font-bold text-[#D8B56C] shadow-[0_6px_16px_-8px_rgba(0,0,0,.6)]">✓ Verified by SocietyFlats</span>
           </button>
           <div className="grid h-full min-h-0 grid-rows-2 gap-3 overflow-hidden">
             {[gallery[1] || gallery[0], gallery[2] || gallery[0]].map((image, index) => (
@@ -984,7 +984,7 @@ export function SocietyPage() {
                 )}
               </span>
               {societyScore > 0 ? <span className="font-bold text-[#25302B]">★ {(societyScore > 10 ? societyScore / 10 : societyScore).toFixed(1)}</span> : null}
-              <span className="rounded-full bg-[#E8F7E9] px-3 py-1 text-[12.5px] font-semibold text-[#2A6147]">Data confidence: {confidenceText}</span>
+              <span className="rounded-full bg-[#0B241D] px-3 py-1 text-[12.5px] font-semibold text-[#D8B56C]">Data confidence: {confidenceText}</span>
               <span className="text-[12.5px]">{formatHandoffUpdated(updatedText)}</span>
             </div>
 
