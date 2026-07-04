@@ -905,8 +905,8 @@ export function SocietyPage() {
   ].filter(Boolean).slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-[#F8F3EA] pb-40 md:pb-0">
-      <main className="mx-auto max-w-[1360px] px-4 py-6 md:px-10 md:pb-16">
+    <div className="min-h-screen bg-[#F7F4EF] pb-40 text-[#1D2939] md:pb-0">
+      <main className="mx-auto max-w-[1360px] px-4 py-5 md:px-10 md:pb-14 md:pt-7">
         <div className="mb-4 flex items-center gap-1.5 text-[13px] text-[#6E756E]">
           <Link to="/search?tab=societies">Societies</Link>
           <span>›</span>
@@ -929,13 +929,13 @@ export function SocietyPage() {
                 key={`${image}-${index}`}
                 type="button"
                 onClick={() => { setActiveImage(index); setLightboxOpen(true); }}
-                className="relative h-full w-full flex-shrink-0 snap-center overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left"
+                className="relative h-full w-full flex-shrink-0 snap-center overflow-hidden rounded-[18px] bg-[#E8EDF7] text-left"
               >
                 <img src={image} alt={`${society.name} photo ${index + 1}`} className="h-full w-full object-cover" loading={index === 0 ? "eager" : "lazy"} />
               </button>
             ))}
           </div>
-          <span className="pointer-events-none absolute left-3.5 top-3.5 rounded-full bg-[#0B241D] px-3 py-1.5 text-xs font-bold text-[#D8B56C] shadow-[0_6px_16px_-8px_rgba(0,0,0,.6)]">✓ Verified by SocietyFlats</span>
+          <span className="pointer-events-none absolute left-3.5 top-3.5 rounded-full bg-[#233B6E] px-3 py-1.5 text-xs font-bold text-white shadow-[0_6px_16px_-8px_rgba(0,0,0,.45)]">✓ Verified by SocietyFlats</span>
           {gallery.length > 1 ? (
             <>
               <span className="pointer-events-none absolute right-3.5 top-3.5 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white">{Math.min(activeImage + 1, gallery.length)}/{gallery.length}</span>
@@ -948,13 +948,13 @@ export function SocietyPage() {
           ) : null}
         </section>
         <section className="hidden h-[320px] gap-3 md:grid md:h-[380px] md:grid-cols-[2fr_1fr]">
-          <button type="button" onClick={() => setLightboxOpen(true)} className="relative h-full min-h-0 overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left">
+          <button type="button" onClick={() => setLightboxOpen(true)} className="relative h-full min-h-0 overflow-hidden rounded-[18px] bg-[#E8EDF7] text-left">
             <img src={gallery[0]} alt={society.name} className="h-full w-full object-cover" />
-            <span className="absolute left-4 top-4 rounded-full bg-[#0B241D] px-3 py-1.5 text-xs font-bold text-[#D8B56C] shadow-[0_6px_16px_-8px_rgba(0,0,0,.6)]">✓ Verified by SocietyFlats</span>
+            <span className="absolute left-4 top-4 rounded-full bg-[#233B6E] px-3 py-1.5 text-xs font-bold text-white shadow-[0_6px_16px_-8px_rgba(0,0,0,.45)]">✓ Verified by SocietyFlats</span>
           </button>
           <div className="grid h-full min-h-0 grid-rows-2 gap-3 overflow-hidden">
             {[gallery[1] || gallery[0], gallery[2] || gallery[0]].map((image, index) => (
-              <button key={`${image}-${index}`} type="button" onClick={() => { setActiveImage(index + 1); setLightboxOpen(true); }} className="relative overflow-hidden rounded-[18px] bg-[#E5ECE5]">
+              <button key={`${image}-${index}`} type="button" onClick={() => { setActiveImage(index + 1); setLightboxOpen(true); }} className="relative overflow-hidden rounded-[18px] bg-[#E8EDF7]">
                 <img src={image} alt={`${society.name} ${index + 2}`} className="h-full w-full object-cover" />
                 {index === 1 && gallery.length > 3 ? <span className="absolute inset-0 flex items-center justify-center bg-black/20"><span className="rounded-full bg-black/70 px-3 py-1.5 text-xs text-white">+{gallery.length - 3} photos</span></span> : null}
               </button>
@@ -965,9 +965,9 @@ export function SocietyPage() {
           <p className="mt-2.5 text-[12px] text-[#8A8F89]">Photos via Google Places, reviewed and approved before publishing — not stock images.</p>
         ) : null}
 
-        <div className="mt-7 grid items-stretch gap-9 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="mt-6 grid items-stretch gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section>
-            <h1 className="font-display text-[38px] font-medium leading-tight tracking-[-0.01em] text-[#10251F]">{seoContent?.seo_h1 || society.name}</h1>
+            <h1 className="font-display text-[34px] font-medium leading-[1.02] tracking-[-0.015em] text-[#111827] md:text-[42px]">{seoContent?.seo_h1 || society.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#6E756E]">
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="h-4 w-4" />
@@ -984,12 +984,12 @@ export function SocietyPage() {
                 )}
               </span>
               {societyScore > 0 ? <span className="font-bold text-[#25302B]">★ {(societyScore > 10 ? societyScore / 10 : societyScore).toFixed(1)}</span> : null}
-              <span className="rounded-full bg-[#0B241D] px-3 py-1 text-[12.5px] font-semibold text-[#D8B56C]">Data confidence: {confidenceText}</span>
+              <span className="rounded-full bg-[#EEF2FA] px-3 py-1 text-[12.5px] font-semibold text-[#3156A3]">Data confidence: {confidenceText}</span>
               <span className="text-[12.5px]">{formatHandoffUpdated(updatedText)}</span>
             </div>
 
-            <div className="mt-6 rounded-[16px] border border-[#DDE7DC] bg-[#EEF5F1] p-5">
-              <h2 className="text-sm font-bold text-[#2A6147]">✓ Verified facts · sources reviewed</h2>
+            <div className="mt-6 rounded-[18px] border border-[#D8DFEC] bg-[#F7F9FD] p-5">
+              <h2 className="text-sm font-bold text-[#3156A3]">✓ Verified facts · sources reviewed</h2>
               <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
                 {[...handoffQuickFacts, ...handoffVerifiedFacts].map(([label, value]) => (
                   <div key={label} className="rounded-[12px] bg-white p-3.5">
@@ -1013,9 +1013,9 @@ export function SocietyPage() {
                       <div key={label} className="flex items-center gap-3">
                         <span className="w-[92px] shrink-0 text-[12.5px] text-[#6E756E]">{label}</span>
                         <span className="h-[6px] min-w-0 flex-1 overflow-hidden rounded-full bg-[#EEE9DE]">
-                          <span className="block h-full rounded-full bg-[#2A6147]" style={{ width: `${Math.min(100, Math.max(0, score * 10))}%` }} />
+                          <span className="block h-full rounded-full bg-[#3156A3]" style={{ width: `${Math.min(100, Math.max(0, score * 10))}%` }} />
                         </span>
-                        <span className="w-8 shrink-0 text-right text-[13.5px] font-extrabold text-[#123C32]">{score.toFixed(1)}</span>
+                        <span className="w-8 shrink-0 text-right text-[13.5px] font-extrabold text-[#233B6E]">{score.toFixed(1)}</span>
                       </div>
                     );
                   })}
@@ -1032,7 +1032,7 @@ export function SocietyPage() {
                 <button
                   type="button"
                   onClick={() => setShowAllAmenities((value) => !value)}
-                  className="rounded-full border border-[#DDE7DC] bg-[#EEF5F1] px-4 py-2 text-[13.5px] font-semibold text-[#2A6147]"
+                  className="rounded-full border border-[#D8DFEC] bg-[#F7F9FD] px-4 py-2 text-[13.5px] font-semibold text-[#3156A3]"
                 >
                   {showAllAmenities ? "Show less" : `+${amenities.length - 8} more`}
                 </button>
@@ -1047,7 +1047,7 @@ export function SocietyPage() {
             {seoContent?.location_content ? <><h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Location & connectivity</h2><p className="mt-2.5 whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{seoContent.location_content}</p></> : null}
 
             <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Location intelligence</h2>
-            <div className="mt-3.5 overflow-hidden rounded-[16px] border border-[#DDE4DC] bg-[#E4EBE4]">
+            <div className="mt-3.5 overflow-hidden rounded-[18px] border border-[#D8DFEC] bg-[#E8EDF7]">
               <SocietyNearbyGoogleMap
                 title={society.name}
                 location={societyLocation}
@@ -1065,7 +1065,7 @@ export function SocietyPage() {
 
             <div className="mt-8 grid gap-4 md:grid-cols-2">
               <div className="rounded-[16px] border border-[#E7E3DA] bg-white p-[18px]">
-                <h3 className="text-sm font-bold text-[#2A6147]">Pros</h3>
+                <h3 className="text-sm font-bold text-[#3156A3]">Pros</h3>
                 <div className="mt-3 space-y-2 text-[13.5px] text-[#4A534E]">{(seoPros.length ? seoPros : handoffPros.length ? handoffPros : ["Published society context available"]).map((item: string) => <p key={item}>+ {item}</p>)}</div>
               </div>
               <div className="rounded-[16px] border border-[#E7E3DA] bg-white p-[18px]">
@@ -1079,7 +1079,7 @@ export function SocietyPage() {
               {seoContent.sale_content ? <section><h2 className="text-[19px] font-bold text-[#25302B]">Flats for sale or resale in {society.name}</h2><p className="mt-2.5 whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{seoContent.sale_content}</p></section> : null}
               {seoContent.amenities_content ? <section><h2 className="text-[19px] font-bold text-[#25302B]">Amenities & lifestyle</h2><p className="mt-2.5 whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{seoContent.amenities_content}</p></section> : null}
               {seoContent.investment_content ? <section><h2 className="text-[19px] font-bold text-[#25302B]">Investment and end-use suitability</h2><p className="mt-2.5 whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{seoContent.investment_content}</p></section> : null}
-              {seoBestFor.length ? <section><h2 className="text-[19px] font-bold text-[#25302B]">Best for</h2><div className="mt-3 flex flex-wrap gap-2">{seoBestFor.map((item: string) => <span key={item} className="rounded-full border border-[#DDE7DC] bg-[#EEF5F1] px-3 py-1.5 text-sm text-[#2A6147]">{item}</span>)}</div></section> : null}
+              {seoBestFor.length ? <section><h2 className="text-[19px] font-bold text-[#25302B]">Best for</h2><div className="mt-3 flex flex-wrap gap-2">{seoBestFor.map((item: string) => <span key={item} className="rounded-full border border-[#D8DFEC] bg-[#F7F9FD] px-3 py-1.5 text-sm text-[#3156A3]">{item}</span>)}</div></section> : null}
               {seoNearbyHighlights.length ? <section><h2 className="text-[19px] font-bold text-[#25302B]">Nearby highlights</h2><ul className="mt-3 space-y-2 text-[14.5px] text-[#4A534E]">{seoNearbyHighlights.map((item: string) => <li key={item}>• {item}</li>)}</ul></section> : null}
             </div> : null}
           </section>
@@ -1090,23 +1090,23 @@ export function SocietyPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8A8F89]">Resale price</p>
-                    <p className="mt-1 text-xl font-extrabold text-[#123C32]">{buyTextForHandoff(society)}</p>
+                    <p className="mt-1 text-xl font-extrabold text-[#233B6E]">{buyTextForHandoff(society)}</p>
                   </div>
                   <div className="border-l border-[#EEEAE1] pl-4">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8A8F89]">Rent / month</p>
-                    <p className="mt-1 text-xl font-extrabold text-[#123C32]">{rentTextForHandoff(society)}</p>
+                    <p className="mt-1 text-xl font-extrabold text-[#233B6E]">{rentTextForHandoff(society)}</p>
                   </div>
                 </div>
                 <div className="mt-[18px] grid gap-2.5">
-                  <button type="button" onClick={() => openSocietyCallback("society_page_rent_options")} className="rounded-[12px] bg-[#123C32] px-5 py-3.5 text-[14.5px] font-bold text-white">Get rental options</button>
-                  <button type="button" onClick={() => openSocietyCallback("society_page_availability")} className="rounded-[12px] border-2 border-[#123C32] bg-white px-5 py-3 text-[14.5px] font-bold text-[#123C32]">Check current availability</button>
-                  <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-[12px] bg-[#449B4E] px-5 py-3 text-[14.5px] font-bold text-white"><MessageCircle className="mr-2 h-4 w-4" />WhatsApp SocietyFlats</a>
-                  <button type="button" onClick={toggleSocietyCompare} className="px-4 py-2 text-[13.5px] font-semibold text-[#2A6147]">{isSocietyCompared ? "✓ Added to compare" : "+ Add to compare"}</button>
+                  <button type="button" onClick={() => openSocietyCallback("society_page_rent_options")} className="rounded-[12px] bg-[#233B6E] px-5 py-3.5 text-[14.5px] font-bold text-white">Get rental options</button>
+                  <button type="button" onClick={() => openSocietyCallback("society_page_availability")} className="rounded-[12px] border-2 border-[#233B6E] bg-white px-5 py-3 text-[14.5px] font-bold text-[#233B6E]">Check current availability</button>
+                  <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-[12px] bg-[#3156A3] px-5 py-3 text-[14.5px] font-bold text-white"><MessageCircle className="mr-2 h-4 w-4" />WhatsApp SocietyFlats</a>
+                  <button type="button" onClick={toggleSocietyCompare} className="px-4 py-2 text-[13.5px] font-semibold text-[#3156A3]">{isSocietyCompared ? "✓ Added to compare" : "+ Add to compare"}</button>
                 </div>
                 <p className="mt-3.5 border-t border-[#EEEAE1] pt-3.5 text-[11.5px] leading-5 text-[#7A817D]">We use your phone number only to verify your request and connect you with relevant options.</p>
               </div>
-              <Link to={`/ai-advisor?q=${encodeURIComponent(`Compare ${society.name} with similar Gurgaon societies`)}`} className="mt-3.5 block rounded-[16px] border border-[#DDE7DC] bg-[#EEF5F1] p-4">
-                <strong className="text-sm text-[#123C32]">Not sure about this society?</strong>
+              <Link to={`/ai-advisor?q=${encodeURIComponent(`Compare ${society.name} with similar Gurgaon societies`)}`} className="mt-3.5 block rounded-[16px] border border-[#D8DFEC] bg-[#F7F9FD] p-4">
+                <strong className="text-sm text-[#233B6E]">Not sure about this society?</strong>
                 <p className="mt-1 text-[12.5px] text-[#6E756E]">Ask SocietyFlats AI to compare it with similar options →</p>
               </Link>
             </div>
@@ -1118,8 +1118,8 @@ export function SocietyPage() {
           <div className="grid gap-[18px] md:grid-cols-3">
             {properties.slice(0, 3).map((property) => (
               <Link key={property.id || property.slug} to={safePropertyUrl(property)} className="overflow-hidden rounded-[16px] border border-[#E7E3DA] bg-white">
-                <div className="relative h-[150px] bg-[#E5ECE5]"><img src={safePropertyImage(property)} alt={property.title || "Available home"} className="h-full w-full object-cover" /><span className="absolute left-2.5 top-2.5 rounded-full bg-[#E8F7E9] px-2.5 py-1 text-[11px] font-bold text-[#2A6147]">Verified · {field(property, "listedBy", "listed_by", "Source reviewed")}</span></div>
-                <div className="p-4"><div className="flex items-center justify-between gap-3"><strong>{property.title || "Available home"}</strong><strong className="text-[#123C32]">{field(property, "price", "price", "On request")}</strong></div><p className="mt-1 text-[12.5px] text-[#6E756E]">{field(property, "areaSqft", "area_sqft", "Area on request")} sq.ft · {field(property, "floor", "floor", "Floor on request")} · {field(property, "furnishedStatus", "furnished_status", "Status on request")}</p></div>
+                <div className="relative h-[150px] bg-[#E8EDF7]"><img src={safePropertyImage(property)} alt={property.title || "Available home"} className="h-full w-full object-cover" /><span className="absolute left-2.5 top-2.5 rounded-full bg-[#EEF2FA] px-2.5 py-1 text-[11px] font-bold text-[#3156A3]">Verified · {field(property, "listedBy", "listed_by", "Source reviewed")}</span></div>
+                <div className="p-4"><div className="flex items-center justify-between gap-3"><strong>{property.title || "Available home"}</strong><strong className="text-[#233B6E]">{field(property, "price", "price", "On request")}</strong></div><p className="mt-1 text-[12.5px] text-[#6E756E]">{field(property, "areaSqft", "area_sqft", "Area on request")} sq.ft · {field(property, "floor", "floor", "Floor on request")} · {field(property, "furnishedStatus", "furnished_status", "Status on request")}</p></div>
               </Link>
             ))}
           </div>
@@ -1127,7 +1127,7 @@ export function SocietyPage() {
           <div className="rounded-[16px] border border-dashed border-[#D8D4CA] bg-white p-6 text-sm text-[#6E756E]">No verified homes are listed right now. Request current availability and SocietyFlats will check owner or broker options.</div>
         )}
 
-        {seoInternalLinks.length ? <section className="mt-11"><h2 className="text-[22px] font-bold text-[#25302B]">Explore similar Gurgaon societies</h2><div className="mt-4 flex flex-wrap gap-3">{seoInternalLinks.map((item: any) => <Link key={`${item.url}-${item.label}`} to={item.url} className="rounded-full border border-[#DDE7DC] bg-white px-4 py-2 text-sm font-semibold text-[#2A6147]">{item.label}</Link>)}</div></section> : null}
+        {seoInternalLinks.length ? <section className="mt-11"><h2 className="text-[22px] font-bold text-[#25302B]">Explore similar Gurgaon societies</h2><div className="mt-4 flex flex-wrap gap-3">{seoInternalLinks.map((item: any) => <Link key={`${item.url}-${item.label}`} to={item.url} className="rounded-full border border-[#D8DFEC] bg-white px-4 py-2 text-sm font-semibold text-[#3156A3]">{item.label}</Link>)}</div></section> : null}
 
         {seoFaqs.length ? <section className="mt-11"><h2 className="text-[22px] font-bold text-[#25302B]">Frequently asked questions</h2><div className="mt-4 space-y-3">{seoFaqs.map((faq: any) => <details key={faq.question} className="rounded-[16px] border border-[#E7E3DA] bg-white p-4"><summary className="cursor-pointer font-bold text-[#25302B]">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#4A534E]">{faq.answer}</p></details>)}</div></section> : null}
       </main>
@@ -1136,10 +1136,10 @@ export function SocietyPage() {
         <div className="flex items-center gap-2 rounded-[1.25rem] border border-[#E7E3DA] bg-white/95 p-2.5 shadow-[0_14px_36px_-26px_rgba(0,0,0,.4)] backdrop-blur-xl">
           <div className="min-w-0 flex-1 pl-1.5">
             <p className="truncate text-[11px] text-[#7A817D]">Price range</p>
-            <p className="truncate text-[15px] font-extrabold text-[#123C32]">{buyTextForHandoff(society)}</p>
+            <p className="truncate text-[15px] font-extrabold text-[#233B6E]">{buyTextForHandoff(society)}</p>
           </div>
-          <button type="button" onClick={() => openSocietyCallback("society_page_availability")} className="whitespace-nowrap rounded-[12px] border-2 border-[#123C32] bg-white px-3.5 py-2.5 text-[13px] font-bold text-[#123C32]">Check availability</button>
-          <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#449B4E] text-white"><MessageCircle className="h-4 w-4" /></a>
+          <button type="button" onClick={() => openSocietyCallback("society_page_availability")} className="whitespace-nowrap rounded-[12px] border-2 border-[#233B6E] bg-white px-3.5 py-2.5 text-[13px] font-bold text-[#233B6E]">Check availability</button>
+          <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#3156A3] text-white"><MessageCircle className="h-4 w-4" /></a>
         </div>
       </div>
 

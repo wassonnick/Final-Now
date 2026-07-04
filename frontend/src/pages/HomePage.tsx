@@ -171,7 +171,7 @@ export function HomePage() {
       <SocietyFlatsHero />
 
       {allSocietiesCount > 0 ? (
-        <div className="mx-auto max-w-[1360px] px-5 pt-5 lg:px-10">
+        <div className="mx-auto max-w-[1360px] px-5 pt-4 lg:px-10">
           <div className="border-y border-[#DDD7CC] bg-white/70 px-5 py-4">
             <p className="text-[15px] leading-6 text-[#1D2939]">
               <span className="font-bold">{allSocietiesCount} societies live. 0 fabricated.</span>{" "}
@@ -180,6 +180,36 @@ export function HomePage() {
           </div>
         </div>
       ) : null}
+
+      <section className="mx-auto max-w-[1360px] px-5 pb-3 pt-8 lg:px-10 lg:pb-4 lg:pt-12">
+        <div className="mb-4 flex items-end justify-between lg:mb-5">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8B6B32]">Start with trusted profiles</p>
+            <h2 className="mt-1 font-display text-[27px] font-medium text-[#111827] lg:text-[36px]">Featured verified societies</h2>
+            <p className="mt-1 hidden text-sm text-[#667085] sm:block">Published and admin-reviewed, with images checked before display.</p>
+          </div>
+          <Link to="/search?tab=societies" className="shrink-0 text-[12.5px] font-bold text-[#3156A3] lg:text-sm">View all →</Link>
+        </div>
+        {status === "loading" ? (
+          <div className="-mx-5 flex gap-[14px] overflow-hidden px-5 lg:mx-0 lg:grid lg:grid-cols-4 lg:px-0">
+            {[0, 1, 2, 3].map((item) => <div key={item} className="h-[230px] w-[240px] shrink-0 animate-pulse rounded-[18px] bg-white lg:h-[300px] lg:w-auto" />)}
+          </div>
+        ) : featured.length ? (
+          <>
+            <div className="-mx-5 flex gap-[14px] overflow-x-auto px-5 pb-1 scrollbar-hide lg:hidden">
+              {featured.map((society) => <SocietyCard key={society.slug} society={society} mobile />)}
+            </div>
+            <div className="hidden grid-cols-4 gap-[22px] lg:grid">
+              {featured.map((society) => <SocietyCard key={society.slug} society={society} />)}
+            </div>
+          </>
+        ) : (
+          <div className="rounded-[18px] border border-[#DDD7CC] bg-white p-5 lg:p-7">
+            <p className="font-display text-xl font-medium text-[#111827]">Fresh verified societies are being prepared.</p>
+            <p className="mt-1 text-sm leading-6 text-[#667085]">Profiles appear here after society data and images pass admin review.</p>
+          </div>
+        )}
+      </section>
 
       <JourneySpine />
 
@@ -196,24 +226,6 @@ export function HomePage() {
             </Link>
           ))}
         </div>
-
-        <div className="mb-3 mt-[26px] flex items-baseline justify-between">
-          <h2 className="font-sans text-base font-bold tracking-normal text-[#25302B]">Featured verified societies</h2>
-        </div>
-        {status === "loading" ? (
-          <div className="-mx-5 flex gap-[14px] overflow-hidden px-5">
-            {[0, 1].map((item) => <div key={item} className="h-[230px] w-[240px] shrink-0 animate-pulse rounded-[18px] bg-white" />)}
-          </div>
-        ) : featured.length ? (
-          <div className="-mx-5 flex gap-[14px] overflow-x-auto px-5 pb-1 scrollbar-hide">
-            {featured.map((society) => <SocietyCard key={society.slug} society={society} mobile />)}
-          </div>
-        ) : (
-          <div className="rounded-[18px] border border-[#E7DCCB] bg-white p-5">
-            <p className="font-bold">Fresh verified societies are being prepared.</p>
-            <p className="mt-1 text-sm leading-6 text-[#6E756E]">Public cards appear after society data and images pass admin review.</p>
-          </div>
-        )}
 
         <DecisionGuideStrip mobile />
 
@@ -320,26 +332,11 @@ export function HomePage() {
 
       {/* DESKTOP PROTOTYPE */}
       <main className="hidden lg:block">
-        <section className="mx-auto mt-16 max-w-[1360px] px-10">
-          <div className="mb-[22px] flex items-end justify-between">
-            <div><h2 className="font-display text-[32px] font-medium text-[#25302B]">Featured verified societies</h2><p className="mt-1.5 text-sm text-[#6E756E]">Published & admin-reviewed. Images checked before display.</p></div>
-            <Link to="/search?tab=societies" className="text-sm font-bold text-[#3156A3]">View all societies →</Link>
-          </div>
-          {featured.length ? (
-            <div className="grid grid-cols-4 gap-[22px]">{featured.map((society) => <SocietyCard key={society.slug} society={society} />)}</div>
-          ) : (
-            <div className="rounded-[18px] border border-[#E7DCCB] bg-white p-8">
-              <h3 className="font-display text-2xl font-medium">Fresh verified societies are being prepared.</h3>
-              <p className="mt-2 text-sm text-[#6E756E]">No published society profiles are available yet. New profiles appear here after admin review.</p>
-            </div>
-          )}
-        </section>
-
-        <section className="mx-auto mt-16 max-w-[1360px] px-10">
+        <section className="mx-auto mt-10 max-w-[1360px] px-10">
           <DecisionGuideStrip />
         </section>
 
-        <section className="mx-auto mt-16 max-w-[1360px] px-10">
+        <section className="mx-auto mt-10 max-w-[1360px] px-10">
           <div className="mb-[22px] flex items-end justify-between">
             <div>
               <h2 className="font-display text-[32px] font-medium text-[#25302B]">Verified homes</h2>
@@ -428,7 +425,7 @@ export function HomePage() {
           <PropertyToolsStrip />
         </section>
 
-        <section className="mx-auto mt-16 max-w-[1360px] px-10">
+        <section className="mx-auto mt-10 max-w-[1360px] px-10">
           <div className="mb-[22px] flex items-end justify-between"><h2 className="font-display text-[32px] font-medium text-[#25302B]">Popular Gurgaon areas</h2><Link to="/maps" className="text-sm font-bold text-[#3156A3]">Explore all on map →</Link></div>
           <div className="grid grid-cols-4 gap-4">
             {areas.map(([name, href, reason]) => (
@@ -441,7 +438,7 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto mt-16 grid max-w-[1360px] grid-cols-2 gap-[22px] px-10">
+        <section className="mx-auto mt-10 grid max-w-[1360px] grid-cols-2 gap-[22px] px-10">
           <div className="rounded-[20px] border border-[#E8D0BF] bg-[#FFF4E9] p-8">
             <p className="mb-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[#A45B3A]">For owners</p>
             <h3 className="font-display text-[25px] font-medium text-[#25302B]">List your flat once. Reach serious tenants & buyers.</h3>
@@ -456,7 +453,7 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto mt-16 max-w-[900px] px-10">
+        <section className="mx-auto mt-12 max-w-[900px] px-10">
           <h2 className="mb-[22px] text-center font-display text-[32px] font-medium text-[#25302B]">Questions, answered</h2>
           <div className="space-y-3">
             {faqs.map(([question, answer], index) => (
@@ -468,7 +465,7 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto mt-16 max-w-[1360px] px-10">
+        <section className="mx-auto mt-12 max-w-[1360px] px-10">
           <div className="rounded-[24px] bg-[#111827] p-14 text-center text-white">
             <h2 className="font-display text-[40px] font-medium tracking-[-0.01em] text-white">{allSocietiesCount || societies.length || 40} societies in. Thousands more Gurgaon homes to compare.</h2>
             <p className="mb-7 mt-3 text-base text-[#C7D0DE]">Tell us your budget and commute — SocietyFlats AI narrows it to 2–3 societies worth visiting.</p>

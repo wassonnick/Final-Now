@@ -230,7 +230,7 @@ export default function SocietyFlatsHero() {
       </section>
 
       <section className="hidden overflow-hidden border-b border-[#DDD7CC] bg-[#F7F4EF] lg:block">
-        <div className="mx-auto grid max-w-[1360px] grid-cols-[1.03fr_0.97fr] items-center gap-16 px-10 pb-20 pt-20">
+        <div className="mx-auto grid max-w-[1360px] grid-cols-[1.03fr_0.97fr] items-center gap-14 px-10 pb-12 pt-12">
           <div>
             <div className="mb-[22px] inline-flex items-center gap-2 rounded-full border border-[#DDD7CC] bg-white px-[13px] py-1.5 text-[12.5px] font-bold text-[#3156A3]">
               <Check className="h-[13px] w-[13px] stroke-[3]" />
@@ -239,7 +239,7 @@ export default function SocietyFlatsHero() {
             <h1 className="m-0 font-display text-[64px] font-medium leading-[0.98] tracking-[-0.025em] text-[#111827]">
               Choose the society first. <em className="font-normal text-[#8B6B32]">Then</em> find the home.
             </h1>
-            <p className="mb-8 mt-[22px] max-w-[560px] text-[17px] leading-[1.65] text-[#667085]">
+            <p className="mb-6 mt-[18px] max-w-[560px] text-[17px] leading-[1.6] text-[#667085]">
               Verified society intelligence for Gurgaon buyers and tenants. Search the evidence, compare what matters and request current availability only when you are ready.
             </p>
 
@@ -327,7 +327,7 @@ export default function SocietyFlatsHero() {
             </div>
           </div>
 
-          <div className="relative h-[480px]">
+          <div className="relative h-[430px]">
             <div className="absolute bottom-9 left-6 right-0 top-[14px] -rotate-2 overflow-hidden rounded-[28px] border border-[#D8DFEC] bg-[#E9EEF7]">
               {GOOGLE_MAPS_API_KEY ? (
                 <div ref={mapRef} role="img" aria-label="Live Gurgaon societies map" className="h-full w-full rotate-2 scale-110" />

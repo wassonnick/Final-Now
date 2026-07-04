@@ -100,7 +100,7 @@ function createPopupOverlay(google: any, map: any, position: any, name: string) 
     div.style.fontSize = "11px";
     div.style.lineHeight = "1";
     div.style.fontWeight = "900";
-    div.style.color = "#10251F";
+    div.style.color = "#111827";
     div.style.pointerEvents = "none";
     div.style.zIndex = "9999";
     div.innerText = cleanText(name);

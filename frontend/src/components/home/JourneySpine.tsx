@@ -76,8 +76,8 @@ const audiences = [
 
 export function JourneySpine() {
   return (
-    <section className="mx-auto max-w-[1360px] px-5 py-12 lg:px-10 lg:py-20">
-      <div className="grid gap-8 border-b border-[#DDD7CC] pb-9 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
+    <section className="mx-auto max-w-[1360px] px-5 py-9 lg:px-10 lg:py-12">
+      <div className="grid gap-5 border-b border-[#DDD7CC] pb-7 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#8B6B32]">A clearer property journey</p>
           <h2 className="mt-3 max-w-[560px] font-display text-[34px] font-medium leading-[1.03] text-[#111827] lg:text-[48px]">
@@ -91,7 +91,7 @@ export function JourneySpine() {
 
       <ol className="divide-y divide-[#DDD7CC] lg:grid lg:grid-cols-4 lg:divide-x lg:divide-y-0">
         {steps.map((step, index) => (
-          <li key={step.n} className={`py-7 lg:min-h-[310px] lg:px-7 lg:py-9 ${index === 0 ? "lg:pl-0" : ""} ${index === steps.length - 1 ? "lg:pr-0" : ""}`}>
+          <li key={step.n} className={`py-6 lg:min-h-[270px] lg:px-7 lg:py-7 ${index === 0 ? "lg:pl-0" : ""} ${index === steps.length - 1 ? "lg:pr-0" : ""}`}>
             <div className="flex items-baseline gap-3">
               <span className="font-display text-[18px] text-[#B4975A]">{step.n}</span>
               <h3 className="font-display text-[27px] font-medium text-[#111827]">{step.title}</h3>
