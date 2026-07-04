@@ -172,6 +172,26 @@ class AccountController extends Controller
         $brokerLeads = (clone $brokerLeadQuery)->latest()->limit(20)->get();
         $properties = (clone $propertyQuery)->latest()->limit(20)->get();
 
+        $siteVisits = \App\Models\SiteVisit::with('society:id,name,slug')
+            ->where('visitor_phone', 'like', '%'.$phone.'%')
+            ->whereIn('status', ['proposed', 'confirmed'])
+            ->where(function ($query) {
+                $query->whereNull('selected_slot')->orWhere('selected_slot', '>=', now()->subDay());
+            })
+            ->orderByRaw('selected_slot is null, selected_slot asc')
+            ->limit(5)
+            ->get()
+            ->map(fn ($visit) => [
+                'id' => $visit->id,
+                'status' => $visit->status,
+                'selected_slot' => optional($visit->selected_slot)->toIso8601String(),
+                'proposed_slots' => $visit->proposed_slots,
+                'confirmation_token' => $visit->confirmation_token,
+                'society_name' => $visit->society?->name,
+                'society_slug' => $visit->society?->slug,
+            ])
+            ->values();
+
         return response()->json([
             'account' => $this->accountPayload($account),
             'scope' => [
@@ -187,6 +207,7 @@ class AccountController extends Controller
             'owner_listing_leads' => $ownerLeads->map(fn (Lead $lead) => $this->safeLeadPayload($lead))->values(),
             'broker_submissions' => $brokerLeads->map(fn (Lead $lead) => $this->safeLeadPayload($lead))->values(),
             'linked_properties' => $properties->map(fn (Property $property) => $this->safePropertyPayload($property))->values(),
+            'site_visits' => $siteVisits,
         ]);
     }
 

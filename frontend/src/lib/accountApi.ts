@@ -178,6 +178,15 @@ export type AccountDashboardResponse = {
   owner_listing_leads?: AccountDashboardLead[];
   broker_submissions?: AccountDashboardLead[];
   linked_properties?: AccountDashboardProperty[];
+  site_visits?: Array<{
+    id: number;
+    status: string;
+    selected_slot?: string | null;
+    proposed_slots?: string[] | null;
+    confirmation_token?: string;
+    society_name?: string | null;
+    society_slug?: string | null;
+  }>;
 };
 
 export async function fetchAccountDashboard(accountAccessToken?: string | null) {

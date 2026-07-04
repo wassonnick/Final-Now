@@ -31,6 +31,7 @@ import {
   type CustomerSavedItem,
 } from "@/lib/customerAccount";
 import { SavedSearchesPanel } from "@/components/search/SavedSearchesPanel";
+import { fetchAccountDashboard, type AccountDashboardResponse } from "@/lib/accountApi";
 import { setPublicSeo } from "@/lib/seo";
 
 type DashboardItem = {
@@ -181,6 +182,7 @@ export function CustomerDashboardPage() {
   const [activity, setActivity] = useState<CustomerActivityLead[]>([]);
   const [viewedItems, setViewedItems] = useState<CustomerSavedItem[]>([]);
   const [shortlistedItems, setShortlistedItems] = useState<CustomerSavedItem[]>([]);
+  const [siteVisits, setSiteVisits] = useState<NonNullable<AccountDashboardResponse["site_visits"]>>([]);
   const session = getCustomerAccountSession();
 
   useEffect(() => {
@@ -192,6 +194,13 @@ export function CustomerDashboardPage() {
     setViewedItems(getCustomerSavedItemsForPhone(session?.phone, "view"));
     setShortlistedItems(getCustomerSavedItemsForPhone(session?.phone, "shortlist"));
   }, [session?.phone]);
+
+  useEffect(() => {
+    if (!session?.accountAccessToken) return;
+    fetchAccountDashboard(session.accountAccessToken)
+      .then((dashboard) => setSiteVisits(dashboard?.site_visits || []))
+      .catch(() => setSiteVisits([]));
+  }, [session?.accountAccessToken]);
 
   const customerName = session?.name || "Customer";
   const customerPhone = session?.phone || "";
@@ -336,6 +345,32 @@ export function CustomerDashboardPage() {
           </TabsList>
 
           <TabsContent value="overview" className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            {siteVisits.length > 0 ? (
+              <section className="rounded-[28px] border border-emerald-200 bg-emerald-50/60 p-5 lg:col-span-2">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">Your site visits</p>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  {siteVisits.slice(0, 2).map((visit) => (
+                    <div key={visit.id} className="rounded-2xl border border-emerald-100 bg-white p-4">
+                      <p className="text-sm font-black text-slate-900">{visit.society_name || "Society visit"}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {visit.selected_slot
+                          ? new Date(visit.selected_slot).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })
+                          : "Pick a time slot to confirm"}
+                        {" · "}
+                        <span className={visit.status === "confirmed" ? "font-bold text-emerald-700" : "font-bold text-amber-700"}>
+                          {visit.status === "confirmed" ? "Confirmed" : "Awaiting your confirmation"}
+                        </span>
+                      </p>
+                      {visit.confirmation_token ? (
+                        <Link to={`/site-visits/${visit.confirmation_token}`} className="mt-2 inline-block rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-black text-white">
+                          {visit.status === "confirmed" ? "View details" : "Confirm slot"}
+                        </Link>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
             <section className="max-w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
