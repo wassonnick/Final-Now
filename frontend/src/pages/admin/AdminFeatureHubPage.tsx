@@ -1350,7 +1350,7 @@ export function AdminFeatureHubPage({ feature }: AdminFeatureHubPageProps) {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline" className="rounded-full">
-                <Link to="/admin/societies/import">
+                <Link to="/admin/verified-society-importer">
                   <WandSparkles className="mr-2 h-4 w-4" />
                   Auto import societies
                 </Link>

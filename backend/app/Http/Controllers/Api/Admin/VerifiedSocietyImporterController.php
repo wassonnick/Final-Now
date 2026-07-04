@@ -96,7 +96,7 @@ class VerifiedSocietyImporterController extends Controller
     {
         $data=$request->validate(['review_notes'=>['nullable','string','max:2000']]);
         $applied=[];
-        DB::transaction(function()use($field,$data,&$applied){VerifiedSocietyFieldSource::where('society_id',$field->society_id)->where('field_name',$field->field_name)->update(['is_selected_value'=>false]);$field->update(['is_selected_value'=>true,'needs_review'=>false,'admin_approved'=>true,'admin_rejected'=>false,'confidence_score'=>max(90,(int)$field->confidence_score),'review_notes'=>$data['review_notes']??null]);$applied=$this->profileApplier->applyFieldSource($field);});
+        DB::transaction(function()use($field,$data,&$applied){VerifiedSocietyFieldSource::where('society_id',$field->society_id)->where('field_name',$field->field_name)->update(['is_selected_value'=>false]);$field->update(['is_selected_value'=>true,'needs_review'=>false,'admin_approved'=>true,'admin_rejected'=>false,'confidence_score'=>max(90,(int)$field->confidence_score),'review_notes'=>$data['review_notes']??null,'reviewed_by'=>$this->reviewer(request()),'reviewed_at'=>now()]);$applied=$this->profileApplier->applyFieldSource($field);});
         return response()->json(['message'=>'Field approved and applied. Society remains a draft.','data'=>$field->fresh(),'applied_fields'=>$applied,'society'=>Society::find($field->society_id)]);
     }
 
@@ -104,26 +104,27 @@ class VerifiedSocietyImporterController extends Controller
     {
         $data=$request->validate(['review_notes'=>['nullable','string','max:2000']]);
         $cleared=$this->profileApplier->rejectFieldSource($field,$data['review_notes']??null);
+        $field->update(['reviewed_by'=>$this->reviewer($request),'reviewed_at'=>now()]);
         return response()->json(['message'=>'Field value rejected and removed from the draft where it was still applied.','data'=>$field->fresh(),'cleared_fields'=>$cleared,'society'=>Society::find($field->society_id)]);
     }
 
-    public function approveImage(VerifiedSocietyImportImage $image): JsonResponse
+    public function approveImage(Request $request, VerifiedSocietyImportImage $image): JsonResponse
     {
         $society=Society::findOrFail($image->society_id);$this->assertImporterImageDraft($society);
-        DB::transaction(function()use($image,$society){
+        DB::transaction(function()use($image,$society,$request){
             $update=['status'=>'Draft','verification_status'=>'Needs Review','is_published'=>false,'published_at'=>null,'image_approved_by_admin'=>true];
             if($image->source_url)$update['approved_gallery_image_urls']=array_values(array_unique([...($society->approved_gallery_image_urls?:[]),$image->source_url]));
             $update['image_candidates']=$this->upsertSocietyImageCandidate($society,$image,false,true);
             $society->update($update);
-            $image->update(['image_type'=>'gallery','needs_review'=>false,'admin_approved'=>true,'admin_rejected'=>false]);
+            $image->update(['image_type'=>'gallery','needs_review'=>false,'admin_approved'=>true,'admin_rejected'=>false,'reviewed_by'=>$this->reviewer($request),'reviewed_at'=>now()]);
         });
         return response()->json(['message'=>'Image approved to gallery. It remains publication-gated.','data'=>$image->fresh(),'society'=>$society->fresh()]);
     }
 
-    public function rejectImage(VerifiedSocietyImportImage $image): JsonResponse
+    public function rejectImage(Request $request, VerifiedSocietyImportImage $image): JsonResponse
     {
         $society=Society::findOrFail($image->society_id);$enforceDraft=$society->source_name==='Verified Society Importer V2';
-        DB::transaction(function()use($image,$society){
+        DB::transaction(function()use($image,$society,$request){
             $candidates=array_values(array_filter($society->image_candidates?:[],fn($candidate)=>is_array($candidate)&&!$this->sameSocietyImageCandidate($candidate,$image)));
             $gallery=array_values(array_filter($society->approved_gallery_image_urls?:[],fn($url)=>$url!==$image->source_url));
             $update=['image_candidates'=>$candidates,'approved_gallery_image_urls'=>$gallery,'verification_status'=>'Needs Review'];
@@ -131,7 +132,7 @@ class VerifiedSocietyImporterController extends Controller
             $isCover=($image->google_photo_reference&&$society->image_photo_reference===$image->google_photo_reference)||($image->source_url&&in_array($image->source_url,[$society->cover_image,$society->image_url],true));
             if($isCover)$update+=['cover_image'=>null,'image_url'=>null,'image_photo_reference'=>null,'image_approved_by_admin'=>false,'image_status'=>'placeholder'];
             elseif($gallery===[]&&!collect($candidates)->contains(fn($candidate)=>$candidate['approved']??false)&&blank($society->cover_image)&&blank($society->image_photo_reference))$update['image_approved_by_admin']=false;
-            $society->update($update);$image->update(['needs_review'=>false,'admin_rejected'=>true,'admin_approved'=>false]);
+            $society->update($update);$image->update(['needs_review'=>false,'admin_rejected'=>true,'admin_approved'=>false,'reviewed_by'=>$this->reviewer($request),'reviewed_at'=>now()]);
         });
         return response()->json(['message'=>'Image rejected and removed from public-use fields.'.($enforceDraft?' Society remains unpublished.':''),'data'=>$image->fresh(),'society'=>$society->fresh()]);
     }
@@ -236,6 +237,11 @@ class VerifiedSocietyImporterController extends Controller
     private function rowRules(): array
     {
         return ['name'=>['required','string','min:2','max:255'],'display_name'=>['nullable','string','max:255'],'legal_name'=>['nullable','string','max:255'],'slug'=>['nullable','string','max:255'],'city'=>['nullable','string','max:100'],'state'=>['nullable','string','max:100'],'sector'=>['nullable','string','max:100'],'locality'=>['nullable','string','max:255'],'builder_name'=>['nullable','string','max:255'],'rera_number'=>['nullable','string','max:120'],'rera_url'=>['nullable','url','max:2000'],'promoter_name'=>['nullable','string','max:255'],'rera_status'=>['nullable','string','max:120'],'registration_validity'=>['nullable','string','max:255'],'certificate_url'=>['nullable','url','max:2000'],'rera_search_url'=>['nullable','url','max:2000'],'google_place_id'=>['nullable','string','max:255'],'google_maps_url'=>['nullable','url','max:2000'],'builder_url'=>['nullable','url','max:2000'],'developer_url'=>['nullable','url','max:2000'],'official_project_url'=>['nullable','url','max:2000'],'brochure_url'=>['nullable','url','max:2000'],'source_url'=>['nullable','url','max:2000'],'source_type'=>['nullable','string','max:50'],'cover_image_url'=>['nullable','url','max:2000'],'image_reference_url'=>['nullable','url','max:2000'],'gallery_image_urls'=>['nullable'],'google_photo_references'=>['nullable'],'image_attribution'=>['nullable','string','max:500'],'notes'=>['nullable','string','max:3000'],'address'=>['nullable','string','max:500'],'description'=>['nullable','string','max:5000'],'project_status'=>['nullable','string','max:100'],'possession_status'=>['nullable','string','max:100'],'possession_date'=>['nullable','string','max:100'],'amenities'=>['nullable','array','max:50'],'nearby_schools'=>['nullable'],'nearby_metro'=>['nullable'],'nearby_hospitals'=>['nullable'],'nearby_office_hubs'=>['nullable'],'rent_range'=>['nullable','string','max:100'],'buy_range'=>['nullable','string','max:100'],'rent_min'=>['nullable','string','max:100'],'rent_max'=>['nullable','string','max:100'],'buy_min'=>['nullable','string','max:100'],'buy_max'=>['nullable','string','max:100'],'resale_min'=>['nullable','string','max:100'],'resale_max'=>['nullable','string','max:100'],'average_rent'=>['nullable','string','max:100'],'average_sale_price'=>['nullable','string','max:100'],'price_per_sqft'=>['nullable','string','max:100'],'rental_yield'=>['nullable','string','max:100'],'maintenance_charges'=>['nullable','string','max:100'],'market_notes'=>['nullable','string','max:3000'],'meta_title'=>['nullable','string','max:255'],'meta_description'=>['nullable','string','max:1000'],'score'=>['nullable','numeric','min:0','max:10'],'security_score'=>['nullable','numeric','min:0','max:10'],'maintenance_score'=>['nullable','numeric','min:0','max:10'],'connectivity_score'=>['nullable','numeric','min:0','max:10'],'lifestyle_score'=>['nullable','numeric','min:0','max:10'],'investment_score'=>['nullable','numeric','min:0','max:10'],'latitude'=>['nullable','numeric','between:-90,90'],'longitude'=>['nullable','numeric','between:-180,180'],'confidence_score'=>['nullable','integer','min:0','max:100']];
+    }
+
+    private function reviewer(Request $request): string
+    {
+        return (string)($request->header('X-Admin-Email')?:'admin');
     }
 
     private function assertImporterImageDraft(Society $society): void

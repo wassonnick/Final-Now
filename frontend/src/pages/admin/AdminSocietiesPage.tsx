@@ -540,7 +540,7 @@ export function AdminSocietiesPage() {
               </Button>
 
               <Button asChild variant="outline" className="rounded-full border-blue-100 bg-blue-50 px-3 text-xs font-bold text-blue-700 hover:bg-blue-100 sm:text-sm">
-                <Link to="/admin/societies/import">
+                <Link to="/admin/verified-society-importer">
                   Auto Import
                 </Link>
               </Button>

@@ -468,10 +468,16 @@ export function AdminSocietyImportPage() {
 
   return (
     <AdminLayout
-      title="Society Importer"
+      title="Society Importer (Legacy)"
       subtitle="Authoritative facts from Google, grounded AI gap-fill, deterministic scores. Imports create review-only drafts — never public inventory."
     >
       <PanelErrorBoundary>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+        <p className="text-sm text-amber-800">
+          <span className="font-black">This is the legacy importer.</span> New imports should use the Verified Importer V2 — it adds RERA/legal, builder, nearby and market source layers with a full review queue and reviewer audit trail.
+        </p>
+        <RouterLink to="/admin/verified-society-importer" className="rounded-full bg-amber-600 px-4 py-2 text-xs font-black text-white">Open Verified Importer V2</RouterLink>
+      </div>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.8fr)]">
         <section className="space-y-5">
           {/* Setup */}
