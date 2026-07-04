@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Check, MapPin, Search } from "lucide-react";
+import { Check, MapPin, Search, Sparkles } from "lucide-react";
 import { fetchPublicSocieties, formatPublicLocation, suggestSocieties } from "@/lib/publicData";
 import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
 import { loadGoogleMaps } from "@/components/maps/GoogleSocietyMapView";
@@ -134,22 +134,14 @@ export default function SocietyFlatsHero() {
 
   return (
     <>
-      <section className="bg-[#F8F3EA] lg:hidden">
-        <div className="px-5 pb-2 pt-1">
-          <div className="flex items-center justify-between py-4">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8A8F89]">Location</p>
-              <button type="button" className="mt-1 flex items-center gap-1.5 text-[17px] font-semibold text-[#25302B]">
-                <MapPin className="h-4 w-4 text-[#2A6147]" /> Gurgaon <span className="text-xs">⌄</span>
-              </button>
-            </div>
-            <Link to="/login" className="flex h-10 w-10 items-center justify-center rounded-full bg-[#123C32] text-sm font-semibold text-[#F8F3EA]">
-              SF
-            </Link>
+      <section className="bg-[#0B241D] lg:hidden">
+        <div className="px-5 pb-6 pt-4">
+          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#12332A] px-3 py-1 text-[11px] font-semibold text-[#D8B56C]">
+            <MapPin className="h-3 w-3" /> Gurgaon · 43 societies verified
           </div>
 
-          <p className="font-display text-[30px] font-medium leading-[1.12] tracking-[-0.015em] text-[#25302B]">
-            Find a home in a society you can actually trust.
+          <p className="font-display text-[30px] font-medium leading-[1.12] tracking-[-0.015em] text-[#F4EFE4]">
+            Find a home in a society you can <span className="text-[#D8B56C]">actually trust.</span>
           </p>
 
           <form
@@ -210,9 +202,9 @@ export default function SocietyFlatsHero() {
               </ul>
             ) : null}
           </form>
-          <p className="mt-2 px-1 text-[11.5px] leading-5 text-[#6E756E]">
-            Try: “3 BHK near Cyber City under ₹80k”
-          </p>
+          <Link to="/ai-advisor?q=3+BHK+near+Cyber+City+under+80k" className="mt-2.5 flex items-center gap-1.5 px-1 text-[11.5px] leading-5 text-[#C9C2AF]">
+            <Sparkles className="h-3 w-3 text-[#D8B56C]" /> Ask SocietyFlats AI: “3 BHK near Cyber City under ₹80k”
+          </Link>
 
           <div className="mt-[14px] flex gap-2">
             {tabs.slice(0, 3).map((tab) => (
@@ -225,8 +217,8 @@ export default function SocietyFlatsHero() {
                 }}
                 className={`flex-1 rounded-[11px] border px-2 py-2.5 text-sm font-semibold ${
                   intent === tab.key
-                    ? "border-[#123C32] bg-[#123C32] text-white"
-                    : "border-[#E7DCCB] bg-white text-[#6E756E]"
+                    ? "border-[#D8B56C] bg-[#D8B56C] text-[#0B241D]"
+                    : "border-[#2E4A40] bg-[#12332A] text-[#C9C2AF]"
                 }`}
               >
                 {tab.label === "New Launch" ? "New launch" : tab.label}
@@ -236,21 +228,21 @@ export default function SocietyFlatsHero() {
         </div>
       </section>
 
-      <section className="hidden bg-[#F8F3EA] lg:block">
-        <div className="mx-auto grid max-w-[1360px] grid-cols-[1.05fr_0.95fr] items-center gap-14 px-10 pb-10 pt-14">
+      <section className="hidden bg-[#0B241D] lg:block">
+        <div className="mx-auto grid max-w-[1360px] grid-cols-[1.05fr_0.95fr] items-center gap-14 px-10 pb-14 pt-16">
           <div>
-            <div className="mb-[22px] inline-flex items-center gap-2 rounded-full bg-[#E4F0E6] px-[13px] py-1.5 text-[12.5px] font-bold text-[#1F7A5A]">
+            <div className="mb-[22px] inline-flex items-center gap-2 rounded-full bg-[#12332A] px-[13px] py-1.5 text-[12.5px] font-bold text-[#D8B56C]">
               <Check className="h-[13px] w-[13px] stroke-[3]" />
               Verified Gurgaon societies · admin-reviewed
             </div>
-            <h1 className="m-0 font-display text-[58px] font-medium leading-[1.04] tracking-[-0.02em] text-[#25302B]">
-              Find the <em className="font-normal text-[#C2724E]">right</em> Gurgaon society before choosing the home.
+            <h1 className="m-0 font-display text-[58px] font-medium leading-[1.04] tracking-[-0.02em] text-[#F4EFE4]">
+              Find the <em className="font-normal text-[#D8B56C]">right</em> Gurgaon society before choosing the home.
             </h1>
-            <p className="mb-7 mt-[18px] max-w-[540px] text-[17px] leading-[1.55] text-[#59635E]">
+            <p className="mb-7 mt-[18px] max-w-[540px] text-[17px] leading-[1.55] text-[#C9C2AF]">
               Every society here passed a manual review — real coordinates, Google-sourced photos, no invented listings. Search, compare, then request a visit.
             </p>
 
-            <div className="max-w-[560px] rounded-[18px] border border-[#E7DCCB] bg-white p-[18px] shadow-[0_18px_40px_-28px_rgba(0,0,0,.35)]">
+            <div className="max-w-[560px] rounded-[18px] border border-[#E7DCCB] bg-[#FAF8F2] p-[18px] shadow-[0_24px_50px_-30px_rgba(0,0,0,.6)]">
               <div className="mb-[14px] flex gap-2">
                 {tabs.map((tab) => (
                   <button
@@ -320,12 +312,12 @@ export default function SocietyFlatsHero() {
                 Try: “3 BHK near Cyber City under ₹80k” or “family societies in Sector 65”
               </p>
               <div className="mt-[14px] flex flex-wrap items-center gap-2">
-                <span className="text-[12.5px] font-semibold text-[#6E756E]">Ask AI:</span>
+                <span className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-[#6E756E]"><Sparkles className="h-3.5 w-3.5 text-[#C2724E]" /> Ask SocietyFlats AI:</span>
                 {aiChips.map((chip) => (
                   <Link
                     key={chip}
                     to={`/ai-advisor?q=${encodeURIComponent(chip)}`}
-                    className="rounded-full border border-[#DDE7DC] bg-[#E4F0E6] px-3 py-1.5 text-[12.5px] text-[#2A6147]"
+                    className="rounded-full border border-[#E7DCCB] bg-white px-3 py-1.5 text-[12.5px] text-[#2A6147] transition hover:border-[#C2724E]"
                   >
                     {chip}
                   </Link>
@@ -397,7 +389,7 @@ export default function SocietyFlatsHero() {
             <div className="absolute left-1.5 top-7 inline-flex items-center gap-1.5 rounded-full border border-[#E7DCCB] bg-white px-[13px] py-2 text-xs font-bold shadow-[0_12px_26px_-16px_rgba(0,0,0,.35)]">
               <Check className="h-3 w-3 stroke-[3] text-[#1F7A5A]" /> Admin-reviewed data
             </div>
-            <Link to="/maps" className="absolute bottom-0 right-[58px] rounded-full bg-[#C2724E] px-[13px] py-[7px] text-[11.5px] font-bold text-white shadow-sm">
+            <Link to="/maps" className="absolute bottom-0 right-[58px] rounded-full bg-[#D8B56C] px-[13px] py-[7px] text-[11.5px] font-bold text-[#0B241D] shadow-sm">
               Open map intelligence →
             </Link>
           </div>
