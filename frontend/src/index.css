@@ -77,9 +77,9 @@ body,
   .public-eyebrow { @apply text-[11px] font-black uppercase tracking-[0.2em] text-clay-600; }
   .public-heading { @apply font-display font-semibold leading-[1.02] tracking-[-0.035em] text-forest-950; }
   .public-body { @apply font-medium leading-7 text-forest-600; }
-  .public-primary-button { @apply rounded-full bg-pine-800 font-extrabold text-white shadow-editorial transition hover:bg-pine-900; }
-  .public-secondary-button { @apply rounded-full border border-paper-300 bg-paper-50 font-extrabold text-forest-800 transition hover:border-pine-300 hover:bg-sage-50; }
-  .public-chip { @apply rounded-full border border-paper-300 bg-paper-50 px-3 py-1.5 text-xs font-extrabold text-forest-700 transition hover:border-pine-300 hover:bg-sage-50; }
+  .public-primary-button { @apply rounded-full bg-navy-800 font-extrabold text-white shadow-editorial transition hover:bg-navy-900; }
+  .public-secondary-button { @apply rounded-full border border-paper-300 bg-paper-50 font-extrabold text-navy-900 transition hover:border-navy-300 hover:bg-navy-50; }
+  .public-chip { @apply rounded-full border border-paper-300 bg-paper-50 px-3 py-1.5 text-xs font-extrabold text-navy-800 transition hover:border-navy-300 hover:bg-navy-50; }
 }
 
 @layer utilities {
@@ -91,20 +91,20 @@ body,
 /* Public redesign bridge
    Older public routes retain their proven markup and behavior while these
    scoped aliases translate the former blue SaaS palette into the approved
-   SocietyFlats paper / pine / clay design system. Admin remains untouched. */
+   SocietyFlats ivory / ink / cobalt design system. Admin remains untouched. */
 .public-site {
-  background: #F8F3EA;
-  color: #25302B;
+  background: #F7F4EF;
+  color: #1D2939;
 }
 
 .public-site > main,
 .public-site main {
-  background-color: #F8F3EA;
+  background-color: #F7F4EF;
 }
 
 .public-site h1,
 .public-site h2 {
-  color: #10251F;
+  color: #111827;
   font-family: "Newsreader", Georgia, serif;
   font-weight: 500;
   text-wrap: balance;
@@ -122,26 +122,26 @@ body,
 .public-site .bg-ivory-200 { background-color: #F8F3EA !important; }
 .public-site .bg-navy-50,
 .public-site .bg-blue-50,
-.public-site .bg-slate-50 { background-color: #EEF5F1 !important; }
+.public-site .bg-slate-50 { background-color: #F7F9FD !important; }
 .public-site .bg-navy-100,
 .public-site .bg-blue-100,
-.public-site .bg-slate-100 { background-color: #DDE7DC !important; }
+.public-site .bg-slate-100 { background-color: #EEF2FA !important; }
 .public-site .bg-navy-200,
 .public-site .bg-blue-200,
-.public-site .bg-slate-200 { background-color: #C6DACE !important; }
-.public-site .bg-blue-400 { background-color: #64A07F !important; }
+.public-site .bg-slate-200 { background-color: #D8DFEC !important; }
+.public-site .bg-blue-400 { background-color: #7E9BD2 !important; }
 .public-site .bg-blue-500,
-.public-site .bg-navy-500 { background-color: #327B5D !important; }
+.public-site .bg-navy-500 { background-color: #4E6FB3 !important; }
 .public-site .bg-blue-600,
-.public-site .bg-navy-600 { background-color: #1F684E !important; }
+.public-site .bg-navy-600 { background-color: #3156A3 !important; }
 .public-site .bg-blue-700,
-.public-site .bg-navy-700 { background-color: #123C32 !important; }
+.public-site .bg-navy-700 { background-color: #233B6E !important; }
 .public-site .bg-blue-800,
-.public-site .bg-navy-800 { background-color: #102F28 !important; }
+.public-site .bg-navy-800 { background-color: #1B2E57 !important; }
 .public-site .bg-blue-900,
 .public-site .bg-navy-900,
 .public-site .bg-navy-950,
-.public-site .bg-slate-950 { background-color: #10251F !important; }
+.public-site .bg-slate-950 { background-color: #111827 !important; }
 .public-site .bg-orange-50 { background-color: #FBF3EE !important; }
 .public-site .bg-orange-600,
 .public-site .bg-orange-700 { background-color: #C2724E !important; }
@@ -149,25 +149,25 @@ body,
 .public-site .text-navy-950,
 .public-site .text-navy-900,
 .public-site .text-slate-950,
-.public-site .text-slate-900 { color: #10251F !important; }
+.public-site .text-slate-900 { color: #111827 !important; }
 .public-site .text-navy-800,
 .public-site .text-navy-700,
 .public-site .text-slate-800,
-.public-site .text-slate-700 { color: #25302B !important; }
+.public-site .text-slate-700 { color: #344054 !important; }
 .public-site .text-navy-600,
 .public-site .text-navy-500,
 .public-site .text-slate-600,
-.public-site .text-slate-500 { color: #6E756E !important; }
+.public-site .text-slate-500 { color: #667085 !important; }
 .public-site .text-navy-400,
-.public-site .text-slate-400 { color: #8A8F89 !important; }
+.public-site .text-slate-400 { color: #98A2B3 !important; }
 .public-site .text-blue-900,
 .public-site .text-blue-800,
-.public-site .text-blue-700 { color: #123C32 !important; }
+.public-site .text-blue-700 { color: #233B6E !important; }
 .public-site .text-blue-600,
 .public-site .text-blue-500,
-.public-site .text-blue-400 { color: #2A6147 !important; }
+.public-site .text-blue-400 { color: #3156A3 !important; }
 .public-site .text-blue-300,
-.public-site .text-blue-200 { color: #9FC2AE !important; }
+.public-site .text-blue-200 { color: #AABADD !important; }
 .public-site .text-orange-900,
 .public-site .text-orange-700,
 .public-site .text-orange-600,
@@ -181,28 +181,28 @@ body,
 .public-site .border-slate-100,
 .public-site .border-slate-200 { border-color: #E7DCCB !important; }
 
-.public-site .from-blue-50 { --tw-gradient-from: #EEF5F1 var(--tw-gradient-from-position) !important; }
+.public-site .from-blue-50 { --tw-gradient-from: #F7F9FD var(--tw-gradient-from-position) !important; }
 .public-site .from-blue-700,
-.public-site .from-navy-700 { --tw-gradient-from: #123C32 var(--tw-gradient-from-position) !important; }
+.public-site .from-navy-700 { --tw-gradient-from: #233B6E var(--tw-gradient-from-position) !important; }
 .public-site .via-blue-50,
 .public-site .via-white { --tw-gradient-via: #FFFBF3 var(--tw-gradient-via-position) !important; }
-.public-site .to-blue-400 { --tw-gradient-to: #64A07F var(--tw-gradient-to-position) !important; }
+.public-site .to-blue-400 { --tw-gradient-to: #7E9BD2 var(--tw-gradient-to-position) !important; }
 .public-site .to-slate-50,
-.public-site .to-white { --tw-gradient-to: #F8F3EA var(--tw-gradient-to-position) !important; }
+.public-site .to-white { --tw-gradient-to: #F7F4EF var(--tw-gradient-to-position) !important; }
 
 .public-site input,
 .public-site select,
 .public-site textarea {
   border-color: #E7DCCB;
-  color: #25302B;
+  color: #1D2939;
   -webkit-appearance: none;
 }
 
 .public-site input:focus,
 .public-site select:focus,
 .public-site textarea:focus {
-  border-color: #9FC2AE;
-  box-shadow: 0 0 0 3px rgba(31, 104, 78, 0.10);
+  border-color: #8FA4CC;
+  box-shadow: 0 0 0 3px rgba(49, 86, 163, 0.10);
   /* Safari paints its own native focus ring on :focus regardless of :focus-visible
      support, which doesn't respect border-radius on rounded pill inputs — kill it
      here too, not just on :focus-visible below. */
@@ -222,7 +222,7 @@ body,
 .public-site .shadow-sm,
 .public-site .shadow-soft,
 .public-site .shadow-premium {
-  box-shadow: 0 10px 28px -22px rgba(16, 37, 31, 0.38) !important;
+  box-shadow: 0 10px 28px -22px rgba(17, 24, 39, 0.32) !important;
 }
 
 .public-site a,
@@ -232,7 +232,7 @@ body,
 
 .public-site a:focus-visible,
 .public-site button:focus-visible {
-  outline: 2px solid #2A6147;
+  outline: 2px solid #3156A3;
   outline-offset: 3px;
 }
 

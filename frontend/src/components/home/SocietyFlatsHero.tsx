@@ -134,15 +134,16 @@ export default function SocietyFlatsHero() {
 
   return (
     <>
-      <section className="bg-[#0B241D] lg:hidden">
-        <div className="px-5 pb-6 pt-4">
-          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#12332A] px-3 py-1 text-[11px] font-semibold text-[#D8B56C]">
+      <section className="border-b border-[#DDD7CC] bg-[#F7F4EF] lg:hidden">
+        <div className="px-5 pb-7 pt-5">
+          <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-[#DDD7CC] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#3156A3]">
             <MapPin className="h-3 w-3" /> Gurgaon · 43 societies verified
           </div>
 
-          <p className="font-display text-[30px] font-medium leading-[1.12] tracking-[-0.015em] text-[#F4EFE4]">
-            Find a home in a society you can <span className="text-[#D8B56C]">actually trust.</span>
+          <p className="font-display text-[34px] font-medium leading-[1.05] tracking-[-0.02em] text-[#111827]">
+            Choose the society first. <span className="text-[#8B6B32]">Then find the home.</span>
           </p>
+          <p className="mt-3 text-[14px] leading-6 text-[#667085]">Verified society intelligence for a calmer Gurgaon property search.</p>
 
           <form
             onSubmit={(event) => {
@@ -152,7 +153,7 @@ export default function SocietyFlatsHero() {
             className="relative mt-4"
           >
             <label className="flex w-full items-center gap-2.5 rounded-[16px] border border-[#E7DCCB] bg-white px-4 py-1.5 shadow-[0_6px_18px_-12px_rgba(0,0,0,.25)]">
-              <Search className="h-[19px] w-[19px] shrink-0 text-[#2A6147]" />
+              <Search className="h-[19px] w-[19px] shrink-0 text-[#3156A3]" />
               <input
                 type="search"
                 inputMode="search"
@@ -176,7 +177,7 @@ export default function SocietyFlatsHero() {
                 aria-label="Search sector, society or builder"
                 className="search-bare-input min-w-0 flex-1 bg-transparent py-3 text-[15px] text-[#25302B] outline-none placeholder:text-[#8A8F89]"
               />
-              <button type="submit" aria-label="Submit search" className="shrink-0 rounded-[10px] bg-[#123C32] px-3 py-2 text-xs font-bold text-white">
+              <button type="submit" aria-label="Submit search" className="shrink-0 rounded-[10px] bg-[#233B6E] px-3 py-2 text-xs font-bold text-white">
                 Search
               </button>
             </label>
@@ -202,8 +203,8 @@ export default function SocietyFlatsHero() {
               </ul>
             ) : null}
           </form>
-          <Link to="/ai-advisor?q=3+BHK+near+Cyber+City+under+80k" className="mt-2.5 flex items-center gap-1.5 px-1 text-[11.5px] leading-5 text-[#C9C2AF]">
-            <Sparkles className="h-3 w-3 text-[#D8B56C]" /> Ask SocietyFlats AI: “3 BHK near Cyber City under ₹80k”
+          <Link to="/ai-advisor?q=3+BHK+near+Cyber+City+under+80k" className="mt-2.5 flex items-center gap-1.5 px-1 text-[11.5px] leading-5 text-[#667085]">
+            <Sparkles className="h-3 w-3 text-[#8B6B32]" /> Ask SocietyFlats AI: “3 BHK near Cyber City under ₹80k”
           </Link>
 
           <div className="mt-[14px] flex gap-2">
@@ -217,8 +218,8 @@ export default function SocietyFlatsHero() {
                 }}
                 className={`flex-1 rounded-[11px] border px-2 py-2.5 text-sm font-semibold ${
                   intent === tab.key
-                    ? "border-[#D8B56C] bg-[#D8B56C] text-[#0B241D]"
-                    : "border-[#2E4A40] bg-[#12332A] text-[#C9C2AF]"
+                    ? "border-[#233B6E] bg-[#233B6E] text-white"
+                    : "border-[#D8DFEC] bg-white text-[#475467]"
                 }`}
               >
                 {tab.label === "New Launch" ? "New launch" : tab.label}
@@ -228,21 +229,21 @@ export default function SocietyFlatsHero() {
         </div>
       </section>
 
-      <section className="hidden bg-[#0B241D] lg:block">
-        <div className="mx-auto grid max-w-[1360px] grid-cols-[1.05fr_0.95fr] items-center gap-14 px-10 pb-14 pt-16">
+      <section className="hidden overflow-hidden border-b border-[#DDD7CC] bg-[#F7F4EF] lg:block">
+        <div className="mx-auto grid max-w-[1360px] grid-cols-[1.03fr_0.97fr] items-center gap-16 px-10 pb-20 pt-20">
           <div>
-            <div className="mb-[22px] inline-flex items-center gap-2 rounded-full bg-[#12332A] px-[13px] py-1.5 text-[12.5px] font-bold text-[#D8B56C]">
+            <div className="mb-[22px] inline-flex items-center gap-2 rounded-full border border-[#DDD7CC] bg-white px-[13px] py-1.5 text-[12.5px] font-bold text-[#3156A3]">
               <Check className="h-[13px] w-[13px] stroke-[3]" />
               Verified Gurgaon societies · admin-reviewed
             </div>
-            <h1 className="m-0 font-display text-[58px] font-medium leading-[1.04] tracking-[-0.02em] text-[#F4EFE4]">
-              Find the <em className="font-normal text-[#D8B56C]">right</em> Gurgaon society before choosing the home.
+            <h1 className="m-0 font-display text-[64px] font-medium leading-[0.98] tracking-[-0.025em] text-[#111827]">
+              Choose the society first. <em className="font-normal text-[#8B6B32]">Then</em> find the home.
             </h1>
-            <p className="mb-7 mt-[18px] max-w-[540px] text-[17px] leading-[1.55] text-[#C9C2AF]">
-              Every society here passed a manual review — real coordinates, Google-sourced photos, no invented listings. Search, compare, then request a visit.
+            <p className="mb-8 mt-[22px] max-w-[560px] text-[17px] leading-[1.65] text-[#667085]">
+              Verified society intelligence for Gurgaon buyers and tenants. Search the evidence, compare what matters and request current availability only when you are ready.
             </p>
 
-            <div className="max-w-[560px] rounded-[18px] border border-[#E7DCCB] bg-[#FAF8F2] p-[18px] shadow-[0_24px_50px_-30px_rgba(0,0,0,.6)]">
+            <div className="max-w-[590px] rounded-[22px] border border-[#D8DFEC] bg-white p-[18px] shadow-[0_24px_70px_-42px_rgba(25,40,75,.45)]">
               <div className="mb-[14px] flex gap-2">
                 {tabs.map((tab) => (
                   <button
@@ -251,7 +252,7 @@ export default function SocietyFlatsHero() {
                     onClick={() => setIntent(tab.key)}
                     className={`rounded-[10px] border px-4 py-2 text-sm font-semibold ${
                       intent === tab.key
-                        ? "border-[#123C32] bg-[#123C32] text-white"
+                        ? "border-[#233B6E] bg-[#233B6E] text-white"
                         : "border-[#E7DCCB] bg-white text-[#59635E]"
                     }`}
                   >
@@ -267,7 +268,7 @@ export default function SocietyFlatsHero() {
                 className="flex gap-2.5"
               >
                 <label className="relative flex min-w-0 flex-1 items-center gap-2 rounded-[12px] border border-[#E7DCCB] bg-[#FFFBF3] px-[15px] py-[13px]">
-                  <Search className="h-[18px] w-[18px] text-[#2A6147]" />
+                  <Search className="h-[18px] w-[18px] text-[#3156A3]" />
                   <input
                     value={query}
                     onChange={(event) => {
@@ -304,7 +305,7 @@ export default function SocietyFlatsHero() {
                     </ul>
                   ) : null}
                 </label>
-                <button type="submit" className="rounded-[12px] bg-[#123C32] px-[26px] text-[15px] font-bold text-white">
+                <button type="submit" className="rounded-[12px] bg-[#233B6E] px-[26px] text-[15px] font-bold text-white hover:bg-[#1B2E57]">
                   {intent === "society" ? "Search societies" : "Search"}
                 </button>
               </form>
@@ -312,12 +313,12 @@ export default function SocietyFlatsHero() {
                 Try: “3 BHK near Cyber City under ₹80k” or “family societies in Sector 65”
               </p>
               <div className="mt-[14px] flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-[#6E756E]"><Sparkles className="h-3.5 w-3.5 text-[#C2724E]" /> Ask SocietyFlats AI:</span>
+                <span className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-[#667085]"><Sparkles className="h-3.5 w-3.5 text-[#8B6B32]" /> Ask SocietyFlats AI:</span>
                 {aiChips.map((chip) => (
                   <Link
                     key={chip}
                     to={`/ai-advisor?q=${encodeURIComponent(chip)}`}
-                    className="rounded-full border border-[#E7DCCB] bg-white px-3 py-1.5 text-[12.5px] text-[#2A6147] transition hover:border-[#C2724E]"
+                    className="rounded-full border border-[#D8DFEC] bg-[#F7F9FD] px-3 py-1.5 text-[12.5px] text-[#3156A3] transition hover:border-[#8FA4CC]"
                   >
                     {chip}
                   </Link>
@@ -327,19 +328,19 @@ export default function SocietyFlatsHero() {
           </div>
 
           <div className="relative h-[480px]">
-            <div className="absolute bottom-9 left-6 right-0 top-[14px] -rotate-2 overflow-hidden rounded-[26px] border border-[#C8D7C7] bg-[#DDE7DC]">
+            <div className="absolute bottom-9 left-6 right-0 top-[14px] -rotate-2 overflow-hidden rounded-[28px] border border-[#D8DFEC] bg-[#E9EEF7]">
               {GOOGLE_MAPS_API_KEY ? (
                 <div ref={mapRef} role="img" aria-label="Live Gurgaon societies map" className="h-full w-full rotate-2 scale-110" />
               ) : (
                 <>
-                  <div className="absolute inset-0 [background-image:repeating-linear-gradient(0deg,#C8D7C7_0_1px,transparent_1px_36px),repeating-linear-gradient(90deg,#C8D7C7_0_1px,transparent_1px_36px)]" />
-                  <MapPin className="absolute left-[58%] top-16 h-7 w-7 fill-[#123C32] text-white" />
+                  <div className="absolute inset-0 [background-image:repeating-linear-gradient(0deg,#D8DFEC_0_1px,transparent_1px_36px),repeating-linear-gradient(90deg,#D8DFEC_0_1px,transparent_1px_36px)]" />
+                  <MapPin className="absolute left-[58%] top-16 h-7 w-7 fill-[#3156A3] text-white" />
                 </>
               )}
             </div>
 
             <div className="absolute right-1 top-0 w-[296px] rotate-2 rounded-[20px] border border-[#E7DCCB] bg-white p-3 shadow-[0_28px_50px_-24px_rgba(15,40,30,.45)]">
-              <div className="relative flex h-44 items-center justify-center overflow-hidden rounded-[13px] bg-[#DDE7DC] [background-image:repeating-linear-gradient(135deg,#C8D7C7_0_1px,transparent_1px_12px)]">
+              <div className="relative flex h-44 items-center justify-center overflow-hidden rounded-[13px] bg-[#E8EDF7] [background-image:repeating-linear-gradient(135deg,#D8DFEC_0_1px,transparent_1px_12px)]">
                 {primary && hasGooglePlacesDisplayPhoto(primary) ? (
                   <img src={societyDisplayImage(primary)} alt={primary.name} className="absolute inset-0 h-full w-full object-cover" />
                 ) : (
@@ -347,11 +348,11 @@ export default function SocietyFlatsHero() {
                     {primary ? "admin-reviewed society image" : "published society data"}
                   </span>
                 )}
-                <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-[#E4F0E6] px-2.5 py-1 text-[11px] font-bold text-[#1F7A5A]">
+                <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-[#EEF2FA] px-2.5 py-1 text-[11px] font-bold text-[#3156A3]">
                   <Check className="h-3 w-3 stroke-[3]" /> Verified
                 </span>
                 {scoreOf(primary) ? (
-                  <span className="absolute right-2 top-2 rounded-[9px] bg-white px-2.5 py-1 text-[13px] font-extrabold text-[#123C32]">
+                  <span className="absolute right-2 top-2 rounded-[9px] bg-white px-2.5 py-1 text-[13px] font-extrabold text-[#233B6E]">
                     {scoreOf(primary)}
                   </span>
                 ) : null}
@@ -366,7 +367,7 @@ export default function SocietyFlatsHero() {
                   <div><p className="text-[10.5px] text-[#6E756E]">Buy</p><p className="text-[13.5px] font-bold">{buyTextOf(primary)}</p></div>
                 </div>
                 <div className="mt-3 flex items-center justify-between rounded-[9px] bg-[#F8F3EA] px-3 py-2 text-[11px]">
-                  <span className="font-bold text-[#1F7A5A]">Data confidence: {confidenceOf(primary)}</span>
+                  <span className="font-bold text-[#3156A3]">Data confidence: {confidenceOf(primary)}</span>
                   <span className="text-[#6E756E]">Availability: On request</span>
                 </div>
               </div>
@@ -375,11 +376,11 @@ export default function SocietyFlatsHero() {
             <div className="absolute bottom-6 left-0 w-[244px] -rotate-3 rounded-[18px] border border-[#E7DCCB] bg-white p-4 shadow-[0_24px_44px_-26px_rgba(15,40,30,.4)]">
               <div className="flex items-center justify-between">
                 <p className="text-[15px] font-bold">{secondary?.name || "Society intelligence"}</p>
-                {scoreOf(secondary) ? <strong className="text-base text-[#123C32]">{scoreOf(secondary)}</strong> : null}
+                {scoreOf(secondary) ? <strong className="text-base text-[#233B6E]">{scoreOf(secondary)}</strong> : null}
               </div>
               <p className="mt-0.5 text-xs text-[#6E756E]">{secondary ? formatPublicLocation(secondary) : "Admin-reviewed data"}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-[#E4F0E6] px-2.5 py-1 text-[11px] font-bold text-[#1F7A5A]">
+                <span className="rounded-full bg-[#EEF2FA] px-2.5 py-1 text-[11px] font-bold text-[#3156A3]">
                   Confidence {confidenceOf(secondary)}
                 </span>
                 <span className="text-[11px] text-[#6E756E]">Sources reviewed</span>
@@ -387,9 +388,9 @@ export default function SocietyFlatsHero() {
             </div>
 
             <div className="absolute left-1.5 top-7 inline-flex items-center gap-1.5 rounded-full border border-[#E7DCCB] bg-white px-[13px] py-2 text-xs font-bold shadow-[0_12px_26px_-16px_rgba(0,0,0,.35)]">
-              <Check className="h-3 w-3 stroke-[3] text-[#1F7A5A]" /> Admin-reviewed data
+              <Check className="h-3 w-3 stroke-[3] text-[#3156A3]" /> Admin-reviewed data
             </div>
-            <Link to="/maps" className="absolute bottom-0 right-[58px] rounded-full bg-[#D8B56C] px-[13px] py-[7px] text-[11.5px] font-bold text-[#0B241D] shadow-sm">
+            <Link to="/maps" className="absolute bottom-0 right-[58px] rounded-full bg-[#233B6E] px-[13px] py-[7px] text-[11.5px] font-bold text-white shadow-sm">
               Open map intelligence →
             </Link>
           </div>

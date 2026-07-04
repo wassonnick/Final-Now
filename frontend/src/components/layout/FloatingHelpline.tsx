@@ -21,7 +21,7 @@ export function FloatingHelpline() {
         <div className="flex flex-col gap-2">
           <a
             href={`tel:${PHONE_TEL}`}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-paper-300 bg-paper-50/95 px-4 text-xs font-black text-pine-800 shadow-editorial backdrop-blur transition hover:-translate-y-0.5 hover:bg-sage-50"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[#D8DFEC] bg-white/95 px-4 text-xs font-black text-[#233B6E] shadow-editorial backdrop-blur transition hover:-translate-y-0.5 hover:bg-[#F7F9FD]"
             aria-label={`Call SocietyFlats on ${PHONE_DISPLAY}`}
           >
             <Phone className="h-3.5 w-3.5" />
@@ -31,7 +31,7 @@ export function FloatingHelpline() {
             href={WHATSAPP_URL}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-sage-300 bg-pine-800 px-4 text-xs font-black text-white shadow-editorial transition hover:-translate-y-0.5 hover:bg-pine-900"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[#233B6E] bg-[#233B6E] px-4 text-xs font-black text-white shadow-editorial transition hover:-translate-y-0.5 hover:bg-[#1B2E57]"
             aria-label="WhatsApp SocietyFlats"
           >
             <MessageCircle className="h-3.5 w-3.5" />
@@ -44,7 +44,7 @@ export function FloatingHelpline() {
         <div className="flex flex-col items-center gap-2">
           <a
             href={`tel:${PHONE_TEL}`}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-paper-300 bg-paper-50/95 text-pine-800 shadow-editorial backdrop-blur transition active:scale-95"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#D8DFEC] bg-white/95 text-[#233B6E] shadow-editorial backdrop-blur transition active:scale-95"
             aria-label={`Call SocietyFlats on ${PHONE_DISPLAY}`}
           >
             <Phone className="h-4 w-4" />
@@ -54,7 +54,7 @@ export function FloatingHelpline() {
             href={WHATSAPP_URL}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-sage-300 bg-pine-800 text-white shadow-editorial transition active:scale-95"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#233B6E] bg-[#233B6E] text-white shadow-editorial transition active:scale-95"
             aria-label="WhatsApp SocietyFlats"
           >
             <MessageCircle className="h-4 w-4" />

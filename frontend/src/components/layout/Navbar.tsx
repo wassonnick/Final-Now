@@ -1,5 +1,5 @@
-// R1 Midnight Pine chrome: dark pine navigation, Find/Tools/Services/Partner module
-// groups on desktop, app-like bottom tab bar with gold AI center and a Services
+// Premium light chrome: calm neutral navigation with contextual module groups,
+// an app-like bottom tab bar and a complete Services directory on mobile.
 // directory sheet on mobile. All routes unchanged; every public module is reachable
 // from every page in at most two taps.
 // C85/C71/C70C history: owner CTA remains List Your Flat; broker labels unchanged.
@@ -118,13 +118,13 @@ export function Navbar() {
 
   return (
     <>
-    <header className="sticky top-0 z-50 w-full border-b border-[#1C3A31] bg-[#0B241D]">
+    <header className="sticky top-0 z-50 w-full border-b border-[#DDD7CC] bg-[#FBFAF7]/95 shadow-[0_8px_30px_-28px_rgba(17,24,39,.35)] backdrop-blur-xl">
       <div className="mx-auto flex h-[64px] max-w-[1360px] items-center justify-between gap-3 px-4 sm:gap-5 lg:h-[68px] lg:px-8">
-        <Link to="/" className="flex shrink-0 items-center gap-2 rounded-lg focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D8B56C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B241D] lg:gap-[9px]" aria-label="SocietyFlats home">
-          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] bg-[#D8B56C] text-[#0B241D]">
+        <Link to="/" className="flex shrink-0 items-center gap-2 rounded-lg focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3156A3] focus-visible:ring-offset-2 lg:gap-[9px]" aria-label="SocietyFlats home">
+          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-[#233B6E] text-white">
             <Home className="h-4 w-4" />
           </span>
-          <span className="font-display text-[19px] font-medium tracking-[-0.01em] text-[#F4EFE4] lg:text-[21px]">
+          <span className="font-display text-[19px] font-medium tracking-[-0.01em] text-[#111827] lg:text-[21px]">
             SocietyFlats
           </span>
         </Link>
@@ -135,9 +135,9 @@ export function Navbar() {
             setShowHeaderSuggestions(false);
             navigate(`/search?tab=societies&q=${encodeURIComponent(headerQuery.trim())}`);
           }}
-          className="relative hidden min-w-[240px] max-w-[420px] flex-1 items-center gap-[9px] rounded-full bg-[#FAF8F2] px-[14px] py-[8px] lg:flex"
+          className="relative hidden min-w-[240px] max-w-[420px] flex-1 items-center gap-[9px] rounded-full border border-[#D8DFEC] bg-white px-[14px] py-[8px] lg:flex"
         >
-          <Search className="h-4 w-4 text-[#123C32]" />
+          <Search className="h-4 w-4 text-[#3156A3]" />
           <input
             value={headerQuery}
             onChange={(event) => {
@@ -150,7 +150,7 @@ export function Navbar() {
             placeholder="Search society, sector or builder"
             className="search-bare-input min-w-0 flex-1 bg-transparent text-sm font-normal text-[#25302B] outline-none placeholder:text-[#8A8478]"
           />
-          <span className={cn("h-2 w-2 rounded-full transition", isSearchFocused ? "bg-[#D8B56C]" : "bg-transparent")} />
+          <span className={cn("h-2 w-2 rounded-full transition", isSearchFocused ? "bg-[#B4975A]" : "bg-transparent")} />
           {showHeaderSuggestions && headerQuery.trim() && headerSuggestions.length > 0 ? (
             <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-72 overflow-y-auto rounded-2xl border border-[#E7DCCB] bg-white p-1.5 shadow-lg">
               {headerSuggestions.map((society) => (
@@ -183,7 +183,7 @@ export function Navbar() {
                 aria-expanded={openGroup === group.key}
                 className={cn(
                   "flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold transition-colors",
-                  openGroup === group.key ? "bg-[#12332A] text-[#F4EFE4]" : "text-[#C9C2AF] hover:text-[#F4EFE4]",
+                  openGroup === group.key ? "bg-[#EEF2FA] text-[#233B6E]" : "text-[#475467] hover:bg-white hover:text-[#111827]",
                 )}
               >
                 {group.label}
@@ -193,11 +193,11 @@ export function Navbar() {
                 <div className="absolute right-0 top-[calc(100%+6px)] z-40 w-[264px] rounded-2xl border border-[#E7DCCB] bg-white p-1.5 shadow-xl">
                   {group.links.map((link) => (
                     <Link key={link.href} to={link.href} className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-[#F8F3EA]">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[#EEF5F1] text-[#123C32]"><link.icon className="h-4 w-4" /></span>
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[#EEF2FA] text-[#3156A3]"><link.icon className="h-4 w-4" /></span>
                       <span className="min-w-0">
                         <span className="flex items-center gap-2 text-sm font-semibold text-[#25302B]">
                           {link.label}
-                          {link.badge && link.badge > 0 ? <span className="rounded-full bg-[#123C32] px-1.5 py-0.5 text-[10px] font-bold text-white">{link.badge}</span> : null}
+                          {link.badge && link.badge > 0 ? <span className="rounded-full bg-[#233B6E] px-1.5 py-0.5 text-[10px] font-bold text-white">{link.badge}</span> : null}
                         </span>
                         {link.hint ? <span className="block text-xs text-[#8A8478]">{link.hint}</span> : null}
                       </span>
@@ -210,42 +210,42 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link to="/shortlist" className="relative rounded-full p-2.5 transition-colors hover:bg-[#12332A] lg:hidden">
-            <Heart className="h-5 w-5 text-[#F4EFE4]" />
-            {shortlist.length > 0 && <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-[#D8B56C] text-[10px] font-bold text-[#0B241D]">{shortlist.length}</span>}
+          <Link to="/shortlist" className="relative rounded-full p-2.5 transition-colors hover:bg-[#EEF2FA] lg:hidden">
+            <Heart className="h-5 w-5 text-[#233B6E]" />
+            {shortlist.length > 0 && <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-[#B4975A] text-[10px] font-bold text-white">{shortlist.length}</span>}
           </Link>
 
-          <Link to="/sell" className="hidden lg:block"><Button size="sm" className="h-auto rounded-full bg-[#D8B56C] px-4 py-[9px] text-[13.5px] font-bold text-[#0B241D] shadow-none hover:bg-[#C9A45B]">List Your Flat</Button></Link>
+          <Link to="/sell" className="hidden lg:block"><Button size="sm" className="h-auto rounded-full bg-[#233B6E] px-4 py-[9px] text-[13.5px] font-bold text-white shadow-none hover:bg-[#1B2E57]">List Your Flat</Button></Link>
           <button
             type="button"
             onClick={() => navigate(accountDashboardPath || "/login")}
-            className="hidden h-9 w-9 items-center justify-center rounded-full bg-[#12332A] text-[13px] font-bold text-[#F4EFE4] lg:flex"
+            className="hidden h-9 w-9 items-center justify-center rounded-full bg-[#EEF2FA] text-[13px] font-bold text-[#233B6E] lg:flex"
             aria-label={accountDashboardPath ? "Open dashboard" : "Open account"}
           >
             {isAuthenticated && user?.first_name ? String(user.first_name).slice(0, 2).toUpperCase() : <User className="h-4 w-4" />}
           </button>
-          <button className="rounded-full p-2 text-[#F4EFE4] transition-colors hover:bg-[#12332A] xl:hidden" aria-label="Open menu" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
+          <button className="rounded-full p-2 text-[#233B6E] transition-colors hover:bg-[#EEF2FA] xl:hidden" aria-label="Open menu" onClick={() => setIsMenuOpen(!isMenuOpen)}>{isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
         </div>
       </div>
 
       {isMenuOpen && (
-        <div className="border-t border-[#1C3A31] bg-[#0B241D] xl:hidden">
+        <div className="border-t border-[#DDD7CC] bg-[#FBFAF7] xl:hidden">
           <div className="container mx-auto space-y-4 px-4 py-4">
             {moduleGroups.map((group) => (
               <div key={group.key}>
-                <p className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#D8B56C]">{group.label}</p>
+                <p className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#8B6B32]">{group.label}</p>
                 <div className="mt-1.5 grid grid-cols-2 gap-1.5">
                   {group.links.map((link) => (
-                    <Link key={link.href} to={link.href} className="flex items-center gap-2.5 rounded-xl bg-[#12332A] px-3 py-2.5 text-[#F4EFE4]" onClick={() => setIsMenuOpen(false)}>
-                      <link.icon className="h-4 w-4 shrink-0 text-[#D8B56C]" />
+                    <Link key={link.href} to={link.href} className="flex items-center gap-2.5 rounded-xl border border-[#E7E2D9] bg-white px-3 py-2.5 text-[#1D2939]" onClick={() => setIsMenuOpen(false)}>
+                      <link.icon className="h-4 w-4 shrink-0 text-[#3156A3]" />
                       <span className="truncate text-[13px] font-semibold">{link.label}</span>
-                      {link.badge && link.badge > 0 ? <span className="ml-auto rounded-full bg-[#D8B56C] px-1.5 text-[10px] font-bold text-[#0B241D]">{link.badge}</span> : null}
+                      {link.badge && link.badge > 0 ? <span className="ml-auto rounded-full bg-[#233B6E] px-1.5 text-[10px] font-bold text-white">{link.badge}</span> : null}
                     </Link>
                   ))}
                 </div>
               </div>
             ))}
-            <Button variant="outline" className="w-full rounded-full border-[#2E4A40] bg-transparent text-[#F4EFE4] hover:bg-[#12332A]" onClick={() => { navigate(accountDashboardPath || '/login'); setIsMenuOpen(false); }}>
+            <Button variant="outline" className="w-full rounded-full border-[#D8DFEC] bg-white text-[#233B6E] hover:bg-[#EEF2FA]" onClick={() => { navigate(accountDashboardPath || '/login'); setIsMenuOpen(false); }}>
               {accountDashboardPath ? "Dashboard" : "Login"}
             </Button>
           </div>
@@ -253,7 +253,7 @@ export function Navbar() {
       )}
     </header>
 
-    <nav className="fixed bottom-[calc(0.65rem+env(safe-area-inset-bottom))] left-3 right-3 z-50 rounded-[1.25rem] border border-[#1C3A31] bg-[#0B241D]/95 p-2 shadow-editorial backdrop-blur-xl xl:hidden" aria-label="Primary">
+    <nav className="fixed bottom-[calc(0.65rem+env(safe-area-inset-bottom))] left-3 right-3 z-50 rounded-[1.25rem] border border-[#D8DFEC] bg-white/95 p-2 shadow-[0_20px_50px_-20px_rgba(17,24,39,.32)] backdrop-blur-xl xl:hidden" aria-label="Primary">
       <div className="grid grid-cols-5 gap-1">
         {[
           { label: 'Home', href: '/', icon: Home },
@@ -268,14 +268,14 @@ export function Navbar() {
           const isActive = !isServices && location.pathname === action.href.split('?')[0];
           const className = cn(
             'relative flex w-full flex-col items-center justify-center rounded-2xl px-2 py-2 text-[11px] font-semibold transition',
-            isSignature ? 'bg-[#D8B56C] text-[#0B241D]' : isActive ? 'bg-[#12332A] text-[#F4EFE4]' : 'text-[#C9C2AF]',
+            isSignature ? 'bg-[#233B6E] text-white' : isActive ? 'bg-[#EEF2FA] text-[#233B6E]' : 'text-[#667085]',
           );
           const inner = (
             <>
               <Icon className="mb-1 h-4 w-4" />
               {action.label}
               {action.badge && action.badge > 0 ? (
-                <span className="absolute right-2 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D8B56C] px-1 text-[9px] font-bold text-[#0B241D]">{action.badge}</span>
+                <span className="absolute right-2 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#B4975A] px-1 text-[9px] font-bold text-white">{action.badge}</span>
               ) : null}
             </>
           );
@@ -293,7 +293,7 @@ export function Navbar() {
         <button type="button" className="flex-1" aria-label="Close services" onClick={() => setServicesOpen(false)} />
         <div className="max-h-[80vh] overflow-y-auto rounded-t-[20px] bg-[#FAF8F2] p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           <div className="mb-3 flex items-center justify-between">
-            <p className="font-display text-[19px] font-medium text-[#10251F]">Everything SocietyFlats does</p>
+            <p className="font-display text-[19px] font-medium text-[#111827]">Everything SocietyFlats does</p>
             <button type="button" onClick={() => setServicesOpen(false)} aria-label="Close" className="rounded-full border border-[#E7DCCB] bg-white p-2 text-[#25302B]"><X className="h-4 w-4" /></button>
           </div>
           {moduleGroups.map((group) => (
@@ -302,11 +302,11 @@ export function Navbar() {
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {group.links.map((link) => (
                   <Link key={link.href} to={link.href} onClick={() => setServicesOpen(false)} className="flex items-start gap-2.5 rounded-2xl border border-[#E7DCCB] bg-white p-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[#0B241D] text-[#D8B56C]"><link.icon className="h-4 w-4" /></span>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[#EEF2FA] text-[#3156A3]"><link.icon className="h-4 w-4" /></span>
                     <span className="min-w-0">
                       <span className="flex items-center gap-1.5 text-[13px] font-bold text-[#25302B]">
                         {link.label}
-                        {link.badge && link.badge > 0 ? <span className="rounded-full bg-[#123C32] px-1.5 text-[10px] font-bold text-white">{link.badge}</span> : null}
+                        {link.badge && link.badge > 0 ? <span className="rounded-full bg-[#233B6E] px-1.5 text-[10px] font-bold text-white">{link.badge}</span> : null}
                       </span>
                       {link.hint ? <span className="block text-[11px] leading-4 text-[#8A8478]">{link.hint}</span> : null}
                     </span>

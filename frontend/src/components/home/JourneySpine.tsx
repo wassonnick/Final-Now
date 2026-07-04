@@ -1,47 +1,55 @@
-// R1b Journey spine: the home-buying journey as the organising spine of the
-// homepage. Each of the four stages surfaces the exact modules used at that
-// moment, so every platform feature is discovered in context rather than as a
-// feature grid. Below it, an audience band routes NRI/owner/broker/partner
-// visitors to their entry module. All routes are live; nothing is a mockup.
 import { Link } from "react-router-dom";
 import {
-  Search, Sparkles, MapPin, ShieldCheck, Layers, Scale, Calculator, BarChart3,
-  CalendarCheck, MessageCircle, Landmark, Gift, Globe2, Briefcase, BadgeIndianRupee,
-  ArrowRight,
+  ArrowUpRight,
+  BadgeIndianRupee,
+  BarChart3,
+  Briefcase,
+  Calculator,
+  CalendarCheck,
+  Gift,
+  Globe2,
+  Landmark,
+  Layers,
+  MapPin,
+  MessageCircle,
+  Scale,
+  Search,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
 type Step = {
   n: string;
   title: string;
   line: string;
-  modules: Array<{ label: string; href: string; icon: any }>;
+  modules: Array<{ label: string; href: string; icon: typeof Search }>;
 };
 
 const steps: Step[] = [
   {
     n: "01",
     title: "Discover",
-    line: "Start where buyers and tenants actually search — by society, sector or a plain question.",
+    line: "Search by society, sector, builder or simply describe the home you need.",
     modules: [
       { label: "Search societies", href: "/search?tab=societies", icon: Search },
-      { label: "Ask the AI Advisor", href: "/ai-advisor", icon: Sparkles },
-      { label: "Explore the live map", href: "/maps", icon: MapPin },
-      { label: "Browse builder floors", href: "/builder-floors", icon: Layers },
+      { label: "Ask AI Advisor", href: "/ai-advisor", icon: Sparkles },
+      { label: "Explore the map", href: "/maps", icon: MapPin },
+      { label: "Builder floors", href: "/builder-floors", icon: Layers },
     ],
   },
   {
     n: "02",
     title: "Verify",
-    line: "Every society is reviewed field by field — scores, sources and a visible confidence label. If we can't confirm it, we say so.",
+    line: "Read the evidence behind each profile before a property enters the picture.",
     modules: [
-      { label: "See how we verify", href: "/trust", icon: ShieldCheck },
-      { label: "Read market insights", href: "/insights", icon: BarChart3 },
+      { label: "How verification works", href: "/trust", icon: ShieldCheck },
+      { label: "Market insights", href: "/insights", icon: BarChart3 },
     ],
   },
   {
     n: "03",
     title: "Decide",
-    line: "Weigh two or three societies side by side and run the numbers before you ever step out.",
+    line: "Compare the strongest options and understand the numbers without the sales noise.",
     modules: [
       { label: "Compare societies", href: "/compare", icon: Scale },
       { label: "Investment calculator", href: "/investment-calculator", icon: Calculator },
@@ -49,75 +57,72 @@ const steps: Step[] = [
   },
   {
     n: "04",
-    title: "Move in",
-    line: "Request a verified visit, get a human on chat, and stay connected to your society after you move.",
+    title: "Act",
+    line: "Request current availability, plan a visit or speak with the right specialist.",
     modules: [
-      { label: "Request a site visit", href: "/search?tab=societies", icon: CalendarCheck },
-      { label: "Talk on live chat", href: "/chat", icon: MessageCircle },
-      { label: "RWA & builder portal", href: "/builder-portal", icon: Landmark },
+      { label: "Plan a site visit", href: "/search?tab=societies", icon: CalendarCheck },
+      { label: "Live chat", href: "/chat", icon: MessageCircle },
+      { label: "Builder & RWA", href: "/builder-portal", icon: Landmark },
     ],
   },
 ];
 
 const audiences = [
-  { label: "Buying from abroad", hint: "NRI desk — concierge, no guarantees", href: "/nri-services", icon: Globe2 },
-  { label: "Own a flat here", hint: "List it to verified buyers and tenants", href: "/sell", icon: BadgeIndianRupee },
-  { label: "Broker with inventory", hint: "Partner CRM for verified stock", href: "/broker-crm", icon: Briefcase },
-  { label: "Refer and earn", hint: "Reward on every conversion", href: "/referrals", icon: Gift },
+  { label: "NRI property desk", hint: "Local coordination from abroad", href: "/nri-services", icon: Globe2 },
+  { label: "List your flat", hint: "Reach verified demand", href: "/sell", icon: BadgeIndianRupee },
+  { label: "Broker partnership", hint: "Society-specific enquiries", href: "/broker-crm", icon: Briefcase },
+  { label: "Referral partner", hint: "Track qualified introductions", href: "/referrals", icon: Gift },
 ];
 
 export function JourneySpine() {
   return (
-    <section className="mx-auto max-w-[1360px] px-5 py-10 lg:px-10 lg:py-16">
-      <div className="rounded-[26px] bg-[#0B241D] px-5 py-8 lg:px-12 lg:py-12">
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#D8B56C]">The SocietyFlats way</p>
-        <h2 className="mt-2 max-w-[640px] font-display text-[26px] font-medium leading-tight text-[#F4EFE4] lg:text-[34px]">
-          One clean path from first search to move-in day.
-        </h2>
-        <p className="mt-2 max-w-[560px] text-[13.5px] leading-6 text-[#C9C2AF]">
-          Everything the platform does shows up exactly when you need it — no feature hunting.
+    <section className="mx-auto max-w-[1360px] px-5 py-12 lg:px-10 lg:py-20">
+      <div className="grid gap-8 border-b border-[#DDD7CC] pb-9 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#8B6B32]">A clearer property journey</p>
+          <h2 className="mt-3 max-w-[560px] font-display text-[34px] font-medium leading-[1.03] text-[#111827] lg:text-[48px]">
+            Everything you need, in the order you need it.
+          </h2>
+        </div>
+        <p className="max-w-[650px] text-[15px] leading-7 text-[#667085] lg:justify-self-end lg:text-[17px]">
+          SocietyFlats is organised around the decision—not around a list of products. Start with discovery, verify the facts, compare confidently and then speak to a human.
         </p>
-
-        <ol className="mt-8 grid gap-4 lg:grid-cols-4">
-          {steps.map((step) => (
-            <li key={step.n} className="rounded-[18px] border border-[#1C3A31] bg-[#12332A] p-4">
-              <div className="flex items-center gap-2">
-                <span className="font-display text-[22px] font-medium text-[#D8B56C]">{step.n}</span>
-                <span className="text-[15px] font-bold text-[#F4EFE4]">{step.title}</span>
-              </div>
-              <p className="mt-2 text-[12.5px] leading-5 text-[#C9C2AF]">{step.line}</p>
-              <div className="mt-3 space-y-1.5">
-                {step.modules.map((mod) => (
-                  <Link
-                    key={mod.href + mod.label}
-                    to={mod.href}
-                    className="group flex items-center gap-2 rounded-xl bg-[#0B241D] px-2.5 py-2 text-[12.5px] font-semibold text-[#F4EFE4] transition hover:bg-[#0F2C24]"
-                  >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#1C3A31] text-[#D8B56C]"><mod.icon className="h-3.5 w-3.5" /></span>
-                    <span className="min-w-0 flex-1 truncate">{mod.label}</span>
-                    <ArrowRight className="h-3.5 w-3.5 text-[#4E6A5F] transition group-hover:text-[#D8B56C]" />
-                  </Link>
-                ))}
-              </div>
-            </li>
-          ))}
-        </ol>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {audiences.map((aud) => (
-          <Link
-            key={aud.href}
-            to={aud.href}
-            className="group flex items-start gap-3 rounded-[18px] border border-[#E7DCCB] bg-white p-4 transition hover:border-[#D8B56C]"
-          >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] bg-[#0B241D] text-[#D8B56C]"><aud.icon className="h-5 w-5" /></span>
-            <span className="min-w-0">
-              <span className="block text-[14px] font-bold text-[#25302B]">{aud.label}</span>
-              <span className="mt-0.5 block text-[12px] leading-4 text-[#8A8478]">{aud.hint}</span>
-            </span>
-          </Link>
+      <ol className="divide-y divide-[#DDD7CC] lg:grid lg:grid-cols-4 lg:divide-x lg:divide-y-0">
+        {steps.map((step, index) => (
+          <li key={step.n} className={`py-7 lg:min-h-[310px] lg:px-7 lg:py-9 ${index === 0 ? "lg:pl-0" : ""} ${index === steps.length - 1 ? "lg:pr-0" : ""}`}>
+            <div className="flex items-baseline gap-3">
+              <span className="font-display text-[18px] text-[#B4975A]">{step.n}</span>
+              <h3 className="font-display text-[27px] font-medium text-[#111827]">{step.title}</h3>
+            </div>
+            <p className="mt-3 min-h-[60px] text-[13.5px] leading-6 text-[#667085]">{step.line}</p>
+            <div className="mt-5 space-y-1">
+              {step.modules.map((mod) => (
+                <Link key={mod.href + mod.label} to={mod.href} className="group flex items-center gap-2.5 py-2 text-[13px] font-semibold text-[#344054] transition hover:text-[#3156A3]">
+                  <mod.icon className="h-4 w-4 text-[#8B6B32]" />
+                  <span>{mod.label}</span>
+                  <ArrowUpRight className="ml-auto h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100" />
+                </Link>
+              ))}
+            </div>
+          </li>
         ))}
+      </ol>
+
+      <div className="mt-2 border-y border-[#DDD7CC] bg-white/65 px-0 py-4 lg:flex lg:items-center lg:gap-8 lg:px-5">
+        <p className="mb-2 whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.18em] text-[#8B6B32] lg:mb-0">Specialist paths</p>
+        <div className="grid flex-1 gap-1 sm:grid-cols-2 lg:grid-cols-4">
+          {audiences.map((aud) => (
+            <Link key={aud.href} to={aud.href} className="group flex items-center gap-3 px-0 py-2.5 lg:px-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EEF2FA] text-[#3156A3]"><aud.icon className="h-4 w-4" /></span>
+              <span className="min-w-0">
+                <span className="block text-[13.5px] font-bold text-[#1D2939]">{aud.label}</span>
+                <span className="block text-[11.5px] text-[#7A8290]">{aud.hint}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   );
