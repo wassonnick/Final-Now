@@ -35,9 +35,9 @@ type PublicProperty = Awaited<ReturnType<typeof fetchPublicProperties>>[number];
 
 const featureIntro = {
   maps: {
-    title: 'Maps Intelligence',
+    title: 'Explore Gurgaon on the map',
     eyebrow: 'Search by location context',
-    text: 'Filter societies by sector, road and nearby anchors. Open each profile with its verified public data.',
+    text: 'See societies by sector, road and the anchors around them — then open any profile with its verified public data.',
     icon: MapPinned,
   },
   'broker-crm': {
@@ -48,14 +48,14 @@ const featureIntro = {
   },
   chat: {
     title: 'Ask anything about Gurgaon societies',
-    eyebrow: 'Published-data assistant',
-    text: 'Grounded in published SocietyFlats society profiles — it\'ll say "I don\'t have that yet" instead of inventing an answer.',
+    eyebrow: 'Grounded, honest answers',
+    text: 'It answers only from published SocietyFlats profiles — and it\'ll happily say "I don\'t have that yet" rather than invent something to fill the gap.',
     icon: MessageSquareText,
   },
   recommendations: {
     title: 'Your shortlist',
-    eyebrow: 'Match by fit',
-    text: 'Use budget, locality and lifestyle priorities to get a ranked shortlist from live society data.',
+    eyebrow: 'Matched to your fit',
+    text: 'Tell us your budget, area and what matters most — we\'ll rank a shortlist from live society data, no sponsored placements.',
     icon: Target,
   },
 };
