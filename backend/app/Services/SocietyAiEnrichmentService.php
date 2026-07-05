@@ -64,26 +64,39 @@ class SocietyAiEnrichmentService
     private function marketPrompt(string $name, string $sector, string $city): string
     {
         $location = trim($sector.' '.$city);
+        $year = now()->year;
 
         return <<<PROMPT
-Research current rental and resale market pricing for this specific residential project using web search. Do not reuse generic market averages from other projects — find data tied to this exact project name.
+You are pricing ONE specific Gurgaon residential project from CURRENTLY LISTED units on India's major property portals. Accuracy against those portals is the whole job.
 
 Project: {$name}
 Location: {$location}
 
+METHOD — do this, do not shortcut:
+1. Run separate searches for this exact project on each major portal. Use queries like:
+   - "{$name} {$sector} 99acres price for sale"
+   - "{$name} {$sector} magicbricks resale price"
+   - "{$name} {$sector} housing.com rent"
+   - "{$name} {$sector} squareyards price per sqft"
+   - "{$name} {$sector} nobroker rent"
+   Also try the project name without the sector if the first pass is thin.
+2. Read the ACTIVE listings (units currently for sale / for rent) — NOT sector-wide averages, NOT a single old article, NOT a builder's original launch price. Prefer listings and price pages updated within the last 12 months ({$year} or late last year).
+3. Build each range from the SPREAD of current listings across configurations: buy_range = lowest currently-listed resale price to the highest; rent_range = lowest current asking rent to the highest; price_per_sqft = the current ₹/sqft band those listings imply.
+4. Cross-check across at least two portals. If portals disagree, widen the range to cover both rather than picking one. If you can only find one stale figure, mark confidence "low" and say so.
+
 Return ONLY this JSON object, no markdown fences, no commentary:
 {
-  "rent_range": "ONLY a short range, e.g. '₹X - ₹Y per month'. Never add parenthetical context, configuration breakdowns or extra sentences. Null if no project-specific data found.",
-  "buy_range": "ONLY a short range, e.g. '₹X Cr - ₹Y Cr'. Never add parenthetical context, configuration breakdowns or extra sentences. Null if no project-specific data found.",
-  "price_per_sqft": "string e.g. ₹X - ₹Y, or null",
+  "rent_range": "ONLY a short range, e.g. '₹X - ₹Y per month', spanning current asking rents. Never add parentheticals or configuration breakdowns. Null if no current project-specific listings found.",
+  "buy_range": "ONLY a short range, e.g. '₹X Cr - ₹Y Cr', spanning current resale listings. Never add parentheticals or configuration breakdowns. Null if none found.",
+  "price_per_sqft": "current ₹/sqft band, e.g. '₹X,XXX - ₹Y,YYY', or null",
   "rental_yield": "string e.g. X.X%, or null",
-  "average_rent": "string single representative figure, or null",
-  "average_sale_price": "string single representative figure, or null",
-  "confidence": "high | medium | low",
-  "notes": "short note on data freshness/source quality"
+  "average_rent": "single representative current asking rent, or null",
+  "average_sale_price": "single representative current resale price, or null",
+  "confidence": "high (2+ portals agree, recent) | medium (one solid recent portal) | low (thin or stale)",
+  "notes": "name the portals you actually found figures on and how recent they were, e.g. '99acres + magicbricks resale listings, 2026'"
 }
 
-Use null for any field you cannot support with search results for this specific project. Never invent numbers.
+Never invent numbers. Never carry over the builder's launch price as the current resale price. Use null for any field you cannot support with current listings for THIS specific project.
 PROMPT;
     }
 
@@ -104,20 +117,49 @@ PROMPT;
         return $this->enrichMarketDataOnlyGemini($name, $sector, $city);
     }
 
+    /** Property portals whose current listings we price against. */
+    private const MARKET_PORTAL_DOMAINS = [
+        '99acres.com', 'magicbricks.com', 'housing.com', 'squareyards.com', 'nobroker.in', 'proptiger.com',
+    ];
+
     private function enrichMarketDataOnlyClaude(string $name, string $sector, string $city, string $apiKey): array
+    {
+        // Pass 1: restrict the search to the real property portals so the model reads
+        // current listings, never a stale blog or the builder's launch price. If that
+        // finds no project-specific figure, pass 2 opens the search for coverage.
+        $restricted = $this->runClaudeMarketSearch($name, $sector, $city, $apiKey, self::MARKET_PORTAL_DOMAINS);
+        if (isset($restricted['_ai_error']) || $this->hasMarketFigure($restricted)) {
+            return $restricted;
+        }
+
+        $open = $this->runClaudeMarketSearch($name, $sector, $city, $apiKey, null);
+
+        return isset($open['_ai_error']) ? $restricted : $open;
+    }
+
+    /**
+     * @param  array<int,string>|null  $allowedDomains  Restrict the web search to these
+     *                                                   domains, or null for an open search.
+     */
+    private function runClaudeMarketSearch(string $name, string $sector, string $city, string $apiKey, ?array $allowedDomains): array
     {
         $model = trim((string) config('services.claude.model', 'claude-haiku-4-5')) ?: 'claude-haiku-4-5';
         $prompt = $this->marketPrompt($name, $sector, $city);
+
+        $tool = (new \Anthropic\Messages\WebSearchTool20260209())->withMaxUses(8)->withAllowedCallers(['direct']);
+        if ($allowedDomains !== null) {
+            $tool = $tool->withAllowedDomains($allowedDomains);
+        }
 
         try {
             $client = new \Anthropic\Client(apiKey: $apiKey);
 
             $message = $client->messages->create(
-                maxTokens: 1024,
+                maxTokens: 2048,
                 messages: [['role' => 'user', 'content' => $prompt]],
                 model: $model,
-                system: 'You are a careful Indian real-estate market research assistant. Only report figures you can support from search results for the exact named project. Use null when unsure.',
-                tools: [(new \Anthropic\Messages\WebSearchTool20260209())->withMaxUses(4)->withAllowedCallers(['direct'])],
+                system: 'You are an Indian real-estate pricing researcher. Your figures are checked against 99acres, Housing.com and MagicBricks, so they must reflect CURRENT listings on those portals for the exact named project — never a builder launch price, never a sector-wide average, never a stale article. Search each portal, prefer listings from the last 12 months, cross-check at least two, widen the range to cover disagreement, and use null rather than guessing.',
+                tools: [$tool],
             );
         } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
             return ['_ai_error' => 'Claude HTTP '.($e->status ?? 0).': '.$e->getMessage()];
@@ -151,6 +193,18 @@ PROMPT;
         $data['market_sources'] = collect($sources)->unique('url')->values()->all();
 
         return $data;
+    }
+
+    /** True when the AI result carries at least one usable rent or buy figure. */
+    private function hasMarketFigure(array $data): bool
+    {
+        foreach (['rent_range', 'buy_range', 'average_rent', 'average_sale_price', 'price_per_sqft'] as $field) {
+            if (! empty($data[$field]) && trim((string) $data[$field]) !== '' && strtolower(trim((string) $data[$field])) !== 'null') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function enrichMarketDataOnlyGemini(string $name, string $sector, string $city): array
@@ -504,7 +558,7 @@ Rules:
 - Image candidate mode: {$imageInstruction}
 - Search every major category before returning null. Populate project area, configurations, towers, units, market ranges, coordinates, nearby schools, hospitals, commute links, office hubs, official URLs and SEO whenever grounded evidence exists.
 - Do not return a generic basic profile when search grounding is available. Use null only after the searched sources do not support the field.
-- Market ranges (rent_range, buy_range, average_rent, average_sale_price, price_per_sqft, rental_yield): search current listing/aggregator sources (e.g. 99acres, Square Yards, Magicbricks, Housing.com, Google AI Overview) specifically for THIS society/project, not a generic citywide or sector-wide range. Cite the exact pages used. If only stale or generic-area data is found, widen the range to cover it rather than picking one old/narrow figure, and add the field to fields_to_verify.
+- Market ranges (rent_range, buy_range, average_rent, average_sale_price, price_per_sqft, rental_yield): run SEPARATE searches for this exact project on 99acres, MagicBricks, Housing.com and Square Yards (e.g. "<project> <sector> 99acres price", "<project> magicbricks resale", "<project> housing.com rent"). Read the units CURRENTLY listed for sale/rent — never the builder's launch price, never a sector-wide average, never a single stale article. Prefer listings from the last 12 months. Build buy_range from the lowest to highest current resale listing and rent_range from the lowest to highest current asking rent, widening to cover disagreement between portals. These figures are checked against those portals, so accuracy is critical. Add any market field to fields_to_verify when data is thin or older than ~12 months.
 - Keep all output review-first, not publicly guaranteed.
 - If unsure, use null and add the field to fields_to_verify.
 PROMPT;
