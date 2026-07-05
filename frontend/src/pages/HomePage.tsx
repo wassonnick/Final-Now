@@ -47,7 +47,7 @@ const faqs = [
   ["How does SocietyFlats verify a society?", "Imported society data and images remain private until an admin reviews and publishes them."],
   ["Why do some societies show no available homes?", "Society profiles and property availability are reviewed separately. We never fabricate inventory."],
   ["Is there any brokerage or fee for tenants?", "Any applicable commercial terms are clarified before a visit or transaction."],
-  ["How is the AI Advisor recommendation calculated?", "Recommendations use your stated needs and the currently published SocietyFlats dataset."],
+  ["How is the AI Advisor recommendation calculated?", "It matches your stated needs — budget, commute, configuration — against the scored, currently published SocietyFlats dataset. No paid placements, no sponsored ranking."],
   ["Can owners list a flat for rent or resale?", "Yes. Owners can list a flat for rent or resale and listings are reviewed before publishing or sharing with users."],
   ["Can brokers partner with SocietyFlats?", "Yes. Brokers with verified Gurgaon inventory can partner with SocietyFlats and share society-specific rental or resale options."],
 ];
@@ -143,8 +143,8 @@ export function HomePage() {
 
   useEffect(() => {
     setPublicSeo(
-      "Verified Gurgaon Societies — Compare Before You Choose a Home | SocietyFlats",
-      "40+ Gurgaon societies reviewed field-by-field before publishing — real coordinates, reviewed display images and no invented listings. Compare security, commute and price before you visit.",
+      "Find Your Gurgaon Home with Confidence — Verified Society Scores & Live Pricing | SocietyFlats",
+      "Choose your Gurgaon society with clarity: real-life scores for connectivity, safety and lifestyle, live rent and sale prices, and a friendly AI advisor. Every society checked by real people, every home genuine. Shortlist calmly, then visit only what fits.",
     );
     window.scrollTo(0, 0);
     fetchPublicSocieties()
@@ -277,9 +277,9 @@ export function HomePage() {
           </div>
         ) : (
           <div className="rounded-[18px] border border-[#E7DCCB] bg-white p-5">
-            <h3 className="text-[15px] font-bold text-[#25302B]">Verified homes are being added.</h3>
+            <h3 className="text-[15px] font-bold text-[#25302B]">New homes, added as we verify them.</h3>
             <p className="mt-1 text-[13px] leading-5 text-[#6E756E]">
-              Request current availability and our team will help with rental or resale options.
+              Tell us what you're looking for and we'll find current rentals and resale homes we can genuinely stand behind.
             </p>
             <button
               type="button"
@@ -294,15 +294,15 @@ export function HomePage() {
         <PropertyToolsStrip mobile />
 
         <div className="mt-[26px] rounded-[20px] border border-[#D8DFEC] bg-[#F7F9FD] px-5 py-[22px]">
-          <h2 className="font-display text-[23px] font-medium leading-tight text-[#111827]">Every society, reviewed.</h2>
+          <h2 className="font-display text-[23px] font-medium leading-tight text-[#111827]">Every society, checked with care.</h2>
           <p className="mb-4 mt-1 text-[13.5px] leading-[1.5] text-[#667085]">
-            Data and images are reviewed before a society goes live.
+            Hundreds of details on every society — checked by real people, scored fairly, and kept up to date so you're never guessing.
           </p>
           <div className="space-y-3">
             {[
-              ["Admin-reviewed data", "A person checks every field before it goes live — not just an algorithm."],
-              ["Images reviewed", "Cover photos come from Google Places or the builder, never stock images."],
-              ["Refreshed regularly", "Price ranges are re-researched with live web search, not copy-pasted once and forgotten."],
+              ["Scored fairly, not guessed", "Six real-life scores per society — how it commutes, how safe it feels, how it lives — drawn from evidence, not opinions."],
+              ["Checked by real people", "Someone verifies every detail before it goes live. Cover photos come from Google Places or the builder — never stock images."],
+              ["Prices kept honest", "We re-check rent and sale ranges with live search across portals, so what you see reflects today's market — not last year's."],
             ].map(([title, body], index) => (
               <div key={title} className="flex items-center gap-3">
                 <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-[#E8EDF7]">
@@ -339,7 +339,7 @@ export function HomePage() {
             <div>
               <h2 className="font-display text-[32px] font-medium text-[#25302B]">Verified homes</h2>
               <p className="mt-1.5 text-sm text-[#6E756E]">
-                Published rental and resale inventory inside reviewed Gurgaon societies.
+                Real rental and resale homes, inside societies we've checked and scored for you.
               </p>
             </div>
             <Link to="/search?tab=rent" className="text-sm font-bold text-[#3156A3]">
@@ -402,10 +402,10 @@ export function HomePage() {
             <div className="grid grid-cols-[1fr_auto] items-center gap-6 rounded-[18px] border border-[#E7DCCB] bg-white p-8">
               <div>
                 <h3 className="font-display text-2xl font-medium text-[#25302B]">
-                  Verified homes are being added.
+                  New homes, added as we verify them.
                 </h3>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6E756E]">
-                  Request current availability and our team will help with rental or resale options inside suitable Gurgaon societies.
+                  Tell us what you're looking for and we'll find current rental and resale homes inside the right Gurgaon societies — checked before we share them, so you can trust what you see.
                 </p>
               </div>
               <button
@@ -439,14 +439,14 @@ export function HomePage() {
         <section className="mx-auto mt-10 grid max-w-[1360px] grid-cols-2 gap-[22px] px-10">
           <div className="rounded-[20px] border border-[#E8D0BF] bg-[#FFF4E9] p-8">
             <p className="mb-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[#A45B3A]">For owners</p>
-            <h3 className="font-display text-[25px] font-medium text-[#25302B]">List your flat once. Reach serious tenants & buyers.</h3>
-            <p className="mb-5 mt-2.5 text-sm leading-[1.55] text-[#59635E]">Own a flat in Gurgaon? Reach people already searching inside your society. No spam—your number is used only for verification and enquiries.</p>
+            <h3 className="font-display text-[25px] font-medium text-[#25302B]">List once. Meet the people already looking in your society.</h3>
+            <p className="mb-5 mt-2.5 text-sm leading-[1.55] text-[#59635E]">Own a home in Gurgaon? We'll put it in front of tenants and buyers already searching your exact society. No spam, ever — your number is only used to verify you and pass on genuine enquiries.</p>
             <Link to="/sell" className="inline-flex rounded-[11px] bg-[#C2724E] px-6 py-3 text-sm font-bold text-white">List your flat</Link>
           </div>
           <div className="rounded-[20px] bg-[#233B6E] p-8 text-white">
             <p className="mb-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[#D7C18C]">For brokers</p>
             <h3 className="font-display text-[25px] font-medium text-white">Partner with SocietyFlats.</h3>
-            <p className="mb-5 mt-2.5 text-sm leading-[1.55] text-[#D8DFEC]">Have verified Gurgaon inventory? Get society-specific enquiries and avoid duplicate listing spam.</p>
+            <p className="mb-5 mt-2.5 text-sm leading-[1.55] text-[#D8DFEC]">Have verified Gurgaon inventory? We'll connect you with buyers looking in the exact societies you cover — real enquiries, none of the duplicate-listing noise.</p>
             <Link to="/broker-crm" className="inline-flex rounded-[11px] bg-white px-6 py-3 text-sm font-bold text-[#233B6E]">Become a partner</Link>
           </div>
         </section>
@@ -469,8 +469,8 @@ export function HomePage() {
 
         <section className="mx-auto mt-12 max-w-[1360px] px-10">
           <div className="rounded-[24px] bg-[#111827] p-14 text-center text-white">
-            <h2 className="font-display text-[40px] font-medium tracking-[-0.01em] text-white">{allSocietiesCount || societies.length || 40} societies in. Thousands more Gurgaon homes to compare.</h2>
-            <p className="mb-7 mt-3 text-base text-[#C7D0DE]">Tell us your budget and commute — SocietyFlats AI narrows it to 2–3 societies worth visiting.</p>
+            <h2 className="font-display text-[40px] font-medium tracking-[-0.01em] text-white">{allSocietiesCount || societies.length || 40} societies checked. Let's find the few that feel like home.</h2>
+            <p className="mb-7 mt-3 text-base text-[#C7D0DE]">Tell the AI Advisor your budget and commute, and it'll gently narrow Gurgaon down to the two or three societies genuinely worth your time.</p>
             <div className="flex justify-center gap-[14px]">
               <Link to="/ai-advisor" className="rounded-[12px] bg-[#C2724E] px-8 py-[15px] text-[15px] font-bold text-white">Get my shortlist</Link>
               <Link to="/search?tab=societies" className="rounded-[12px] border border-white/30 bg-white/10 px-8 py-[15px] text-[15px] font-bold text-white">Browse verified societies</Link>
@@ -482,7 +482,7 @@ export function HomePage() {
       <PublicLeadModal
         open={leadOpen}
         title="Request a callback"
-        subtitle="Share your requirement and SocietyFlats will help with relevant Gurgaon options."
+        subtitle="Tell us what you're looking for — we'll come back with the Gurgaon societies and homes that actually fit."
         source="homepage"
         defaultMessage="Help me shortlist the right Gurgaon society."
         defaultRequirement="Gurgaon society shortlist"
