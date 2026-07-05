@@ -80,10 +80,13 @@ METHOD — do this, do not shortcut:
    - "{$name} {$sector} squareyards price"
    - "{$name} {$sector} rent"
    Also try the project name without the sector if the first pass is thin.
-2. For BUY PRICE, your target is the project's headline "PRICE RANGE" as shown at the top of the portal's project page — the range that spans ALL configurations from the SMALLEST BHK to the LARGEST (e.g. 99acres shows a project price range plus a per-BHK breakdown: 2 BHK, 3 BHK, 4 BHK, 5 BHK/penthouse). Set buy_range = the minimum price of the smallest configuration to the MAXIMUM price of the LARGEST configuration. Do NOT stop at 3/4 BHK — include the biggest 5 BHK / penthouse figure, and do NOT let one cheap distressed resale listing drag the floor below the portal's stated minimum. If the portal shows "₹14.6 - 40.44 Cr", return that, not a narrower resale-only band.
-3. For RENT, read the current asking rents across configurations and span lowest to highest.
-4. price_per_sqft = the current ₹/sqft band the portal shows for this project.
-5. Cross-check across at least two portals. If portals disagree, widen the range to cover both. Prefer the config-spanning project price range over a single individual listing. If data is thin or only a stale figure exists, mark confidence "low" and say so.
+2. For BUY PRICE, your target is the portal's headline "PRICE RANGE" banner — the "₹X - ₹Y Cr" figure shown at the TOP of the MAIN project overview page (the .../npxid-... page on 99acres, or the project page on Housing.com / Square Yards), directly above the per-BHK breakdown (2 BHK, 3 BHK, 4 BHK, 5 BHK/penthouse). COPY that banner range verbatim into buy_range.
+   - This banner IS the answer. Do NOT open the "-resale-in-" / "for-resale" listing sub-pages and build your own range from individual asking prices — those resale asks routinely run BELOW the banner's smallest-configuration price, and using them produces a floor that does not match the portal. Ignore them for buy_range.
+   - If (and only if) the main project page shows NO headline price-range banner, fall back to the per-BHK breakdown: buy_range = the smallest configuration's minimum to the largest configuration's (5 BHK / penthouse) maximum. Never let a cheap distressed listing set the floor.
+   - Example: if 99acres' banner reads "₹14.6 - 40.44 Cr", buy_range is exactly "₹14.6 Cr - ₹40.44 Cr" — not a lower resale-derived band like "₹10 - 33 Cr".
+3. For RENT, read the current asking rents across configurations on the portal and span lowest to highest.
+4. price_per_sqft = the ₹/sqft band the MAIN project page displays for this project (matching the banner price range), not a resale-listing median that undercuts it.
+5. Confirm the banner on the main project page of at least one major portal; cross-check the per-BHK figures against a second portal where possible. If the main page shows no banner and you must fall back to configurations, mark confidence "medium"; if data is thin or stale, mark "low" and say so.
 
 UNITS — this trips people up, get it right:
 - rent_range is a MONTHLY rent, always in rupees or LAKH per month (e.g. '₹85,000 - ₹2.5 lakh per month'). Monthly rent is NEVER in crores — even the priciest Gurgaon homes rent for a few lakh a month, so any crore figure in rent is wrong.
@@ -92,7 +95,7 @@ UNITS — this trips people up, get it right:
 Return ONLY this JSON object, no markdown fences, no commentary:
 {
   "rent_range": "ONLY a short MONTHLY range in ₹/lakh, e.g. '₹85,000 - ₹2,50,000 per month', spanning current asking rents. Never crores. Never add parentheticals. Null if no current project-specific listings found.",
-  "buy_range": "ONLY a short range, e.g. '₹X Cr - ₹Y Cr', matching the portal's config-spanning project PRICE RANGE (smallest BHK minimum to largest BHK / penthouse maximum). Never add parentheticals or configuration breakdowns. Null if none found.",
+  "buy_range": "ONLY a short range, e.g. '₹X Cr - ₹Y Cr', COPIED from the portal's headline PRICE RANGE banner on the main project page (NOT built from resale listing asks, which run lower). Never add parentheticals or configuration breakdowns. Null if the project has no price-range banner and no per-BHK figures.",
   "price_per_sqft": "current ₹/sqft band, e.g. '₹X,XXX - ₹Y,YYY', or null",
   "rental_yield": "string e.g. X.X%, or null",
   "average_rent": "single representative current asking rent, or null",
@@ -148,7 +151,7 @@ PROMPT;
                 maxTokens: 2048,
                 messages: [['role' => 'user', 'content' => $prompt]],
                 model: $model,
-                system: 'You are an Indian real-estate pricing researcher. Your figures are checked against 99acres, Housing.com and MagicBricks, so they must reflect CURRENT listings on those portals for the exact named project — never a builder launch price, never a sector-wide average, never a stale article. Search each portal, prefer listings from the last 12 months, cross-check at least two, widen the range to cover disagreement, and use null rather than guessing.',
+                system: 'You are an Indian real-estate pricing researcher. Your buy_range is checked directly against the PRICE RANGE banner that 99acres / Housing.com / Square Yards display at the top of a project page, so for buy_range you must COPY that displayed banner for the exact named project — do NOT rebuild it from individual resale listing asks, which run below the banner and will fail the check. Rent and per-sqft come from the same project page\'s current figures. Never use a sector-wide average or a stale article. Cross-check the portal figures, and use null rather than guessing.',
                 tools: [$tool],
             );
         } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
