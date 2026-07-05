@@ -111,6 +111,9 @@ class MarketSuggestionService
         $result = $this->ai->enrichMarketDataOnly($society->name, (string) $society->sector, (string) ($society->city ?: 'Gurugram'));
 
         if (isset($result['_ai_error'])) {
+            if (AiBudgetGuard::isProviderLimit($result)) {
+                throw new \App\Exceptions\AiProviderLimitException('Market fetch hit provider limit: '.$result['_ai_error']);
+            }
             throw new \RuntimeException('Market fetch failed: '.$result['_ai_error']);
         }
 
@@ -203,6 +206,9 @@ class MarketSuggestionService
         $result = $this->ai->enrichMarketDataOnly($society->name, (string) $society->sector, (string) ($society->city ?: 'Gurugram'));
 
         if (isset($result['_ai_error'])) {
+            if (AiBudgetGuard::isProviderLimit($result)) {
+                throw new \App\Exceptions\AiProviderLimitException('Market fetch hit provider limit: '.$result['_ai_error']);
+            }
             throw new \RuntimeException('Market fetch failed: '.$result['_ai_error']);
         }
 

@@ -462,10 +462,20 @@ class SocietyImportController extends Controller
      */
     public function marketRefresh(Society $society): JsonResponse
     {
+        $budget = app(\App\Services\Ops\AiBudgetGuard::class);
+        if ($budget->providerLimited()) {
+            return response()->json(['message' => 'AI provider usage limit reached — market refreshes are paused. Try again later.'], 429);
+        }
+
         $result = $this->ai->enrichMarketDataOnly($society->name, (string) $society->sector, (string) ($society->city ?: 'Gurugram'));
 
         if (isset($result['_ai_error'])) {
-            return response()->json(['message' => $result['_ai_error']], ($result['_ai_quota_limited'] ?? false) ? 429 : 422);
+            $isLimit = \App\Services\Ops\AiBudgetGuard::isProviderLimit($result);
+            if ($isLimit) {
+                $budget->tripProviderLimit();
+            }
+
+            return response()->json(['message' => $result['_ai_error']], $isLimit ? 429 : 422);
         }
 
         $marketFields = ['rent_range', 'buy_range', 'price_per_sqft', 'rental_yield', 'average_rent', 'average_sale_price'];

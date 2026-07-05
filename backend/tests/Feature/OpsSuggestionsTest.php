@@ -190,6 +190,47 @@ class OpsSuggestionsTest extends TestCase
         Queue::assertPushed(\App\Jobs\AutoRefreshSocietyMarket::class, fn ($job) => $job->societyId === $stale->id);
     }
 
+    public function test_provider_limit_trips_the_breaker_and_stops_further_calls(): void
+    {
+        $society = $this->society('Limit One', 'limit-one');
+
+        // The AI returns a quota/billing error → refreshAndApply must raise the typed
+        // exception, the job trips the breaker, and a following job makes no AI call.
+        $this->mock(SocietyAiEnrichmentService::class)
+            ->shouldReceive('enrichMarketDataOnly')
+            ->once()
+            ->andReturn(['_ai_error' => 'Claude HTTP 429: usage limit reached', '_ai_error_status' => 429, '_ai_quota_limited' => true]);
+
+        $budget = app(AiBudgetGuard::class);
+        $this->assertFalse($budget->providerLimited());
+
+        (new \App\Jobs\AutoRefreshSocietyMarket($society->id))->handle(
+            app(\App\Services\Ops\MarketSuggestionService::class),
+            $budget,
+        );
+
+        $this->assertTrue($budget->providerLimited(), 'Breaker must be tripped after a provider limit.');
+
+        // Second society: enrichMarketDataOnly must NOT be called again while tripped.
+        $other = $this->society('Limit Two', 'limit-two');
+        $this->mock(SocietyAiEnrichmentService::class)->shouldNotReceive('enrichMarketDataOnly');
+
+        (new \App\Jobs\AutoRefreshSocietyMarket($other->id))->handle(
+            app(\App\Services\Ops\MarketSuggestionService::class),
+            app(AiBudgetGuard::class),
+        );
+    }
+
+    public function test_is_provider_limit_classifies_errors(): void
+    {
+        $g = AiBudgetGuard::class;
+        $this->assertTrue($g::isProviderLimit(['_ai_quota_limited' => true]));
+        $this->assertTrue($g::isProviderLimit(['_ai_error_status' => 402]));
+        $this->assertTrue($g::isProviderLimit(['_ai_error' => 'Claude HTTP 429: credit balance too low']));
+        $this->assertFalse($g::isProviderLimit(['_ai_error' => 'Claude returned empty text (stop reason: max_tokens)']));
+        $this->assertFalse($g::isProviderLimit([]));
+    }
+
     public function test_admin_override_locks_fields_and_auto_refresh_leaves_them_alone(): void
     {
         $society = $this->society('Flagship', 'flagship', [

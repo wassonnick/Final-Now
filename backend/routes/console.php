@@ -141,6 +141,14 @@ Artisan::command('market:auto-refresh {--limit=12} {--max-age-days=30} {--force}
     $force = (bool) $this->option('force') || (int) $this->option('max-age-days') === 0;
     $limit = max(1, min((int) $this->option('limit'), $force ? 200 : 30));
 
+    // If the provider already signalled a credit/usage limit, don't queue a sweep that
+    // would just short-circuit — report it so the operator knows to top up and retry.
+    if (app(\App\Services\Ops\AiBudgetGuard::class)->providerLimited()) {
+        $this->warn('AI provider usage limit is active — skipping. It clears automatically; top up credits and retry later.');
+
+        return;
+    }
+
     $query = Society::query()->where('is_published', true)->get(['id', 'field_sources']);
 
     if ($force) {

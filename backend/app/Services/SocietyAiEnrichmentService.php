@@ -154,7 +154,13 @@ PROMPT;
                 tools: [$tool],
             );
         } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
-            return ['_ai_error' => 'Claude HTTP '.($e->status ?? 0).': '.$e->getMessage()];
+            $status = (int) ($e->status ?? 0);
+
+            return [
+                '_ai_error' => 'Claude HTTP '.$status.': '.$e->getMessage(),
+                '_ai_error_status' => $status,
+                '_ai_quota_limited' => in_array($status, [402, 429], true),
+            ];
         } catch (\Throwable $e) {
             return ['_ai_error' => $e->getMessage()];
         }

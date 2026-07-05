@@ -36,11 +36,19 @@ class AutoRefreshSocietyMarket implements ShouldQueue
             return;
         }
 
-        if (! $budget->allow()) {
+        // Daily call cap, plus a circuit-breaker: once the provider signals a credit/usage
+        // limit, every remaining job in the sweep short-circuits instead of firing another
+        // failing call — so a bulk refresh stops cleanly at the credit line.
+        if (! $budget->allow() || $budget->providerLimited()) {
             return;
         }
 
         $budget->record();
-        $market->refreshAndApply($society);
+
+        try {
+            $market->refreshAndApply($society);
+        } catch (\App\Exceptions\AiProviderLimitException $e) {
+            $budget->tripProviderLimit();
+        }
     }
 }
