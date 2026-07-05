@@ -134,6 +134,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/societies/nearby-intelligence/bulk-auto-fill', [SocietyController::class, 'bulkNearbyIntelligenceAutoFill']);
     Route::post('/societies/{society}/nearby-intelligence/auto-fill', [SocietyController::class, 'nearbyIntelligenceAutoFill']);
     Route::get('/societies/seo-content/report', [AdminSocietySeoReportController::class, 'report']);
+    Route::get('/societies/seo-content/revoice-pending', [AdminSocietySeoContentController::class, 'revoicePending']);
     Route::post('/societies/seo-content/bulk-generate-drafts', [AdminSocietySeoReportController::class, 'bulkGenerate']);
     Route::post('/societies/seo-content/bulk-score', [AdminSocietySeoReportController::class, 'bulkScore']);
     Route::post('/societies/seo-content/bulk-regenerate-missing', [AdminSocietySeoReportController::class, 'bulkRegenerateMissing']);
@@ -147,6 +148,8 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/societies/{society}/seo-content/preview', [AdminSocietySeoContentController::class, 'preview']);
     Route::post('/societies/{society}/seo-content/generate-ai-draft', [AdminSocietySeoContentController::class, 'generateAiDraft']);
     Route::post('/societies/{society}/seo-content/improve-ai-draft', [AdminSocietySeoContentController::class, 'improveAiDraft']);
+    Route::post('/societies/{society}/seo-content/revoice/approve', [AdminSocietySeoContentController::class, 'approveRevoice']);
+    Route::post('/societies/{society}/seo-content/revoice/reject', [AdminSocietySeoContentController::class, 'rejectRevoice']);
     Route::apiResource('societies', SocietyController::class)->except(['create', 'edit']);
     Route::apiResource('properties', PropertyController::class)->except(['create', 'edit']);
     Route::apiResource('leads', LeadController::class)->only(['index', 'show', 'update', 'destroy']);

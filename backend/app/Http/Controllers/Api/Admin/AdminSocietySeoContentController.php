@@ -19,8 +19,57 @@ class AdminSocietySeoContentController extends Controller
     public function __construct(
         private readonly SocietySeoScoringService $scoring,
         private readonly SocietySeoAiDraftService $ai,
+        private readonly \App\Services\Seo\SocietySeoRevoiceService $revoice,
     )
     {
+    }
+
+    /** Societies whose SEO copy has a re-voiced draft waiting for review (live copy unchanged). */
+    public function revoicePending(): JsonResponse
+    {
+        $items = SocietySeoContent::query()
+            ->whereNotNull('revoice_draft')
+            ->with('society:id,name,slug,sector')
+            ->orderByDesc('revoice_generated_at')
+            ->get()
+            ->map(fn (SocietySeoContent $c) => [
+                'society_id' => $c->society_id,
+                'society_name' => $c->society?->name,
+                'society_slug' => $c->society?->slug,
+                'generated_at' => $c->revoice_generated_at,
+                'live' => collect($c->only(SocietySeoAiDraftService::OUTPUT_KEYS)),
+                'draft' => $c->revoice_draft,
+            ]);
+
+        return response()->json(['status' => 'ok', 'data' => $items]);
+    }
+
+    /** Approve a pending re-voice: merge the draft into the live copy and re-publish. */
+    public function approveRevoice(Request $request, Society $society): JsonResponse
+    {
+        $content = $society->seoContent;
+        if (! $content || ! $content->hasPendingRevoice()) {
+            return response()->json(['status' => 'error', 'message' => 'No pending re-voice draft for this society.'], 422);
+        }
+
+        $before = $content->toArray();
+        $updated = $this->revoice->approve($content, $request->user()?->getAuthIdentifier());
+        $this->logChange($request, $society, $updated, 'revoice_approved', $before, $updated->toArray());
+
+        return response()->json(['status' => 'ok', 'message' => 'Re-voiced SEO copy approved and published.', 'data' => $this->payload($updated)]);
+    }
+
+    /** Discard a pending re-voice draft, leaving the live copy exactly as it was. */
+    public function rejectRevoice(Request $request, Society $society): JsonResponse
+    {
+        $content = $society->seoContent;
+        if (! $content || ! $content->hasPendingRevoice()) {
+            return response()->json(['status' => 'error', 'message' => 'No pending re-voice draft for this society.'], 422);
+        }
+
+        $updated = $this->revoice->reject($content);
+
+        return response()->json(['status' => 'ok', 'message' => 'Re-voice draft discarded. Live copy is unchanged.', 'data' => $this->payload($updated)]);
     }
 
     public function show(Society $society): JsonResponse

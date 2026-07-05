@@ -23,3 +23,8 @@ export const publishSeoAutopilotDraft = (id:number) => adminFetch(`${base}/draft
 export const fetchSeoAutopilotReports = () => adminFetch(`${base}/reports`).then(json);
 export const generateSeoAutopilotReport = (period:string) => adminFetch(`${base}/reports`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({period})}).then(json);
 export const fetchGoogleSearchConsole = () => adminFetch(`${base}/search-console/fetch`, {method:'POST'}).then(json);
+
+// Society SEO re-voice review (draft-holding layer: live copy stays until approved).
+export const fetchRevoicePending = () => adminFetch('/admin/societies/seo-content/revoice-pending').then(json);
+export const approveRevoice = (societyId:number) => adminFetch(`/admin/societies/${societyId}/seo-content/revoice/approve`, {method:'POST'}).then(json);
+export const rejectRevoice = (societyId:number) => adminFetch(`/admin/societies/${societyId}/seo-content/revoice/reject`, {method:'POST'}).then(json);

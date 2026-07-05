@@ -210,6 +210,61 @@ Artisan::command('ops:validate-photo-references {--limit=60}', function () {
     $this->info("Checked {$societies->count()} approved covers; {$stale} stale reference(s) flagged.");
 })->purpose('Detect approved Google Places cover photos whose references have gone stale');
 
+Artisan::command('seo:revoice {--limit=10} {--force}', function () {
+    // Review-first re-voicing: regenerate published societies' SEO copy in the current brand
+    // voice and park each as a pending draft (revoice_draft). The live page is untouched until
+    // an admin approves. Budget-guarded, and stops cleanly if the provider signals a credit limit.
+    $limit = max(1, min((int) $this->option('limit'), 100));
+    $force = (bool) $this->option('force');
+
+    $budget = app(\App\Services\Ops\AiBudgetGuard::class);
+    if ($budget->providerLimited()) {
+        $this->warn('AI provider usage limit is active — skipping. Top up credits and retry later.');
+
+        return;
+    }
+
+    $societies = Society::query()
+        ->where('is_published', true)
+        ->whereHas('seoContent', fn ($q) => $q->where('status', 'published'))
+        ->with('seoContent')
+        ->orderBy('id')
+        ->get()
+        ->filter(fn ($s) => $force || ! $s->seoContent?->hasPendingRevoice())
+        ->take($limit);
+
+    if ($societies->isEmpty()) {
+        $this->info('No published societies need re-voicing (all already have a pending draft).');
+
+        return;
+    }
+
+    $service = app(\App\Services\Seo\SocietySeoRevoiceService::class);
+    $done = 0;
+    $failed = 0;
+
+    foreach ($societies as $society) {
+        if (! $budget->allow() || $budget->providerLimited()) {
+            $this->warn('Stopped early: AI budget cap reached or provider limit tripped.');
+            break;
+        }
+        $budget->record();
+        try {
+            $service->generateForSociety($society);
+            $done++;
+        } catch (\App\Exceptions\AiProviderLimitException $e) {
+            $budget->tripProviderLimit();
+            $this->warn("Stopped at provider credit limit after {$done} society(ies). Top up and re-run.");
+            break;
+        } catch (\Throwable $e) {
+            report($e);
+            $failed++;
+        }
+    }
+
+    $this->info("Re-voiced {$done} society(ies) into pending drafts ({$failed} failed). Nothing is live until approved in the SEO studio.");
+})->purpose('Regenerate published society SEO copy in the current brand voice as review-first pending drafts');
+
 Artisan::command('imports:tick', function () {
     // Advance any in-flight auto-import jobs from the background scheduler so a
     // one-click bulk import completes on its own — the admin no longer has to keep

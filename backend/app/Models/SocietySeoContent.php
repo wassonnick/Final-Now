@@ -18,6 +18,7 @@ class SocietySeoContent extends Model
         'internal_link_suggestions_json', 'schema_json', 'content_score',
         'keyword_score', 'uniqueness_score', 'readability_score', 'status',
         'generated_by', 'reviewed_by', 'published_at',
+        'revoice_draft', 'revoice_generated_at',
     ];
 
     protected $casts = [
@@ -33,7 +34,15 @@ class SocietySeoContent extends Model
         'uniqueness_score' => 'integer',
         'readability_score' => 'integer',
         'published_at' => 'datetime',
+        'revoice_draft' => 'array',
+        'revoice_generated_at' => 'datetime',
     ];
+
+    /** A regenerated draft is parked and awaiting review without touching the live copy. */
+    public function hasPendingRevoice(): bool
+    {
+        return ! empty($this->revoice_draft);
+    }
 
     public function society(): BelongsTo
     {
