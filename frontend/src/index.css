@@ -110,6 +110,10 @@ body,
   text-wrap: balance;
 }
 
+/* On dark hero bands an explicit white utility must beat the default dark heading colour,
+   otherwise headings render dark-on-dark and disappear. */
+.public-site .text-white { color: #fff !important; }
+
 .public-site p {
   text-wrap: pretty;
 }
