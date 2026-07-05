@@ -198,7 +198,7 @@ export function InsightsPage() {
 
     fetchPublicSocieties()
       .then(setSocieties)
-      .catch(() => setError("Live data is temporarily unavailable. Please use search or request a callback."))
+      .catch(() => setError("We can't load live data right now — try search, or ask us for a callback and we'll help."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -312,7 +312,7 @@ export function InsightsPage() {
           ) : error ? (
             <p className="rounded-2xl bg-amber-50 p-6 text-center text-amber-800">{error}</p>
           ) : marketRows.length === 0 ? (
-            <p className="rounded-2xl bg-blue-50 p-6 text-center text-navy-600">No published societies yet — check back soon.</p>
+            <p className="rounded-2xl bg-blue-50 p-6 text-center text-navy-600">Nothing to show here just yet — new societies are on the way.</p>
           ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[980px] border-separate border-spacing-y-2">

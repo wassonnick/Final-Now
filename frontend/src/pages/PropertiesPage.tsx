@@ -279,18 +279,18 @@ export function PropertiesPage() {
         ) : (
           <div className="rounded-[2rem] border border-navy-100 bg-white p-10 text-center">
             <h2 className="text-2xl font-bold text-navy-900">
-              {properties.length === 0 ? 'No verified homes are currently published' : 'No matching properties found'}
+              {properties.length === 0 ? "We'd rather show you nothing than something fake" : 'Nothing matched — try widening the search'}
             </h2>
 
             <p className="mx-auto mt-2 max-w-2xl text-navy-500">
               {properties.length === 0
-                ? 'We do not show fake listings. Request current availability and SocietyFlats will help you find rental or resale options.'
-                : 'Try searching with another locality or society.'}
+                ? "We never post listings we can't stand behind. Tell us what you're looking for and we'll find current rental or resale homes for you."
+                : 'Try another locality or society, and we\'ll surface what fits.'}
             </p>
 
             {properties.length === 0 ? (
               <Button className="mt-5 rounded-full bg-blue-700 px-6 hover:bg-blue-800" onClick={() => setAvailabilityOpen(true)}>
-                Request current availability
+                Find me current homes
               </Button>
             ) : null}
           </div>

@@ -245,11 +245,11 @@ export function SocietiesPage() {
           </div>
         ) : (
           <div className="rounded-[2rem] border border-navy-100 bg-white p-10 text-center">
-            <h2 className="text-2xl font-bold text-navy-900">No societies found</h2>
+            <h2 className="text-2xl font-bold text-navy-900">Nothing matched — let's widen the search.</h2>
             <p className="mt-2 text-navy-500">
-              Try a different society, builder, sector or locality, or{' '}
+              Try another society, builder, sector or locality, or{' '}
               <Link to="/ai-advisor" className="font-semibold text-blue-700 hover:underline">
-                ask SocietyFlats AI for the closest match
+                let our AI advisor find the closest fit
               </Link>
               .
             </p>

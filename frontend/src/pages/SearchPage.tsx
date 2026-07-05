@@ -1742,7 +1742,7 @@ export function SearchPage() {
               <div className="border-b border-[#E7DCCB] px-5 py-4">
                 <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#2A6147]">Live map intelligence</p>
                 <h2 className="mt-1 text-xl font-medium text-[#10251F]">Societies around your search</h2>
-                <p className="mt-1 text-xs leading-5 text-[#6E756E]">Select a result to inspect its location and published nearby context.</p>
+                <p className="mt-1 text-xs leading-5 text-[#6E756E]">Pick a result to see where it sits and what's nearby.</p>
               </div>
               <div className="relative min-h-0 flex-1 overflow-y-auto bg-[#DDE7DC]">
                 {GOOGLE_MAPS_API_KEY && getValidMapSocieties(societyResults).length ? (

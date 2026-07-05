@@ -103,8 +103,8 @@ export function MapsPage() {
 
   useEffect(() => {
     setPublicSeo(
-      "Gurgaon Society Map | SocietyFlats",
-      "Explore verified Gurgaon societies on a live map with society-first location intelligence, valid coordinates and profile links.",
+      "Gurgaon Society Map — Explore Verified Societies Live | SocietyFlats",
+      "Explore Gurgaon's verified societies on a live map — real coordinates, society-first, with a link straight to every profile and the homes nearby.",
       { canonical: "/maps" },
     );
   }, []);
@@ -189,7 +189,7 @@ export function MapsPage() {
                 Explore Gurgaon societies on a live map.
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-navy-500 md:text-lg">
-                Search society, sector, builder or locality, compare verified pins and continue to profiles or homes around the same location.
+                Search a society, sector, builder or locality, compare verified pins, and jump straight to profiles or the homes around them.
               </p>
             </div>
 
@@ -273,8 +273,8 @@ export function MapsPage() {
 
           {!googleMapsApiKey ? (
             <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-              <span className="font-black">Live map temporarily unavailable.</span>{" "}
-              SocietyFlats is showing a privacy-safe map preview. Published coordinate pins will return when the map service is available.
+              <span className="font-black">The live map's taking a short breather.</span>{" "}
+              We're showing a privacy-safe preview for now — the real society pins will be back as soon as the map service is available.
             </div>
           ) : null}
         </div>

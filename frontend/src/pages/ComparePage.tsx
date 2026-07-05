@@ -420,7 +420,7 @@ export function ComparePage() {
         <main className="mx-auto max-w-[1360px] px-4 py-8 md:px-10 md:pb-16">
           <h1 className="font-display text-[34px] font-medium text-[#10251F]">Compare societies</h1>
           <p className="mt-1.5 text-sm text-[#6E756E]">Side by side across the things that actually decide where you live.</p>
-          <p className="mt-1.5 text-[13px] font-semibold text-[#2A6147]">Every column below comes from the same admin-reviewed dataset — nothing here is estimated on the spot.</p>
+          <p className="mt-1.5 text-[13px] font-semibold text-[#2A6147]">Every column comes from the same checked dataset — nothing here is guessed on the spot.</p>
 
           <div className="mt-7 rounded-[16px] bg-[#123C32] px-[22px] py-[18px] text-[#F1F5EF] md:flex md:items-center md:gap-6">
             <span className="text-xs font-bold uppercase tracking-[0.08em] text-[#8BCB9E]">AI summary</span>
