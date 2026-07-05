@@ -73,20 +73,19 @@ Project: {$name}
 Location: {$location}
 
 METHOD — do this, do not shortcut:
-1. Run separate searches for this exact project on each major portal. Use queries like:
-   - "{$name} {$sector} 99acres price"
-   - "{$name} {$sector} magicbricks price range"
-   - "{$name} {$sector} housing.com price"
-   - "{$name} {$sector} squareyards price"
-   - "{$name} {$sector} rent"
+1. Run separate searches for this exact project. Use queries like:
+   - "{$name} {$sector} resale price 2 3 4 BHK crore"
+   - "{$name} {$sector} price 99acres OR squareyards OR housing"
+   - "{$name} {$sector} rent per month"
+   - "{$name} {$sector} 2026 resale review OR market analysis"
    Also try the project name without the sector if the first pass is thin.
-2. For BUY PRICE, your target is the portal's headline "PRICE RANGE" banner — the "₹X - ₹Y Cr" figure shown at the TOP of the MAIN project overview page (the .../npxid-... page on 99acres, or the project page on Housing.com / Square Yards), directly above the per-BHK breakdown (2 BHK, 3 BHK, 4 BHK, 5 BHK/penthouse). COPY that banner range verbatim into buy_range.
-   - This banner IS the answer. Do NOT open the "-resale-in-" / "for-resale" listing sub-pages and build your own range from individual asking prices — those resale asks routinely run BELOW the banner's smallest-configuration price, and using them produces a floor that does not match the portal. Ignore them for buy_range.
-   - If (and only if) the main project page shows NO headline price-range banner, fall back to the per-BHK breakdown: buy_range = the smallest configuration's minimum to the largest configuration's (5 BHK / penthouse) maximum. Never let a cheap distressed listing set the floor.
-   - Example: if 99acres' banner reads "₹14.6 - 40.44 Cr", buy_range is exactly "₹14.6 Cr - ₹40.44 Cr" — not a lower resale-derived band like "₹10 - 33 Cr".
-3. For RENT, read the current asking rents across configurations on the portal and span lowest to highest.
-4. price_per_sqft = the ₹/sqft band the MAIN project page displays for this project (matching the banner price range), not a resale-listing median that undercuts it.
-5. Confirm the banner on the main project page of at least one major portal; cross-check the per-BHK figures against a second portal where possible. If the main page shows no banner and you must fall back to configurations, mark confidence "medium"; if data is thin or stale, mark "low" and say so.
+2. For BUY PRICE, build the CURRENT RESALE market range — what units are actually listed / transacting for now — and cross-check it across at least two independent sources (property portals AND any recent market-analysis articles). Aim for the CONSENSUS, not any single listing:
+   - FLOOR = the typical current asking price of the smallest actively-traded configuration. IGNORE a lone stale or unusually cheap outlier that sits well below what other sources show for that configuration — one cheap listing must not set the floor.
+   - CEILING = the current price of the largest configuration actually listed (top BHK / penthouse). Do NOT inflate it with a neighbouring project's price or a marketing "up to" figure that no real unit in THIS project reaches.
+   - When a portal's headline "price range" is much wider than what real listings and market analyses show (e.g. a marketing band whose top is really a different, pricier project), trust the listings/analyst consensus, not the marketing band.
+3. For RENT, read the current asking rents across configurations and span the consensus lowest to highest.
+4. price_per_sqft = the current ₹/sqft band that recent listings/analyses imply for this project.
+5. Confidence: "high" only when 2+ recent independent sources agree; "medium" for one solid recent source; "low" for thin or stale data — and say which in notes.
 
 UNITS — this trips people up, get it right:
 - rent_range is a MONTHLY rent, always in rupees or LAKH per month (e.g. '₹85,000 - ₹2.5 lakh per month'). Monthly rent is NEVER in crores — even the priciest Gurgaon homes rent for a few lakh a month, so any crore figure in rent is wrong.
@@ -95,7 +94,7 @@ UNITS — this trips people up, get it right:
 Return ONLY this JSON object, no markdown fences, no commentary:
 {
   "rent_range": "ONLY a short MONTHLY range in ₹/lakh, e.g. '₹85,000 - ₹2,50,000 per month', spanning current asking rents. Never crores. Never add parentheticals. Null if no current project-specific listings found.",
-  "buy_range": "ONLY a short range, e.g. '₹X Cr - ₹Y Cr', COPIED from the portal's headline PRICE RANGE banner on the main project page (NOT built from resale listing asks, which run lower). Never add parentheticals or configuration breakdowns. Null if the project has no price-range banner and no per-BHK figures.",
+  "buy_range": "ONLY a short range, e.g. '₹X Cr - ₹Y Cr', for the CURRENT RESALE market: floor = typical smallest actively-traded config (ignore lone cheap outliers), ceiling = largest config actually listed. Consensus of 2+ recent sources; do not inflate the ceiling with a neighbouring project's price. Never add parentheticals or configuration breakdowns. Null if none found.",
   "price_per_sqft": "current ₹/sqft band, e.g. '₹X,XXX - ₹Y,YYY', or null",
   "rental_yield": "string e.g. X.X%, or null",
   "average_rent": "single representative current asking rent, or null",
@@ -151,7 +150,7 @@ PROMPT;
                 maxTokens: 2048,
                 messages: [['role' => 'user', 'content' => $prompt]],
                 model: $model,
-                system: 'You are an Indian real-estate pricing researcher. Your buy_range is checked directly against the PRICE RANGE banner that 99acres / Housing.com / Square Yards display at the top of a project page, so for buy_range you must COPY that displayed banner for the exact named project — do NOT rebuild it from individual resale listing asks, which run below the banner and will fail the check. Rent and per-sqft come from the same project page\'s current figures. Never use a sector-wide average or a stale article. Cross-check the portal figures, and use null rather than guessing.',
+                system: 'You are an Indian real-estate pricing researcher. Report the CURRENT RESALE market for the exact named project: the price a buyer actually pays today, backed by the consensus of at least two recent independent sources (property portals and recent market-analysis articles). Build the buy range from real current listings — floor from the typical smallest actively-traded configuration (ignoring lone cheap outliers), ceiling from the largest configuration actually listed. Do NOT inflate the ceiling with a neighbouring project\'s price or a marketing "up to" band that no real unit in this project reaches, and never use a builder launch price or a sector-wide average. Prefer figures 2+ sources agree on, and use null rather than guessing.',
                 tools: [$tool],
             );
         } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
