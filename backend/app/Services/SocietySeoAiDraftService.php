@@ -104,7 +104,8 @@ class SocietySeoAiDraftService
         $shape['schema_json'] = new \stdClass();
 
         return "Create a {$mode} SocietyFlats SEO draft for an Indian real-estate user considering rent, resale, shortlisting or verified availability in Gurgaon.\n\n"
-            ."STRICT SAFETY RULES:\n- Use only the supplied facts JSON.\n- Never invent towers, units, acres, prices, amenities, RERA, possession, distances, schools, hospitals, ratings, reviews or availability.\n- If a fact is missing, skip the claim or state that it needs verification without filler.\n- Do not promise appreciation, yield, inventory or returns.\n- Use natural helpful language without keyword stuffing.\n- Internal links must be safe relative SocietyFlats paths only; use an empty array if uncertain.\n- FAQ answers must match the visible draft content.\n- Output valid JSON only with exactly the requested keys.\n\n"
+            ."VOICE & TONE (SocietyFlats brand — match it exactly):\n- Warm, human and reassuring, like a knowledgeable local friend — never corporate, robotic or salesy.\n- Premium and confident but calm: short, clear sentences and strong verbs; no hype, no exclamation marks, no clichés ('nestled', 'dream home', 'prime location', 'stone's throw', 'luxury living at its finest').\n- Lead with how the place actually lives — how safe it feels, how it commutes, everyday life — supported by the scores and checked data. Intelligence delivered warmly, not as a spec sheet.\n- Address the reader as 'you'. Be honest about what is verified versus still to confirm; confidence should come from evidence, not adjectives.\n- No inflated claims, no fake scale, no '#1 / best-in-India' language, no guaranteed outcomes.\n\n"
+            ."STRICT SAFETY RULES (override tone if they ever conflict):\n- Use only the supplied facts JSON.\n- Never invent towers, units, acres, prices, amenities, RERA, possession, distances, schools, hospitals, ratings, reviews or availability.\n- If a fact is missing, skip the claim or state that it needs verification without filler.\n- Do not promise appreciation, yield, inventory or returns.\n- Use natural helpful language without keyword stuffing.\n- Internal links must be safe relative SocietyFlats paths only; use an empty array if uncertain.\n- FAQ answers must match the visible draft content.\n- Output valid JSON only with exactly the requested keys.\n\n"
             .'SUPPLIED FACTS JSON: '.json_encode($facts, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n"
             .'MISSING FACT WARNINGS: '.json_encode($warnings)."\n"
             .($existing ? 'EXISTING DRAFT TO IMPROVE: '.json_encode($existing, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n" : '')
@@ -117,7 +118,7 @@ class SocietySeoAiDraftService
         $model = trim((string) config('services.gemini.model', 'gemini-2.0-flash')) ?: 'gemini-2.0-flash';
         $response = Http::timeout(45)->withHeaders(['x-goog-api-key' => $apiKey, 'Content-Type' => 'application/json'])
             ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
-                'systemInstruction' => ['parts' => [['text' => 'You write factual, admin-reviewable SocietyFlats SEO drafts. Return JSON only and never add facts outside supplied data.']]],
+                'systemInstruction' => ['parts' => [['text' => 'You write SocietyFlats SEO drafts in a warm, human, premium-but-honest voice — like a knowledgeable local friend, never corporate or salesy. Stay strictly factual to the supplied data, add no facts of your own, avoid hype and clichés, and return JSON only.']]],
                 'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],
                 'generationConfig' => ['temperature' => 0.2, 'responseMimeType' => 'application/json'],
             ]);
@@ -133,7 +134,7 @@ class SocietySeoAiDraftService
             maxTokens: 5000,
             messages: [['role' => 'user', 'content' => $prompt]],
             model: trim((string) config('services.claude.model', 'claude-haiku-4-5')) ?: 'claude-haiku-4-5',
-            system: 'Write factual, admin-reviewable SocietyFlats SEO drafts from supplied data only. Return valid JSON only.',
+            system: 'Write SocietyFlats SEO drafts in a warm, human, premium-but-honest voice — like a knowledgeable local friend, never corporate or salesy, no hype or clichés. Use only the supplied data, add no facts of your own, and return valid JSON only.',
         );
         $text = collect($message->content)->filter(fn ($block) => $block->type === 'text')->map(fn ($block) => $block->text)->join("\n");
         return $this->decode($text);
