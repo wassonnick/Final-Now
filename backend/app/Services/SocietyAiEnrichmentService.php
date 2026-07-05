@@ -117,39 +117,21 @@ PROMPT;
         return $this->enrichMarketDataOnlyGemini($name, $sector, $city);
     }
 
-    /** Property portals whose current listings we price against. */
-    private const MARKET_PORTAL_DOMAINS = [
-        '99acres.com', 'magicbricks.com', 'housing.com', 'squareyards.com', 'nobroker.in', 'proptiger.com',
-    ];
-
     private function enrichMarketDataOnlyClaude(string $name, string $sector, string $city, string $apiKey): array
     {
-        // Pass 1: restrict the search to the real property portals so the model reads
-        // current listings, never a stale blog or the builder's launch price. If that
-        // finds no project-specific figure, pass 2 opens the search for coverage.
-        $restricted = $this->runClaudeMarketSearch($name, $sector, $city, $apiKey, self::MARKET_PORTAL_DOMAINS);
-        if (isset($restricted['_ai_error']) || $this->hasMarketFigure($restricted)) {
-            return $restricted;
-        }
-
-        $open = $this->runClaudeMarketSearch($name, $sector, $city, $apiKey, null);
-
-        return isset($open['_ai_error']) ? $restricted : $open;
+        return $this->runClaudeMarketSearch($name, $sector, $city, $apiKey);
     }
 
-    /**
-     * @param  array<int,string>|null  $allowedDomains  Restrict the web search to these
-     *                                                   domains, or null for an open search.
-     */
-    private function runClaudeMarketSearch(string $name, string $sector, string $city, string $apiKey, ?array $allowedDomains): array
+    private function runClaudeMarketSearch(string $name, string $sector, string $city, string $apiKey): array
     {
         $model = trim((string) config('services.claude.model', 'claude-haiku-4-5')) ?: 'claude-haiku-4-5';
         $prompt = $this->marketPrompt($name, $sector, $city);
 
+        // Open web search (no allowed_domains — several portals like MagicBricks block
+        // Anthropic's crawler and hard-400 the request when named as an allowed domain).
+        // The portal-targeted prompt still steers the queries to the right listings, and
+        // the search returns portal price snippets even for pages we cannot fully crawl.
         $tool = (new \Anthropic\Messages\WebSearchTool20260209())->withMaxUses(8)->withAllowedCallers(['direct']);
-        if ($allowedDomains !== null) {
-            $tool = $tool->withAllowedDomains($allowedDomains);
-        }
 
         try {
             $client = new \Anthropic\Client(apiKey: $apiKey);
@@ -193,18 +175,6 @@ PROMPT;
         $data['market_sources'] = collect($sources)->unique('url')->values()->all();
 
         return $data;
-    }
-
-    /** True when the AI result carries at least one usable rent or buy figure. */
-    private function hasMarketFigure(array $data): bool
-    {
-        foreach (['rent_range', 'buy_range', 'average_rent', 'average_sale_price', 'price_per_sqft'] as $field) {
-            if (! empty($data[$field]) && trim((string) $data[$field]) !== '' && strtolower(trim((string) $data[$field])) !== 'null') {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private function enrichMarketDataOnlyGemini(string $name, string $sector, string $city): array
