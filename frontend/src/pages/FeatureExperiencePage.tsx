@@ -24,7 +24,7 @@ import { fetchPublicProperties, fetchPublicSocieties, formatPublicLocation, sear
 import { cn } from '@/lib/utils';
 import { createCustomerAccountSession, rememberBrokerActivitySubmission } from '@/lib/customerAccount';
 import { fetchAccountByPhone, syncAccountToBackend } from '@/lib/accountApi';
-import { AiChatTool } from '@/components/chat/AiChatTool';
+import { SocietyAssistant } from '@/components/ai/SocietyAssistant';
 import { setPublicSeo } from '@/lib/seo';
 import { API_BASE_URL } from '@/config/api';
 
@@ -662,7 +662,7 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
         {feature === 'maps' ? <MapsTool societies={societies} /> : null}
         {feature === 'recommendations' ? <RecommendationsTool societies={societies} /> : null}
         {feature === 'broker-crm' ? <LeadFlowTool feature={feature} /> : null}
-        {feature === 'chat' ? <AiChatTool /> : null}
+        {feature === 'chat' ? <SocietyAssistant /> : null}
       </section>
     </div>
   );
