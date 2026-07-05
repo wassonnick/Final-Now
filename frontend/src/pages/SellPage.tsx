@@ -110,8 +110,8 @@ export function SellPage() {
 
   useEffect(() => {
     setPublicSeo(
-      "List Your Gurgaon Flat | Connect with Verified Buyers & Tenants Directly",
-      "Skip endless phone calls from unverified brokers. List your premium property directly on SocietyFlats to reach high-intent clients looking specifically inside your residential community.",
+      "List Your Gurgaon Flat — Reach Verified Buyers & Tenants Directly | SocietyFlats",
+      "List your Gurgaon home once and meet buyers and tenants already searching your exact society — genuine, ready people. No endless broker calls, no listing spam.",
       { canonical: "/sell" },
     );
     window.scrollTo(0, 0);
@@ -314,10 +314,10 @@ export function SellPage() {
                 Owner listing
               </Badge>
               <h1 className="max-w-2xl text-3xl font-black tracking-[-0.045em] leading-[0.98] text-slate-950 md:text-5xl">
-                Own a premium apartment in Gurgaon? List your property directly.
+                Own a home in Gurgaon? List it once, and meet the right people.
               </h1>
               <p className="mt-4 max-w-xl text-sm leading-6 text-slate-600 md:text-base md:leading-7">
-                We match your home with pre-qualified buyers and tenants who are already researching your specific society. Skip endless broker calls and listing spam.
+                We introduce your home to buyers and tenants already searching your exact society — genuine, ready people. No endless broker calls, no listing spam.
               </p>
               <div className="mt-5 grid gap-2 sm:grid-cols-3">
                 {[

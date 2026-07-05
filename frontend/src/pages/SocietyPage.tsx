@@ -579,8 +579,8 @@ export function SocietyPage() {
       ? `${society.name}${sectorForSeo ? `, ${sectorForSeo}` : ""} Gurgaon — Verified Profile, Price & Score | SocietyFlats`
       : "SocietyFlats Society Profile");
     const description = seoContent?.seo_description || (society?.name
-      ? `${society.name} in ${sectorForSeo || "Gurgaon"}: security score ${securityScoreForSeo || "—"}/10, connectivity ${connectivityScoreForSeo || "—"}/10. ${rentRangeForSeo ? `Rent ${rentRangeForSeo}.` : ""} ${buyRangeForSeo ? `Resale ${buyRangeForSeo}.` : ""} Reviewed by SocietyFlats admin, sourced via Google Places.`
-      : "Explore verified Gurgaon society profiles, live homes and society intelligence on SocietyFlats.");
+      ? `${society.name} in ${sectorForSeo || "Gurgaon"}: security score ${securityScoreForSeo || "—"}/10, connectivity ${connectivityScoreForSeo || "—"}/10. ${rentRangeForSeo ? `Rent ${rentRangeForSeo}.` : ""} ${buyRangeForSeo ? `Resale ${buyRangeForSeo}.` : ""} Checked by real people at SocietyFlats, with photos from Google Places.`
+      : "Get to know Gurgaon's societies — real-life scores, honest pricing and live homes, each one checked by real people at SocietyFlats.");
 
     const visibleFaqs = Array.isArray(seoContent?.faq_json)
       ? seoContent.faq_json.filter((item: any) => item?.question && item?.answer)

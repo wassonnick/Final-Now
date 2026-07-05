@@ -175,7 +175,7 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
       eyebrow: `${label} Gurgaon`,
       title: `Best ${label} societies in Gurgaon`,
       description:
-        `Compare ${label} societies by location, score, rent range, resale range and available homes before booking a visit.`,
+        `Compare ${label} societies by location, real-life score, honest rent and resale ranges and the homes available — so you can choose calmly before booking a visit.`,
       canonical: `/builder/${builderSlug}`,
       searchQuery: `${label} Gurgaon`,
       primaryCta: `See which ${label} societies fit your budget`,
@@ -183,7 +183,7 @@ function landingCopy(variant: LandingVariant, localitySlug?: string, builderSlug
       focusLabel: `${label} best match`,
       insightTitle: `Why shortlist ${label} societies first?`,
       insightText:
-        `${label} projects can vary sharply by micro-market, maintenance, access and inventory depth. SocietyFlats keeps the builder context connected to society-level details.`,
+        `${label} projects can differ sharply by micro-market, upkeep, access and how much is actually available. We keep the builder's story tied to real society-level detail — so you compare the home, not just the brand.`,
     };
   }
 

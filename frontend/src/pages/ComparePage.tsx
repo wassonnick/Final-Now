@@ -338,8 +338,8 @@ export function ComparePage() {
 
   useEffect(() => {
     setPublicSeo(
-      "Compare Gurgaon Societies Side-by-Side — Score, Rent, Resale | SocietyFlats",
-      "Compare Gurgaon societies by score, location, amenities, rent range, resale range and next actions before choosing a home.",
+      "Compare Gurgaon Societies Side-by-Side — Scores, Rent & Resale | SocietyFlats",
+      "Put Gurgaon societies side by side — scores, location, amenities, honest rent and resale ranges — and see clearly which one feels like home before you visit.",
     );
     window.scrollTo(0, 0);
   }, []);

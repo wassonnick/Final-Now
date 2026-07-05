@@ -69,8 +69,8 @@ export function PropertiesPage() {
   useEffect(() => {
     let mounted = true;
     setPublicSeo(
-      'Homes Inside Societies SocietyFlats Has Already Reviewed | SocietyFlats',
-      'Browse published Gurgaon rental and resale homes inside SocietyFlats society profiles.',
+      'Gurgaon Homes Inside Societies We Have Already Checked | SocietyFlats',
+      'Browse real Gurgaon rental and resale homes — every one inside a society we have already checked and scored for you, so you can shortlist with confidence.',
       { canonical: '/properties' },
     );
 
@@ -141,12 +141,12 @@ export function PropertiesPage() {
             </div>
 
             <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-navy-900 md:text-6xl">
-              Homes inside societies SocietyFlats has already reviewed
+              Homes inside societies we've already checked.
             </h1>
 
             <p className="mt-5 text-lg leading-relaxed text-navy-500">
-              Every home below sits inside a society we've checked for security, access and maintenance —
-              not a random address.
+              Every home here sits inside a society we've already checked for safety, access and upkeep —
+              so you're never chasing a random address.
             </p>
           </div>
 

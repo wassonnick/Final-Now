@@ -12,7 +12,7 @@ export function NriServicesPage() {
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
-    setPublicSeo("NRI Property Support in Gurgaon | SocietyFlats", "Request a human-reviewed Gurgaon property consultation for buying, selling, renting out or local coordination from overseas.", { canonical: "/nri-services" });
+    setPublicSeo("NRI Property Support in Gurgaon — Handled with Care | SocietyFlats", "Buying, selling or renting out in Gurgaon from overseas? Start with a real, human consultation — local coordination you can trust, never invented inventory or guaranteed outcomes.", { canonical: "/nri-services" });
   }, []);
 
   async function submit(event: FormEvent) {
@@ -31,7 +31,7 @@ export function NriServicesPage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
       <section className="rounded-[36px] border border-blue-100 bg-white p-7 shadow-sm md:p-10">
-        <div className="flex items-start gap-4"><div className="rounded-2xl bg-blue-50 p-3 text-blue-700"><Globe2 className="h-7 w-7" /></div><div><p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">NRI property desk</p><h1 className="mt-2 text-4xl font-black text-slate-950">Human-reviewed Gurgaon property support from overseas</h1><p className="mt-3 max-w-3xl leading-7 text-slate-600">Request local coordination for buying, selling, renting out or property management. We start with a consultation—never with invented inventory or guaranteed outcomes.</p></div></div>
+        <div className="flex items-start gap-4"><div className="rounded-2xl bg-blue-50 p-3 text-blue-700"><Globe2 className="h-7 w-7" /></div><div><p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">NRI property desk</p><h1 className="mt-2 text-4xl font-black text-slate-950">Gurgaon property, handled with care while you're overseas.</h1><p className="mt-3 max-w-3xl leading-7 text-slate-600">Buying, selling, renting out or just need someone local you can trust? We start with a real conversation — never with invented inventory or promises we can't keep.</p></div></div>
         <div className="mt-7 grid gap-3 md:grid-cols-4">{['Buy with local verification','Sell through a reviewed process','Rent out real inventory','Coordinate property management'].map((text) => <div key={text} className="rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700">{text}</div>)}</div>
       </section>
 

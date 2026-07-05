@@ -191,8 +191,8 @@ export function InsightsPage() {
 
   useEffect(() => {
     setPublicSeo(
-      "Gurgaon Real Estate Market Insights | Property Values & Rental Trends",
-      "Track verified rental price bands, property demand shifts and long-term investment viability scores across Gurgaon’s key micro-markets.",
+      "Gurgaon Real Estate Market Insights — Prices & Rental Trends | SocietyFlats",
+      "See how Gurgaon really moves — honest rental price bands, shifting demand and long-term value across the city's key micro-markets, so you can time your move with clarity.",
     );
     window.scrollTo(0, 0);
 
@@ -231,7 +231,7 @@ export function InsightsPage() {
               </h1>
 
               <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-blue-500">
-                Track verified rental price bands, demand shifts and investment context across Gurgaon’s key micro-markets before users shortlist, compare and request verification.
+                Follow honest rental price bands, demand shifts and investment context across Gurgaon's key micro-markets — so you can time your move with a clear head.
               </p>
 
               <div className="mt-5 flex flex-wrap gap-2">

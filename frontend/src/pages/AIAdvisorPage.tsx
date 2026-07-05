@@ -647,8 +647,8 @@ export function AIAdvisorPage() {
 
   useEffect(() => {
     setPublicSeo(
-      "SocietyFlats AI Advisor | Smart Gurgaon Home Search",
-      "Use our natural language AI tool to find the perfect home. Shortlist properties based on office commute times, preferred schools, monthly budget and lifestyle needs.",
+      "SocietyFlats AI Advisor — Your Gurgaon Home Search, Made Simple",
+      "Just tell our AI advisor what matters — your commute, budget, schools, the feel you're after — and it'll gently shortlist the Gurgaon societies and homes that genuinely fit.",
     );
     window.scrollTo(0, 0);
   }, []);
@@ -747,7 +747,7 @@ export function AIAdvisorPage() {
           SocietyFlats AI Advisor
         </h1>
         <p className="mt-1.5 text-sm text-[#6E756E]">
-          A local expert that reasons from verified society data — not a black box.
+          Like a knowledgeable local friend — it reasons from verified society data, and shows its work.
         </p>
         <p className="mt-1.5 text-[13px] font-semibold text-[#2A6147]">
           It only recommends from the {publicSocieties.length || "published"} societies SocietyFlats has published and reviewed — it will tell you when nothing fits well, instead of forcing a match.
@@ -950,11 +950,11 @@ export function AIAdvisorPage() {
               </span>
 
               <h1 className="mt-4 max-w-3xl font-display text-[34px] font-black leading-[0.98] tracking-[-0.045em] text-navy-950 md:text-[52px]">
-                Tailor your search in plain English.
+                Just tell us what you need, in your own words.
               </h1>
 
               <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-blue-500 md:text-[17px]">
-                Continue your Gurgaon society shortlist. Tell our intelligent engine exactly what your family needs. Skip repetitive filters and get a data-backed shortlist by budget, office, school, builder, pet needs, lifestyle or investment goal.
+                Pick up your Gurgaon shortlist where you left off. Tell us exactly what your family needs — budget, office, schools, builder, pets, lifestyle or investment goal — and skip the repetitive filters for a shortlist that genuinely fits.
               </p>
 
               {resultSocieties.length ? (
