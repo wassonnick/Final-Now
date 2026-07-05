@@ -74,15 +74,16 @@ Location: {$location}
 
 METHOD — do this, do not shortcut:
 1. Run separate searches for this exact project on each major portal. Use queries like:
-   - "{$name} {$sector} 99acres price for sale"
-   - "{$name} {$sector} magicbricks resale price"
-   - "{$name} {$sector} housing.com rent"
-   - "{$name} {$sector} squareyards price per sqft"
-   - "{$name} {$sector} nobroker rent"
+   - "{$name} {$sector} 99acres price"
+   - "{$name} {$sector} magicbricks price range"
+   - "{$name} {$sector} housing.com price"
+   - "{$name} {$sector} squareyards price"
+   - "{$name} {$sector} rent"
    Also try the project name without the sector if the first pass is thin.
-2. Read the ACTIVE listings (units currently for sale / for rent) — NOT sector-wide averages, NOT a single old article, NOT a builder's original launch price. Prefer listings and price pages updated within the last 12 months ({$year} or late last year).
-3. Build each range from the SPREAD of current listings across configurations: buy_range = lowest currently-listed resale price to the highest; rent_range = lowest current asking rent to the highest; price_per_sqft = the current ₹/sqft band those listings imply.
-4. Cross-check across at least two portals. If portals disagree, widen the range to cover both rather than picking one. If you can only find one stale figure, mark confidence "low" and say so.
+2. For BUY PRICE, your target is the project's headline "PRICE RANGE" as shown at the top of the portal's project page — the range that spans ALL configurations from the SMALLEST BHK to the LARGEST (e.g. 99acres shows a project price range plus a per-BHK breakdown: 2 BHK, 3 BHK, 4 BHK, 5 BHK/penthouse). Set buy_range = the minimum price of the smallest configuration to the MAXIMUM price of the LARGEST configuration. Do NOT stop at 3/4 BHK — include the biggest 5 BHK / penthouse figure, and do NOT let one cheap distressed resale listing drag the floor below the portal's stated minimum. If the portal shows "₹14.6 - 40.44 Cr", return that, not a narrower resale-only band.
+3. For RENT, read the current asking rents across configurations and span lowest to highest.
+4. price_per_sqft = the current ₹/sqft band the portal shows for this project.
+5. Cross-check across at least two portals. If portals disagree, widen the range to cover both. Prefer the config-spanning project price range over a single individual listing. If data is thin or only a stale figure exists, mark confidence "low" and say so.
 
 UNITS — this trips people up, get it right:
 - rent_range is a MONTHLY rent, always in rupees or LAKH per month (e.g. '₹85,000 - ₹2.5 lakh per month'). Monthly rent is NEVER in crores — even the priciest Gurgaon homes rent for a few lakh a month, so any crore figure in rent is wrong.
@@ -91,7 +92,7 @@ UNITS — this trips people up, get it right:
 Return ONLY this JSON object, no markdown fences, no commentary:
 {
   "rent_range": "ONLY a short MONTHLY range in ₹/lakh, e.g. '₹85,000 - ₹2,50,000 per month', spanning current asking rents. Never crores. Never add parentheticals. Null if no current project-specific listings found.",
-  "buy_range": "ONLY a short range, e.g. '₹X Cr - ₹Y Cr', spanning current resale listings. Never add parentheticals or configuration breakdowns. Null if none found.",
+  "buy_range": "ONLY a short range, e.g. '₹X Cr - ₹Y Cr', matching the portal's config-spanning project PRICE RANGE (smallest BHK minimum to largest BHK / penthouse maximum). Never add parentheticals or configuration breakdowns. Null if none found.",
   "price_per_sqft": "current ₹/sqft band, e.g. '₹X,XXX - ₹Y,YYY', or null",
   "rental_yield": "string e.g. X.X%, or null",
   "average_rent": "single representative current asking rent, or null",
@@ -128,7 +129,10 @@ PROMPT;
 
     private function runClaudeMarketSearch(string $name, string $sector, string $city, string $apiKey): array
     {
-        $model = trim((string) config('services.claude.model', 'claude-haiku-4-5')) ?: 'claude-haiku-4-5';
+        // Stronger reasoning model for the accuracy-critical market synthesis (config-spanning
+        // portal price ranges), falling back to the default import model if unset.
+        $model = trim((string) config('services.claude.market_model'))
+            ?: (trim((string) config('services.claude.model', 'claude-haiku-4-5')) ?: 'claude-haiku-4-5');
         $prompt = $this->marketPrompt($name, $sector, $city);
 
         // Open web search (no allowed_domains — several portals like MagicBricks block

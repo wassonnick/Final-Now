@@ -100,6 +100,11 @@ return [
     'claude' => [
         'api_key' => env('ANTHROPIC_API_KEY'),
         'model' => env('ANTHROPIC_MODEL', 'claude-haiku-4-5'),
+        // Market pricing must match 99acres/Housing/MagicBricks exactly, so the market
+        // researcher runs on a stronger reasoning model that synthesises portal listings
+        // and config-spanning price ranges more reliably than Haiku. Low volume (<=66/day)
+        // keeps the cost negligible.
+        'market_model' => env('ANTHROPIC_MARKET_MODEL', 'claude-sonnet-4-6'),
         // Claude API has no free daily quota (unlike Gemini's 20/day), so grounded web search
         // can stay on by default — cost is roughly $0.02-0.03 per society.
         'import_grounding' => env('ANTHROPIC_IMPORT_GROUNDING', true),
