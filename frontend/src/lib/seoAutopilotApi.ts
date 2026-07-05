@@ -26,5 +26,6 @@ export const fetchGoogleSearchConsole = () => adminFetch(`${base}/search-console
 
 // Society SEO re-voice review (draft-holding layer: live copy stays until approved).
 export const fetchRevoicePending = () => adminFetch('/admin/societies/seo-content/revoice-pending').then(json);
+export const generateRevoiceBatch = (limit=10) => adminFetch('/admin/societies/seo-content/revoice-generate', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({limit})}).then(json);
 export const approveRevoice = (societyId:number) => adminFetch(`/admin/societies/${societyId}/seo-content/revoice/approve`, {method:'POST'}).then(json);
 export const rejectRevoice = (societyId:number) => adminFetch(`/admin/societies/${societyId}/seo-content/revoice/reject`, {method:'POST'}).then(json);

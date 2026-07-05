@@ -135,6 +135,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/societies/{society}/nearby-intelligence/auto-fill', [SocietyController::class, 'nearbyIntelligenceAutoFill']);
     Route::get('/societies/seo-content/report', [AdminSocietySeoReportController::class, 'report']);
     Route::get('/societies/seo-content/revoice-pending', [AdminSocietySeoContentController::class, 'revoicePending']);
+    Route::post('/societies/seo-content/revoice-generate', [AdminSocietySeoContentController::class, 'generateRevoiceBatch']);
     Route::post('/societies/seo-content/bulk-generate-drafts', [AdminSocietySeoReportController::class, 'bulkGenerate']);
     Route::post('/societies/seo-content/bulk-score', [AdminSocietySeoReportController::class, 'bulkScore']);
     Route::post('/societies/seo-content/bulk-regenerate-missing', [AdminSocietySeoReportController::class, 'bulkRegenerateMissing']);

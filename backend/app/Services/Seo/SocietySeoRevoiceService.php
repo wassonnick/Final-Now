@@ -5,6 +5,7 @@ namespace App\Services\Seo;
 use App\Exceptions\AiProviderLimitException;
 use App\Models\Society;
 use App\Models\SocietySeoContent;
+use App\Services\Ops\AiBudgetGuard;
 use App\Services\SocietySeoAiDraftService;
 use App\Services\SocietySeoScoringService;
 
@@ -21,7 +22,60 @@ class SocietySeoRevoiceService
     public function __construct(
         private readonly SocietySeoAiDraftService $ai,
         private readonly SocietySeoScoringService $scoring,
+        private readonly AiBudgetGuard $budget,
     ) {
+    }
+
+    /**
+     * Re-voice a batch of published societies into pending drafts. Skips societies that already
+     * have a pending draft (unless $force), respects the daily AI budget cap, and trips the
+     * provider circuit-breaker so a run stops cleanly at the credit line. Nothing goes live —
+     * every result is a pending draft awaiting review.
+     *
+     * @return array{generated:int,failed:int,candidates:int,stopped:?string}
+     */
+    public function generateBatch(int $limit, bool $force = false): array
+    {
+        $limit = max(1, min($limit, 100));
+        $summary = ['generated' => 0, 'failed' => 0, 'candidates' => 0, 'stopped' => null];
+
+        if ($this->budget->providerLimited()) {
+            $summary['stopped'] = 'provider_limit';
+
+            return $summary;
+        }
+
+        $societies = Society::query()
+            ->where('is_published', true)
+            ->whereHas('seoContent', fn ($q) => $q->where('status', 'published'))
+            ->with('seoContent')
+            ->orderBy('id')
+            ->get()
+            ->filter(fn ($s) => $force || ! $s->seoContent?->hasPendingRevoice())
+            ->take($limit);
+
+        $summary['candidates'] = $societies->count();
+
+        foreach ($societies as $society) {
+            if (! $this->budget->allow() || $this->budget->providerLimited()) {
+                $summary['stopped'] = 'budget_cap';
+                break;
+            }
+            $this->budget->record();
+            try {
+                $this->generateForSociety($society);
+                $summary['generated']++;
+            } catch (AiProviderLimitException $e) {
+                $this->budget->tripProviderLimit();
+                $summary['stopped'] = 'provider_limit';
+                break;
+            } catch (\Throwable $e) {
+                report($e);
+                $summary['failed']++;
+            }
+        }
+
+        return $summary;
     }
 
     /**

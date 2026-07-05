@@ -7,7 +7,7 @@ import {
   fetchSeoAutopilotKeywords, fetchSeoAutopilotPages, fetchSeoAutopilotReports, fetchSeoAutopilotTasks,
   generateSeoAutopilotDraft, generateSeoAutopilotReport, rejectSeoAutopilotDraft, runSeoAutopilotAudit,
   seedSeoAutopilotKeywords, updateSeoAutopilotTask, publishSeoAutopilotDraft, updateSeoAutopilotDraft,
-  fetchRevoicePending, approveRevoice, rejectRevoice,
+  fetchRevoicePending, approveRevoice, rejectRevoice, generateRevoiceBatch,
 } from '@/lib/seoAutopilotApi';
 
 type Tab='overview'|'pages'|'tasks'|'keywords'|'drafts'|'revoice'|'reports';
@@ -56,7 +56,7 @@ export function AdminSeoAutopilotPage(){
     </article>):<div className="rounded-[28px] border bg-white p-8 text-center text-slate-500">No SEO drafts yet. Generate one from Page Audits.</div>}</section>:null}
 
     {dashboard&&tab==='revoice'?<section className="space-y-4">
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><span className="font-black">Review-first re-voice.</span> These published societies have a re-worded draft in the current brand voice. The live page keeps its existing copy until you approve — approving swaps the new copy in; rejecting discards it. Generate the queue with <span className="font-mono text-xs">php artisan seo:revoice</span>.</div>
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-amber-900"><span className="font-black">Review-first re-voice.</span> These published societies have a re-worded draft in the current brand voice. The live page keeps its existing copy until you approve — approving swaps the new copy in; rejecting discards it.</p><div className="flex shrink-0 gap-2"><Button disabled={Boolean(busy)} onClick={()=>void run('revoice-gen-5',()=>generateRevoiceBatch(5))}><Sparkles className={`mr-2 h-4 w-4 ${busy==='revoice-gen-5'?'animate-spin':''}`}/>Re-voice next 5</Button><Button variant="outline" disabled={Boolean(busy)} onClick={()=>void run('revoice-gen-20',()=>generateRevoiceBatch(20))}>Next 20</Button></div></div></div>
       {revoice.length?revoice.map(item=>{const fields:Array<[string,string]>=[['seo_title','Title'],['seo_h1','H1'],['seo_description','Meta description'],['intro_summary','Intro']];return(
       <article key={item.society_id} className="rounded-[24px] border border-slate-200 bg-white p-5">
         <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-black text-slate-950">{item.society_name}</h3><p className="text-xs text-slate-500">Draft generated {item.generated_at?new Date(item.generated_at).toLocaleString():'recently'} · live copy unchanged</p></div><div className="flex gap-2"><Button className="bg-emerald-700 hover:bg-emerald-800" disabled={Boolean(busy)} onClick={()=>void run(`revoice-approve-${item.society_id}`,()=>approveRevoice(item.society_id))}>Approve &amp; publish</Button><Button variant="outline" className="text-rose-700" disabled={Boolean(busy)} onClick={()=>void run(`revoice-reject-${item.society_id}`,()=>rejectRevoice(item.society_id))}>Reject</Button></div></div>

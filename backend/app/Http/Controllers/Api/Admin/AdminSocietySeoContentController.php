@@ -44,6 +44,23 @@ class AdminSocietySeoContentController extends Controller
         return response()->json(['status' => 'ok', 'data' => $items]);
     }
 
+    /** Generate a batch of re-voice drafts from the admin panel (same guards as the CLI command). */
+    public function generateRevoiceBatch(Request $request): JsonResponse
+    {
+        $limit = (int) $request->integer('limit', 10);
+        $summary = $this->revoice->generateBatch($limit, $request->boolean('force'));
+
+        $message = match ($summary['stopped']) {
+            'provider_limit' => "Stopped at the AI credit limit after {$summary['generated']} society(ies). Top up and run again.",
+            'budget_cap' => "Stopped at today's AI budget cap after {$summary['generated']} society(ies). Continue tomorrow.",
+            default => $summary['candidates'] === 0
+                ? 'No published societies need re-voicing — they all already have a pending draft.'
+                : "Re-voiced {$summary['generated']} society(ies) into pending drafts. Nothing is live until you approve.",
+        };
+
+        return response()->json(['status' => 'ok', 'message' => $message, 'summary' => $summary]);
+    }
+
     /** Approve a pending re-voice: merge the draft into the live copy and re-publish. */
     public function approveRevoice(Request $request, Society $society): JsonResponse
     {

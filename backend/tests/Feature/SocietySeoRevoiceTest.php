@@ -80,6 +80,22 @@ class SocietySeoRevoiceTest extends TestCase
         $this->admin()->postJson("/api/admin/societies/{$other->id}/seo-content/revoice/approve")->assertStatus(422);
     }
 
+    public function test_generate_batch_parks_drafts_for_published_societies_and_skips_pending(): void
+    {
+        [, $withPending] = $this->publishedSociety(['revoice_draft' => $this->completeDraft(), 'revoice_generated_at' => now()], 'Has Pending', 'has-pending');
+        [$fresh] = $this->publishedSociety([], 'Fresh One', 'fresh-one');
+
+        $this->mockAi(['seo_h1' => 'Batch H1']);
+
+        // Endpoint drives the same batch logic; only the society without a pending draft is processed.
+        $this->admin()->postJson('/api/admin/societies/seo-content/revoice-generate', ['limit' => 10])
+            ->assertOk()
+            ->assertJsonPath('summary.generated', 1);
+
+        $this->assertSame('Batch H1', data_get($fresh->seoContent->fresh()->revoice_draft, 'seo_h1'));
+        $this->assertNotNull($withPending->fresh()->revoice_draft); // untouched, still its original pending draft
+    }
+
     public function test_service_skips_societies_without_published_content(): void
     {
         $society = Society::create(['name' => 'Draft Co', 'slug' => 'draft-co', 'city' => 'Gurugram', 'status' => 'Draft', 'verification_status' => 'Needs Review', 'is_published' => false, 'score' => 7, 'description' => 'x']);
