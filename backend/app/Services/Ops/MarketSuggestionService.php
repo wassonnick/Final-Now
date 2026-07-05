@@ -20,6 +20,27 @@ class MarketSuggestionService
     {
     }
 
+    /**
+     * Clean a single AI market value: strip any parenthetical/aside so ranges stay short,
+     * and drop values that fail a plausibility check for their field. Returns null when the
+     * value is unusable (caller should then skip the field).
+     */
+    public static function sanitizeMarketValue(string $field, mixed $value): ?string
+    {
+        $clean = trim(preg_replace('/\s*[(;].*$/u', '', trim((string) $value)) ?? (string) $value);
+        if ($clean === '' || strtolower($clean) === 'null' || mb_strlen($clean) > 60) {
+            return null;
+        }
+
+        // A monthly rent expressed in crores is always a lakh/crore units error — reject it
+        // rather than publish an impossible figure (e.g. "₹2.5 - ₹3.5 Cr per month").
+        if (in_array($field, ['rent_range', 'average_rent'], true) && preg_match('/\b(cr|crore|crores)\b/i', $clean)) {
+            return null;
+        }
+
+        return $clean;
+    }
+
     /** Fetch grounded market data and store it as a pending suggestion. */
     public function fetchForSociety(Society $society): ?OpsSuggestion
     {
@@ -32,7 +53,10 @@ class MarketSuggestionService
         $updates = [];
         foreach (self::MARKET_FIELDS as $field) {
             if (array_key_exists($field, $result) && $result[$field] !== null && trim((string) $result[$field]) !== '') {
-                $updates[$field] = trim((string) $result[$field]);
+                $clean = self::sanitizeMarketValue($field, $result[$field]);
+                if ($clean !== null) {
+                    $updates[$field] = $clean;
+                }
             }
         }
 
@@ -112,9 +136,8 @@ class MarketSuggestionService
         foreach (self::MARKET_FIELDS as $field) {
             $value = $result[$field] ?? null;
             if ($value !== null && trim((string) $value) !== '') {
-                // Strip any parenthetical aside the model appends so ranges stay short/clean.
-                $clean = trim(preg_replace('/\s*[(;].*$/u', '', trim((string) $value)) ?? (string) $value);
-                if ($clean !== '' && mb_strlen($clean) <= 60) {
+                $clean = self::sanitizeMarketValue($field, $value);
+                if ($clean !== null) {
                     $updates[$field] = $clean;
                 }
             }

@@ -84,9 +84,13 @@ METHOD — do this, do not shortcut:
 3. Build each range from the SPREAD of current listings across configurations: buy_range = lowest currently-listed resale price to the highest; rent_range = lowest current asking rent to the highest; price_per_sqft = the current ₹/sqft band those listings imply.
 4. Cross-check across at least two portals. If portals disagree, widen the range to cover both rather than picking one. If you can only find one stale figure, mark confidence "low" and say so.
 
+UNITS — this trips people up, get it right:
+- rent_range is a MONTHLY rent, always in rupees or LAKH per month (e.g. '₹85,000 - ₹2.5 lakh per month'). Monthly rent is NEVER in crores — even the priciest Gurgaon homes rent for a few lakh a month, so any crore figure in rent is wrong.
+- buy_range / average_sale_price are total prices, in CRORES for premium projects (e.g. '₹3.2 Cr - ₹6.5 Cr').
+
 Return ONLY this JSON object, no markdown fences, no commentary:
 {
-  "rent_range": "ONLY a short range, e.g. '₹X - ₹Y per month', spanning current asking rents. Never add parentheticals or configuration breakdowns. Null if no current project-specific listings found.",
+  "rent_range": "ONLY a short MONTHLY range in ₹/lakh, e.g. '₹85,000 - ₹2,50,000 per month', spanning current asking rents. Never crores. Never add parentheticals. Null if no current project-specific listings found.",
   "buy_range": "ONLY a short range, e.g. '₹X Cr - ₹Y Cr', spanning current resale listings. Never add parentheticals or configuration breakdowns. Null if none found.",
   "price_per_sqft": "current ₹/sqft band, e.g. '₹X,XXX - ₹Y,YYY', or null",
   "rental_yield": "string e.g. X.X%, or null",

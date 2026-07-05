@@ -473,7 +473,10 @@ class SocietyImportController extends Controller
 
         foreach ($marketFields as $field) {
             if (array_key_exists($field, $result) && $result[$field] !== null && trim((string) $result[$field]) !== '') {
-                $updates[$field] = $result[$field];
+                $clean = \App\Services\Ops\MarketSuggestionService::sanitizeMarketValue($field, $result[$field]);
+                if ($clean !== null) {
+                    $updates[$field] = $clean;
+                }
             }
         }
 

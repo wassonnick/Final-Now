@@ -190,6 +190,22 @@ class OpsSuggestionsTest extends TestCase
         Queue::assertPushed(\App\Jobs\AutoRefreshSocietyMarket::class, fn ($job) => $job->societyId === $stale->id);
     }
 
+    public function test_sanitize_market_value_rejects_rent_in_crores_and_strips_asides(): void
+    {
+        $svc = \App\Services\Ops\MarketSuggestionService::class;
+        // Monthly rent in crores is a units error -> rejected.
+        $this->assertNull($svc::sanitizeMarketValue('rent_range', '₹2.5 - ₹3.5 Cr per month'));
+        $this->assertNull($svc::sanitizeMarketValue('average_rent', '₹1.2 crore per month'));
+        // Valid rent in lakh is kept.
+        $this->assertSame('₹85,000 - ₹2.5 lakh per month', $svc::sanitizeMarketValue('rent_range', '₹85,000 - ₹2.5 lakh per month'));
+        // Buy range in crores is fine (not a rent field).
+        $this->assertSame('₹10.33 - ₹28.62 Cr', $svc::sanitizeMarketValue('buy_range', '₹10.33 - ₹28.62 Cr'));
+        // Parenthetical aside stripped.
+        $this->assertSame('₹3 Cr - ₹5 Cr', $svc::sanitizeMarketValue('buy_range', '₹3 Cr - ₹5 Cr (resale; 4 BHK)'));
+        // Empty/null-ish rejected.
+        $this->assertNull($svc::sanitizeMarketValue('rent_range', 'null'));
+    }
+
     private function society(string $name, string $slug, array $overrides = []): Society
     {
         return Society::create(array_merge([
