@@ -134,23 +134,36 @@ Artisan::command('ops:queue-market-refresh {--limit=15}', function () {
     $this->info("Queued market-refresh suggestions for {$societies->count()} societies (results land as pending suggestions, never auto-applied).");
 })->purpose('Queue grounded market-data refresh suggestions for the stalest published societies');
 
-Artisan::command('market:auto-refresh {--limit=12} {--max-age-days=30}', function () {
-    $limit = max(1, min((int) $this->option('limit'), 30));
-    $maxAge = now()->subDays(max(1, (int) $this->option('max-age-days')))->toIso8601String();
+Artisan::command('market:auto-refresh {--limit=12} {--max-age-days=30} {--force}', function () {
+    // --force (or --max-age-days=0) re-refreshes every published society regardless of how
+    // recently its market data was refreshed — used after a sourcing/model change to roll
+    // the improvement across the whole catalogue rather than waiting for the age gate.
+    $force = (bool) $this->option('force') || (int) $this->option('max-age-days') === 0;
+    $limit = max(1, min((int) $this->option('limit'), $force ? 200 : 30));
 
-    // Fully automatic: refresh published societies whose market data is missing or older
-    // than the max age, oldest first, a batch per run. Applied directly to the live page.
-    $societies = Society::query()
-        ->where('is_published', true)
-        ->get(['id', 'field_sources'])
-        ->filter(fn ($s) => (data_get($s->field_sources, 'market.refreshed_at') ?? '1970-01-01') < $maxAge)
-        ->sortBy(fn ($s) => data_get($s->field_sources, 'market.refreshed_at') ?? '1970-01-01')
-        ->take($limit);
+    $query = Society::query()->where('is_published', true)->get(['id', 'field_sources']);
+
+    if ($force) {
+        // Oldest-first so a limited forced batch still drains the stalest data first.
+        $societies = $query
+            ->sortBy(fn ($s) => data_get($s->field_sources, 'market.refreshed_at') ?? '1970-01-01')
+            ->take($limit);
+    } else {
+        $maxAge = now()->subDays(max(1, (int) $this->option('max-age-days')))->toIso8601String();
+
+        // Fully automatic: refresh published societies whose market data is missing or older
+        // than the max age, oldest first, a batch per run. Applied directly to the live page.
+        $societies = $query
+            ->filter(fn ($s) => (data_get($s->field_sources, 'market.refreshed_at') ?? '1970-01-01') < $maxAge)
+            ->sortBy(fn ($s) => data_get($s->field_sources, 'market.refreshed_at') ?? '1970-01-01')
+            ->take($limit);
+    }
 
     foreach ($societies as $society) {
         AutoRefreshSocietyMarket::dispatch($society->id);
     }
-    $this->info("Queued automatic market refresh for {$societies->count()} societies (rent/sale applied directly, no manual review).");
+    $mode = $force ? 'forced (all published)' : 'age-gated';
+    $this->info("Queued {$mode} market refresh for {$societies->count()} societies (rent/sale applied directly, no manual review).");
 })->purpose('Keep published societies current with the market — auto-fetch and apply rent/sale ranges');
 
 Artisan::command('ops:validate-photo-references {--limit=60}', function () {
