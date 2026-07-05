@@ -34,6 +34,7 @@ import {
 import { setPublicSeo } from "@/lib/seo";
 import { useAppStore } from "@/store";
 import { API_BASE_URL } from "@/config/api";
+import { SocietyAssistant } from "@/components/ai/SocietyAssistant";
 
 type AdvisorMatch = {
   id?: number;
@@ -753,7 +754,17 @@ export function AIAdvisorPage() {
           It only recommends from the {publicSocieties.length || "published"} societies SocietyFlats has published and reviewed — it will tell you when nothing fits well, instead of forcing a match.
         </p>
 
-        <div className="mt-7 grid items-start gap-7 lg:grid-cols-[420px_minmax(0,1fr)]">
+        <div className="mt-7">
+          <SocietyAssistant initialQuery={initialQuery} />
+        </div>
+
+        <div className="mt-12 mb-4 flex items-center gap-3">
+          <span className="h-px flex-1 bg-[#E7E3DA]" />
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#8A8F89]">Prefer to explore on your own?</span>
+          <span className="h-px flex-1 bg-[#E7E3DA]" />
+        </div>
+
+        <div className="grid items-start gap-7 lg:grid-cols-[420px_minmax(0,1fr)]">
           <section className="rounded-[20px] border border-[#E7E3DA] bg-white p-[22px] lg:sticky lg:top-[94px]">
             <div className="mb-4 flex items-center gap-3">
               <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[11px] bg-[#123C32]">

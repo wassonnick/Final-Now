@@ -81,23 +81,36 @@ function SocietyCards({ matches }: { matches: Match[] }) {
   );
 }
 
-export function SocietyAssistant() {
+export function SocietyAssistant({ initialQuery }: { initialQuery?: string } = {}) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
   const [thinkIdx, setThinkIdx] = useState(0);
   const [error, setError] = useState('');
-  const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const firedInitial = useRef(false);
   const token = () => window.localStorage.getItem(TOKEN_KEY) || '';
 
   useEffect(() => {
     const saved = token();
-    if (!saved) return;
+    // Auto-fire a query handed off from a link (e.g. the homepage "Ask SocietyFlats AI" chips),
+    // but only for a fresh visitor — don't hijack an existing conversation.
+    if (!saved) {
+      const q = (initialQuery || '').trim();
+      if (q && !firedInitial.current) {
+        firedInitial.current = true;
+        void send(q);
+      }
+      return;
+    }
     fetch(`${API_BASE_URL}/ai/chat/${saved}`).then((r) => (r.ok ? r.json() : null)).then((j) => {
       if (j?.data?.length) setMessages(j.data.map((m: any) => ({ role: m.role, content: m.content, matches: m.role === 'assistant' ? m.context_entities || [] : undefined })));
     }).catch(() => undefined);
-  }, []);
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, thinking]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery]);
+  // Scroll only the message container, never the whole window (the assistant is embedded on
+  // tall pages, so scrollIntoView would yank the viewport past it).
+  useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [messages, thinking]);
   useEffect(() => { if (!thinking) return; const id = setInterval(() => setThinkIdx((i) => (i + 1) % THINKING.length), 1100); return () => clearInterval(id); }, [thinking]);
 
   const send = async (text: string) => {
@@ -133,7 +146,7 @@ export function SocietyAssistant() {
         {started ? <button onClick={reset} className="inline-flex items-center gap-1.5 rounded-full border border-[#E7DCCB] px-3 py-1.5 text-xs font-bold text-[#6E756E] hover:bg-[#F8F3EA]"><RotateCcw className="h-3.5 w-3.5" />New chat</button> : null}
       </div>
 
-      <div className="h-[460px] space-y-4 overflow-y-auto px-4 py-5">
+      <div ref={scrollRef} className="h-[460px] space-y-4 overflow-y-auto px-4 py-5">
         {!started ? (
           <div className="mx-auto max-w-md pt-6 text-center">
             <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F1EEE6] text-[#10251F]"><Sparkles className="h-6 w-6" /></span>
@@ -161,7 +174,6 @@ export function SocietyAssistant() {
             <span className="text-xs font-medium text-[#6E756E]">{THINKING[thinkIdx]}</span>
           </div></div>
         ) : null}
-        <div ref={endRef} />
       </div>
 
       {error ? <p className="px-4 pb-1 text-sm font-semibold text-rose-600">{error}</p> : null}
