@@ -105,6 +105,9 @@ return [
         // and config-spanning price ranges more reliably than Haiku. Low volume (<=66/day)
         // keeps the cost negligible.
         'market_model' => env('ANTHROPIC_MARKET_MODEL', 'claude-sonnet-4-6'),
+        // Conversational assistant model. Haiku is fast and cheap for chat and handles the
+        // society-search tool well; bump to a stronger model via env if you want deeper reasoning.
+        'assistant_model' => env('ANTHROPIC_ASSISTANT_MODEL', 'claude-haiku-4-5'),
         // Claude API has no free daily quota (unlike Gemini's 20/day), so grounded web search
         // can stay on by default — cost is roughly $0.02-0.03 per society.
         'import_grounding' => env('ANTHROPIC_IMPORT_GROUNDING', true),
