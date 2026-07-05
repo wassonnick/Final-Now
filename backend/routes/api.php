@@ -104,6 +104,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/import/societies/{society}/image-candidates', [SocietyImportController::class, 'imageCandidateDecision']);
     Route::post('/import/societies/{society}/re-enrich', [SocietyImportController::class, 'reEnrich']);
     Route::post('/import/societies/{society}/market-refresh', [SocietyImportController::class, 'marketRefresh']);
+    Route::post('/import/societies/{society}/market-override', [SocietyImportController::class, 'marketOverride']);
     Route::post('/import/societies/{society}/publish', [SocietyImportController::class, 'publish']);
     Route::prefix('verified-importer')->group(function () {
         Route::get('/jobs', [VerifiedSocietyImporterController::class, 'jobs']);

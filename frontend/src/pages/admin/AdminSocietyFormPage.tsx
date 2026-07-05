@@ -250,6 +250,71 @@ export function AdminSocietyFormPage() {
   const [googleImageRightsConfirmed, setGoogleImageRightsConfirmed] = useState(false);
   const [reviewingImage, setReviewingImage] = useState(false);
   const [googlePlacesPreviewUrl, setGooglePlacesPreviewUrl] = useState("");
+  const [marketLocking, setMarketLocking] = useState(false);
+  const [marketLockMessage, setMarketLockMessage] = useState("");
+  const [marketLocked, setMarketLocked] = useState<string[]>([]);
+
+  // Seed the market-lock indicator from the loaded society's provenance.
+  useEffect(() => {
+    const locked = society.fieldSources?.market?.locked;
+    setMarketLocked(Array.isArray(locked) ? locked : []);
+  }, [society.fieldSources]);
+
+  // Save the current Rent/Buy/Price-per-sqft values as the exact portal figure and lock
+  // them so the automated market refresh never overwrites them. Web search cannot reliably
+  // read a portal's client-rendered headline price range, so flagship societies are pinned
+  // here by hand once.
+  const handleLockMarketToPortal = async () => {
+    if (!society.id) return;
+    setMarketLocking(true);
+    setMarketLockMessage("");
+    try {
+      const res = await adminFetch(`/admin/import/societies/${society.id}/market-override`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rent_range: society.rentRange,
+          buy_range: society.buyRange,
+          price_per_sqft: society.pricePerSqft,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMarketLockMessage(json.message || "Could not lock market data.");
+        return;
+      }
+      setMarketLocked(Array.isArray(json.locked) ? json.locked : []);
+      setMarketLockMessage(json.message || "Market data saved and locked.");
+    } catch {
+      setMarketLockMessage("Could not reach the server.");
+    } finally {
+      setMarketLocking(false);
+    }
+  };
+
+  const handleUnlockMarket = async () => {
+    if (!society.id || marketLocked.length === 0) return;
+    setMarketLocking(true);
+    setMarketLockMessage("");
+    try {
+      const res = await adminFetch(`/admin/import/societies/${society.id}/market-override`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unlock: marketLocked }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMarketLockMessage(json.message || "Could not unlock market data.");
+        return;
+      }
+      setMarketLocked(Array.isArray(json.locked) ? json.locked : []);
+      setMarketLockMessage("Market data unlocked — automated refresh will resume.");
+    } catch {
+      setMarketLockMessage("Could not reach the server.");
+    } finally {
+      setMarketLocking(false);
+    }
+  };
 
   // Preview the cover photo via the admin proxy (works pre-publish, unlike the public
   // google-place-photo route which only serves published Verified/Premium societies).
@@ -1304,6 +1369,49 @@ export function AdminSocietyFormPage() {
                   </label>
                 ))}
               </div>
+
+              {isEdit && society.id ? (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3.5 md:p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold text-amber-900">Match the portal price range</span>
+                    {marketLocked.length > 0 ? (
+                      <span className="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                        🔒 Locked: {marketLocked.join(", ")}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-1.5 text-xs leading-5 text-amber-800">
+                    Automated refresh reads resale listings, which can sit below a portal&apos;s headline
+                    &ldquo;Price Range&rdquo; banner. For flagship societies, type the exact 99acres/Housing figure into
+                    Rent&nbsp;Range, Buy&nbsp;Range and Price&nbsp;/&nbsp;sq&nbsp;ft above, then lock it here so the daily
+                    refresh never overwrites it.
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                    <Button
+                      type="button"
+                      onClick={handleLockMarketToPortal}
+                      disabled={marketLocking}
+                      className="h-9 rounded-xl bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700"
+                    >
+                      {marketLocking ? "Saving…" : "Save & lock to portal"}
+                    </Button>
+                    {marketLocked.length > 0 ? (
+                      <Button
+                        type="button"
+                        onClick={handleUnlockMarket}
+                        disabled={marketLocking}
+                        variant="outline"
+                        className="h-9 rounded-xl border-amber-300 px-4 text-sm font-semibold text-amber-800"
+                      >
+                        Unlock (resume auto-refresh)
+                      </Button>
+                    ) : null}
+                    {marketLockMessage ? (
+                      <span className="text-xs font-medium text-amber-900">{marketLockMessage}</span>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
             </section>
 
             <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">

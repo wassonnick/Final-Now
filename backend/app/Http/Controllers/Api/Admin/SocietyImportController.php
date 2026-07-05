@@ -469,9 +469,13 @@ class SocietyImportController extends Controller
         }
 
         $marketFields = ['rent_range', 'buy_range', 'price_per_sqft', 'rental_yield', 'average_rent', 'average_sale_price'];
+        $locked = \App\Services\Ops\MarketSuggestionService::lockedFields($society);
         $updates = [];
 
         foreach ($marketFields as $field) {
+            if (in_array($field, $locked, true)) {
+                continue; // admin-locked: keep the curated portal figure
+            }
             if (array_key_exists($field, $result) && $result[$field] !== null && trim((string) $result[$field]) !== '') {
                 $clean = \App\Services\Ops\MarketSuggestionService::sanitizeMarketValue($field, $result[$field]);
                 if ($clean !== null) {
@@ -486,6 +490,7 @@ class SocietyImportController extends Controller
             'notes' => $result['notes'] ?? null,
             'sources' => $result['market_sources'] ?? [],
             'refreshed_at' => now()->toIso8601String(),
+            'locked' => $locked,
         ];
         $updates['field_sources'] = $fieldSources;
         $updates['verification_status'] = 'Needs Review';
@@ -501,6 +506,45 @@ class SocietyImportController extends Controller
         return response()->json([
             'message' => 'Market data refreshed with grounded search. Still review before publishing.',
             'data' => $society->fresh(),
+        ]);
+    }
+
+    /**
+     * Manually set market fields to the exact portal figure and lock them from automated
+     * refresh. Web search cannot reliably read a portal's client-rendered headline price
+     * range, so for flagship societies an admin enters it here once and it sticks.
+     */
+    public function marketOverride(Request $request, Society $society): JsonResponse
+    {
+        $validated = $request->validate([
+            'rent_range' => ['nullable', 'string', 'max:60'],
+            'buy_range' => ['nullable', 'string', 'max:60'],
+            'price_per_sqft' => ['nullable', 'string', 'max:60'],
+            'rental_yield' => ['nullable', 'string', 'max:60'],
+            'average_rent' => ['nullable', 'string', 'max:60'],
+            'average_sale_price' => ['nullable', 'string', 'max:60'],
+            'unlock' => ['sometimes', 'array'],
+            'unlock.*' => ['string'],
+        ]);
+
+        $unlock = array_values(array_intersect(
+            \App\Services\Ops\MarketSuggestionService::MARKET_FIELDS,
+            (array) ($validated['unlock'] ?? []),
+        ));
+        $values = collect($validated)->except(['unlock'])->all();
+
+        $updates = app(\App\Services\Ops\MarketSuggestionService::class)->applyOverride($society, $values, $unlock);
+
+        if ($updates === []) {
+            return response()->json(['message' => 'No valid market values supplied (a monthly rent in crores is rejected).'], 422);
+        }
+
+        $society = $society->fresh();
+
+        return response()->json([
+            'message' => 'Market data saved and locked — automated refresh will no longer overwrite these fields.',
+            'locked' => \App\Services\Ops\MarketSuggestionService::lockedFields($society),
+            'data' => $society,
         ]);
     }
 

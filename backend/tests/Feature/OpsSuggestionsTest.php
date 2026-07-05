@@ -190,6 +190,64 @@ class OpsSuggestionsTest extends TestCase
         Queue::assertPushed(\App\Jobs\AutoRefreshSocietyMarket::class, fn ($job) => $job->societyId === $stale->id);
     }
 
+    public function test_admin_override_locks_fields_and_auto_refresh_leaves_them_alone(): void
+    {
+        $society = $this->society('Flagship', 'flagship', [
+            'buy_range' => '₹5 Cr - ₹8 Cr',
+            'rent_range' => '₹50,000 - ₹70,000 per month',
+            'verification_status' => 'Verified',
+        ]);
+
+        $svc = app(\App\Services\Ops\MarketSuggestionService::class);
+
+        // Admin sets the exact portal range for buy only, and locks it.
+        $svc->applyOverride($society, ['buy_range' => '₹14.6 Cr - ₹40.44 Cr']);
+        $society->refresh();
+        $this->assertSame('₹14.6 Cr - ₹40.44 Cr', $society->buy_range);
+        $this->assertSame(['buy_range'], \App\Services\Ops\MarketSuggestionService::lockedFields($society));
+
+        // A later auto-refresh must skip buy_range but may update the unlocked rent.
+        $this->mock(SocietyAiEnrichmentService::class)
+            ->shouldReceive('enrichMarketDataOnly')
+            ->once()
+            ->andReturn([
+                'buy_range' => '₹10.33 Cr - ₹28.62 Cr', // would clobber — must be ignored
+                'rent_range' => '₹60,000 - ₹90,000 per month',
+                'confidence' => 'medium',
+                'market_sources' => [],
+            ]);
+
+        app(\App\Services\Ops\MarketSuggestionService::class)->refreshAndApply($society->fresh());
+
+        $fresh = $society->fresh();
+        $this->assertSame('₹14.6 Cr - ₹40.44 Cr', $fresh->buy_range, 'Locked buy_range must survive auto-refresh.');
+        $this->assertSame('₹60,000 - ₹90,000 per month', $fresh->rent_range, 'Unlocked rent still refreshes.');
+        $this->assertSame(['buy_range'], \App\Services\Ops\MarketSuggestionService::lockedFields($fresh), 'Lock persists across refresh.');
+    }
+
+    public function test_market_override_endpoint_saves_and_locks_and_can_unlock(): void
+    {
+        $society = $this->society('Override Endpoint', 'override-endpoint');
+
+        $this->admin()->postJson("/api/admin/import/societies/{$society->id}/market-override", [
+            'buy_range' => '₹14.6 Cr - ₹40.44 Cr',
+            'rent_range' => '₹2,50,000 - ₹5,00,000 per month',
+        ])->assertOk()->assertJsonPath('data.buy_range', '₹14.6 Cr - ₹40.44 Cr');
+
+        $this->assertEqualsCanonicalizing(['buy_range', 'rent_range'], \App\Services\Ops\MarketSuggestionService::lockedFields($society->fresh()));
+
+        // A monthly rent in crores is still rejected by the sanitizer.
+        $this->admin()->postJson("/api/admin/import/societies/{$society->id}/market-override", [
+            'rent_range' => '₹2 Cr - ₹3 Cr',
+        ])->assertStatus(422);
+
+        // Unlock releases the field back to automation.
+        $this->admin()->postJson("/api/admin/import/societies/{$society->id}/market-override", [
+            'unlock' => ['rent_range'],
+        ])->assertOk();
+        $this->assertSame(['buy_range'], \App\Services\Ops\MarketSuggestionService::lockedFields($society->fresh()));
+    }
+
     public function test_sanitize_market_value_rejects_rent_in_crores_and_strips_asides(): void
     {
         $svc = \App\Services\Ops\MarketSuggestionService::class;

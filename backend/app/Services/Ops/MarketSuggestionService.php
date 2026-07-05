@@ -21,6 +21,70 @@ class MarketSuggestionService
     }
 
     /**
+     * Market fields an admin has manually set and locked. Automated refreshes (scheduler,
+     * manual "refresh", suggestion apply) must never overwrite these — they hold the exact
+     * portal figure the admin curated, which web search cannot reliably reproduce.
+     *
+     * @return array<int,string>
+     */
+    public static function lockedFields(Society $society): array
+    {
+        return array_values(array_intersect(
+            self::MARKET_FIELDS,
+            (array) data_get($society->field_sources, 'market.locked', []),
+        ));
+    }
+
+    /**
+     * Manually set one or more market fields and lock them from automated refresh. Blank
+     * values are ignored (never used to clear a field). Returns the applied updates (empty
+     * array when nothing usable was supplied). `$unlock` releases fields back to automation.
+     *
+     * @param  array<string,mixed>  $values
+     * @param  array<int,string>  $unlock
+     * @return array<string,mixed>
+     */
+    public function applyOverride(Society $society, array $values, array $unlock = []): array
+    {
+        $updates = [];
+        foreach (self::MARKET_FIELDS as $field) {
+            if (! array_key_exists($field, $values)) {
+                continue;
+            }
+            if ($values[$field] === null || trim((string) $values[$field]) === '') {
+                continue; // blank means "leave as-is", never wipe a real value
+            }
+            $clean = self::sanitizeMarketValue($field, $values[$field]);
+            if ($clean !== null) {
+                $updates[$field] = $clean;
+            }
+        }
+
+        $locked = self::lockedFields($society);
+        $locked = array_values(array_diff($locked, $unlock)); // release requested fields
+        $locked = array_values(array_unique(array_merge($locked, array_keys($updates))));
+
+        if ($updates === [] && $unlock === []) {
+            return [];
+        }
+
+        $fieldSources = (array) ($society->field_sources ?? []);
+        $market = (array) ($fieldSources['market'] ?? []);
+        $fieldSources['market'] = array_merge($market, [
+            'source' => 'admin_override',
+            'confidence' => 'high',
+            'notes' => 'Buy/rent set manually by admin to match the portal price range.',
+            'refreshed_at' => now()->toIso8601String(),
+            'locked' => $locked,
+        ]);
+        $updates['field_sources'] = $fieldSources;
+
+        $society->update($updates);
+
+        return $updates;
+    }
+
+    /**
      * Clean a single AI market value: strip any parenthetical/aside so ranges stay short,
      * and drop values that fail a plausibility check for their field. Returns null when the
      * value is unusable (caller should then skip the field).
@@ -50,8 +114,13 @@ class MarketSuggestionService
             throw new \RuntimeException('Market fetch failed: '.$result['_ai_error']);
         }
 
+        $locked = self::lockedFields($society);
+
         $updates = [];
         foreach (self::MARKET_FIELDS as $field) {
+            if (in_array($field, $locked, true)) {
+                continue; // don't suggest changes to admin-locked fields
+            }
             if (array_key_exists($field, $result) && $result[$field] !== null && trim((string) $result[$field]) !== '') {
                 $clean = self::sanitizeMarketValue($field, $result[$field]);
                 if ($clean !== null) {
@@ -93,7 +162,11 @@ class MarketSuggestionService
 
         $society = $suggestion->society;
         $payload = $suggestion->payload;
-        $updates = (array) ($payload['updates'] ?? []);
+        $locked = self::lockedFields($society);
+        // Never let a stored suggestion overwrite a field the admin has since locked.
+        $updates = collect((array) ($payload['updates'] ?? []))
+            ->reject(fn ($v, $k) => in_array($k, $locked, true))
+            ->all();
 
         $fieldSources = (array) ($society->field_sources ?? []);
         $fieldSources['market'] = [
@@ -101,6 +174,7 @@ class MarketSuggestionService
             'notes' => $payload['notes'] ?? null,
             'sources' => $payload['sources'] ?? [],
             'refreshed_at' => now()->toIso8601String(),
+            'locked' => $locked,
         ];
         $updates['field_sources'] = $fieldSources;
         $updates['verification_status'] = 'Needs Review';
@@ -132,8 +206,13 @@ class MarketSuggestionService
             throw new \RuntimeException('Market fetch failed: '.$result['_ai_error']);
         }
 
+        $locked = self::lockedFields($society);
+
         $updates = [];
         foreach (self::MARKET_FIELDS as $field) {
+            if (in_array($field, $locked, true)) {
+                continue; // admin-locked: never auto-overwrite the curated portal figure
+            }
             $value = $result[$field] ?? null;
             if ($value !== null && trim((string) $value) !== '') {
                 $clean = self::sanitizeMarketValue($field, $value);
@@ -154,6 +233,7 @@ class MarketSuggestionService
             'sources' => $result['market_sources'] ?? [],
             'refreshed_at' => now()->toIso8601String(),
             'auto_applied' => true,
+            'locked' => $locked, // preserve any admin locks across the refresh
         ];
         $updates['field_sources'] = $fieldSources;
 
