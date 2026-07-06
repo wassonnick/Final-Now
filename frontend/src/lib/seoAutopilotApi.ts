@@ -10,6 +10,8 @@ const base = '/admin/seo-autopilot';
 export const fetchSeoAutopilotDashboard = () => adminFetch(`${base}/dashboard`).then(json);
 export const fetchSeoAutopilotPages = (params = '') => adminFetch(`${base}/pages${params ? `?${params}` : ''}`).then(json);
 export const runSeoAutopilotAudit = (pageId?: number) => adminFetch(`${base}/audit`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(pageId ? { page_id:pageId } : {}) }).then(json);
+export const runSeoAutopilotCycle = () => adminFetch(`${base}/automation/run`, {method:'POST'}).then(json);
+export const updateSeoAutopilotSettings = (data:Record<string,boolean|number|string>) => adminFetch(`${base}/automation/settings`, {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(json);
 export const fetchSeoAutopilotTasks = () => adminFetch(`${base}/tasks?status=open&per_page=100`).then(json);
 export const updateSeoAutopilotTask = (id:number,status:string) => adminFetch(`${base}/tasks/${id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status}) }).then(json);
 export const fetchSeoAutopilotKeywords = () => adminFetch(`${base}/keywords?per_page=200`).then(json);

@@ -7,7 +7,8 @@ import {
   fetchSeoAutopilotKeywords, fetchSeoAutopilotPages, fetchSeoAutopilotReports, fetchSeoAutopilotTasks,
   generateSeoAutopilotDraft, generateSeoAutopilotReport, rejectSeoAutopilotDraft, runSeoAutopilotAudit,
   seedSeoAutopilotKeywords, updateSeoAutopilotTask, publishSeoAutopilotDraft, updateSeoAutopilotDraft,
-  fetchRevoicePending, approveRevoice, rejectRevoice, generateRevoiceBatch,
+  fetchRevoicePending, approveRevoice, rejectRevoice, generateRevoiceBatch, runSeoAutopilotCycle,
+  updateSeoAutopilotSettings,
 } from '@/lib/seoAutopilotApi';
 
 type Tab='overview'|'pages'|'tasks'|'keywords'|'drafts'|'revoice'|'reports';
@@ -15,6 +16,7 @@ type RevoiceItem={society_id:number;society_name?:string;society_slug?:string;ge
 type PageRow={id:number;page_type:string;url:string;title?:string;is_public:boolean;is_indexable:boolean;content_word_count:number;latest_audit?:{score:number;status:string;issues:any[]}};
 type Task={id:number;priority:string;title:string;description?:string;task_type:string;page?:PageRow;source:string};
 type Draft={id:number;status:string;confidence_score:number;reason?:string;current_version:any;suggested_version:any;data_sources?:string[];risk_warnings?:string[];page?:PageRow};
+type MarketingPlan={id:string;title:string;outcome:string;cadence:string;automation:string[];kpis:string[]};
 const tabs:Array<[Tab,string,any]>=[['overview','Command Center',Gauge],['pages','Page Audits',Globe2],['tasks','SEO Tasks',ListChecks],['keywords','Keywords',KeyRound],['drafts','AI Drafts',Sparkles],['revoice','Re-voice',Sparkles],['reports','Reports',BarChart3]];
 const unwrap=(payload:any)=>payload?.data?.data||payload?.data||[];
 const scoreTone=(score=0)=>score>=80?'bg-emerald-100 text-emerald-800':score>=50?'bg-amber-100 text-amber-800':'bg-rose-100 text-rose-800';
@@ -25,6 +27,7 @@ export function AdminSeoAutopilotPage(){
   const load=useCallback(async()=>{setError('');try{const[d,p,t,k,dr,r]=await Promise.all([fetchSeoAutopilotDashboard(),fetchSeoAutopilotPages('per_page=100'),fetchSeoAutopilotTasks(),fetchSeoAutopilotKeywords(),fetchSeoAutopilotDrafts(),fetchSeoAutopilotReports()]);setDashboard(d.data);setPages(unwrap(p));setTasks(unwrap(t));setKeywords(unwrap(k));setDrafts(unwrap(dr));setReports(unwrap(r));try{setRevoice(unwrap(await fetchRevoicePending()));}catch{/* revoice queue is optional */}}catch(e){setError(e instanceof Error?e.message:'Could not load SEO Autopilot.');}},[]);
   useEffect(()=>{void load()},[load]);
   const run=async(key:string,action:()=>Promise<any>)=>{try{setBusy(key);setError('');setNotice('');const result=await action();setNotice(result?.message||'SEO action completed.');await load();}catch(e){setError(e instanceof Error?e.message:'SEO action failed.');}finally{setBusy('');}};
+  const updateAutomation=(key:string,value:boolean|number|string)=>run(`automation-${key}`,()=>updateSeoAutopilotSettings({[key]:value}));
   const startEdit=(draft:Draft)=>{const value=draft.suggested_version||{};setEditing(draft.id);setEditForm({seo_title:value.seo_title||'',seo_description:value.seo_description||'',seo_h1:value.seo_h1||'',intro_summary:value.intro_summary||'',reason:draft.reason||''});};
   const summary=dashboard?.summary||{};const filteredPages=pages.filter(p=>(!type||p.page_type===type)&&(!search||`${p.url} ${p.title||''}`.toLowerCase().includes(search.toLowerCase())));
   return <AdminLayout title="SEO Autopilot" subtitle="Audit, improve and monitor every indexable SocietyFlats page — AI remains review-only.">
@@ -37,6 +40,35 @@ export function AdminSeoAutopilotPage(){
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{[
         ['Public pages',summary.public_pages,Globe2],['Average score',summary.average_score,Gauge],['Open tasks',summary.open_tasks,ListChecks],['Pending drafts',summary.pending_drafts,Sparkles],['Failed checks',summary.failed_checks,AlertTriangle],
       ].map(([label,value,Icon]:any)=><article key={label} className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm"><Icon className="h-5 w-5 text-blue-700"/><p className="mt-4 text-3xl font-black text-slate-950">{value??0}</p><p className="mt-1 text-sm font-bold text-slate-500">{label}</p></article>)}</section>
+      <section className="grid gap-5 xl:grid-cols-[.9fr_1.1fr]">
+        <article className="rounded-[28px] border border-blue-100 bg-gradient-to-br from-blue-950 via-slate-950 to-slate-900 p-6 text-white shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-200">Automation engine</p>
+              <h2 className="mt-2 text-2xl font-black">{dashboard.automation?.settings?.enabled?'Running daily':'Paused'}</h2>
+              <p className="mt-2 max-w-xl text-sm text-slate-300">Runs audits, Search Console import, keyword refresh, opportunity scoring, review-only AI drafts and reports with one scheduled cycle.</p>
+            </div>
+            <Button disabled={Boolean(busy)} onClick={()=>void run('cycle',runSeoAutopilotCycle)} className="bg-white text-slate-950 hover:bg-blue-50"><RefreshCw className={`mr-2 h-4 w-4 ${busy==='cycle'?'animate-spin':''}`}/>Run complete automation</Button>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl bg-white/10 p-4"><p className="text-xs text-slate-300">Next run</p><p className="mt-1 text-sm font-black">{dashboard.automation?.next_run_at?new Date(dashboard.automation.next_run_at).toLocaleString():'—'}</p></div>
+            <div className="rounded-2xl bg-white/10 p-4"><p className="text-xs text-slate-300">Last run</p><p className="mt-1 text-sm font-black">{dashboard.automation?.last_run?.status||'No run yet'}</p></div>
+            <div className="rounded-2xl bg-white/10 p-4"><p className="text-xs text-slate-300">Drafts per run</p><select disabled={Boolean(busy)} value={dashboard.automation?.settings?.drafts_per_run??5} onChange={e=>void updateAutomation('drafts_per_run',Number(e.target.value))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 p-2 text-sm font-black text-white"><option value={0}>0</option><option value={3}>3</option><option value={5}>5</option><option value={10}>10</option><option value={20}>20</option></select></div>
+          </div>
+          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+            {[
+              ['enabled','Autopilot enabled'],['audit_enabled','Page audits'],['technical_checks_enabled','Technical checks'],['search_console_enabled','Search Console import'],['keyword_refresh_enabled','Keyword refresh'],['draft_generation_enabled','Review draft generation'],['reports_enabled','Reports'],
+            ].map(([key,label])=><label key={key} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold"><span>{label}</span><input type="checkbox" checked={Boolean(dashboard.automation?.settings?.[key])} disabled={Boolean(busy)} onChange={e=>void updateAutomation(key,e.target.checked)} className="h-5 w-5 accent-blue-500"/></label>)}
+          </div>
+          {dashboard.automation?.recent_runs?.length?<div className="mt-5 rounded-2xl bg-white/5 p-4"><p className="text-xs font-black uppercase tracking-[0.16em] text-blue-200">Recent runs</p><div className="mt-3 space-y-2">{dashboard.automation.recent_runs.slice(0,4).map((run:any)=><div key={run.id} className="flex items-center justify-between gap-3 text-xs"><span className="font-bold">#{run.id} · {run.trigger}</span><span className="text-slate-300">{run.status} · {run.summary?.drafts_generated??0} drafts</span></div>)}</div></div>:null}
+        </article>
+        <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div><p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">SEO marketing plan</p><h2 className="mt-2 text-2xl font-black text-slate-950">From crawl health to organic leads</h2><p className="mt-2 text-sm text-slate-500">The plan is now embedded in Autopilot so the daily cycle has a clear business path, not just a checklist.</p></div>
+          </div>
+          <div className="mt-5 grid gap-3 lg:grid-cols-2">{(dashboard.marketing_plan||[]).map((phase:MarketingPlan)=><div key={phase.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4"><div className="flex items-center justify-between gap-3"><h3 className="font-black text-slate-950">{phase.title}</h3><span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-blue-700">{phase.cadence}</span></div><p className="mt-2 text-sm text-slate-600">{phase.outcome}</p><p className="mt-3 text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Automation</p><ul className="mt-2 space-y-1 text-xs font-bold text-slate-600">{phase.automation.map(item=><li key={item}>• {item}</li>)}</ul></div>)}</div>
+        </article>
+      </section>
       <section className="grid gap-5 xl:grid-cols-[1.25fr_.75fr]"><div className="rounded-[28px] border border-slate-200 bg-white p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black">Top opportunities</h2><p className="text-sm text-slate-500">Prioritized from audits and Search Console.</p></div><Button disabled={Boolean(busy)} onClick={()=>void run('audit',()=>runSeoAutopilotAudit())}><RefreshCw className={`mr-2 h-4 w-4 ${busy==='audit'?'animate-spin':''}`}/>Run full audit</Button></div><div className="mt-5 space-y-3">{(dashboard.opportunities||[]).slice(0,8).map((task:Task)=><div key={task.id} className="rounded-2xl bg-slate-50 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-black text-slate-900">{task.title}</p><p className="mt-1 text-xs text-slate-500">{task.page?.url||'Site-wide'} · {task.source}</p></div><span className={`rounded-full px-2.5 py-1 text-[11px] font-black uppercase ${priorityTone(task.priority)}`}>{task.priority}</span></div></div>)}</div></div>
         <div className="rounded-[28px] bg-slate-950 p-6 text-white"><h2 className="text-xl font-black">Search Console</h2><p className="mt-2 text-sm text-slate-300">{dashboard.search_console?.configured?'Connected and ready for scheduled imports.':'Optional integration is not configured. Manual audits still run normally.'}</p><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-white/10 p-4"><p className="text-2xl font-black">{dashboard.search_console?.clicks_28d||0}</p><p className="text-xs text-slate-300">Clicks · 28d</p></div><div className="rounded-2xl bg-white/10 p-4"><p className="text-2xl font-black">{dashboard.search_console?.impressions_28d||0}</p><p className="text-xs text-slate-300">Impressions · 28d</p></div></div><Button variant="outline" className="mt-4 w-full border-white/20 bg-white/5 text-white hover:bg-white/10" disabled={Boolean(busy)} onClick={()=>void run('gsc',fetchGoogleSearchConsole)}>Import now</Button></div>
       </section>

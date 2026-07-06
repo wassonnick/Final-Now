@@ -68,6 +68,8 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
         Route::get('/dashboard', [AdminSeoAutopilotController::class, 'dashboard']);
         Route::get('/pages', [AdminSeoAutopilotController::class, 'pages']);
         Route::post('/audit', [AdminSeoAutopilotController::class, 'runAudit']);
+        Route::post('/automation/run', [AdminSeoAutopilotController::class, 'runAutomation']);
+        Route::patch('/automation/settings', [AdminSeoAutopilotController::class, 'updateAutomationSettings']);
         Route::get('/tasks', [AdminSeoAutopilotController::class, 'tasks']);
         Route::patch('/tasks/{task}', [AdminSeoAutopilotController::class, 'updateTask']);
         Route::get('/keywords', [AdminSeoAutopilotController::class, 'keywordList']);

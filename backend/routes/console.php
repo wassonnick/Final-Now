@@ -17,6 +17,7 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use App\Services\Seo\SeoAutopilotAuditService;
+use App\Services\Seo\SeoAutopilotRunner;
 use App\Services\Seo\SeoKeywordIntelligenceService;
 use App\Services\Seo\SeoPageRegistryService;
 use App\Services\Seo\SeoReportService;
@@ -68,6 +69,12 @@ Artisan::command('seo:autopilot-report {period=weekly}', function (string $perio
     $report=app(SeoReportService::class)->generate($period);
     $this->info("Generated {$period} SEO report #{$report->id}.");
 })->purpose('Generate a daily, weekly or monthly SEO Autopilot report');
+
+Artisan::command('seo:autopilot-run {--trigger=scheduled}', function () {
+    $run=app(SeoAutopilotRunner::class)->run((string)$this->option('trigger'));
+    $summary=$run->summary?:[];
+    $this->info("SEO Autopilot run #{$run->id} {$run->status}: ".($summary['pages_audited']??0).' pages audited, '.($summary['drafts_generated']??0).' drafts generated, '.($summary['search_console_rows']??0).' Search Console rows imported.');
+})->purpose('Run the complete closed-loop SEO automation cycle');
 
 Artisan::command('ops:daily-digest', function () {
     $payload = app(AdminOpsInboxService::class)->build(true);
@@ -260,9 +267,6 @@ Schedule::command('market:auto-refresh')->dailyAt('05:30')->withoutOverlapping()
 Schedule::command('ops:validate-photo-references')->weeklyOn(2, '05:00')->withoutOverlapping();
 Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=1')->everyMinute()->withoutOverlapping()->runInBackground();
 Schedule::call(fn () => AiConversation::query()->where('expires_at', '<', now())->delete())->dailyAt('03:15')->name('prune-expired-ai-conversations')->withoutOverlapping();
-Schedule::command('seo:autopilot-audit')->dailyAt('02:00')->withoutOverlapping();
-Schedule::command('seo:autopilot-keywords')->weeklyOn(1,'02:45')->withoutOverlapping();
-Schedule::command('seo:autopilot-search-console')->weeklyOn(1,'03:15')->withoutOverlapping();
-Schedule::command('seo:autopilot-report daily')->dailyAt('04:00')->withoutOverlapping();
+Schedule::command('seo:autopilot-run')->dailyAt('02:00')->withoutOverlapping();
 Schedule::command('seo:autopilot-report weekly')->weeklyOn(1,'04:15')->withoutOverlapping();
 Schedule::command('seo:autopilot-report monthly')->monthlyOn(1,'04:30')->withoutOverlapping();

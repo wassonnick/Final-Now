@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\SeoChangeLog;
+use App\Models\SeoAutomationRun;
+use App\Models\SeoAutomationSetting;
 use App\Models\SeoDraft;
 use App\Models\SeoPage;
 use App\Models\SeoTask;
@@ -40,6 +42,45 @@ class SeoAutopilotTest extends TestCase
         $this->assertTrue($page->is_public);
         $this->assertDatabaseHas('seo_audits',['seo_page_id'=>$page->id]);
         $this->assertDatabaseHas('seo_tasks',['seo_page_id'=>$page->id,'status'=>'open']);
+    }
+
+    public function test_dashboard_exposes_automation_policy_and_marketing_plan(): void
+    {
+        $this->society('Plan Society','plan-society');
+
+        $this->admin()->getJson('/api/admin/seo-autopilot/dashboard')
+            ->assertOk()
+            ->assertJsonPath('data.automation.settings.enabled',true)
+            ->assertJsonPath('data.marketing_plan.0.id','foundation')
+            ->assertJsonPath('data.quick_actions.0.id','cycle');
+    }
+
+    public function test_complete_automation_cycle_runs_and_records_summary(): void
+    {
+        $this->society('Cycle Society','cycle-society');
+
+        $this->admin()->postJson('/api/admin/seo-autopilot/automation/run')
+            ->assertOk()
+            ->assertJsonPath('data.trigger','manual');
+
+        $run=SeoAutomationRun::firstOrFail();
+        $this->assertContains($run->status,['completed','completed_with_warnings']);
+        $this->assertGreaterThan(0,$run->summary['pages_registered']);
+        $this->assertGreaterThan(0,$run->summary['pages_audited']);
+        $this->assertDatabaseHas('seo_reports',['period'=>'daily']);
+    }
+
+    public function test_automation_settings_can_pause_cycle(): void
+    {
+        $this->admin()->patchJson('/api/admin/seo-autopilot/automation/settings',['enabled'=>false,'drafts_per_run'=>3])
+            ->assertOk()
+            ->assertJsonPath('data.enabled',false)
+            ->assertJsonPath('data.drafts_per_run',3);
+
+        $this->assertFalse(SeoAutomationSetting::firstOrFail()->enabled);
+        $this->admin()->postJson('/api/admin/seo-autopilot/automation/run')
+            ->assertUnprocessable()
+            ->assertJsonPath('message','SEO Autopilot is paused. Enable it before running a cycle.');
     }
 
     public function test_keyword_clusters_map_to_existing_pages(): void

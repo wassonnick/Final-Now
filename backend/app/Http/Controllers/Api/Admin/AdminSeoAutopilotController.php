@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SeoAudit;
+use App\Models\SeoAutomationRun;
 use App\Models\SeoDraft;
 use App\Models\SeoKeyword;
 use App\Models\SeoPage;
@@ -11,6 +12,7 @@ use App\Models\SeoReport;
 use App\Models\SeoSearchConsoleMetric;
 use App\Models\SeoTask;
 use App\Services\Seo\SeoAutopilotAuditService;
+use App\Services\Seo\SeoAutopilotRunner;
 use App\Services\Seo\SeoDraftService;
 use App\Services\Seo\SeoKeywordIntelligenceService;
 use App\Services\Seo\SeoPageRegistryService;
@@ -23,13 +25,14 @@ use Illuminate\Validation\Rule;
 
 class AdminSeoAutopilotController extends Controller
 {
-    public function __construct(private SeoPageRegistryService $registry,private SeoAutopilotAuditService $audits,private SeoKeywordIntelligenceService $keywords,private SeoSearchConsoleService $searchConsole,private SeoReportService $reports,private SeoDraftService $drafts,private SeoTechnicalAuditService $technical){}
+    public function __construct(private SeoPageRegistryService $registry,private SeoAutopilotAuditService $audits,private SeoKeywordIntelligenceService $keywords,private SeoSearchConsoleService $searchConsole,private SeoReportService $reports,private SeoDraftService $drafts,private SeoTechnicalAuditService $technical,private SeoAutopilotRunner $runner){}
 
     public function dashboard(): JsonResponse
     {
         $this->registry->sync();if(!SeoAudit::exists())$this->audits->run();$latest=SeoAudit::whereIn('id',SeoAudit::selectRaw('MAX(id)')->groupBy('seo_page_id'))->get();
         $duplicateTitles=SeoPage::whereNotNull('title')->selectRaw('title, COUNT(*) aggregate')->groupBy('title')->havingRaw('COUNT(*) > 1')->count();$duplicateMeta=SeoPage::whereNotNull('meta_description')->selectRaw('meta_description, COUNT(*) aggregate')->groupBy('meta_description')->havingRaw('COUNT(*) > 1')->count();
-        return response()->json(['status'=>'ok','data'=>['summary'=>['total_pages'=>SeoPage::count(),'public_pages'=>SeoPage::where('is_public',true)->count(),'average_score'=>round((float)$latest->avg('score'),1),'missing_title'=>SeoPage::whereNull('title')->orWhere('title','')->count(),'missing_meta'=>SeoPage::whereNull('meta_description')->orWhere('meta_description','')->count(),'missing_h1'=>SeoPage::whereNull('h1')->orWhere('h1','')->count(),'missing_schema'=>SeoPage::whereNull('schema_types')->count(),'thin_content'=>SeoPage::where('content_word_count','<',300)->count(),'duplicate_titles'=>$duplicateTitles,'duplicate_meta'=>$duplicateMeta,'missing_internal_links'=>SeoPage::where('internal_link_count','<',2)->count(),'pending_drafts'=>SeoDraft::where('status','needs_review')->count(),'failed_checks'=>$latest->where('status','failed')->count(),'technical_issues'=>SeoTask::where('status','open')->where('source','technical')->count(),'open_tasks'=>SeoTask::where('status','open')->count()],'sitemap'=>['included'=>SeoPage::where('sitemap_included',true)->count(),'public_not_in_sitemap'=>SeoPage::where('is_public',true)->where('is_indexable',true)->where('sitemap_included',false)->count()],'search_console'=>['configured'=>$this->searchConsole->configured(),'authentication'=>$this->searchConsole->authenticationMode(),'clicks_28d'=>SeoSearchConsoleMetric::where('metric_date','>=',now()->subDays(28))->sum('clicks'),'impressions_28d'=>SeoSearchConsoleMetric::where('metric_date','>=',now()->subDays(28))->sum('impressions')],'opportunities'=>SeoTask::with('page')->where('status','open')->orderByRaw("CASE priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END")->latest()->limit(12)->get(),'quick_actions'=>[['id'=>'audit','label'=>'Run technical + page audit'],['id'=>'keywords','label'=>'Refresh keyword clusters'],['id'=>'report','label'=>'Generate weekly report'],['id'=>'gsc','label'=>'Import Search Console data']]]]);
+        $settings=$this->runner->settings();$nextRun=now($settings->timezone)->setTime(2,0);if($nextRun->isPast())$nextRun->addDay();
+        return response()->json(['status'=>'ok','data'=>['summary'=>['total_pages'=>SeoPage::count(),'public_pages'=>SeoPage::where('is_public',true)->count(),'average_score'=>round((float)$latest->avg('score'),1),'missing_title'=>SeoPage::whereNull('title')->orWhere('title','')->count(),'missing_meta'=>SeoPage::whereNull('meta_description')->orWhere('meta_description','')->count(),'missing_h1'=>SeoPage::whereNull('h1')->orWhere('h1','')->count(),'missing_schema'=>SeoPage::whereNull('schema_types')->count(),'thin_content'=>SeoPage::where('content_word_count','<',300)->count(),'duplicate_titles'=>$duplicateTitles,'duplicate_meta'=>$duplicateMeta,'missing_internal_links'=>SeoPage::where('internal_link_count','<',2)->count(),'pending_drafts'=>SeoDraft::where('status','needs_review')->count(),'failed_checks'=>$latest->where('status','failed')->count(),'technical_issues'=>SeoTask::where('status','open')->where('source','technical')->count(),'open_tasks'=>SeoTask::where('status','open')->count()],'sitemap'=>['included'=>SeoPage::where('sitemap_included',true)->count(),'public_not_in_sitemap'=>SeoPage::where('is_public',true)->where('is_indexable',true)->where('sitemap_included',false)->count()],'search_console'=>['configured'=>$this->searchConsole->configured(),'authentication'=>$this->searchConsole->authenticationMode(),'clicks_28d'=>SeoSearchConsoleMetric::where('metric_date','>=',now()->subDays(28))->sum('clicks'),'impressions_28d'=>SeoSearchConsoleMetric::where('metric_date','>=',now()->subDays(28))->sum('impressions')],'automation'=>['settings'=>$settings,'next_run_at'=>$nextRun->toIso8601String(),'last_run'=>SeoAutomationRun::latest('started_at')->first(),'recent_runs'=>SeoAutomationRun::latest('started_at')->limit(8)->get()],'marketing_plan'=>$this->runner->marketingPlan(),'opportunities'=>SeoTask::with('page')->where('status','open')->orderByRaw("CASE priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END")->latest()->limit(12)->get(),'quick_actions'=>[['id'=>'cycle','label'=>'Run complete automation cycle'],['id'=>'audit','label'=>'Run technical + page audit'],['id'=>'keywords','label'=>'Refresh keyword clusters'],['id'=>'report','label'=>'Generate weekly report'],['id'=>'gsc','label'=>'Import Search Console data']]]]);
     }
 
     public function pages(Request $request): JsonResponse{$query=SeoPage::with('latestAudit');foreach(['page_type','is_public','is_indexable'] as $filter)if($request->filled($filter))$query->where($filter,$request->input($filter));if($request->filled('status'))$query->whereHas('latestAudit',fn($q)=>$q->where('status',$request->input('status')));if($request->filled('search'))$query->where(fn($q)=>$q->where('url','like','%'.$request->input('search').'%')->orWhere('title','like','%'.$request->input('search').'%'));return response()->json(['status'=>'ok','data'=>$query->orderBy('page_type')->orderBy('url')->paginate(min($request->integer('per_page',50),100))]);}
@@ -52,5 +55,22 @@ class AdminSeoAutopilotController extends Controller
     public function publishDraft(Request $request,SeoDraft $draft): JsonResponse{try{return response()->json(['status'=>'ok','message'=>'Approved SEO content published. Sitemap refresh remains a tracked validation task.','data'=>$this->drafts->publish($draft,$this->actor($request))->load('page')]);}catch(\InvalidArgumentException $e){return response()->json(['status'=>'error','message'=>$e->getMessage()],422);}}
     public function reportList(): JsonResponse{return response()->json(['status'=>'ok','data'=>SeoReport::latest('generated_at')->limit(24)->get()]);}
     public function generateReport(Request $request): JsonResponse{$data=$request->validate(['period'=>['nullable',Rule::in(['daily','weekly','monthly'])]]);return response()->json(['status'=>'ok','message'=>'SEO report generated.','data'=>$this->reports->generate($data['period']??'weekly')],201);}
+    public function runAutomation(): JsonResponse
+    {
+        try{return response()->json(['status'=>'ok','message'=>'Complete SEO automation cycle finished. Public AI content remains in the review queue.','data'=>$this->runner->run('manual')]);}
+        catch(\InvalidArgumentException $e){return response()->json(['status'=>'error','message'=>$e->getMessage()],422);}
+        catch(\RuntimeException $e){return response()->json(['status'=>'error','message'=>$e->getMessage()],409);}
+    }
+    public function updateAutomationSettings(Request $request): JsonResponse
+    {
+        $data=$request->validate([
+            'enabled'=>['sometimes','boolean'],'audit_enabled'=>['sometimes','boolean'],'technical_checks_enabled'=>['sometimes','boolean'],
+            'search_console_enabled'=>['sometimes','boolean'],'keyword_refresh_enabled'=>['sometimes','boolean'],
+            'draft_generation_enabled'=>['sometimes','boolean'],'reports_enabled'=>['sometimes','boolean'],
+            'drafts_per_run'=>['sometimes','integer','min:0','max:20'],'timezone'=>['sometimes','timezone'],
+        ]);
+        $settings=$this->runner->settings();$settings->update($data);
+        return response()->json(['status'=>'ok','message'=>'SEO automation policy updated.','data'=>$settings->fresh()]);
+    }
     private function actor(Request $request): string{return (string)($request->header('X-Admin-Email')?:'admin');}
 }
