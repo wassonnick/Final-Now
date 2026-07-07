@@ -1,4 +1,4 @@
-export type CustomerAccountRole = "customer" | "broker";
+export type CustomerAccountRole = "customer" | "broker" | "rwa";
 
 export type CustomerAccountSession = {
   role?: CustomerAccountRole;

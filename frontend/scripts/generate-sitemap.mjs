@@ -264,6 +264,13 @@ async function main() {
       changefreq: "weekly",
       lastmod: society?.updated_at?.slice?.(0, 10) || society?.published_at?.slice?.(0, 10),
     });
+
+    routes.push({
+      loc: `/rwa/${slug}`,
+      priority: "0.58",
+      changefreq: "weekly",
+      lastmod: society?.updated_at?.slice?.(0, 10) || society?.published_at?.slice?.(0, 10),
+    });
   }
 
   for (const property of properties) {

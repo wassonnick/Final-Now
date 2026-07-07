@@ -34,6 +34,8 @@ const SiteVisitConfirmationPage = lazy(() => import('@/pages/SiteVisitConfirmati
 const InvestmentCalculatorPage = lazy(() => import('@/pages/InvestmentCalculatorPage').then((module) => ({ default: module.InvestmentCalculatorPage })));
 const BuilderFloorsPage = lazy(() => import('@/pages/BuilderFloorsPage').then((module) => ({ default: module.BuilderFloorsPage })));
 const BuilderPortalPage = lazy(() => import('@/pages/BuilderPortalPage').then((module) => ({ default: module.BuilderPortalPage })));
+const RwaSocietyPage = lazy(() => import('@/pages/RwaSocietyPage').then((module) => ({ default: module.RwaSocietyPage })));
+const RwaDashboardPage = lazy(() => import('@/pages/RwaDashboardPage').then((module) => ({ default: module.RwaDashboardPage })));
 const PublicInfoPage = lazy(() => import('@/pages/PublicInfoPage').then((module) => ({ default: module.PublicInfoPage })));
 const ReferralPage = lazy(() => import('@/pages/ReferralPage').then((module) => ({ default: module.ReferralPage })));
 const NriServicesPage = lazy(() => import('@/pages/NriServicesPage').then((module) => ({ default: module.NriServicesPage })));
@@ -56,6 +58,7 @@ const AdminFeatureHubPage = lazy(() => import('@/pages/admin/AdminFeatureHubPage
 const AdminSiteVisitsPage = lazy(() => import('@/pages/admin/AdminSiteVisitsPage').then((module) => ({ default: module.AdminSiteVisitsPage })));
 const AdminRentHistoryPage = lazy(() => import('@/pages/admin/AdminRentHistoryPage').then((module) => ({ default: module.AdminRentHistoryPage })));
 const AdminBuilderPortalPage = lazy(() => import('@/pages/admin/AdminBuilderPortalPage').then((module) => ({ default: module.AdminBuilderPortalPage })));
+const AdminRwaPortalPage = lazy(() => import('@/pages/admin/AdminRwaPortalPage').then((module) => ({ default: module.AdminRwaPortalPage })));
 const AdminReferralsPage = lazy(() => import('@/pages/admin/AdminReferralsPage').then((module) => ({ default: module.AdminReferralsPage })));
 const AdminNriCasesPage = lazy(() => import('@/pages/admin/AdminNriCasesPage').then((module) => ({ default: module.AdminNriCasesPage })));
 const AdminSeoAutopilotPage = lazy(() => import('@/pages/admin/AdminSeoAutopilotPage').then((module) => ({ default: module.AdminSeoAutopilotPage })));
@@ -149,6 +152,9 @@ function AppShell() {
             <Route path="/referrals" element={<ProtectedAccountRoute role="customer"><ReferralPage /></ProtectedAccountRoute>} />
             <Route path="/broker/dashboard" element={<ProtectedAccountRoute role="broker"><BrokerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/broker" element={<ProtectedAccountRoute role="broker"><BrokerDashboardPage /></ProtectedAccountRoute>} />
+            <Route path="/rwa/dashboard" element={<ProtectedAccountRoute role="rwa"><RwaDashboardPage /></ProtectedAccountRoute>} />
+            <Route path="/rwa" element={<ProtectedAccountRoute role="rwa"><RwaDashboardPage /></ProtectedAccountRoute>} />
+            <Route path="/rwa/:slug" element={<RwaSocietyPage />} />
             <Route path="/sell" element={<SellPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/visit/:token" element={<SiteVisitConfirmationPage />} />
@@ -209,6 +215,7 @@ function AppShell() {
             <Route path="/admin/site-visits" element={<ProtectedAdminRoute><AdminSiteVisitsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/rent-history" element={<ProtectedAdminRoute><AdminRentHistoryPage /></ProtectedAdminRoute>} />
             <Route path="/admin/builder-portal" element={<ProtectedAdminRoute><AdminBuilderPortalPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/rwa" element={<ProtectedAdminRoute><AdminRwaPortalPage /></ProtectedAdminRoute>} />
             <Route path="/admin/ai" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="ai" /></ProtectedAdminRoute>} />
             <Route path="/admin/maps" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="maps" /></ProtectedAdminRoute>} />
             <Route path="/admin/broker-crm" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="broker-crm" /></ProtectedAdminRoute>} />

@@ -13,11 +13,12 @@ class AdminBuilderPortalController extends Controller
 {
     public function claims(): JsonResponse
     {
-        return response()->json(['data' => BuilderClaim::with(['account:id,name,phone,email', 'society:id,name,slug'])->latest()->get()]);
+        return response()->json(['data' => BuilderClaim::with(['account:id,name,phone,email', 'society:id,name,slug'])->where('claim_type', 'builder')->latest()->get()]);
     }
 
     public function updateClaim(Request $request, BuilderClaim $claim): JsonResponse
     {
+        abort_if($claim->claim_type !== 'builder', 404);
         $data = $request->validate(['status' => ['required', 'in:pending,approved,rejected'], 'review_notes' => ['nullable', 'string', 'max:3000']]);
         $claim->update($data + ['reviewed_at' => $data['status'] === 'pending' ? null : now()]);
 

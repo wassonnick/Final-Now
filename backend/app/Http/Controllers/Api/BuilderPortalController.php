@@ -22,7 +22,7 @@ class BuilderPortalController extends Controller
             return response()->json(['message' => 'OTP login required.'], 401);
         }
 
-        return response()->json(['data' => $account->builderClaims()->with(['society' => fn ($query) => $query->select('id', 'name', 'slug')->with(['reviews' => fn ($reviews) => $reviews->select('id', 'society_id', 'title', 'content', 'rating')->where('status', 'approved')]), 'announcements'])->latest()->get()]);
+        return response()->json(['data' => $account->builderClaims()->where('claim_type', 'builder')->with(['society' => fn ($query) => $query->select('id', 'name', 'slug')->with(['reviews' => fn ($reviews) => $reviews->select('id', 'society_id', 'title', 'content', 'rating')->where('status', 'approved')]), 'announcements'])->latest()->get()]);
     }
 
     public function storeClaim(Request $request): JsonResponse
@@ -35,7 +35,7 @@ class BuilderPortalController extends Controller
         if (! $society) {
             return response()->json(['message' => 'Claims are accepted only for published societies.'], 422);
         }
-        $claim = BuilderClaim::updateOrCreate(['account_id' => $account->id, 'society_id' => $society->id], $data + ['status' => 'pending', 'review_notes' => null, 'reviewed_at' => null]);
+        $claim = BuilderClaim::updateOrCreate(['account_id' => $account->id, 'society_id' => $society->id, 'claim_type' => 'builder'], $data + ['status' => 'pending', 'review_notes' => null, 'reviewed_at' => null]);
 
         return response()->json(['message' => 'Claim submitted for admin verification.', 'data' => $claim], $claim->wasRecentlyCreated ? 201 : 200);
     }
@@ -45,7 +45,7 @@ class BuilderPortalController extends Controller
         if (! $account = $this->accountFromBearer($request)) {
             return response()->json(['message' => 'OTP login required.'], 401);
         }
-        if ($claim->account_id !== $account->id || $claim->status !== 'approved') {
+        if ($claim->account_id !== $account->id || $claim->claim_type !== 'builder' || $claim->status !== 'approved') {
             return response()->json(['message' => 'An approved claim is required.'], 403);
         }
         $data = $request->validate(['title' => ['required', 'string', 'max:255'], 'category' => ['required', 'in:update,maintenance,event,safety,notice'], 'content' => ['required', 'string', 'min:10', 'max:10000'], 'expires_at' => ['nullable', 'date', 'after:today']]);
@@ -67,7 +67,7 @@ class BuilderPortalController extends Controller
         if (! $account = $this->accountFromBearer($request)) {
             return response()->json(['message' => 'OTP login required.'], 401);
         }
-        if ($claim->account_id !== $account->id || $claim->status !== 'approved' || $review->society_id !== $claim->society_id || $review->status !== 'approved') {
+        if ($claim->account_id !== $account->id || $claim->claim_type !== 'builder' || $claim->status !== 'approved' || $review->society_id !== $claim->society_id || $review->status !== 'approved') {
             return response()->json(['message' => 'An approved claim for this society is required.'], 403);
         }
         $data = $request->validate(['content' => ['required', 'string', 'min:10', 'max:5000']]);

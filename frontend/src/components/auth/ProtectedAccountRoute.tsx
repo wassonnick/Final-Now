@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 
-type AccountRole = "customer" | "broker";
+type AccountRole = "customer" | "broker" | "rwa";
 
 function getStoredAccountRole() {
   try {
@@ -35,7 +35,7 @@ export function ProtectedAccountRoute({
   if (storedRole !== role) {
     return (
       <Navigate
-        to={storedRole === "broker" ? "/broker/dashboard" : "/customer/dashboard"}
+        to={storedRole === "broker" ? "/broker/dashboard" : storedRole === "rwa" ? "/rwa/dashboard" : "/customer/dashboard"}
         replace
       />
     );

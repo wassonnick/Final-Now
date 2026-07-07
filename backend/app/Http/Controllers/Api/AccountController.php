@@ -214,7 +214,7 @@ class AccountController extends Controller
     public function upsert(Request $request)
     {
         $validated = $request->validate([
-            'role' => ['required', Rule::in(['customer', 'broker'])],
+            'role' => ['required', Rule::in(['customer', 'broker', 'rwa'])],
             'phone' => ['required', 'string', 'max:30'],
             'name' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -311,7 +311,7 @@ class AccountController extends Controller
     public function requestOtp(Request $request)
     {
         $validated = $request->validate([
-            'role' => ['required', Rule::in(['customer', 'broker'])],
+            'role' => ['required', Rule::in(['customer', 'broker', 'rwa'])],
             'phone' => ['required', 'string', 'max:30'],
             'name' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -386,7 +386,7 @@ class AccountController extends Controller
     public function verifyOtp(Request $request)
     {
         $validated = $request->validate([
-            'role' => ['required', Rule::in(['customer', 'broker'])],
+            'role' => ['required', Rule::in(['customer', 'broker', 'rwa'])],
             'phone' => ['required', 'string', 'max:30'],
             'otp' => ['required', 'string', 'min:4', 'max:8'],
         ]);

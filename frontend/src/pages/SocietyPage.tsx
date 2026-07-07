@@ -1109,6 +1109,10 @@ export function SocietyPage() {
                 <strong className="text-sm text-[#233B6E]">Not sure about this society?</strong>
                 <p className="mt-1 text-[12.5px] text-[#6E756E]">Ask SocietyFlats AI to compare it with similar options →</p>
               </Link>
+              <Link to={`/rwa/${society.slug || slug}`} className="mt-3.5 block rounded-[16px] border border-emerald-100 bg-emerald-50/70 p-4">
+                <strong className="inline-flex items-center gap-2 text-sm text-emerald-800"><Shield className="h-4 w-4" /> RWA notices & resident forum</strong>
+                <p className="mt-1 text-[12.5px] text-emerald-700">View official RWA updates, discussions, questions and grievances →</p>
+              </Link>
             </div>
           </aside>
         </div>

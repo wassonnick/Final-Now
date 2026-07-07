@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { setPublicSeo } from "@/lib/seo";
 
-type AccountRole = "customer" | "broker";
+type AccountRole = "customer" | "broker" | "rwa";
 type LoginStep = "details" | "otp" | "verified";
 
 function cleanPhone(value: string) {
@@ -41,7 +41,9 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
-  const requestedRole = params.get("role") === "broker" ? "broker" : "customer";
+  const requestedRoleParam = params.get("role");
+  const requestedRole: AccountRole =
+    requestedRoleParam === "broker" || requestedRoleParam === "rwa" ? requestedRoleParam : "customer";
   const nextPath = params.get("next") || "";
 
   const [role, setRole] = useState<AccountRole>(requestedRole);
@@ -66,15 +68,16 @@ export function LoginPage() {
   }, []);
 
   const cleanMobile = cleanPhone(phone);
-  const accountName = name.trim() || (role === "broker" ? "Broker Partner" : "Customer");
+  const accountName = name.trim() || (role === "broker" ? "Broker Partner" : role === "rwa" ? "RWA Representative" : "Customer");
 
   const targetPath = useMemo(() => {
     if (nextPath.startsWith("/broker") && role === "broker") return nextPath;
+    if (nextPath.startsWith("/rwa") && role === "rwa") return nextPath;
     if ((nextPath.startsWith("/customer") || nextPath.startsWith("/owner")) && role === "customer") {
       return nextPath;
     }
 
-    return role === "broker" ? "/broker/dashboard" : "/customer/dashboard";
+    return role === "broker" ? "/broker/dashboard" : role === "rwa" ? "/rwa/dashboard" : "/customer/dashboard";
   }, [nextPath, role]);
 
   function completeLocalLogin(response?: AccountResponse | null) {
@@ -259,31 +262,30 @@ export function LoginPage() {
                 </div>
               </div>
 
-              <div className="mb-5 grid grid-cols-2 gap-2 rounded-2xl bg-slate-50 p-1">
-                <button
-                  type="button"
-                  disabled={step === "otp"}
-                  onClick={() => setRole("customer")}
-                  className={cn(
-                    "rounded-xl px-4 py-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-70",
-                    role === "customer" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500",
-                  )}
-                >
-                  <UserRound className="mr-2 inline h-4 w-4" />
-                  Customer
-                </button>
-                <button
-                  type="button"
-                  disabled={step === "otp"}
-                  onClick={() => setRole("broker")}
-                  className={cn(
-                    "rounded-xl px-4 py-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-70",
-                    role === "broker" ? "bg-white text-orange-700 shadow-sm" : "text-slate-500",
-                  )}
-                >
-                  <BriefcaseBusiness className="mr-2 inline h-4 w-4" />
-                  Broker
-                </button>
+              <div className="mb-5 grid grid-cols-3 gap-2 rounded-2xl bg-slate-50 p-1">
+                {[
+                  { key: "customer" as const, label: "Customer", icon: UserRound, active: "text-blue-700" },
+                  { key: "broker" as const, label: "Broker", icon: BriefcaseBusiness, active: "text-orange-700" },
+                  { key: "rwa" as const, label: "RWA", icon: ShieldCheck, active: "text-emerald-700" },
+                ].map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      disabled={step === "otp"}
+                      onClick={() => setRole(item.key)}
+                      className={cn(
+                        "rounded-xl px-3 py-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-70",
+                        role === item.key ? `bg-white ${item.active} shadow-sm` : "text-slate-500",
+                      )}
+                    >
+                      <Icon className="mr-1.5 inline h-4 w-4" />
+                      {item.label}
+                    </button>
+                  );
+                })}
               </div>
 
               {error ? (
@@ -321,7 +323,11 @@ export function LoginPage() {
                     disabled={loading}
                     className={cn(
                       "h-12 w-full rounded-2xl text-white",
-                      role === "broker" ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-700 hover:bg-blue-800",
+                      role === "broker"
+                        ? "bg-orange-600 hover:bg-orange-700"
+                        : role === "rwa"
+                          ? "bg-emerald-700 hover:bg-emerald-800"
+                          : "bg-blue-700 hover:bg-blue-800",
                     )}
                   >
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
@@ -367,7 +373,11 @@ export function LoginPage() {
                     disabled={loading}
                     className={cn(
                       "h-12 w-full rounded-2xl text-white",
-                      role === "broker" ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-700 hover:bg-blue-800",
+                      role === "broker"
+                        ? "bg-orange-600 hover:bg-orange-700"
+                        : role === "rwa"
+                          ? "bg-emerald-700 hover:bg-emerald-800"
+                          : "bg-blue-700 hover:bg-blue-800",
                     )}
                   >
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}

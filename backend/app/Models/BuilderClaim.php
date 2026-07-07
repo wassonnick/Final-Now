@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BuilderClaim extends Model
 {
-    protected $fillable = ['account_id', 'society_id', 'organisation_name', 'representative_name', 'representative_role', 'phone', 'email', 'proof_notes', 'status', 'review_notes', 'reviewed_at'];
+    protected $fillable = ['account_id', 'society_id', 'claim_type', 'organisation_name', 'representative_name', 'representative_role', 'phone', 'email', 'proof_notes', 'status', 'review_notes', 'reviewed_at'];
 
     protected $casts = ['reviewed_at' => 'datetime'];
 
@@ -30,5 +30,15 @@ class BuilderClaim extends Model
     public function reviewResponses(): HasMany
     {
         return $this->hasMany(ReviewResponse::class);
+    }
+
+    public function rwaThreads(): HasMany
+    {
+        return $this->hasMany(RwaThread::class);
+    }
+
+    public function rwaReplies(): HasMany
+    {
+        return $this->hasMany(RwaReply::class);
     }
 }
