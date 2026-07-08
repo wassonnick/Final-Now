@@ -11,7 +11,18 @@ class SocialContextService
 {
     private const SITE_URL = 'https://www.societyflats.com';
 
-    private const BLOCKED_CONTEXT_PATTERN = '/phone|mobile|email|password|token|admin_note|notes|lead_name|owner_phone|owner_email|₹|rs\.|cr\b|crore|lac|lakh|rera|possession|ready to move|ready-to-move|rating|google rating|guaranteed|best|number one|lowest|cheapest|investment|return|appreciation|luxury|ultra-luxury|premium|world-class|exclusive|limited|book now|sq\.ft|sqft|sq m|acre|km|minutes|\bbhk\b|\btowers?\b|\bunits?\b/i';
+    private const BLOCKED_CONTEXT_PATTERN = '/phone|mobile|email|password|token|admin_note|notes|lead_name|owner_phone|owner_email|₹|rs\.|cr\b|crore|lac|lakh|rera|possession|ready to move|ready-to-move|rating|google rating|guaranteed|best|number one|lowest|cheapest|investment|return|appreciation|luxury|ultra-luxury|premium|world-class|exclusive|limited|book now|sq\.ft|sqft|sq m|acre|km|minutes|preferred time|tomorrow|today|raw message|requirement|\bbhk\b|\btowers?\b|\bunits?\b/i';
+
+    private const SAFE_LEAD_BUCKETS = [
+        'rent',
+        'buy',
+        'resale',
+        'owner_listing',
+        'tenant_query',
+        'buyer_query',
+        'general',
+        'unknown',
+    ];
 
     private const SAFE_AMENITY_KEYWORDS = [
         'swimming pool' => 'Swimming Pool',
@@ -166,15 +177,88 @@ class SocialContextService
 
         return [
             'requested_areas' => $this->groupLeadField('entity_slug', $week),
-            'requested_property_types' => $this->groupLeadField('requirement', $week),
+            'requested_property_types' => $this->safeLeadTypeBuckets($week),
             'tenant_queries_this_week' => (clone $recent)->where(fn ($q) => $q
                 ->where('lead_intent', 'like', '%rent%')
                 ->orWhere('requirement', 'like', '%rent%'))->count(),
-            'owner_queries_this_week' => (clone $recent)->where(fn ($q) => $q
+            'owner_listing_queries_this_week' => (clone $recent)->where(fn ($q) => $q
                 ->where('source', 'like', '%owner%')
                 ->orWhere('source', 'like', '%sell%')
                 ->orWhere('lead_intent', 'like', '%owner%'))->count(),
         ];
+    }
+
+    private function safeLeadTypeBuckets($since): array
+    {
+        $counts = array_fill_keys(self::SAFE_LEAD_BUCKETS, 0);
+
+        Lead::query()
+            ->where('created_at', '>=', $since)
+            ->get([
+                'requirement',
+                'lead_intent',
+                'source',
+                'message',
+                'search_query',
+                'ai_query',
+                'cta_label',
+                'source_page',
+            ])
+            ->each(function (Lead $lead) use (&$counts) {
+                $bucket = $this->safeLeadBucket($lead);
+                $counts[$bucket] = ($counts[$bucket] ?? 0) + 1;
+            });
+
+        return collect($counts)
+            ->filter(fn (int $count) => $count > 0)
+            ->sortDesc()
+            ->map(fn (int $count, string $label) => ['label' => $label, 'count' => $count])
+            ->values()
+            ->all();
+    }
+
+    private function safeLeadBucket(Lead $lead): string
+    {
+        $text = mb_strtolower(implode(' ', array_filter([
+            $lead->requirement,
+            $lead->lead_intent,
+            $lead->source,
+            $lead->message,
+            $lead->search_query,
+            $lead->ai_query,
+            $lead->cta_label,
+            $lead->source_page,
+        ], fn ($value) => is_scalar($value) && trim((string) $value) !== '')));
+
+        if ($text === '') {
+            return 'unknown';
+        }
+
+        if (preg_match('/\b(?:owner|list\s*property|listing|sell(?:er|ing)?|landlord)\b/', $text)) {
+            return 'owner_listing';
+        }
+
+        if (preg_match('/\b(?:resale|secondary sale|re-sale)\b/', $text)) {
+            return 'resale';
+        }
+
+        if (preg_match('/\b(?:rent|rental|lease|tenant)\b/', $text)) {
+            return str_contains($text, 'tenant') && ! preg_match('/\b(?:rent|rental|lease)\b/', $text)
+                ? 'tenant_query'
+                : 'rent';
+        }
+
+        if (preg_match('/\b(?:buy|buyer|purchase|for sale)\b/', $text)) {
+            return str_contains($text, 'buyer') && ! preg_match('/\b(?:buy|purchase|for sale)\b/', $text)
+                ? 'buyer_query'
+                : 'buy';
+        }
+
+        if (preg_match('/\b(?:callback|contact|enquiry|inquiry|question|help|general)\b/', $text)) {
+            return 'general';
+        }
+
+        return 'unknown';
     }
 
     private function groupLeadField(string $field, $since): array

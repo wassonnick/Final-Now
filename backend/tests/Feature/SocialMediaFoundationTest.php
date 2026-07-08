@@ -81,6 +81,21 @@ class SocialMediaFoundationTest extends TestCase
             'created_at' => now(),
         ]);
 
+        Lead::create([
+            'name' => 'Unsafe Buyer Lead',
+            'phone' => '7777777777',
+            'email' => 'unsafe-buyer@example.test',
+            'budget' => '₹4 Cr',
+            'requirement' => 'Buy requirement Preferred time Tomorrow raw message please call',
+            'entity_slug' => 'preferred-time-tomorrow',
+            'source' => 'Website',
+            'source_page' => 'Society page',
+            'lead_intent' => 'buyer',
+            'notes' => 'admin note with tomorrow visit detail',
+            'message' => 'Preferred time Tomorrow. Raw message with mobile number.',
+            'created_at' => now(),
+        ]);
+
         $response = $this->admin()->getJson('/api/admin/ai/social/context')->assertOk();
         $json = json_encode($response->json());
         $lowerJson = mb_strtolower($json);
@@ -92,13 +107,22 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertStringNotContainsString('Private Lead', $json);
         $this->assertStringNotContainsString('lead@example.test', $json);
         $this->assertStringNotContainsString('private lead note', $json);
+        $this->assertStringNotContainsString('Unsafe Buyer Lead', $json);
+        $this->assertStringNotContainsString('unsafe-buyer@example.test', $json);
+        $this->assertStringNotContainsString('Preferred time Tomorrow', $json);
         $this->assertArrayNotHasKey('seo_title', $response->json('data.published_societies_summary.0'));
         $this->assertArrayNotHasKey('seo_description', $response->json('data.published_societies_summary.0'));
-        $this->assertDoesNotMatchRegularExpression('/phone|mobile|email|password|token|admin_note|notes|lead_name|owner_phone|owner_email|₹|rs\\.|cr\\b|crore|lac|lakh|rera|possession|ready to move|ready-to-move|rating|google rating|guaranteed|best|number one|lowest|cheapest|investment|return|appreciation|luxury|ultra-luxury|premium|world-class|exclusive|limited|book now|sq\\.ft|sqft|sq m|acre|km|minutes|\\bbhk\\b|\\btowers?\\b|\\bunits?\\b/i', $lowerJson);
+        $this->assertDoesNotMatchRegularExpression('/phone|mobile|email|password|token|admin_note|notes|lead_name|owner_phone|owner_email|₹|rs\\.|cr\\b|crore|lac|lakh|rera|possession|ready to move|ready-to-move|rating|google rating|guaranteed|best|number one|lowest|cheapest|investment|return|appreciation|luxury|ultra-luxury|premium|world-class|exclusive|limited|book now|sq\\.ft|sqft|sq m|acre|km|minutes|preferred time|tomorrow|today|raw message|requirement|\\bbhk\\b|\\btowers?\\b|\\bunits?\\b/i', $lowerJson);
         $this->assertJsonStringEqualsJsonString(json_encode(['Gymnasium', 'Clubhouse', 'Swimming Pool', 'Power Backup', 'Parking']), json_encode($response->json('data.published_societies_summary.0.approved_amenities')));
         $this->assertSame(['schools' => 2, 'hospitals' => 2, 'transit' => 2, 'business_hubs' => 1, 'other' => 0], $response->json('data.published_societies_summary.0.nearby_highlights'));
         $this->assertSame('Published society profile by Godrej Properties in Sector 104, Gurugram with approved amenities and a public SocietyFlats page.', $response->json('data.published_societies_summary.0.short_description'));
         $this->assertSame('published-home-1', $response->json('data.published_properties_summary.0.slug'));
+        $leadTypeLabels = collect($response->json('data.safe_lead_trend_summary.requested_property_types'))->pluck('label')->all();
+        $this->assertContains('rent', $leadTypeLabels);
+        $this->assertContains('buy', $leadTypeLabels);
+        $this->assertEmpty(array_diff($leadTypeLabels, ['rent', 'buy', 'resale', 'owner_listing', 'tenant_query', 'buyer_query', 'general', 'unknown']));
+        $this->assertArrayHasKey('owner_listing_queries_this_week', $response->json('data.safe_lead_trend_summary'));
+        $this->assertArrayNotHasKey('owner_queries_this_week', $response->json('data.safe_lead_trend_summary'));
     }
 
     public function test_generator_without_openai_creates_review_only_posts_and_creative_briefs(): void
