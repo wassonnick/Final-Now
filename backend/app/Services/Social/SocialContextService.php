@@ -11,7 +11,38 @@ class SocialContextService
 {
     private const SITE_URL = 'https://www.societyflats.com';
 
-    private const BLOCKED_CONTEXT_PATTERN = '/\b(?:phone|mobile|email|password|token|admin_note|notes|lead_name|rera|possession|rating|guaranteed|best|number one|lowest|cheapest|ready\s*[- ]?\s*to\s*[- ]?\s*move|starting\s+from|google\s+rating|investment\s+return|appreciation)\b|₹|rs\.?|cr\b|crore|lac|lakh|\b\d+(?:\.\d+)?\s*(?:km|kilometres?|minutes?|mins?)\b/i';
+    private const BLOCKED_CONTEXT_PATTERN = '/phone|mobile|email|password|token|admin_note|notes|lead_name|owner_phone|owner_email|₹|rs\.|cr\b|crore|lac|lakh|rera|possession|ready to move|ready-to-move|rating|google rating|guaranteed|best|number one|lowest|cheapest|investment|return|appreciation|luxury|ultra-luxury|premium|world-class|exclusive|limited|book now|sq\.ft|sqft|sq m|acre|km|minutes|\bbhk\b|\btowers?\b|\bunits?\b/i';
+
+    private const SAFE_AMENITY_KEYWORDS = [
+        'swimming pool' => 'Swimming Pool',
+        'gymnasium' => 'Gymnasium',
+        'gym' => 'Gymnasium',
+        'clubhouse' => 'Clubhouse',
+        'kids play area' => 'Kids Play Area',
+        'children play area' => 'Kids Play Area',
+        'jogging track' => 'Jogging Track',
+        'security' => 'Security',
+        '24x7 security' => 'Security',
+        'cctv' => 'CCTV',
+        'power backup' => 'Power Backup',
+        'visitor parking' => 'Parking',
+        'parking' => 'Parking',
+        'garden' => 'Garden',
+        'park' => 'Park',
+        'tennis court' => 'Tennis Court',
+        'basketball court' => 'Basketball Court',
+        'badminton court' => 'Badminton Court',
+        'yoga area' => 'Yoga Area',
+        'meditation area' => 'Meditation Area',
+        'indoor games' => 'Indoor Games',
+        'community hall' => 'Community Hall',
+        'multipurpose hall' => 'Multipurpose Hall',
+        'lift' => 'Lift',
+        'water supply' => 'Water Supply',
+        'fire safety' => 'Fire Safety',
+        'rainwater harvesting' => 'Rainwater Harvesting',
+        'ev charging' => 'EV Charging',
+    ];
 
     public function build(?int $societyId = null, ?int $propertyId = null, ?string $sector = null): array
     {
@@ -21,21 +52,18 @@ class SocialContextService
         return [
             'brand' => [
                 'name' => 'SocietyFlats.com',
-                'positioning' => 'Gurgaon local society discovery platform helping a buyer, tenant, owner and channel audience choose the right society before choosing the home.',
-                'tone' => 'trustworthy, local expert, helpful, clear, non-spammy, practical, not hype-heavy.',
+                'positioning' => 'Gurgaon society discovery platform for safe social draft ideas.',
+                'tone' => 'trustworthy, local, helpful, clear, practical.',
                 'content_goals' => [
-                    'educate buyer and tenant audiences about Gurgaon societies',
-                    'generate tenant/buyer/owner enquiries',
-                    'explain society-led search',
-                    'promote verified society intelligence',
-                    'build trust for rentals and resale',
-                    'encourage WhatsApp/callback enquiries',
+                    'educate home search audiences about Gurgaon societies',
+                    'encourage enquiry through SocietyFlats',
+                    'explain society-led home search',
+                    'keep every draft review-led',
                 ],
             ],
             'published_societies_summary' => $societies->map(fn (Society $society) => $this->societySummary($society))->values(),
             'published_properties_summary' => $properties->map(fn (Property $property) => $this->propertySummary($property))->values(),
             'safe_lead_trend_summary' => $this->safeLeadTrends(),
-            'popular_areas' => $this->popularSectors(),
             'safe_claim_rules' => $this->claimRules(),
         ];
     }
@@ -95,45 +123,40 @@ class SocialContextService
             'city' => $this->sanitizeMarketingText($society->city, 80),
             'builder' => $this->sanitizeMarketingText($society->builder, 100),
             'published_status' => 'published',
-            'short_description' => $this->sanitizeMarketingText($society->description),
+            'short_description' => $this->neutralSocietySummary($society),
             'approved_amenities' => $this->cleanAmenities($society->amenities),
             'nearby_highlights' => $this->nearbyHighlights($society),
             'public_url' => self::SITE_URL.'/society/'.$society->slug,
-            'seo_title' => $this->sanitizeMarketingText($society->meta_title, 120),
-            'seo_description' => $this->sanitizeMarketingText($society->meta_description, 180),
         ];
     }
 
     private function propertySummary(Property $property): array
     {
         $society = $property->relationLoaded('society') ? $property->getRelation('society') : $property->society()->first();
+        $slug = $this->safeSlug($property->slug, 'published-home-'.$property->id);
 
         return [
             'id' => $property->id,
             'title' => $this->sanitizeMarketingText($property->title, 100) ?: 'Published SocietyFlats home',
-            'slug' => $property->slug,
+            'slug' => $slug,
             'listing_type' => $this->sanitizeMarketingText($property->listing_type, 40),
             'bedrooms' => $property->bedrooms,
             'society_name' => $this->sanitizeMarketingText($society?->name ?: $property->getAttribute('society'), 100),
             'sector' => $this->sanitizeMarketingText($society?->sector ?: $property->locality, 80),
-            'public_url' => self::SITE_URL.'/property/'.$property->slug,
+            'public_url' => self::SITE_URL.'/property/'.$slug,
             'status' => $property->status,
         ];
     }
 
     private function nearbyHighlights(Society $society): array
     {
-        return collect([
-            ...$this->nearbyEntries($society->nearby_schools, 'school'),
-            ...$this->nearbyEntries($society->nearby_metro, 'transit'),
-            ...$this->nearbyEntries($society->nearby_hospitals, 'hospital'),
-            ...$this->nearbyEntries($society->nearby_office_hubs, 'business'),
-        ])
-            ->filter(fn ($item) => $item['name'] !== '')
-            ->unique(fn ($item) => mb_strtolower($item['category'].'|'.$item['name']))
-            ->take(8)
-            ->values()
-            ->all();
+        return [
+            'schools' => count($this->flattenNearby($society->nearby_schools)),
+            'hospitals' => count($this->flattenNearby($society->nearby_hospitals)),
+            'transit' => count($this->flattenNearby($society->nearby_metro)),
+            'business_hubs' => count($this->flattenNearby($society->nearby_office_hubs)),
+            'other' => 0,
+        ];
     }
 
     private function safeLeadTrends(): array
@@ -144,10 +167,10 @@ class SocialContextService
         return [
             'requested_areas' => $this->groupLeadField('entity_slug', $week),
             'requested_property_types' => $this->groupLeadField('requirement', $week),
-            'tenant_enquiries_this_week' => (clone $recent)->where(fn ($q) => $q
+            'tenant_queries_this_week' => (clone $recent)->where(fn ($q) => $q
                 ->where('lead_intent', 'like', '%rent%')
                 ->orWhere('requirement', 'like', '%rent%'))->count(),
-            'owner_listing_enquiries_this_week' => (clone $recent)->where(fn ($q) => $q
+            'owner_queries_this_week' => (clone $recent)->where(fn ($q) => $q
                 ->where('source', 'like', '%owner%')
                 ->orWhere('source', 'like', '%sell%')
                 ->orWhere('lead_intent', 'like', '%owner%'))->count(),
@@ -170,29 +193,13 @@ class SocialContextService
             ->all();
     }
 
-    private function popularSectors(): array
-    {
-        $societies = Society::query()
-            ->where('is_published', true)
-            ->whereIn('status', ['Verified', 'Premium'])
-            ->whereNotNull('sector')
-            ->selectRaw('sector as name, COUNT(*) as count')
-            ->groupBy('sector')
-            ->orderByDesc('count')
-            ->limit(15)
-            ->get();
-
-        return $societies->map(fn ($row) => ['name' => $row->name, 'count' => (int) $row->count])->all();
-    }
-
     private function claimRules(): array
     {
         return [
             'Use only the provided SocietyFlats data.',
-            'Do not invent monetary figures, inventory claims, legal registry details, handover timelines, rankings, testimonials, or financial outcomes.',
-            'Avoid superlatives and hard-sell language unless the exact claim is approved outside this context.',
-            'Any draft with sensitive commercial, legal, builder, inventory, or market language must be treated as high risk and reviewed.',
-            'Generic educational posts may be low risk.',
+            'Use neutral educational copy only.',
+            'Avoid commercial, legal, timing, ranking, size, availability, or market claims.',
+            'Any builder mention must be treated as high risk and reviewed.',
             'In SM1A, all AI-generated posts must still be saved as needs_approval.',
         ];
     }
@@ -217,6 +224,19 @@ class SocialContextService
             ->filter()
             ->values()
             ->all();
+    }
+
+    private function neutralSocietySummary(Society $society): string
+    {
+        $area = $this->safeAreaLabel($society->sector ?: $society->locality) ?: 'Gurgaon';
+        $city = $this->safeAreaLabel($society->city) ?: 'Gurgaon';
+        $builder = $this->sanitizeMarketingText($society->builder, 80);
+
+        if ($builder) {
+            return "Published society profile by {$builder} in {$area}, {$city} with approved amenities and a public SocietyFlats page.";
+        }
+
+        return "Published society profile in {$area}, {$city} with approved amenities and a public SocietyFlats page.";
     }
 
     private function nearbyEntry(mixed $item, string $category): ?array
@@ -290,12 +310,30 @@ class SocialContextService
         }
 
         return collect($items)
-            ->map(fn ($item) => $this->sanitizeMarketingText($item, 60))
+            ->map(fn ($item) => $this->safeAmenity($item))
             ->filter()
             ->unique(fn ($item) => mb_strtolower($item))
-            ->take(12)
+            ->take(10)
             ->values()
             ->all();
+    }
+
+    private function safeAmenity(mixed $item): ?string
+    {
+        $text = trim((string) $item);
+        if ($text === '' || is_numeric($text) || preg_match('/[\[\]{}]/', $text) || preg_match(self::BLOCKED_CONTEXT_PATTERN, $text)) {
+            return null;
+        }
+
+        $normalized = mb_strtolower(preg_replace('/\s+/', ' ', $text) ?: $text);
+
+        foreach (self::SAFE_AMENITY_KEYWORDS as $needle => $label) {
+            if ($normalized === $needle || str_contains($normalized, $needle)) {
+                return $label;
+            }
+        }
+
+        return null;
     }
 
     private function sanitizeNearbyName(mixed $value): string
@@ -355,6 +393,21 @@ class SocialContextService
         }
 
         return $this->shorten($value, $limit);
+    }
+
+    private function safeAreaLabel(mixed $value): ?string
+    {
+        return $this->sanitizeMarketingText($value, 80);
+    }
+
+    private function safeSlug(?string $slug, string $fallback): string
+    {
+        $slug = trim((string) $slug);
+        if ($slug === '' || preg_match(self::BLOCKED_CONTEXT_PATTERN, str_replace('-', ' ', $slug))) {
+            return $fallback;
+        }
+
+        return $slug;
     }
 
     private function shorten(?string $value, int $limit = 280): ?string

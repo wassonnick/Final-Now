@@ -42,7 +42,7 @@ class SocialMediaFoundationTest extends TestCase
             'description' => '<p>Best luxury option starting from ₹4.25 Cr with RERA ABC123, possession Dec 2027, ready to move, Google rating 4.8, 1.4 km from metro. <cite>turn0search1</cite> Safe community information.</p>',
             'meta_title' => 'Best Published Social Society from Rs. 4 Cr',
             'meta_description' => 'Guaranteed investment return and appreciation with ready to move homes near transit.',
-            'amenities' => ['["Gym","Clubhouse","Swimming Pool"]', 'Power Backup, Visitor Parking'],
+            'amenities' => ['["Gym","Clubhouse","Swimming Pool","Luxury Lounge","2.5 acre Greens"]', 'Power Backup, Visitor Parking, World-class specifications'],
             'nearby_schools' => json_encode([['name' => 'Top School 1.4 km rating 4.7'], ['name' => 'Aravali Public School']]),
             'nearby_metro' => "Metro Station - 5 minutes away\nDwarka Expressway Transit",
             'nearby_hospitals' => 'Best Hospital Google rating 4.9, Safe Care Hospital',
@@ -83,6 +83,7 @@ class SocialMediaFoundationTest extends TestCase
 
         $response = $this->admin()->getJson('/api/admin/ai/social/context')->assertOk();
         $json = json_encode($response->json());
+        $lowerJson = mb_strtolower($json);
 
         $this->assertStringContainsString('Published Social Society', $json);
         $this->assertStringNotContainsString('Draft Private Society', $json);
@@ -91,10 +92,13 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertStringNotContainsString('Private Lead', $json);
         $this->assertStringNotContainsString('lead@example.test', $json);
         $this->assertStringNotContainsString('private lead note', $json);
-        $this->assertDoesNotMatchRegularExpression('/phone|mobile|email|password|token|admin_note|notes|lead_name|₹|rs\\.?|cr\\b|crore|lac|lakh|rera|possession|ready to move|rating|google rating|guaranteed|best|number one|lowest|cheapest|investment return|appreciation/i', $json);
-        $this->assertDoesNotMatchRegularExpression('/\\b\\d+(?:\\.\\d+)?\\s*(?:km|minutes?|mins?)\\b/i', $json);
-        $this->assertJsonStringEqualsJsonString(json_encode(['Gym', 'Clubhouse', 'Swimming Pool', 'Power Backup', 'Visitor Parking']), json_encode($response->json('data.published_societies_summary.0.approved_amenities')));
-        $this->assertSame(['name' => 'Aravali Public School', 'category' => 'school'], $response->json('data.published_societies_summary.0.nearby_highlights.0'));
+        $this->assertArrayNotHasKey('seo_title', $response->json('data.published_societies_summary.0'));
+        $this->assertArrayNotHasKey('seo_description', $response->json('data.published_societies_summary.0'));
+        $this->assertDoesNotMatchRegularExpression('/phone|mobile|email|password|token|admin_note|notes|lead_name|owner_phone|owner_email|₹|rs\\.|cr\\b|crore|lac|lakh|rera|possession|ready to move|ready-to-move|rating|google rating|guaranteed|best|number one|lowest|cheapest|investment|return|appreciation|luxury|ultra-luxury|premium|world-class|exclusive|limited|book now|sq\\.ft|sqft|sq m|acre|km|minutes|\\bbhk\\b|\\btowers?\\b|\\bunits?\\b/i', $lowerJson);
+        $this->assertJsonStringEqualsJsonString(json_encode(['Gymnasium', 'Clubhouse', 'Swimming Pool', 'Power Backup', 'Parking']), json_encode($response->json('data.published_societies_summary.0.approved_amenities')));
+        $this->assertSame(['schools' => 2, 'hospitals' => 2, 'transit' => 2, 'business_hubs' => 1, 'other' => 0], $response->json('data.published_societies_summary.0.nearby_highlights'));
+        $this->assertSame('Published society profile by Godrej Properties in Sector 104, Gurugram with approved amenities and a public SocietyFlats page.', $response->json('data.published_societies_summary.0.short_description'));
+        $this->assertSame('published-home-1', $response->json('data.published_properties_summary.0.slug'));
     }
 
     public function test_generator_without_openai_creates_review_only_posts_and_creative_briefs(): void
