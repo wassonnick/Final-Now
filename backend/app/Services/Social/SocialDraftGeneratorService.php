@@ -1,0 +1,249 @@
+<?php
+
+namespace App\Services\Social;
+
+use App\Models\SocialPost;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+
+class SocialDraftGeneratorService
+{
+    public const PROMPT_VERSION = 'sm1a-v1';
+
+    private const HIGH_RISK_TERMS = [
+        'price', 'rent', 'sale', 'available', 'availability', 'builder', 'rera', 'possession',
+        'investment', 'return', 'guaranteed', 'best', 'number one', 'top', 'appreciation',
+        'lowest', 'cheapest', 'luxury', 'premium', 'exclusive', 'limited', 'sold out',
+    ];
+
+    public function __construct(
+        private SocialContextService $contextService,
+        private SocialImageAssetService $imageAssets,
+    ) {}
+
+    public function generate(array $input): array
+    {
+        $society = ! empty($input['society_id']) ? $this->contextService->publishedSociety((int) $input['society_id']) : null;
+        $property = ! empty($input['property_id']) ? $this->contextService->publishedProperty((int) $input['property_id']) : null;
+
+        if (! empty($input['society_id']) && ! $society) {
+            throw new \InvalidArgumentException('Selected society is not published.');
+        }
+        if (! empty($input['property_id']) && ! $property) {
+            throw new \InvalidArgumentException('Selected property is not published and approved.');
+        }
+
+        $context = $this->contextService->build($society?->id, $property?->id, $input['sector'] ?? null);
+        $posts = $this->draftsFromAi($input, $context);
+        $saved = [];
+
+        foreach ($posts as $postData) {
+            $normalized = $this->normalizePost($postData, $input, $society?->id, $property?->id);
+            $post = SocialPost::create($normalized);
+
+            if (! empty($input['generate_images'])) {
+                $this->imageAssets->createForPost($post);
+            } elseif (! empty($post->image_prompt) || ! empty($post->creative_prompt)) {
+                $post->assets()->create([
+                    'asset_type' => 'creative_brief',
+                    'platform' => $post->platform,
+                    'image_prompt' => $post->image_prompt ?: $post->creative_prompt,
+                    'status' => 'needs_approval',
+                    'risk_level' => $post->risk_level,
+                    'metadata' => [
+                        'ai_generated' => false,
+                        'disclaimer' => 'Creative prompt only. SM1A does not auto-publish assets.',
+                    ],
+                ]);
+            }
+
+            $saved[] = $post->load('assets');
+        }
+
+        return ['context' => $context, 'posts' => $saved];
+    }
+
+    private function draftsFromAi(array $input, array $context): array
+    {
+        $apiKey = (string) config('services.openai.api_key', '');
+        $model = (string) config('services.openai.model', 'gpt-4.1-mini');
+
+        if (! $apiKey) {
+            return $this->fallbackDrafts($input, $context);
+        }
+
+        $prompt = $this->prompt($input, $context);
+
+        try {
+            $response = Http::timeout(70)->withToken($apiKey)->post('https://api.openai.com/v1/chat/completions', [
+                'model' => $model,
+                'temperature' => 0.35,
+                'response_format' => ['type' => 'json_object'],
+                'messages' => [
+                    ['role' => 'system', 'content' => $this->systemPrompt()],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+            ]);
+
+            if (! $response->successful()) {
+                throw new \RuntimeException('OpenAI request failed with HTTP '.$response->status().'.');
+            }
+
+            $content = (string) data_get($response->json(), 'choices.0.message.content', '');
+            $decoded = json_decode($content, true);
+            $posts = is_array($decoded['posts'] ?? null) ? $decoded['posts'] : [];
+
+            return $posts ?: $this->fallbackDrafts($input, $context);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $this->fallbackDrafts($input, $context);
+        }
+    }
+
+    private function normalizePost(array $post, array $input, ?int $societyId, ?int $propertyId): array
+    {
+        $platform = $this->allowed($post['platform'] ?? null, $input['platforms'], $input['platforms'][0]);
+        $sourceType = $post['source_type'] ?? ($propertyId ? 'property' : ($societyId ? 'society' : (! empty($input['sector']) ? 'sector' : 'brand')));
+        $sourceId = $propertyId ?: $societyId ?: (is_numeric($post['source_id'] ?? null) ? (int) $post['source_id'] : null);
+
+        $risk = in_array(($post['risk_level'] ?? 'medium'), ['low', 'medium', 'high'], true) ? $post['risk_level'] : 'medium';
+        $textForRisk = implode(' ', [
+            $post['title'] ?? '',
+            $post['hook'] ?? '',
+            $post['caption'] ?? '',
+            $post['creative_prompt'] ?? '',
+            $post['image_prompt'] ?? '',
+        ]);
+        if ($this->containsHighRiskTerms($textForRisk)) {
+            $risk = 'high';
+        }
+
+        return [
+            'platform' => $platform,
+            'post_type' => $this->postType($platform, $post['post_type'] ?? null),
+            'title' => Str::limit((string) ($post['title'] ?? 'SocietyFlats social draft'), 250, ''),
+            'hook' => $post['hook'] ?? null,
+            'caption' => trim((string) ($post['caption'] ?? 'Choose the society before choosing the home with SocietyFlats.com.')),
+            'cta' => $post['cta'] ?? 'Request a callback on SocietyFlats.com',
+            'hashtags' => array_values(array_filter((array) ($post['hashtags'] ?? ['#SocietyFlats', '#GurgaonHomes']))),
+            'creative_prompt' => $post['creative_prompt'] ?? null,
+            'image_prompt' => $post['image_prompt'] ?? null,
+            'image_style' => $this->imageStyle($post['image_style'] ?? ($input['image_style'] ?? null)),
+            'carousel_slides' => is_array($post['carousel_slides'] ?? null) ? $post['carousel_slides'] : null,
+            'reel_script' => $post['reel_script'] ?? null,
+            'source_type' => in_array($sourceType, ['society', 'property', 'sector', 'brand', 'education'], true) ? $sourceType : null,
+            'source_id' => $sourceId,
+            'risk_level' => $risk,
+            'status' => 'needs_approval',
+            'ai_model' => config('services.openai.api_key') ? config('services.openai.model', 'gpt-4.1-mini') : 'system_fallback',
+            'ai_image_model' => config('services.openai.image_model'),
+            'ai_prompt_version' => self::PROMPT_VERSION,
+        ];
+    }
+
+    private function fallbackDrafts(array $input, array $context): array
+    {
+        $society = $context['published_societies_summary'][0] ?? null;
+        $sector = $input['sector'] ?? ($society['sector'] ?? 'Gurgaon');
+        $count = max(1, min(10, (int) ($input['number_of_variations'] ?? 1)));
+        $posts = [];
+
+        $platforms = array_values($input['platforms']);
+
+        for ($index = 0; $index < $count; $index++) {
+            $platform = $platforms[$index % count($platforms)];
+            $subject = $society ? $society['name'] : $sector;
+            $posts[] = [
+                'platform' => $platform,
+                'post_type' => $platform === 'linkedin' ? 'linkedin_post' : ($platform === 'google_business' ? 'google_business_post' : 'single_post'),
+                'title' => 'Society-first home search in '.$subject,
+                'hook' => 'Before shortlisting a flat, shortlist the society.',
+                'caption' => "SocietyFlats helps Gurgaon users compare published society intelligence before they choose a rental or resale home. Explore verified society context, location signals and enquiry support without fake inventory claims.",
+                'cta' => 'Explore SocietyFlats.com or request a callback',
+                'hashtags' => ['#SocietyFlats', '#GurgaonHomes', '#SocietyFirstSearch'],
+                'creative_prompt' => 'Create a clean branded SocietyFlats graphic showing society-first search, Gurgaon map cues and review-ready content blocks.',
+                'image_prompt' => 'Premium real-estate illustration for SocietyFlats: Gurgaon skyline abstraction, society cards, map pins, warm neutral background. No fake building photos, no people faces, no guarantees.',
+                'image_style' => $input['image_style'] ?? 'premium_real_estate',
+                'carousel_slides' => [
+                    ['slide' => 1, 'heading' => 'Choose the society first', 'body' => 'Compare location, amenities and public profile signals before the home.', 'image_prompt' => 'Society-first search card layout'],
+                    ['slide' => 2, 'heading' => 'Avoid fake listings', 'body' => 'SocietyFlats keeps drafts and inventory review-led.', 'image_prompt' => 'Trust and review workflow graphic'],
+                ],
+                'reel_script' => null,
+                'source_type' => $society ? 'society' : 'education',
+                'source_id' => $society['id'] ?? null,
+                'risk_level' => $index === 0 ? 'low' : 'medium',
+                'risk_reason' => 'Fallback draft uses generic approved brand positioning only.',
+            ];
+        }
+
+        return $posts;
+    }
+
+    private function systemPrompt(): string
+    {
+        return <<<'PROMPT'
+You are generating social media draft content for SocietyFlats.com.
+
+You may only use the provided SocietyFlats context.
+You must not invent: prices, availability, builder claims, possession dates, RERA details, testimonials, rankings, market appreciation, investment returns, guarantees, exact distances, legal claims.
+If data is missing, write generally and safely.
+Any content mentioning price, availability, builder, possession, RERA, investment, returns, market trends, ranking, or “best/top/luxury/premium” claims must be marked high risk.
+Generic educational posts can be low risk.
+All outputs are drafts for admin review.
+Do not include phone numbers.
+Do not include private owner/lead data.
+Do not mention unpublished inventory.
+Return only valid JSON in the requested shape.
+PROMPT;
+    }
+
+    private function prompt(array $input, array $context): string
+    {
+        return 'Generate '.(int) $input['number_of_variations'].' SocietyFlats social drafts for platforms '.implode(', ', $input['platforms']).'. '
+            .'Content pillar: '.$input['content_pillar'].'. Objective: '.$input['objective'].'. Target audience: '.$input['target_audience'].'. '
+            .'Image style: '.($input['image_style'] ?? 'premium_real_estate').'. '
+            ."Required JSON shape: {\"posts\":[{\"platform\":\"instagram\",\"post_type\":\"single_post | carousel | reel | story | whatsapp_status | google_business_post | linkedin_post\",\"title\":\"string\",\"hook\":\"string\",\"caption\":\"string\",\"cta\":\"string\",\"hashtags\":[\"string\"],\"creative_prompt\":\"string\",\"image_prompt\":\"string\",\"image_style\":\"premium_real_estate | clean_corporate | instagram_carousel | whatsapp_status | google_business | minimal_vector | local_area_guide\",\"carousel_slides\":[{\"slide\":1,\"heading\":\"string\",\"body\":\"string\",\"image_prompt\":\"string\"}],\"reel_script\":\"string or null\",\"source_type\":\"society | property | sector | brand | education | null\",\"source_id\":123,\"risk_level\":\"low | medium | high\",\"risk_reason\":\"string\"}]}.\n\n"
+            .'Safe SocietyFlats context JSON: '.json_encode($context, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    private function containsHighRiskTerms(string $text): bool
+    {
+        $text = mb_strtolower($text);
+
+        foreach (self::HIGH_RISK_TERMS as $term) {
+            if (str_contains($text, $term)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function allowed(?string $value, array $allowed, string $fallback): string
+    {
+        return in_array($value, $allowed, true) ? $value : $fallback;
+    }
+
+    private function postType(string $platform, ?string $value): string
+    {
+        $allowed = ['single_post', 'carousel', 'reel', 'story', 'whatsapp_status', 'google_business_post', 'linkedin_post'];
+        if (in_array($value, $allowed, true)) {
+            return $value;
+        }
+
+        return match ($platform) {
+            'whatsapp' => 'whatsapp_status',
+            'google_business' => 'google_business_post',
+            'linkedin' => 'linkedin_post',
+            default => 'single_post',
+        };
+    }
+
+    private function imageStyle(?string $style): ?string
+    {
+        $allowed = ['premium_real_estate', 'clean_corporate', 'instagram_carousel', 'whatsapp_status', 'google_business', 'minimal_vector', 'local_area_guide'];
+
+        return in_array($style, $allowed, true) ? $style : 'premium_real_estate';
+    }
+}

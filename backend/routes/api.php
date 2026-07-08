@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Admin\AdminRwaPortalController;
 use App\Http\Controllers\Api\Admin\AdminSiteVisitController;
 use App\Http\Controllers\Api\Admin\AdminOpsController;
 use App\Http\Controllers\Api\Admin\AdminSeoAutopilotController;
+use App\Http\Controllers\Api\Admin\AdminSocialController;
 use App\Http\Controllers\Api\Admin\AdminStatsController;
 use App\Http\Controllers\Api\Admin\AdminSocietySeoContentController;
 use App\Http\Controllers\Api\Admin\AdminSocietySeoReportController;
@@ -69,6 +70,21 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/ops/suggestions/{suggestion}/apply', [AdminOpsController::class, 'applySuggestion']);
     Route::post('/ops/suggestions/{suggestion}/dismiss', [AdminOpsController::class, 'dismissSuggestion']);
     Route::post('/uploads/images', [ImageUploadController::class, 'store']);
+    Route::get('/ai/social/context', [AdminSocialController::class, 'context']);
+    Route::prefix('social')->group(function () {
+        Route::post('/generate', [AdminSocialController::class, 'generate']);
+        Route::get('/posts', [AdminSocialController::class, 'posts']);
+        Route::get('/posts/{post}', [AdminSocialController::class, 'showPost']);
+        Route::patch('/posts/{post}', [AdminSocialController::class, 'updatePost']);
+        Route::post('/posts/{post}/approve', [AdminSocialController::class, 'approvePost']);
+        Route::post('/posts/{post}/reject', [AdminSocialController::class, 'rejectPost']);
+        Route::post('/posts/{post}/generate-image', [AdminSocialController::class, 'generateImage']);
+        Route::get('/assets', [AdminSocialController::class, 'assets']);
+        Route::patch('/assets/{asset}', [AdminSocialController::class, 'updateAsset']);
+        Route::post('/assets/{asset}/approve', [AdminSocialController::class, 'approveAsset']);
+        Route::post('/assets/{asset}/reject', [AdminSocialController::class, 'rejectAsset']);
+        Route::get('/accounts', [AdminSocialController::class, 'accounts']);
+    });
     Route::prefix('seo-autopilot')->group(function () {
         Route::get('/dashboard', [AdminSeoAutopilotController::class, 'dashboard']);
         Route::get('/pages', [AdminSeoAutopilotController::class, 'pages']);

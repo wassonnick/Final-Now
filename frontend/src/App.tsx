@@ -62,6 +62,11 @@ const AdminRwaPortalPage = lazy(() => import('@/pages/admin/AdminRwaPortalPage')
 const AdminReferralsPage = lazy(() => import('@/pages/admin/AdminReferralsPage').then((module) => ({ default: module.AdminReferralsPage })));
 const AdminNriCasesPage = lazy(() => import('@/pages/admin/AdminNriCasesPage').then((module) => ({ default: module.AdminNriCasesPage })));
 const AdminSeoAutopilotPage = lazy(() => import('@/pages/admin/AdminSeoAutopilotPage').then((module) => ({ default: module.AdminSeoAutopilotPage })));
+const AdminSocialDraftsPage = lazy(() => import('@/pages/admin/AdminSocialDraftsPage').then((module) => ({ default: module.AdminSocialDraftsPage })));
+const AdminSocialGeneratePage = lazy(() => import('@/pages/admin/AdminSocialGeneratePage').then((module) => ({ default: module.AdminSocialGeneratePage })));
+const AdminSocialAssetsPage = lazy(() => import('@/pages/admin/AdminSocialAssetsPage').then((module) => ({ default: module.AdminSocialAssetsPage })));
+const AdminSocialAccountsPage = lazy(() => import('@/pages/admin/AdminSocialAccountsPage').then((module) => ({ default: module.AdminSocialAccountsPage })));
+const AdminSocialCalendarPage = lazy(() => import('@/pages/admin/AdminSocialCalendarPage').then((module) => ({ default: module.AdminSocialCalendarPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -209,6 +214,11 @@ function AppShell() {
             <Route path="/admin/referrals" element={<ProtectedAdminRoute><AdminReferralsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/nri-cases" element={<ProtectedAdminRoute><AdminNriCasesPage /></ProtectedAdminRoute>} />
             <Route path="/admin/seo-autopilot" element={<ProtectedAdminRoute><AdminSeoAutopilotPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/social" element={<ProtectedAdminRoute><AdminSocialDraftsPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/social/generate" element={<ProtectedAdminRoute><AdminSocialGeneratePage /></ProtectedAdminRoute>} />
+            <Route path="/admin/social/assets" element={<ProtectedAdminRoute><AdminSocialAssetsPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/social/accounts" element={<ProtectedAdminRoute><AdminSocialAccountsPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/social/calendar" element={<ProtectedAdminRoute><AdminSocialCalendarPage /></ProtectedAdminRoute>} />
 
             <Route path="/admin/reviews" element={<ProtectedAdminRoute><AdminReviewsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsersPage /></ProtectedAdminRoute>} />

@@ -38,6 +38,12 @@ return [
     'admin_api_token' => env('ADMIN_API_TOKEN'),
     'google_places_api_key' => env('GOOGLE_PLACES_API_KEY'),
 
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-4.1-mini'),
+        'image_model' => env('OPENAI_IMAGE_MODEL'),
+    ],
+
     'search_console' => [
         'site_url' => env('GOOGLE_SEARCH_CONSOLE_SITE_URL', 'https://www.societyflats.com'),
         'access_token' => env('GOOGLE_SEARCH_CONSOLE_ACCESS_TOKEN'),

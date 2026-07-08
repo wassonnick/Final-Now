@@ -19,6 +19,7 @@ import {
   Gift,
   Globe2,
   Gauge,
+  Sparkles,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ const links = [
   { label: "RWA Portal", href: "/admin/rwa", icon: Users },
   { label: "AI Features", href: "/admin/ai", icon: Bot },
   { label: "SEO Autopilot", href: "/admin/seo-autopilot", icon: Gauge },
+  { label: "AI Social Media", href: "/admin/social", icon: Sparkles },
   { label: "Maps", href: "/admin/maps", icon: MapPinned },
   { label: "Broker CRM", href: "/admin/broker-crm", icon: BriefcaseBusiness },
   { label: "Owner CRM", href: "/admin/owner-crm", icon: BriefcaseBusiness },
