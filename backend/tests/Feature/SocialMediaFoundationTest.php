@@ -36,7 +36,18 @@ class SocialMediaFoundationTest extends TestCase
 
     public function test_context_exposes_only_safe_published_marketing_data(): void
     {
-        $published = $this->society(['name' => 'Published Social Society', 'slug' => 'published-social-society']);
+        $published = $this->society([
+            'name' => 'Published Social Society',
+            'slug' => 'published-social-society',
+            'description' => '<p>Best luxury option starting from ₹4.25 Cr with RERA ABC123, possession Dec 2027, ready to move, Google rating 4.8, 1.4 km from metro. <cite>turn0search1</cite> Safe community information.</p>',
+            'meta_title' => 'Best Published Social Society from Rs. 4 Cr',
+            'meta_description' => 'Guaranteed investment return and appreciation with ready to move homes near transit.',
+            'amenities' => ['["Gym","Clubhouse","Swimming Pool"]', 'Power Backup, Visitor Parking'],
+            'nearby_schools' => json_encode([['name' => 'Top School 1.4 km rating 4.7'], ['name' => 'Aravali Public School']]),
+            'nearby_metro' => "Metro Station - 5 minutes away\nDwarka Expressway Transit",
+            'nearby_hospitals' => 'Best Hospital Google rating 4.9, Safe Care Hospital',
+            'nearby_office_hubs' => '<cite>bad</cite> Cyber Business Park 20 minutes',
+        ]);
         $this->society(['name' => 'Draft Private Society', 'slug' => 'draft-private-society', 'is_published' => false, 'status' => 'Draft']);
 
         Property::create([
@@ -80,6 +91,10 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertStringNotContainsString('Private Lead', $json);
         $this->assertStringNotContainsString('lead@example.test', $json);
         $this->assertStringNotContainsString('private lead note', $json);
+        $this->assertDoesNotMatchRegularExpression('/phone|mobile|email|password|token|admin_note|notes|lead_name|₹|rs\\.?|cr\\b|crore|lac|lakh|rera|possession|ready to move|rating|google rating|guaranteed|best|number one|lowest|cheapest|investment return|appreciation/i', $json);
+        $this->assertDoesNotMatchRegularExpression('/\\b\\d+(?:\\.\\d+)?\\s*(?:km|minutes?|mins?)\\b/i', $json);
+        $this->assertJsonStringEqualsJsonString(json_encode(['Gym', 'Clubhouse', 'Swimming Pool', 'Power Backup', 'Visitor Parking']), json_encode($response->json('data.published_societies_summary.0.approved_amenities')));
+        $this->assertSame(['name' => 'Aravali Public School', 'category' => 'school'], $response->json('data.published_societies_summary.0.nearby_highlights.0'));
     }
 
     public function test_generator_without_openai_creates_review_only_posts_and_creative_briefs(): void
