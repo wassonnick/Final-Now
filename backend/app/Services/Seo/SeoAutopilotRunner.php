@@ -29,6 +29,7 @@ class SeoAutopilotRunner
             'search_console_enabled'=>true, 'keyword_refresh_enabled'=>true,
             'draft_generation_enabled'=>true, 'reports_enabled'=>true,
             'drafts_per_run'=>5, 'timezone'=>'Asia/Kolkata',
+            'auto_publish_enabled'=>true, 'auto_publish_min_confidence'=>80,
         ]);
     }
 
@@ -41,7 +42,7 @@ class SeoAutopilotRunner
         if(!$lock->get())throw new \RuntimeException('An SEO Autopilot cycle is already running.');
 
         $run=SeoAutomationRun::create(['trigger'=>$trigger,'status'=>'running','started_at'=>now()]);
-        $summary=['pages_registered'=>0,'pages_audited'=>0,'average_score'=>0,'technical_failures'=>0,'keywords_refreshed'=>0,'search_console_rows'=>0,'drafts_generated'=>0,'report_id'=>null,'warnings'=>[]];
+        $summary=['pages_registered'=>0,'pages_audited'=>0,'average_score'=>0,'technical_failures'=>0,'keywords_refreshed'=>0,'search_console_rows'=>0,'drafts_generated'=>0,'drafts_auto_published'=>0,'report_id'=>null,'warnings'=>[]];
 
         try {
             $summary['pages_registered']=$this->registry->sync();
@@ -61,6 +62,7 @@ class SeoAutopilotRunner
                 catch(\Throwable $e){report($e);$summary['warnings'][]='Search Console import failed; existing metrics were preserved.';}
             }
             if($settings->draft_generation_enabled)$summary['drafts_generated']=$this->generateOpportunityDrafts($settings->drafts_per_run);
+            if($settings->auto_publish_enabled)$summary['drafts_auto_published']=$this->autoPublishSafeDrafts((int)$settings->auto_publish_min_confidence);
             if($settings->reports_enabled)$summary['report_id']=$this->reports->generate('daily')->id;
 
             $status=$summary['warnings']||$summary['technical_failures']?'completed_with_warnings':'completed';
@@ -92,6 +94,27 @@ class SeoAutopilotRunner
             catch(\InvalidArgumentException){continue;}
         }
         return $generated;
+    }
+
+    /**
+     * Publish safe landing-page drafts without waiting for a human: verified-data metadata
+     * drafts (never society content) whose confidence clears the policy threshold and whose
+     * only warnings are the standard boilerplate. Every action lands in SeoChangeLog with
+     * actor "autopilot", and the settings kill-switch turns the whole pass off.
+     */
+    private function autoPublishSafeDrafts(int $minConfidence): int
+    {
+        $published=0;
+        $pending=SeoDraft::with('page')->where('status','needs_review')->orderBy('id')->get();
+        foreach($pending as $draft){
+            if(!$this->drafts->autoPublishEligible($draft,$minConfidence))continue;
+            try{
+                $this->drafts->approve($draft,'autopilot');
+                $this->drafts->publish($draft->fresh(),'autopilot');
+                $published++;
+            }catch(\Throwable $e){report($e);}
+        }
+        return $published;
     }
 
     public function marketingPlan(): array

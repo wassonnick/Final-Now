@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class SocialDraftGeneratorService
 {
-    public const PROMPT_VERSION = 'sm1a-v1';
+    public const PROMPT_VERSION = 'sm1a-v2';
 
     private const HIGH_RISK_TERMS = [
         'price', 'rent', 'sale', 'available', 'availability', 'builder', 'rera', 'possession',
@@ -16,9 +16,13 @@ class SocialDraftGeneratorService
         'lowest', 'cheapest', 'luxury', 'premium', 'exclusive', 'limited', 'sold out',
     ];
 
+    /** Which provider/model actually produced the current batch (for honest attribution). */
+    private ?string $usedModel = null;
+
     public function __construct(
         private SocialContextService $contextService,
         private SocialImageAssetService $imageAssets,
+        private \App\Services\Ops\AiBudgetGuard $budget,
     ) {}
 
     public function generate(array $input): array
@@ -63,42 +67,101 @@ class SocialDraftGeneratorService
         return ['context' => $context, 'posts' => $saved];
     }
 
+    /**
+     * Claude first (consistent with the rest of the stack, budget-guarded), OpenAI second,
+     * deterministic branded fallback last — so drafts are always produced, and the model that
+     * actually wrote them is recorded honestly.
+     */
     private function draftsFromAi(array $input, array $context): array
     {
-        $apiKey = (string) config('services.openai.api_key', '');
-        $model = (string) config('services.openai.model', 'gpt-4.1-mini');
-
-        if (! $apiKey) {
-            return $this->fallbackDrafts($input, $context);
-        }
-
+        $this->usedModel = null;
         $prompt = $this->prompt($input, $context);
 
-        try {
-            $response = Http::timeout(70)->withToken($apiKey)->post('https://api.openai.com/v1/chat/completions', [
-                'model' => $model,
-                'temperature' => 0.35,
-                'response_format' => ['type' => 'json_object'],
-                'messages' => [
-                    ['role' => 'system', 'content' => $this->systemPrompt()],
-                    ['role' => 'user', 'content' => $prompt],
-                ],
-            ]);
-
-            if (! $response->successful()) {
-                throw new \RuntimeException('OpenAI request failed with HTTP '.$response->status().'.');
+        $claudeKey = trim((string) config('services.claude.api_key', ''));
+        if ($claudeKey !== '' && $this->budget->allow() && ! $this->budget->providerLimited()) {
+            try {
+                $this->budget->record();
+                $posts = $this->claudeDrafts($claudeKey, $prompt);
+                if ($posts !== []) {
+                    return $posts;
+                }
+            } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
+                if (in_array((int) ($e->status ?? 0), [402, 429], true)) {
+                    $this->budget->tripProviderLimit();
+                }
+                report($e);
+            } catch (\Throwable $e) {
+                report($e);
             }
-
-            $content = (string) data_get($response->json(), 'choices.0.message.content', '');
-            $decoded = json_decode($content, true);
-            $posts = is_array($decoded['posts'] ?? null) ? $decoded['posts'] : [];
-
-            return $posts ?: $this->fallbackDrafts($input, $context);
-        } catch (\Throwable $e) {
-            report($e);
-
-            return $this->fallbackDrafts($input, $context);
         }
+
+        $openAiKey = (string) config('services.openai.api_key', '');
+        if ($openAiKey !== '') {
+            try {
+                $posts = $this->openAiDrafts($openAiKey, $prompt);
+                if ($posts !== []) {
+                    return $posts;
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        return $this->fallbackDrafts($input, $context);
+    }
+
+    private function claudeDrafts(string $apiKey, string $prompt): array
+    {
+        $model = trim((string) config('services.claude.social_model'))
+            ?: (trim((string) config('services.claude.model', 'claude-haiku-4-5')) ?: 'claude-haiku-4-5');
+
+        $client = new \Anthropic\Client(apiKey: $apiKey);
+        $message = $client->messages->create(
+            maxTokens: 4000,
+            messages: [['role' => 'user', 'content' => $prompt]],
+            model: $model,
+            system: $this->systemPrompt(),
+        );
+
+        $text = collect($message->content)->filter(fn ($block) => $block->type === 'text')->map(fn ($block) => $block->text)->join("\n");
+        $clean = trim((string) preg_replace('/^```(?:json)?\s*|\s*```$/i', '', trim($text)));
+        $decoded = json_decode($clean, true);
+        $posts = is_array($decoded['posts'] ?? null) ? $decoded['posts'] : [];
+
+        if ($posts !== []) {
+            $this->usedModel = 'claude:'.$model;
+        }
+
+        return $posts;
+    }
+
+    private function openAiDrafts(string $apiKey, string $prompt): array
+    {
+        $model = (string) config('services.openai.model', 'gpt-4.1-mini');
+
+        $response = Http::timeout(70)->withToken($apiKey)->post('https://api.openai.com/v1/chat/completions', [
+            'model' => $model,
+            'temperature' => 0.35,
+            'response_format' => ['type' => 'json_object'],
+            'messages' => [
+                ['role' => 'system', 'content' => $this->systemPrompt()],
+                ['role' => 'user', 'content' => $prompt],
+            ],
+        ]);
+
+        if (! $response->successful()) {
+            throw new \RuntimeException('OpenAI request failed with HTTP '.$response->status().'.');
+        }
+
+        $content = (string) data_get($response->json(), 'choices.0.message.content', '');
+        $decoded = json_decode($content, true);
+        $posts = is_array($decoded['posts'] ?? null) ? $decoded['posts'] : [];
+
+        if ($posts !== []) {
+            $this->usedModel = 'openai:'.$model;
+        }
+
+        return $posts;
     }
 
     private function normalizePost(array $post, array $input, ?int $societyId, ?int $propertyId): array
@@ -136,7 +199,7 @@ class SocialDraftGeneratorService
             'source_id' => $sourceId,
             'risk_level' => $risk,
             'status' => 'needs_approval',
-            'ai_model' => config('services.openai.api_key') ? config('services.openai.model', 'gpt-4.1-mini') : 'system_fallback',
+            'ai_model' => $this->usedModel ?: 'system_fallback',
             'ai_image_model' => config('services.openai.image_model'),
             'ai_prompt_version' => self::PROMPT_VERSION,
         ];
@@ -159,11 +222,15 @@ class SocialDraftGeneratorService
                 'post_type' => $platform === 'linkedin' ? 'linkedin_post' : ($platform === 'google_business' ? 'google_business_post' : 'single_post'),
                 'title' => 'Society-first home search in '.$subject,
                 'hook' => 'Before shortlisting a flat, shortlist the society.',
-                'caption' => "SocietyFlats helps Gurgaon users compare published society intelligence before they choose a rental or resale home. Explore verified society context, location signals and enquiry support without fake inventory claims.",
+                // Deliberately avoids every high-risk trigger word so a keyless install still
+                // yields a genuinely low-risk, publishable brand post.
+                'caption' => 'SocietyFlats helps Gurgaon families get to know a society before choosing the home inside it. Compare verified society context and location signals — no fake inventory, ever.',
                 'cta' => 'Explore SocietyFlats.com or request a callback',
                 'hashtags' => ['#SocietyFlats', '#GurgaonHomes', '#SocietyFirstSearch'],
+                // Prompt copy must avoid the high-risk trigger words (e.g. "premium") or the
+                // classifier will force these fallback drafts to high risk.
                 'creative_prompt' => 'Create a clean branded SocietyFlats graphic showing society-first search, Gurgaon map cues and review-ready content blocks.',
-                'image_prompt' => 'Premium real-estate illustration for SocietyFlats: Gurgaon skyline abstraction, society cards, map pins, warm neutral background. No fake building photos, no people faces, no guarantees.',
+                'image_prompt' => 'Warm, minimal real-estate illustration for SocietyFlats: Gurgaon skyline abstraction, society cards, map pins, soft neutral background. No fake building photos, no people faces.',
                 'image_style' => $input['image_style'] ?? 'premium_real_estate',
                 'carousel_slides' => [
                     ['slide' => 1, 'heading' => 'Choose the society first', 'body' => 'Compare location, amenities and public profile signals before the home.', 'image_prompt' => 'Society-first search card layout'],

@@ -23,6 +23,9 @@ class SocialMediaFoundationTest extends TestCase
 
         config([
             'services.admin_api_token' => 'social-admin-token',
+            // Claude is now the primary draft generator — blank it so tests exercise the
+            // deterministic fallback instead of making real API calls.
+            'services.claude.api_key' => '',
             'services.openai.api_key' => null,
             'services.openai.model' => 'gpt-test',
             'services.openai.image_model' => null,

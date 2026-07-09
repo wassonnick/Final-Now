@@ -235,6 +235,26 @@ Artisan::command('seo:revoice {--limit=10} {--force}', function () {
     $this->info("Re-voiced {$summary['generated']} society(ies) into pending drafts ({$summary['failed']} failed). Nothing is live until approved in the SEO studio.");
 })->purpose('Regenerate published society SEO copy in the current brand voice as review-first pending drafts');
 
+Artisan::command('social:autopilot', function () {
+    // Daily hands-off social cycle: weekday content plan, grounded draft generation,
+    // auto-approval of LOW-risk posts (+ their AI image assets) and scheduling across the
+    // publish window. Medium/high-risk drafts stop and wait for a human in the admin.
+    $summary = app(\App\Services\Social\SocialAutopilotService::class)->run();
+    $this->info(sprintf(
+        'Social autopilot: %d generated, %d auto-approved, %d scheduled, %d queued for review%s.',
+        $summary['generated'], $summary['auto_approved'], $summary['scheduled'], $summary['queued_for_review'],
+        $summary['skipped'] ? ' (skipped: '.$summary['skipped'].')' : '',
+    ));
+})->purpose('Run the daily social content autopilot (plan, generate, auto-approve low-risk, schedule)');
+
+Artisan::command('social:publish-due', function () {
+    // Publishes due, approved, LOW-risk scheduled posts to connected accounts.
+    $summary = app(\App\Services\Social\SocialAutopilotService::class)->publishDue();
+    if ($summary['published'] || $summary['failed']) {
+        $this->info("Social publish tick: {$summary['published']} published, {$summary['failed']} failed.");
+    }
+})->purpose('Publish due low-risk scheduled social posts to connected accounts');
+
 Artisan::command('imports:tick', function () {
     // Advance any in-flight auto-import jobs from the background scheduler so a
     // one-click bulk import completes on its own — the admin no longer has to keep
@@ -268,5 +288,9 @@ Schedule::command('ops:validate-photo-references')->weeklyOn(2, '05:00')->withou
 Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=1')->everyMinute()->withoutOverlapping()->runInBackground();
 Schedule::call(fn () => AiConversation::query()->where('expires_at', '<', now())->delete())->dailyAt('03:15')->name('prune-expired-ai-conversations')->withoutOverlapping();
 Schedule::command('seo:autopilot-run')->dailyAt('02:00')->withoutOverlapping();
+// Social autopilot: plan + generate + auto-approve low-risk each morning, then a tick that
+// publishes scheduled low-risk posts to connected accounts through the day.
+Schedule::command('social:autopilot')->dailyAt('08:30')->withoutOverlapping();
+Schedule::command('social:publish-due')->everyFifteenMinutes()->withoutOverlapping();
 Schedule::command('seo:autopilot-report weekly')->weeklyOn(1,'04:15')->withoutOverlapping();
 Schedule::command('seo:autopilot-report monthly')->monthlyOn(1,'04:30')->withoutOverlapping();

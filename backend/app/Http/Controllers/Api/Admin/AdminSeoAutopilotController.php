@@ -68,6 +68,7 @@ class AdminSeoAutopilotController extends Controller
             'search_console_enabled'=>['sometimes','boolean'],'keyword_refresh_enabled'=>['sometimes','boolean'],
             'draft_generation_enabled'=>['sometimes','boolean'],'reports_enabled'=>['sometimes','boolean'],
             'drafts_per_run'=>['sometimes','integer','min:0','max:20'],'timezone'=>['sometimes','timezone'],
+            'auto_publish_enabled'=>['sometimes','boolean'],'auto_publish_min_confidence'=>['sometimes','integer','min:50','max:100'],
         ]);
         $settings=$this->runner->settings();$settings->update($data);
         return response()->json(['status'=>'ok','message'=>'SEO automation policy updated.','data'=>$settings->fresh()]);

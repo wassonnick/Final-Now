@@ -57,7 +57,7 @@ export function AdminSeoAutopilotPage(){
           </div>
           <div className="mt-5 grid gap-2 sm:grid-cols-2">
             {[
-              ['enabled','Autopilot enabled'],['audit_enabled','Page audits'],['technical_checks_enabled','Technical checks'],['search_console_enabled','Search Console import'],['keyword_refresh_enabled','Keyword refresh'],['draft_generation_enabled','Review draft generation'],['reports_enabled','Reports'],
+              ['enabled','Autopilot enabled'],['audit_enabled','Page audits'],['technical_checks_enabled','Technical checks'],['search_console_enabled','Search Console import'],['keyword_refresh_enabled','Keyword refresh'],['draft_generation_enabled','Review draft generation'],['auto_publish_enabled','Auto-publish safe drafts'],['reports_enabled','Reports'],
             ].map(([key,label])=><label key={key} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold"><span>{label}</span><input type="checkbox" checked={Boolean(dashboard.automation?.settings?.[key])} disabled={Boolean(busy)} onChange={e=>void updateAutomation(key,e.target.checked)} className="h-5 w-5 accent-blue-500"/></label>)}
           </div>
           {dashboard.automation?.recent_runs?.length?<div className="mt-5 rounded-2xl bg-white/5 p-4"><p className="text-xs font-black uppercase tracking-[0.16em] text-blue-200">Recent runs</p><div className="mt-3 space-y-2">{dashboard.automation.recent_runs.slice(0,4).map((run:any)=><div key={run.id} className="flex items-center justify-between gap-3 text-xs"><span className="font-bold">#{run.id} · {run.trigger}</span><span className="text-slate-300">{run.status} · {run.summary?.drafts_generated??0} drafts</span></div>)}</div></div>:null}

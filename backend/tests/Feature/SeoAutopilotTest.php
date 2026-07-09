@@ -230,6 +230,45 @@ class SeoAutopilotTest extends TestCase
         $this->assertDatabaseHas('seo_change_logs',['seo_page_id'=>$page->id,'action'=>'draft_published']);
     }
 
+    public function test_nightly_cycle_auto_publishes_safe_landing_drafts_and_skips_everything_else(): void
+    {
+        $this->society('Autopub Society','autopub-society');
+
+        $safePage=SeoPage::create(['page_key'=>'sector:sector-165','page_type'=>'sector','url'=>'/gurgaon/sector-165','canonical_url'=>'/gurgaon/sector-165','title'=>'Old title','h1'=>'Old H1','is_public'=>true,'is_indexable'=>true,'metadata'=>['sector'=>'Sector 165','societies'=>['Autopub Society','Second Society'],'approved_society_count'=>2]]);
+        $eligible=SeoDraft::create(['seo_page_id'=>$safePage->id,'status'=>'needs_review','current_version'=>['seo_title'=>'Old title'],'suggested_version'=>['seo_title'=>'Best Societies in Sector 165, Gurgaon | SocietyFlats','seo_description'=>'Compare verified societies.','seo_h1'=>'Best Societies in Sector 165, Gurgaon'],'confidence_score'=>85,'risk_warnings'=>\App\Services\Seo\SeoDraftService::BOILERPLATE_WARNINGS,'generated_by'=>'system']);
+
+        $lowConfidence=SeoDraft::create(['seo_page_id'=>$safePage->id,'status'=>'needs_review','current_version'=>[],'suggested_version'=>['seo_title'=>'Low confidence'],'confidence_score'=>60,'risk_warnings'=>\App\Services\Seo\SeoDraftService::BOILERPLATE_WARNINGS,'generated_by'=>'system']);
+        $warned=SeoDraft::create(['seo_page_id'=>$safePage->id,'status'=>'needs_review','current_version'=>[],'suggested_version'=>['seo_title'=>'Warned'],'confidence_score'=>90,'risk_warnings'=>[...\App\Services\Seo\SeoDraftService::BOILERPLATE_WARNINGS,'AI provider failed; deterministic verified-data fallback used.'],'generated_by'=>'system']);
+
+        $societyModel=Society::where('slug','autopub-society')->firstOrFail();
+        $societyPage=SeoPage::create(['page_key'=>'society:'.$societyModel->id,'page_type'=>'society','entity_type'=>Society::class,'entity_id'=>$societyModel->id,'url'=>'/society/autopub-society','canonical_url'=>'/society/autopub-society','is_public'=>true,'is_indexable'=>true]);
+        $societyDraft=SeoDraft::create(['seo_page_id'=>$societyPage->id,'status'=>'needs_review','current_version'=>[],'suggested_version'=>['seo_title'=>'Society draft'],'confidence_score'=>95,'risk_warnings'=>\App\Services\Seo\SeoDraftService::BOILERPLATE_WARNINGS,'generated_by'=>'system']);
+
+        $this->admin()->postJson('/api/admin/seo-autopilot/automation/run')->assertOk();
+
+        $this->assertSame('published',$eligible->fresh()->status,'Safe high-confidence landing draft must auto-publish.');
+        $this->assertSame('Best Societies in Sector 165, Gurgaon | SocietyFlats',$safePage->fresh()->title,'Approval must write the metadata to the page.');
+        $this->assertSame('needs_review',$lowConfidence->fresh()->status,'Below-threshold confidence must stay for review.');
+        $this->assertSame('needs_review',$warned->fresh()->status,'Real risk warnings must block auto-publish.');
+        $this->assertSame('needs_review',$societyDraft->fresh()->status,'Society drafts must never auto-publish.');
+        $this->assertTrue(SeoChangeLog::where('action','draft_published')->where('actor','autopilot')->exists());
+        $this->assertGreaterThanOrEqual(1,(int) SeoAutomationRun::latest('id')->first()->summary['drafts_auto_published']);
+    }
+
+    public function test_auto_publish_kill_switch_keeps_all_drafts_in_review(): void
+    {
+        $this->society('Killswitch Society','killswitch-society');
+        $this->admin()->patchJson('/api/admin/seo-autopilot/automation/settings',['auto_publish_enabled'=>false])->assertOk()->assertJsonPath('data.auto_publish_enabled',false);
+
+        $page=SeoPage::create(['page_key'=>'sector:sector-166','page_type'=>'sector','url'=>'/gurgaon/sector-166','canonical_url'=>'/gurgaon/sector-166','is_public'=>true,'is_indexable'=>true,'metadata'=>['sector'=>'Sector 166','societies'=>['A','B'],'approved_society_count'=>2]]);
+        $draft=SeoDraft::create(['seo_page_id'=>$page->id,'status'=>'needs_review','current_version'=>[],'suggested_version'=>['seo_title'=>'Safe'],'confidence_score'=>92,'risk_warnings'=>\App\Services\Seo\SeoDraftService::BOILERPLATE_WARNINGS,'generated_by'=>'system']);
+
+        $this->admin()->postJson('/api/admin/seo-autopilot/automation/run')->assertOk();
+
+        $this->assertSame('needs_review',$draft->fresh()->status);
+        $this->assertSame(0,(int) SeoAutomationRun::latest('id')->first()->summary['drafts_auto_published']);
+    }
+
     private function society(string $name,string $slug,string $sector='Sector 65'): Society
     {
         return Society::create(['name'=>$name,'slug'=>$slug,'builder'=>'Verified Builder','sector'=>$sector,'locality'=>$sector,'city'=>'Gurugram','state'=>'Haryana','description'=>'Verified society information for Gurgaon residents considering rent or resale homes.','status'=>'Verified','verification_status'=>'Verified','is_published'=>true,'published_at'=>now(),'score'=>8.2,'amenities'=>['Gym'],'image_alt_text'=>$name.' Gurgaon society']);

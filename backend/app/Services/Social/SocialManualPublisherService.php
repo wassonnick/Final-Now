@@ -22,9 +22,42 @@ class SocialManualPublisherService
         $this->validatePublishGate($post, $options);
 
         $account = $this->accountFor($platform, $options['social_account_id'] ?? null);
+
+        return $this->send($post, $account, $platform, 'manual_publish', $actor);
+    }
+
+    /**
+     * Autopilot path: no human confirmation, so the gates are stricter — approved LOW-risk
+     * posts only, never WhatsApp (manual export only), never a repeat publish. Everything
+     * else reuses the exact same platform send + logging as the manual path.
+     */
+    public function publishAutomatically(SocialPost $post): array
+    {
+        $platform = $this->accountPlatform($post->platform);
+
+        if ($platform === 'whatsapp_business') {
+            throw new InvalidArgumentException('WhatsApp posts are manual-export only and cannot auto-publish.');
+        }
+        if ($post->status !== 'approved') {
+            throw new InvalidArgumentException('Only approved posts can auto-publish.');
+        }
+        if ($post->risk_level !== 'low') {
+            throw new InvalidArgumentException('Only low-risk posts may auto-publish; this one needs a human.');
+        }
+        if ($post->posted_at || $post->publish_status === 'published') {
+            throw new InvalidArgumentException('This social post has already been published.');
+        }
+
+        $account = $this->accountFor($platform, $post->social_account_id);
+
+        return $this->send($post, $account, $platform, 'autopilot_publish', 'autopilot');
+    }
+
+    private function send(SocialPost $post, SocialAccount $account, string $platform, string $action, ?string $actor): array
+    {
         $asset = $this->validatedAsset($post, in_array($platform, ['instagram_business', 'facebook_page'], true));
 
-        $this->log($post, $account, 'manual_publish_attempt', 'started', $actor, 'Manual publish requested.');
+        $this->log($post, $account, $action.'_attempt', 'started', $actor, 'Publish requested.');
 
         try {
             $result = match ($platform) {
@@ -46,7 +79,7 @@ class SocialManualPublisherService
                 'publish_metadata' => $result['metadata'] ?? [],
             ]);
 
-            $this->log($post->fresh(), $account, 'manual_publish', 'published', $actor, 'Post published manually.', [
+            $this->log($post->fresh(), $account, $action, 'published', $actor, 'Post published.', [
                 'external_post_id' => $result['external_post_id'] ?? null,
             ]);
 
@@ -55,7 +88,7 @@ class SocialManualPublisherService
             $message = $this->safeError($e->getMessage());
             $post->update(['publish_status' => 'failed', 'publish_error' => $message]);
             $account->update(['last_error' => $message]);
-            $this->log($post->fresh(), $account, 'manual_publish', 'failed', $actor, $message);
+            $this->log($post->fresh(), $account, $action, 'failed', $actor, $message);
 
             throw new InvalidArgumentException($message);
         }

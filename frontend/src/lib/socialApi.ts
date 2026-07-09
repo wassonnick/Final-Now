@@ -108,3 +108,20 @@ export const updateSocialAsset = (id: number, payload: Record<string, unknown>) 
 
 export const approveSocialAsset = (id: number) => adminFetch(`/admin/social/assets/${id}/approve`, { method: "POST" }).then(json);
 export const rejectSocialAsset = (id: number) => adminFetch(`/admin/social/assets/${id}/reject`, { method: "POST" }).then(json);
+
+export type SocialAutomationSettings = {
+  enabled: boolean;
+  auto_approve_low_risk: boolean;
+  auto_publish_low_risk: boolean;
+  generate_images: boolean;
+  posts_per_day: number;
+  platforms: string[] | null;
+  publish_hours: number[] | null;
+  last_run_at?: string | null;
+  last_run_summary?: { generated?: number; auto_approved?: number; scheduled?: number; queued_for_review?: number; skipped?: string | null } | null;
+};
+
+export const fetchSocialAutomation = () => adminFetch("/admin/social/automation").then(json).then((body) => body.data as SocialAutomationSettings);
+export const updateSocialAutomation = (payload: Record<string, unknown>) =>
+  adminFetch("/admin/social/automation", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);
+export const runSocialAutopilot = () => adminFetch("/admin/social/automation/run", { method: "POST" }).then(json);

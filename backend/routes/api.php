@@ -73,6 +73,9 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/uploads/images', [ImageUploadController::class, 'store']);
     Route::get('/ai/social/context', [AdminSocialController::class, 'context']);
     Route::prefix('social')->group(function () {
+        Route::get('/automation', [AdminSocialController::class, 'automationSettings']);
+        Route::patch('/automation', [AdminSocialController::class, 'updateAutomationSettings']);
+        Route::post('/automation/run', [AdminSocialController::class, 'runAutopilot']);
         Route::post('/generate', [AdminSocialController::class, 'generate']);
         Route::get('/posts', [AdminSocialController::class, 'posts']);
         Route::get('/posts/{post}', [AdminSocialController::class, 'showPost']);

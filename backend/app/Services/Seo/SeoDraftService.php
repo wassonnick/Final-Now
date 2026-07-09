@@ -9,7 +9,31 @@ use App\Models\SocietySeoContent;
 use Illuminate\Support\Str;
 class SeoDraftService
 {
+    /** Warnings every draft carries by design — they don't indicate an actual problem. */
+    public const BOILERPLATE_WARNINGS = [
+        'Admin review required before publication.',
+        'Prices, distances, RERA and legal claims are intentionally omitted unless already verified.',
+    ];
+
     public function __construct(private SeoAutopilotAiService $ai){}
+
+    /**
+     * Whether the nightly run may approve AND publish this draft without a human:
+     * landing-page metadata only (never society content), public page, confidence at or
+     * above the policy threshold, and no risk warnings beyond the standard boilerplate.
+     */
+    public function autoPublishEligible(SeoDraft $draft, int $minConfidence): bool
+    {
+        $page = $draft->page;
+        if (! $page || ! $page->is_public || $draft->status !== 'needs_review') return false;
+        if ($page->page_type === 'society' || ($page->entity_type === Society::class && $page->entity_id)) return false;
+        if ((int) $draft->confidence_score < $minConfidence) return false;
+
+        $realWarnings = collect((array) $draft->risk_warnings)
+            ->reject(fn ($warning) => in_array($warning, self::BOILERPLATE_WARNINGS, true));
+
+        return $realWarnings->isEmpty();
+    }
 
     public function generate(SeoPage $page): SeoDraft
     {

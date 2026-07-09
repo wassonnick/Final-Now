@@ -31,6 +31,38 @@ class AdminSocialController extends Controller
         return response()->json(['status' => 'ok', 'data' => $this->context->build()]);
     }
 
+    public function automationSettings(\App\Services\Social\SocialAutopilotService $autopilot): JsonResponse
+    {
+        return response()->json(['status' => 'ok', 'data' => $autopilot->settings()]);
+    }
+
+    public function updateAutomationSettings(Request $request, \App\Services\Social\SocialAutopilotService $autopilot): JsonResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['sometimes', 'boolean'],
+            'auto_approve_low_risk' => ['sometimes', 'boolean'],
+            'auto_publish_low_risk' => ['sometimes', 'boolean'],
+            'generate_images' => ['sometimes', 'boolean'],
+            'posts_per_day' => ['sometimes', 'integer', 'min:1', 'max:6'],
+            'platforms' => ['sometimes', 'array', 'min:1'],
+            'platforms.*' => [Rule::in(['instagram', 'facebook', 'linkedin', 'google_business'])],
+            'publish_hours' => ['sometimes', 'array', 'min:1', 'max:6'],
+            'publish_hours.*' => ['integer', 'min:0', 'max:23'],
+        ]);
+
+        $settings = $autopilot->settings();
+        $settings->update($data);
+
+        return response()->json(['status' => 'ok', 'message' => 'Social autopilot policy updated.', 'data' => $settings->fresh()]);
+    }
+
+    public function runAutopilot(\App\Services\Social\SocialAutopilotService $autopilot): JsonResponse
+    {
+        $summary = $autopilot->run();
+
+        return response()->json(['status' => 'ok', 'message' => 'Autopilot cycle completed. Low-risk posts were auto-approved and scheduled; everything else waits for review.', 'summary' => $summary]);
+    }
+
     public function generate(Request $request): JsonResponse
     {
         $data = $request->validate([
