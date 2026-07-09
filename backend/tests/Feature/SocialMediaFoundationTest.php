@@ -47,6 +47,7 @@ class SocialMediaFoundationTest extends TestCase
             'nearby_metro' => "Metro Station - 5 minutes away\nDwarka Expressway Transit",
             'nearby_hospitals' => 'Best Hospital Google rating 4.9, Safe Care Hospital',
             'nearby_office_hubs' => '<cite>bad</cite> Cyber Business Park 20 minutes',
+            'builder' => 'Godrej Properties Limited',
         ]);
         $this->society(['name' => 'Draft Private Society', 'slug' => 'draft-private-society', 'is_published' => false, 'status' => 'Draft']);
 
@@ -115,6 +116,7 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/phone|mobile|email|password|token|admin_note|notes|lead_name|owner_phone|owner_email|₹|rs\\.|cr\\b|crore|lac|lakh|rera|possession|ready to move|ready-to-move|rating|google rating|guaranteed|best|number one|lowest|cheapest|investment|return|appreciation|luxury|ultra-luxury|premium|world-class|exclusive|limited|book now|sq\\.ft|sqft|sq m|acre|km|minutes|preferred time|tomorrow|today|raw message|requirement|\\bbhk\\b|\\btowers?\\b|\\bunits?\\b/i', $lowerJson);
         $this->assertJsonStringEqualsJsonString(json_encode(['Gymnasium', 'Clubhouse', 'Swimming Pool', 'Power Backup', 'Parking']), json_encode($response->json('data.published_societies_summary.0.approved_amenities')));
         $this->assertSame(['schools' => 2, 'hospitals' => 2, 'transit' => 2, 'business_hubs' => 1, 'other' => 0], $response->json('data.published_societies_summary.0.nearby_highlights'));
+        $this->assertSame('Godrej Properties', $response->json('data.published_societies_summary.0.builder'));
         $this->assertSame('Published society profile by Godrej Properties in Sector 104, Gurugram with approved amenities and a public SocietyFlats page.', $response->json('data.published_societies_summary.0.short_description'));
         $this->assertSame('published-home-1', $response->json('data.published_properties_summary.0.slug'));
         $leadTypeLabels = collect($response->json('data.safe_lead_trend_summary.requested_property_types'))->pluck('label')->all();

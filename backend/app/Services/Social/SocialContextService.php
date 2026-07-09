@@ -132,7 +132,7 @@ class SocialContextService
             'sector' => $this->sanitizeMarketingText($society->sector, 80),
             'locality' => $this->sanitizeMarketingText($society->locality, 80),
             'city' => $this->sanitizeMarketingText($society->city, 80),
-            'builder' => $this->sanitizeMarketingText($society->builder, 100),
+            'builder' => $this->sanitizeBuilderName($society->builder, 100),
             'published_status' => 'published',
             'short_description' => $this->neutralSocietySummary($society),
             'approved_amenities' => $this->cleanAmenities($society->amenities),
@@ -314,7 +314,7 @@ class SocialContextService
     {
         $area = $this->safeAreaLabel($society->sector ?: $society->locality) ?: 'Gurgaon';
         $city = $this->safeAreaLabel($society->city) ?: 'Gurgaon';
-        $builder = $this->sanitizeMarketingText($society->builder, 80);
+        $builder = $this->sanitizeBuilderName($society->builder, 80);
 
         if ($builder) {
             return "Published society profile by {$builder} in {$area}, {$city} with approved amenities and a public SocietyFlats page.";
@@ -471,6 +471,29 @@ class SocialContextService
         $value = preg_replace('/[^\p{L}\p{N}\s.,&()\/-]/u', ' ', $value) ?: $value;
         $value = preg_replace('/\s+/', ' ', $value) ?: $value;
         $value = trim($value, " \t\n\r\0\x0B.,;-");
+
+        if ($value === '' || preg_match(self::BLOCKED_CONTEXT_PATTERN, $value)) {
+            return null;
+        }
+
+        return $this->shorten($value, $limit);
+    }
+
+    private function sanitizeBuilderName(mixed $value, int $limit = 100): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        $value = preg_replace('/<cite\b[^>]*>.*?<\/cite>/is', ' ', $value) ?: $value;
+        $value = strip_tags($value);
+        $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = preg_replace('/\[[^\]]*cite[^\]]*\]|\bturn\d+\w*\d*\b/i', ' ', $value) ?: $value;
+        $value = preg_replace('/\b(?:private\s+limited|pvt\.?\s*ltd\.?|limited|ltd\.?|llp)\b\.?/i', ' ', $value) ?: $value;
+        $value = preg_replace('/[^\p{L}\p{N}\s.&()\/-]/u', ' ', $value) ?: $value;
+        $value = preg_replace('/\s+/', ' ', $value) ?: $value;
+        $value = trim($value, " \t\n\r\0\x0B.,;-&");
 
         if ($value === '' || preg_match(self::BLOCKED_CONTEXT_PATTERN, $value)) {
             return null;
