@@ -59,6 +59,19 @@ class SeoAutopilotAuditService
         SeoTask::updateOrCreate(['seo_page_id'=>$page->id,'task_type'=>$type,'status'=>'open'],['priority'=>$priority,'title'=>$title,'description'=>$description,'source'=>str_starts_with($type,'audit_')?'audit':'data','metadata'=>$metadata]);
     }
     private function length(?string $v,int $min,int $max): bool{$n=mb_strlen(trim((string)$v));return $n>=$min&&$n<=$max;}
-    private function keywordSignal(SeoPage $p,array $m): bool{$needle=mb_strtolower((string)($m['name']??$m['sector']??$m['builder']??$p->page_type));$hay=mb_strtolower($p->title.' '.$p->h1);return $needle!==''&&str_contains($hay,$needle);}
+    /**
+     * Keyword targeting checks the page's actual mapped keywords (punctuation-insensitive),
+     * falling back to the entity name — titles must reflect what people really search for.
+     */
+    private function keywordSignal(SeoPage $p,array $m): bool
+    {
+        $hay=$this->normalizeText($p->title.' '.$p->h1);
+        foreach(\App\Models\SeoKeyword::where('seo_page_id',$p->id)->limit(6)->pluck('keyword') as $keyword){
+            if($keyword!==''&&str_contains($hay,$this->normalizeText((string)$keyword)))return true;
+        }
+        $needle=$this->normalizeText((string)($m['name']??$m['sector']??$m['builder']??$p->page_type));
+        return $needle!==''&&str_contains($hay,$needle);
+    }
+    private function normalizeText(string $v): string{return trim((string)preg_replace('/\s+/',' ',(string)preg_replace('/[^a-z0-9\s]/',' ',mb_strtolower($v))));}
     private function slugQuality(string $url): bool{$path=(string)(parse_url($url,PHP_URL_PATH)?:'/');return $path==='/'||((bool)preg_match('#^/[a-z0-9][a-z0-9/-]*$#',$path)&&!str_contains($path,'//')&&!preg_match('#([a-z0-9-]+)/\1(?:/|$)#',$path));}
 }

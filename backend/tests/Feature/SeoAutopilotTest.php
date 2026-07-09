@@ -255,6 +255,31 @@ class SeoAutopilotTest extends TestCase
         $this->assertGreaterThanOrEqual(1,(int) SeoAutomationRun::latest('id')->first()->summary['drafts_auto_published']);
     }
 
+    public function test_registry_enriches_landing_pages_and_drafts_become_fact_rich_and_linked(): void
+    {
+        $a=$this->society('Fact Society A','fact-society-a','Sector 77');
+        $a->update(['rent_range'=>'₹45,000 - ₹80,000 per month','buy_range'=>'₹1.75 Cr - ₹3.2 Cr','score'=>8.6]);
+        $b=$this->society('Fact Society B','fact-society-b','Sector 77');
+        $b->update(['rent_range'=>'₹60,000 - ₹95,000 per month','buy_range'=>'₹2.4 Cr - ₹4 Cr','score'=>7.9]);
+
+        app(\App\Services\Seo\SeoPageRegistryService::class)->sync();
+
+        $page=SeoPage::where('page_key','sector:sector-77')->firstOrFail();
+        $meta=$page->metadata;
+        $this->assertSame('₹45,000',$meta['rent_from'],'Registry must compute the verified rent entry point.');
+        $this->assertSame('₹1.75 Cr',$meta['buy_from'],'Registry must compute the verified resale entry point.');
+        $this->assertSame('fact-society-a',$meta['top_societies'][0]['slug'],'Top societies must be ranked by score with slugs.');
+
+        $draft=app(\App\Services\Seo\SeoDraftService::class)->generate($page);
+        $suggested=$draft->suggested_version;
+
+        $this->assertStringContainsString('2 Best Societies in Sector 77',$suggested['seo_title'],'Title must lead with the verified count.');
+        $this->assertStringContainsString('₹45,000',$suggested['seo_description'],'Description must carry the verified rent entry point.');
+        $this->assertStringContainsString('/society/fact-society-a',collect($suggested['internal_links'])->pluck('url')->implode(' '),'Drafts must link to real society profiles, not search queries.');
+        $this->assertTrue(collect($suggested['faq'])->contains(fn($f)=>str_contains($f['question'],'cost to rent')&&str_contains($f['answer'],'₹45,000')),'FAQ must answer with the verified rent figure.');
+        $this->assertTrue(collect($suggested['faq'])->contains(fn($f)=>str_contains($f['question'],'stand out')&&str_contains($f['answer'],'Fact Society A (8.6/10)')),'FAQ must surface top societies with scores.');
+    }
+
     public function test_auto_publish_kill_switch_keeps_all_drafts_in_review(): void
     {
         $this->society('Killswitch Society','killswitch-society');

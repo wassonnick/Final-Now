@@ -7,14 +7,18 @@ class SeoAutopilotAiService
 {
     public function available(): bool{return $this->provider()==='claude'?filled(config('services.claude.api_key')):filled(config('services.gemini.api_key'));}
     public function model(): string{return $this->provider().':'.(string)config('services.'.$this->provider().'.model');}
-    public function improve(SeoPage $page,array $fallback): array
+    public function improve(SeoPage $page,array $fallback,array $intel=[]): array
     {
-        if(!$this->available())return $fallback;$prompt=$this->prompt($page,$fallback);$raw=$this->provider()==='claude'?$this->claude($prompt):$this->gemini($prompt);return $this->normalize($raw,$fallback);
+        if(!$this->available())return $fallback;$prompt=$this->prompt($page,$fallback,$intel);$raw=$this->provider()==='claude'?$this->claude($prompt):$this->gemini($prompt);return $this->normalize($raw,$fallback);
     }
-    private function prompt(SeoPage $page,array $fallback): string
+    private function prompt(SeoPage $page,array $fallback,array $intel=[]): string
     {
         $facts=['page_type'=>$page->page_type,'url'=>$page->url,'current_title'=>$page->title,'current_description'=>$page->meta_description,'current_h1'=>$page->h1,'verified_metadata'=>$page->metadata?:[],'content_word_count'=>$page->content_word_count];
-        return "Improve this SocietyFlats SEO draft using ONLY the supplied verified facts. Never invent prices, distances, RERA, possession, amenities, availability, builder facts or legal claims. If a fact is absent, omit it and add a risk warning. Return JSON only with keys seo_title, seo_description, seo_h1, intro_summary, internal_links, faq, schema, reason, risk_warnings. Internal links must be relative SocietyFlats paths. Schema types are limited to WebPage, BreadcrumbList and FAQPage. Nothing is published automatically.\nFACTS: ".json_encode($facts,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)."\nSAFE FALLBACK: ".json_encode($fallback,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+        $targeting='';
+        if(!empty($intel['target_keywords']))$targeting.="\nTARGET KEYWORDS (work the primary one naturally into seo_title and seo_h1; use others only where natural): ".json_encode($intel['target_keywords'],JSON_UNESCAPED_UNICODE);
+        if(!empty($intel['search_console_queries']))$targeting.="\nREAL SEARCH QUERIES this page already appears for (align title/description wording with the highest-impression ones): ".json_encode($intel['search_console_queries'],JSON_UNESCAPED_UNICODE);
+        if(!empty($intel['open_audit_issues']))$targeting.="\nOPEN AUDIT ISSUES to fix in this draft: ".json_encode($intel['open_audit_issues'],JSON_UNESCAPED_UNICODE);
+        return "Improve this SocietyFlats SEO draft using ONLY the supplied verified facts. Never invent prices, distances, RERA, possession, amenities, availability, builder facts or legal claims. If a fact is absent, omit it and add a risk warning. Titles must be under 65 characters and earn the click with real specifics from verified_metadata (counts, rent_from, buy_from, scores) rather than generic phrasing; meta descriptions under 165 characters with one concrete fact and a clear next step. Prefer the real society profile URLs already present in the fallback internal_links. Return JSON only with keys seo_title, seo_description, seo_h1, intro_summary, internal_links, faq, schema, reason, risk_warnings. Internal links must be relative SocietyFlats paths. Schema types are limited to WebPage, BreadcrumbList and FAQPage. Nothing is published automatically.".$targeting."\nFACTS: ".json_encode($facts,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)."\nSAFE FALLBACK: ".json_encode($fallback,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
     }
     private function gemini(string $prompt): array
     {

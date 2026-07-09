@@ -47,6 +47,8 @@ class SeoPageRegistryService
                     'metadata' => [
                         'name'=>$society->name,'sector'=>$society->sector,'locality'=>$society->locality,'builder'=>$society->builder,
                         'city'=>$society->city,'status'=>$society->status,'seo_status'=>$seo?->status ?: 'missing',
+                        'score'=>$society->score ? round((float) $society->score, 1) : null,
+                        'rent_range'=>$society->rent_range,'buy_range'=>$society->buy_range,
                         'has_cta'=>true,'heading_count'=>$publishedSeo ? 7 : 2,'missing_data'=>$this->missingSocietyData($society),
                     ],
                 ]); $count++;
@@ -70,13 +72,13 @@ class SeoPageRegistryService
 
         $publicSocieties = Society::query()->where('is_published', true)->whereIn('status', ['Verified','Premium'])->get();
         foreach ($publicSocieties->groupBy('sector')->filter(fn ($items, $key) => filled($key)) as $sector => $items) {
-            $slug=Str::slug($sector);$names=$items->pluck('name')->take(8)->all();
-            $this->upsertLanding('sector:'.$slug,'sector','/gurgaon/'.$slug,"Best Societies in {$sector}, Gurgaon","Compare verified societies, rent and resale context in {$sector}, Gurgaon.","Best Societies in {$sector}, Gurgaon",$items->count(),['sector'=>$sector,'societies'=>$names,'has_cta'=>true]);$count++;
+            $slug=Str::slug($sector);
+            $this->upsertLanding('sector:'.$slug,'sector','/gurgaon/'.$slug,"Best Societies in {$sector}, Gurgaon","Compare verified societies, rent and resale context in {$sector}, Gurgaon.","Best Societies in {$sector}, Gurgaon",$items->count(),['sector'=>$sector,'societies'=>$items->pluck('name')->take(8)->all(),'has_cta'=>true]+$this->marketFacts($items));$count++;
         }
         $builderGroups=$publicSocieties->filter(fn($society)=>filled($society->builder))->groupBy(fn($society)=>$this->builderSlug((string)$society->builder));
         foreach ($builderGroups as $slug => $items) {
-            $builder=$this->builderLabel((string)$slug,(string)$items->first()->builder);$names=$items->pluck('name')->take(8)->all();
-            $this->upsertLanding('builder:'.$slug,'builder','/builder/'.$slug,"{$builder} Societies in Gurgaon","Explore verified {$builder} societies, locations and availability in Gurgaon.","{$builder} Societies in Gurgaon",$items->count(),['builder'=>$builder,'societies'=>$names,'has_cta'=>true]);$count++;
+            $builder=$this->builderLabel((string)$slug,(string)$items->first()->builder);
+            $this->upsertLanding('builder:'.$slug,'builder','/builder/'.$slug,"{$builder} Societies in Gurgaon","Explore verified {$builder} societies, locations and availability in Gurgaon.","{$builder} Societies in Gurgaon",$items->count(),['builder'=>$builder,'societies'=>$items->pluck('name')->take(8)->all(),'has_cta'=>true]+$this->marketFacts($items));$count++;
         }
 
         foreach ($this->staticPages() as $page) { $this->upsert($page); $count++; }
@@ -99,6 +101,30 @@ class SeoPageRegistryService
             ['guide:insights','guide','/insights','Gurgaon Property Insights','Decision-focused guides for Gurgaon society renters and buyers.','Gurgaon Property Insights'],
         ];
         return array_map(fn($p)=>['page_key'=>$p[0],'page_type'=>$p[1],'url'=>$p[2],'title'=>$p[3],'meta_description'=>$p[4],'h1'=>$p[5],'canonical_url'=>str_contains($p[2],'?')?strstr($p[2],'?',true):$p[2],'is_indexable'=>true,'sitemap_included'=>!str_contains($p[2],'?'),'is_public'=>true,'content_word_count'=>350,'internal_link_count'=>8,'image_alt_coverage'=>100,'schema_types'=>['WebPage','BreadcrumbList'],'freshness_at'=>now(),'metadata'=>['name'=>$p[5],'city'=>'Gurgaon','has_cta'=>true,'heading_count'=>5]],$pages);
+    }
+
+    /**
+     * Verified market facts for a landing page, computed from the published societies it
+     * covers: the rent/resale entry points and the strongest societies (with real profile
+     * links) — so drafts can be specific and data-rich instead of generic.
+     *
+     * @param \Illuminate\Support\Collection<int,Society> $items
+     * @return array<string,mixed>
+     */
+    private function marketFacts($items): array
+    {
+        $matcher = new \App\Services\Ai\SocietyMatchService();
+        $rentFloors = $items->map(fn (Society $s) => $matcher->priceFromText($s->rent_range ?: $s->average_rent))->filter(fn ($v) => $v && $v >= 5000)->sort()->values();
+        $buyFloors = $items->map(fn (Society $s) => $matcher->priceFromText($s->buy_range ?: $s->average_sale_price))->filter(fn ($v) => $v && $v >= 1000000)->sort()->values();
+
+        return [
+            'rent_from' => $rentFloors->isNotEmpty() ? '₹'.number_format((float) $rentFloors->first(), 0, '.', ',') : null,
+            'buy_from' => $buyFloors->isNotEmpty() ? '₹'.rtrim(rtrim(number_format($buyFloors->first() / 10000000, 2, '.', ''), '0'), '.').' Cr' : null,
+            'top_societies' => $items->sortByDesc(fn (Society $s) => (float) $s->score)->take(6)->map(fn (Society $s) => array_filter([
+                'name' => $s->name, 'slug' => $s->slug, 'score' => $s->score ? round((float) $s->score, 1) : null,
+                'rent_range' => $s->rent_range, 'buy_range' => $s->buy_range,
+            ]))->values()->all(),
+        ];
     }
 
     private function upsert(array $attributes): SeoPage { return SeoPage::updateOrCreate(['page_key'=>$attributes['page_key']],$attributes); }
