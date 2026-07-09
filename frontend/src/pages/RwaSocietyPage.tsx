@@ -150,7 +150,7 @@ export function RwaSocietyPage() {
               {data.society.name} RWA updates, questions and grievances.
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-              A verified, SEO-friendly resident layer for official notices, community questions, maintenance issues and transparent resolution history.
+              The verified resident hub for {data.society.name} — official notices, community questions, maintenance issues and how they were resolved, all in one transparent place.
             </p>
             <div className="mt-5 flex flex-wrap gap-2 text-sm font-bold text-slate-600">
               {location ? <span className="rounded-full bg-slate-100 px-3 py-1">{location}</span> : null}
@@ -159,6 +159,14 @@ export function RwaSocietyPage() {
               ) : (
                 <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">Unclaimed RWA page</span>
               )}
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button asChild className="rounded-full bg-[#233B6E] hover:bg-[#1B2E57]">
+                <Link to={`/society/${data.society.slug || slug}`}>View {data.society.name}'s verified profile</Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-full border-slate-300">
+                <Link to={`/ai-advisor?q=${encodeURIComponent(`Tell me about living in ${data.society.name}`)}`}>Thinking of moving here? Ask our AI</Link>
+              </Button>
             </div>
           </div>
           <aside className="rounded-[1.75rem] border border-slate-200 bg-slate-950 p-6 text-white shadow-xl">

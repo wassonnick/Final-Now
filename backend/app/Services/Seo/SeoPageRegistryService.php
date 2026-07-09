@@ -52,6 +52,25 @@ class SeoPageRegistryService
                         'has_cta'=>true,'heading_count'=>$publishedSeo ? 7 : 2,'missing_data'=>$this->missingSocietyData($society),
                     ],
                 ]); $count++;
+
+                // Every published society also has a public RWA community page (announcements,
+                // resident threads) — register it so audits, keywords and the sitemap checks
+                // cover the "<society> RWA" long-tail surface.
+                if ($isPublic) {
+                    $this->upsert([
+                        'page_key' => 'rwa:'.$society->id,
+                        'page_type' => 'rwa', 'entity_type' => Society::class, 'entity_id' => $society->id,
+                        'url' => '/rwa/'.$society->slug, 'canonical_url' => '/rwa/'.$society->slug,
+                        'title' => $society->name.' RWA — Announcements & Resident Updates | SocietyFlats',
+                        'meta_description' => 'Official RWA announcements, resident questions and community updates for '.$society->name.', Gurgaon — on the verified SocietyFlats profile.',
+                        'h1' => $society->name.' RWA',
+                        'is_indexable' => true, 'sitemap_included' => true, 'is_public' => true,
+                        'content_word_count' => 120, 'internal_link_count' => 2,
+                        'image_alt_coverage' => 100, 'schema_types' => ['WebPage'],
+                        'freshness_at' => $society->updated_at,
+                        'metadata' => ['name' => $society->name.' RWA', 'sector' => $society->sector, 'has_cta' => true, 'heading_count' => 3],
+                    ]); $count++;
+                }
             }
         });
 
@@ -92,15 +111,30 @@ class SeoPageRegistryService
 
     private function staticPages(): array
     {
+        // Every public module page must be registered here or the SEO Autopilot is blind to
+        // it — no audits, no keyword mapping, no gap tasks, no drafts. Word counts are honest
+        // estimates so thin tool pages get flagged as the real content gaps they are.
         $pages=[
-            ['guide:gurgaon','guide','/gurgaon','Gurgaon Society Guide','Compare verified Gurgaon societies by sector, builder and living priorities.','Gurgaon Society Guide'],
-            ['guide:societies','guide','/societies','Verified Societies in Gurgaon','Browse verified Gurgaon societies with reviewed location and lifestyle data.','Verified Societies in Gurgaon'],
-            ['rent:gurgaon','rent','/search?tab=rent','Flats for Rent in Gurgaon','Request current verified rental availability across Gurgaon societies.','Flats for Rent in Gurgaon'],
-            ['buy:gurgaon','buy','/search?tab=buy','Flats for Sale in Gurgaon','Compare verified Gurgaon societies before requesting resale availability.','Flats for Sale in Gurgaon'],
-            ['comparison:gurgaon','comparison','/compare','Compare Gurgaon Societies','Compare verified Gurgaon societies side by side.','Compare Gurgaon Societies'],
-            ['guide:insights','guide','/insights','Gurgaon Property Insights','Decision-focused guides for Gurgaon society renters and buyers.','Gurgaon Property Insights'],
+            ['guide:gurgaon','guide','/gurgaon','Gurgaon Society Guide','Compare verified Gurgaon societies by sector, builder and living priorities.','Gurgaon Society Guide',350],
+            ['guide:societies','guide','/societies','Verified Societies in Gurgaon','Browse verified Gurgaon societies with reviewed location and lifestyle data.','Verified Societies in Gurgaon',350],
+            ['rent:gurgaon','rent','/search?tab=rent','Flats for Rent in Gurgaon','Request current verified rental availability across Gurgaon societies.','Flats for Rent in Gurgaon',350],
+            ['buy:gurgaon','buy','/search?tab=buy','Flats for Sale in Gurgaon','Compare verified Gurgaon societies before requesting resale availability.','Flats for Sale in Gurgaon',350],
+            ['comparison:gurgaon','comparison','/compare','Compare Gurgaon Societies','Compare verified Gurgaon societies side by side.','Compare Gurgaon Societies',350],
+            ['guide:insights','guide','/insights','Gurgaon Property Insights','Decision-focused guides for Gurgaon society renters and buyers.','Gurgaon Property Insights',350],
+            ['guide:sell','guide','/sell','List Your Gurgaon Flat — Reach Verified Buyers & Tenants | SocietyFlats','List your Gurgaon home once and meet buyers and tenants already searching your exact society.','Own a home in Gurgaon? List it once, and meet the right people.',420],
+            ['guide:nri','guide','/nri-services','NRI Property Support in Gurgaon — Handled with Care | SocietyFlats','Buying, selling or renting out in Gurgaon from overseas? Start with a real, human consultation.','Gurgaon property, handled with care while you\'re overseas.',380],
+            ['guide:builder-floors','guide','/builder-floors','Builder Floors in Gurgaon — What to Check Before You Buy | SocietyFlats','How builder floors really differ from apartments — land share, entry, parking, terrace rights and title.','A builder floor isn\'t an apartment. Here\'s what actually changes.',420],
+            ['guide:builder-portal','guide','/builder-portal','Builder & RWA Portal — Claim Your Society | SocietyFlats','Claim your published society and share official updates with residents and buyers.','Claim your society\'s profile on SocietyFlats',260],
+            ['guide:broker','guide','/broker-crm','Gurgaon Broker Partner Program | SocietyFlats','Apply to become a verified SocietyFlats broker partner for society-specific Gurgaon enquiries.','Join SocietyFlats as a Broker Partner',240],
+            ['feature:ai-advisor','feature','/ai-advisor','SocietyFlats AI Advisor — Your Gurgaon Home Search, Made Simple','Tell our AI advisor what matters and it shortlists the Gurgaon societies and homes that genuinely fit.','SocietyFlats AI Advisor',140],
+            ['feature:chat','feature','/chat','Gurgaon Society AI Chat | SocietyFlats','Ask a conversational assistant grounded in published SocietyFlats societies and live Gurgaon homes.','Ask anything about Gurgaon societies',130],
+            ['feature:maps','feature','/maps','Gurgaon Society Map — Explore Verified Societies Live | SocietyFlats','Explore Gurgaon\'s verified societies on a live map with real coordinates and profile links.','Explore Gurgaon societies on a live map.',180],
+            ['feature:calculator','feature','/investment-calculator','Gurgaon Rental Yield & Investment Calculator | SocietyFlats','Estimate rent, yield and investment context for Gurgaon societies from verified published data.','Gurgaon Investment Calculator',200],
+            ['feature:recommendations','feature','/recommendations','Gurgaon Society Recommendations | SocietyFlats','Build a shortlist from published Gurgaon society profiles and live verified inventory.','Your shortlist',160],
+            ['guide:trust','guide','/trust','How SocietyFlats Verifies Societies | SocietyFlats','What admin-reviewed society data actually means — our verification standard.','What admin-reviewed society data actually means.',300],
+            ['guide:help','guide','/help','Help & FAQ | SocietyFlats','Clear answers for society-first home search on SocietyFlats.','Clear answers for society-first home search.',300],
         ];
-        return array_map(fn($p)=>['page_key'=>$p[0],'page_type'=>$p[1],'url'=>$p[2],'title'=>$p[3],'meta_description'=>$p[4],'h1'=>$p[5],'canonical_url'=>str_contains($p[2],'?')?strstr($p[2],'?',true):$p[2],'is_indexable'=>true,'sitemap_included'=>!str_contains($p[2],'?'),'is_public'=>true,'content_word_count'=>350,'internal_link_count'=>8,'image_alt_coverage'=>100,'schema_types'=>['WebPage','BreadcrumbList'],'freshness_at'=>now(),'metadata'=>['name'=>$p[5],'city'=>'Gurgaon','has_cta'=>true,'heading_count'=>5]],$pages);
+        return array_map(fn($p)=>['page_key'=>$p[0],'page_type'=>$p[1],'url'=>$p[2],'title'=>$p[3],'meta_description'=>$p[4],'h1'=>$p[5],'canonical_url'=>str_contains($p[2],'?')?strstr($p[2],'?',true):$p[2],'is_indexable'=>true,'sitemap_included'=>!str_contains($p[2],'?'),'is_public'=>true,'content_word_count'=>$p[6],'internal_link_count'=>8,'image_alt_coverage'=>100,'schema_types'=>['WebPage','BreadcrumbList'],'freshness_at'=>now(),'metadata'=>['name'=>$p[5],'city'=>'Gurgaon','has_cta'=>true,'heading_count'=>5]],$pages);
     }
 
     /**

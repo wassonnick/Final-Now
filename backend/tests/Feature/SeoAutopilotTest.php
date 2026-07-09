@@ -35,8 +35,9 @@ class SeoAutopilotTest extends TestCase
         $society=$this->society('Audit Society','audit-society');
         SocietySeoContent::create(['society_id'=>$society->id,'status'=>'published','seo_title'=>'Audit Society Gurgaon Guide | SocietyFlats','seo_description'=>'Review Audit Society in Gurgaon with verified location, lifestyle, rent and resale context before requesting current availability.','seo_h1'=>'Audit Society Gurgaon','intro_summary'=>'A short intro.','published_at'=>now()]);
 
+        // 1 published society + its public RWA page + 18 registered module/static pages.
         $this->admin()->getJson('/api/admin/seo-autopilot/dashboard')
-            ->assertOk()->assertJsonPath('data.summary.public_pages',7);
+            ->assertOk()->assertJsonPath('data.summary.public_pages',20);
 
         $page=SeoPage::where('page_key','society:'.$society->id)->firstOrFail();
         $this->assertTrue($page->is_public);
@@ -243,6 +244,30 @@ class SeoAutopilotTest extends TestCase
         $this->admin()->postJson("/api/admin/seo-autopilot/drafts/{$draftId}/publish")->assertOk()->assertJsonPath('data.status','published');
         $this->getJson('/api/seo/pages/resolve?path=%2Fgurgaon%2Fsector-88')->assertOk()->assertJsonPath('data.seo_h1','Best Societies in Sector 88, Gurgaon');
         $this->assertDatabaseHas('seo_change_logs',['seo_page_id'=>$page->id,'action'=>'draft_published']);
+    }
+
+    public function test_registry_covers_module_pages_and_rwa_pages_and_keywords_map_to_them(): void
+    {
+        $society=$this->society('Rwa Covered Society','rwa-covered-society');
+
+        app(\App\Services\Seo\SeoPageRegistryService::class)->sync();
+
+        // Module pages are registered so the autopilot can audit and rank their gaps.
+        foreach(['guide:sell','guide:nri','guide:builder-floors','guide:builder-portal','feature:ai-advisor','feature:chat','feature:maps','feature:calculator','guide:trust','guide:help'] as $key){
+            $this->assertDatabaseHas('seo_pages',['page_key'=>$key,'is_public'=>true]);
+        }
+
+        // Every published society gets its public RWA community page registered too.
+        $rwa=SeoPage::where('page_key','rwa:'.$society->id)->firstOrFail();
+        $this->assertSame('/rwa/rwa-covered-society',$rwa->url);
+        $this->assertTrue((bool)$rwa->is_public);
+        $this->assertStringContainsString('RWA',$rwa->title);
+
+        // Keyword intelligence seeds module intent keywords mapped to the right pages.
+        app(\App\Services\Seo\SeoKeywordIntelligenceService::class)->seed();
+        $this->assertDatabaseHas('seo_keywords',['keyword'=>'list flat in gurgaon']);
+        $this->assertDatabaseHas('seo_keywords',['keyword'=>'builder floor in gurgaon']);
+        $this->assertDatabaseHas('seo_keywords',['keyword'=>'gurgaon rental yield calculator']);
     }
 
     public function test_nightly_cycle_auto_publishes_safe_landing_drafts_and_skips_everything_else(): void
