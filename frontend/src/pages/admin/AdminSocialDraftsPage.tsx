@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, ImagePlus, Pencil, RefreshCw, XCircle } from "lucide-react";
+import { CheckCircle2, Copy, ImagePlus, Pencil, RefreshCw, Send, XCircle } from "lucide-react";
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { AdminSocialNav } from "./AdminSocialNav";
-import { approveSocialPost, fetchSocialPosts, generateSocialPostImage, rejectSocialPost, updateSocialPost, type SocialPost } from "@/lib/socialApi";
+import { approveSocialPost, fetchSocialPosts, generateSocialPostImage, publishSocialPost, rejectSocialPost, updateSocialPost, type SocialPost } from "@/lib/socialApi";
 
 function tone(value: string) {
   if (value === "high" || value === "rejected") return "bg-rose-50 text-rose-700";
@@ -28,6 +28,21 @@ export function AdminSocialDraftsPage() {
     if (!editing) return;
     await run(() => updateSocialPost(editing.id, { caption }), "Draft updated.");
     setEditing(null);
+  }
+
+  async function manualPublish(post: SocialPost) {
+    const label = post.platform === "whatsapp" ? "prepare WhatsApp manual export" : "publish this approved post manually";
+    if (!window.confirm(`Final confirmation: ${label}? This will never publish unapproved drafts.`)) return;
+    const confirmHighRisk = post.risk_level === "high"
+      ? window.confirm("This post is marked HIGH RISK. Explicitly approve high-risk manual publishing?")
+      : false;
+    if (post.risk_level === "high" && !confirmHighRisk) return;
+
+    await run(async () => {
+      const body = await publishSocialPost(post.id, { confirm_publish: true, confirm_high_risk: confirmHighRisk });
+      const copy = body?.data?.copy as string | undefined;
+      if (copy && navigator.clipboard) await navigator.clipboard.writeText(copy);
+    }, post.platform === "whatsapp" ? "WhatsApp copy/export prepared." : "Post manually published.");
   }
 
   return (
@@ -55,6 +70,7 @@ export function AdminSocialDraftsPage() {
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black capitalize">{post.platform.replace("_", " ")}</span>
                   <span className={`rounded-full px-3 py-1 text-xs font-black capitalize ${tone(post.risk_level)}`}>{post.risk_level} risk</span>
                   <span className={`rounded-full px-3 py-1 text-xs font-black capitalize ${tone(post.status)}`}>{post.status.replace("_", " ")}</span>
+                  {post.publish_status ? <span className={`rounded-full px-3 py-1 text-xs font-black capitalize ${tone(post.publish_status)}`}>{post.publish_status.replace("_", " ")}</span> : null}
                 </div>
                 <h2 className="mt-3 text-xl font-black">{post.title || post.hook || "Untitled draft"}</h2>
                 {post.hook ? <p className="mt-1 text-sm font-bold text-slate-500">{post.hook}</p> : null}
@@ -71,11 +87,19 @@ export function AdminSocialDraftsPage() {
               </div>
             ) : null}
             {post.assets?.length ? <p className="mt-3 text-xs font-bold text-slate-500">{post.assets.length} attached asset(s)</p> : null}
+            {post.publish_error ? <p className="mt-3 rounded-2xl bg-rose-50 p-3 text-xs font-bold text-rose-700">{post.publish_error}</p> : null}
+            {post.external_post_id ? <p className="mt-3 text-xs font-bold text-emerald-700">External post ID: {post.external_post_id}</p> : null}
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button size="sm" className="rounded-full bg-emerald-600" onClick={() => void run(() => approveSocialPost(post.id), "Draft approved.")}><CheckCircle2 className="mr-2 h-4 w-4" />Approve</Button>
+              {post.status !== "published" ? <Button size="sm" className="rounded-full bg-emerald-600" onClick={() => void run(() => approveSocialPost(post.id), "Draft approved.")}><CheckCircle2 className="mr-2 h-4 w-4" />Approve</Button> : null}
               <Button size="sm" variant="outline" className="rounded-full bg-white text-rose-700" onClick={() => void run(() => rejectSocialPost(post.id), "Draft rejected.")}><XCircle className="mr-2 h-4 w-4" />Reject</Button>
               <Button size="sm" variant="outline" className="rounded-full bg-white" onClick={() => { setEditing(post); setCaption(post.caption); }}><Pencil className="mr-2 h-4 w-4" />Edit</Button>
               <Button size="sm" variant="outline" className="rounded-full bg-white" onClick={() => void run(() => generateSocialPostImage(post.id), "Asset generated for review.")}><ImagePlus className="mr-2 h-4 w-4" />Generate image</Button>
+              {post.status === "approved" ? (
+                <Button size="sm" className="rounded-full bg-slate-950" onClick={() => void manualPublish(post)}>
+                  {post.platform === "whatsapp" ? <Copy className="mr-2 h-4 w-4" /> : <Send className="mr-2 h-4 w-4" />}
+                  {post.platform === "whatsapp" ? "Export WhatsApp" : "Publish manually"}
+                </Button>
+              ) : null}
               <Button size="sm" variant="outline" disabled className="rounded-full bg-white"><RefreshCw className="mr-2 h-4 w-4" />Regenerate in SM2</Button>
             </div>
           </article>

@@ -1,28 +1,53 @@
 import { useEffect, useState } from "react";
-import { PlugZap } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, PlugZap } from "lucide-react";
 
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { AdminSocialNav } from "./AdminSocialNav";
-import { fetchSocialAccounts, type SocialAccount } from "@/lib/socialApi";
+import { fetchSocialAccounts, startSocialOAuth, type SocialAccount } from "@/lib/socialApi";
 
 export function AdminSocialAccountsPage() {
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [message, setMessage] = useState("");
+  const [oauthUrl, setOauthUrl] = useState("");
 
-  useEffect(() => {
-    fetchSocialAccounts().then(setAccounts).catch((error) => setMessage(error instanceof Error ? error.message : "Unable to load social accounts."));
-  }, []);
+  const load = async () => setAccounts(await fetchSocialAccounts());
+  useEffect(() => { void load().catch((error) => setMessage(error instanceof Error ? error.message : "Unable to load social accounts.")); }, []);
+
+  async function connect(platform: string) {
+    try {
+      const result = await startSocialOAuth(platform);
+      if (result.authorization_url) {
+        setOauthUrl(result.authorization_url);
+        setMessage("OAuth URL generated. Open it, approve access, then complete the callback server-side with the returned code/state.");
+        window.open(result.authorization_url, "_blank", "noopener,noreferrer");
+      } else {
+        setMessage(result.message || "Manual export mode enabled.");
+      }
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to start OAuth.");
+    }
+  }
 
   return (
-    <AdminLayout title="Social Accounts" subtitle="Future connection foundation. SM1A stores no frontend tokens and does not publish.">
+    <AdminLayout title="Social Accounts" subtitle="SM2 connects official accounts for approved, manual publishing only. Tokens never reach the frontend.">
       <AdminSocialNav />
       {message ? <p className="mb-5 rounded-2xl bg-blue-50 p-4 text-sm font-bold text-blue-700">{message}</p> : null}
+      {oauthUrl ? (
+        <section className="mb-5 rounded-[1.5rem] border bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-black">OAuth URL</h2>
+          <p className="mt-2 break-all rounded-2xl bg-slate-50 p-3 text-xs font-bold text-slate-600">{oauthUrl}</p>
+          <Button size="sm" variant="outline" className="mt-3 rounded-full bg-white" onClick={() => void navigator.clipboard?.writeText(oauthUrl)}>
+            <Copy className="mr-2 h-4 w-4" />Copy URL
+          </Button>
+        </section>
+      ) : null}
 
       <section className="rounded-[1.5rem] border bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-black">Connection placeholders</h2>
+        <h2 className="text-xl font-black">Official account connections</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          These rows prepare Instagram, Facebook, LinkedIn, Google Business and WhatsApp workflows for SM2. Tokens are intentionally hidden from the API response.
+          Connect Instagram Business, Facebook Page, LinkedIn and Google Business Profile through OAuth. WhatsApp remains manual export only because the Business API does not publish normal Status updates.
         </p>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {accounts.map((account) => (
@@ -32,10 +57,15 @@ export function AdminSocialAccountsPage() {
                   <p className="text-xs font-black uppercase tracking-wide text-blue-700">{account.platform.replace(/_/g, " ")}</p>
                   <h3 className="mt-1 text-lg font-black">{account.account_name || account.platform}</h3>
                   <p className="mt-1 text-sm font-bold text-slate-500">Status: {account.status.replace(/_/g, " ")}</p>
+                  {account.account_handle ? <p className="mt-1 text-xs font-bold text-slate-500">Handle: {account.account_handle}</p> : null}
+                  {account.last_connected_at ? <p className="mt-1 text-xs font-bold text-emerald-700">Connected: {new Date(account.last_connected_at).toLocaleString("en-IN")}</p> : null}
+                  {account.last_error ? <p className="mt-2 text-xs font-bold text-rose-700">{account.last_error}</p> : null}
                 </div>
-                <PlugZap className="h-5 w-5 text-slate-400" />
+                {account.status === "connected" ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <PlugZap className="h-5 w-5 text-slate-400" />}
               </div>
-              <Button disabled variant="outline" className="mt-4 rounded-full bg-white">Connect in SM2</Button>
+              <Button variant="outline" className="mt-4 rounded-full bg-white" onClick={() => void connect(account.platform)}>
+                {account.platform === "whatsapp_business" ? "Enable manual export" : <><ExternalLink className="mr-2 h-4 w-4" />Connect OAuth</>}
+              </Button>
             </article>
           ))}
         </div>

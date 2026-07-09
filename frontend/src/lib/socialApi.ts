@@ -35,6 +35,12 @@ export type SocialPost = {
   risk_level: string;
   status: string;
   scheduled_at?: string | null;
+  posted_at?: string | null;
+  external_post_id?: string | null;
+  external_post_url?: string | null;
+  publish_status?: string | null;
+  publish_error?: string | null;
+  publish_metadata?: Record<string, unknown> | null;
   created_at?: string;
   assets?: SocialAsset[];
 };
@@ -44,11 +50,24 @@ export type SocialAccount = {
   platform: string;
   account_name?: string | null;
   account_handle?: string | null;
+  account_id?: string | null;
   status: string;
   token_expires_at?: string | null;
+  last_connected_at?: string | null;
+  last_error?: string | null;
   scopes?: string[] | null;
+  metadata?: Record<string, unknown> | null;
   created_at?: string;
   updated_at?: string;
+};
+
+export type SocialOAuthStart = {
+  platform: string;
+  mode?: string;
+  message?: string;
+  authorization_url?: string;
+  state?: string;
+  redirect_uri?: string;
 };
 
 async function json(response: Response) {
@@ -75,6 +94,14 @@ export const updateSocialPost = (id: number, payload: Record<string, unknown>) =
 export const approveSocialPost = (id: number) => adminFetch(`/admin/social/posts/${id}/approve`, { method: "POST" }).then(json);
 export const rejectSocialPost = (id: number) => adminFetch(`/admin/social/posts/${id}/reject`, { method: "POST" }).then(json);
 export const generateSocialPostImage = (id: number) => adminFetch(`/admin/social/posts/${id}/generate-image`, { method: "POST" }).then(json);
+export const publishSocialPost = (id: number, payload: Record<string, unknown>) =>
+  adminFetch(`/admin/social/posts/${id}/publish`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);
+
+export const startSocialOAuth = (platform: string) =>
+  adminFetch(`/admin/social/oauth/${platform}/start`, { method: "POST" }).then(json).then((body) => body.data as SocialOAuthStart);
+
+export const completeSocialOAuth = (payload: { platform: string; code: string; state: string }) =>
+  adminFetch("/admin/social/oauth/callback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);
 
 export const updateSocialAsset = (id: number, payload: Record<string, unknown>) =>
   adminFetch(`/admin/social/assets/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);

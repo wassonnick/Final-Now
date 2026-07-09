@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\SocialAccount;
 use App\Models\SocialPost;
 use App\Models\SocialPostAsset;
+use App\Models\SocialPublishLog;
 use App\Services\Social\SocialContextService;
 use App\Services\Social\SocialDraftGeneratorService;
 use App\Services\Social\SocialImageAssetService;
+use App\Services\Social\SocialManualPublisherService;
+use App\Services\Social\SocialOAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,6 +22,8 @@ class AdminSocialController extends Controller
         private SocialContextService $context,
         private SocialDraftGeneratorService $generator,
         private SocialImageAssetService $images,
+        private SocialOAuthService $oauth,
+        private SocialManualPublisherService $publisher,
     ) {}
 
     public function context(Request $request): JsonResponse
@@ -110,6 +115,29 @@ class AdminSocialController extends Controller
         return response()->json(['status' => 'ok', 'message' => 'Social draft rejected. Nothing was posted.', 'data' => $post->fresh()->load('assets')]);
     }
 
+    public function publishPost(Request $request, SocialPost $post): JsonResponse
+    {
+        $data = $request->validate([
+            'confirm_publish' => ['accepted'],
+            'confirm_high_risk' => ['sometimes', 'boolean'],
+            'social_account_id' => ['sometimes', 'nullable', 'integer', 'exists:social_accounts,id'],
+        ]);
+
+        try {
+            $result = $this->publisher->publish($post, $data, $request->header('X-Admin-Email') ?: 'admin');
+
+            return response()->json([
+                'status' => 'ok',
+                'message' => $result['mode'] === 'manual_export'
+                    ? 'WhatsApp manual export prepared. Nothing was auto-posted.'
+                    : 'Social post manually published.',
+                'data' => $result,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
     public function generateImage(SocialPost $post): JsonResponse
     {
         $asset = $this->images->createForPost($post);
@@ -157,26 +185,53 @@ class AdminSocialController extends Controller
 
     public function accounts(): JsonResponse
     {
-        $platforms = [
-            'instagram_business' => 'Instagram Business',
-            'facebook_page' => 'Facebook Page',
-            'linkedin' => 'LinkedIn Page/Profile',
-            'google_business_profile' => 'Google Business Profile',
-            'whatsapp_business' => 'WhatsApp Business',
-        ];
-
-        foreach ($platforms as $platform => $label) {
-            SocialAccount::firstOrCreate(
-                ['platform' => $platform],
-                ['account_name' => $label, 'status' => 'not_connected', 'metadata' => ['sm1a_placeholder' => true]]
-            );
-        }
+        $this->oauth->ensureAccounts();
 
         $accounts = SocialAccount::query()
-            ->select(['id', 'platform', 'account_name', 'account_handle', 'status', 'token_expires_at', 'scopes', 'created_at', 'updated_at'])
+            ->select(['id', 'platform', 'account_name', 'account_handle', 'account_id', 'status', 'token_expires_at', 'last_connected_at', 'last_error', 'scopes', 'metadata', 'created_at', 'updated_at'])
             ->orderBy('id')
             ->get();
 
         return response()->json(['status' => 'ok', 'data' => $accounts]);
+    }
+
+    public function startOAuth(string $platform): JsonResponse
+    {
+        try {
+            return response()->json(['status' => 'ok', 'data' => $this->oauth->start($platform)]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function oauthCallback(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'platform' => ['nullable', Rule::in(array_keys(SocialOAuthService::PLATFORMS))],
+            'code' => ['required', 'string'],
+            'state' => ['required', 'string'],
+        ]);
+
+        try {
+            $account = $this->oauth->callback($data['platform'] ?? null, $data['code'], $data['state']);
+
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Social account connected. Tokens are encrypted and never returned to the frontend.',
+                'data' => $account->only(['id', 'platform', 'account_name', 'account_handle', 'account_id', 'status', 'token_expires_at', 'last_connected_at', 'scopes', 'metadata']),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function publishLogs(Request $request): JsonResponse
+    {
+        $query = SocialPublishLog::query()->latest();
+        if ($request->filled('post_id')) {
+            $query->where('social_post_id', $request->integer('post_id'));
+        }
+
+        return response()->json(['status' => 'ok', 'data' => $query->paginate(min($request->integer('per_page', 50), 100))]);
     }
 }

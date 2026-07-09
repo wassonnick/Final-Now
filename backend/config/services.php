@@ -52,6 +52,16 @@ return [
         'refresh_token' => env('GOOGLE_SEARCH_CONSOLE_REFRESH_TOKEN'),
     ],
 
+    'social_oauth' => [
+        'redirect_uri' => env('SOCIAL_OAUTH_REDIRECT_URI', rtrim(env('APP_URL', 'https://final-now.onrender.com'), '/').'/api/admin/social/oauth/callback'),
+        'meta_client_id' => env('META_CLIENT_ID'),
+        'meta_client_secret' => env('META_CLIENT_SECRET'),
+        'linkedin_client_id' => env('LINKEDIN_CLIENT_ID'),
+        'linkedin_client_secret' => env('LINKEDIN_CLIENT_SECRET'),
+        'google_client_id' => env('GOOGLE_BUSINESS_CLIENT_ID', env('GOOGLE_SEARCH_CONSOLE_CLIENT_ID')),
+        'google_client_secret' => env('GOOGLE_BUSINESS_CLIENT_SECRET', env('GOOGLE_SEARCH_CONSOLE_CLIENT_SECRET')),
+    ],
+
     'lead_notifications' => [
         'enabled' => env('LEAD_NOTIFICATION_ENABLED', false),
         'webhook_url' => env('LEAD_NOTIFICATION_WEBHOOK_URL'),

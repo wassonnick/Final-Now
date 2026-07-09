@@ -63,6 +63,7 @@ Route::post('/reviews', [ReviewController::class, 'store']);
 Route::post('/reviews/{review}/helpful', [ReviewController::class, 'markHelpful']);
 Route::get('/site-visits/{token}', [SiteVisitController::class, 'show']);
 Route::post('/site-visits/{token}/confirm', [SiteVisitController::class, 'confirm']);
+Route::get('/admin/social/oauth/callback', [AdminSocialController::class, 'oauthCallback'])->middleware('throttle:20,1');
 Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/stats', AdminStatsController::class);
     Route::get('/ops/action-inbox', [AdminOpsController::class, 'actionInbox']);
@@ -79,11 +80,15 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
         Route::post('/posts/{post}/approve', [AdminSocialController::class, 'approvePost']);
         Route::post('/posts/{post}/reject', [AdminSocialController::class, 'rejectPost']);
         Route::post('/posts/{post}/generate-image', [AdminSocialController::class, 'generateImage']);
+        Route::post('/posts/{post}/publish', [AdminSocialController::class, 'publishPost']);
         Route::get('/assets', [AdminSocialController::class, 'assets']);
         Route::patch('/assets/{asset}', [AdminSocialController::class, 'updateAsset']);
         Route::post('/assets/{asset}/approve', [AdminSocialController::class, 'approveAsset']);
         Route::post('/assets/{asset}/reject', [AdminSocialController::class, 'rejectAsset']);
         Route::get('/accounts', [AdminSocialController::class, 'accounts']);
+        Route::post('/oauth/{platform}/start', [AdminSocialController::class, 'startOAuth']);
+        Route::post('/oauth/callback', [AdminSocialController::class, 'oauthCallback']);
+        Route::get('/publish-logs', [AdminSocialController::class, 'publishLogs']);
     });
     Route::prefix('seo-autopilot')->group(function () {
         Route::get('/dashboard', [AdminSeoAutopilotController::class, 'dashboard']);

@@ -22,10 +22,16 @@ class SocialPost extends Model
         'reel_script',
         'source_type',
         'source_id',
+        'social_account_id',
         'risk_level',
         'status',
         'scheduled_at',
         'posted_at',
+        'external_post_id',
+        'external_post_url',
+        'publish_status',
+        'publish_error',
+        'publish_metadata',
         'ai_model',
         'ai_image_model',
         'ai_prompt_version',
@@ -36,6 +42,7 @@ class SocialPost extends Model
         'carousel_slides' => 'array',
         'scheduled_at' => 'datetime',
         'posted_at' => 'datetime',
+        'publish_metadata' => 'array',
     ];
 
     public function assets(): HasMany

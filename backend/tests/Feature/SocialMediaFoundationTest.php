@@ -7,6 +7,7 @@ use App\Models\Property;
 use App\Models\SocialAccount;
 use App\Models\SocialPost;
 use App\Models\SocialPostAsset;
+use App\Models\SocialPublishLog;
 use App\Models\Society;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -212,6 +213,189 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertStringNotContainsString('refresh_token_encrypted', $json);
         $this->assertStringNotContainsString('raw-access-token', $json);
         $this->assertStringNotContainsString('raw-refresh-token', $json);
+    }
+
+    public function test_sm2_manual_publish_requires_approval_confirmation_and_connected_account(): void
+    {
+        $post = SocialPost::create([
+            'platform' => 'instagram',
+            'post_type' => 'single_post',
+            'title' => 'Safe Instagram draft',
+            'caption' => 'Neutral approved society update.',
+            'risk_level' => 'low',
+            'status' => 'needs_approval',
+        ]);
+
+        SocialPostAsset::create([
+            'social_post_id' => $post->id,
+            'asset_type' => 'image',
+            'platform' => 'instagram',
+            'public_url' => 'https://cdn.example.test/social/image.jpg',
+            'status' => 'approved',
+            'risk_level' => 'low',
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'instagram_business',
+            'account_name' => 'Instagram Business',
+            'account_id' => 'ig-user-1',
+            'status' => 'connected',
+            'metadata' => ['instagram_business_account_id' => 'ig-user-1'],
+        ]);
+        $account->access_token = 'secret-instagram-token';
+        $account->save();
+
+        $this->admin()->postJson("/api/admin/social/posts/{$post->id}/publish", [
+            'confirm_publish' => true,
+            'social_account_id' => $account->id,
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'Only approved social posts can be manually published.');
+
+        $post->update(['status' => 'approved']);
+
+        $this->admin()->postJson("/api/admin/social/posts/{$post->id}/publish", [
+            'social_account_id' => $account->id,
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'The confirm publish field must be accepted.');
+    }
+
+    public function test_sm2_instagram_manual_publish_saves_external_id_and_audit_log_without_exposing_token(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/ig-user-1/media' => Http::response(['id' => 'container-1'], 200),
+            'https://graph.facebook.com/v20.0/ig-user-1/media_publish' => Http::response(['id' => 'ig-post-1'], 200),
+        ]);
+
+        $post = SocialPost::create([
+            'platform' => 'instagram',
+            'post_type' => 'single_post',
+            'title' => 'Approved Instagram post',
+            'caption' => 'Neutral approved society update.',
+            'risk_level' => 'low',
+            'status' => 'approved',
+        ]);
+
+        SocialPostAsset::create([
+            'social_post_id' => $post->id,
+            'asset_type' => 'image',
+            'platform' => 'instagram',
+            'public_url' => 'https://cdn.example.test/social/image.jpg',
+            'status' => 'approved',
+            'risk_level' => 'low',
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'instagram_business',
+            'account_name' => 'Instagram Business',
+            'account_id' => 'ig-user-1',
+            'status' => 'connected',
+            'metadata' => ['instagram_business_account_id' => 'ig-user-1'],
+        ]);
+        $account->access_token = 'secret-instagram-token';
+        $account->save();
+
+        $response = $this->admin()->postJson("/api/admin/social/posts/{$post->id}/publish", [
+            'confirm_publish' => true,
+            'social_account_id' => $account->id,
+        ])->assertOk();
+
+        $responseJson = json_encode($response->json());
+        $this->assertStringNotContainsString('secret-instagram-token', $responseJson);
+        $this->assertDatabaseHas('social_posts', [
+            'id' => $post->id,
+            'status' => 'published',
+            'publish_status' => 'published',
+            'external_post_id' => 'ig-post-1',
+        ]);
+        $this->assertTrue(SocialPublishLog::where('social_post_id', $post->id)->where('status', 'published')->exists());
+    }
+
+    public function test_sm2_oauth_callback_stores_tokens_encrypted_without_returning_them(): void
+    {
+        Http::fake([
+            'https://www.linkedin.com/oauth/v2/accessToken' => Http::response([
+                'access_token' => 'linkedin-secret-token',
+                'refresh_token' => 'linkedin-refresh-secret',
+                'expires_in' => 3600,
+                'token_type' => 'Bearer',
+            ], 200),
+        ]);
+
+        $start = $this->admin()->postJson('/api/admin/social/oauth/linkedin/start')->assertOk();
+        $state = $start->json('data.state');
+
+        $response = $this->getJson('/api/admin/social/oauth/callback?'.http_build_query([
+            'code' => 'oauth-code',
+            'state' => $state,
+        ]))->assertOk();
+
+        $json = json_encode($response->json());
+        $this->assertStringNotContainsString('linkedin-secret-token', $json);
+        $this->assertStringNotContainsString('linkedin-refresh-secret', $json);
+
+        $account = SocialAccount::where('platform', 'linkedin')->firstOrFail();
+        $this->assertSame('connected', $account->status);
+        $this->assertNotSame('linkedin-secret-token', $account->access_token_encrypted);
+        $this->assertSame('linkedin-secret-token', $account->accessToken());
+    }
+
+    public function test_sm2_high_risk_publish_requires_explicit_high_risk_confirmation(): void
+    {
+        $post = SocialPost::create([
+            'platform' => 'linkedin',
+            'post_type' => 'single_post',
+            'title' => 'High risk draft',
+            'caption' => 'Reviewed high risk post.',
+            'risk_level' => 'high',
+            'status' => 'approved',
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'linkedin',
+            'account_name' => 'LinkedIn',
+            'account_id' => 'urn:li:person:abc',
+            'status' => 'connected',
+        ]);
+        $account->access_token = 'secret-linkedin-token';
+        $account->save();
+
+        $this->admin()->postJson("/api/admin/social/posts/{$post->id}/publish", [
+            'confirm_publish' => true,
+            'social_account_id' => $account->id,
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'High-risk posts require explicit high-risk confirmation before manual publishing.');
+    }
+
+    public function test_sm2_whatsapp_returns_manual_export_and_never_posts(): void
+    {
+        $post = SocialPost::create([
+            'platform' => 'whatsapp',
+            'post_type' => 'status',
+            'title' => 'WhatsApp status',
+            'caption' => 'Manual WhatsApp status copy.',
+            'risk_level' => 'low',
+            'status' => 'approved',
+        ]);
+
+        SocialPostAsset::create([
+            'social_post_id' => $post->id,
+            'asset_type' => 'creative_brief',
+            'platform' => 'whatsapp',
+            'public_url' => 'https://cdn.example.test/social/whatsapp.jpg',
+            'status' => 'approved',
+            'risk_level' => 'low',
+        ]);
+
+        $this->admin()->postJson("/api/admin/social/posts/{$post->id}/publish", [
+            'confirm_publish' => true,
+        ])->assertOk()
+            ->assertJsonPath('data.mode', 'manual_export')
+            ->assertJsonPath('data.copy', 'Manual WhatsApp status copy.');
+
+        $post->refresh();
+        $this->assertSame('manual_export_ready', $post->publish_status);
+        $this->assertNull($post->posted_at);
+        $this->assertTrue(SocialPublishLog::where('social_post_id', $post->id)->where('action', 'whatsapp_manual_export')->exists());
     }
 
     private function society(array $extra = []): Society
