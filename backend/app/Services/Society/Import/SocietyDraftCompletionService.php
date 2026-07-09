@@ -23,6 +23,7 @@ class SocietyDraftCompletionService
         private readonly SocietySeoAiDraftService $seoAi,
         private readonly SocietySeoScoringService $seoScoring,
         private readonly AiBudgetGuard $budget,
+        private readonly \App\Services\GooglePlacesSocietyImageService $places,
     ) {}
 
     /**
@@ -140,6 +141,29 @@ class SocietyDraftCompletionService
             ]);
 
             return true;
+        }
+
+        // No harvested candidate — as a last automatic resort, look the society up on Google
+        // Places by name and use its photo (same rights-safe basis: served on demand through
+        // Google's API with attribution). Scraped/official images still require a human.
+        try {
+            $reference = $this->places->findImageReference($society);
+            if (! empty($reference['photo_reference'])) {
+                $society->update([
+                    'place_id' => $reference['place_id'] ?: $society->place_id,
+                    'image_photo_reference' => $reference['photo_reference'],
+                    'image_reference_url' => $reference['safe_reference_url'] ?? null,
+                    'image_status' => 'google_places_reference_found',
+                    'image_approved_by_admin' => true,
+                    'image_credit' => $reference['credit'] ?? 'Google Places',
+                    'image_license_notes' => $reference['license_note']
+                        ?? 'Google Places photo served on demand via API with attribution; auto-approved during completion.',
+                ]);
+
+                return true;
+            }
+        } catch (\Throwable $e) {
+            report($e);
         }
 
         return false;

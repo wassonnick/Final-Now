@@ -62,6 +62,26 @@ class SocietyDraftCompletionTest extends TestCase
         $this->assertContains('published_seo', $result['missing']);
     }
 
+    public function test_cover_falls_back_to_a_places_lookup_when_no_candidates_were_harvested(): void
+    {
+        $society = $this->draft(['image_candidates' => []]);
+        $this->mockSeoAi();
+        $this->mock(\App\Services\GooglePlacesSocietyImageService::class, function ($mock) {
+            $mock->shouldReceive('findImageReference')->once()->andReturn([
+                'photo_reference' => 'lookup-ref-7', 'place_id' => 'place-7',
+                'safe_reference_url' => 'https://maps.example/ref', 'credit' => 'Google Places',
+                'license_note' => 'Served via Google API with attribution.',
+            ]);
+        });
+
+        $result = app(SocietyDraftCompletionService::class)->complete($society, allowReEnrich: false);
+
+        $this->assertTrue($result['published'], 'Places-lookup cover should unblock publishing. Missing: '.implode(',', $result['missing']));
+        $fresh = $society->fresh();
+        $this->assertSame('lookup-ref-7', $fresh->image_photo_reference);
+        $this->assertTrue((bool) $fresh->image_approved_by_admin);
+    }
+
     public function test_completion_job_publishes_a_ready_draft(): void
     {
         $society = $this->draft([
