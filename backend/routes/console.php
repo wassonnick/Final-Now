@@ -235,6 +235,48 @@ Artisan::command('seo:revoice {--limit=10} {--force}', function () {
     $this->info("Re-voiced {$summary['generated']} society(ies) into pending drafts ({$summary['failed']} failed). Nothing is live until approved in the SEO studio.");
 })->purpose('Regenerate published society SEO copy in the current brand voice as review-first pending drafts');
 
+Artisan::command('societies:complete-drafts {--limit=100} {--skip-re-enrich}', function () {
+    // Backlog sweep: run the one-click completion pipeline over every unpublished imported
+    // draft — fill data gaps, approve rights-safe covers, generate + publish SEO, and publish
+    // each society whose completeness gates all pass. Honest gaps stay in review, listed.
+    $limit = max(1, min((int) $this->option('limit'), 200));
+    $completion = app(\App\Services\Society\Import\SocietyDraftCompletionService::class);
+    $budget = app(\App\Services\Ops\AiBudgetGuard::class);
+
+    $drafts = Society::query()
+        ->where('is_published', false)
+        ->whereNotNull('imported_at')
+        ->orderBy('id')
+        ->limit($limit)
+        ->get();
+
+    if ($drafts->isEmpty()) {
+        $this->info('No unpublished imported drafts found.');
+
+        return;
+    }
+
+    $published = 0;
+    foreach ($drafts as $society) {
+        if ($budget->providerLimited()) {
+            $this->warn('Stopped: AI provider limit tripped. Re-run after topping up.');
+            break;
+        }
+        $result = $completion->complete($society, ! $this->option('skip-re-enrich'));
+        $published += $result['published'] ? 1 : 0;
+        $this->line(sprintf(
+            '%s #%d %s — %s%s',
+            $result['published'] ? '[PUBLISHED]' : '[IN REVIEW]',
+            $result['society_id'],
+            $result['name'],
+            implode(', ', $result['actions']) ?: 'no action needed',
+            $result['missing'] ? ' | missing: '.implode(', ', $result['missing']) : '',
+        ));
+    }
+
+    $this->info("Done: {$published}/{$drafts->count()} drafts published; the rest list their missing gates above.");
+})->purpose('Complete and publish every unpublished imported society draft (data, cover, SEO, publish)');
+
 Artisan::command('social:autopilot', function () {
     // Daily hands-off social cycle: weekday content plan, grounded draft generation,
     // auto-approval of LOW-risk posts (+ their AI image assets) and scheduling across the

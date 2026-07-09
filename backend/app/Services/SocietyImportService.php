@@ -177,7 +177,13 @@ class SocietyImportService
         $society = Society::create($attr);
 
         $pending = ! empty($outcome['gemini_unavailable']);
-        $this->log($job, "Draft created: {$society->name} (ID {$society->id}). ".($pending ? 'AI gap-fill was unavailable — re-enrich to complete soft fields.' : 'Review before publishing.'));
+
+        // True one-click import: a queued follow-up finishes the draft (fills remaining
+        // gaps, approves a rights-safe cover, generates + publishes SEO) and publishes the
+        // society automatically once every completeness gate passes.
+        \App\Jobs\CompleteImportedSocietyDraft::dispatch($society->id);
+
+        $this->log($job, "Draft created: {$society->name} (ID {$society->id}). ".($pending ? 'AI gap-fill was unavailable — the queued completion pass will retry the soft fields.' : 'Completion queued — SEO + publish follow automatically once every check passes.'));
 
         return [
             'name' => $society->name,
