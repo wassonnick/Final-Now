@@ -52,16 +52,22 @@ class SocialImageAssetService
         }
 
         try {
-            $response = Http::timeout(90)->withToken($apiKey)->post('https://api.openai.com/v1/images/generations', [
+            // gpt-image-1 always returns b64_json and REJECTS the response_format parameter
+            // (it is a dall-e-only option), so only send it to dall-e models.
+            $payload = [
                 'model' => $imageModel,
                 'prompt' => $this->safeImagePrompt($imagePrompt),
                 'size' => '1024x1024',
                 'n' => 1,
-                'response_format' => 'b64_json',
-            ]);
+            ];
+            if (str_starts_with($imageModel, 'dall-e')) {
+                $payload['response_format'] = 'b64_json';
+            }
+
+            $response = Http::timeout(120)->withToken($apiKey)->post('https://api.openai.com/v1/images/generations', $payload);
 
             if (! $response->successful()) {
-                throw new \RuntimeException('OpenAI image request failed with HTTP '.$response->status().'.');
+                throw new \RuntimeException('OpenAI image request failed with HTTP '.$response->status().': '.mb_substr((string) data_get($response->json(), 'error.message', $response->body()), 0, 300));
             }
 
             $b64 = data_get($response->json(), 'data.0.b64_json');
@@ -104,7 +110,7 @@ class SocialImageAssetService
                 'status' => 'needs_approval',
                 'risk_level' => $post->risk_level,
                 'ai_model' => $imageModel,
-                'metadata' => $metadata + ['reason' => 'Image generation failed; preserved safe creative brief for review.'],
+                'metadata' => $metadata + ['reason' => 'Image generation failed; preserved safe creative brief for review.', 'error' => mb_substr($e->getMessage(), 0, 300)],
             ]);
         }
     }

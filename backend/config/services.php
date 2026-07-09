@@ -40,8 +40,9 @@ return [
 
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
-        'model' => env('OPENAI_MODEL', 'gpt-4.1-mini'),
-        'image_model' => env('OPENAI_IMAGE_MODEL'),
+        'model' => env('OPENAI_MODEL', 'gpt-5.4-mini'),
+        'image_model' => env('OPENAI_IMAGE_MODEL', 'gpt-image-1'),
+        'processing_mode' => env('OPENAI_PROCESSING_MODE', 'standard'),
     ],
 
     'search_console' => [
