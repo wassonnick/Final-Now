@@ -146,7 +146,7 @@ export function SocietyAssistant({ initialQuery }: { initialQuery?: string } = {
         {started ? <button onClick={reset} className="inline-flex items-center gap-1.5 rounded-full border border-[#E7DCCB] px-3 py-1.5 text-xs font-bold text-[#6E756E] hover:bg-[#F8F3EA]"><RotateCcw className="h-3.5 w-3.5" />New chat</button> : null}
       </div>
 
-      <div ref={scrollRef} className="h-[460px] space-y-4 overflow-y-auto px-4 py-5">
+      <div ref={scrollRef} className="h-[44vh] max-h-[440px] min-h-[280px] space-y-4 overflow-y-auto px-4 py-5">
         {!started ? (
           <div className="mx-auto max-w-md pt-6 text-center">
             <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F1EEE6] text-[#10251F]"><Sparkles className="h-6 w-6" /></span>
