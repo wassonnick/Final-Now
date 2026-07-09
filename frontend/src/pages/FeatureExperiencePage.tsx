@@ -622,6 +622,27 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
     fetchPublicProperties().then(setProperties).catch((error) => console.error('Properties fetch failed:', error));
   }, [feature]);
 
+  // The chat assistant is a focused, first-fold experience — skip the big feature hero and
+  // stat cards (the assistant carries its own identity header) so it lands above the fold.
+  if (feature === 'chat') {
+    return (
+      <div className="min-h-screen bg-ivory-100">
+        <main className="mx-auto max-w-[900px] px-4 pb-14 pt-6 md:px-6">
+          <h1 className="font-display text-[26px] font-medium leading-tight text-navy-950 md:text-[32px]">
+            Ask anything about Gurgaon societies
+          </h1>
+          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-navy-500">
+            Grounded, honest answers from published SocietyFlats profiles — it'll say "I don't have that yet"
+            rather than invent something to fill the gap.
+          </p>
+          <div className="mt-4">
+            <SocietyAssistant />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-ivory-100">
       <FeatureHero feature={feature} />
@@ -662,7 +683,6 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
         {feature === 'maps' ? <MapsTool societies={societies} /> : null}
         {feature === 'recommendations' ? <RecommendationsTool societies={societies} /> : null}
         {feature === 'broker-crm' ? <LeadFlowTool feature={feature} /> : null}
-        {feature === 'chat' ? <SocietyAssistant /> : null}
       </section>
     </div>
   );
