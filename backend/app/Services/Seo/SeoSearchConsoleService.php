@@ -27,12 +27,27 @@ class SeoSearchConsoleService
         foreach($rows as $row){$url=(string)($row['page_url']??$row['page']??'');if($url==='')continue;$path=parse_url($url,PHP_URL_PATH)?:'/';$page=SeoPage::where('url',$path)->orWhere('canonical_url',$path)->first();$date=Carbon::parse($row['date']??now())->startOfDay();$metric=SeoSearchConsoleMetric::updateOrCreate(['metric_date'=>$date,'page_url'=>$url,'query'=>(string)($row['query']??'')],['seo_page_id'=>$page?->id,'clicks'=>(int)($row['clicks']??0),'impressions'=>(int)($row['impressions']??0),'ctr'=>(float)($row['ctr']??0),'position'=>isset($row['position'])?(float)$row['position']:null,'metadata'=>$row['metadata']??null]);$this->opportunities($metric);$count++;}
         return $count;
     }
+    /**
+     * Dual-pass import. Google's API silently DROPS anonymized (privacy-filtered) queries
+     * whenever the query dimension is requested, so query-sliced data undercounts badly on
+     * younger sites. Pass 1 (date+page, stored with query='') captures the true totals the
+     * GSC UI shows; pass 2 (date+page+query) captures the keyword intel used for targeting
+     * and opportunity detection. Headline sums must read the query='' rows.
+     */
     public function fetch(int $days=28): int
     {
-        if(!$this->configured())return 0;$site=rawurlencode((string)config('services.search_console.site_url'));
-        $response=Http::withToken($this->accessToken())->timeout(30)->post("https://searchconsole.googleapis.com/webmasters/v3/sites/{$site}/searchAnalytics/query",['startDate'=>now()->subDays($days)->toDateString(),'endDate'=>now()->subDay()->toDateString(),'dimensions'=>['date','page','query'],'rowLimit'=>25000]);
+        if(!$this->configured())return 0;
+        $count=$this->import($this->queryApi($days,['date','page']));
+        return $count+$this->import($this->queryApi($days,['date','page','query']));
+    }
+
+    private function queryApi(int $days,array $dimensions): array
+    {
+        $site=rawurlencode((string)config('services.search_console.site_url'));
+        $response=Http::withToken($this->accessToken())->timeout(30)->post("https://searchconsole.googleapis.com/webmasters/v3/sites/{$site}/searchAnalytics/query",['startDate'=>now()->subDays($days)->toDateString(),'endDate'=>now()->subDay()->toDateString(),'dimensions'=>$dimensions,'rowLimit'=>25000]);
         if(!$response->successful())throw new \RuntimeException('Search Console import failed with HTTP '.$response->status().'.');
-        $rows=collect($response->json('rows',[]))->map(fn($r)=>['date'=>$r['keys'][0]??now()->toDateString(),'page_url'=>$r['keys'][1]??'','query'=>$r['keys'][2]??null,'clicks'=>$r['clicks']??0,'impressions'=>$r['impressions']??0,'ctr'=>$r['ctr']??0,'position'=>$r['position']??null])->all();return $this->import($rows);
+        $hasQueryDimension=count($dimensions)>2;
+        return collect($response->json('rows',[]))->map(fn($r)=>['date'=>$r['keys'][0]??now()->toDateString(),'page_url'=>$r['keys'][1]??'','query'=>$hasQueryDimension?($r['keys'][2]??null):null,'clicks'=>$r['clicks']??0,'impressions'=>$r['impressions']??0,'ctr'=>$r['ctr']??0,'position'=>$r['position']??null])->all();
     }
     private function opportunities(SeoSearchConsoleMetric $m): void
     {

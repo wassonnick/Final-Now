@@ -128,8 +128,9 @@ class SeoAutopilotTest extends TestCase
             ]]],200),
         ]);
 
+        // Dual-pass import: one totals row (query='') + one query-sliced intel row.
         $this->admin()->postJson('/api/admin/seo-autopilot/search-console/fetch')
-            ->assertOk()->assertJsonPath('count',1)->assertJsonPath('configured',true);
+            ->assertOk()->assertJsonPath('count',2)->assertJsonPath('configured',true);
 
         Http::assertSent(fn($request)=>$request->url()==='https://oauth2.googleapis.com/token'
             && $request['grant_type']==='refresh_token'
@@ -137,6 +138,20 @@ class SeoAutopilotTest extends TestCase
         Http::assertSent(fn($request)=>str_starts_with($request->url(),'https://searchconsole.googleapis.com/')
             && $request->hasHeader('Authorization','Bearer fresh-access-token'));
         $this->assertDatabaseHas('seo_search_console_metrics',['query'=>'gurgaon societies','clicks'=>4]);
+        $this->assertDatabaseHas('seo_search_console_metrics',['query'=>'','clicks'=>4]);
+    }
+
+    public function test_headline_gsc_totals_prefer_totals_rows_over_query_sliced_rows(): void
+    {
+        // Google omits anonymized queries from query-sliced rows, so the query rows undercount:
+        // totals row says 9 clicks / 400 impressions; the only surviving query row says 2 / 150.
+        \App\Models\SeoSearchConsoleMetric::create(['metric_date'=>now()->subDays(3),'page_url'=>'https://www.societyflats.com/gurgaon','query'=>'','clicks'=>9,'impressions'=>400,'ctr'=>0.0225]);
+        \App\Models\SeoSearchConsoleMetric::create(['metric_date'=>now()->subDays(3),'page_url'=>'https://www.societyflats.com/gurgaon','query'=>'gurgaon societies','clicks'=>2,'impressions'=>150,'ctr'=>0.013]);
+
+        $this->admin()->getJson('/api/admin/seo-autopilot/dashboard')
+            ->assertOk()
+            ->assertJsonPath('data.search_console.clicks_28d',9)
+            ->assertJsonPath('data.search_console.impressions_28d',400);
     }
 
     public function test_society_draft_approval_updates_reviewable_fields_but_never_publishes(): void
