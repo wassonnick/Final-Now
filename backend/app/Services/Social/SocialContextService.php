@@ -60,6 +60,21 @@ class SocialContextService
         $societies = $this->publishedSocieties($societyId, $sector);
         $properties = $this->publishedProperties($propertyId, $sector);
 
+        // Without an explicit subject the context used to open with the same societies in the
+        // same order every run, so every batch of drafts anchored on the same names. Rotate:
+        // least-recently-featured societies first (random tie-break), trimmed to a focused set.
+        if ($societyId === null && $sector === null && $societies->count() > 1) {
+            $lastFeatured = \App\Models\SocialPost::query()
+                ->where('source_type', 'society')->whereNotNull('source_id')
+                ->selectRaw('source_id, MAX(created_at) as last_used')->groupBy('source_id')
+                ->pluck('last_used', 'source_id');
+            $societies = $societies
+                ->shuffle()
+                ->sortBy(fn (Society $society) => (string) ($lastFeatured[$society->id] ?? '1970-01-01'))
+                ->take(14)
+                ->values();
+        }
+
         return [
             'brand' => [
                 'name' => 'SocietyFlats.com',

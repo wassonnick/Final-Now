@@ -56,11 +56,21 @@ export function AdminSocialGeneratePage() {
     setPlatforms((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
   }
 
-  async function submit() {
+  async function submit(autoPlan = false) {
     setLoading(true);
     setMessage("");
     try {
-      const body = await generateSocialPosts({
+      const body = await generateSocialPosts(autoPlan ? {
+        // Auto-plan: the backend fills pillar/objective/audience/subject from the autopilot's
+        // weekday content calendar + least-recently-featured rotation.
+        auto_plan: true,
+        platforms,
+        content_pillar: null,
+        objective: null,
+        target_audience: null,
+        number_of_variations: Number(form.number_of_variations),
+        generate_images: form.generate_images,
+      } : {
         ...form,
         platforms,
         society_id: form.society_id ? Number(form.society_id) : null,
@@ -141,9 +151,15 @@ export function AdminSocialGeneratePage() {
               <span className="text-sm font-bold text-slate-700">Generate image draft assets when image model is configured; otherwise save creative briefs.</span>
             </label>
           </div>
-          <Button disabled={loading || platforms.length === 0} onClick={() => void submit()} className="mt-5 rounded-full bg-blue-700">
-            <Sparkles className="mr-2 h-4 w-4" /> {loading ? "Generating..." : "Generate review-only drafts"}
-          </Button>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Button disabled={loading || platforms.length === 0} onClick={() => void submit(true)} className="rounded-full bg-emerald-700 hover:bg-emerald-800">
+              <Sparkles className="mr-2 h-4 w-4" /> {loading ? "Generating..." : "Auto-plan today's drafts"}
+            </Button>
+            <Button disabled={loading || platforms.length === 0} onClick={() => void submit()} variant="outline" className="rounded-full">
+              {loading ? "Generating..." : "Generate from this brief"}
+            </Button>
+            <span className="text-xs text-slate-500">Auto-plan picks today's pillar, subject and angle rotation for you.</span>
+          </div>
         </div>
 
         <aside className="rounded-[1.5rem] border bg-slate-950 p-5 text-white shadow-sm">

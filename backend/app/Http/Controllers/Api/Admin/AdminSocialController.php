@@ -65,12 +65,14 @@ class AdminSocialController extends Controller
 
     public function generate(Request $request): JsonResponse
     {
+        $autoPlan = $request->boolean('auto_plan');
+
         $data = $request->validate([
             'platforms' => ['required', 'array', 'min:1'],
             'platforms.*' => ['required', Rule::in(['instagram', 'facebook', 'linkedin', 'whatsapp', 'google_business'])],
-            'content_pillar' => ['required', 'string', 'max:120'],
-            'objective' => ['required', 'string', 'max:140'],
-            'target_audience' => ['required', 'string', 'max:140'],
+            'content_pillar' => [$autoPlan ? 'nullable' : 'required', 'string', 'max:120'],
+            'objective' => [$autoPlan ? 'nullable' : 'required', 'string', 'max:400'],
+            'target_audience' => [$autoPlan ? 'nullable' : 'required', 'string', 'max:140'],
             'society_id' => ['nullable', 'integer'],
             'property_id' => ['nullable', 'integer'],
             'sector' => ['nullable', 'string', 'max:120'],
@@ -78,6 +80,19 @@ class AdminSocialController extends Controller
             'generate_images' => ['nullable', 'boolean'],
             'image_style' => ['nullable', Rule::in(['premium_real_estate', 'clean_corporate', 'instagram_carousel', 'whatsapp_status', 'google_business', 'minimal_vector', 'local_area_guide'])],
         ]);
+
+        // Auto-plan: fill pillar/objective/audience/subject from the autopilot's weekday
+        // content calendar + least-recently-featured rotation, so a manual run needs zero
+        // creative input while still landing on a fresh, logical subject.
+        if ($autoPlan) {
+            $plan = app(\App\Services\Social\SocialAutopilotService::class)->planFor(now(config('app.timezone', 'UTC')));
+            $data['content_pillar'] = $data['content_pillar'] ?: $plan['content_pillar'];
+            $data['objective'] = $data['objective'] ?: $plan['objective'];
+            $data['target_audience'] = $data['target_audience'] ?: $plan['target_audience'];
+            $data['image_style'] = $data['image_style'] ?? $plan['image_style'];
+            $data['society_id'] = $data['society_id'] ?? ($plan['society_id'] ?? null);
+            $data['sector'] = $data['sector'] ?? ($plan['sector'] ?? null);
+        }
 
         try {
             $result = $this->generator->generate($data + ['generate_images' => (bool) ($data['generate_images'] ?? false)]);
