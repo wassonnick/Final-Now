@@ -63,6 +63,7 @@ const AdminReferralsPage = lazy(() => import('@/pages/admin/AdminReferralsPage')
 const AdminNriCasesPage = lazy(() => import('@/pages/admin/AdminNriCasesPage').then((module) => ({ default: module.AdminNriCasesPage })));
 const AdminSeoAutopilotPage = lazy(() => import('@/pages/admin/AdminSeoAutopilotPage').then((module) => ({ default: module.AdminSeoAutopilotPage })));
 const AdminSocialDraftsPage = lazy(() => import('@/pages/admin/AdminSocialDraftsPage').then((module) => ({ default: module.AdminSocialDraftsPage })));
+const AdminOwnerListingsPage = lazy(() => import('@/pages/admin/AdminOwnerListingsPage').then((module) => ({ default: module.AdminOwnerListingsPage })));
 const AdminSocialGeneratePage = lazy(() => import('@/pages/admin/AdminSocialGeneratePage').then((module) => ({ default: module.AdminSocialGeneratePage })));
 const AdminSocialAssetsPage = lazy(() => import('@/pages/admin/AdminSocialAssetsPage').then((module) => ({ default: module.AdminSocialAssetsPage })));
 const AdminSocialAccountsPage = lazy(() => import('@/pages/admin/AdminSocialAccountsPage').then((module) => ({ default: module.AdminSocialAccountsPage })));
@@ -214,6 +215,7 @@ function AppShell() {
             <Route path="/admin/referrals" element={<ProtectedAdminRoute><AdminReferralsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/nri-cases" element={<ProtectedAdminRoute><AdminNriCasesPage /></ProtectedAdminRoute>} />
             <Route path="/admin/seo-autopilot" element={<ProtectedAdminRoute><AdminSeoAutopilotPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/owner-listings" element={<ProtectedAdminRoute><AdminOwnerListingsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/social" element={<ProtectedAdminRoute><AdminSocialDraftsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/social/generate" element={<ProtectedAdminRoute><AdminSocialGeneratePage /></ProtectedAdminRoute>} />
             <Route path="/admin/social/assets" element={<ProtectedAdminRoute><AdminSocialAssetsPage /></ProtectedAdminRoute>} />

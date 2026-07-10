@@ -347,9 +347,9 @@ export function BrokerDashboardPage() {
                 </Link>
               </Button>
               <Button asChild variant="outline" className="rounded-full border-orange-100 bg-white px-5">
-                <Link to="/broker-crm">
+                <Link to="/sell">
                   <Building2 className="mr-2 h-4 w-4" />
-                  Add inventory
+                  Add inventory with photos
                 </Link>
               </Button>
               <Button variant="outline" onClick={logout} className="rounded-full border-slate-200 bg-white px-5 text-slate-600">

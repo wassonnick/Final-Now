@@ -35,6 +35,7 @@ const links = [
   { label: "Societies", href: "/admin/societies", icon: Building2 },
   { label: "Verified Importer", href: "/admin/verified-society-importer", icon: ShieldCheck },
   { label: "Properties", href: "/admin/properties", icon: Home },
+  { label: "Owner Listings", href: "/admin/owner-listings", icon: Home },
   { label: "Leads", href: "/admin/leads", icon: MessageSquareText },
   { label: "Referrals", href: "/admin/referrals", icon: Gift },
   { label: "NRI Cases", href: "/admin/nri-cases", icon: Globe2 },
