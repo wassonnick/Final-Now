@@ -186,6 +186,9 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::apiResource('properties', PropertyController::class)->except(['create', 'edit']);
     Route::apiResource('leads', LeadController::class)->only(['index', 'show', 'update', 'destroy']);
     Route::apiResource('accounts', AdminAccountController::class)->only(['index', 'show', 'update']);
+    Route::get('/owner-listings', [\App\Http\Controllers\Api\Admin\AdminOwnerListingController::class, 'index']);
+    Route::patch('/owner-listings/{listing}', [\App\Http\Controllers\Api\Admin\AdminOwnerListingController::class, 'update']);
+    Route::post('/owner-listings/{listing}/convert', [\App\Http\Controllers\Api\Admin\AdminOwnerListingController::class, 'convert']);
     Route::apiResource('reviews', AdminReviewController::class)->only(['index', 'update', 'destroy']);
     Route::apiResource('referrals', AdminReferralController::class)->only(['index', 'update']);
     Route::apiResource('nri-cases', AdminNriCaseController::class)->only(['index', 'update']);
@@ -206,7 +209,12 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::apiResource('site-visits', AdminSiteVisitController::class)->only(['index', 'store', 'update']);
 });
 
+// Public listing intake (flats + builder floors) — the core inventory catcher.
+Route::post('/listings', [\App\Http\Controllers\Api\OwnerListingController::class, 'store'])->middleware('throttle:6,1');
+Route::post('/listings/images', [\App\Http\Controllers\Api\OwnerListingController::class, 'uploadImage'])->middleware('throttle:20,1');
+
 Route::prefix('accounts')->group(function () {
+    Route::get('/listings', [\App\Http\Controllers\Api\OwnerListingController::class, 'mine']);
     Route::post('/upsert', [AccountController::class, 'upsert']);
     Route::post('/request-otp', [AccountController::class, 'requestOtp'])->middleware('throttle:5,1');
     Route::post('/verify-otp', [AccountController::class, 'verifyOtp'])->middleware('throttle:10,1');

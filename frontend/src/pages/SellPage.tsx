@@ -21,8 +21,9 @@ import { cn } from "@/lib/utils";
 import { backendApi } from "@/services/backendApi";
 import { trackEvent, trackLeadIntent, trackLeadSubmitted } from "@/lib/analytics";
 import { cleanLeadTrackingPayload } from "@/lib/leadTracking";
-import { createCustomerAccountSession } from "@/lib/customerAccount";
-import { fetchAccountByPhone, syncAccountToBackend } from "@/lib/accountApi";
+import { createCustomerAccountSession, getCustomerAccountSession } from "@/lib/customerAccount";
+import { syncAccountToBackend } from "@/lib/accountApi";
+import { submitListing, uploadListingImage } from "@/lib/listingsApi";
 import { setPublicSeo } from "@/lib/seo";
 
 function cleanOwnerLeadPhone(value: string) {
@@ -107,6 +108,31 @@ export function SellPage() {
   const [success, setSuccess] = useState(false);
   const [accountCreated, setAccountCreated] = useState(false);
   const [error, setError] = useState("");
+  const [listingType, setListingType] = useState<"apartment" | "builder_floor">("apartment");
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [photoUploading, setPhotoUploading] = useState(0);
+  const [photoError, setPhotoError] = useState("");
+
+  const addPhotos = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setPhotoError("");
+    const incoming = Array.from(files).slice(0, Math.max(0, 8 - photos.length));
+    if (!incoming.length) {
+      setPhotoError("You can attach up to 8 photos.");
+      return;
+    }
+    setPhotoUploading((n) => n + incoming.length);
+    for (const file of incoming) {
+      try {
+        const url = await uploadListingImage(file);
+        setPhotos((current) => (current.length < 8 ? [...current, url] : current));
+      } catch (uploadError) {
+        setPhotoError(uploadError instanceof Error ? uploadError.message : "One photo failed to upload.");
+      } finally {
+        setPhotoUploading((n) => Math.max(0, n - 1));
+      }
+    }
+  };
 
   useEffect(() => {
     setPublicSeo(
@@ -217,52 +243,31 @@ export function SellPage() {
       society_name: societyName,
     });
 
-    try {
-      const existingAccount = await fetchAccountByPhone(cleanPhone);
-      if (existingAccount?.account?.id) {
-        setError("This phone number is already registered. Please login or continue with OTP before submitting another owner listing.");
-        setSubmitting(false);
-        return;
-      }
-    } catch {
-      setError("Could not validate this phone number. Please try again before submitting.");
-      setSubmitting(false);
-      return;
-    }
-
-    const ownerMessage = [
-      "Owner listing submission from Sell page",
-      `Intent: ${listingIntent}`,
-      `Owner name: ${form.name.trim() || "Not provided"}`,
-      `Phone: ${cleanPhone || form.phone || "Not provided"}`,
-      `Society: ${societyName || "Not provided"}`,
-      `Tower / Block: ${towerName || "Not provided"}`,
-      `BHK: ${bhk || "Not provided"}`,
-      `Size: ${size || "Not provided"}`,
-      `Floor: ${floor || "Not provided"}`,
-      `Furnishing: ${furnishing || "Not provided"}`,
-      `Availability: ${availability || "Not provided"}`,
-      `Property details: ${propertyDetails || "Not provided"}`,
-      `Expected ${purpose === "rent" ? "rent" : "sale price"}: ${expectation || "Not provided"}`,
-      `Preferred callback time: ${preferredTime || "Not provided"}`,
-      "Suggested next action: Call owner, verify property details, ask for photos, confirm availability and expected pricing.",
-    ].join("\n");
+    // A registered phone is welcome — the backend attaches the listing to the existing
+    // account instead of blocking the submission.
+    const matchedSociety = societyOptions.find(
+      (option: any) => String(option?.name || "").trim().toLowerCase() === societyName.toLowerCase(),
+    );
 
     try {
-      await backendApi.createLead({
+      // Structured listing with photos — the backend also raises the follow-up lead.
+      await submitListing({
         name: form.name.trim(),
         phone: cleanPhone,
-        source: purpose === "rent" ? "owner_listing_rent" : "owner_listing_sale",
+        purpose: purpose === "rent" ? "rent" : "sale",
+        listing_type: listingType,
+        society_id: matchedSociety?.id ?? null,
         society_name: societyName || null,
-        property_title: propertyTitle,
-        message: ownerMessage,
-        requirement:
-          purpose === "rent"
-            ? `Owner listing - Rent${preferredTime ? ` · Preferred time: ${preferredTime}` : ""}`
-            : `Owner listing - Sale${preferredTime ? ` · Preferred time: ${preferredTime}` : ""}`,
-        budget: expectation || null,
-        ...ownerTrackingPayload,
-      });
+        tower: towerName || null,
+        bhk: bhk || null,
+        size_sqft: size || null,
+        floor: floor || null,
+        furnishing: furnishing || null,
+        availability: [availability, preferredTime ? `Best time to call: ${preferredTime}` : null].filter(Boolean).join(" · ") || null,
+        expected_price: expectation || null,
+        details: propertyDetails || null,
+        images: photos,
+      }, getCustomerAccountSession()?.accountAccessToken);
       trackLeadSubmitted({
         ...ownerTrackingPayload,
         source: purpose === "rent" ? "owner_listing_rent" : "owner_listing_sale",
@@ -423,12 +428,22 @@ export function SellPage() {
                     </div>
                   ) : null}
                   {listingStep === 4 ? (
-                    <div>
-                      <p className="mb-3 text-sm font-bold">How would you like to list it?</p>
-                      <div className="grid grid-cols-2 gap-2 rounded-2xl bg-blue-50 p-1">
-                        {(["rent", "sell"] as const).map((item) => (
-                          <button key={item} type="button" onClick={() => { setPurpose(item); trackEvent("owner_listing_purpose_changed", { source: "sell_page", lead_intent: `owner_listing_${item}`, cta_label: item === "rent" ? "For Rent" : "For Sale" }); advanceFrom(4); }} className={cn("rounded-xl px-4 py-3 text-sm font-semibold", purpose === item ? "bg-white shadow-sm text-navy-900" : "text-navy-500")}>{item === "rent" ? "For Rent" : "For Sale"}</button>
-                        ))}
+                    <div className="space-y-4">
+                      <div>
+                        <p className="mb-3 text-sm font-bold">How would you like to list it?</p>
+                        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-blue-50 p-1">
+                          {(["rent", "sell"] as const).map((item) => (
+                            <button key={item} type="button" onClick={() => { setPurpose(item); trackEvent("owner_listing_purpose_changed", { source: "sell_page", lead_intent: `owner_listing_${item}`, cta_label: item === "rent" ? "For Rent" : "For Sale" }); }} className={cn("rounded-xl px-4 py-3 text-sm font-semibold", purpose === item ? "bg-white shadow-sm text-navy-900" : "text-navy-500")}>{item === "rent" ? "For Rent" : "For Sale"}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="mb-3 text-sm font-bold">What type of home is it?</p>
+                        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-blue-50 p-1">
+                          {([["apartment", "Society apartment"], ["builder_floor", "Builder floor"]] as const).map(([value, label]) => (
+                            <button key={value} type="button" onClick={() => setListingType(value)} className={cn("rounded-xl px-4 py-3 text-sm font-semibold", listingType === value ? "bg-white shadow-sm text-navy-900" : "text-navy-500")}>{label}</button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   ) : null}
@@ -441,8 +456,27 @@ export function SellPage() {
                     </div>
                   ) : null}
                   {listingStep === 6 ? (
-                    <div className="rounded-[18px] border border-dashed border-[#C6DACE] bg-[#EEF5F1] p-6 text-center">
-                      <Camera className="mx-auto h-8 w-8 text-[#2A6147]" /><p className="mt-3 font-bold">Photos are optional at this stage</p><p className="mt-1 text-xs leading-5 text-[#6E756E]">Our team can collect and review images before anything is published.</p>
+                    <div>
+                      <label className="block cursor-pointer rounded-[18px] border border-dashed border-[#C6DACE] bg-[#EEF5F1] p-6 text-center transition hover:border-[#2A6147]">
+                        <Camera className="mx-auto h-8 w-8 text-[#2A6147]" />
+                        <p className="mt-3 font-bold">Add photos of your home</p>
+                        <p className="mt-1 text-xs leading-5 text-[#6E756E]">
+                          Up to 8 photos (JPG/PNG/WebP, max 5MB each). Listings with photos get verified and matched much faster — but you can also skip this and add them later.
+                        </p>
+                        <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(event) => { void addPhotos(event.target.files); event.target.value = ""; }} />
+                      </label>
+                      {photoUploading > 0 ? <p className="mt-2 text-xs font-semibold text-[#2A6147]">Uploading {photoUploading} photo{photoUploading > 1 ? "s" : ""}…</p> : null}
+                      {photoError ? <p className="mt-2 text-xs font-semibold text-red-600">{photoError}</p> : null}
+                      {photos.length ? (
+                        <div className="mt-3 grid grid-cols-4 gap-2">
+                          {photos.map((url) => (
+                            <div key={url} className="group relative overflow-hidden rounded-xl border border-[#DDE7DC]">
+                              <img src={url} alt="Listing photo" className="h-20 w-full object-cover" />
+                              <button type="button" onClick={() => setPhotos((current) => current.filter((item) => item !== url))} className="absolute right-1 top-1 rounded-full bg-black/60 px-1.5 text-[10px] font-bold text-white">✕</button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                   {listingStep === 7 ? (
@@ -452,7 +486,7 @@ export function SellPage() {
                     <div>
                       <p className="mb-3 text-sm font-bold">Review your listing request</p>
                       <div className="grid gap-2 rounded-[16px] bg-[#EEF5F1] p-4 text-sm">
-                        {[["Owner", form.name], ["Phone", form.phone], ["Society", form.society], ["Intent", purpose === "rent" ? "Rent" : "Sale"], ["Flat", [form.bhk, form.size, form.furnishing].filter(Boolean).join(" · ") || "Details on request"], ["Expectation", form.expectation || "Discuss on call"], ["Availability", form.availability || "Discuss on call"]].map(([label, value]) => <div key={label} className="flex justify-between gap-4 border-b border-[#DDE7DC] pb-2 last:border-0 last:pb-0"><span className="text-[#6E756E]">{label}</span><strong className="text-right text-[#25302B]">{value}</strong></div>)}
+                        {[["Owner", form.name], ["Phone", form.phone], ["Society", form.society], ["Intent", purpose === "rent" ? "Rent" : "Sale"], ["Type", listingType === "builder_floor" ? "Builder floor" : "Society apartment"], ["Flat", [form.bhk, form.size, form.furnishing].filter(Boolean).join(" · ") || "Details on request"], ["Photos", photos.length ? `${photos.length} attached` : "None yet"], ["Expectation", form.expectation || "Discuss on call"], ["Availability", form.availability || "Discuss on call"]].map(([label, value]) => <div key={label} className="flex justify-between gap-4 border-b border-[#DDE7DC] pb-2 last:border-0 last:pb-0"><span className="text-[#6E756E]">{label}</span><strong className="text-right text-[#25302B]">{value}</strong></div>)}
                       </div>
                     </div>
                   ) : null}

@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardProperty, type AccountDashboardResponse } from "@/lib/accountApi";
+import { fetchMyListings, type OwnerListingRecord } from "@/lib/listingsApi";
 import { setPublicSeo } from "@/lib/seo";
 import {
   CUSTOMER_ACCOUNT_EVENT,
@@ -202,7 +203,15 @@ export function OwnerDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [activity, setActivity] = useState<CustomerActivityLead[]>([]);
   const [backendDashboard, setBackendDashboard] = useState<AccountDashboardResponse | null>(null);
+  const [ownerListings, setOwnerListings] = useState<OwnerListingRecord[]>([]);
   const session = getCustomerAccountSession();
+
+  // First-class listing submissions (with photos + review status) from the new intake flow.
+  useEffect(() => {
+    const token = session?.accountAccessToken;
+    if (!token) return;
+    fetchMyListings(token).then(setOwnerListings).catch(() => undefined);
+  }, [session?.accountAccessToken]);
 
   useEffect(() => {
     setPublicSeo("Private Owner Dashboard | SocietyFlats", "Private SocietyFlats owner listing and enquiry dashboard.", { canonical: "/owner/dashboard", noindex: true });
@@ -269,14 +278,26 @@ export function OwnerDashboard() {
     [backendDashboard?.linked_properties],
   );
 
+  const structuredListingItems = useMemo(
+    () =>
+      ownerListings.map((listing) => ({
+        title: [listing.bhk ? `${listing.bhk} BHK` : null, listing.listing_type === "builder_floor" ? "Builder floor" : "Apartment", listing.society_name ? `in ${listing.society_name}` : null].filter(Boolean).join(" ") || `Listing #${listing.id}`,
+        meta: [listing.purpose === "rent" ? "For rent" : "For sale", listing.expected_price, listing.images?.length ? `${listing.images.length} photo${listing.images.length > 1 ? "s" : ""}` : "No photos yet"].filter(Boolean).join(" · "),
+        status: listing.status === "converted" ? "Live review passed" : listing.status.replace("_", " "),
+      })),
+    [ownerListings],
+  );
+
   const listingItems = useMemo(
     () =>
-      backendLinkedPropertyItems.length
-        ? backendLinkedPropertyItems
-        : backendOwnerLeadItems.length
-          ? backendOwnerLeadItems
-          : listingSubmissions.map(toDashboardItem),
-    [backendLinkedPropertyItems, backendOwnerLeadItems, listingSubmissions],
+      structuredListingItems.length
+        ? structuredListingItems
+        : backendLinkedPropertyItems.length
+          ? backendLinkedPropertyItems
+          : backendOwnerLeadItems.length
+            ? backendOwnerLeadItems
+            : listingSubmissions.map(toDashboardItem),
+    [structuredListingItems, backendLinkedPropertyItems, backendOwnerLeadItems, listingSubmissions],
   );
 
   const recentItems = useMemo(
