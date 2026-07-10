@@ -174,6 +174,28 @@ function getArea(item: any) {
   return item?.area_sqft || item?.areaSqft || "-";
 }
 
+function getSourceBadge(item: any) {
+  const raw = String(item?.source_label || item?.sourceLabel || item?.source_type || item?.sourceType || "").toLowerCase();
+
+  if (raw.includes("owner submitted") || raw.includes("owner_submitted") || item?.owner_listing_id || item?.ownerListingId) {
+    return { label: "Owner Submitted", className: "border-indigo-100 bg-indigo-50 text-indigo-700" };
+  }
+
+  if (raw.includes("lead converted") || raw.includes("lead_converted") || c14SourceLeadId(item)) {
+    return { label: "Lead Converted", className: "border-blue-100 bg-blue-50 text-blue-700" };
+  }
+
+  if (raw.includes("broker") || item?.broker_account_id || item?.brokerAccountId) {
+    return { label: "Broker Assigned", className: "border-violet-100 bg-violet-50 text-violet-700" };
+  }
+
+  if (raw.includes("owner") || item?.owner_account_id || item?.ownerAccountId) {
+    return { label: "Owner Assigned", className: "border-sky-100 bg-sky-50 text-sky-700" };
+  }
+
+  return { label: "SocietyFlats Inventory", className: "border-emerald-100 bg-emerald-50 text-emerald-700" };
+}
+
 export function AdminPropertiesPage() {
   const [c13StatusFilter, setC13StatusFilter] = useState<"all" | AdminInventoryStatus>("all");
 const [properties, setProperties] = useState<any[]>([]);
@@ -262,6 +284,8 @@ const [properties, setProperties] = useState<any[]>([]);
       title,
       slug: `${baseSlug}-copy-${Date.now().toString(36)}`,
       listing_type: getListingType(item) === "-" ? "Rent" : getListingType(item),
+      source_type: "societyflats_inventory",
+      inventory_owner_type: "societyflats",
       status: "Draft",
       society: getSocietyName(item) === "-" ? "" : getSocietyName(item),
       locality: item?.locality || "",
@@ -564,6 +588,7 @@ const [properties, setProperties] = useState<any[]>([]);
                   const listingType = getListingType(item);
                   const propertyUrl = getPropertyUrl(item);
                   const editUrl = `/admin/properties/${item.id}/edit`;
+                  const sourceBadge = getSourceBadge(item);
 
                   return (
                     <article
@@ -598,6 +623,9 @@ const [properties, setProperties] = useState<any[]>([]);
                                   Verified
                                 </span>
                               ) : null}
+                              <span className={`rounded-full border px-3 py-1 text-xs font-bold ${sourceBadge.className}`}>
+                                {sourceBadge.label}
+                              </span>
                               {c42PropertyQualityIssues(item).length ? (
                                 <span className="rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
                                   Quality: {c42PropertyQualityIssues(item).length} issue{c42PropertyQualityIssues(item).length > 1 ? "s" : ""}

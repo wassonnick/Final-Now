@@ -180,6 +180,10 @@ class PropertyFormSimplificationTest extends TestCase
             ->assertOk()
             ->assertJsonMissingPath('data.owner_name')
             ->assertJsonMissingPath('data.owner_phone')
+            ->assertJsonMissingPath('data.owner_account_id')
+            ->assertJsonMissingPath('data.broker_account_id')
+            ->assertJsonMissingPath('data.owner_listing_id')
+            ->assertJsonMissingPath('data.submitted_by_user_id')
             ->assertJsonMissingPath('data.unit_number');
     }
 

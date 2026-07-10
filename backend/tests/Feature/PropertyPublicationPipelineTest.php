@@ -43,7 +43,7 @@ class PropertyPublicationPipelineTest extends TestCase
             'security_deposit' => '170000',
             'status' => 'Live',
         ])->assertStatus(422)
-            ->assertJsonValidationErrors(['verified', 'owner_name', 'owner_phone']);
+            ->assertJsonValidationErrors(['verified']);
 
         $this->assertSame(0, Property::count());
     }

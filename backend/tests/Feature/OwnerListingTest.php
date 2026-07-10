@@ -104,6 +104,9 @@ class OwnerListingTest extends TestCase
             'society_id' => $society->id,
             'bedrooms' => 4,
             'area_sqft' => 2400,
+            'source_type' => 'owner_submitted_listing',
+            'inventory_owner_type' => 'owner',
+            'owner_listing_id' => $listing->id,
         ]);
 
         // Converting twice fails cleanly.

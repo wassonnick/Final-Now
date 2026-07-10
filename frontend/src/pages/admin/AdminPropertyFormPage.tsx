@@ -85,7 +85,20 @@ const emptyProperty = {
   ownerName: "",
   ownerPhone: "",
   sourceLeadId: "",
+  listingSource: "societyflats_inventory",
+  inventoryOwnerType: "societyflats",
+  ownerAccountId: "",
+  brokerAccountId: "",
+  ownerListingId: "",
+  submittedByUserId: "",
 };
+
+type ListingSourceType =
+  | "societyflats_inventory"
+  | "owner_inventory"
+  | "broker_inventory"
+  | "owner_submitted_listing"
+  | "lead_converted";
 
 type SocietyOption = {
   id?: number | string;
@@ -101,6 +114,61 @@ type SocietyOption = {
   status?: string;
   isPublished?: boolean;
 };
+
+type AccountOption = {
+  id: number | string;
+  name?: string;
+  phone?: string;
+  email?: string;
+  role?: string;
+};
+
+const listingSourceOptions: { value: ListingSourceType; label: string; helper: string }[] = [
+  {
+    value: "societyflats_inventory",
+    label: "SocietyFlats Inventory",
+    helper: "Admin-created inventory owned and managed by SocietyFlats.",
+  },
+  {
+    value: "owner_inventory",
+    label: "Assign to Owner/User",
+    helper: "Privately attach this inventory to an existing user account.",
+  },
+  {
+    value: "broker_inventory",
+    label: "Assign to Broker",
+    helper: "Privately attach this inventory to a broker account.",
+  },
+  {
+    value: "owner_submitted_listing",
+    label: "Link to Existing Owner Listing",
+    helper: "Preserve the owner-submitted source while creating a property draft.",
+  },
+  {
+    value: "lead_converted",
+    label: "Link to Lead",
+    helper: "Preserve the lead source for a converted inventory item.",
+  },
+];
+
+function inventoryOwnerTypeFor(source: ListingSourceType) {
+  if (source === "owner_inventory" || source === "owner_submitted_listing") return "owner";
+  if (source === "broker_inventory") return "broker";
+  if (source === "lead_converted") return "lead";
+  return "societyflats";
+}
+
+function normalizeListingSource(data: any, sourceLeadIdParam = ""): ListingSourceType {
+  const raw = String(data?.source_type || data?.sourceType || "").trim() as ListingSourceType;
+  if (listingSourceOptions.some((item) => item.value === raw)) return raw;
+  if (data?.owner_listing_id || data?.ownerListingId) return "owner_submitted_listing";
+  if (data?.source_lead_id || data?.sourceLeadId || sourceLeadIdParam) return "lead_converted";
+  return "societyflats_inventory";
+}
+
+function accountLabel(item: AccountOption) {
+  return [item.name || `Account #${item.id}`, item.role, item.phone || item.email].filter(Boolean).join(" · ");
+}
 
 function extractSocieties(payload: any): SocietyOption[] {
   const raw =
@@ -242,11 +310,11 @@ function isBuilderFloorListing(listingType: string) {
 
 function requiredFieldHint(listingType: string) {
   if (isRentalListing(listingType)) {
-    return "Drafts only need listing type, property type and a society/locality/sector. Publishing still requires verified owner, photos, society, price and final checks.";
+    return "Drafts only need listing type, property type and a society/locality/sector. Publishing requires verified property details, society, price and final checks.";
   }
 
   if (isBuilderFloorListing(listingType)) {
-    return "Builder floor drafts can start with locality or sector. Add area, price, photos and verification before publishing.";
+    return "Builder floor drafts can start with locality or sector. Add area, price and verification before publishing.";
   }
 
   return "Sale drafts only need a society/locality/sector to start. Add total sale price and verification before publishing.";
@@ -366,7 +434,7 @@ function ownerPublishQualityIssues(args: {
 
   const issues: string[] = [];
 
-  if (!args.verified) issues.push("Mark as verified after confirming owner/property details.");
+  if (!args.verified) issues.push("Mark as verified after confirming property details.");
   if (!String(args.description || "").trim()) issues.push("Generate or write a clean public description.");
   if (!String(args.floor || "").trim()) issues.push("Confirm floor details before publishing.");
   if (!String(args.furnishedStatus || "").trim()) issues.push("Confirm furnishing status before publishing.");
@@ -410,7 +478,9 @@ export function AdminPropertyFormPage() {
 
   const [property, setProperty] = useState(emptyProperty);
   const [societyOptions, setSocietyOptions] = useState<SocietyOption[]>([]);
+  const [accountOptions, setAccountOptions] = useState<AccountOption[]>([]);
   const [societiesLoading, setSocietiesLoading] = useState(true);
+  const [accountsLoading, setAccountsLoading] = useState(false);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [saveMode, setSaveMode] = useState<"Draft" | "Verification" | "Live" | null>(null);
@@ -435,6 +505,33 @@ export function AdminPropertyFormPage() {
     }
 
     void loadSocieties();
+  }, []);
+
+  useEffect(() => {
+    async function loadAccounts() {
+      try {
+        setAccountsLoading(true);
+        const response = await adminFetch("/admin/accounts?per_page=100");
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(json?.message || "Failed to load accounts");
+
+        const raw = Array.isArray(json?.data) ? json.data : [];
+        setAccountOptions(raw.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          phone: item.phone,
+          email: item.email,
+          role: item.role,
+        })).filter((item: AccountOption) => Boolean(item.id)));
+      } catch (err) {
+        console.error(err);
+        setError("Unable to load account assignment search. You can still paste account IDs manually.");
+      } finally {
+        setAccountsLoading(false);
+      }
+    }
+
+    void loadAccounts();
   }, []);
 
 
@@ -510,6 +607,12 @@ export function AdminPropertyFormPage() {
           ownerName: data.owner_name || "",
           ownerPhone: data.owner_phone || "",
           sourceLeadId: data.source_lead_id ? String(data.source_lead_id) : "",
+          listingSource: normalizeListingSource(data, sourceLeadIdParam),
+          inventoryOwnerType: data.inventory_owner_type || data.inventoryOwnerType || inventoryOwnerTypeFor(normalizeListingSource(data, sourceLeadIdParam)),
+          ownerAccountId: data.owner_account_id ? String(data.owner_account_id) : "",
+          brokerAccountId: data.broker_account_id ? String(data.broker_account_id) : "",
+          ownerListingId: data.owner_listing_id ? String(data.owner_listing_id) : "",
+          submittedByUserId: data.submitted_by_user_id ? String(data.submitted_by_user_id) : "",
         });
       } catch (err) {
         console.error(err);
@@ -564,6 +667,14 @@ export function AdminPropertyFormPage() {
   const sourceLeadId = String((property as any).sourceLeadId || sourceLeadIdParam);
   const ownerName = String((property as any).ownerName || ownerNameParam);
   const ownerPhone = String((property as any).ownerPhone || ownerPhoneParam);
+  const listingSource = normalizeListingSource({
+    source_type: (property as any).listingSource,
+    source_lead_id: sourceLeadId,
+    owner_listing_id: (property as any).ownerListingId,
+  }) as ListingSourceType;
+  const ownerAccountId = String((property as any).ownerAccountId || "");
+  const brokerAccountId = String((property as any).brokerAccountId || "");
+  const ownerListingId = String((property as any).ownerListingId || "");
 
 
   const labels = pricingLabels(property.listingType);
@@ -619,9 +730,7 @@ export function AdminPropertyFormPage() {
     if (!locality) return "Locality is required before publishing.";
     if (!price) return `${labels.price} is required before publishing.`;
     if (!society) return "A published society is required before publishing.";
-    if (!String(ownerName || "").trim()) return "Owner or authorised broker name is required before publishing.";
-    if (String(ownerPhone || "").replace(/\D/g, "").length < 10) return "A valid owner or authorised broker phone is required before publishing.";
-    if (!property.verified) return "Verify the owner and property details before publishing.";
+    if (!property.verified) return "Verify the property details before publishing.";
 
     if (rentalListing) {
       if (!society) return "Society is required before publishing a rent listing.";
@@ -878,6 +987,8 @@ export function AdminPropertyFormPage() {
       const uniqueSlug = sourceLeadId && !isEdit
         ? `${makeSlug(title)}-owner-lead-${sourceLeadId}-${Date.now()}`
         : makeSlug(title);
+      const selectedSource = listingSource;
+      const selectedInventoryOwnerType = inventoryOwnerTypeFor(selectedSource);
 
       const payload = {
         title,
@@ -887,7 +998,13 @@ export function AdminPropertyFormPage() {
         society: property.society,
         society_id: (property as any).societyId || undefined,
         property_type: (property as any).propertyType || "Apartment",
-        source_lead_id: sourceLeadId ? Number(sourceLeadId) : undefined,
+        source_type: selectedSource,
+        inventory_owner_type: selectedInventoryOwnerType,
+        owner_account_id: selectedSource === "owner_inventory" ? Number(ownerAccountId) : null,
+        broker_account_id: selectedSource === "broker_inventory" ? Number(brokerAccountId) : null,
+        owner_listing_id: selectedSource === "owner_submitted_listing" ? Number(ownerListingId) : null,
+        submitted_by_user_id: selectedSource === "owner_inventory" ? Number(ownerAccountId) : null,
+        source_lead_id: selectedSource === "lead_converted" && sourceLeadId ? Number(sourceLeadId) : null,
         owner_name: ownerName || undefined,
         owner_phone: ownerPhone || undefined,
         owner_verification_status: status === "Live" ? "Verified" : sourceLeadId ? "Draft Created" : undefined,
@@ -1076,6 +1193,8 @@ export function AdminPropertyFormPage() {
       ownerName: current.ownerName || ownerName,
       ownerPhone: current.ownerPhone || ownerPhone,
       sourceLeadId: current.sourceLeadId || sourceLeadId,
+      listingSource: sourceLeadId ? "lead_converted" : current.listingSource,
+      inventoryOwnerType: sourceLeadId ? "lead" : current.inventoryOwnerType,
       description: ownerDraftDescription({
         ownerName,
         ownerPhone,
@@ -1348,8 +1467,120 @@ export function AdminPropertyFormPage() {
                   </span>
                 </label>
 
+                <div className="md:col-span-2 rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <p className="text-sm font-black text-slate-900">Assign Listing Source</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        Admin-created properties are treated as SocietyFlats inventory unless assigned to an owner, broker, lead, or submitted listing.
+                      </p>
+                    </div>
+                    <span className="w-fit rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-blue-700">
+                      {listingSourceOptions.find((item) => item.value === listingSource)?.label || "SocietyFlats Inventory"}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Listing Source
+                      <select
+                        value={listingSource}
+                        onChange={(event) => {
+                          const nextSource = event.target.value as ListingSourceType;
+                          setProperty((current: any) => ({
+                            ...current,
+                            listingSource: nextSource,
+                            inventoryOwnerType: inventoryOwnerTypeFor(nextSource),
+                            ownerAccountId: nextSource === "owner_inventory" ? current.ownerAccountId : "",
+                            brokerAccountId: nextSource === "broker_inventory" ? current.brokerAccountId : "",
+                            ownerListingId: nextSource === "owner_submitted_listing" ? current.ownerListingId : "",
+                            sourceLeadId: nextSource === "lead_converted" ? current.sourceLeadId || sourceLeadIdParam : "",
+                            submittedByUserId: nextSource === "owner_inventory" ? current.ownerAccountId : "",
+                          }));
+                        }}
+                        className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                      >
+                        {listingSourceOptions.map((item) => (
+                          <option key={item.value} value={item.value}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="mt-1 block text-xs font-normal text-slate-400">
+                        {listingSourceOptions.find((item) => item.value === listingSource)?.helper}
+                      </span>
+                    </label>
+
+                    {listingSource === "owner_inventory" ? (
+                      <label className="text-sm font-medium text-slate-700">
+                        Owner/User Account
+                        <Input
+                          list="admin-property-owner-accounts"
+                          value={ownerAccountId}
+                          onChange={(event) => updateField("ownerAccountId", event.target.value)}
+                          className="mt-2 h-10 rounded-xl border-slate-200 bg-white"
+                          placeholder={accountsLoading ? "Loading accounts..." : "Type or paste account ID"}
+                        />
+                        <datalist id="admin-property-owner-accounts">
+                          {accountOptions.filter((item) => item.role !== "broker").map((item) => (
+                            <option key={`owner-${item.id}`} value={String(item.id)} label={accountLabel(item)} />
+                          ))}
+                        </datalist>
+                        <span className="mt-1 block text-xs font-normal text-slate-400">Private admin link only; no owner details are exposed publicly.</span>
+                      </label>
+                    ) : null}
+
+                    {listingSource === "broker_inventory" ? (
+                      <label className="text-sm font-medium text-slate-700">
+                        Broker Account
+                        <Input
+                          list="admin-property-broker-accounts"
+                          value={brokerAccountId}
+                          onChange={(event) => updateField("brokerAccountId", event.target.value)}
+                          className="mt-2 h-10 rounded-xl border-slate-200 bg-white"
+                          placeholder={accountsLoading ? "Loading accounts..." : "Type or paste broker account ID"}
+                        />
+                        <datalist id="admin-property-broker-accounts">
+                          {accountOptions.filter((item) => item.role === "broker").map((item) => (
+                            <option key={`broker-${item.id}`} value={String(item.id)} label={accountLabel(item)} />
+                          ))}
+                        </datalist>
+                        <span className="mt-1 block text-xs font-normal text-slate-400">Public CTA still routes through SocietyFlats lead capture.</span>
+                      </label>
+                    ) : null}
+
+                    {listingSource === "owner_submitted_listing" ? (
+                      <label className="text-sm font-medium text-slate-700">
+                        Owner Listing ID
+                        <Input
+                          value={ownerListingId}
+                          onChange={(event) => updateField("ownerListingId", event.target.value)}
+                          className="mt-2 h-10 rounded-xl border-slate-200 bg-white"
+                          placeholder="Existing owner listing ID"
+                          inputMode="numeric"
+                        />
+                        <span className="mt-1 block text-xs font-normal text-slate-400">Use this only when converting or linking an owner-submitted listing.</span>
+                      </label>
+                    ) : null}
+
+                    {listingSource === "lead_converted" ? (
+                      <label className="text-sm font-medium text-slate-700">
+                        Lead ID
+                        <Input
+                          value={sourceLeadId}
+                          onChange={(event) => updateField("sourceLeadId", event.target.value)}
+                          className="mt-2 h-10 rounded-xl border-slate-200 bg-white"
+                          placeholder="Existing lead ID"
+                          inputMode="numeric"
+                        />
+                        <span className="mt-1 block text-xs font-normal text-slate-400">Lead-converted inventory keeps the source lead link privately.</span>
+                      </label>
+                    ) : null}
+                  </div>
+                </div>
+
                 <label className="text-sm font-medium text-slate-700">
-                  Owner / authorised broker <span className="text-rose-500">*</span>
+                  Owner / authorised broker <span className="text-xs font-normal text-slate-400">(optional private note)</span>
                   <Input
                     value={ownerName}
                     onChange={(event) => updateField("ownerName", event.target.value)}
@@ -1359,7 +1590,7 @@ export function AdminPropertyFormPage() {
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  Contact phone <span className="text-rose-500">*</span>
+                  Contact phone <span className="text-xs font-normal text-slate-400">(optional private note)</span>
                   <Input
                     value={ownerPhone}
                     onChange={(event) => updateField("ownerPhone", event.target.value)}

@@ -14,12 +14,20 @@ class PropertyController extends Controller
 {
     private const INTERNAL_FIELDS = [
         'source_lead_id',
+        'owner_account_id',
+        'broker_account_id',
+        'owner_listing_id',
+        'submitted_by_user_id',
         'owner_name',
         'owner_phone',
         'owner_verification_status',
         'owner_notes',
         'unit_number',
         'source_lead',
+        'owner_account',
+        'broker_account',
+        'owner_listing',
+        'submitted_by_user',
     ];
 
     public function index(Request $request): JsonResponse
@@ -50,9 +58,13 @@ class PropertyController extends Controller
         }
 
         $properties = $q->latest()->paginate($request->integer('per_page', 24));
-        if (! $isAdmin) {
-            $properties->getCollection()->each->makeHidden(self::INTERNAL_FIELDS);
-        }
+        $properties->getCollection()->each(function (Property $property) use ($isAdmin) {
+            $property->setAttribute('source_label', $this->sourceLabel($property));
+
+            if (! $isAdmin) {
+                $property->makeHidden(self::INTERNAL_FIELDS);
+            }
+        });
 
         return response()->json([
             'status' => 'ok',
@@ -87,6 +99,7 @@ class PropertyController extends Controller
     }
 
     $data = $property->toArray();
+    $data['source_label'] = $this->sourceLabel($property);
 
     $data['amenities'] = is_string($property->amenities)
         ? json_decode($property->amenities, true) ?? []
@@ -118,7 +131,7 @@ class PropertyController extends Controller
         return response()->json([
             'status' => 'ok',
             'message' => 'Property created successfully.',
-            'data' => $property,
+            'data' => $this->withSourceLabel($property),
         ], 201);
     }
 
@@ -133,11 +146,12 @@ class PropertyController extends Controller
         $p = $this->applyPublicationRules($p, $property);
 
         $property->update($p);
+        $property = $property->refresh();
 
         return response()->json([
             'status' => 'ok',
             'message' => 'Property updated successfully.',
-            'data' => $property,
+            'data' => $this->withSourceLabel($property),
         ]);
     }
 
@@ -158,6 +172,12 @@ class PropertyController extends Controller
         $payload = $r->validate([
             'society_id' => 'nullable|exists:societies,id',
             'source_lead_id' => 'nullable|integer|exists:leads,id',
+            'source_type' => 'nullable|in:societyflats_inventory,owner_inventory,broker_inventory,owner_submitted_listing,lead_converted',
+            'inventory_owner_type' => 'nullable|in:societyflats,owner,broker,lead',
+            'owner_account_id' => 'nullable|integer|exists:accounts,id',
+            'broker_account_id' => 'nullable|integer|exists:accounts,id',
+            'owner_listing_id' => 'nullable|integer|exists:owner_listings,id',
+            'submitted_by_user_id' => 'nullable|integer|exists:accounts,id',
             'owner_name' => 'nullable|string|max:255',
             'owner_phone' => 'nullable|string|max:30',
             'owner_verification_status' => 'nullable|string|max:100',
@@ -210,7 +230,109 @@ class PropertyController extends Controller
             'verified' => 'nullable|boolean',
         ]);
 
-        return $this->normaliseSimplifiedPayload($payload, $partial);
+        return $this->normaliseInventorySource($this->normaliseSimplifiedPayload($payload, $partial), $partial);
+    }
+
+    private function normaliseInventorySource(array $payload, bool $partial): array
+    {
+        $sourceTypeProvided = array_key_exists('source_type', $payload);
+        $sourceType = $payload['source_type'] ?? null;
+
+        if (! $partial && ! $sourceType) {
+            $sourceType = ! empty($payload['owner_listing_id'])
+                ? 'owner_submitted_listing'
+                : (! empty($payload['source_lead_id']) ? 'lead_converted' : 'societyflats_inventory');
+        }
+
+        if (! $sourceType && $partial) {
+            return $payload;
+        }
+
+        $sourceType = $sourceType ?: 'societyflats_inventory';
+        $payload['source_type'] = $sourceType;
+
+        $clearAssignments = function (array $fields) use (&$payload): void {
+            foreach ($fields as $field) {
+                $payload[$field] = null;
+            }
+        };
+
+        match ($sourceType) {
+            'societyflats_inventory' => $payload['inventory_owner_type'] = 'societyflats',
+            'owner_inventory', 'owner_submitted_listing' => $payload['inventory_owner_type'] = 'owner',
+            'broker_inventory' => $payload['inventory_owner_type'] = 'broker',
+            'lead_converted' => $payload['inventory_owner_type'] = 'lead',
+            default => $payload['inventory_owner_type'] = 'societyflats',
+        };
+
+        if ($sourceType === 'societyflats_inventory') {
+            $clearAssignments([
+                'owner_account_id',
+                'broker_account_id',
+                'source_lead_id',
+                'owner_listing_id',
+                'submitted_by_user_id',
+            ]);
+
+            return $payload;
+        }
+
+        if ($sourceType === 'owner_inventory') {
+            if (empty($payload['owner_account_id'])) {
+                throw ValidationException::withMessages([
+                    'owner_account_id' => ['Choose an owner/user account or keep this as SocietyFlats Inventory.'],
+                ]);
+            }
+
+            $payload['submitted_by_user_id'] = $payload['submitted_by_user_id'] ?? $payload['owner_account_id'];
+            $clearAssignments(['broker_account_id', 'source_lead_id', 'owner_listing_id']);
+
+            return $payload;
+        }
+
+        if ($sourceType === 'broker_inventory') {
+            if (empty($payload['broker_account_id'])) {
+                throw ValidationException::withMessages([
+                    'broker_account_id' => ['Choose a broker account or keep this as SocietyFlats Inventory.'],
+                ]);
+            }
+
+            $clearAssignments(['owner_account_id', 'source_lead_id', 'owner_listing_id', 'submitted_by_user_id']);
+
+            return $payload;
+        }
+
+        if ($sourceType === 'owner_submitted_listing') {
+            if (empty($payload['owner_listing_id'])) {
+                throw ValidationException::withMessages([
+                    'owner_listing_id' => ['Choose an owner listing to link or keep this as SocietyFlats Inventory.'],
+                ]);
+            }
+
+            $payload['submitted_by_user_id'] = $payload['submitted_by_user_id'] ?? ($payload['owner_account_id'] ?? null);
+            $clearAssignments(['broker_account_id', 'source_lead_id']);
+
+            return $payload;
+        }
+
+        if ($sourceType === 'lead_converted') {
+            if (empty($payload['source_lead_id'])) {
+                throw ValidationException::withMessages([
+                    'source_lead_id' => ['Choose a lead to link or keep this as SocietyFlats Inventory.'],
+                ]);
+            }
+
+            $clearAssignments(['owner_account_id', 'broker_account_id', 'owner_listing_id', 'submitted_by_user_id']);
+
+            return $payload;
+        }
+
+        if ($sourceTypeProvided) {
+            $payload['source_type'] = 'societyflats_inventory';
+            $payload['inventory_owner_type'] = 'societyflats';
+        }
+
+        return $payload;
     }
 
     private function normaliseSimplifiedPayload(array $payload, bool $partial): array
@@ -358,16 +480,8 @@ class PropertyController extends Controller
             $errors['price'][] = 'A rent or sale price is required before publishing.';
         }
         if (! ($effective['verified'] ?? false)) {
-            $errors['verified'][] = 'Verify the owner and property details before publishing.';
+            $errors['verified'][] = 'Verify the property details before publishing.';
         }
-        if (trim((string) ($effective['owner_name'] ?? '')) === '') {
-            $errors['owner_name'][] = 'Owner or authorised broker name is required before publishing.';
-        }
-        $phone = preg_replace('/\D+/', '', (string) ($effective['owner_phone'] ?? ''));
-        if (strlen($phone) < 10) {
-            $errors['owner_phone'][] = 'A valid owner or authorised broker phone is required before publishing.';
-        }
-
         $images = array_values(array_filter((array) ($effective['images'] ?? [])));
         if (collect($images)->contains(fn ($image) => str_contains((string) $image, 'images.unsplash.com/photo-1600607687939'))) {
             $errors['images'][] = 'The stock placeholder cannot be published as a property photo.';
@@ -387,6 +501,27 @@ class PropertyController extends Controller
         $payload['owner_verification_status'] = 'Verified';
 
         return $payload;
+    }
+
+    private function sourceLabel(Property $property): string
+    {
+        $sourceType = $property->source_type
+            ?: ($property->owner_listing_id ? 'owner_submitted_listing' : ($property->source_lead_id ? 'lead_converted' : 'societyflats_inventory'));
+
+        return match ($sourceType) {
+            'owner_inventory' => 'Owner Assigned',
+            'broker_inventory' => 'Broker Assigned',
+            'owner_submitted_listing' => 'Owner Submitted',
+            'lead_converted' => 'Lead Converted',
+            default => 'SocietyFlats Inventory',
+        };
+    }
+
+    private function withSourceLabel(Property $property): Property
+    {
+        $property->setAttribute('source_label', $this->sourceLabel($property));
+
+        return $property;
     }
 
     private function cleanArray(mixed $value): array

@@ -80,6 +80,13 @@ class AdminOwnerListingController extends Controller
             'inherited_society_amenities' => $listing->inherited_society_amenities ?: ($listing->society?->amenities ?: []),
             'property_amenities' => $listing->property_amenities ?: [],
             'amenities' => $listing->property_amenities ?: [],
+            'source_type' => 'owner_submitted_listing',
+            'inventory_owner_type' => 'owner',
+            'owner_listing_id' => $listing->id,
+            'owner_account_id' => $listing->account_id,
+            'submitted_by_user_id' => $listing->account_id,
+            'broker_account_id' => null,
+            'source_lead_id' => null,
             'owner_name' => $listing->name,
             'owner_phone' => $listing->phone,
         ]);

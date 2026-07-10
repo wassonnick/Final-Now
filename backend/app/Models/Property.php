@@ -12,6 +12,12 @@ class Property extends Model
     protected $fillable = [
         'society_id',
         'source_lead_id',
+        'source_type',
+        'inventory_owner_type',
+        'owner_account_id',
+        'broker_account_id',
+        'owner_listing_id',
+        'submitted_by_user_id',
         'owner_name',
         'owner_phone',
         'owner_verification_status',
@@ -96,6 +102,26 @@ class Property extends Model
     public function sourceLead(): BelongsTo
     {
         return $this->belongsTo(Lead::class, 'source_lead_id');
+    }
+
+    public function ownerAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'owner_account_id');
+    }
+
+    public function brokerAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'broker_account_id');
+    }
+
+    public function ownerListing(): BelongsTo
+    {
+        return $this->belongsTo(OwnerListing::class, 'owner_listing_id');
+    }
+
+    public function submittedByUser(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'submitted_by_user_id');
     }
 
     public function leads(): HasMany

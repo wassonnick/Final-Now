@@ -90,6 +90,10 @@ interface Property {
   society?: string | SocietyRef | null;
   society_name?: string | null;
   societyName?: string | null;
+  source_type?: string | null;
+  sourceType?: string | null;
+  source_label?: string | null;
+  sourceLabel?: string | null;
 }
 
 function isPublicLiveProperty(property: any) {
@@ -266,6 +270,23 @@ function moneyValue(value: unknown): number {
   return amount;
 }
 
+function publicSourceLabel(property: Property | null) {
+  const label = String(property?.sourceLabel || property?.source_label || "").trim();
+  if (label) {
+    if (/societyflats/i.test(label)) return "SocietyFlats Verified Inventory";
+    if (/broker/i.test(label)) return "Broker inventory verified by SocietyFlats";
+    if (/owner/i.test(label)) return "Owner inventory verified by SocietyFlats";
+    return "SocietyFlats reviewed inventory";
+  }
+
+  const raw = String(property?.sourceType || property?.source_type || "").toLowerCase();
+  if (raw.includes("societyflats")) return "SocietyFlats Verified Inventory";
+  if (raw.includes("broker")) return "Broker inventory verified by SocietyFlats";
+  if (raw.includes("owner")) return "Owner inventory verified by SocietyFlats";
+  if (raw.includes("lead")) return "SocietyFlats reviewed inventory";
+  return "SocietyFlats Verified Inventory";
+}
+
 export function PropertyPage() {
   const { slug } = useParams();
 
@@ -353,15 +374,7 @@ export function PropertyPage() {
   const listingType = getField(property, "listingType", "listing_type", "Property");
   const listingSearchTab = searchTabForListingType(listingType);
   const propertyType = getField(property, "propertyType", "property_type", "Apartment");
-  const listedByValue = String(
-    getField(property, "listedBy", "listed_by", "") ||
-    getField(property, "sourceType", "source_type", ""),
-  ).toLowerCase();
-  const listingSourceLabel = listedByValue.includes("owner")
-    ? "Listed by owner"
-    : listedByValue.includes("broker")
-      ? "Broker partner"
-      : "Source reviewed";
+  const listingSourceLabel = publicSourceLabel(property);
   const areaSqft = getField(property, "areaSqft", "area_sqft", "-");
   const furnishedStatus = getField(property, "furnishedStatus", "furnished_status", "-");
   const amenities = useMemo(() => parseList(property?.amenities), [property?.amenities]);
@@ -803,7 +816,7 @@ export function PropertyPage() {
                   <div><p className="text-sm font-semibold text-[#25302B]">{listingSourceLabel}</p><p className="text-[11.5px] text-[#2A6147]">{property.verified ? "Verified contact" : "Contact reviewed before sharing"}</p></div>
                 </div>
                 <div className="mt-4 grid gap-2.5">
-                  <button type="button" onClick={() => openLead("enquiry")} className="rounded-[12px] bg-[#C8783F] px-5 py-3.5 text-[14.5px] font-bold text-white">{listedByValue.includes("owner") ? "Contact owner" : "Ask about this home"}</button>
+                  <button type="button" onClick={() => openLead("enquiry")} className="rounded-[12px] bg-[#C8783F] px-5 py-3.5 text-[14.5px] font-bold text-white">Ask SocietyFlats</button>
                   <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-[12px] bg-[#449B4E] px-5 py-3 text-[14.5px] font-bold text-white"><MessageCircle className="mr-2 h-4 w-4" />WhatsApp</a>
                   <button type="button" onClick={() => openLead("callback")} className="rounded-[12px] border-2 border-[#123C32] bg-white px-5 py-3 text-[14.5px] font-bold text-[#123C32]">Request callback</button>
                 </div>
@@ -827,7 +840,7 @@ export function PropertyPage() {
             <p className="truncate text-[11px] text-[#7A817D]">{listingType}</p>
             <p className="truncate text-[15px] font-extrabold text-[#123C32]">{price}</p>
           </div>
-          <button type="button" onClick={() => openLead("enquiry")} className="whitespace-nowrap rounded-[12px] bg-[#C8783F] px-3.5 py-2.5 text-[13px] font-bold text-white">{listedByValue.includes("owner") ? "Contact owner" : "Ask about this"}</button>
+          <button type="button" onClick={() => openLead("enquiry")} className="whitespace-nowrap rounded-[12px] bg-[#C8783F] px-3.5 py-2.5 text-[13px] font-bold text-white">Ask SocietyFlats</button>
           <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#449B4E] text-white"><MessageCircle className="h-4 w-4" /></a>
         </div>
       </div>
