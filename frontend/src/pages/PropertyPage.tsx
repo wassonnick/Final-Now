@@ -459,12 +459,51 @@ export function PropertyPage() {
     }
   };
 
-  // C16 property SEO route effect
+  // Listing SEO: data-rich meta (price/area/society), share image, and RealEstateListing +
+  // BreadcrumbList JSON-LD so flats and builder floors are rich-result eligible — this page
+  // is the core inventory surface, so every listing must earn its clicks.
   useEffect(() => {
     if (property) {
+      const priceText = price && String(price) !== "On request" ? String(price) : "";
+      const facts = [
+        priceText ? (saleListing ? `Price ${priceText}` : `Rent ${priceText}`) : null,
+        areaSqft && String(areaSqft) !== "-" ? `${areaSqft} sq.ft.` : null,
+        furnishedStatus && String(furnishedStatus) !== "-" ? String(furnishedStatus) : null,
+      ].filter(Boolean).join(" · ");
+      const canonicalPath = `/property/${property.slug || slug}`;
+
+      const jsonLd = {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "RealEstateListing",
+            name: title,
+            url: `https://www.societyflats.com${canonicalPath}`,
+            ...(photos.length ? { image: photos.slice(0, 6) } : {}),
+            description: `${title} in ${societyName || societyLocality || "Gurgaon"}${facts ? ` — ${facts}` : ""}. Verified by SocietyFlats.`,
+            ...(propertyPrice > 0
+              ? { offers: { "@type": "Offer", price: propertyPrice, priceCurrency: "INR", availability: "https://schema.org/InStock" } }
+              : {}),
+            ...(societyName || societyLocality
+              ? { address: { "@type": "PostalAddress", streetAddress: [societyName, societyLocality].filter(Boolean).join(", "), addressLocality: "Gurugram", addressRegion: "Haryana", addressCountry: "IN" } }
+              : {}),
+          },
+          {
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://www.societyflats.com" },
+              { "@type": "ListItem", position: 2, name: "Properties", item: "https://www.societyflats.com/properties" },
+              ...(societySlug ? [{ "@type": "ListItem", position: 3, name: societyName, item: `https://www.societyflats.com/society/${societySlug}` }] : []),
+              { "@type": "ListItem", position: societySlug ? 4 : 3, name: title, item: `https://www.societyflats.com${canonicalPath}` },
+            ],
+          },
+        ],
+      };
+
       setPublicSeo(
-        `${title} | ${societyName || "Gurgaon"} | SocietyFlats`,
-        `View ${title} in ${societyName || societyLocality || "Gurgaon"} with verified availability, society context, price and callback support on SocietyFlats.`,
+        `${title}${priceText ? ` — ${priceText}` : ""} | SocietyFlats`,
+        `${title} in ${societyName || societyLocality || "Gurgaon"}${facts ? ` — ${facts}` : ""}. Inside a society verified by real people. Check current availability or ask about this home on SocietyFlats.`,
+        { canonical: canonicalPath, jsonLd, ...(photos.length ? { image: photos[0] } : {}) },
       );
       return;
     }
@@ -476,7 +515,7 @@ export function PropertyPage() {
         true,
       );
     }
-  }, [property, loading, title, societyName, societyLocality]);
+  }, [property, loading, title, societyName, societyLocality, societySlug, price, propertyPrice, saleListing, areaSqft, furnishedStatus, photos, slug]);
 
   useEffect(() => {
     let mounted = true;
