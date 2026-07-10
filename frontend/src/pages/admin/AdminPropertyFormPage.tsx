@@ -32,44 +32,53 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { adminFetch, adminHeaders, uploadAdminImage } from "@/lib/adminApi";
 import { API_BASE_URL } from "@/config/api";
 
-const localities = [
-  "Sector 54, Gurgaon",
-  "Golf Course Road, Gurgaon",
-  "Sector 65, Gurgaon",
-  "Sector 72, Gurgaon",
-  "DLF Phase 5, Gurgaon",
-  "Sohna Road, Gurgaon",
-];
-
 const amenitiesList = [
-  "Power Backup",
-  "Clubhouse",
-  "Swimming Pool",
-  "Gym",
-  "Security",
-  "Pet Friendly",
-  "Park View",
+  "Modular Kitchen",
+  "Wardrobes",
+  "AC",
+  "Geyser",
+  "Reserved Parking",
   "Servant Room",
+  "Study Room",
+  "Park Facing",
+  "Corner Unit",
+  "Renovated",
+  "Pet Friendly",
 ];
 
 const emptyProperty = {
   title: "",
   listingType: "Rent",
+  propertyType: "Apartment",
   status: "Draft",
   society: "",
   societyId: "",
   locality: "",
+  sector: "",
+  city: "Gurugram",
+  builder: "",
   price: "",
+  rentAmount: "",
+  salePrice: "",
   securityDeposit: "",
   maintenance: "",
+  maintenanceIncluded: false,
+  maintenanceAmount: "",
   bedrooms: "",
   bathrooms: "",
+  balconies: "",
   areaSqft: "",
+  carpetAreaSqft: "",
   floor: "",
+  tower: "",
+  unitNumber: "",
   facing: "North-East",
   furnishedStatus: "Semi Furnished",
+  availableFrom: "",
   description: "",
   amenities: [] as string[],
+  inheritedSocietyAmenities: [] as string[],
+  propertyAmenities: [] as string[],
   images: [] as string[],
   featured: false,
   verified: false,
@@ -84,6 +93,11 @@ type SocietyOption = {
   slug?: string;
   sector?: string;
   locality?: string;
+  city?: string;
+  builder?: string;
+  approvedAmenities?: string[];
+  address?: string;
+  publishedStatus?: string;
   status?: string;
   isPublished?: boolean;
 };
@@ -107,10 +121,15 @@ function extractSocieties(payload: any): SocietyOption[] {
       slug: item.slug || "",
       sector: item.sector || "",
       locality: item.locality || "",
+      city: item.city || "Gurugram",
+      builder: item.builder || "",
+      approvedAmenities: parseArray(item.approved_amenities || item.approvedAmenities || item.amenities).slice(0, 20),
+      address: item.address || "",
+      publishedStatus: item.published_status || (item.is_published ? "published" : "draft"),
       status: item.status || "",
       isPublished: Boolean(item.is_published),
     }))
-    .filter((item: SocietyOption) => Boolean(item.name) && item.isPublished && ["Verified", "Premium"].includes(String(item.status)))
+    .filter((item: SocietyOption) => Boolean(item.name))
     .sort((a: SocietyOption, b: SocietyOption) => a.name.localeCompare(b.name));
 }
 
@@ -223,14 +242,29 @@ function isBuilderFloorListing(listingType: string) {
 
 function requiredFieldHint(listingType: string) {
   if (isRentalListing(listingType)) {
-    return "For rent listings, title, society, locality, monthly rent and security deposit are required.";
+    return "Drafts only need listing type, property type and a society/locality/sector. Publishing still requires verified owner, photos, society, price and final checks.";
   }
 
   if (isBuilderFloorListing(listingType)) {
-    return "For builder floors, title, locality, asking price and area are required. Booking amount is optional.";
+    return "Builder floor drafts can start with locality or sector. Add area, price, photos and verification before publishing.";
   }
 
-  return "For sale/resale listings, title, society, locality and sale price are required. Token amount is optional.";
+  return "Sale drafts only need a society/locality/sector to start. Add total sale price and verification before publishing.";
+}
+
+function numberValue(value: string | number | undefined | null) {
+  const cleaned = String(value ?? "").replace(/[^\d.]/g, "");
+  if (!cleaned) return "";
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? String(parsed) : "";
+}
+
+function generatedPropertyTitle(property: typeof emptyProperty) {
+  const listing = isRentalListing(property.listingType) ? "for Rent" : isSaleListing(property.listingType) ? "for Sale" : "Listing";
+  const bhk = String(property.bedrooms || "").trim();
+  const type = String(property.propertyType || "Apartment").trim();
+  const location = [property.society, property.sector || property.locality || property.city].filter(Boolean).join(", ");
+  return [bhk ? `${bhk} BHK` : "", type, location ? `in ${location}` : "in Gurugram", listing].filter(Boolean).join(" ");
 }
 
 
@@ -381,7 +415,7 @@ export function AdminPropertyFormPage() {
   const [societiesLoading, setSocietiesLoading] = useState(true);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
-  const [saveMode, setSaveMode] = useState<"Draft" | "Live" | null>(null);
+  const [saveMode, setSaveMode] = useState<"Draft" | "Verification" | "Live" | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -390,35 +424,13 @@ export function AdminPropertyFormPage() {
     async function loadSocieties() {
       try {
         setSocietiesLoading(true);
-
-        let allSocieties: SocietyOption[] = [];
-        const maxPages = 20;
-
-        for (let page = 1; page <= maxPages; page += 1) {
-          const response = await adminFetch(`/admin/societies?page=${page}&per_page=100`);
-          const json = await response.json().catch(() => ({}));
-
-          if (!response.ok) {
-            throw new Error(json?.message || "Failed to load societies");
-          }
-
-          const pageItems = extractSocieties(json);
-          allSocieties = mergeSocietyOptions(allSocieties, pageItems);
-
-          const paginated = json?.data && !Array.isArray(json.data) ? json.data : null;
-          const currentPage = Number(paginated?.current_page || page);
-          const lastPage = Number(paginated?.last_page || page);
-          const hasNext = Boolean(paginated?.next_page_url);
-
-          if (!pageItems.length || currentPage >= lastPage || !hasNext) {
-            break;
-          }
-        }
-
-        setSocietyOptions(allSocieties);
+        const response = await adminFetch("/admin/societies/lookup?q=");
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(json?.message || "Failed to load societies");
+        setSocietyOptions(extractSocieties(json));
       } catch (err) {
         console.error(err);
-        setError("Unable to load all live societies. Existing selected society will still be preserved.");
+        setError("Unable to load society lookup. Existing selected society will still be preserved.");
       } finally {
         setSocietiesLoading(false);
       }
@@ -464,21 +476,36 @@ export function AdminPropertyFormPage() {
         setProperty({
           title: data.title || "",
           listingType: data.listing_type || data.listingType || "Rent",
+          propertyType: data.property_type || data.propertyType || "Apartment",
           status: data.status || "Draft",
           society: getSocietyName(data),
           societyId: getSocietyId(data),
           locality: data.locality || "",
+          sector: data.sector || "",
+          city: data.city || "Gurugram",
+          builder: data.builder || data.society?.builder || "",
           price: data.price || "",
+          rentAmount: data.rent_amount || data.rentAmount || "",
+          salePrice: data.sale_price || data.salePrice || "",
           securityDeposit: data.security_deposit || data.securityDeposit || "",
           maintenance: data.maintenance || "",
+          maintenanceIncluded: Boolean(data.maintenance_included || data.maintenanceIncluded),
+          maintenanceAmount: data.maintenance_amount || data.maintenanceAmount || "",
           bedrooms: data.bedrooms || "",
           bathrooms: data.bathrooms || "",
+          balconies: data.balconies || "",
           areaSqft: data.area_sqft || data.areaSqft || "",
+          carpetAreaSqft: data.carpet_area_sqft || data.carpetAreaSqft || "",
           floor: data.floor || "",
+          tower: data.tower || "",
+          unitNumber: data.unit_number || data.unitNumber || "",
           facing: data.facing || "North-East",
           furnishedStatus: data.furnished_status || data.furnishedStatus || "Semi Furnished",
+          availableFrom: data.available_from || data.availableFrom || "",
           description: data.description || "",
           amenities: parseArray(data.amenities),
+          inheritedSocietyAmenities: parseArray(data.inherited_society_amenities || data.inheritedSocietyAmenities),
+          propertyAmenities: parseArray(data.property_amenities || data.propertyAmenities || data.amenities),
           images: parseArray(data.images),
           featured: Boolean(data.featured),
           verified: Boolean(data.verified),
@@ -498,13 +525,13 @@ export function AdminPropertyFormPage() {
   }, [id]);
 
   const propertyImages = parseArray(property.images);
-  const propertyAmenities = parseArray(property.amenities);
+  const inheritedSocietyAmenities = parseArray((property as any).inheritedSocietyAmenities);
+  const propertyAmenities = parseArray((property as any).propertyAmenities || property.amenities);
 
   const completion = useMemo(() => {
     const checks = [
       Boolean(property.title.trim()),
-      Boolean(property.society),
-      Boolean(property.locality),
+      Boolean(property.society || (property as any).locality || (property as any).sector),
       Boolean(property.price),
       Boolean(property.bedrooms),
       Boolean(property.areaSqft),
@@ -587,7 +614,7 @@ export function AdminPropertyFormPage() {
     const title = String(property.title || "").trim();
     const society = String(property.society || "").trim();
     const locality = String(property.locality || "").trim();
-    const price = String(property.price || "").trim();
+    const price = String(property.price || (rentalListing ? (property as any).rentAmount : (property as any).salePrice) || "").trim();
     const deposit = String(property.securityDeposit || "").trim();
     const area = String(property.areaSqft || "").trim();
 
@@ -654,8 +681,50 @@ export function AdminPropertyFormPage() {
 
   const ownerPublishBlocked = sourceLeadId && ownerQualityIssues.length > 0;
 
+  const applySocietyOption = (option?: SocietyOption, fallbackName = "") => {
+    setProperty((current: any) => ({
+      ...current,
+      society: option?.name || fallbackName,
+      societyId: option?.id ? String(option.id) : "",
+      sector: option?.sector || current.sector || "",
+      locality: option?.locality || current.locality || "",
+      city: option?.city || current.city || "Gurugram",
+      builder: option?.builder || current.builder || "",
+      inheritedSocietyAmenities: option?.approvedAmenities?.length ? option.approvedAmenities : current.inheritedSocietyAmenities,
+    }));
+    if (error) setError("");
+    if (success) setSuccess("");
+  };
+
+  const updateSocietySearch = async (value: string) => {
+    const exactMatch = societyOptions.find((item) => item.name.toLowerCase() === value.trim().toLowerCase());
+    if (exactMatch) {
+      applySocietyOption(exactMatch, value);
+      return;
+    }
+
+    setProperty((current: any) => ({ ...current, society: value, societyId: "" }));
+    if (value.trim().length >= 2) {
+      try {
+        const response = await adminFetch(`/admin/societies/lookup?q=${encodeURIComponent(value.trim())}`);
+        const json = await response.json().catch(() => ({}));
+        if (response.ok) setSocietyOptions((current) => mergeSocietyOptions(current, extractSocieties(json)));
+      } catch {
+        // Locality free-text still works even if lookup fails.
+      }
+    }
+    if (error) setError("");
+    if (success) setSuccess("");
+  };
+
   const updateField = (key: string, value: any) => {
-    setProperty((current: any) => ({ ...current, [key]: value }));
+    setProperty((current: any) => {
+      const next = { ...current, [key]: value };
+      if (key === "rentAmount") next.price = value;
+      if (key === "salePrice") next.price = value;
+      if (key === "propertyAmenities") next.amenities = value;
+      return next;
+    });
     if (error) setError("");
     if (success) setSuccess("");
   };
@@ -663,13 +732,15 @@ export function AdminPropertyFormPage() {
   const toggleAmenity = (amenity: string, checked: boolean | "indeterminate") => {
     setProperty((current: any) => {
       const enabled = checked === true;
-      const currentAmenities = parseArray(current.amenities);
+      const currentAmenities = parseArray(current.propertyAmenities || current.amenities);
+      const nextAmenities = enabled
+        ? Array.from(new Set([...currentAmenities, amenity]))
+        : currentAmenities.filter((item: string) => item !== amenity);
 
       return {
         ...current,
-        amenities: enabled
-          ? Array.from(new Set([...currentAmenities, amenity]))
-          : currentAmenities.filter((item: string) => item !== amenity),
+        propertyAmenities: nextAmenities,
+        amenities: nextAmenities,
       };
     });
   };
@@ -718,38 +789,22 @@ export function AdminPropertyFormPage() {
   };
 
   const validate = () => {
-    const title = String(property.title || "").trim();
-    const price = String(property.price || "").trim();
-    const deposit = String(property.securityDeposit || "").trim();
-    const society = String(property.society || "").trim();
-    const locality = String(property.locality || "").trim();
-    const area = String(property.areaSqft || "").trim();
+    const listingType = String(property.listingType || "").trim();
+    const propertyType = String((property as any).propertyType || "").trim();
+    const hasLocation = [property.society, property.locality, (property as any).sector].some((item) => String(item || "").trim());
 
-    if (!title) return "Property title is required.";
-    if (!locality) return "Please select a locality.";
-    if (!price) return `${labels.price} is required.`;
-
-    if (rentalListing) {
-      if (!society) return "Please select a society for the rental listing.";
-      if (!deposit) return "Security deposit is required for rent listings.";
-    }
-
-    if (saleListing && !builderFloorListing) {
-      if (!society) return "Please select a society for the sale/resale listing.";
-    }
-
-    if (builderFloorListing && !area) {
-      return "Area is required for builder floor listings.";
-    }
+    if (!listingType) return "Listing type is required.";
+    if (!propertyType) return "Property type is required.";
+    if (!hasLocation) return "Add a society, locality or sector to save the draft.";
 
     return "";
   };
 
   const handleSave = async (status: string) => {
-    const title = String(property.title || "").trim();
+    const title = String(property.title || "").trim() || generatedPropertyTitle(property);
     const society = String(property.society || "").trim();
     const locality = String(property.locality || "").trim();
-    const price = String(property.price || "").trim();
+    const price = String(property.price || (rentalListing ? (property as any).rentAmount : (property as any).salePrice) || "").trim();
     const deposit = String(property.securityDeposit || "").trim();
     const area = String(property.areaSqft || "").trim();
 
@@ -770,9 +825,7 @@ export function AdminPropertyFormPage() {
 
     let validationError = "";
 
-    if (!title) {
-      validationError = "Property title is required.";
-    } else if (!locality) {
+    if (!locality && !String((property as any).sector || "").trim() && !society) {
       validationError = "Locality is required.";
     } else if (!price) {
       validationError = `${priceLabel} is required.`;
@@ -807,8 +860,18 @@ export function AdminPropertyFormPage() {
       return;
     }
 
-    if (status === "Draft" && !title) {
-      setError("Property title is required to save a draft.");
+    if (status !== "Live") {
+      const draftError = validate();
+      if (draftError) {
+        setError(draftError);
+        setSuccess("");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+    }
+
+    if (status === "Verification" && !title) {
+      setError("Property title is required to mark as verification.");
       setSuccess("");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
@@ -816,7 +879,7 @@ export function AdminPropertyFormPage() {
 
     try {
       setSaving(true);
-      setSaveMode(status as "Draft" | "Live");
+      setSaveMode(status as "Draft" | "Verification" | "Live");
       setError("");
 
       const uniqueSlug = sourceLeadId && !isEdit
@@ -830,6 +893,7 @@ export function AdminPropertyFormPage() {
         status,
         society: property.society,
         society_id: (property as any).societyId || undefined,
+        property_type: (property as any).propertyType || "Apartment",
         source_lead_id: sourceLeadId ? Number(sourceLeadId) : undefined,
         owner_name: ownerName || undefined,
         owner_phone: ownerPhone || undefined,
@@ -845,20 +909,36 @@ export function AdminPropertyFormPage() {
               .join("\n")
           : undefined,
         locality: property.locality,
-        price: property.price || "On Request",
+        sector: (property as any).sector || undefined,
+        city: (property as any).city || "Gurugram",
+        tower: (property as any).tower || undefined,
+        unit_number: (property as any).unitNumber || undefined,
+        price: price || "On Request",
+        rent_amount: numberValue((property as any).rentAmount || (rentalListing ? price : "")) || undefined,
+        rent_unit: "monthly",
+        sale_price: numberValue((property as any).salePrice || (saleListing ? price : "")) || undefined,
+        sale_price_unit: "total",
         security_deposit: property.securityDeposit,
         maintenance: property.maintenance,
+        maintenance_included: Boolean((property as any).maintenanceIncluded),
+        maintenance_amount: numberValue((property as any).maintenanceAmount) || undefined,
+        maintenance_unit: "monthly",
         bedrooms: property.bedrooms,
         bathrooms: property.bathrooms,
+        balconies: (property as any).balconies || undefined,
         area_sqft: property.areaSqft,
+        carpet_area_sqft: (property as any).carpetAreaSqft || undefined,
         floor: property.floor,
         facing: property.facing,
         furnished_status: property.furnishedStatus,
+        available_from: (property as any).availableFrom || undefined,
         description: cleanPublicDescription(property.description),
-        amenities: parseArray(property.amenities),
+        amenities: propertyAmenities,
+        inherited_society_amenities: inheritedSocietyAmenities,
+        property_amenities: propertyAmenities,
         images: parseArray(property.images),
         featured: Boolean(property.featured),
-        verified: Boolean(property.verified),
+        verified: status === "Verification" ? true : Boolean(property.verified),
       };
 
       const response = await adminFetch(isEdit ? `/admin/properties/${id}` : "/admin/properties", {
@@ -1057,6 +1137,17 @@ export function AdminPropertyFormPage() {
 
             <Button
               type="button"
+              onClick={() => handleSave("Verification")}
+              disabled={saving}
+              variant="outline"
+              className="h-10 rounded-full border-blue-200 text-sm font-bold text-blue-700"
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              {saving && saveMode === "Verification" ? "Saving..." : "Save & Mark Verified"}
+            </Button>
+
+            <Button
+              type="button"
               onClick={() => handleSave("Live")}
               disabled={saving || Boolean(publishValidationError) || Boolean(ownerPublishBlocked)}
               className="rounded-full bg-blue-600 px-5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
@@ -1207,6 +1298,21 @@ export function AdminPropertyFormPage() {
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
+                  Property Type
+                  <select
+                    value={(property as any).propertyType}
+                    onChange={(event) => updateField("propertyType", event.target.value)}
+                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+                  >
+                    <option>Apartment</option>
+                    <option>Builder Floor</option>
+                    <option>Villa</option>
+                    <option>Penthouse</option>
+                    <option>Studio</option>
+                  </select>
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
                   Status
                   <select
                     value={property.status}
@@ -1220,38 +1326,30 @@ export function AdminPropertyFormPage() {
                   </select>
                 </label>
 
-                <label className="text-sm font-medium text-slate-700">
-                  Society <span className="text-rose-500">*</span>
-                  <select
+                <label className="md:col-span-2 text-sm font-medium text-slate-700">
+                  Society
+                  <Input
+                    list="admin-property-societies"
                     value={property.society}
-                    onChange={(event) => {
-                      const selectedName = event.target.value;
-                      const selectedOption = societyDropdownOptions.find((item) => item.name === selectedName);
-                      setProperty((current: any) => ({
-                        ...current,
-                        society: selectedName,
-                        societyId: selectedOption?.id ? String(selectedOption.id) : "",
-                      }));
-                      if (error) setError("");
-                      if (success) setSuccess("");
+                    onChange={(event) => { void updateSocietySearch(event.target.value); }}
+                    onBlur={() => {
+                      const selectedOption = societyDropdownOptions.find((item) => item.name.toLowerCase() === String(property.society || "").trim().toLowerCase());
+                      if (selectedOption) applySocietyOption(selectedOption, property.society);
                     }}
-                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
-                  >
-                    <option value="">
-                      {societiesLoading ? "Loading societies..." : "Select Society"}
-                    </option>
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder={societiesLoading ? "Loading societies..." : "Start typing society name"}
+                  />
+                  <datalist id="admin-property-societies">
                     {societyDropdownOptions.map((item) => (
-                      <option key={`${item.id || item.name}-${item.name}`} value={item.name}>
-                        {societyLabel(item)}
-                      </option>
+                      <option key={`${item.id || item.name}-${item.name}`} value={item.name} label={societyLabel(item)} />
                     ))}
-                  </select>
+                  </datalist>
                   <span className="mt-1 block text-xs font-normal text-slate-400">
                     {societiesLoading
-                      ? "Fetching live societies..."
+                      ? "Fetching societies..."
                       : societyOptions.length
-                        ? `${societyOptions.length} live societies loaded`
-                        : "No live societies loaded"}
+                        ? `${societyOptions.length} society matches loaded. Selecting one autofills location and society amenities.`
+                        : "Type a new society/locality and save as draft."}
                   </span>
                 </label>
 
@@ -1277,17 +1375,43 @@ export function AdminPropertyFormPage() {
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  Locality <span className="text-rose-500">*</span>
-                  <select
+                  Sector
+                  <Input
+                    value={(property as any).sector}
+                    onChange={(event) => updateField("sector", event.target.value)}
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder="Sector 54"
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Locality
+                  <Input
                     value={property.locality}
                     onChange={(event) => updateField("locality", event.target.value)}
-                    className="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
-                  >
-                    <option value="">Select Locality</option>
-                    {localities.map((item) => (
-                      <option key={item}>{item}</option>
-                    ))}
-                  </select>
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder="Golf Course Road"
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  City
+                  <Input
+                    value={(property as any).city}
+                    onChange={(event) => updateField("city", event.target.value)}
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder="Gurugram"
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Builder / Developer
+                  <Input
+                    value={(property as any).builder}
+                    onChange={(event) => updateField("builder", event.target.value)}
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder="Autofills from society when available"
+                  />
                 </label>
               </div>
             </section>
@@ -1306,8 +1430,36 @@ export function AdminPropertyFormPage() {
               </p>
 
               <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {rentalListing ? (
+                  <label className="text-sm font-medium text-slate-700">
+                    Monthly Rent
+                    <Input
+                      value={(property as any).rentAmount}
+                      onChange={(event) => updateField("rentAmount", event.target.value)}
+                      className="mt-2 h-10 rounded-xl border-slate-200"
+                      placeholder="85000"
+                      inputMode="numeric"
+                    />
+                    <span className="mt-1 block text-xs font-normal text-slate-400">Always monthly. No unit dropdown.</span>
+                  </label>
+                ) : null}
+
+                {saleListing ? (
+                  <label className="text-sm font-medium text-slate-700">
+                    Total Sale Price
+                    <Input
+                      value={(property as any).salePrice}
+                      onChange={(event) => updateField("salePrice", event.target.value)}
+                      className="mt-2 h-10 rounded-xl border-slate-200"
+                      placeholder="42500000"
+                      inputMode="numeric"
+                    />
+                    <span className="mt-1 block text-xs font-normal text-slate-400">Total price only. Price / sq.ft. is calculated from sale price and area.</span>
+                  </label>
+                ) : null}
+
                 <label className="text-sm font-medium text-slate-700">
-                  {labels.price} <span className="text-rose-500">*</span>
+                  Display Price
                   <Input
                     value={property.price}
                     onChange={(event) => updateField("price", event.target.value)}
@@ -1327,13 +1479,23 @@ export function AdminPropertyFormPage() {
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  {labels.maintenance}
+                  Maintenance Amount
                   <Input
-                    value={property.maintenance}
-                    onChange={(event) => updateField("maintenance", event.target.value)}
+                    value={(property as any).maintenanceAmount}
+                    onChange={(event) => updateField("maintenanceAmount", event.target.value)}
                     className="mt-2 h-10 rounded-xl border-slate-200"
-                    placeholder={labels.maintenancePlaceholder}
+                    placeholder="12000"
+                    inputMode="numeric"
                   />
+                  <span className="mt-1 block text-xs font-normal text-slate-400">Monthly maintenance.</span>
+                </label>
+
+                <label className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700">
+                  <Checkbox
+                    checked={(property as any).maintenanceIncluded}
+                    onCheckedChange={(checked) => updateField("maintenanceIncluded", checked === true)}
+                  />
+                  Maintenance included
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
@@ -1363,6 +1525,37 @@ export function AdminPropertyFormPage() {
                     onChange={(event) => updateField("areaSqft", event.target.value)}
                     className="mt-2 h-10 rounded-xl border-slate-200"
                     placeholder="2200"
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Carpet Area (sq ft)
+                  <Input
+                    value={(property as any).carpetAreaSqft}
+                    onChange={(event) => updateField("carpetAreaSqft", event.target.value)}
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder="1650"
+                    inputMode="numeric"
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Tower / Block
+                  <Input
+                    value={(property as any).tower}
+                    onChange={(event) => updateField("tower", event.target.value)}
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder="Tower A"
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Unit Number
+                  <Input
+                    value={(property as any).unitNumber}
+                    onChange={(event) => updateField("unitNumber", event.target.value)}
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder="Private, admin only"
                   />
                 </label>
 
@@ -1403,6 +1596,27 @@ export function AdminPropertyFormPage() {
                     <option>Unfurnished</option>
                   </select>
                 </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Balconies
+                  <Input
+                    value={(property as any).balconies}
+                    onChange={(event) => updateField("balconies", event.target.value)}
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                    placeholder="2"
+                    inputMode="numeric"
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Available From
+                  <Input
+                    type="date"
+                    value={(property as any).availableFrom}
+                    onChange={(event) => updateField("availableFrom", event.target.value)}
+                    className="mt-2 h-10 rounded-xl border-slate-200"
+                  />
+                </label>
               </div>
             </section>
 
@@ -1436,7 +1650,24 @@ export function AdminPropertyFormPage() {
               </label>
 
               <div className="mt-4">
-                <p className="text-sm font-medium text-slate-700">Amenities</p>
+                <p className="text-sm font-medium text-slate-700">Included from society</p>
+                {inheritedSocietyAmenities.length ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {inheritedSocietyAmenities.slice(0, 16).map((item) => (
+                      <span key={item} className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                    Select a society to autofill approved society amenities. Keep property-specific features separate below.
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-5">
+                <p className="text-sm font-medium text-slate-700">Property-specific amenities</p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {amenitiesList.map((item) => (
                     <label
@@ -1562,7 +1793,7 @@ export function AdminPropertyFormPage() {
         </div>
 
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <Button
               type="button"
               onClick={() => handleSave("Draft")}
@@ -1572,6 +1803,15 @@ export function AdminPropertyFormPage() {
             >
               <Save className="mr-2 h-4 w-4" />
               {saving && saveMode === "Draft" ? "Saving..." : "Draft"}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => handleSave("Verification")}
+              disabled={saving}
+              variant="outline"
+              className="h-11 rounded-full border-blue-200 text-blue-700"
+            >
+              {saving && saveMode === "Verification" ? "Saving..." : "Verify"}
             </Button>
 <Button
               type="button"

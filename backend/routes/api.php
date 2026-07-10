@@ -40,6 +40,7 @@ Route::get('/health', fn () => response()->json([
 ]));
 
 Route::get('/societies', [SocietyController::class, 'index']);
+Route::get('/societies/lookup', [SocietyController::class, 'lookup']);
 Route::get('/societies/{idOrSlug}/google-place-photo', [SocietyController::class, 'googlePlacePhoto']);
 Route::get('/societies/{slug}', [SocietyController::class, 'show']);
 Route::get('/properties', [PropertyController::class, 'index']);
@@ -115,6 +116,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
         Route::post('/reports', [AdminSeoAutopilotController::class, 'generateReport']);
     });
     Route::post('/societies/fetch-from-url', [SocietyController::class, 'fetchFromUrl']);
+    Route::get('/societies/lookup', [SocietyController::class, 'lookup']);
     Route::post('/societies/fetch-from-brochure', [SocietyController::class, 'fetchFromBrochure']);
     Route::post('/societies/create-from-fetched-data', [SocietyController::class, 'createFromFetchedData']);
     Route::post('/societies/{society}/enrich', [SocietyController::class, 'enrich']);

@@ -61,9 +61,32 @@ const SELL_WIZARD_STORAGE_KEY = "societyflats_sell_wizard_v1";
 
 type SellWizardForm = {
   name: string; society: string; tower: string; bhk: string; size: string; floor: string;
+  locality: string; sector: string; city: string; societyId: string; inheritedSocietyAmenities: string[];
   furnishing: string; availability: string; details: string; expectation: string;
   preferredTime: string; phone: string;
 };
+
+function moneyToNumber(value: string) {
+  const raw = String(value || "").toLowerCase().replace(/,/g, "").trim();
+  const base = Number((raw.match(/\d+(?:\.\d+)?/) || [""])[0]);
+  if (!Number.isFinite(base)) return null;
+  if (/\bcr|crore\b/.test(raw)) return Math.round(base * 10000000);
+  if (/\blac|lakh\b/.test(raw)) return Math.round(base * 100000);
+  return Math.round(base);
+}
+
+function parseSocietyAmenities(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 16);
+  if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parseSocietyAmenities(parsed);
+    } catch {
+      return value.split(",").map((item) => item.trim()).filter(Boolean).slice(0, 16);
+    }
+  }
+  return [];
+}
 
 function restoreSellWizard(): { form: Partial<SellWizardForm>; step: number; purpose: "rent" | "sell" } | null {
   try {
@@ -89,10 +112,15 @@ export function SellPage() {
   const [form, setForm] = useState<SellWizardForm>({
     name: "",
     society: searchParams.get("society") || "",
+    societyId: "",
     tower: "",
     bhk: "",
     size: "",
     floor: "",
+    locality: "",
+    sector: "",
+    city: "Gurugram",
+    inheritedSocietyAmenities: [],
     furnishing: "",
     availability: "",
     details: "",
@@ -166,6 +194,18 @@ export function SellPage() {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
+  const applySociety = (option: any) => {
+    setForm((current) => ({
+      ...current,
+      society: option?.name || current.society,
+      societyId: option?.id ? String(option.id) : "",
+      sector: option?.sector || current.sector,
+      locality: option?.locality || current.locality,
+      city: option?.city || current.city || "Gurugram",
+      inheritedSocietyAmenities: parseSocietyAmenities(option?.approved_amenities || option?.approvedAmenities || option?.amenities),
+    }));
+  };
+
   const advanceFrom = (step: number) => {
     setListingStep((current) => (current === step ? Math.min(8, step + 1) : current));
   };
@@ -179,8 +219,8 @@ export function SellPage() {
   const stepReady =
     listingStep === 1 ? isValidOwnerLeadPhone(form.phone) :
     listingStep === 2 ? Boolean(form.name.trim()) :
-    listingStep === 3 ? Boolean(form.society.trim()) :
-    listingStep === 5 ? Boolean(form.bhk.trim()) :
+    listingStep === 3 ? Boolean(form.society.trim() || form.locality.trim() || form.sector.trim()) :
+    listingStep === 5 ? Boolean(form.bhk.trim() && form.expectation.trim()) :
     true;
 
   const submitOwnerLead = async (event: FormEvent) => {
@@ -199,6 +239,8 @@ export function SellPage() {
 
     const listingIntent = purpose === "rent" ? "Rent" : "Sale";
     const societyName = form.society.trim();
+    const locality = form.locality.trim();
+    const sector = form.sector.trim();
     const towerName = form.tower.trim();
     const bhk = form.bhk.trim();
     const size = form.size.trim();
@@ -246,8 +288,27 @@ export function SellPage() {
     // A registered phone is welcome — the backend attaches the listing to the existing
     // account instead of blocking the submission.
     const matchedSociety = societyOptions.find(
-      (option: any) => String(option?.name || "").trim().toLowerCase() === societyName.toLowerCase(),
+      (option: any) => String(option?.id || "") === String(form.societyId || "") || String(option?.name || "").trim().toLowerCase() === societyName.toLowerCase(),
     );
+    const expectedNumber = moneyToNumber(expectation);
+
+    if (!societyName && !locality && !sector) {
+      setError("Please add a society, locality or sector.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (!bhk && listingType !== "builder_floor") {
+      setError("Please add the BHK for this residential listing.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (!expectedNumber) {
+      setError(purpose === "rent" ? "Please add the expected monthly rent." : "Please add the expected total sale price.");
+      setSubmitting(false);
+      return;
+    }
 
     try {
       // Structured listing with photos — the backend also raises the follow-up lead.
@@ -258,6 +319,9 @@ export function SellPage() {
         listing_type: listingType,
         society_id: matchedSociety?.id ?? null,
         society_name: societyName || null,
+        locality: locality || null,
+        sector: sector || null,
+        city: form.city || "Gurugram",
         tower: towerName || null,
         bhk: bhk || null,
         size_sqft: size || null,
@@ -265,6 +329,10 @@ export function SellPage() {
         furnishing: furnishing || null,
         availability: [availability, preferredTime ? `Best time to call: ${preferredTime}` : null].filter(Boolean).join(" · ") || null,
         expected_price: expectation || null,
+        rent_amount: purpose === "rent" ? expectedNumber : null,
+        sale_price: purpose === "sell" ? expectedNumber : null,
+        inherited_society_amenities: form.inheritedSocietyAmenities,
+        property_amenities: [],
         details: propertyDetails || null,
         images: photos,
       }, getCustomerAccountSession()?.accountAccessToken);
@@ -362,7 +430,7 @@ export function SellPage() {
               </div>
               {success ? (
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-sm font-semibold leading-6 text-emerald-700">
-                  <p>Listing submitted successfully. Our team will call to verify ownership, photos, pricing and availability before creating the right draft.</p>
+                  <p>Your property has been submitted for admin review. SocietyFlats will verify details before publishing.</p>
                   {accountCreated ? (
                     <div className="mt-4 rounded-2xl bg-white/80 p-4 text-emerald-800">
                       <p className="font-black">Customer account created automatically.</p>
@@ -395,15 +463,14 @@ export function SellPage() {
                   ) : null}
                   {listingStep === 3 ? (
                     <div className="relative">
-                      <p className="mb-3 text-sm font-bold">Which society is the flat in?</p>
+                      <p className="mb-3 text-sm font-bold">Where is the flat?</p>
                       <Input
-                        required
                         autoFocus
                         value={form.society}
                         onChange={(event) => { updateForm("society", event.target.value); setShowSocietySuggestions(true); }}
                         onFocus={() => setShowSocietySuggestions(true)}
                         onBlur={() => setTimeout(() => setShowSocietySuggestions(false), 120)}
-                        onKeyDown={advanceOnEnter(3, Boolean(form.society.trim()))}
+                        onKeyDown={advanceOnEnter(3, Boolean(form.society.trim() || form.locality.trim() || form.sector.trim()))}
                         className="h-12 rounded-xl"
                         placeholder="Society name e.g. DLF Park Place"
                       />
@@ -414,7 +481,7 @@ export function SellPage() {
                               <button
                                 type="button"
                                 onMouseDown={(event) => event.preventDefault()}
-                                onClick={() => { updateForm("society", option.name); setShowSocietySuggestions(false); advanceFrom(3); }}
+                                onClick={() => { applySociety(option); setShowSocietySuggestions(false); advanceFrom(3); }}
                                 className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-[#EEF5F1]"
                               >
                                 <span className="font-semibold text-[#25302B]">{option.name}</span>
@@ -424,7 +491,30 @@ export function SellPage() {
                           ))}
                         </ul>
                       ) : null}
-                      <p className="mt-2 text-xs text-[#6E756E]">Pick a verified society, or type any name — new societies are added after review.</p>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <Input
+                          value={form.sector}
+                          onChange={(event) => updateForm("sector", event.target.value)}
+                          onKeyDown={advanceOnEnter(3, Boolean(form.society.trim() || form.locality.trim() || form.sector.trim()))}
+                          className="h-11 rounded-xl"
+                          placeholder="Sector e.g. Sector 54"
+                        />
+                        <Input
+                          value={form.locality}
+                          onChange={(event) => updateForm("locality", event.target.value)}
+                          onKeyDown={advanceOnEnter(3, Boolean(form.society.trim() || form.locality.trim() || form.sector.trim()))}
+                          className="h-11 rounded-xl"
+                          placeholder="Locality e.g. Golf Course Road"
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-[#6E756E]">Pick a verified society to autofill details, or type locality/sector if the society is not listed yet.</p>
+                      {form.inheritedSocietyAmenities.length ? (
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {form.inheritedSocietyAmenities.slice(0, 8).map((item) => (
+                            <span key={item} className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">{item}</span>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                   {listingStep === 4 ? (
@@ -450,7 +540,7 @@ export function SellPage() {
                   {listingStep === 5 ? (
                     <div className="space-y-3">
                       <p className="text-sm font-bold">Tell us about the flat</p>
-                      <div className="grid gap-3 sm:grid-cols-2"><Input required autoFocus value={form.bhk} onChange={(event) => updateForm("bhk", event.target.value)} onKeyDown={advanceOnEnter(5, Boolean(form.bhk.trim()))} className="h-11 rounded-xl" placeholder="BHK e.g. 3 BHK" /><Input value={form.size} onChange={(event) => updateForm("size", event.target.value)} onKeyDown={advanceOnEnter(5, Boolean(form.bhk.trim()))} className="h-11 rounded-xl" placeholder="Size e.g. 1983 sq.ft." /></div>
+                      <div className="grid gap-3 sm:grid-cols-2"><Input required autoFocus value={form.bhk} onChange={(event) => updateForm("bhk", event.target.value)} onKeyDown={advanceOnEnter(5, Boolean(form.bhk.trim() && form.expectation.trim()))} className="h-11 rounded-xl" placeholder="BHK e.g. 3 BHK" /><Input value={form.size} onChange={(event) => updateForm("size", event.target.value)} onKeyDown={advanceOnEnter(5, Boolean(form.bhk.trim() && form.expectation.trim()))} className="h-11 rounded-xl" placeholder="Size e.g. 1983 sq.ft." /></div>
                       <div className="grid gap-3 sm:grid-cols-2"><Input value={form.tower} onChange={(event) => updateForm("tower", event.target.value)} className="h-11 rounded-xl" placeholder="Tower / block" /><Input value={form.floor} onChange={(event) => updateForm("floor", event.target.value)} className="h-11 rounded-xl" placeholder="Floor e.g. 12th" /></div>
                       <div className="grid gap-3 sm:grid-cols-2"><Input value={form.furnishing} onChange={(event) => updateForm("furnishing", event.target.value)} className="h-11 rounded-xl" placeholder="Furnishing" /><Input value={form.expectation} onChange={(event) => updateForm("expectation", event.target.value)} className="h-11 rounded-xl" placeholder={purpose === "rent" ? "Expected monthly rent" : "Expected sale price"} /></div>
                     </div>
@@ -486,7 +576,7 @@ export function SellPage() {
                     <div>
                       <p className="mb-3 text-sm font-bold">Review your listing request</p>
                       <div className="grid gap-2 rounded-[16px] bg-[#EEF5F1] p-4 text-sm">
-                        {[["Owner", form.name], ["Phone", form.phone], ["Society", form.society], ["Intent", purpose === "rent" ? "Rent" : "Sale"], ["Type", listingType === "builder_floor" ? "Builder floor" : "Society apartment"], ["Flat", [form.bhk, form.size, form.furnishing].filter(Boolean).join(" · ") || "Details on request"], ["Photos", photos.length ? `${photos.length} attached` : "None yet"], ["Expectation", form.expectation || "Discuss on call"], ["Availability", form.availability || "Discuss on call"]].map(([label, value]) => <div key={label} className="flex justify-between gap-4 border-b border-[#DDE7DC] pb-2 last:border-0 last:pb-0"><span className="text-[#6E756E]">{label}</span><strong className="text-right text-[#25302B]">{value}</strong></div>)}
+                        {[["Owner", form.name], ["Phone", form.phone], ["Society", form.society || "Not selected"], ["Location", [form.sector, form.locality, form.city].filter(Boolean).join(" · ") || "Review needed"], ["Intent", purpose === "rent" ? "Rent" : "Sale"], ["Type", listingType === "builder_floor" ? "Builder floor" : "Society apartment"], ["Flat", [form.bhk, form.size, form.furnishing].filter(Boolean).join(" · ") || "Details on request"], ["Photos", photos.length ? `${photos.length} attached` : "None yet"], ["Expectation", form.expectation || "Discuss on call"], ["Availability", form.availability || "Discuss on call"]].map(([label, value]) => <div key={label} className="flex justify-between gap-4 border-b border-[#DDE7DC] pb-2 last:border-0 last:pb-0"><span className="text-[#6E756E]">{label}</span><strong className="text-right text-[#25302B]">{value}</strong></div>)}
                       </div>
                     </div>
                   ) : null}

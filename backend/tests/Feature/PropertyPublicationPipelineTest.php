@@ -21,6 +21,9 @@ class PropertyPublicationPipelineTest extends TestCase
     {
         $this->withToken('admin-test-token')->postJson('/api/admin/properties', [
             'title' => 'Owner draft home',
+            'listing_type' => 'Rent',
+            'property_type' => 'Apartment',
+            'locality' => 'Sector 54',
             'price' => '85000',
             'status' => 'Draft',
         ])->assertCreated()->assertJsonPath('data.status', 'Draft');

@@ -21,6 +21,29 @@ class SocietyController extends Controller {
     return response()->json(['status'=>'ok','data'=>$query->withCount('properties')->orderByDesc('featured')->orderByDesc('search_boost')->orderBy('name')->paginate($request->integer('per_page',24))]);
   }
 
+  public function lookup(Request $request): JsonResponse {
+    $isAdmin = $request->is('api/admin/*') || $request->is('admin/*');
+    $term = trim((string) $request->query('q', ''));
+
+    $query = Society::query()
+      ->when(!$isAdmin, fn ($q) => $q->where('is_published', true)->whereIn('status', ['Verified', 'Premium']))
+      ->when($term !== '', fn ($q) => $q->where(fn ($b) => $b
+        ->where('name', 'ilike', "%{$term}%")
+        ->orWhere('locality', 'ilike', "%{$term}%")
+        ->orWhere('sector', 'ilike', "%{$term}%")
+        ->orWhere('builder', 'ilike', "%{$term}%")))
+      ->orderByDesc('featured')
+      ->orderByDesc('search_boost')
+      ->orderBy('name')
+      ->limit(20)
+      ->get();
+
+    return response()->json([
+      'status' => 'ok',
+      'data' => $query->map(fn (Society $society) => $this->lookupPayload($society, $isAdmin))->values(),
+    ]);
+  }
+
   public function googlePlacePhoto(string $idOrSlug, GooglePlacesSocietyImageService $places)
   {
     $society = Society::query()
@@ -101,6 +124,52 @@ class SocietyController extends Controller {
         'data' => $society,
     ]);
 }
+
+  private function lookupPayload(Society $society, bool $isAdmin): array
+  {
+    $payload = [
+      'id' => $society->id,
+      'name' => $society->name,
+      'slug' => $society->slug,
+      'sector' => $society->sector,
+      'locality' => $society->locality,
+      'city' => $society->city ?: 'Gurugram',
+      'builder' => $society->builder,
+      'approved_amenities' => $this->cleanAmenityList($society->amenities),
+      'public_url' => 'https://www.societyflats.com/society/'.$society->slug,
+    ];
+
+    if ($isAdmin) {
+      $payload['published_status'] = $society->is_published ? 'published' : 'draft';
+      $payload['address'] = $society->address;
+    }
+
+    return $payload;
+  }
+
+  private function cleanAmenityList(mixed $value): array
+  {
+    if (is_null($value) || $value === '') return [];
+    if (is_string($value)) {
+      $decoded = json_decode($value, true);
+      $value = json_last_error() === JSON_ERROR_NONE ? $decoded : preg_split('/,|;|\r?\n/', $value);
+    }
+
+    return collect(is_array($value) ? $value : [])
+      ->flatMap(function ($item) {
+        if (is_string($item)) {
+          $decoded = json_decode($item, true);
+          if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) return $decoded;
+          return preg_split('/,|;|\r?\n/', $item) ?: [];
+        }
+        return [is_array($item) ? ($item['name'] ?? $item['title'] ?? null) : $item];
+      })
+      ->map(fn ($item) => trim(strip_tags((string) $item)))
+      ->filter(fn ($item) => $item !== '' && mb_strlen($item) <= 80 && preg_match('/[a-zA-Z]/', $item))
+      ->unique(fn ($item) => mb_strtolower($item))
+      ->values()
+      ->all();
+  }
   public function store(Request $request): JsonResponse
   {
       $p = $this->withSocietyDefaults($this->payload($request));

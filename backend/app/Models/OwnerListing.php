@@ -11,12 +11,16 @@ class OwnerListing extends Model
 
     protected $fillable = [
         'account_id', 'name', 'phone', 'purpose', 'listing_type', 'society_id', 'society_name',
-        'tower', 'bhk', 'size_sqft', 'floor', 'furnishing', 'availability', 'expected_price',
-        'details', 'images', 'status', 'admin_notes', 'property_id',
+        'locality', 'sector', 'city', 'tower', 'bhk', 'size_sqft', 'floor', 'furnishing',
+        'availability', 'expected_price', 'rent_amount', 'sale_price', 'details',
+        'property_amenities', 'inherited_society_amenities', 'images', 'status',
+        'admin_notes', 'property_id',
     ];
 
     protected $casts = [
         'images' => 'array',
+        'property_amenities' => 'array',
+        'inherited_society_amenities' => 'array',
     ];
 
     public function society(): BelongsTo

@@ -43,7 +43,14 @@ class OwnerListingTest extends TestCase
     {
         $account = Account::create(['name' => 'Existing', 'phone' => '9876543210', 'phone_normalized' => '9876543210', 'role' => 'customer']);
 
-        $this->postJson('/api/listings', ['name' => 'Existing', 'phone' => '9876543210', 'purpose' => 'sale', 'listing_type' => 'builder_floor'])
+        $this->postJson('/api/listings', [
+            'name' => 'Existing',
+            'phone' => '9876543210',
+            'purpose' => 'sale',
+            'listing_type' => 'builder_floor',
+            'sector' => 'Sector 57',
+            'sale_price' => 25000000,
+        ])
             ->assertCreated();
 
         $this->assertSame($account->id, OwnerListing::firstOrFail()->account_id);
