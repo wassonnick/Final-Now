@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { setPublicSeo } from "@/lib/seo";
 import { API_BASE_URL } from "@/config/api";
+import { PROPERTY_PHOTOS_UNDER_VERIFICATION, propertyDisplayImages, hasRealPropertyPhotos } from "@/lib/propertyImages";
 import {
   getCustomerAccountSession,
   isCustomerItemShortlisted,
@@ -244,16 +245,7 @@ function leadRequirementFor(listingType: string, leadType: "callback" | "enquiry
 }
 
 function getPhotos(property: Property): string[] {
-  const savedImages = parseList(property.images);
-  const galleryImages = parseList(property.galleryImages ?? property.gallery_images);
-  const coverImage = property.coverImage || property.cover_image;
-
-  const photos = [...savedImages, ...galleryImages, coverImage]
-    .filter(Boolean)
-    .map(String)
-    .filter((value, index, self) => self.indexOf(value) === index);
-
-  return photos.length ? photos : ["/brand/societyflats-icon-512.png"];
+  return propertyDisplayImages(property.images, property.galleryImages ?? property.gallery_images, property.coverImage || property.cover_image);
 }
 
 function safePropertyPath(property: Property): string {
@@ -374,6 +366,7 @@ export function PropertyPage() {
   const furnishedStatus = getField(property, "furnishedStatus", "furnished_status", "-");
   const amenities = useMemo(() => parseList(property?.amenities), [property?.amenities]);
   const photos = useMemo(() => (property ? getPhotos(property) : []), [property]);
+  const realPropertyPhotos = useMemo(() => (property ? hasRealPropertyPhotos(property.images) : false), [property]);
   const saleListing = /sale|buy|resale|builder/i.test(String(listingType));
   const propertyPrice = moneyValue(price);
   const loanAmount = propertyPrice * (loanPercent / 100);
@@ -752,7 +745,12 @@ export function PropertyPage() {
           <section>
             <div className="grid h-[250px] gap-3 sm:h-[320px] md:h-[360px] md:grid-cols-[2fr_1fr]">
               <button type="button" onClick={() => setLightboxOpen(true)} className="relative h-full min-h-0 overflow-hidden rounded-[18px] bg-[#E5ECE5] text-left">
-                <img src={photos[0]} alt={title} className="h-full w-full object-cover" />
+                <img src={photos[0]} alt={realPropertyPhotos ? title : PROPERTY_PHOTOS_UNDER_VERIFICATION} className="h-full w-full object-cover" />
+                {!realPropertyPhotos ? (
+                  <span className="absolute bottom-4 left-4 rounded-full bg-white/92 px-4 py-2 text-xs font-black uppercase tracking-[0.08em] text-blue-700 shadow-sm">
+                    {PROPERTY_PHOTOS_UNDER_VERIFICATION}
+                  </span>
+                ) : null}
               </button>
               <div className="hidden h-full min-h-0 grid-rows-2 gap-3 overflow-hidden md:grid">
                 {[photos[1] || photos[0], photos[2] || photos[0]].map((photo, index) => (

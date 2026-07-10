@@ -43,7 +43,7 @@ class PropertyPublicationPipelineTest extends TestCase
             'security_deposit' => '170000',
             'status' => 'Live',
         ])->assertStatus(422)
-            ->assertJsonValidationErrors(['verified', 'owner_name', 'owner_phone', 'images']);
+            ->assertJsonValidationErrors(['verified', 'owner_name', 'owner_phone']);
 
         $this->assertSame(0, Property::count());
     }
@@ -58,6 +58,26 @@ class PropertyPublicationPipelineTest extends TestCase
         $this->withToken('admin-test-token')->postJson('/api/admin/properties', $payload)
             ->assertStatus(422)
             ->assertJsonValidationErrors(['images']);
+    }
+
+    public function test_verified_live_inventory_can_publish_without_property_photos(): void
+    {
+        $society = $this->publishedSociety();
+        $payload = $this->validLivePayload($society);
+        $payload['images'] = [];
+
+        $response = $this->withToken('admin-test-token')
+            ->postJson('/api/admin/properties', $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'Live')
+            ->assertJsonPath('data.images', []);
+
+        $property = Property::findOrFail($response->json('data.id'));
+        $this->assertNotNull($property->published_at);
+
+        $this->getJson('/api/properties/'.$property->slug)
+            ->assertOk()
+            ->assertJsonPath('data.images', []);
     }
 
     public function test_verified_live_inventory_records_audit_timestamps_and_becomes_public(): void

@@ -71,6 +71,7 @@ import { Button } from "@/components/ui/button";
 import { AdminBadge } from "@/components/admin/AdminBadge";
 import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
 import { adminFetch, adminHeaders } from "@/lib/adminApi";
+import { propertyDisplayImage } from "@/lib/propertyImages";
 
 function c14SourceLeadId(property: any) {
   return (
@@ -109,7 +110,6 @@ function parseArray(value: any): string[] {
 function c42PropertyQualityIssues(item: any) {
   const issues: string[] = [];
   const ownerLinked = Boolean(c14SourceLeadId(item));
-  const images = parseArray(item?.images);
   const description = String(item?.description || "").trim();
   const listingType = String(getListingType(item) || "").toLowerCase();
 
@@ -121,7 +121,6 @@ function c42PropertyQualityIssues(item: any) {
   }
 
   if (ownerLinked) {
-    if (!images.length) issues.push("real property photo missing");
     if (!description) issues.push("description missing");
     if (!item?.verified) issues.push("owner verification missing");
   }
@@ -136,7 +135,7 @@ function getPropertyImage(item: any) {
   if (item?.cover_image) return item.cover_image;
   if (item?.coverImage) return item.coverImage;
 
-  return "";
+  return propertyDisplayImage([]);
 }
 
 function getSocietyName(item: any) {

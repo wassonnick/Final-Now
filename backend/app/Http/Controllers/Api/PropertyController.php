@@ -369,9 +369,7 @@ class PropertyController extends Controller
         }
 
         $images = array_values(array_filter((array) ($effective['images'] ?? [])));
-        if ($images === []) {
-            $errors['images'][] = 'Upload at least one real property photo before publishing.';
-        } elseif (collect($images)->contains(fn ($image) => str_contains((string) $image, 'images.unsplash.com/photo-1600607687939'))) {
+        if (collect($images)->contains(fn ($image) => str_contains((string) $image, 'images.unsplash.com/photo-1600607687939'))) {
             $errors['images'][] = 'The stock placeholder cannot be published as a property photo.';
         }
 

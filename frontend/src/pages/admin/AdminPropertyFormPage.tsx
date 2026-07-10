@@ -356,7 +356,6 @@ function isOwnerDraftSource(sourceLeadId: string) {
 function ownerPublishQualityIssues(args: {
   sourceLeadId: string;
   verified: boolean;
-  images: string[];
   description: string;
   floor: string;
   furnishedStatus: string;
@@ -368,7 +367,6 @@ function ownerPublishQualityIssues(args: {
   const issues: string[] = [];
 
   if (!args.verified) issues.push("Mark as verified after confirming owner/property details.");
-  if (!args.images.length) issues.push("Upload at least one real property photo before publishing.");
   if (!String(args.description || "").trim()) issues.push("Generate or write a clean public description.");
   if (!String(args.floor || "").trim()) issues.push("Confirm floor details before publishing.");
   if (!String(args.furnishedStatus || "").trim()) issues.push("Confirm furnishing status before publishing.");
@@ -536,7 +534,6 @@ export function AdminPropertyFormPage() {
       Boolean(property.bedrooms),
       Boolean(property.areaSqft),
       Boolean(property.description.trim()),
-      propertyImages.length > 0,
     ];
 
     const done = checks.filter(Boolean).length;
@@ -546,7 +543,7 @@ export function AdminPropertyFormPage() {
       total: checks.length,
       percent: Math.round((done / checks.length) * 100),
     };
-  }, [property, propertyImages.length]);
+  }, [property]);
 
 
   const sourceLeadIdParam = useMemo(() => {
@@ -625,7 +622,6 @@ export function AdminPropertyFormPage() {
     if (!String(ownerName || "").trim()) return "Owner or authorised broker name is required before publishing.";
     if (String(ownerPhone || "").replace(/\D/g, "").length < 10) return "A valid owner or authorised broker phone is required before publishing.";
     if (!property.verified) return "Verify the owner and property details before publishing.";
-    if (!propertyImages.length) return "Upload at least one real property photo before publishing.";
 
     if (rentalListing) {
       if (!society) return "Society is required before publishing a rent listing.";
@@ -649,7 +645,6 @@ export function AdminPropertyFormPage() {
     property.securityDeposit,
     property.areaSqft,
     property.verified,
-    propertyImages.length,
     ownerName,
     ownerPhone,
     labels.price,
@@ -662,7 +657,6 @@ export function AdminPropertyFormPage() {
   const ownerQualityIssues = useMemo(() => ownerPublishQualityIssues({
     sourceLeadId,
     verified: Boolean(property.verified),
-    images: propertyImages,
     description: property.description,
     floor: property.floor,
     furnishedStatus: property.furnishedStatus,
@@ -671,7 +665,6 @@ export function AdminPropertyFormPage() {
   }), [
     sourceLeadId,
     property.verified,
-    propertyImages,
     property.description,
     property.floor,
     property.furnishedStatus,
@@ -784,7 +777,7 @@ export function AdminPropertyFormPage() {
   };
 
   const continueWithoutPhotos = () => {
-    setSuccess("Continuing without photos. Save Draft is allowed; publishing requires real property photos.");
+    setSuccess("Continuing without photos. Published listings will show the SocietyFlats “Photos under verification” placeholder until real photos are uploaded.");
     setError("");
   };
 
@@ -1254,7 +1247,9 @@ export function AdminPropertyFormPage() {
           <div className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-medium text-slate-500">Images</p>
             <p className="mt-2 text-xl font-bold text-slate-950">{propertyImages.length}</p>
-            <p className="mt-1.5 text-xs font-semibold text-blue-600">Max 8 images</p>
+              <p className="mt-1.5 text-xs font-semibold text-blue-600">
+                {propertyImages.length ? "Max 8 images" : "Placeholder used until photos are verified"}
+              </p>
           </div>
         </section>
 
@@ -1690,7 +1685,7 @@ export function AdminPropertyFormPage() {
             <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
               <h2 className="text-base font-bold tracking-tight text-slate-950">Media</h2>
               <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
-                Upload real property photos, or continue as a private draft without photos.
+                Upload real property photos when available. If none are uploaded, published listings use a SocietyFlats placeholder marked “Photos under verification.”
               </p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -1700,7 +1695,7 @@ export function AdminPropertyFormPage() {
                     onClick={continueWithoutPhotos}
                     className="rounded-full border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                   >
-                    Continue without photos
+                    Use verification placeholder
                   </Button>
                 </div>
 
@@ -1786,7 +1781,7 @@ export function AdminPropertyFormPage() {
                 <p>{fieldSummary("Title", property.title)}</p>
                 <p>{fieldSummary("Society", property.society)}</p>
                 <p>{fieldSummary(labels.price, property.price)}</p>
-                <p>{fieldSummary("Images", propertyImages.length ? `${propertyImages.length}` : "")}</p>
+                <p>{fieldSummary("Photos", propertyImages.length ? `${propertyImages.length}` : "verification placeholder")}</p>
               </div>
             </section>
           </aside>

@@ -49,6 +49,7 @@ import {
 } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
 import { API_BASE_URL } from "@/config/api";
+import { PROPERTY_PHOTOS_UNDER_VERIFICATION, hasRealPropertyPhotos } from "@/lib/propertyImages";
 import {
   getCustomerAccountSession,
   isCustomerItemShortlisted,
@@ -302,7 +303,7 @@ function safePropertyImage(property: any) {
   try {
     return propertyImage(property);
   } catch {
-    return "/brand/societyflats-icon-512.png";
+    return propertyImage(property);
   }
 }
 
@@ -1122,7 +1123,7 @@ export function SocietyPage() {
           <div className="grid gap-[18px] md:grid-cols-3">
             {properties.slice(0, 3).map((property) => (
               <Link key={property.id || property.slug} to={safePropertyUrl(property)} className="overflow-hidden rounded-[16px] border border-[#E7E3DA] bg-white">
-                <div className="relative h-[150px] bg-[#E8EDF7]"><img src={safePropertyImage(property)} alt={property.title || "Available home"} className="h-full w-full object-cover" /><span className="absolute left-2.5 top-2.5 rounded-full bg-[#EEF2FA] px-2.5 py-1 text-[11px] font-bold text-[#3156A3]">Verified · {field(property, "listedBy", "listed_by", "Source reviewed")}</span></div>
+                <div className="relative h-[150px] bg-[#E8EDF7]"><img src={safePropertyImage(property)} alt={hasRealPropertyPhotos(field(property, "images", "images", [])) ? (property.title || "Available home") : PROPERTY_PHOTOS_UNDER_VERIFICATION} className="h-full w-full object-cover" /><span className="absolute left-2.5 top-2.5 rounded-full bg-[#EEF2FA] px-2.5 py-1 text-[11px] font-bold text-[#3156A3]">Verified · {field(property, "listedBy", "listed_by", "Source reviewed")}</span>{!hasRealPropertyPhotos(field(property, "images", "images", [])) ? <span className="absolute bottom-2.5 left-2.5 rounded-full bg-white/90 px-2.5 py-1 text-[10.5px] font-bold text-[#3156A3]">{PROPERTY_PHOTOS_UNDER_VERIFICATION}</span> : null}</div>
                 <div className="p-4"><div className="flex items-center justify-between gap-3"><strong>{property.title || "Available home"}</strong><strong className="text-[#233B6E]">{field(property, "price", "price", "On request")}</strong></div><p className="mt-1 text-[12.5px] text-[#6E756E]">{field(property, "areaSqft", "area_sqft", "Area on request")} sq.ft · {field(property, "floor", "floor", "Floor on request")} · {field(property, "furnishedStatus", "furnished_status", "Status on request")}</p></div>
               </Link>
             ))}

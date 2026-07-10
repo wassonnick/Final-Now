@@ -13,6 +13,7 @@ import { setPublicSeo } from '@/lib/seo';
 import { API_BASE_URL } from '@/config/api';
 import { PublicLeadModal } from '@/components/leads/PublicLeadModal';
 import { Button } from '@/components/ui/button';
+import { PROPERTY_PHOTOS_UNDER_VERIFICATION, hasRealPropertyPhotos, propertyDisplayImage } from '@/lib/propertyImages';
 
 type Property = {
   id: number;
@@ -52,11 +53,7 @@ function extractProperties(payload: ApiResponse): Property[] {
 }
 
 function propertyImage(property: Property) {
-  if (Array.isArray(property.images) && property.images[0]) {
-    return property.images[0];
-  }
-
-  return '';
+  return propertyDisplayImage(property.images);
 }
 
 export function PropertiesPage() {
@@ -179,6 +176,7 @@ export function PropertiesPage() {
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {filteredProperties.map((property) => {
               const image = propertyImage(property);
+              const realPhotos = hasRealPropertyPhotos(property.images);
 
               return (
               <Link
@@ -187,17 +185,11 @@ export function PropertiesPage() {
                 className="group overflow-hidden rounded-[2rem] border border-navy-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-soft"
               >
                 <div className="relative h-64 overflow-hidden bg-navy-50">
-                  {image ? (
-                    <img
-                      src={image}
-                      alt={property.title}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center bg-[#DDE7DC]">
-                      <Building2 className="h-10 w-10 text-[#2A6147]" />
-                    </div>
-                  )}
+                  <img
+                    src={image}
+                    alt={realPhotos ? property.title : PROPERTY_PHOTOS_UNDER_VERIFICATION}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
 
                   <div className="absolute left-4 top-4 flex gap-2">
                     <div className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-navy-700">
@@ -211,6 +203,12 @@ export function PropertiesPage() {
                       </div>
                     ) : null}
                   </div>
+
+                  {!realPhotos ? (
+                    <div className="absolute bottom-4 left-4 rounded-full bg-white/92 px-3 py-1 text-xs font-bold text-blue-700 shadow-sm">
+                      {PROPERTY_PHOTOS_UNDER_VERIFICATION}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="p-6">

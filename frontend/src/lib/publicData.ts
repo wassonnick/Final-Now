@@ -2,6 +2,7 @@ import { type AdminProperty } from '@/lib/adminPropertyStore';
 import { mapApiSociety, type AdminSociety } from '@/lib/adminSocietyStore';
 import { societyDisplayImage } from '@/lib/societyImages';
 import { API_BASE_URL } from '@/config/api';
+import { propertyDisplayImage } from '@/lib/propertyImages';
 
 function extractItems(payload: any) {
   if (Array.isArray(payload?.data)) return payload.data;
@@ -103,7 +104,7 @@ export function societyImage(society: AdminSociety) {
 }
 
 export function propertyImage(property: AdminProperty) {
-  return property.images?.[0] || '';
+  return propertyDisplayImage(property.images);
 }
 
 export function formatPublicLocation(society: AdminSociety) {

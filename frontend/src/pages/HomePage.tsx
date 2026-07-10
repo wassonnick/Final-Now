@@ -8,11 +8,13 @@ import {
   fetchPublicProperties,
   fetchPublicSocieties,
   formatPublicLocation,
+  propertyImage,
   propertyUrl,
   societyImage,
 } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
 import { hasGooglePlacesDisplayPhoto, societyImageAttribution } from "@/lib/societyImages";
+import { PROPERTY_PHOTOS_UNDER_VERIFICATION, hasRealPropertyPhotos } from "@/lib/propertyImages";
 
 // SEO compatibility anchors: Start with the path buyers and tenants search most.
 // Need help choosing between societies? · Prime localities · Top builders · User intent
@@ -239,7 +241,8 @@ export function HomePage() {
         ) : verifiedHomes.length ? (
           <div className="-mx-5 flex gap-[14px] overflow-x-auto px-5 pb-1 scrollbar-hide">
             {verifiedHomes.map((property) => {
-              const image = Array.isArray(property.images) ? property.images[0] : "";
+              const image = propertyImage(property);
+              const realPhotos = hasRealPropertyPhotos(property.images);
               return (
                 <Link
                   key={property.id}
@@ -247,14 +250,11 @@ export function HomePage() {
                   className="w-[240px] shrink-0 overflow-hidden rounded-[18px] border border-[#E7DCCB] bg-white shadow-[0_8px_22px_-16px_rgba(0,0,0,.3)]"
                 >
                   <div className="relative flex h-[118px] items-center justify-center overflow-hidden bg-[#E8EDF7]">
-                    {image ? (
-                      <img src={image} alt={property.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <Home className="h-8 w-8 text-[#3156A3]" />
-                    )}
+                    <img src={image} alt={realPhotos ? property.title : PROPERTY_PHOTOS_UNDER_VERIFICATION} className="h-full w-full object-cover" />
                     <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-[#EEF2FA] px-2 py-1 text-[10.5px] font-bold text-[#3156A3]">
                       <Check className="h-3 w-3 stroke-[3]" /> Verified home
                     </span>
+                    {!realPhotos ? <span className="absolute bottom-2.5 left-2.5 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-[#3156A3]">{PROPERTY_PHOTOS_UNDER_VERIFICATION}</span> : null}
                   </div>
                   <div className="p-[13px]">
                     <div className="flex items-start justify-between gap-2">
@@ -356,7 +356,8 @@ export function HomePage() {
           ) : verifiedHomes.length ? (
             <div className="grid grid-cols-4 gap-[22px]">
               {verifiedHomes.slice(0, 4).map((property) => {
-                const image = Array.isArray(property.images) ? property.images[0] : "";
+                const image = propertyImage(property);
+                const realPhotos = hasRealPropertyPhotos(property.images);
                 return (
                   <Link
                     key={property.id}
@@ -364,17 +365,14 @@ export function HomePage() {
                     className="overflow-hidden rounded-[18px] border border-[#E7DCCB] bg-white shadow-[0_10px_28px_-22px_rgba(0,0,0,.35)] transition hover:-translate-y-1"
                   >
                     <div className="relative flex h-[158px] items-center justify-center overflow-hidden bg-[#E8EDF7]">
-                      {image ? (
-                        <img src={image} alt={property.title} className="h-full w-full object-cover" />
-                      ) : (
-                        <Home className="h-9 w-9 text-[#3156A3]" />
-                      )}
+                      <img src={image} alt={realPhotos ? property.title : PROPERTY_PHOTOS_UNDER_VERIFICATION} className="h-full w-full object-cover" />
                       <span className="absolute left-[11px] top-[11px] inline-flex items-center gap-1 rounded-full bg-[#EEF2FA] px-2.5 py-1 text-[11px] font-bold text-[#3156A3]">
                         <Check className="h-3 w-3 stroke-[3]" /> Verified home
                       </span>
                       <span className="absolute right-[9px] top-[9px] rounded-[9px] bg-white px-2 py-1 text-[11px] font-bold text-[#233B6E]">
                         {property.listingType || "Home"}
                       </span>
+                      {!realPhotos ? <span className="absolute bottom-[11px] left-[11px] rounded-full bg-white/90 px-2.5 py-1 text-[10.5px] font-bold text-[#3156A3]">{PROPERTY_PHOTOS_UNDER_VERIFICATION}</span> : null}
                     </div>
                     <div className="px-[15px] pb-4 pt-[14px]">
                       <h3 className="line-clamp-1 text-base font-bold text-[#25302B]">{property.title}</h3>
