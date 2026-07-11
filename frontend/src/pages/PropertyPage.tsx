@@ -7,7 +7,7 @@ import { trackEvent, trackLeadIntent, trackLeadSubmitted, trackResultClicked } f
 import { cleanLeadTrackingPayload } from "@/lib/leadTracking";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { setPublicSeo } from "@/lib/seo";
 import { API_BASE_URL } from "@/config/api";
 import { PROPERTY_PHOTOS_UNDER_VERIFICATION, propertyDisplayImages, hasRealPropertyPhotos } from "@/lib/propertyImages";
+import { formatPropertyPrice, propertyPriceNumber } from "@/lib/propertyDisplay";
 import {
   getCustomerAccountSession,
   isCustomerItemShortlisted,
@@ -261,15 +262,6 @@ function safePropertyPath(property: Property): string {
   return "/properties";
 }
 
-function moneyValue(value: unknown): number {
-  const text = String(value || '').toLowerCase();
-  const amount = Number(text.replace(/[^0-9.]/g, '')) || 0;
-  if (text.includes('cr')) return amount * 10_000_000;
-  if (text.includes('lakh') || /\bl\b/.test(text)) return amount * 100_000;
-  if (text.includes('k')) return amount * 1_000;
-  return amount;
-}
-
 function publicSourceLabel(property: Property | null) {
   const label = String(property?.sourceLabel || property?.source_label || "").trim();
   if (label) {
@@ -289,6 +281,7 @@ function publicSourceLabel(property: Property | null) {
 
 export function PropertyPage() {
   const { slug } = useParams();
+  const navigate = useNavigate();
 
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
@@ -347,6 +340,11 @@ export function PropertyPage() {
         if (mounted) {
           setProperty(nextProperty);
           setActiveImage(0);
+
+          const canonicalSlug = String(nextProperty.slug || "").trim();
+          if (canonicalSlug && cleanSlug !== canonicalSlug) {
+            navigate(`/property/${canonicalSlug}`, { replace: true });
+          }
         }
       } catch (error) {
         console.error("Property fetch failed:", error);
@@ -364,13 +362,13 @@ export function PropertyPage() {
     return () => {
       mounted = false;
     };
-  }, [slug]);
+  }, [navigate, slug]);
 
   const title = property?.title || "Property";
   const societyName = getSocietyName(property);
   const societySlug = getSocietySlug(property);
   const societyLocality = getSocietyLocality(property);
-  const price = property?.price || property?.rent || "On request";
+  const price = property ? formatPropertyPrice(property) : "On request";
   const listingType = getField(property, "listingType", "listing_type", "Property");
   const listingSearchTab = searchTabForListingType(listingType);
   const propertyType = getField(property, "propertyType", "property_type", "Apartment");
@@ -379,9 +377,15 @@ export function PropertyPage() {
   const furnishedStatus = getField(property, "furnishedStatus", "furnished_status", "-");
   const amenities = useMemo(() => parseList(property?.amenities), [property?.amenities]);
   const photos = useMemo(() => (property ? getPhotos(property) : []), [property]);
-  const realPropertyPhotos = useMemo(() => (property ? hasRealPropertyPhotos(property.images) : false), [property]);
+  const realPropertyPhotos = useMemo(
+    () =>
+      property
+        ? hasRealPropertyPhotos(property.images, property.galleryImages ?? property.gallery_images, property.coverImage || property.cover_image)
+        : false,
+    [property],
+  );
   const saleListing = /sale|buy|resale|builder/i.test(String(listingType));
-  const propertyPrice = moneyValue(price);
+  const propertyPrice = propertyPriceNumber(property);
   const loanAmount = propertyPrice * (loanPercent / 100);
   const monthlyRate = interestRate / 1200;
   const months = tenureYears * 12;

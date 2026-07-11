@@ -3,12 +3,15 @@ export type PropertyListingType = 'Rent' | 'Sale' | 'Buy / Resale' | 'Sell Listi
 
 export interface AdminProperty {
   id: number;
+  slug?: string;
   title: string;
   society: string;
   locality: string;
   listingType: PropertyListingType;
   status: PropertyStatus;
   price: string;
+  salePrice?: string;
+  rentAmount?: string;
   securityDeposit: string;
   maintenance: string;
   bedrooms: string;
@@ -22,6 +25,8 @@ export interface AdminProperty {
   featured: boolean;
   verified: boolean;
   images: string[];
+  coverImage?: string;
+  galleryImages?: string[] | string;
   updated: string;
 }
 

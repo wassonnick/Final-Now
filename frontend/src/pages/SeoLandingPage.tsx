@@ -28,6 +28,7 @@ import {
 import { setPublicSeo } from "@/lib/seo";
 import { societyImageAttribution } from "@/lib/societyImages";
 import { fetchPublishedSeoOverride, type PublishedSeoOverride } from "@/lib/publishedSeoOverride";
+import { formatPropertyPrice } from "@/lib/propertyDisplay";
 
 type LandingVariant =
   | "gurgaon"
@@ -485,7 +486,7 @@ function PropertyCard({ property }: { property: any }) {
         <div className="mt-3 flex items-center justify-between border-t border-blue-50 pt-2.5">
           <span className="text-sm font-bold text-navy-500">{property.furnishedStatus || "Verified listing"}</span>
           <span className="rounded-full bg-blue-700 px-3 py-1.5 text-sm font-black text-white">
-            {compactText(property.price)}
+            {formatPropertyPrice(property)}
           </span>
         </div>
       </div>

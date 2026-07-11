@@ -14,7 +14,8 @@ import {
 } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
 import { hasGooglePlacesDisplayPhoto, societyImageAttribution } from "@/lib/societyImages";
-import { PROPERTY_PHOTOS_UNDER_VERIFICATION, hasRealPropertyPhotos } from "@/lib/propertyImages";
+import { PROPERTY_PHOTOS_UNDER_VERIFICATION } from "@/lib/propertyImages";
+import { formatPropertyPrice, hasRealPropertyDisplayPhotos } from "@/lib/propertyDisplay";
 
 // SEO compatibility anchors: Start with the path buyers and tenants search most.
 // Need help choosing between societies? · Prime localities · Top builders · User intent
@@ -242,7 +243,7 @@ export function HomePage() {
           <div className="-mx-5 flex gap-[14px] overflow-x-auto px-5 pb-1 scrollbar-hide">
             {verifiedHomes.map((property) => {
               const image = propertyImage(property);
-              const realPhotos = hasRealPropertyPhotos(property.images);
+              const realPhotos = hasRealPropertyDisplayPhotos(property);
               return (
                 <Link
                   key={property.id}
@@ -265,7 +266,7 @@ export function HomePage() {
                       {property.society || property.locality || "Gurgaon"}
                     </p>
                     <div className="mt-3 flex items-end justify-between border-t border-[#EEE6DA] pt-3">
-                      <p className="text-sm font-bold text-[#233B6E]">{property.price || "Price on request"}</p>
+                      <p className="text-sm font-bold text-[#233B6E]">{formatPropertyPrice(property, "Price on request")}</p>
                       <p className="text-[11px] text-[#6E756E]">
                         {property.bedrooms ? `${property.bedrooms} BHK` : "Details verified"}
                       </p>
@@ -357,7 +358,7 @@ export function HomePage() {
             <div className="grid grid-cols-4 gap-[22px]">
               {verifiedHomes.slice(0, 4).map((property) => {
                 const image = propertyImage(property);
-                const realPhotos = hasRealPropertyPhotos(property.images);
+                const realPhotos = hasRealPropertyDisplayPhotos(property);
                 return (
                   <Link
                     key={property.id}
@@ -383,7 +384,7 @@ export function HomePage() {
                         <div>
                           <p className="text-[11px] text-[#6E756E]">Price</p>
                           <p className="text-[13.5px] font-bold text-[#233B6E]">
-                            {property.price || "On request"}
+                            {formatPropertyPrice(property)}
                           </p>
                         </div>
                         <p className="text-right text-[11px] leading-5 text-[#6E756E]">

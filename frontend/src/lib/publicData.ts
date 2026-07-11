@@ -2,7 +2,7 @@ import { type AdminProperty } from '@/lib/adminPropertyStore';
 import { mapApiSociety, type AdminSociety } from '@/lib/adminSocietyStore';
 import { societyDisplayImage } from '@/lib/societyImages';
 import { API_BASE_URL } from '@/config/api';
-import { propertyDisplayImage } from '@/lib/propertyImages';
+import { propertyDisplayPhoto, publicPropertyUrl } from '@/lib/propertyDisplay';
 
 function extractItems(payload: any) {
   if (Array.isArray(payload?.data)) return payload.data;
@@ -34,12 +34,15 @@ export function getPublicProperties() {
 function mapApiProperty(data: any): AdminProperty {
   return {
     id: Number(data?.id || 0),
+    slug: data?.slug || data?.property_slug || '',
     title: data?.title || '',
     society: typeof data?.society === 'object' ? data.society?.name || data?.society_name || '' : data?.society || '',
     locality: data?.locality || '',
     listingType: data?.listing_type || data?.listingType || 'Rent',
     status: data?.status || 'Draft',
     price: data?.price || '',
+    salePrice: data?.sale_price || data?.salePrice || '',
+    rentAmount: data?.rent_amount || data?.rentAmount || '',
     securityDeposit: data?.security_deposit || '',
     maintenance: data?.maintenance || '',
     bedrooms: String(data?.bedrooms || ''),
@@ -53,6 +56,8 @@ function mapApiProperty(data: any): AdminProperty {
     featured: Boolean(data?.featured),
     verified: Boolean(data?.verified),
     images: Array.isArray(data?.images) ? data.images : [],
+    coverImage: data?.cover_image || data?.coverImage || '',
+    galleryImages: data?.gallery_images || data?.galleryImages || [],
     updated: data?.updated_at || '',
   };
 }
@@ -96,7 +101,7 @@ export function slugify(value: string) {
 }
 
 export function propertyUrl(property: AdminProperty) {
-  return `/property/${property.id}`;
+  return publicPropertyUrl(property);
 }
 
 export function societyImage(society: AdminSociety) {
@@ -104,7 +109,7 @@ export function societyImage(society: AdminSociety) {
 }
 
 export function propertyImage(property: AdminProperty) {
-  return propertyDisplayImage(property.images);
+  return propertyDisplayPhoto(property);
 }
 
 export function formatPublicLocation(society: AdminSociety) {

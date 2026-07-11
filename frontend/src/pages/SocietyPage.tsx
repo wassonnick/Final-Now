@@ -49,7 +49,8 @@ import {
 } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
 import { API_BASE_URL } from "@/config/api";
-import { PROPERTY_PHOTOS_UNDER_VERIFICATION, hasRealPropertyPhotos } from "@/lib/propertyImages";
+import { PROPERTY_PHOTOS_UNDER_VERIFICATION } from "@/lib/propertyImages";
+import { formatPropertyPrice, hasRealPropertyDisplayPhotos, propertyDisplayPhoto, publicPropertyUrl } from "@/lib/propertyDisplay";
 import {
   getCustomerAccountSession,
   isCustomerItemShortlisted,
@@ -297,29 +298,15 @@ function safeSocietyImage(society: any) {
 }
 
 function safePropertyImage(property: any) {
-  const images = listField(property, "images", "images");
-  if (images[0]) return images[0];
-
   try {
-    return propertyImage(property);
+    return propertyDisplayPhoto(property);
   } catch {
     return propertyImage(property);
   }
 }
 
 function safePropertyUrl(property: any) {
-  const rawSlug = String(property?.slug || "");
-
-  const slug = rawSlug
-    .replace(/^\/+/, "")
-    .replace(/^property\//, "")
-    .replace(/^property\//, "");
-
-  if (slug) {
-    return `/property/${slug}`;
-  }
-
-  return `/property/${property?.id || 1}`;
+  return publicPropertyUrl(property);
 }
 
 function safeLocation(society: any) {
@@ -1123,8 +1110,8 @@ export function SocietyPage() {
           <div className="grid gap-[18px] md:grid-cols-3">
             {properties.slice(0, 3).map((property) => (
               <Link key={property.id || property.slug} to={safePropertyUrl(property)} className="overflow-hidden rounded-[16px] border border-[#E7E3DA] bg-white">
-                <div className="relative h-[150px] bg-[#E8EDF7]"><img src={safePropertyImage(property)} alt={hasRealPropertyPhotos(field(property, "images", "images", [])) ? (property.title || "Available home") : PROPERTY_PHOTOS_UNDER_VERIFICATION} className="h-full w-full object-cover" /><span className="absolute left-2.5 top-2.5 rounded-full bg-[#EEF2FA] px-2.5 py-1 text-[11px] font-bold text-[#3156A3]">Verified · {field(property, "listedBy", "listed_by", "Source reviewed")}</span>{!hasRealPropertyPhotos(field(property, "images", "images", [])) ? <span className="absolute bottom-2.5 left-2.5 rounded-full bg-white/90 px-2.5 py-1 text-[10.5px] font-bold text-[#3156A3]">{PROPERTY_PHOTOS_UNDER_VERIFICATION}</span> : null}</div>
-                <div className="p-4"><div className="flex items-center justify-between gap-3"><strong>{property.title || "Available home"}</strong><strong className="text-[#233B6E]">{field(property, "price", "price", "On request")}</strong></div><p className="mt-1 text-[12.5px] text-[#6E756E]">{field(property, "areaSqft", "area_sqft", "Area on request")} sq.ft · {field(property, "floor", "floor", "Floor on request")} · {field(property, "furnishedStatus", "furnished_status", "Status on request")}</p></div>
+                <div className="relative h-[150px] bg-[#E8EDF7]"><img src={safePropertyImage(property)} alt={hasRealPropertyDisplayPhotos(property) ? (property.title || "Available home") : PROPERTY_PHOTOS_UNDER_VERIFICATION} className="h-full w-full object-cover" /><span className="absolute left-2.5 top-2.5 rounded-full bg-[#EEF2FA] px-2.5 py-1 text-[11px] font-bold text-[#3156A3]">Verified · {field(property, "listedBy", "listed_by", "Source reviewed")}</span>{!hasRealPropertyDisplayPhotos(property) ? <span className="absolute bottom-2.5 left-2.5 rounded-full bg-white/90 px-2.5 py-1 text-[10.5px] font-bold text-[#3156A3]">{PROPERTY_PHOTOS_UNDER_VERIFICATION}</span> : null}</div>
+                <div className="p-4"><div className="flex items-center justify-between gap-3"><strong>{property.title || "Available home"}</strong><strong className="text-[#233B6E]">{formatPropertyPrice(property)}</strong></div><p className="mt-1 text-[12.5px] text-[#6E756E]">{field(property, "areaSqft", "area_sqft", "Area on request")} sq.ft · {field(property, "floor", "floor", "Floor on request")} · {field(property, "furnishedStatus", "furnished_status", "Status on request")}</p></div>
               </Link>
             ))}
           </div>

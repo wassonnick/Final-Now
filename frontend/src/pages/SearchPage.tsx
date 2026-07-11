@@ -43,6 +43,7 @@ import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 import { GoogleSocietyMapView } from "@/components/maps/GoogleSocietyMapView";
 import { getValidMapSocieties } from "@/components/maps/SocietyMapView";
 import { API_BASE_URL } from "@/config/api";
+import { formatPropertyPrice } from "@/lib/propertyDisplay";
 
 const GOOGLE_MAPS_API_KEY = String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();
 
@@ -1539,7 +1540,7 @@ export function SearchPage() {
                         <div>
                           <p className="text-xs text-navy-400">Price</p>
                           <p className="line-clamp-1 font-black text-navy-900">
-                            {compactValue(property.price)}
+                            {formatPropertyPrice(property)}
                           </p>
                         </div>
                         <div>

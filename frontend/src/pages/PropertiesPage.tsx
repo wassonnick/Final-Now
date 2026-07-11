@@ -13,7 +13,8 @@ import { setPublicSeo } from '@/lib/seo';
 import { API_BASE_URL } from '@/config/api';
 import { PublicLeadModal } from '@/components/leads/PublicLeadModal';
 import { Button } from '@/components/ui/button';
-import { PROPERTY_PHOTOS_UNDER_VERIFICATION, hasRealPropertyPhotos, propertyDisplayImage } from '@/lib/propertyImages';
+import { PROPERTY_PHOTOS_UNDER_VERIFICATION } from '@/lib/propertyImages';
+import { formatPropertyPrice, hasRealPropertyDisplayPhotos, propertyDisplayPhoto, publicPropertyUrl } from '@/lib/propertyDisplay';
 
 type Property = {
   id: number;
@@ -24,6 +25,8 @@ type Property = {
   bedrooms?: string | number;
   area_sqft?: string | number;
   price?: string | number;
+  sale_price?: string | number;
+  rent_amount?: string | number;
   furnished_status?: string;
   featured?: boolean;
   verified?: boolean;
@@ -37,6 +40,8 @@ type Property = {
       sector?: string;
     };
   images?: string[] | null;
+  cover_image?: string | null;
+  gallery_images?: string[] | string | null;
 };
 
 type ApiResponse = {
@@ -53,7 +58,7 @@ function extractProperties(payload: ApiResponse): Property[] {
 }
 
 function propertyImage(property: Property) {
-  return propertyDisplayImage(property.images);
+  return propertyDisplayPhoto(property);
 }
 
 export function PropertiesPage() {
@@ -176,12 +181,12 @@ export function PropertiesPage() {
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {filteredProperties.map((property) => {
               const image = propertyImage(property);
-              const realPhotos = hasRealPropertyPhotos(property.images);
+              const realPhotos = hasRealPropertyDisplayPhotos(property);
 
               return (
               <Link
                 key={property.id}
-                to={`/property/${property.slug}`}
+                to={publicPropertyUrl(property)}
                 className="group overflow-hidden rounded-[2rem] border border-navy-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-soft"
               >
                 <div className="relative h-64 overflow-hidden bg-navy-50">
@@ -229,7 +234,7 @@ export function PropertiesPage() {
                     <div className="rounded-2xl bg-navy-600 px-4 py-3 text-center text-white">
                       <p className="text-xs text-white/70">Price</p>
                       <p className="text-sm font-bold">
-                        {property.price || 'On request'}
+                        {formatPropertyPrice(property)}
                       </p>
                     </div>
                   </div>
