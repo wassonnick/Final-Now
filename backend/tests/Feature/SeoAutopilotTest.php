@@ -341,6 +341,26 @@ class SeoAutopilotTest extends TestCase
         $this->assertDatabaseMissing('seo_pages',['page_key'=>'legacy:nri']);
     }
 
+    public function test_registry_sync_survives_property_rows_with_society_name_column_set(): void
+    {
+        // Production regression: Property has BOTH a `society` string column and a society()
+        // relation. Magic access returns the column, so the sync crashed with 'Attempt to
+        // read property "is_published" on string' the moment a converted listing (which fills
+        // the name column) existed.
+        $society=$this->society('Prop Sync Society','prop-sync-society');
+        \App\Models\Property::create([
+            'title'=>'4 BHK Builder Floor for Sale in Prop Sync Society','slug'=>'4-bhk-builder-floor-prop-sync',
+            'listing_type'=>'Builder Floor','status'=>'Draft','verified'=>false,
+            'society_id'=>$society->id,'society'=>$society->name,'locality'=>'Sector 70','price'=>'₹3.2 Cr',
+        ]);
+
+        app(\App\Services\Seo\SeoPageRegistryService::class)->sync();
+
+        $page=SeoPage::where('page_key','like','property:%')->firstOrFail();
+        $this->assertFalse((bool)$page->is_public,'Draft/unverified property must not be public.');
+        $this->assertSame('Prop Sync Society',($page->metadata)['society'],'Metadata must carry the related society name, not crash on the string column.');
+    }
+
     public function test_rwa_page_drafts_approve_and_publish_without_touching_society_seo(): void
     {
         // Regression: RWA pages link to a Society entity, so their drafts used to be routed

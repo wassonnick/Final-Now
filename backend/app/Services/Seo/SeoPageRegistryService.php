@@ -76,7 +76,11 @@ class SeoPageRegistryService
 
         Property::with('society')->orderBy('id')->chunk(100, function ($properties) use (&$count) {
             foreach ($properties as $property) {
-                $isPublic = $property->status === 'Live' && $property->verified && $property->published_at && $property->society?->is_published;
+                // Property has BOTH a `society` string column (the name) and a society()
+                // relation — magic access returns the column, so read the loaded relation
+                // explicitly or is_published gets read off a string and the sync 500s.
+                $linkedSociety = $property->relationLoaded('society') ? $property->getRelation('society') : null;
+                $isPublic = $property->status === 'Live' && $property->verified && $property->published_at && (bool) $linkedSociety?->is_published;
                 $this->upsert([
                     'page_key'=>'property:'.$property->id,'page_type'=>'property','entity_type'=>Property::class,'entity_id'=>$property->id,
                     'url'=>'/property/'.$property->slug,'title'=>$property->title,'meta_description'=>$property->description,'h1'=>$property->title,
@@ -84,7 +88,7 @@ class SeoPageRegistryService
                     'content_word_count'=>$this->words($property->description),'internal_link_count'=>$property->society_id ? 1 : 0,
                     'image_alt_coverage'=>count((array)$property->images) ? 0 : 100,'schema_types'=>['WebPage'],
                     'freshness_at'=>$property->availability_checked_at ?: $property->updated_at,
-                    'metadata'=>['name'=>$property->title,'society'=>$property->society?->name,'locality'=>$property->locality,'has_cta'=>true,'heading_count'=>2],
+                    'metadata'=>['name'=>$property->title,'society'=>$linkedSociety?->name,'locality'=>$property->locality,'has_cta'=>true,'heading_count'=>2],
                 ]); $count++;
             }
         });
