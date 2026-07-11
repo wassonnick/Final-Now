@@ -113,6 +113,27 @@ async function fetchRows(endpoint) {
   return { rows: [], reachedApi: false };
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Frontend and backend redeploy simultaneously on every push, so the API is frequently
+// mid-restart at exactly the moment this build script runs — a single instant attempt
+// meant the sitemap kept preserving a stale file build after build. Retry with backoff
+// to ride out the deploy race (warm path costs nothing extra).
+async function fetchRowsWithRetry(endpoint, attempts = 4, delayMs = 20000) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const result = await fetchRows(endpoint);
+    if (result.reachedApi) return result;
+    if (attempt < attempts) {
+      console.warn(
+        `Sitemap: API unreachable for ${endpoint} (attempt ${attempt}/${attempts}) — retrying in ${delayMs / 1000}s.`,
+      );
+      await sleep(delayMs);
+    }
+  }
+
+  return { rows: [], reachedApi: false };
+}
+
 function countDetailUrls(xml, segment) {
   return (String(xml).match(new RegExp(`<loc>${SITE_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/${segment}/`, "g")) || []).length;
 }
@@ -238,8 +259,8 @@ async function main() {
 
   const routes = [...staticRoutes];
 
-  const societyResult = await fetchRows("/societies");
-  const propertyResult = await fetchRows("/properties");
+  const societyResult = await fetchRowsWithRetry("/societies");
+  const propertyResult = await fetchRowsWithRetry("/properties");
 
   if (!societyResult.reachedApi || !propertyResult.reachedApi) {
     throw new Error(`Could not reach the public API at ${API_BASE}.`);
