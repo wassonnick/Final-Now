@@ -345,6 +345,57 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertSame('Meta connected, but no Facebook Pages were returned. Make sure your Facebook account has admin access to the Society Flats Page.', $account->last_error);
     }
 
+    public function test_sm2_meta_page_debug_endpoint_requires_admin_token(): void
+    {
+        $this->getJson('/api/admin/social/meta/pages/debug')->assertUnauthorized();
+    }
+
+    public function test_sm2_meta_page_debug_endpoint_returns_safe_page_diagnostic_without_tokens(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response([
+                'data' => [[
+                    'id' => 'page-1',
+                    'name' => 'Society Flats',
+                    'username' => 'societyflats',
+                    'tasks' => ['CREATE_CONTENT', 'MODERATE'],
+                    'access_token' => 'page-secret-token',
+                    'instagram_business_account' => [
+                        'id' => 'ig-1',
+                        'username' => 'societyflats.in',
+                        'name' => 'SocietyFlats Instagram',
+                    ],
+                ]],
+            ], 200),
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page',
+            'account_name' => 'Facebook Page',
+            'status' => 'connected_no_pages',
+            'last_error' => 'Meta connected, but no Facebook Pages were returned.',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement'],
+        ]);
+        $account->access_token = 'user-secret-token';
+        $account->save();
+
+        $response = $this->admin()->getJson('/api/admin/social/meta/pages/debug')
+            ->assertOk()
+            ->assertJsonPath('data.pages_count', 1)
+            ->assertJsonPath('data.pages.0.id', 'page-1')
+            ->assertJsonPath('data.pages.0.name', 'Society Flats')
+            ->assertJsonPath('data.pages.0.username', 'societyflats')
+            ->assertJsonPath('data.pages.0.has_instagram_business_account', true)
+            ->assertJsonPath('data.pages.0.instagram_username', 'societyflats.in');
+
+        $json = json_encode($response->json());
+        $this->assertStringContainsString('CREATE_CONTENT', $json);
+        $this->assertStringNotContainsString('user-secret-token', $json);
+        $this->assertStringNotContainsString('page-secret-token', $json);
+        $this->assertStringNotContainsString('access_token', $json);
+        $this->assertStringNotContainsString('client_secret', $json);
+    }
+
     public function test_sm2_instagram_business_account_is_saved_when_connected_to_selected_page(): void
     {
         Http::fake([

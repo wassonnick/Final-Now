@@ -295,6 +295,14 @@ class AdminSocialController extends Controller
         }
     }
 
+    public function debugMetaPages(): JsonResponse
+    {
+        return response()->json([
+            'status' => 'ok',
+            'data' => $this->oauth->debugMetaPages(),
+        ]);
+    }
+
     public function publishLogs(Request $request): JsonResponse
     {
         $query = SocialPublishLog::query()->latest();

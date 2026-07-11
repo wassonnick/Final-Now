@@ -121,6 +121,52 @@ class SocialOAuthService
         return $this->saveSelectedFacebookPage($account, $page);
     }
 
+    public function debugMetaPages(): array
+    {
+        $account = SocialAccount::where('platform', 'facebook_page')->first();
+
+        if (! $account || ! $account->accessToken()) {
+            return [
+                'granted_scopes' => $account?->scopes ?: [],
+                'pages_count' => 0,
+                'pages' => [],
+                'last_error' => 'No encrypted Meta OAuth token is stored for the Facebook Page connection.',
+            ];
+        }
+
+        try {
+            $response = Http::get('https://graph.facebook.com/v20.0/me/accounts', [
+                'fields' => 'id,name,username,tasks,instagram_business_account{id,username,name}',
+                'access_token' => $account->accessToken(),
+            ]);
+        } catch (\Throwable) {
+            return [
+                'granted_scopes' => $account->scopes ?: [],
+                'pages_count' => 0,
+                'pages' => [],
+                'last_error' => 'Meta Graph API request failed while checking Facebook Page access.',
+            ];
+        }
+
+        if (! $response->successful()) {
+            return [
+                'granted_scopes' => $account->scopes ?: [],
+                'pages_count' => 0,
+                'pages' => [],
+                'last_error' => (string) ($response->json('error.message') ?: 'Meta Graph API did not return Facebook Pages.'),
+            ];
+        }
+
+        $pages = $this->safeMetaDebugPages($response->json('data', []));
+
+        return [
+            'granted_scopes' => $account->scopes ?: [],
+            'pages_count' => count($pages),
+            'pages' => $pages,
+            'last_error' => $account->last_error,
+        ];
+    }
+
     private function authorizationUrl(string $platform, string $state, string $mode = 'connect'): string
     {
         return match ($platform) {
@@ -398,6 +444,26 @@ class SocialOAuthService
                         'name' => data_get($ig, 'name'),
                     ], fn ($value) => $value !== null && $value !== '') : null,
                 ], fn ($value) => $value !== null && $value !== '');
+            })
+            ->values()
+            ->all();
+    }
+
+    private function safeMetaDebugPages(array $pages): array
+    {
+        return collect($pages)
+            ->filter(fn ($page) => is_array($page) && data_get($page, 'id') && data_get($page, 'name'))
+            ->map(function (array $page) {
+                $ig = data_get($page, 'instagram_business_account');
+
+                return [
+                    'id' => (string) data_get($page, 'id'),
+                    'name' => (string) data_get($page, 'name'),
+                    'username' => data_get($page, 'username'),
+                    'tasks' => array_values(array_filter(array_map('strval', (array) data_get($page, 'tasks', [])))),
+                    'has_instagram_business_account' => is_array($ig) && (bool) data_get($ig, 'id'),
+                    'instagram_username' => is_array($ig) ? data_get($ig, 'username') : null,
+                ];
             })
             ->values()
             ->all();

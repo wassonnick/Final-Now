@@ -70,6 +70,20 @@ export type SocialOAuthStart = {
   redirect_uri?: string;
 };
 
+export type MetaPageAccessDebug = {
+  granted_scopes: string[];
+  pages_count: number;
+  pages: Array<{
+    id: string;
+    name: string;
+    username?: string | null;
+    tasks?: string[];
+    has_instagram_business_account: boolean;
+    instagram_username?: string | null;
+  }>;
+  last_error?: string | null;
+};
+
 async function json(response: Response) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body?.message || `Request failed: ${response.status}`);
@@ -84,6 +98,8 @@ export const fetchSocialContext = () => adminFetch("/admin/ai/social/context").t
 export const fetchSocialPosts = (params = "") => adminFetch(`/admin/social/posts${params ? `?${params}` : ""}`).then(json).then((body) => unwrapList<SocialPost>(body));
 export const fetchSocialAssets = (params = "") => adminFetch(`/admin/social/assets${params ? `?${params}` : ""}`).then(json).then((body) => unwrapList<SocialAsset>(body));
 export const fetchSocialAccounts = () => adminFetch("/admin/social/accounts").then(json).then((body) => body.data as SocialAccount[]);
+export const fetchMetaPageAccessDebug = () =>
+  adminFetch("/admin/social/meta/pages/debug").then(json).then((body) => body.data as MetaPageAccessDebug);
 
 export const generateSocialPosts = (payload: Record<string, unknown>) =>
   adminFetch("/admin/social/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);

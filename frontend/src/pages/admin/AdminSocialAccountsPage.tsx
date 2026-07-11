@@ -4,7 +4,14 @@ import { CheckCircle2, Copy, ExternalLink, PlugZap } from "lucide-react";
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { AdminSocialNav } from "./AdminSocialNav";
-import { fetchSocialAccounts, selectMetaPage, startSocialOAuth, type SocialAccount } from "@/lib/socialApi";
+import {
+  fetchMetaPageAccessDebug,
+  fetchSocialAccounts,
+  selectMetaPage,
+  startSocialOAuth,
+  type MetaPageAccessDebug,
+  type SocialAccount,
+} from "@/lib/socialApi";
 
 type MetaPageOption = {
   id?: string;
@@ -28,6 +35,7 @@ export function AdminSocialAccountsPage() {
   const [message, setMessage] = useState("");
   const [oauthUrl, setOauthUrl] = useState("");
   const [selectedPageId, setSelectedPageId] = useState("");
+  const [metaDebug, setMetaDebug] = useState<MetaPageAccessDebug | null>(null);
 
   const load = async () => setAccounts(await fetchSocialAccounts());
   useEffect(() => { void load().catch((error) => setMessage(error instanceof Error ? error.message : "Unable to load social accounts.")); }, []);
@@ -63,6 +71,16 @@ export function AdminSocialAccountsPage() {
       await load();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to select Facebook Page.");
+    }
+  }
+
+  async function checkMetaPageAccess() {
+    try {
+      const result = await fetchMetaPageAccessDebug();
+      setMetaDebug(result);
+      setMessage(`Meta diagnostic completed. Pages returned: ${result.pages_count}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to check Meta Page access.");
     }
   }
 
@@ -124,6 +142,41 @@ export function AdminSocialAccountsPage() {
                 </div>
                 {account.status === "connected" ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <PlugZap className="h-5 w-5 text-slate-400" />}
               </div>
+              {account.platform === "facebook_page" && account.status === "connected_no_pages" ? (
+                <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm font-black text-amber-900">Meta connected, but no Facebook Pages were returned.</p>
+                  <ul className="mt-3 list-disc space-y-1 pl-5 text-xs font-bold leading-5 text-amber-900">
+                    <li>Facebook profile must have full access to the Society Flats Page.</li>
+                    <li>Facebook profile must have access to the SocietyFlats Meta app.</li>
+                    <li>Remove old SocietyFlats app from Facebook Business Integrations.</li>
+                    <li>Reconnect and choose Edit settings if shown.</li>
+                    <li>Instagram should be connected to the selected Facebook Page.</li>
+                  </ul>
+                  <Button size="sm" variant="outline" className="mt-3 rounded-full bg-white" onClick={() => void checkMetaPageAccess()}>
+                    Check Meta Page Access
+                  </Button>
+                  {metaDebug ? (
+                    <div className="mt-3 rounded-xl bg-white p-3 text-xs font-bold text-slate-700">
+                      <p>Granted scopes: {metaDebug.granted_scopes?.join(", ") || "none returned"}</p>
+                      <p className="mt-1">Pages returned: {metaDebug.pages_count}</p>
+                      {metaDebug.last_error ? <p className="mt-1 text-rose-700">Last error: {metaDebug.last_error}</p> : null}
+                      {metaDebug.pages.length ? (
+                        <div className="mt-2 space-y-2">
+                          {metaDebug.pages.map((page) => (
+                            <div key={page.id} className="rounded-lg border p-2">
+                              <p>{page.name}{page.username ? ` (@${page.username})` : ""}</p>
+                              <p className="text-slate-500">Tasks: {page.tasks?.join(", ") || "none returned"}</p>
+                              <p className="text-slate-500">
+                                Instagram: {page.has_instagram_business_account ? page.instagram_username || "connected" : "not connected"}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               {account.status === "pending_page_selection" && availablePages.length > 1 ? (
                 <div className="mt-4 rounded-2xl border border-blue-100 bg-white p-3">
                   <p className="text-sm font-black text-slate-900">Choose Facebook Page to connect</p>
