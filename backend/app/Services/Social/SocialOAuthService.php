@@ -9,10 +9,6 @@ use InvalidArgumentException;
 
 class SocialOAuthService
 {
-    private const META_CONNECT_SCOPES = ['public_profile', 'email', 'pages_show_list', 'pages_read_engagement'];
-    private const META_INSTAGRAM_PUBLISH_SCOPES = ['instagram_basic', 'instagram_content_publish', 'pages_show_list', 'pages_read_engagement'];
-    private const META_FACEBOOK_PUBLISH_SCOPES = ['pages_manage_posts', 'pages_manage_engagement', 'pages_show_list', 'pages_read_engagement'];
-
     public const PLATFORMS = [
         'instagram_business' => 'Instagram Business',
         'facebook_page' => 'Facebook Page',
@@ -173,12 +169,26 @@ class SocialOAuthService
     public function scopes(string $platform, string $mode = 'connect'): array
     {
         return match ($platform) {
-            'instagram_business' => $mode === 'publish' ? self::META_INSTAGRAM_PUBLISH_SCOPES : self::META_CONNECT_SCOPES,
-            'facebook_page' => $mode === 'publish' ? self::META_FACEBOOK_PUBLISH_SCOPES : self::META_CONNECT_SCOPES,
+            'instagram_business', 'facebook_page' => $this->metaScopes($mode),
             'linkedin' => ['openid', 'profile', 'w_member_social'],
             'google_business_profile' => ['https://www.googleapis.com/auth/business.manage'],
             default => [],
         };
+    }
+
+    private function metaScopes(string $mode): array
+    {
+        $key = $mode === 'publish' ? 'meta_publish_scopes' : 'meta_connect_scopes';
+        $fallback = $mode === 'publish'
+            ? 'pages_manage_posts,pages_manage_engagement,instagram_basic,instagram_content_publish'
+            : 'public_profile,pages_show_list,pages_read_engagement';
+
+        $raw = (string) config("services.social_oauth.{$key}", $fallback);
+
+        return array_values(array_unique(array_filter(array_map(
+            static fn ($scope) => trim((string) $scope),
+            preg_split('/[\s,]+/', $raw) ?: []
+        ))));
     }
 
     private function grantedScopes(string $platform, array $token, string $mode): array

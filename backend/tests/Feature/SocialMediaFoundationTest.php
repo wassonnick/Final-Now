@@ -227,6 +227,7 @@ class SocialMediaFoundationTest extends TestCase
 
         $this->assertStringContainsString('pages_show_list', $scope);
         $this->assertStringContainsString('pages_read_engagement', $scope);
+        $this->assertStringNotContainsString('email', $scope);
         $this->assertStringNotContainsString('pages_manage_posts', $scope);
         $this->assertStringNotContainsString('pages_manage_engagement', $scope);
         $this->assertStringNotContainsString('instagram_content_publish', $scope);
@@ -239,7 +240,7 @@ class SocialMediaFoundationTest extends TestCase
                 'access_token' => 'meta-read-token',
                 'expires_in' => 3600,
                 'token_type' => 'Bearer',
-                'scope' => 'public_profile,email,pages_show_list,pages_read_engagement',
+                'scope' => 'public_profile,pages_show_list,pages_read_engagement',
             ], 200),
         ]);
 
