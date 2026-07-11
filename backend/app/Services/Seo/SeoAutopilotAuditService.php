@@ -43,7 +43,10 @@ class SeoAutopilotAuditService
         foreach($checks as $key=>[$passed,$points,$message]){$earned=$passed?$points:0;$score+=$earned;$breakdown[$key]=['score'=>$earned,'max'=>$points,'passed'=>$passed];if(!$passed)$issues[]=['code'=>$key,'message'=>$message,'priority'=>in_array($key,['indexability','sitemap','title','h1'],true)?'high':'medium'];}
         $audit=SeoAudit::create(['seo_page_id'=>$page->id,'score'=>$score,'status'=>$score>=80?'healthy':($score>=50?'warning':'failed'),'breakdown'=>$breakdown,'issues'=>$issues,'checked_at'=>now()]);
         $this->tasks($page,$issues);
-        foreach((array)($meta['missing_data']??[]) as $field)$this->task($page,'missing_data','medium','Verify missing '.str_replace('_',' ',$field),'A verified source is required before AI may make this claim.',['field'=>$field]);
+        $missingData=(array)($meta['missing_data']??[]);
+        foreach($missingData as $field)$this->task($page,'missing_data','medium','Verify missing '.str_replace('_',' ',$field),'A verified source is required before AI may make this claim.',['field'=>$field]);
+        // Data arrived since the task was opened — close it automatically.
+        if($missingData===[])SeoTask::where('seo_page_id',$page->id)->where('task_type','missing_data')->where('status','open')->update(['status'=>'resolved','resolved_at'=>now()]);
         return $audit;
     }
 

@@ -89,7 +89,7 @@ class SeoAutopilotRunner
             if($generated>=max(0,min($limit,20)))break;
             $page=SeoPage::find($pageId);
             if(!$page||!$page->is_public||SeoDraft::where('seo_page_id',$page->id)->whereIn('status',['needs_review','approved'])->exists())continue;
-            if($page->entity_type===Society::class&&$page->entity_id&&(($page->metadata?:[])['seo_status']??null)==='published')continue;
+            if($page->page_type==='society'&&$page->entity_type===Society::class&&$page->entity_id&&(($page->metadata?:[])['seo_status']??null)==='published')continue;
             try{$this->drafts->generate($page);$generated++;}
             catch(\InvalidArgumentException){continue;}
         }

@@ -320,6 +320,56 @@ class SeoAutopilotTest extends TestCase
         $this->assertTrue(collect($suggested['faq'])->contains(fn($f)=>str_contains($f['question'],'stand out')&&str_contains($f['answer'],'Fact Society A (8.6/10)')),'FAQ must surface top societies with scores.');
     }
 
+    public function test_rwa_page_drafts_approve_and_publish_without_touching_society_seo(): void
+    {
+        // Regression: RWA pages link to a Society entity, so their drafts used to be routed
+        // into the society-SEO-content path and blocked with "Published society SEO was not
+        // overwritten" — making them unapprovable.
+        $society=$this->society('Rwa Draft Society','rwa-draft-society');
+        SocietySeoContent::create(['society_id'=>$society->id,'status'=>'published','seo_title'=>'Society title stays','seo_description'=>'Original.','seo_h1'=>'Society H1','published_at'=>now()]);
+
+        app(\App\Services\Seo\SeoPageRegistryService::class)->sync();
+        $rwaPage=SeoPage::where('page_key','rwa:'.$society->id)->firstOrFail();
+        $draft=SeoDraft::create(['seo_page_id'=>$rwaPage->id,'status'=>'needs_review','current_version'=>['seo_title'=>$rwaPage->title],'suggested_version'=>['seo_title'=>'Rwa Draft Society RWA Gurgaon | Community Updates','seo_description'=>'Verified resident updates.','seo_h1'=>'Rwa Draft Society RWA Gurgaon'],'confidence_score'=>82,'risk_warnings'=>\App\Services\Seo\SeoDraftService::BOILERPLATE_WARNINGS,'generated_by'=>'ai']);
+
+        $this->admin()->postJson("/api/admin/seo-autopilot/drafts/{$draft->id}/approve")->assertOk();
+        $this->admin()->postJson("/api/admin/seo-autopilot/drafts/{$draft->id}/publish")->assertOk();
+
+        $this->assertSame('published',$draft->fresh()->status);
+        $this->assertSame('Rwa Draft Society RWA Gurgaon | Community Updates',$rwaPage->fresh()->title,'Approval must land on the RWA page itself.');
+        $this->assertSame('Society title stays',SocietySeoContent::firstOrFail()->seo_title,'The society\'s own published SEO must be untouched.');
+    }
+
+    public function test_sitemap_and_missing_data_tasks_auto_resolve(): void
+    {
+        // A published page present in the live sitemap clears its sitemap follow-up tasks,
+        // and a page whose data gaps were filled clears its missing_data task — no human
+        // needed to confirm what the machine can verify.
+        $society=$this->society('Autoresolve Society','autoresolve-society');
+        $society->update(['rera_number'=>'RERA-123','rent_range'=>'₹60,000 - ₹90,000 per month','buy_range'=>'₹2 Cr - ₹3 Cr']);
+        SocietySeoContent::create(['society_id'=>$society->id,'status'=>'published','seo_title'=>'T','seo_description'=>'D','seo_h1'=>'H','published_at'=>now()]);
+        app(\App\Services\Seo\SeoPageRegistryService::class)->sync();
+        $page=SeoPage::where('page_key','society:'.$society->id)->firstOrFail();
+
+        SeoTask::create(['seo_page_id'=>$page->id,'task_type'=>'sitemap_refresh_after_publish','status'=>'open','priority'=>'high','title'=>'Refresh sitemap','description'=>'x','source'=>'workflow']);
+        SeoTask::create(['seo_page_id'=>$page->id,'task_type'=>'missing_data','status'=>'open','priority'=>'medium','title'=>'Verify missing rera','description'=>'x','source'=>'data']);
+
+        $base=rtrim((string)config('services.lead_notifications.frontend_url'),'/');
+        $allLocs=SeoPage::where('is_public',true)->where('sitemap_included',true)->get()->map(fn($p)=>'<loc>'.$base.$p->canonical_url.'</loc>')->implode('');
+        Http::fake([
+            $base.'/robots.txt'=>Http::response("User-agent: *\nAllow: /",200),
+            $base.'/sitemap.xml'=>Http::response('<urlset>'.$allLocs.'</urlset>',200),
+            $base.'/404'=>Http::response('not found',200),
+            '*'=>Http::response('ok',200),
+        ]);
+
+        app(\App\Services\Seo\SeoTechnicalAuditService::class)->run();
+        app(\App\Services\Seo\SeoAutopilotAuditService::class)->audit($page->fresh());
+
+        $this->assertSame('resolved',SeoTask::where('seo_page_id',$page->id)->where('task_type','sitemap_refresh_after_publish')->firstOrFail()->status);
+        $this->assertSame('resolved',SeoTask::where('seo_page_id',$page->id)->where('task_type','missing_data')->firstOrFail()->status);
+    }
+
     public function test_auto_publish_kill_switch_keeps_all_drafts_in_review(): void
     {
         $this->society('Killswitch Society','killswitch-society');
