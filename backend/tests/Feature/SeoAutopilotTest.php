@@ -320,6 +320,27 @@ class SeoAutopilotTest extends TestCase
         $this->assertTrue(collect($suggested['faq'])->contains(fn($f)=>str_contains($f['question'],'stand out')&&str_contains($f['answer'],'Fact Society A (8.6/10)')),'FAQ must surface top societies with scores.');
     }
 
+    public function test_registry_sync_survives_legacy_rows_holding_urls_under_stale_page_keys(): void
+    {
+        // Production regression: seo_pages.url is UNIQUE, and old registry versions left rows
+        // holding module URLs under stale page_keys. A plain updateOrCreate(page_key) then
+        // 500s on the url index during sync (the admin dashboard runs sync inline).
+        SeoPage::create(['page_key'=>'legacy:sell-page','page_type'=>'guide','url'=>'/sell','canonical_url'=>'/sell','title'=>'Old sell title','is_public'=>true,'is_indexable'=>true]);
+        // And a stale duplicate scenario: current key exists AND another row holds the URL.
+        SeoPage::create(['page_key'=>'guide:nri','page_type'=>'guide','url'=>'/nri-old-url','canonical_url'=>'/nri-old-url','is_public'=>true,'is_indexable'=>true]);
+        SeoPage::create(['page_key'=>'legacy:nri','page_type'=>'guide','url'=>'/nri-services','canonical_url'=>'/nri-services','is_public'=>true,'is_indexable'=>true]);
+
+        app(\App\Services\Seo\SeoPageRegistryService::class)->sync();
+
+        // The legacy /sell row was adopted under the new key — no duplicate, no crash.
+        $this->assertSame(1,SeoPage::where('url','/sell')->count());
+        $this->assertSame('guide:sell',SeoPage::where('url','/sell')->firstOrFail()->page_key);
+        // The stale duplicate holding /nri-services was removed; the keyed row owns the URL.
+        $this->assertSame(1,SeoPage::where('url','/nri-services')->count());
+        $this->assertSame('guide:nri',SeoPage::where('url','/nri-services')->firstOrFail()->page_key);
+        $this->assertDatabaseMissing('seo_pages',['page_key'=>'legacy:nri']);
+    }
+
     public function test_rwa_page_drafts_approve_and_publish_without_touching_society_seo(): void
     {
         // Regression: RWA pages link to a Society entity, so their drafts used to be routed

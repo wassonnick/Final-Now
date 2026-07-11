@@ -161,7 +161,31 @@ class SeoPageRegistryService
         ];
     }
 
-    private function upsert(array $attributes): SeoPage { return SeoPage::updateOrCreate(['page_key'=>$attributes['page_key']],$attributes); }
+    /**
+     * seo_pages has a UNIQUE index on url as well as page_key. Registry history can leave a
+     * row holding a URL under a stale page_key (keys were renamed across versions and the
+     * sync never deletes) — a plain updateOrCreate(page_key) then explodes on the url index.
+     * Reconcile on both: adopt the row matching either identity, and drop a stale duplicate
+     * that would otherwise still hold our unique URL (its audits cascade, tasks null out).
+     */
+    private function upsert(array $attributes): SeoPage
+    {
+        $byKey = SeoPage::where('page_key', $attributes['page_key'])->first();
+        $byUrl = SeoPage::where('url', $attributes['url'])->first();
+
+        if ($byKey && $byUrl && $byKey->id !== $byUrl->id) {
+            $byUrl->delete();
+        }
+
+        $target = $byKey ?: $byUrl;
+        if ($target) {
+            $target->update($attributes);
+
+            return $target;
+        }
+
+        return SeoPage::create($attributes);
+    }
     private function builderSlug(string $builder): string
     {
         $value=Str::lower($builder);
