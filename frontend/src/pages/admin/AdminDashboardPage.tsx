@@ -451,6 +451,7 @@ export function AdminDashboardPage() {
   const [inbox, setInbox] = useState<any>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [suggestionBusyId, setSuggestionBusyId] = useState<number | null>(null);
+  const [scheduler, setScheduler] = useState<{ healthy: boolean; last_heartbeat_at?: string | null; minutes_since?: number | null } | null>(null);
 
   const loadStats = async () => {
     try {
@@ -465,6 +466,7 @@ export function AdminDashboardPage() {
       }
 
       setStats({ ...emptyStats, ...json });
+      setScheduler(json?.scheduler || null);
     } catch (err) {
       console.error(err);
       setError("Unable to load live dashboard stats.");
@@ -795,6 +797,11 @@ export function AdminDashboardPage() {
   return (
     <AdminLayout title="Dashboard" subtitle="SocietyFlats command center">
       <div className="space-y-4 md:space-y-6">
+        {scheduler && !scheduler.healthy ? (
+          <div className="rounded-2xl border border-rose-300 bg-rose-50 px-5 py-3.5 text-sm font-bold text-rose-800">
+            ⚠ Scheduler appears down — {scheduler.last_heartbeat_at ? `last heartbeat ${scheduler.minutes_since} min ago` : "no heartbeat recorded yet"}. All scheduled automation (SEO cycle, social autopilot, market refresh, queue jobs) is stalled until the backend scheduler loop runs again — check the societyflats-api service on Render.
+          </div>
+        ) : null}
         {(error || leadError || inventoryError) ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-700">
             {error || leadError || inventoryError}

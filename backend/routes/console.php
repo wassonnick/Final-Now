@@ -318,6 +318,11 @@ Artisan::command('imports:tick', function () {
     $this->info("Advanced {$jobs->count()} in-flight import job(s).");
 })->purpose('Drive queued/running auto-import jobs to completion in the background');
 
+// Scheduler heartbeat: stamped every tick so the admin dashboard can raise a visible
+// "scheduler appears down" warning when automation silently stalls (there is no separate
+// worker service — the web container's schedule:run loop is the only engine).
+Schedule::call(fn () => \Illuminate\Support\Facades\Cache::put(\App\Services\Ops\SchedulerHeartbeat::CACHE_KEY, now()->toIso8601String(), now()->addDays(3)))
+    ->everyMinute()->name('scheduler-heartbeat');
 Schedule::command('imports:tick')->everyMinute()->withoutOverlapping();
 Schedule::command('saved-searches:match')->dailyAt('08:00')->withoutOverlapping();
 Schedule::command('ops:daily-digest')->dailyAt('07:30')->withoutOverlapping();
