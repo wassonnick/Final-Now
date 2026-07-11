@@ -218,6 +218,49 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertStringNotContainsString('raw-refresh-token', $json);
     }
 
+    public function test_sm2_meta_oauth_default_url_uses_connect_only_scopes(): void
+    {
+        $response = $this->admin()->postJson('/api/admin/social/oauth/facebook_page/start')->assertOk();
+        $url = $response->json('data.authorization_url');
+        parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+        $scope = (string) ($query['scope'] ?? '');
+
+        $this->assertStringContainsString('pages_show_list', $scope);
+        $this->assertStringContainsString('pages_read_engagement', $scope);
+        $this->assertStringNotContainsString('pages_manage_posts', $scope);
+        $this->assertStringNotContainsString('pages_manage_engagement', $scope);
+        $this->assertStringNotContainsString('instagram_content_publish', $scope);
+    }
+
+    public function test_sm2_meta_account_can_connect_with_read_only_scopes(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/oauth/access_token' => Http::response([
+                'access_token' => 'meta-read-token',
+                'expires_in' => 3600,
+                'token_type' => 'Bearer',
+                'scope' => 'public_profile,email,pages_show_list,pages_read_engagement',
+            ], 200),
+        ]);
+
+        $start = $this->admin()->postJson('/api/admin/social/oauth/facebook_page/start')->assertOk();
+
+        $response = $this->getJson('/api/admin/social/oauth/callback?'.http_build_query([
+            'platform' => 'facebook_page',
+            'code' => 'oauth-code',
+            'state' => $start->json('data.state'),
+        ]))->assertOk();
+
+        $json = json_encode($response->json());
+        $this->assertStringNotContainsString('meta-read-token', $json);
+
+        $account = SocialAccount::where('platform', 'facebook_page')->firstOrFail();
+        $this->assertSame('connected', $account->status);
+        $this->assertContains('pages_show_list', $account->scopes);
+        $this->assertContains('pages_read_engagement', $account->scopes);
+        $this->assertNotContains('pages_manage_posts', $account->scopes);
+    }
+
     public function test_sm2_manual_publish_requires_approval_confirmation_and_connected_account(): void
     {
         $post = SocialPost::create([
@@ -243,6 +286,7 @@ class SocialMediaFoundationTest extends TestCase
             'account_name' => 'Instagram Business',
             'account_id' => 'ig-user-1',
             'status' => 'connected',
+            'scopes' => ['instagram_content_publish', 'instagram_basic', 'pages_show_list', 'pages_read_engagement'],
             'metadata' => ['instagram_business_account_id' => 'ig-user-1'],
         ]);
         $account->access_token = 'secret-instagram-token';
@@ -292,6 +336,7 @@ class SocialMediaFoundationTest extends TestCase
             'account_name' => 'Instagram Business',
             'account_id' => 'ig-user-1',
             'status' => 'connected',
+            'scopes' => ['instagram_content_publish', 'instagram_basic', 'pages_show_list', 'pages_read_engagement'],
             'metadata' => ['instagram_business_account_id' => 'ig-user-1'],
         ]);
         $account->access_token = 'secret-instagram-token';
@@ -311,6 +356,67 @@ class SocialMediaFoundationTest extends TestCase
             'external_post_id' => 'ig-post-1',
         ]);
         $this->assertTrue(SocialPublishLog::where('social_post_id', $post->id)->where('status', 'published')->exists());
+    }
+
+    public function test_sm2_facebook_publish_is_blocked_without_pages_manage_posts_scope(): void
+    {
+        $post = SocialPost::create([
+            'platform' => 'facebook',
+            'post_type' => 'single_post',
+            'title' => 'Approved Facebook post',
+            'caption' => 'Neutral approved society update.',
+            'risk_level' => 'low',
+            'status' => 'approved',
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page',
+            'account_name' => 'Facebook Page',
+            'account_id' => 'page-1',
+            'status' => 'connected',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement'],
+        ]);
+        $account->access_token = 'secret-facebook-token';
+        $account->save();
+
+        $this->admin()->postJson("/api/admin/social/posts/{$post->id}/publish", [
+            'confirm_publish' => true,
+            'social_account_id' => $account->id,
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'Meta publish blocked: required publishing permission is not granted.');
+
+        $this->assertTrue(SocialPublishLog::where('social_post_id', $post->id)->where('status', 'blocked')->exists());
+    }
+
+    public function test_sm2_instagram_publish_is_blocked_without_instagram_content_publish_scope(): void
+    {
+        $post = SocialPost::create([
+            'platform' => 'instagram',
+            'post_type' => 'single_post',
+            'title' => 'Approved Instagram post',
+            'caption' => 'Neutral approved society update.',
+            'risk_level' => 'low',
+            'status' => 'approved',
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'instagram_business',
+            'account_name' => 'Instagram Business',
+            'account_id' => 'ig-user-1',
+            'status' => 'connected',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement'],
+            'metadata' => ['instagram_business_account_id' => 'ig-user-1'],
+        ]);
+        $account->access_token = 'secret-instagram-token';
+        $account->save();
+
+        $this->admin()->postJson("/api/admin/social/posts/{$post->id}/publish", [
+            'confirm_publish' => true,
+            'social_account_id' => $account->id,
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'Meta publish blocked: required publishing permission is not granted.');
+
+        $this->assertTrue(SocialPublishLog::where('social_post_id', $post->id)->where('status', 'blocked')->exists());
     }
 
     public function test_sm2_oauth_callback_stores_tokens_encrypted_without_returning_them(): void

@@ -242,10 +242,14 @@ class AdminSocialController extends Controller
         return response()->json(['status' => 'ok', 'data' => $accounts]);
     }
 
-    public function startOAuth(string $platform): JsonResponse
+    public function startOAuth(Request $request, string $platform): JsonResponse
     {
+        $data = $request->validate([
+            'mode' => ['sometimes', Rule::in(['connect', 'publish'])],
+        ]);
+
         try {
-            return response()->json(['status' => 'ok', 'data' => $this->oauth->start($platform)]);
+            return response()->json(['status' => 'ok', 'data' => $this->oauth->start($platform, $data['mode'] ?? 'connect')]);
         } catch (\InvalidArgumentException $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
         }

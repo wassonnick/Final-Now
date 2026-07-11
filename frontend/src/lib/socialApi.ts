@@ -97,8 +97,12 @@ export const generateSocialPostImage = (id: number) => adminFetch(`/admin/social
 export const publishSocialPost = (id: number, payload: Record<string, unknown>) =>
   adminFetch(`/admin/social/posts/${id}/publish`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);
 
-export const startSocialOAuth = (platform: string) =>
-  adminFetch(`/admin/social/oauth/${platform}/start`, { method: "POST" }).then(json).then((body) => body.data as SocialOAuthStart);
+export const startSocialOAuth = (platform: string, mode: "connect" | "publish" = "connect") =>
+  adminFetch(`/admin/social/oauth/${platform}/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode }),
+  }).then(json).then((body) => body.data as SocialOAuthStart);
 
 export const completeSocialOAuth = (payload: { platform: string; code: string; state: string }) =>
   adminFetch("/admin/social/oauth/callback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);

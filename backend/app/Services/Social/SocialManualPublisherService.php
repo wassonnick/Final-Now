@@ -55,6 +55,8 @@ class SocialManualPublisherService
 
     private function send(SocialPost $post, SocialAccount $account, string $platform, string $action, ?string $actor): array
     {
+        $this->ensurePublishingScopes($post, $account, $platform, $action, $actor);
+
         $asset = $this->validatedAsset($post, in_array($platform, ['instagram_business', 'facebook_page'], true));
 
         $this->log($post, $account, $action.'_attempt', 'started', $actor, 'Publish requested.');
@@ -92,6 +94,34 @@ class SocialManualPublisherService
 
             throw new InvalidArgumentException($message);
         }
+    }
+
+    private function ensurePublishingScopes(SocialPost $post, SocialAccount $account, string $platform, string $action, ?string $actor): void
+    {
+        $required = match ($platform) {
+            'facebook_page' => ['pages_manage_posts'],
+            'instagram_business' => ['instagram_content_publish'],
+            default => [],
+        };
+
+        if (! $required) {
+            return;
+        }
+
+        $granted = array_map('strval', $account->scopes ?: []);
+        $missing = array_values(array_diff($required, $granted));
+        if (! $missing) {
+            return;
+        }
+
+        $message = 'Meta publish blocked: required publishing permission is not granted.';
+        $post->update(['publish_status' => 'failed', 'publish_error' => $message]);
+        $account->update(['last_error' => $message]);
+        $this->log($post->fresh(), $account, $action.'_blocked', 'blocked', $actor, $message, [
+            'missing_scopes' => $missing,
+        ]);
+
+        throw new InvalidArgumentException($message);
     }
 
     private function validatePublishGate(SocialPost $post, array $options): void
