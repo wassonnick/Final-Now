@@ -9,6 +9,7 @@ import {
   fetchSocialAccounts,
   selectMetaPage,
   startSocialOAuth,
+  type MetaDebugPage,
   type MetaPageAccessDebug,
   type SocialAccount,
 } from "@/lib/socialApi";
@@ -28,6 +29,16 @@ function metaPublishMissing(account: SocialAccount) {
 
 function isMetaAccount(account: SocialAccount) {
   return account.platform === "facebook_page" || account.platform === "instagram_business";
+}
+
+function metaDebugPages(debug: MetaPageAccessDebug | null): MetaDebugPage[] {
+  if (!debug) return [];
+
+  return debug.businesses.flatMap((business) => [...business.owned_pages, ...business.client_pages]);
+}
+
+function societyFlatsDebugPage(debug: MetaPageAccessDebug | null): MetaDebugPage | undefined {
+  return metaDebugPages(debug).find((page) => page.name.trim().toLowerCase() === "society flats");
 }
 
 export function AdminSocialAccountsPage() {
@@ -78,7 +89,8 @@ export function AdminSocialAccountsPage() {
     try {
       const result = await fetchMetaPageAccessDebug();
       setMetaDebug(result);
-      setMessage(`Meta diagnostic completed. Pages returned: ${result.pages_count}.`);
+      const fallbackCount = result.businesses.reduce((sum, business) => sum + business.owned_pages_count + business.client_pages_count, 0);
+      setMessage(`Meta diagnostic completed. /me/accounts pages: ${result.pages_count_from_me_accounts}. Business asset pages: ${fallbackCount}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to check Meta Page access.");
     }
@@ -109,6 +121,7 @@ export function AdminSocialAccountsPage() {
             const availablePages = account.platform === "facebook_page" && Array.isArray(account.metadata?.available_pages)
               ? (account.metadata.available_pages as MetaPageOption[])
               : [];
+            const fallbackSocietyFlatsPage = societyFlatsDebugPage(metaDebug);
 
             return (
             <article key={account.id} className="rounded-2xl border bg-slate-50 p-4">
@@ -158,17 +171,33 @@ export function AdminSocialAccountsPage() {
                   {metaDebug ? (
                     <div className="mt-3 rounded-xl bg-white p-3 text-xs font-bold text-slate-700">
                       <p>Granted scopes: {metaDebug.granted_scopes?.join(", ") || "none returned"}</p>
-                      <p className="mt-1">Pages returned: {metaDebug.pages_count}</p>
+                      <p className="mt-1">Meta profile: {metaDebug.me?.name || "not returned"}</p>
+                      <p className="mt-1">/me/accounts pages: {metaDebug.pages_count_from_me_accounts}</p>
+                      <p className="mt-1">Business portfolios: {metaDebug.businesses_count}</p>
                       {metaDebug.last_error ? <p className="mt-1 text-rose-700">Last error: {metaDebug.last_error}</p> : null}
-                      {metaDebug.pages.length ? (
-                        <div className="mt-2 space-y-2">
-                          {metaDebug.pages.map((page) => (
-                            <div key={page.id} className="rounded-lg border p-2">
-                              <p>{page.name}{page.username ? ` (@${page.username})` : ""}</p>
-                              <p className="text-slate-500">Tasks: {page.tasks?.join(", ") || "none returned"}</p>
-                              <p className="text-slate-500">
-                                Instagram: {page.has_instagram_business_account ? page.instagram_username || "connected" : "not connected"}
-                              </p>
+                      {fallbackSocietyFlatsPage ? (
+                        <Button size="sm" className="mt-3 rounded-full" onClick={() => void selectMetaPage(fallbackSocietyFlatsPage.id).then(load).then(() => setMessage("Society Flats connected from Meta Business assets."))}>
+                          Connect Society Flats
+                        </Button>
+                      ) : null}
+                      {metaDebug.businesses.length ? (
+                        <div className="mt-3 space-y-3">
+                          {metaDebug.businesses.map((business) => (
+                            <div key={business.id} className="rounded-lg border p-2">
+                              <p className="text-slate-900">{business.name}</p>
+                              <p className="text-slate-500">Owned pages: {business.owned_pages_count} · Client pages: {business.client_pages_count}</p>
+                              {[...business.owned_pages, ...business.client_pages].map((page) => (
+                                <div key={`${business.id}-${page.id}`} className="mt-2 rounded-lg bg-slate-50 p-2">
+                                  <p>{page.name}{page.username ? ` (@${page.username})` : ""}</p>
+                                  <p className="text-slate-500">Tasks: {page.tasks?.join(", ") || "none returned"}</p>
+                                  <p className="text-slate-500">
+                                    Instagram: {page.has_instagram_business_account ? page.instagram_username || "connected" : "not connected"}
+                                  </p>
+                                  <Button size="sm" variant="outline" className="mt-2 rounded-full bg-white" onClick={() => void selectMetaPage(page.id).then(load).then(() => setMessage(`${page.name} connected from Meta Business assets.`))}>
+                                    Connect this Page
+                                  </Button>
+                                </div>
+                              ))}
                             </div>
                           ))}
                         </div>

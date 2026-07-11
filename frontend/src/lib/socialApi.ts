@@ -71,17 +71,28 @@ export type SocialOAuthStart = {
 };
 
 export type MetaPageAccessDebug = {
+  me?: { id: string; name?: string | null } | null;
   granted_scopes: string[];
-  pages_count: number;
-  pages: Array<{
+  pages_count_from_me_accounts: number;
+  businesses_count: number;
+  businesses: Array<{
     id: string;
     name: string;
-    username?: string | null;
-    tasks?: string[];
-    has_instagram_business_account: boolean;
-    instagram_username?: string | null;
+    owned_pages_count: number;
+    client_pages_count: number;
+    owned_pages: MetaDebugPage[];
+    client_pages: MetaDebugPage[];
   }>;
   last_error?: string | null;
+};
+
+export type MetaDebugPage = {
+  id: string;
+  name: string;
+  username?: string | null;
+  tasks?: string[];
+  has_instagram_business_account: boolean;
+  instagram_username?: string | null;
 };
 
 async function json(response: Response) {
@@ -124,7 +135,7 @@ export const completeSocialOAuth = (payload: { platform: string; code: string; s
   adminFetch("/admin/social/oauth/callback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);
 
 export const selectMetaPage = (pageId: string) =>
-  adminFetch("/admin/social/oauth/meta/select-page", {
+  adminFetch("/admin/social/meta/pages/select", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ page_id: pageId }),

@@ -353,6 +353,10 @@ class SocialMediaFoundationTest extends TestCase
     public function test_sm2_meta_page_debug_endpoint_returns_safe_page_diagnostic_without_tokens(): void
     {
         Http::fake([
+            'https://graph.facebook.com/v20.0/me?*' => Http::response([
+                'id' => 'user-1',
+                'name' => 'Nitin Wasson',
+            ], 200),
             'https://graph.facebook.com/v20.0/me/accounts*' => Http::response([
                 'data' => [[
                     'id' => 'page-1',
@@ -367,6 +371,14 @@ class SocialMediaFoundationTest extends TestCase
                     ],
                 ]],
             ], 200),
+            'https://graph.facebook.com/v20.0/me/businesses*' => Http::response([
+                'data' => [[
+                    'id' => 'biz-1',
+                    'name' => 'SocietyFlats Business',
+                ]],
+            ], 200),
+            'https://graph.facebook.com/v20.0/biz-1/owned_pages*' => Http::response(['data' => []], 200),
+            'https://graph.facebook.com/v20.0/biz-1/client_pages*' => Http::response(['data' => []], 200),
         ]);
 
         $account = SocialAccount::create([
@@ -381,19 +393,148 @@ class SocialMediaFoundationTest extends TestCase
 
         $response = $this->admin()->getJson('/api/admin/social/meta/pages/debug')
             ->assertOk()
-            ->assertJsonPath('data.pages_count', 1)
-            ->assertJsonPath('data.pages.0.id', 'page-1')
-            ->assertJsonPath('data.pages.0.name', 'Society Flats')
-            ->assertJsonPath('data.pages.0.username', 'societyflats')
-            ->assertJsonPath('data.pages.0.has_instagram_business_account', true)
-            ->assertJsonPath('data.pages.0.instagram_username', 'societyflats.in');
+            ->assertJsonPath('data.me.id', 'user-1')
+            ->assertJsonPath('data.pages_count_from_me_accounts', 1)
+            ->assertJsonPath('data.businesses_count', 1)
+            ->assertJsonPath('data.businesses.0.id', 'biz-1')
+            ->assertJsonPath('data.businesses.0.owned_pages_count', 0);
 
         $json = json_encode($response->json());
-        $this->assertStringContainsString('CREATE_CONTENT', $json);
         $this->assertStringNotContainsString('user-secret-token', $json);
         $this->assertStringNotContainsString('page-secret-token', $json);
         $this->assertStringNotContainsString('access_token', $json);
         $this->assertStringNotContainsString('client_secret', $json);
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/me/accounts'));
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/me/businesses'));
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/biz-1/owned_pages'));
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/biz-1/client_pages'));
+    }
+
+    public function test_sm2_meta_business_fallback_detects_owned_pages_and_auto_connects_society_flats(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/me?*' => Http::response(['id' => 'user-1', 'name' => 'Nitin Wasson'], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response(['data' => []], 200),
+            'https://graph.facebook.com/v20.0/me/businesses*' => Http::response(['data' => [['id' => 'biz-1', 'name' => 'SocietyFlats Business']]], 200),
+            'https://graph.facebook.com/v20.0/biz-1/owned_pages*' => Http::response([
+                'data' => [[
+                    'id' => 'page-sf',
+                    'name' => 'Society Flats',
+                    'username' => 'societyflats',
+                    'tasks' => ['CREATE_CONTENT'],
+                    'instagram_business_account' => [
+                        'id' => 'ig-sf',
+                        'username' => 'societyflats.in',
+                        'name' => 'SocietyFlats Instagram',
+                    ],
+                    'access_token' => 'page-secret-token',
+                ]],
+            ], 200),
+            'https://graph.facebook.com/v20.0/biz-1/client_pages*' => Http::response(['data' => []], 200),
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page',
+            'account_name' => 'Facebook Page',
+            'status' => 'connected_no_pages',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement'],
+        ]);
+        $account->access_token = 'user-secret-token';
+        $account->save();
+
+        $response = $this->admin()->getJson('/api/admin/social/meta/pages/debug')
+            ->assertOk()
+            ->assertJsonPath('data.pages_count_from_me_accounts', 0)
+            ->assertJsonPath('data.businesses.0.owned_pages_count', 1)
+            ->assertJsonPath('data.businesses.0.owned_pages.0.name', 'Society Flats')
+            ->assertJsonPath('data.businesses.0.owned_pages.0.has_instagram_business_account', true);
+
+        $account->refresh();
+        $this->assertSame('connected', $account->status);
+        $this->assertSame('Society Flats', $account->account_name);
+        $this->assertSame('page-sf', $account->account_id);
+        $this->assertSame('business_asset_fallback', data_get($account->metadata, 'source'));
+        $this->assertFalse((bool) data_get($account->metadata, 'publish_enabled'));
+
+        $instagram = SocialAccount::where('platform', 'instagram_business')->firstOrFail();
+        $this->assertSame('connected', $instagram->status);
+        $this->assertSame('ig-sf', $instagram->account_id);
+        $this->assertSame('societyflats.in', $instagram->account_handle);
+        $this->assertSame('page-sf', data_get($instagram->metadata, 'connected_facebook_page_id'));
+
+        $json = json_encode($response->json());
+        $this->assertStringNotContainsString('user-secret-token', $json);
+        $this->assertStringNotContainsString('page-secret-token', $json);
+        $this->assertStringNotContainsString('access_token', $json);
+    }
+
+    public function test_sm2_meta_page_select_endpoint_saves_client_page_from_business_fallback(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/me?*' => Http::response(['id' => 'user-1', 'name' => 'Nitin Wasson'], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response(['data' => []], 200),
+            'https://graph.facebook.com/v20.0/me/businesses*' => Http::response(['data' => [['id' => 'biz-1', 'name' => 'SocietyFlats Business']]], 200),
+            'https://graph.facebook.com/v20.0/biz-1/owned_pages*' => Http::response(['data' => []], 200),
+            'https://graph.facebook.com/v20.0/biz-1/client_pages*' => Http::response([
+                'data' => [[
+                    'id' => 'page-client',
+                    'name' => 'Society Flats',
+                    'username' => 'societyflats',
+                    'tasks' => ['CREATE_CONTENT'],
+                    'instagram_business_account' => [
+                        'id' => 'ig-client',
+                        'username' => 'societyflats.in',
+                        'name' => 'SocietyFlats Instagram',
+                    ],
+                ]],
+            ], 200),
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page',
+            'account_name' => 'Facebook Page',
+            'status' => 'connected_no_pages',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement'],
+        ]);
+        $account->access_token = 'user-secret-token';
+        $account->save();
+
+        $this->admin()->postJson('/api/admin/social/meta/pages/select', [
+            'page_id' => 'page-client',
+        ])->assertOk();
+
+        $account->refresh();
+        $this->assertSame('connected', $account->status);
+        $this->assertSame('page-client', $account->account_id);
+        $this->assertSame('client_pages', data_get($account->metadata, 'source'));
+
+        $instagram = SocialAccount::where('platform', 'instagram_business')->firstOrFail();
+        $this->assertSame('connected', $instagram->status);
+        $this->assertSame('ig-client', $instagram->account_id);
+    }
+
+    public function test_sm2_meta_page_select_endpoint_rejects_invalid_page_id(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/me?*' => Http::response(['id' => 'user-1', 'name' => 'Nitin Wasson'], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response(['data' => []], 200),
+            'https://graph.facebook.com/v20.0/me/businesses*' => Http::response(['data' => []], 200),
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page',
+            'account_name' => 'Facebook Page',
+            'status' => 'connected_no_pages',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement'],
+        ]);
+        $account->access_token = 'user-secret-token';
+        $account->save();
+
+        $this->admin()->postJson('/api/admin/social/meta/pages/select', [
+            'page_id' => 'missing-page',
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'Selected Facebook Page was not found in Meta Page or Business assets.');
     }
 
     public function test_sm2_instagram_business_account_is_saved_when_connected_to_selected_page(): void
