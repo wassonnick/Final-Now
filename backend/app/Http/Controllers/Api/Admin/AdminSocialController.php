@@ -276,6 +276,25 @@ class AdminSocialController extends Controller
         }
     }
 
+    public function selectMetaPage(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'page_id' => ['required', 'string'],
+        ]);
+
+        try {
+            $account = $this->oauth->selectMetaPage($data['page_id']);
+
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Facebook Page selected. Tokens remain encrypted and are never returned to the frontend.',
+                'data' => $account->only(['id', 'platform', 'account_name', 'account_handle', 'account_id', 'status', 'token_expires_at', 'last_connected_at', 'scopes', 'metadata']),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
     public function publishLogs(Request $request): JsonResponse
     {
         $query = SocialPublishLog::query()->latest();

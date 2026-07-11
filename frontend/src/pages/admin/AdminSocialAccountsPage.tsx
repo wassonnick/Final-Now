@@ -4,7 +4,13 @@ import { CheckCircle2, Copy, ExternalLink, PlugZap } from "lucide-react";
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { AdminSocialNav } from "./AdminSocialNav";
-import { fetchSocialAccounts, startSocialOAuth, type SocialAccount } from "@/lib/socialApi";
+import { fetchSocialAccounts, selectMetaPage, startSocialOAuth, type SocialAccount } from "@/lib/socialApi";
+
+type MetaPageOption = {
+  id?: string;
+  name?: string;
+  username?: string;
+};
 
 function metaPublishMissing(account: SocialAccount) {
   const scopes = account.scopes || [];
@@ -21,6 +27,7 @@ export function AdminSocialAccountsPage() {
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [message, setMessage] = useState("");
   const [oauthUrl, setOauthUrl] = useState("");
+  const [selectedPageId, setSelectedPageId] = useState("");
 
   const load = async () => setAccounts(await fetchSocialAccounts());
   useEffect(() => { void load().catch((error) => setMessage(error instanceof Error ? error.message : "Unable to load social accounts.")); }, []);
@@ -40,6 +47,22 @@ export function AdminSocialAccountsPage() {
       await load();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to start OAuth.");
+    }
+  }
+
+  async function chooseMetaPage() {
+    if (!selectedPageId) {
+      setMessage("Choose a Facebook Page to connect.");
+      return;
+    }
+
+    try {
+      await selectMetaPage(selectedPageId);
+      setMessage("Facebook Page selected. Instagram Business account was connected too if Meta returned one.");
+      setSelectedPageId("");
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to select Facebook Page.");
     }
   }
 
@@ -65,6 +88,9 @@ export function AdminSocialAccountsPage() {
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {accounts.map((account) => {
             const publishMissing = account.status === "connected" && metaPublishMissing(account);
+            const availablePages = account.platform === "facebook_page" && Array.isArray(account.metadata?.available_pages)
+              ? (account.metadata.available_pages as MetaPageOption[])
+              : [];
 
             return (
             <article key={account.id} className="rounded-2xl border bg-slate-50 p-4">
@@ -73,6 +99,11 @@ export function AdminSocialAccountsPage() {
                   <p className="text-xs font-black uppercase tracking-wide text-blue-700">{account.platform.replace(/_/g, " ")}</p>
                   <h3 className="mt-1 text-lg font-black">{account.account_name || account.platform}</h3>
                   <p className="mt-1 text-sm font-bold text-slate-500">Status: {account.status.replace(/_/g, " ")}</p>
+                  {account.status === "connected" ? (
+                    <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">
+                      Connected
+                    </p>
+                  ) : null}
                   {publishMissing ? (
                     <p className="mt-2 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">
                       Connected / Publish not enabled
@@ -84,11 +115,33 @@ export function AdminSocialAccountsPage() {
                     </p>
                   ) : null}
                   {account.account_handle ? <p className="mt-1 text-xs font-bold text-slate-500">Handle: {account.account_handle}</p> : null}
+                  {account.account_id ? <p className="mt-1 text-xs font-bold text-slate-500">Account ID: {account.account_id}</p> : null}
                   {account.last_connected_at ? <p className="mt-1 text-xs font-bold text-emerald-700">Connected: {new Date(account.last_connected_at).toLocaleString("en-IN")}</p> : null}
                   {account.last_error ? <p className="mt-2 text-xs font-bold text-rose-700">{account.last_error}</p> : null}
+                  {account.platform === "instagram_business" && account.status !== "connected" && account.metadata?.message ? (
+                    <p className="mt-2 text-xs font-bold text-slate-600">{String(account.metadata.message)}</p>
+                  ) : null}
                 </div>
                 {account.status === "connected" ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <PlugZap className="h-5 w-5 text-slate-400" />}
               </div>
+              {account.status === "pending_page_selection" && availablePages.length > 1 ? (
+                <div className="mt-4 rounded-2xl border border-blue-100 bg-white p-3">
+                  <p className="text-sm font-black text-slate-900">Choose Facebook Page to connect</p>
+                  <select
+                    className="mt-3 w-full rounded-xl border bg-white px-3 py-2 text-sm font-bold text-slate-700"
+                    value={selectedPageId}
+                    onChange={(event) => setSelectedPageId(event.target.value)}
+                  >
+                    <option value="">Select a Page</option>
+                    {availablePages.map((page) => (
+                      <option key={page.id} value={page.id}>{page.name}{page.username ? ` (@${page.username})` : ""}</option>
+                    ))}
+                  </select>
+                  <Button size="sm" className="mt-3 rounded-full" onClick={() => void chooseMetaPage()}>
+                    Save selected Page
+                  </Button>
+                </div>
+              ) : null}
               <Button variant="outline" className="mt-4 rounded-full bg-white" onClick={() => void connect(account.platform)}>
                 {account.platform === "whatsapp_business" ? "Enable manual export" : <><ExternalLink className="mr-2 h-4 w-4" />Connect OAuth</>}
               </Button>

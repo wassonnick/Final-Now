@@ -242,6 +242,13 @@ class SocialMediaFoundationTest extends TestCase
                 'token_type' => 'Bearer',
                 'scope' => 'public_profile,pages_show_list,pages_read_engagement',
             ], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response([
+                'data' => [[
+                    'id' => 'page-1',
+                    'name' => 'Society Flats',
+                    'username' => 'societyflats',
+                ]],
+            ], 200),
         ]);
 
         $start = $this->admin()->postJson('/api/admin/social/oauth/facebook_page/start')->assertOk();
@@ -257,9 +264,125 @@ class SocialMediaFoundationTest extends TestCase
 
         $account = SocialAccount::where('platform', 'facebook_page')->firstOrFail();
         $this->assertSame('connected', $account->status);
+        $this->assertSame('Society Flats', $account->account_name);
+        $this->assertSame('page-1', $account->account_id);
+        $this->assertSame('societyflats', $account->account_handle);
         $this->assertContains('pages_show_list', $account->scopes);
         $this->assertContains('pages_read_engagement', $account->scopes);
         $this->assertNotContains('pages_manage_posts', $account->scopes);
+        $this->assertFalse((bool) data_get($account->metadata, 'sm1a_placeholder'));
+    }
+
+    public function test_sm2_meta_oauth_requires_page_selection_when_multiple_pages_returned(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/oauth/access_token' => Http::response([
+                'access_token' => 'meta-read-token',
+                'expires_in' => 3600,
+                'token_type' => 'Bearer',
+                'scope' => 'public_profile,pages_show_list,pages_read_engagement',
+            ], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response([
+                'data' => [
+                    ['id' => 'page-1', 'name' => 'Society Flats', 'username' => 'societyflats'],
+                    ['id' => 'page-2', 'name' => 'Other Page', 'username' => 'otherpage'],
+                ],
+            ], 200),
+        ]);
+
+        $start = $this->admin()->postJson('/api/admin/social/oauth/facebook_page/start')->assertOk();
+
+        $this->getJson('/api/admin/social/oauth/callback?'.http_build_query([
+            'platform' => 'facebook_page',
+            'code' => 'oauth-code',
+            'state' => $start->json('data.state'),
+        ]))->assertOk();
+
+        $account = SocialAccount::where('platform', 'facebook_page')->firstOrFail();
+        $this->assertSame('pending_page_selection', $account->status);
+        $this->assertNull($account->account_id);
+        $this->assertSame(2, data_get($account->metadata, 'available_pages_count'));
+        $this->assertCount(2, data_get($account->metadata, 'available_pages'));
+
+        $responseJson = json_encode($this->admin()->getJson('/api/admin/social/accounts')->json());
+        $this->assertStringNotContainsString('meta-read-token', $responseJson);
+
+        $this->admin()->postJson('/api/admin/social/oauth/meta/select-page', [
+            'page_id' => 'page-2',
+        ])->assertOk();
+
+        $account->refresh();
+        $this->assertSame('connected', $account->status);
+        $this->assertSame('Other Page', $account->account_name);
+        $this->assertSame('page-2', $account->account_id);
+        $this->assertSame('otherpage', $account->account_handle);
+    }
+
+    public function test_sm2_meta_oauth_handles_no_pages_safely(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/oauth/access_token' => Http::response([
+                'access_token' => 'meta-read-token',
+                'expires_in' => 3600,
+                'token_type' => 'Bearer',
+                'scope' => 'public_profile,pages_show_list,pages_read_engagement',
+            ], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response(['data' => []], 200),
+        ]);
+
+        $start = $this->admin()->postJson('/api/admin/social/oauth/facebook_page/start')->assertOk();
+
+        $this->getJson('/api/admin/social/oauth/callback?'.http_build_query([
+            'platform' => 'facebook_page',
+            'code' => 'oauth-code',
+            'state' => $start->json('data.state'),
+        ]))->assertOk();
+
+        $account = SocialAccount::where('platform', 'facebook_page')->firstOrFail();
+        $this->assertSame('connected_no_pages', $account->status);
+        $this->assertNull($account->account_id);
+        $this->assertSame(0, data_get($account->metadata, 'available_pages_count'));
+        $this->assertSame('Meta connected, but no Facebook Pages were returned. Make sure your Facebook account has admin access to the Society Flats Page.', $account->last_error);
+    }
+
+    public function test_sm2_instagram_business_account_is_saved_when_connected_to_selected_page(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/oauth/access_token' => Http::response([
+                'access_token' => 'meta-read-token',
+                'expires_in' => 3600,
+                'token_type' => 'Bearer',
+                'scope' => 'public_profile,pages_show_list,pages_read_engagement',
+            ], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response([
+                'data' => [[
+                    'id' => 'page-1',
+                    'name' => 'Society Flats',
+                    'username' => 'societyflats',
+                    'instagram_business_account' => [
+                        'id' => 'ig-1',
+                        'username' => 'societyflats.in',
+                        'name' => 'SocietyFlats Instagram',
+                    ],
+                ]],
+            ], 200),
+        ]);
+
+        $start = $this->admin()->postJson('/api/admin/social/oauth/facebook_page/start')->assertOk();
+
+        $this->getJson('/api/admin/social/oauth/callback?'.http_build_query([
+            'platform' => 'facebook_page',
+            'code' => 'oauth-code',
+            'state' => $start->json('data.state'),
+        ]))->assertOk();
+
+        $instagram = SocialAccount::where('platform', 'instagram_business')->firstOrFail();
+        $this->assertSame('connected', $instagram->status);
+        $this->assertSame('SocietyFlats Instagram', $instagram->account_name);
+        $this->assertSame('ig-1', $instagram->account_id);
+        $this->assertSame('societyflats.in', $instagram->account_handle);
+        $this->assertFalse((bool) data_get($instagram->metadata, 'publish_enabled'));
+        $this->assertSame('meta-read-token', $instagram->accessToken());
     }
 
     public function test_sm2_manual_publish_requires_approval_confirmation_and_connected_account(): void

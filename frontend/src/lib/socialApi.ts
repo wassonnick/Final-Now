@@ -107,6 +107,13 @@ export const startSocialOAuth = (platform: string, mode: "connect" | "publish" =
 export const completeSocialOAuth = (payload: { platform: string; code: string; state: string }) =>
   adminFetch("/admin/social/oauth/callback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);
 
+export const selectMetaPage = (pageId: string) =>
+  adminFetch("/admin/social/oauth/meta/select-page", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ page_id: pageId }),
+  }).then(json);
+
 export const updateSocialAsset = (id: number, payload: Record<string, unknown>) =>
   adminFetch(`/admin/social/assets/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);
 

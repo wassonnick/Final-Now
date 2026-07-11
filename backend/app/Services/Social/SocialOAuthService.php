@@ -100,7 +100,25 @@ class SocialOAuthService
         $account->refresh_token = $token['refresh_token'] ?? null;
         $account->save();
 
+        if ($account->platform === 'facebook_page') {
+            return $this->syncMetaPages($account);
+        }
+
         return $account;
+    }
+
+    public function selectMetaPage(string $pageId): SocialAccount
+    {
+        $account = SocialAccount::where('platform', 'facebook_page')->firstOrFail();
+        $pages = data_get($account->metadata, 'available_pages', []);
+        $page = collect(is_array($pages) ? $pages : [])
+            ->first(fn ($candidate) => (string) data_get($candidate, 'id') === (string) $pageId);
+
+        if (! is_array($page)) {
+            throw new InvalidArgumentException('Selected Facebook Page was not found in the connected Meta account.');
+        }
+
+        return $this->saveSelectedFacebookPage($account, $page);
     }
 
     private function authorizationUrl(string $platform, string $state, string $mode = 'connect'): string
@@ -224,5 +242,164 @@ class SocialOAuthService
         if (! array_key_exists($platform, self::PLATFORMS)) {
             throw new InvalidArgumentException('Unsupported social platform.');
         }
+    }
+
+    private function syncMetaPages(SocialAccount $account): SocialAccount
+    {
+        try {
+            $response = Http::get('https://graph.facebook.com/v20.0/me/accounts', [
+                'fields' => 'id,name,username,instagram_business_account{id,username,name}',
+                'access_token' => $account->accessToken(),
+            ]);
+
+            if (! $response->successful()) {
+                return $this->markMetaPageFetchFailed($account, 'Meta connected, but Facebook Pages could not be fetched. Check pages_show_list permission and Page access.');
+            }
+
+            $pages = $this->safeMetaPages($response->json('data', []));
+        } catch (\Throwable) {
+            return $this->markMetaPageFetchFailed($account, 'Meta connected, but Facebook Pages could not be fetched. Check pages_show_list permission and Page access.');
+        }
+
+        if (count($pages) === 1) {
+            return $this->saveSelectedFacebookPage($account, $pages[0]);
+        }
+
+        $metadata = array_merge($account->metadata ?: [], [
+            'oauth_mode' => 'connect',
+            'publish_enabled' => false,
+            'available_pages_count' => count($pages),
+            'available_pages' => $pages,
+            'sm1a_placeholder' => false,
+        ]);
+
+        if ($pages === []) {
+            $account->update([
+                'status' => 'connected_no_pages',
+                'account_name' => 'Facebook Page',
+                'account_id' => null,
+                'account_handle' => null,
+                'last_error' => 'Meta connected, but no Facebook Pages were returned. Make sure your Facebook account has admin access to the Society Flats Page.',
+                'metadata' => $metadata,
+            ]);
+
+            return $account->fresh();
+        }
+
+        $account->update([
+            'status' => 'pending_page_selection',
+            'account_name' => 'Choose Facebook Page',
+            'account_id' => null,
+            'account_handle' => null,
+            'last_error' => null,
+            'metadata' => $metadata,
+        ]);
+
+        return $account->fresh();
+    }
+
+    private function saveSelectedFacebookPage(SocialAccount $account, array $page): SocialAccount
+    {
+        $metadata = array_merge($account->metadata ?: [], [
+            'oauth_mode' => 'connect',
+            'publish_enabled' => false,
+            'available_pages_count' => (int) data_get($account->metadata, 'available_pages_count', 1),
+            'selected_page_id' => (string) data_get($page, 'id'),
+            'sm1a_placeholder' => false,
+        ]);
+
+        $account->update([
+            'status' => 'connected',
+            'account_name' => (string) data_get($page, 'name', 'Facebook Page'),
+            'account_id' => (string) data_get($page, 'id'),
+            'account_handle' => data_get($page, 'username'),
+            'last_error' => null,
+            'metadata' => $metadata,
+        ]);
+
+        $this->syncInstagramBusinessAccount($page, $account);
+
+        return $account->fresh();
+    }
+
+    private function syncInstagramBusinessAccount(array $page, SocialAccount $facebookAccount): void
+    {
+        $ig = data_get($page, 'instagram_business_account');
+        if (! is_array($ig) || ! data_get($ig, 'id')) {
+            SocialAccount::updateOrCreate(
+                ['platform' => 'instagram_business'],
+                [
+                    'account_name' => self::PLATFORMS['instagram_business'],
+                    'status' => 'not_connected',
+                    'last_error' => null,
+                    'metadata' => [
+                        'message' => 'No Instagram Business account is connected to this Facebook Page.',
+                        'publish_enabled' => false,
+                        'sm2_manual_only' => true,
+                    ],
+                ],
+            );
+
+            return;
+        }
+
+        $instagram = SocialAccount::firstOrNew(['platform' => 'instagram_business']);
+        $instagram->fill([
+            'account_name' => (string) (data_get($ig, 'name') ?: data_get($ig, 'username') ?: 'Instagram Business'),
+            'account_id' => (string) data_get($ig, 'id'),
+            'account_handle' => data_get($ig, 'username'),
+            'status' => 'connected',
+            'last_connected_at' => now(),
+            'last_error' => null,
+            'scopes' => $facebookAccount->scopes ?: [],
+            'token_expires_at' => $facebookAccount->token_expires_at,
+            'metadata' => array_merge($instagram->metadata ?: [], [
+                'oauth_mode' => 'connect',
+                'publish_enabled' => false,
+                'facebook_page_id' => $facebookAccount->account_id,
+                'instagram_business_account_id' => (string) data_get($ig, 'id'),
+                'sm1a_placeholder' => false,
+            ]),
+        ]);
+        $instagram->access_token = $facebookAccount->accessToken();
+        $instagram->save();
+    }
+
+    private function markMetaPageFetchFailed(SocialAccount $account, string $message): SocialAccount
+    {
+        $account->update([
+            'status' => 'failed',
+            'last_error' => $message,
+            'metadata' => array_merge($account->metadata ?: [], [
+                'oauth_mode' => 'connect',
+                'publish_enabled' => false,
+                'available_pages_count' => 0,
+                'sm1a_placeholder' => false,
+            ]),
+        ]);
+
+        return $account->fresh();
+    }
+
+    private function safeMetaPages(array $pages): array
+    {
+        return collect($pages)
+            ->filter(fn ($page) => is_array($page) && data_get($page, 'id') && data_get($page, 'name'))
+            ->map(function (array $page) {
+                $ig = data_get($page, 'instagram_business_account');
+
+                return array_filter([
+                    'id' => (string) data_get($page, 'id'),
+                    'name' => (string) data_get($page, 'name'),
+                    'username' => data_get($page, 'username'),
+                    'instagram_business_account' => is_array($ig) && data_get($ig, 'id') ? array_filter([
+                        'id' => (string) data_get($ig, 'id'),
+                        'username' => data_get($ig, 'username'),
+                        'name' => data_get($ig, 'name'),
+                    ], fn ($value) => $value !== null && $value !== '') : null,
+                ], fn ($value) => $value !== null && $value !== '');
+            })
+            ->values()
+            ->all();
     }
 }

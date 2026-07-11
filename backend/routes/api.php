@@ -92,6 +92,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
         Route::get('/accounts', [AdminSocialController::class, 'accounts']);
         Route::post('/oauth/{platform}/start', [AdminSocialController::class, 'startOAuth']);
         Route::post('/oauth/callback', [AdminSocialController::class, 'oauthCallback']);
+        Route::post('/oauth/meta/select-page', [AdminSocialController::class, 'selectMetaPage']);
         Route::get('/publish-logs', [AdminSocialController::class, 'publishLogs']);
     });
     Route::prefix('seo-autopilot')->group(function () {
