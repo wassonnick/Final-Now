@@ -120,6 +120,9 @@ CACHE_DRIVER=file
 SESSION_DRIVER=database
 QUEUE_CONNECTION=database
 
+META_CONNECT_SCOPES=public_profile,pages_show_list,pages_read_engagement,business_management
+META_PUBLISH_SCOPES=pages_manage_posts,pages_manage_engagement,instagram_basic,instagram_content_publish
+
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.mailgun.org
 MAIL_PORT=587

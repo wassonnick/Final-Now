@@ -144,6 +144,8 @@ class SocialOAuthService
             return [
                 'me' => null,
                 'granted_scopes' => $account?->scopes ?: [],
+                'business_management_required' => true,
+                'business_management_message' => 'Business Portfolio lookup requires Meta business_management permission. Reconnect Meta after adding this scope.',
                 'pages_count_from_me_accounts' => 0,
                 'businesses_count' => 0,
                 'businesses' => [],
@@ -158,10 +160,21 @@ class SocialOAuthService
             $account = $this->saveSelectedFacebookPage($account, $this->pageForSave($societyFlatsPage), 'business_asset_fallback');
         }
 
-        return array_merge([
+        $missingBusinessManagement = ! in_array('business_management', $account->scopes ?: [], true);
+
+        $debug = $this->safeMetaInventoryForDebug($inventory);
+        $debug = array_merge($debug, [
             'granted_scopes' => $account->scopes ?: [],
-            'last_error' => $account->last_error,
-        ], $this->safeMetaInventoryForDebug($inventory));
+            'business_management_required' => $missingBusinessManagement,
+            'business_management_message' => $missingBusinessManagement
+                ? 'Business Portfolio lookup requires Meta business_management permission. Reconnect Meta after adding this scope.'
+                : null,
+            'last_error' => $missingBusinessManagement
+                ? 'Business Portfolio lookup requires Meta business_management permission. Reconnect Meta after adding this scope.'
+                : ($debug['last_error'] ?: $account->last_error),
+        ]);
+
+        return $debug;
     }
 
     private function authorizationUrl(string $platform, string $state, string $mode = 'connect'): string
@@ -242,7 +255,7 @@ class SocialOAuthService
         $key = $mode === 'publish' ? 'meta_publish_scopes' : 'meta_connect_scopes';
         $fallback = $mode === 'publish'
             ? 'pages_manage_posts,pages_manage_engagement,instagram_basic,instagram_content_publish'
-            : 'public_profile,pages_show_list,pages_read_engagement';
+            : 'public_profile,pages_show_list,pages_read_engagement,business_management';
 
         $raw = (string) config("services.social_oauth.{$key}", $fallback);
 

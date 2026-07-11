@@ -192,6 +192,10 @@ services:
         sync: false
       - key: GOOGLE_SEARCH_CONSOLE_REFRESH_TOKEN
         sync: false
+      - key: META_CONNECT_SCOPES
+        value: public_profile,pages_show_list,pages_read_engagement,business_management
+      - key: META_PUBLISH_SCOPES
+        value: pages_manage_posts,pages_manage_engagement,instagram_basic,instagram_content_publish
       - key: UPLOADS_DISK
         value: r2
       - key: R2_ACCESS_KEY_ID

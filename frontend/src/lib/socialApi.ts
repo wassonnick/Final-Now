@@ -73,6 +73,8 @@ export type SocialOAuthStart = {
 export type MetaPageAccessDebug = {
   me?: { id: string; name?: string | null } | null;
   granted_scopes: string[];
+  business_management_required?: boolean;
+  business_management_message?: string | null;
   pages_count_from_me_accounts: number;
   businesses_count: number;
   businesses: Array<{

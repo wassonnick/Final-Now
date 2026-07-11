@@ -227,6 +227,7 @@ class SocialMediaFoundationTest extends TestCase
 
         $this->assertStringContainsString('pages_show_list', $scope);
         $this->assertStringContainsString('pages_read_engagement', $scope);
+        $this->assertStringContainsString('business_management', $scope);
         $this->assertStringNotContainsString('email', $scope);
         $this->assertStringNotContainsString('pages_manage_posts', $scope);
         $this->assertStringNotContainsString('pages_manage_engagement', $scope);
@@ -386,7 +387,7 @@ class SocialMediaFoundationTest extends TestCase
             'account_name' => 'Facebook Page',
             'status' => 'connected_no_pages',
             'last_error' => 'Meta connected, but no Facebook Pages were returned.',
-            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement'],
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement', 'business_management'],
         ]);
         $account->access_token = 'user-secret-token';
         $account->save();
@@ -395,6 +396,7 @@ class SocialMediaFoundationTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.me.id', 'user-1')
             ->assertJsonPath('data.pages_count_from_me_accounts', 1)
+            ->assertJsonPath('data.business_management_required', false)
             ->assertJsonPath('data.businesses_count', 1)
             ->assertJsonPath('data.businesses.0.id', 'biz-1')
             ->assertJsonPath('data.businesses.0.owned_pages_count', 0);
@@ -409,6 +411,36 @@ class SocialMediaFoundationTest extends TestCase
         Http::assertSent(fn ($request) => str_contains($request->url(), '/me/businesses'));
         Http::assertSent(fn ($request) => str_contains($request->url(), '/biz-1/owned_pages'));
         Http::assertSent(fn ($request) => str_contains($request->url(), '/biz-1/client_pages'));
+    }
+
+    public function test_sm2_meta_page_debug_reports_missing_business_management_scope_clearly(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/me?*' => Http::response(['id' => 'user-1', 'name' => 'Nitin Wasson'], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response(['data' => []], 200),
+            'https://graph.facebook.com/v20.0/me/businesses*' => Http::response([
+                'error' => ['message' => '(#100) Missing Permission'],
+            ], 400),
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page',
+            'account_name' => 'Facebook Page',
+            'status' => 'connected_no_pages',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement'],
+        ]);
+        $account->access_token = 'user-secret-token';
+        $account->save();
+
+        $response = $this->admin()->getJson('/api/admin/social/meta/pages/debug')
+            ->assertOk()
+            ->assertJsonPath('data.business_management_required', true)
+            ->assertJsonPath('data.business_management_message', 'Business Portfolio lookup requires Meta business_management permission. Reconnect Meta after adding this scope.')
+            ->assertJsonPath('data.last_error', 'Business Portfolio lookup requires Meta business_management permission. Reconnect Meta after adding this scope.');
+
+        $json = json_encode($response->json());
+        $this->assertStringNotContainsString('user-secret-token', $json);
+        $this->assertStringNotContainsString('access_token', $json);
     }
 
     public function test_sm2_meta_business_fallback_detects_owned_pages_and_auto_connects_society_flats(): void
@@ -438,7 +470,7 @@ class SocialMediaFoundationTest extends TestCase
             'platform' => 'facebook_page',
             'account_name' => 'Facebook Page',
             'status' => 'connected_no_pages',
-            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement'],
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement', 'business_management'],
         ]);
         $account->access_token = 'user-secret-token';
         $account->save();
@@ -456,6 +488,7 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertSame('page-sf', $account->account_id);
         $this->assertSame('business_asset_fallback', data_get($account->metadata, 'source'));
         $this->assertFalse((bool) data_get($account->metadata, 'publish_enabled'));
+        $this->assertNotContains('pages_manage_posts', $account->scopes);
 
         $instagram = SocialAccount::where('platform', 'instagram_business')->firstOrFail();
         $this->assertSame('connected', $instagram->status);
@@ -495,7 +528,7 @@ class SocialMediaFoundationTest extends TestCase
             'platform' => 'facebook_page',
             'account_name' => 'Facebook Page',
             'status' => 'connected_no_pages',
-            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement'],
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement', 'business_management'],
         ]);
         $account->access_token = 'user-secret-token';
         $account->save();
@@ -526,7 +559,7 @@ class SocialMediaFoundationTest extends TestCase
             'platform' => 'facebook_page',
             'account_name' => 'Facebook Page',
             'status' => 'connected_no_pages',
-            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement'],
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement', 'business_management'],
         ]);
         $account->access_token = 'user-secret-token';
         $account->save();

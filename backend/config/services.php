@@ -57,7 +57,7 @@ return [
         'redirect_uri' => env('SOCIAL_OAUTH_REDIRECT_URI', rtrim(env('APP_URL', 'https://final-now.onrender.com'), '/').'/api/admin/social/oauth/callback'),
         'meta_client_id' => env('META_CLIENT_ID'),
         'meta_client_secret' => env('META_CLIENT_SECRET'),
-        'meta_connect_scopes' => env('META_CONNECT_SCOPES', 'public_profile,pages_show_list,pages_read_engagement'),
+        'meta_connect_scopes' => env('META_CONNECT_SCOPES', 'public_profile,pages_show_list,pages_read_engagement,business_management'),
         'meta_publish_scopes' => env('META_PUBLISH_SCOPES', 'pages_manage_posts,pages_manage_engagement,instagram_basic,instagram_content_publish'),
         'linkedin_client_id' => env('LINKEDIN_CLIENT_ID'),
         'linkedin_client_secret' => env('LINKEDIN_CLIENT_SECRET'),

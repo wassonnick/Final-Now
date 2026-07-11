@@ -171,6 +171,11 @@ export function AdminSocialAccountsPage() {
                   {metaDebug ? (
                     <div className="mt-3 rounded-xl bg-white p-3 text-xs font-bold text-slate-700">
                       <p>Granted scopes: {metaDebug.granted_scopes?.join(", ") || "none returned"}</p>
+                      {metaDebug.business_management_required ? (
+                        <p className="mt-2 rounded-lg bg-amber-100 p-2 text-amber-900">
+                          {metaDebug.business_management_message || "Business Portfolio lookup requires Meta business_management permission. Reconnect Meta after adding this scope."}
+                        </p>
+                      ) : null}
                       <p className="mt-1">Meta profile: {metaDebug.me?.name || "not returned"}</p>
                       <p className="mt-1">/me/accounts pages: {metaDebug.pages_count_from_me_accounts}</p>
                       <p className="mt-1">Business portfolios: {metaDebug.businesses_count}</p>
