@@ -547,6 +547,110 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertSame('ig-client', $instagram->account_id);
     }
 
+    public function test_sm2_meta_page_select_endpoint_saves_page_from_available_pages_metadata(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/me?*' => Http::response(['id' => 'user-1', 'name' => 'Nitin Wasson'], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response(['data' => []], 200),
+            'https://graph.facebook.com/v20.0/me/businesses*' => Http::response(['data' => []], 200),
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page',
+            'account_name' => 'Choose Facebook Page',
+            'status' => 'pending_page_selection',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement', 'business_management'],
+            'metadata' => [
+                'available_pages_count' => 2,
+                'available_pages' => [
+                    ['id' => 'page-saved', 'name' => 'Society Flats', 'username' => 'societyflats'],
+                    ['id' => 'page-other', 'name' => 'Other Page', 'username' => 'other'],
+                ],
+            ],
+        ]);
+        $account->access_token = 'user-secret-token';
+        $account->save();
+
+        $this->admin()->postJson('/api/admin/social/meta/pages/select', [
+            'page_id' => 'page-saved',
+        ])->assertOk();
+
+        $account->refresh();
+        $this->assertSame('connected', $account->status);
+        $this->assertSame('Society Flats', $account->account_name);
+        $this->assertSame('page-saved', $account->account_id);
+        $this->assertSame('societyflats', $account->account_handle);
+        $this->assertSame('available_pages', data_get($account->metadata, 'source'));
+        $this->assertFalse((bool) data_get($account->metadata, 'publish_enabled'));
+    }
+
+    public function test_sm2_manual_meta_page_id_requires_explicit_confirmation(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/me?*' => Http::response(['id' => 'user-1', 'name' => 'Nitin Wasson'], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response(['data' => []], 200),
+            'https://graph.facebook.com/v20.0/me/businesses*' => Http::response(['data' => []], 200),
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page',
+            'account_name' => 'Facebook Page',
+            'status' => 'connected_no_pages',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement', 'business_management'],
+        ]);
+        $account->access_token = 'user-secret-token';
+        $account->save();
+
+        $this->admin()->postJson('/api/admin/social/meta/pages/select', [
+            'page_id' => 'manual-page',
+            'page_name' => 'Society Flats',
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'Selected Facebook Page was not found in Meta Page or Business assets. Manual fallback requires explicit confirmation.');
+    }
+
+    public function test_sm2_manual_meta_page_id_saves_without_enabling_publish_or_fake_instagram(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/me?*' => Http::response(['id' => 'user-1', 'name' => 'Nitin Wasson'], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response(['data' => []], 200),
+            'https://graph.facebook.com/v20.0/me/businesses*' => Http::response(['data' => []], 200),
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page',
+            'account_name' => 'Facebook Page',
+            'status' => 'connected_no_pages',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement', 'business_management'],
+        ]);
+        $account->access_token = 'user-secret-token';
+        $account->save();
+
+        $response = $this->admin()->postJson('/api/admin/social/meta/pages/select', [
+            'page_id' => 'manual-page',
+            'page_name' => 'Society Flats',
+            'manual_fallback_confirmed' => true,
+        ])->assertOk();
+
+        $account->refresh();
+        $this->assertSame('connected_manual_page', $account->status);
+        $this->assertSame('Society Flats', $account->account_name);
+        $this->assertSame('manual-page', $account->account_id);
+        $this->assertNull($account->account_handle);
+        $this->assertSame('manual_page_id', data_get($account->metadata, 'source'));
+        $this->assertTrue((bool) data_get($account->metadata, 'manual_page_warning'));
+        $this->assertFalse((bool) data_get($account->metadata, 'publish_enabled'));
+        $this->assertNotContains('pages_manage_posts', $account->scopes);
+
+        $instagram = SocialAccount::where('platform', 'instagram_business')->firstOrFail();
+        $this->assertSame('connected_missing_ig', $instagram->status);
+        $this->assertNull($instagram->account_id);
+        $this->assertSame('Instagram Business account could not be verified through Meta yet.', data_get($instagram->metadata, 'message'));
+
+        $json = json_encode($response->json());
+        $this->assertStringNotContainsString('user-secret-token', $json);
+        $this->assertStringNotContainsString('access_token', $json);
+    }
+
     public function test_sm2_meta_page_select_endpoint_rejects_invalid_page_id(): void
     {
         Http::fake([
@@ -567,7 +671,7 @@ class SocialMediaFoundationTest extends TestCase
         $this->admin()->postJson('/api/admin/social/meta/pages/select', [
             'page_id' => 'missing-page',
         ])->assertStatus(422)
-            ->assertJsonPath('message', 'Selected Facebook Page was not found in Meta Page or Business assets.');
+            ->assertJsonPath('message', 'Selected Facebook Page was not found in Meta Page or Business assets. Manual fallback requires explicit confirmation.');
     }
 
     public function test_sm2_instagram_business_account_is_saved_when_connected_to_selected_page(): void

@@ -307,10 +307,25 @@ class AdminSocialController extends Controller
     {
         $data = $request->validate([
             'page_id' => ['required', 'string'],
+            'page_name' => ['nullable', 'string', 'max:255'],
+            'manual_fallback_confirmed' => ['sometimes', 'boolean'],
         ]);
 
         try {
-            $account = $this->oauth->selectMetaPageFromGraph($data['page_id']);
+            $manualFallbackConfirmed = $request->boolean('manual_fallback_confirmed');
+
+            if ($manualFallbackConfirmed && blank($data['page_name'] ?? null)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Manual Facebook Page ID fallback requires both Page ID and Page name.',
+                ], 422);
+            }
+
+            $account = $this->oauth->selectMetaPageFromGraph(
+                $data['page_id'],
+                $data['page_name'] ?? null,
+                $manualFallbackConfirmed,
+            );
 
             return response()->json([
                 'status' => 'ok',

@@ -46,6 +46,8 @@ export function AdminSocialAccountsPage() {
   const [message, setMessage] = useState("");
   const [oauthUrl, setOauthUrl] = useState("");
   const [selectedPageId, setSelectedPageId] = useState("");
+  const [manualPageId, setManualPageId] = useState("");
+  const [manualPageName, setManualPageName] = useState("");
   const [metaDebug, setMetaDebug] = useState<MetaPageAccessDebug | null>(null);
 
   const load = async () => setAccounts(await fetchSocialAccounts());
@@ -85,6 +87,26 @@ export function AdminSocialAccountsPage() {
     }
   }
 
+  async function saveManualMetaPage() {
+    if (!manualPageId.trim() || !manualPageName.trim()) {
+      setMessage("Enter both Facebook Page ID and Page name before saving the manual fallback.");
+      return;
+    }
+
+    try {
+      await selectMetaPage(manualPageId.trim(), {
+        page_name: manualPageName.trim(),
+        manual_fallback_confirmed: true,
+      });
+      setMessage("Facebook Page saved manually. Publishing remains disabled until Meta publish permissions are approved.");
+      setManualPageId("");
+      setManualPageName("");
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to save manual Facebook Page.");
+    }
+  }
+
   async function checkMetaPageAccess() {
     try {
       const result = await fetchMetaPageAccessDebug();
@@ -117,11 +139,12 @@ export function AdminSocialAccountsPage() {
         </p>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {accounts.map((account) => {
-            const publishMissing = account.status === "connected" && metaPublishMissing(account);
+            const publishMissing = ["connected", "connected_manual_page"].includes(account.status) && metaPublishMissing(account);
             const availablePages = account.platform === "facebook_page" && Array.isArray(account.metadata?.available_pages)
               ? (account.metadata.available_pages as MetaPageOption[])
               : [];
             const fallbackSocietyFlatsPage = societyFlatsDebugPage(metaDebug);
+            const canSelectFacebookPage = account.platform === "facebook_page" && ["pending_page_selection", "connected_no_pages"].includes(account.status);
 
             return (
             <article key={account.id} className="rounded-2xl border bg-slate-50 p-4">
@@ -130,7 +153,7 @@ export function AdminSocialAccountsPage() {
                   <p className="text-xs font-black uppercase tracking-wide text-blue-700">{account.platform.replace(/_/g, " ")}</p>
                   <h3 className="mt-1 text-lg font-black">{account.account_name || account.platform}</h3>
                   <p className="mt-1 text-sm font-bold text-slate-500">Status: {account.status.replace(/_/g, " ")}</p>
-                  {account.status === "connected" ? (
+                  {["connected", "connected_manual_page"].includes(account.status) ? (
                     <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">
                       Connected
                     </p>
@@ -155,6 +178,63 @@ export function AdminSocialAccountsPage() {
                 </div>
                 {account.status === "connected" ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <PlugZap className="h-5 w-5 text-slate-400" />}
               </div>
+              {canSelectFacebookPage ? (
+                <div className="mt-4 rounded-2xl border border-blue-100 bg-white p-3">
+                  <p className="text-sm font-black text-slate-900">Select Facebook Page</p>
+                  {availablePages.length ? (
+                    <>
+                      <p className="mt-1 text-xs font-bold leading-5 text-slate-600">
+                        Choose one of the Pages Meta returned for this connection.
+                      </p>
+                      <select
+                        className="mt-3 w-full rounded-xl border bg-white px-3 py-2 text-sm font-bold text-slate-700"
+                        value={selectedPageId}
+                        onChange={(event) => setSelectedPageId(event.target.value)}
+                      >
+                        <option value="">Select a Page</option>
+                        {availablePages.map((page) => (
+                          <option key={page.id} value={page.id}>
+                            {page.name}{page.id ? ` · ${page.id}` : ""}{page.username ? ` (@${page.username})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      <Button size="sm" className="mt-3 rounded-full" onClick={() => void chooseMetaPage()}>
+                        Connect selected Page
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                      <p className="text-sm font-black text-amber-950">Enter Facebook Page ID manually</p>
+                      <p className="mt-2 text-xs font-bold leading-5 text-amber-900">
+                        Use only a Page you own/admin. Publishing will remain disabled until Meta permissions are approved.
+                      </p>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <label className="text-xs font-black uppercase tracking-wide text-slate-500">
+                          Facebook Page ID
+                          <input
+                            className="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm font-bold normal-case tracking-normal text-slate-800"
+                            value={manualPageId}
+                            onChange={(event) => setManualPageId(event.target.value)}
+                            placeholder="Page ID"
+                          />
+                        </label>
+                        <label className="text-xs font-black uppercase tracking-wide text-slate-500">
+                          Page name
+                          <input
+                            className="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm font-bold normal-case tracking-normal text-slate-800"
+                            value={manualPageName}
+                            onChange={(event) => setManualPageName(event.target.value)}
+                            placeholder="Society Flats"
+                          />
+                        </label>
+                      </div>
+                      <Button size="sm" className="mt-3 rounded-full" onClick={() => void saveManualMetaPage()}>
+                        Save as connected page
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : null}
               {account.platform === "facebook_page" && account.status === "connected_no_pages" ? (
                 <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
                   <p className="text-sm font-black text-amber-900">Meta connected, but no Facebook Pages were returned.</p>
@@ -209,24 +289,6 @@ export function AdminSocialAccountsPage() {
                       ) : null}
                     </div>
                   ) : null}
-                </div>
-              ) : null}
-              {account.status === "pending_page_selection" && availablePages.length > 1 ? (
-                <div className="mt-4 rounded-2xl border border-blue-100 bg-white p-3">
-                  <p className="text-sm font-black text-slate-900">Choose Facebook Page to connect</p>
-                  <select
-                    className="mt-3 w-full rounded-xl border bg-white px-3 py-2 text-sm font-bold text-slate-700"
-                    value={selectedPageId}
-                    onChange={(event) => setSelectedPageId(event.target.value)}
-                  >
-                    <option value="">Select a Page</option>
-                    {availablePages.map((page) => (
-                      <option key={page.id} value={page.id}>{page.name}{page.username ? ` (@${page.username})` : ""}</option>
-                    ))}
-                  </select>
-                  <Button size="sm" className="mt-3 rounded-full" onClick={() => void chooseMetaPage()}>
-                    Save selected Page
-                  </Button>
                 </div>
               ) : null}
               <Button variant="outline" className="mt-4 rounded-full bg-white" onClick={() => void connect(account.platform)}>

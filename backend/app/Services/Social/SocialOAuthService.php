@@ -121,17 +121,27 @@ class SocialOAuthService
         return $this->saveSelectedFacebookPage($account, $page);
     }
 
-    public function selectMetaPageFromGraph(string $pageId): SocialAccount
+    public function selectMetaPageFromGraph(string $pageId, ?string $pageName = null, bool $manualFallbackConfirmed = false): SocialAccount
     {
         $account = $this->facebookAccountWithToken();
+        $metadataPage = $this->findStoredAvailableMetaPage($account, $pageId);
+
+        if ($metadataPage) {
+            return $this->saveSelectedFacebookPage($account, $metadataPage, 'available_pages');
+        }
+
         $inventory = $this->metaPageInventory($account);
         $page = $this->findMetaPage($inventory, $pageId);
 
-        if (! $page) {
-            throw new InvalidArgumentException('Selected Facebook Page was not found in Meta Page or Business assets.');
+        if ($page) {
+            return $this->saveSelectedFacebookPage($account, $this->pageForSave($page), (string) data_get($page, 'source', 'business_asset_fallback'));
         }
 
-        return $this->saveSelectedFacebookPage($account, $this->pageForSave($page), (string) data_get($page, 'source', 'business_asset_fallback'));
+        if ($manualFallbackConfirmed) {
+            return $this->saveManualFacebookPage($account, $pageId, (string) $pageName);
+        }
+
+        throw new InvalidArgumentException('Selected Facebook Page was not found in Meta Page or Business assets. Manual fallback requires explicit confirmation.');
     }
 
     public function debugMetaPages(): array
@@ -379,6 +389,56 @@ class SocialOAuthService
         return $account->fresh();
     }
 
+    private function saveManualFacebookPage(SocialAccount $account, string $pageId, string $pageName): SocialAccount
+    {
+        $pageId = trim($pageId);
+        $pageName = trim($pageName);
+
+        if ($pageId === '' || $pageName === '') {
+            throw new InvalidArgumentException('Manual Facebook Page ID fallback requires both Page ID and Page name.');
+        }
+
+        $metadata = array_merge($account->metadata ?: [], [
+            'oauth_mode' => 'connect',
+            'publish_enabled' => false,
+            'selected_page_id' => $pageId,
+            'source' => 'manual_page_id',
+            'sm1a_placeholder' => false,
+            'manual_page_warning' => true,
+        ]);
+
+        $account->update([
+            'status' => 'connected_manual_page',
+            'account_name' => $pageName,
+            'account_id' => $pageId,
+            'account_handle' => null,
+            'last_error' => null,
+            'metadata' => $metadata,
+        ]);
+
+        $instagram = SocialAccount::where('platform', 'instagram_business')->first();
+        if (! $instagram || $instagram->status !== 'connected') {
+            SocialAccount::updateOrCreate(
+                ['platform' => 'instagram_business'],
+                [
+                    'account_name' => self::PLATFORMS['instagram_business'],
+                    'account_id' => null,
+                    'account_handle' => null,
+                    'status' => 'connected_missing_ig',
+                    'last_error' => null,
+                    'metadata' => [
+                        'message' => 'Instagram Business account could not be verified through Meta yet.',
+                        'publish_enabled' => false,
+                        'sm2_manual_only' => true,
+                        'sm1a_placeholder' => false,
+                    ],
+                ],
+            );
+        }
+
+        return $account->fresh();
+    }
+
     private function syncInstagramBusinessAccount(array $page, SocialAccount $facebookAccount): void
     {
         $ig = data_get($page, 'instagram_business_account');
@@ -470,6 +530,16 @@ class SocialOAuthService
         }
 
         return $account;
+    }
+
+    private function findStoredAvailableMetaPage(SocialAccount $account, string $pageId): ?array
+    {
+        $pages = data_get($account->metadata, 'available_pages', []);
+
+        $page = collect(is_array($pages) ? $pages : [])
+            ->first(fn ($candidate) => (string) data_get($candidate, 'id') === (string) $pageId);
+
+        return is_array($page) ? $page : null;
     }
 
     private function metaPageInventory(SocialAccount $account): array
