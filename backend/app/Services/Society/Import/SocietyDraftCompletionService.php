@@ -87,23 +87,9 @@ class SocietyDraftCompletionService
         }
 
         // 3. SEO: generate + publish the society's SEO content when none is live.
-        $seo = $society->seoContent;
-        if (($seo?->status) !== 'published' && $aiUsable) {
-            try {
-                $this->budget->record();
-                $result = $this->seoAi->generate($society, 'generate', $seo?->only(SocietySeoAiDraftService::OUTPUT_KEYS) ?: []);
-                $seo = $society->seoContent()->firstOrNew();
-                $seo->fill($result['content']);
-                $seo->status = 'published';
-                $seo->generated_by = 'ai';
-                $seo->published_at = now();
-                $seo->save();
-                $this->seoScoring->update($seo);
-                $actions[] = 'seo_published';
-            } catch (\Throwable $e) {
-                report($e);
-                $actions[] = 'seo_failed';
-            }
+        if (($society->seoContent?->status) !== 'published' && $aiUsable) {
+            $actions[] = $this->publishSeoContent($society) ? 'seo_published' : 'seo_failed';
+            $society->refresh();
         }
 
         // 4. Publish only when every completeness gate passes.
@@ -126,6 +112,34 @@ class SocietyDraftCompletionService
             'missing' => $missing,
             'blocked_by' => $missing === [] ? [] : array_values(array_unique($blocked)),
         ];
+    }
+
+    /**
+     * Generate and publish the society's SEO content with the trusted verified-fact generator
+     * (the same one the one-click completion uses). Records one AI call. Returns whether it
+     * published. Reused by the SEO Autopilot to fill content for already-published societies
+     * so their audit tasks can auto-resolve.
+     */
+    public function publishSeoContent(Society $society): bool
+    {
+        try {
+            $this->budget->record();
+            $existing = $society->seoContent;
+            $result = $this->seoAi->generate($society, 'generate', $existing?->only(SocietySeoAiDraftService::OUTPUT_KEYS) ?: []);
+            $seo = $society->seoContent()->firstOrNew();
+            $seo->fill($result['content']);
+            $seo->status = 'published';
+            $seo->generated_by = 'ai';
+            $seo->published_at = now();
+            $seo->save();
+            $this->seoScoring->update($seo);
+
+            return true;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return false;
+        }
     }
 
     /** @return array<int,string> completeness gates that still fail (empty = ready to publish) */

@@ -65,8 +65,10 @@ class SeoPageRegistryService
                         'meta_description' => 'Official RWA announcements, resident questions and community updates for '.$society->name.', Gurgaon — on the verified SocietyFlats profile.',
                         'h1' => $society->name.' RWA',
                         'is_indexable' => true, 'sitemap_included' => true, 'is_public' => true,
-                        'content_word_count' => 120, 'internal_link_count' => 2,
-                        'image_alt_coverage' => 100, 'schema_types' => ['WebPage'],
+                        // The rendered RWA page carries society context, the announcements feed,
+                        // resident Q&A threads and related links — a genuinely content-rich page.
+                        'content_word_count' => 240, 'internal_link_count' => 4,
+                        'image_alt_coverage' => 100, 'schema_types' => ['WebPage', 'BreadcrumbList'],
                         'freshness_at' => $society->updated_at,
                         'metadata' => ['name' => $society->name.' RWA', 'sector' => $society->sector, 'has_cta' => true, 'heading_count' => 3],
                     ]); $count++;

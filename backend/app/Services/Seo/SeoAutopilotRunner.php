@@ -20,6 +20,8 @@ class SeoAutopilotRunner
         private SeoSearchConsoleService $searchConsole,
         private SeoDraftService $drafts,
         private SeoReportService $reports,
+        private \App\Services\Society\Import\SocietyDraftCompletionService $completion,
+        private \App\Services\Ops\AiBudgetGuard $budget,
     ) {}
 
     public function settings(): SeoAutomationSetting
@@ -28,7 +30,7 @@ class SeoAutopilotRunner
             'enabled'=>true, 'audit_enabled'=>true, 'technical_checks_enabled'=>true,
             'search_console_enabled'=>true, 'keyword_refresh_enabled'=>true,
             'draft_generation_enabled'=>true, 'reports_enabled'=>true,
-            'drafts_per_run'=>5, 'timezone'=>'Asia/Kolkata',
+            'drafts_per_run'=>12, 'timezone'=>'Asia/Kolkata',
             'auto_publish_enabled'=>true, 'auto_publish_min_confidence'=>80,
         ]);
     }
@@ -42,9 +44,13 @@ class SeoAutopilotRunner
         if(!$lock->get())throw new \RuntimeException('An SEO Autopilot cycle is already running.');
 
         $run=SeoAutomationRun::create(['trigger'=>$trigger,'status'=>'running','started_at'=>now()]);
-        $summary=['pages_registered'=>0,'pages_audited'=>0,'average_score'=>0,'technical_failures'=>0,'keywords_refreshed'=>0,'search_console_rows'=>0,'drafts_generated'=>0,'drafts_auto_published'=>0,'report_id'=>null,'warnings'=>[]];
+        $summary=['pages_registered'=>0,'society_seo_published'=>0,'pages_audited'=>0,'average_score'=>0,'technical_failures'=>0,'keywords_refreshed'=>0,'search_console_rows'=>0,'drafts_generated'=>0,'drafts_auto_published'=>0,'report_id'=>null,'warnings'=>[]];
 
         try {
+            // Fill SEO content for published societies that lack it FIRST, so the sync + audit
+            // that follow see the new content and auto-resolve those societies' tasks this cycle.
+            $summary['society_seo_published']=$this->autoCompleteSocietySeo((int)($settings->drafts_per_run ?: 12));
+
             $summary['pages_registered']=$this->registry->sync();
 
             if($settings->audit_enabled){
@@ -76,6 +82,39 @@ class SeoAutopilotRunner
         }
 
         return $run->fresh();
+    }
+
+    /**
+     * The lever that clears the society/RWA task backlog: publish real SEO content for every
+     * published society that still lacks it. Content fills the registry row's word count,
+     * internal links and schema, so the same cycle's audit flips those checks to pass and the
+     * ~6-7 open tasks per society auto-resolve. Budget-gated; scales up over nightly runs.
+     */
+    private function autoCompleteSocietySeo(int $limit): int
+    {
+        if (! $this->budget->allow() || $this->budget->providerLimited()) {
+            return 0;
+        }
+
+        $societies = Society::query()
+            ->where('is_published', true)
+            ->whereIn('status', ['Verified', 'Premium'])
+            ->whereDoesntHave('seoContent', fn ($q) => $q->where('status', 'published'))
+            ->orderBy('id')
+            ->limit(max(1, min($limit, 30)))
+            ->get();
+
+        $published = 0;
+        foreach ($societies as $society) {
+            if (! $this->budget->allow() || $this->budget->providerLimited()) {
+                break;
+            }
+            if ($this->completion->publishSeoContent($society)) {
+                $published++;
+            }
+        }
+
+        return $published;
     }
 
     private function generateOpportunityDrafts(int $limit): int

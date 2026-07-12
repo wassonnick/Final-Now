@@ -425,6 +425,41 @@ class SeoAutopilotTest extends TestCase
         $this->assertSame(0,(int) SeoAutomationRun::latest('id')->first()->summary['drafts_auto_published']);
     }
 
+    public function test_autopilot_publishes_seo_for_societies_missing_it_and_clears_their_tasks(): void
+    {
+        // The deadlock fix: a published society with no SEO content opens content/link/schema
+        // tasks that used to sit forever. The nightly cycle must now publish real content and
+        // auto-resolve those tasks in the same run.
+        $society = $this->society('Contentless Society', 'contentless-society');
+        app(\App\Services\Seo\SeoPageRegistryService::class)->sync();
+        $page = SeoPage::where('page_key', 'society:'.$society->id)->firstOrFail();
+        app(\App\Services\Seo\SeoAutopilotAuditService::class)->audit($page);
+        $this->assertDatabaseHas('seo_tasks', ['seo_page_id' => $page->id, 'task_type' => 'audit_content_depth', 'status' => 'open']);
+
+        // The trusted verified-fact generator returns rich content for every SEO section.
+        $this->mock(\App\Services\SocietySeoAiDraftService::class, function ($mock) {
+            $mock->shouldReceive('generate')->andReturn(['content' => [
+                'seo_title' => 'Contentless Society, Sector 65 Gurgaon | SocietyFlats',
+                'seo_description' => 'Verified profile for Contentless Society in Sector 65, Gurgaon with honest rent and resale context.',
+                'seo_h1' => 'Contentless Society, Sector 65 Gurgaon',
+                'rent_content' => str_repeat('Rental context sentence about this Gurgaon society. ', 40),
+                'sale_content' => str_repeat('Resale pricing context sentence for buyers. ', 40),
+                'amenities_content' => str_repeat('Amenity detail sentence for residents. ', 20),
+                'investment_content' => str_repeat('Investment outlook sentence for the sector. ', 20),
+                'internal_link_suggestions_json' => [['label' => 'Sector 65', 'url' => '/gurgaon/sector-65'], ['label' => 'Search', 'url' => '/search']],
+                'schema_json' => ['Residence' => []],
+            ], 'warnings' => [], 'provider' => 'claude']);
+        });
+
+        $this->admin()->postJson('/api/admin/seo-autopilot/automation/run')->assertOk();
+
+        $run = SeoAutomationRun::latest('id')->first();
+        $this->assertGreaterThanOrEqual(1, (int) $run->summary['society_seo_published']);
+        $this->assertSame('published', $society->fresh()->seoContent->status);
+        // The same cycle's audit saw the new content and closed the content task.
+        $this->assertDatabaseMissing('seo_tasks', ['seo_page_id' => $page->id, 'task_type' => 'audit_content_depth', 'status' => 'open']);
+    }
+
     private function society(string $name,string $slug,string $sector='Sector 65'): Society
     {
         return Society::create(['name'=>$name,'slug'=>$slug,'builder'=>'Verified Builder','sector'=>$sector,'locality'=>$sector,'city'=>'Gurugram','state'=>'Haryana','description'=>'Verified society information for Gurgaon residents considering rent or resale homes.','status'=>'Verified','verification_status'=>'Verified','is_published'=>true,'published_at'=>now(),'score'=>8.2,'amenities'=>['Gym'],'image_alt_text'=>$name.' Gurgaon society']);
