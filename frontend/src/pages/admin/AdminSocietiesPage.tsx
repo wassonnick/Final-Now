@@ -10,6 +10,7 @@ import {
   Image,
   Link as LinkIcon,
   MapPin,
+  MessageSquareText,
   Plus,
   RefreshCw,
   Search,
@@ -827,6 +828,13 @@ export function AdminSocietiesPage() {
                           <Link to={`/admin/properties?society=${encodeURIComponent(item.name)}`}>
                             <Building2 className="mr-1.5 h-4 w-4" />
                             Properties
+                          </Link>
+                        </Button>
+
+                        <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
+                          <Link to={`/admin/leads?q=${encodeURIComponent(item.name)}`}>
+                            <MessageSquareText className="mr-1.5 h-4 w-4" />
+                            Leads
                           </Link>
                         </Button>
 

@@ -139,6 +139,11 @@ export function AdminOwnerListingsPage() {
                   ) : null}
                 </>
               )}
+              {row.phone ? (
+                <Button asChild variant="outline" className="rounded-full">
+                  <Link to={`/admin/leads?q=${encodeURIComponent(row.phone)}`}>Lead history</Link>
+                </Button>
+              ) : null}
             </div>
           </article>
         ))}

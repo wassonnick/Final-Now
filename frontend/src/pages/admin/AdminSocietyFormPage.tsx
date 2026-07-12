@@ -1690,13 +1690,7 @@ export function AdminSocietyFormPage() {
                     ) : (
                       <p className="mt-2 font-bold text-emerald-700">Approved for attributed Google Places display.</p>
                     )}
-                    {society.id ? (
-                      <Button asChild type="button" variant="outline" className="mt-3 h-8 rounded-full border-amber-200 px-3 text-xs font-bold text-amber-700">
-                        <Link to={`/admin/societies/import?societyId=${society.id}`}>
-                          Choose a different harvested photo
-                        </Link>
-                      </Button>
-                    ) : null}
+                    {/* Alternate harvested photos are reviewed in the Imported images section below. */}
                   </div>
                 ) : null}
 

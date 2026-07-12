@@ -65,7 +65,7 @@ const featureConfigs: Record<FeatureKey, FeatureConfig> = {
       'Use AI-assisted workflows for society profile drafts, brochure extraction, SEO copy, FAQ ideas and lead response drafts. Output must stay in admin review until verified.',
     primaryAction: {
       label: 'Auto import societies',
-      href: '/admin/societies/import',
+      href: '/admin/verified-society-importer',
     },
     metrics: [
       { label: 'Society creation', value: 'URL first', note: 'Official page to draft profile' },

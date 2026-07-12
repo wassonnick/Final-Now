@@ -1,6 +1,6 @@
 // C81 admin leads lite polish: compact scan layout, tighter filters/cards, no bulk write actions.
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   CalendarDays,
   Download,
@@ -1311,26 +1311,34 @@ function c57QuickActionNote(
 }
 
 export function AdminLeadsPage() {
-  const location = useLocation();
+  // Every filter lives in the URL, so deep links from the dashboard / CRMs / anywhere
+  // land pre-filtered, the state is shareable, and back/forward behaves.
+  const [searchParams, setSearchParams] = useSearchParams();
   const [leads, setLeads] = useState<AdminLead[]>([]);
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<"All" | LeadStatus>("All");
-  const [priority, setPriority] = useState<"All" | LeadPriority>("All");
-  const [assignee, setAssignee] = useState<"All" | string>("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [savingLeadId, setSavingLeadId] = useState<number | null>(null);
   const [selectedLeadIds, setSelectedLeadIds] = useState<number[]>([]);
 
-  const dashboardView = useMemo(() => {
-    return new URLSearchParams(location.search).get("view") || "all";
-  }, [location.search]);
+  const query = searchParams.get("q") || "";
+  const status = (searchParams.get("status") as "All" | LeadStatus) || "All";
+  const priority = (searchParams.get("priority") as "All" | LeadPriority) || "All";
+  const dashboardView = searchParams.get("view") || "all";
+  const effectiveAssignee = searchParams.get("assignee") || "All";
 
-  const urlAssignee = useMemo(() => {
-    return new URLSearchParams(location.search).get("assignee") || "";
-  }, [location.search]);
+  const setFilterParam = (key: string, value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (!value || value === "All" || (key === "view" && value === "all")) next.delete(key);
+    else next.set(key, value);
+    setSearchParams(next, { replace: true });
+  };
 
-  const effectiveAssignee = urlAssignee || assignee;
+  const setQuery = (value: string) => setFilterParam("q", value);
+  const setStatus = (value: "All" | LeadStatus) => setFilterParam("status", value);
+  const setPriority = (value: "All" | LeadPriority) => setFilterParam("priority", value);
+  const setAssignee = (value: string) => setFilterParam("assignee", value);
+
+  const activeFilterCount = ["q", "status", "priority", "assignee", "view"].filter((key) => searchParams.get(key)).length;
 
   const dashboardViewLabel = dashboardLeadViewLabel(dashboardView);
 
@@ -1667,16 +1675,18 @@ export function AdminLeadsPage() {
             </div>
           </div>
 
-          {dashboardViewLabel || (effectiveAssignee && effectiveAssignee !== "All") ? (
+          {activeFilterCount > 0 ? (
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-              <span>
-                Showing: <strong>{dashboardViewLabel || "Assigned leads"}</strong>
-                {effectiveAssignee && effectiveAssignee !== "All" ? (
-                  <> · Owner: <strong>{effectiveAssignee}</strong></>
-                ) : null}
+              <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="font-black">Filters ({activeFilterCount}):</span>
+                {dashboardViewLabel ? <span>View: <strong>{dashboardViewLabel}</strong></span> : null}
+                {status !== "All" ? <span>Status: <strong>{status}</strong></span> : null}
+                {priority !== "All" ? <span>Priority: <strong>{priority}</strong></span> : null}
+                {effectiveAssignee !== "All" ? <span>Owner: <strong>{effectiveAssignee}</strong></span> : null}
+                {query ? <span>Search: <strong>“{query}”</strong></span> : null}
               </span>
-              <Link to="/admin/leads" className="font-semibold hover:underline">
-                Clear filter
+              <Link to="/admin/leads" className="shrink-0 font-semibold hover:underline">
+                Clear all
               </Link>
             </div>
           ) : null}
@@ -1713,7 +1723,13 @@ export function AdminLeadsPage() {
               return (
                 <Link
                   key={item.view}
-                  to={item.view === "all" ? "/admin/leads" : `/admin/leads?view=${item.view}`}
+                  to={(() => {
+                    // Switching pipeline view keeps the other active filters intact.
+                    const next = new URLSearchParams(searchParams);
+                    if (item.view === "all") next.delete("view"); else next.set("view", item.view);
+                    const qs = next.toString();
+                    return qs ? `/admin/leads?${qs}` : "/admin/leads";
+                  })()}
                   className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition ${
                     active
                       ? "border-blue-200 bg-blue-600 text-white shadow-sm"

@@ -43,10 +43,8 @@ const NriServicesPage = lazy(() => import('@/pages/NriServicesPage').then((modul
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage').then((module) => ({ default: module.AdminLoginPage })));
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })));
 const AdminSocietiesPage = lazy(() => import('@/pages/admin/AdminSocietiesPage').then((module) => ({ default: module.AdminSocietiesPage })));
-const AdminSocietyFormPage = lazy(() => import('@/pages/admin/AdminSocietyFormPage').then((module) => ({ default: module.AdminSocietyFormPage })));
-const AdminSocietyUrlCreatePage = lazy(() => import('@/pages/admin/AdminSocietyUrlCreatePage').then((module) => ({ default: module.AdminSocietyUrlCreatePage })));
-const AdminSocietyImportPage = lazy(() => import('@/pages/admin/AdminSocietyImportPage').then((module) => ({ default: module.AdminSocietyImportPage })));
 const AdminVerifiedSocietyImporterPage = lazy(() => import('@/pages/admin/AdminVerifiedSocietyImporterPage').then((module) => ({ default: module.AdminVerifiedSocietyImporterPage })));
+const AdminSocietyFormPage = lazy(() => import('@/pages/admin/AdminSocietyFormPage').then((module) => ({ default: module.AdminSocietyFormPage })));
 const AdminPropertiesPage = lazy(() => import('@/pages/admin/AdminPropertiesPage').then((module) => ({ default: module.AdminPropertiesPage })));
 const AdminPropertyFormPage = lazy(() => import('@/pages/admin/AdminPropertyFormPage').then((module) => ({ default: module.AdminPropertyFormPage })));
 const AdminLeadsPage = lazy(() => import('@/pages/admin/AdminLeadsPage').then((module) => ({ default: module.AdminLeadsPage })));
@@ -181,9 +179,9 @@ function AppShell() {
             <Route path="/admin/dashboard" element={<ProtectedAdminRoute><AdminDashboardPage /></ProtectedAdminRoute>} />
 
             <Route path="/admin/societies" element={<ProtectedAdminRoute><AdminSocietiesPage /></ProtectedAdminRoute>} />
-            <Route path="/admin/societies/new-from-url" element={<ProtectedAdminRoute><AdminSocietyUrlCreatePage /></ProtectedAdminRoute>} />
-            <Route path="/admin/societies/import" element={<ProtectedAdminRoute><AdminSocietyImportPage /></ProtectedAdminRoute>} />
-            <Route path="/admin/society-importer" element={<ProtectedAdminRoute><AdminSocietyImportPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/societies/new-from-url" element={<Navigate to="/admin/verified-society-importer" replace />} />
+            <Route path="/admin/societies/import" element={<Navigate to="/admin/verified-society-importer" replace />} />
+            <Route path="/admin/society-importer" element={<Navigate to="/admin/verified-society-importer" replace />} />
             <Route path="/admin/verified-society-importer" element={<ProtectedAdminRoute><AdminVerifiedSocietyImporterPage /></ProtectedAdminRoute>} />
             <Route path="/admin/societies/new" element={<ProtectedAdminRoute><AdminSocietyFormPage /></ProtectedAdminRoute>} />
             <Route path="/admin/societies/:id/edit" element={<ProtectedAdminRoute><AdminSocietyFormPage /></ProtectedAdminRoute>} />
