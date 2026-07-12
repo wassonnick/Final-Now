@@ -14,14 +14,28 @@ function tone(value: string) {
 export function AdminSocialDraftsPage() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"success" | "error">("success");
   const [editing, setEditing] = useState<SocialPost | null>(null);
   const [caption, setCaption] = useState("");
 
   const load = async () => setPosts(await fetchSocialPosts("per_page=100"));
   useEffect(() => { void load(); }, []);
 
+  function notify(text: string, tone: "success" | "error") {
+    setMessage(text);
+    setMessageTone(tone);
+    // The banner is sticky, but jump to it so the result of a click far down the list is never missed.
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function run(action: () => Promise<unknown>, success: string) {
-    try { await action(); setMessage(success); await load(); } catch (error) { setMessage(error instanceof Error ? error.message : "Action failed."); }
+    try {
+      await action();
+      notify(success, "success");
+      await load();
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Action failed.", "error");
+    }
   }
 
   async function saveEdit() {
@@ -48,7 +62,12 @@ export function AdminSocialDraftsPage() {
   return (
     <AdminLayout title="AI Social Media" subtitle="Review AI-generated social drafts. SM1A never auto-posts.">
       <AdminSocialNav />
-      {message ? <p className="mb-5 rounded-2xl bg-blue-50 p-4 text-sm font-bold text-blue-700">{message}</p> : null}
+      {message ? (
+        <div className={`sticky top-3 z-30 mb-5 flex items-start justify-between gap-3 rounded-2xl border p-4 text-sm font-bold shadow-sm ${messageTone === "error" ? "border-rose-300 bg-rose-50 text-rose-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
+          <span>{messageTone === "error" ? "⚠ " : "✓ "}{message}</span>
+          <button type="button" className="shrink-0 text-xs font-black opacity-70 hover:opacity-100" onClick={() => setMessage("")}>Dismiss</button>
+        </div>
+      ) : null}
 
       {editing ? (
         <section className="mb-6 rounded-[1.5rem] border bg-white p-5 shadow-sm">
