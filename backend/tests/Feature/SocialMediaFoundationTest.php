@@ -235,7 +235,7 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertStringNotContainsString('instagram_content_publish', $scope);
     }
 
-    public function test_sm2_meta_publish_review_url_requests_publish_scopes_only(): void
+    public function test_sm2_meta_publish_review_url_requests_only_the_valid_facebook_publish_scope(): void
     {
         $response = $this->admin()->getJson('/api/admin/social/meta/publish-review-url')
             ->assertOk()
@@ -248,8 +248,11 @@ class SocialMediaFoundationTest extends TestCase
         $scope = (string) ($query['scope'] ?? '');
         $state = (string) ($query['state'] ?? '');
 
+        // Facebook publishing works with pages_manage_posts alone. instagram_content_publish is
+        // NOT bundled by default — Meta rejects the whole dialog when that scope isn't enabled
+        // on the app yet, which used to block Facebook too. It's added back via env once ready.
         $this->assertStringContainsString('pages_manage_posts', $scope);
-        $this->assertStringContainsString('instagram_content_publish', $scope);
+        $this->assertStringNotContainsString('instagram_content_publish', $scope);
         $this->assertStringNotContainsString('pages_show_list', $scope);
         $this->assertStringNotContainsString('business_management', $scope);
         $this->assertStringNotContainsString('email', $scope);
@@ -258,6 +261,18 @@ class SocialMediaFoundationTest extends TestCase
         $account = SocialAccount::where('platform', 'facebook_page')->firstOrFail();
         $this->assertSame('publish_review', data_get($account->metadata, 'oauth_mode'));
         $this->assertSame($state, $account->oauth_state);
+    }
+
+    public function test_sm2_facebook_publish_scope_can_be_extended_with_instagram_via_env(): void
+    {
+        // Once the Meta app has the Instagram product enabled, appending the IG scope to the
+        // Facebook publish env re-enables Instagram publishing through the same Page dialog.
+        config(['services.social_oauth.meta_fb_publish_scopes' => 'pages_manage_posts,instagram_content_publish']);
+
+        $scope = app(\App\Services\Social\SocialOAuthService::class)->scopes('facebook_page', 'publish_review');
+
+        $this->assertContains('pages_manage_posts', $scope);
+        $this->assertContains('instagram_content_publish', $scope);
     }
 
     public function test_sm2_meta_publish_review_callback_stores_publish_scopes_without_overwriting_assets(): void

@@ -218,9 +218,15 @@ export function AdminSocialAccountsPage() {
                     </p>
                   ) : null}
                   {publishMissing ? (
-                    <p className="mt-2 text-xs font-bold leading-5 text-amber-800">
-                      Publishing needs Meta to grant {account.platform === "instagram_business" ? "instagram_content_publish" : "pages_manage_posts"}. Click <span className="font-black">Authorize publishing</span> below and approve it on Meta&rsquo;s screen. If you are an admin/developer/tester on the Meta app this works immediately; making it available to other users needs Meta App Review.
-                    </p>
+                    account.platform === "instagram_business" ? (
+                      <p className="mt-2 text-xs font-bold leading-5 text-amber-800">
+                        Instagram publishing runs through the connected Facebook Page token. Enable it by adding the <span className="font-black">Instagram</span> product + <span className="font-black">instagram_content_publish</span> to your Meta app, then set <span className="font-black">META_FB_PUBLISH_SCOPES=pages_manage_posts,instagram_content_publish</span> in Render and re-run <span className="font-black">Authorize publishing</span> on the Facebook account.
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-xs font-bold leading-5 text-amber-800">
+                        Click <span className="font-black">Authorize publishing</span> below and approve <span className="font-black">pages_manage_posts</span> on Meta&rsquo;s screen. If you are an admin/developer/tester on the Meta app this works immediately — no App Review needed for your own Page.
+                      </p>
+                    )
                   ) : null}
                   {account.account_handle ? <p className="mt-1 text-xs font-bold text-slate-500">Handle: {account.account_handle}</p> : null}
                   {account.account_id ? <p className="mt-1 text-xs font-bold text-slate-500">Account ID: {account.account_id}</p> : null}
@@ -421,7 +427,8 @@ function MetaAppReviewChecklist({ accounts }: { accounts: SocialAccount[] }) {
     <section className="mt-5 rounded-[1.5rem] border bg-white p-5 shadow-sm">
       <h2 className="text-xl font-black">Meta publishing checklist</h2>
       <p className="mt-2 text-sm leading-6 text-slate-600">
-        To publish to your own Page/IG: be an admin/developer/tester on the Meta app, then click <span className="font-black">Authorize publishing</span> above and approve pages_manage_posts + instagram_content_publish — no App Review needed for your own assets. App Review is only required to let other users&rsquo; accounts publish.
+        <span className="font-black">Facebook:</span> be an admin/developer/tester on the Meta app, click <span className="font-black">Authorize publishing</span> above, approve pages_manage_posts — works immediately, no App Review for your own Page.
+        {" "}<span className="font-black">Instagram:</span> add the Instagram product + instagram_content_publish to the Meta app, then append instagram_content_publish to META_FB_PUBLISH_SCOPES and reauthorize (IG publishes through the Page token).
       </p>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {rows.map(([label, value]) => (

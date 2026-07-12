@@ -297,23 +297,38 @@ class SocialOAuthService
     public function scopes(string $platform, string $mode = 'connect'): array
     {
         return match ($platform) {
-            'instagram_business', 'facebook_page' => $this->metaScopes($mode),
+            'instagram_business', 'facebook_page' => $this->metaScopes($mode, $platform),
             'linkedin' => ['openid', 'profile', 'w_member_social'],
             'google_business_profile' => ['https://www.googleapis.com/auth/business.manage'],
             default => [],
         };
     }
 
-    private function metaScopes(string $mode): array
+    /**
+     * Publish scopes are requested PER PLATFORM. Meta rejects an entire OAuth dialog if any one
+     * scope is invalid ("Invalid Scopes: instagram_content_publish") — so bundling the Facebook
+     * and Instagram publish scopes meant an un-enabled Instagram permission also blocked the
+     * perfectly valid Facebook one. Authorizing each platform on its own keeps Facebook working
+     * while Instagram waits on its app-product setup.
+     */
+    private function metaScopes(string $mode, string $platform = 'facebook_page'): array
     {
         $publishMode = in_array($mode, ['publish', 'publish_review'], true);
-        $key = $publishMode ? 'meta_publish_scopes' : 'meta_connect_scopes';
-        $fallback = $publishMode
-            ? 'pages_manage_posts,instagram_content_publish'
-            : 'public_profile,pages_show_list,pages_read_engagement,business_management';
 
-        $raw = (string) config("services.social_oauth.{$key}", $fallback);
+        if (! $publishMode) {
+            return $this->parseScopes((string) config('services.social_oauth.meta_connect_scopes', 'public_profile,pages_show_list,pages_read_engagement,business_management'));
+        }
 
+        $fallback = $platform === 'instagram_business'
+            ? 'instagram_basic,instagram_content_publish'
+            : 'pages_manage_posts';
+        $key = $platform === 'instagram_business' ? 'meta_ig_publish_scopes' : 'meta_fb_publish_scopes';
+
+        return $this->parseScopes((string) config("services.social_oauth.{$key}", $fallback));
+    }
+
+    private function parseScopes(string $raw): array
+    {
         return array_values(array_unique(array_filter(array_map(
             static fn ($scope) => trim((string) $scope),
             preg_split('/[\s,]+/', $raw) ?: []

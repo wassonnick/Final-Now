@@ -58,7 +58,14 @@ return [
         'meta_client_id' => env('META_CLIENT_ID'),
         'meta_client_secret' => env('META_CLIENT_SECRET'),
         'meta_connect_scopes' => env('META_CONNECT_SCOPES', 'public_profile,pages_show_list,pages_read_engagement,business_management'),
-        'meta_publish_scopes' => env('META_PUBLISH_SCOPES', 'pages_manage_posts,instagram_content_publish'),
+        // Publish scopes are requested per platform so an un-enabled Instagram permission can't
+        // block the valid Facebook one (Meta rejects the whole dialog on any invalid scope).
+        // Facebook publishing works with pages_manage_posts alone. Instagram Graph publishing
+        // also flows through the Facebook Page token — once the Meta app has the Instagram
+        // product + instagram_content_publish enabled, add it here (e.g.
+        // META_FB_PUBLISH_SCOPES="pages_manage_posts,instagram_content_publish") and reauthorize.
+        'meta_fb_publish_scopes' => env('META_FB_PUBLISH_SCOPES', 'pages_manage_posts'),
+        'meta_ig_publish_scopes' => env('META_IG_PUBLISH_SCOPES', 'instagram_basic,instagram_content_publish'),
         'linkedin_client_id' => env('LINKEDIN_CLIENT_ID'),
         'linkedin_client_secret' => env('LINKEDIN_CLIENT_SECRET'),
         'google_client_id' => env('GOOGLE_BUSINESS_CLIENT_ID', env('GOOGLE_SEARCH_CONSOLE_CLIENT_ID')),
