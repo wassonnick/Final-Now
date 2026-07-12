@@ -1083,6 +1083,66 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertTrue(SocialPublishLog::where('social_post_id', $post->id)->where('metadata->reason', 'missing_scope')->exists());
     }
 
+    public function test_sm2_facebook_publish_resolves_page_id_from_selected_page_when_account_id_cleared(): void
+    {
+        // Re-connecting in connect-only mode can null account_id while the manually selected
+        // page id survives in metadata — publishing must still resolve the page.
+        Http::fake([
+            'https://graph.facebook.com/v20.0/page-manual?*' => Http::response(['access_token' => 'page-token', 'id' => 'page-manual'], 200),
+            'https://graph.facebook.com/v20.0/page-manual/photos' => Http::response(['id' => 'fb-post-2'], 200),
+        ]);
+
+        $post = SocialPost::create([
+            'platform' => 'facebook', 'post_type' => 'single_post', 'title' => 'FB post',
+            'caption' => 'Neutral update.', 'risk_level' => 'low', 'status' => 'approved',
+        ]);
+        SocialPostAsset::create([
+            'social_post_id' => $post->id, 'asset_type' => 'image', 'platform' => 'facebook',
+            'public_url' => 'https://cdn.example.test/social/fb.jpg', 'status' => 'approved', 'risk_level' => 'low',
+        ]);
+        // Mirrors the real state after a manual-page publish authorization: status connected,
+        // publish scope granted, but account_id null with the page id only in selected_page_id.
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page', 'account_name' => 'Society Flats', 'account_id' => null,
+            'status' => 'connected', 'scopes' => ['pages_manage_posts'],
+            'metadata' => ['selected_page_id' => 'page-manual', 'facebook_publish_scope_granted' => true],
+        ]);
+        $account->access_token = 'user-token';
+        $account->save();
+
+        $this->admin()->postJson("/api/admin/social/posts/{$post->id}/publish", [
+            'confirm_publish' => true, 'social_account_id' => $account->id,
+        ])->assertOk();
+
+        $this->assertDatabaseHas('social_posts', ['id' => $post->id, 'external_post_id' => 'fb-post-2']);
+    }
+
+    public function test_sm2_reconnecting_in_connect_mode_clears_stale_publish_grant(): void
+    {
+        // The bug: re-running Connect OAuth returned a token without pages_manage_posts but left
+        // facebook_publish_scope_granted=true, so the UI wrongly showed publishing as enabled.
+        Http::fake([
+            'https://graph.facebook.com/v20.0/oauth/access_token' => Http::response(['access_token' => 'connect-token', 'token_type' => 'bearer'], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response(['data' => []], 200),
+            'https://graph.facebook.com/v20.0/debug_token*' => Http::response(['data' => ['scopes' => ['pages_show_list', 'pages_read_engagement']]], 200),
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page', 'account_name' => 'Society Flats', 'account_id' => 'page-1',
+            'status' => 'connected', 'oauth_state' => 'state-xyz',
+            'scopes' => ['pages_show_list', 'pages_manage_posts'],
+            'metadata' => ['oauth_mode' => 'connect', 'facebook_publish_scope_granted' => true, 'publish_enabled' => true],
+        ]);
+        $account->access_token = 'old-publish-token';
+        $account->save();
+
+        app(\App\Services\Social\SocialOAuthService::class)->callback('facebook_page', 'code-abc', 'state-xyz');
+
+        $fresh = $account->fresh();
+        $this->assertFalse((bool) data_get($fresh->metadata, 'facebook_publish_scope_granted'), 'Stale publish grant must be cleared to match the connect-only token.');
+        $this->assertFalse((bool) data_get($fresh->metadata, 'publish_enabled'));
+    }
+
     public function test_sm2_facebook_publish_resolves_and_uses_a_page_access_token(): void
     {
         // Posting to a Page needs a PAGE token, not the connecting user's token — the publisher

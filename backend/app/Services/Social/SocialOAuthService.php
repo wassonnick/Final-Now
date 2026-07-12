@@ -119,6 +119,20 @@ class SocialOAuthService
             return $this->completeMetaPublishReview($account, $token, $grantedScopes, $metadata);
         }
 
+        // Keep the publish flags honest with the token we just received. Re-connecting in
+        // connect-only mode returns a token without the publish scope, so a previously-granted
+        // flag must be cleared — otherwise the UI (and the publisher's fallback) trusts a stale
+        // "granted" while the live token can't actually publish.
+        if (in_array($account->platform, ['facebook_page', 'instagram_business'], true)) {
+            $fbGranted = in_array('pages_manage_posts', $grantedScopes, true);
+            $igGranted = in_array('instagram_content_publish', $grantedScopes, true);
+            $metadata = array_merge($metadata, [
+                'facebook_publish_scope_granted' => $fbGranted,
+                'instagram_publish_scope_granted' => $igGranted,
+                'publish_enabled' => $account->platform === 'facebook_page' ? $fbGranted : $igGranted,
+            ]);
+        }
+
         $account->fill([
             'status' => $account->platform === 'google_business_profile' ? 'needs_location_verification' : 'connected',
             'oauth_state' => null,

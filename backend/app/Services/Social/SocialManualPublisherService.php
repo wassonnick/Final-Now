@@ -245,7 +245,11 @@ class SocialManualPublisherService
 
     private function publishFacebook(SocialPost $post, SocialAccount $account, ?SocialPostAsset $asset): array
     {
-        $pageId = $account->account_id ?: data_get($account->metadata, 'page_id');
+        // account_id can be cleared if the account is later re-connected in connect-only mode;
+        // fall back to the manually selected page so a working page id still resolves.
+        $pageId = $account->account_id
+            ?: data_get($account->metadata, 'page_id')
+            ?: data_get($account->metadata, 'selected_page_id');
         if (! $pageId) {
             throw new InvalidArgumentException('Facebook Page ID is missing.');
         }
