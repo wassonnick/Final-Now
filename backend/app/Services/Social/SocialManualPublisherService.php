@@ -228,8 +228,13 @@ class SocialManualPublisherService
                 ?: data_get($account->metadata, 'selected_page_id', ''));
         }
         // The Page token must come from the Facebook account that holds pages_manage_posts.
+        // Without a linked Page there is no valid publishing token — fail clearly here rather
+        // than let Meta reject the user token with a cryptic "(#10) ... permission" error.
         $tokenAccount = SocialAccount::where('platform', 'facebook_page')->first() ?: $account;
-        $token = $linkedPageId !== '' ? $this->facebookPageToken($tokenAccount, $linkedPageId) : (string) $account->accessToken();
+        if ($linkedPageId === '') {
+            throw new InvalidArgumentException('Instagram publish blocked: no linked Facebook Page resolved. Connect the Facebook Page (with pages_manage_posts) that owns this Instagram account, then retry.');
+        }
+        $token = $this->facebookPageToken($tokenAccount, $linkedPageId);
 
         $container = Http::post("https://graph.facebook.com/v20.0/{$igUserId}/media", [
             'image_url' => $asset?->public_url,
