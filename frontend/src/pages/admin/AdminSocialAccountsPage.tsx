@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AdminSocialNav } from "./AdminSocialNav";
 import {
   fetchMetaPageAccessDebug,
+  fetchMetaPublishReviewUrl,
   fetchSocialAccounts,
   selectMetaPage,
   startSocialOAuth,
@@ -29,6 +30,14 @@ function metaPublishMissing(account: SocialAccount) {
 
 function isMetaAccount(account: SocialAccount) {
   return account.platform === "facebook_page" || account.platform === "instagram_business";
+}
+
+function hasPublishScope(account: SocialAccount, scope: string) {
+  return Boolean(account.scopes?.includes(scope));
+}
+
+function publishEnabled(account: SocialAccount) {
+  return Boolean(account.metadata?.publish_enabled);
 }
 
 function metaDebugPages(debug: MetaPageAccessDebug | null): MetaDebugPage[] {
@@ -70,6 +79,20 @@ export function AdminSocialAccountsPage() {
       await load();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to start OAuth.");
+    }
+  }
+
+  async function requestMetaPublishReview() {
+    try {
+      const result = await fetchMetaPublishReviewUrl();
+      if (result.authorization_url) {
+        setOauthUrl(result.authorization_url);
+        setMessage("Meta App Review publish-permission URL generated. Complete it only for pages_manage_posts and instagram_content_publish review.");
+        window.open(result.authorization_url, "_blank", "noopener,noreferrer");
+      }
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to generate Meta publish review URL.");
     }
   }
 
@@ -150,6 +173,7 @@ export function AdminSocialAccountsPage() {
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {accounts.map((account) => {
             const publishMissing = ["connected", "connected_manual_page"].includes(account.status) && metaPublishMissing(account);
+            const accountPublishEnabled = publishEnabled(account);
             const availablePages = account.platform === "facebook_page" && Array.isArray(account.metadata?.available_pages)
               ? (account.metadata.available_pages as MetaPageOption[])
               : [];
@@ -171,6 +195,26 @@ export function AdminSocialAccountsPage() {
                   {publishMissing ? (
                     <p className="mt-2 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">
                       Connected / Publish not enabled
+                    </p>
+                  ) : null}
+                  {isMetaAccount(account) && account.metadata?.publish_review_requested ? (
+                    <p className="mt-2 inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-800">
+                      Publish review requested
+                    </p>
+                  ) : null}
+                  {account.platform === "facebook_page" && (hasPublishScope(account, "pages_manage_posts") || account.metadata?.facebook_publish_scope_granted) ? (
+                    <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">
+                      Facebook publish permission granted
+                    </p>
+                  ) : null}
+                  {account.platform === "instagram_business" && (hasPublishScope(account, "instagram_content_publish") || account.metadata?.instagram_publish_scope_granted) ? (
+                    <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">
+                      Instagram publish permission granted
+                    </p>
+                  ) : null}
+                  {accountPublishEnabled ? (
+                    <p className="mt-2 inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-black text-white">
+                      Publish enabled
                     </p>
                   ) : null}
                   {publishMissing ? (
@@ -334,7 +378,7 @@ export function AdminSocialAccountsPage() {
                 <Button
                   variant="outline"
                   className="ml-2 mt-4 rounded-full bg-white text-amber-700"
-                  onClick={() => void connect(account.platform, "publish")}
+                  onClick={() => void requestMetaPublishReview()}
                   title="Use only after Meta App Review approves publishing permissions."
                 >
                   Request publish mode
@@ -344,6 +388,59 @@ export function AdminSocialAccountsPage() {
           );})}
         </div>
       </section>
+      <MetaAppReviewChecklist accounts={accounts} />
     </AdminLayout>
+  );
+}
+
+function checklistStatus(ok: boolean) {
+  return ok ? "Ready" : "Needs setup";
+}
+
+function MetaAppReviewChecklist({ accounts }: { accounts: SocialAccount[] }) {
+  const facebook = accounts.find((account) => account.platform === "facebook_page");
+  const instagram = accounts.find((account) => account.platform === "instagram_business");
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://www.societyflats.com";
+  const redirectUri = "https://final-now.onrender.com/api/admin/social/oauth/callback";
+  const facebookGrant = Boolean(facebook?.scopes?.includes("pages_manage_posts") || facebook?.metadata?.facebook_publish_scope_granted);
+  const instagramGrant = Boolean(instagram?.scopes?.includes("instagram_content_publish") || instagram?.metadata?.instagram_publish_scope_granted);
+
+  const rows = [
+    ["App ID present", "Configured in Render META_CLIENT_ID"],
+    ["Redirect URI present", redirectUri],
+    ["Privacy Policy URL", `${origin}/privacy`],
+    ["Terms URL", `${origin}/terms`],
+    ["Data Deletion URL", `${origin}/privacy#data-deletion`],
+    ["Facebook Page connected", facebook?.account_id ? `${facebook.account_name} · ${facebook.account_id}` : "Needs connection"],
+    ["Instagram connected", instagram?.account_id ? `${instagram.account_handle ? `@${instagram.account_handle}` : instagram.account_name} · ${instagram.account_id}` : "Needs connection"],
+    ["pages_manage_posts status", checklistStatus(facebookGrant)],
+    ["instagram_content_publish status", checklistStatus(instagramGrant)],
+  ];
+
+  return (
+    <section className="mt-5 rounded-[1.5rem] border bg-white p-5 shadow-sm">
+      <h2 className="text-xl font-black">Meta App Review Checklist</h2>
+      <p className="mt-2 text-sm leading-6 text-slate-600">
+        Use this section while preparing Meta App Review. Publishing remains manual and disabled until Meta grants the required publish scopes.
+      </p>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {rows.map(([label, value]) => (
+          <div key={label} className="rounded-2xl border bg-slate-50 p-3">
+            <p className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</p>
+            <p className="mt-1 break-words text-sm font-bold text-slate-900">{value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-950">
+        <p className="font-black">Test video instructions</p>
+        <p className="mt-1">
+          Show admin login, Social Accounts, connected Society Flats Facebook Page and @societyflats Instagram account, an approved social post, final publish confirmation, and the safety block when publish permission or approved media is missing.
+        </p>
+        <p className="mt-3 font-black">Review notes copy</p>
+        <p className="mt-1">
+          SocietyFlats uses Meta publishing permissions only for admin-approved posts to official Society Flats Facebook and Instagram assets. No user-generated or AI draft content is auto-published. Tokens are stored encrypted and never exposed to the frontend.
+        </p>
+      </div>
+    </section>
   );
 }

@@ -63,6 +63,34 @@ class SocialOAuthService
         ];
     }
 
+    public function metaPublishReviewUrl(): array
+    {
+        $account = SocialAccount::firstOrCreate(
+            ['platform' => 'facebook_page'],
+            ['account_name' => self::PLATFORMS['facebook_page'], 'status' => 'not_connected']
+        );
+
+        $state = $this->statePayload('publish_review', 'meta');
+        $account->update([
+            'oauth_state' => $state,
+            'last_error' => null,
+            'metadata' => array_merge($account->metadata ?: [], [
+                'oauth_mode' => 'publish_review',
+                'publish_review_requested_at' => now()->toISOString(),
+                'publish_review_platform' => 'meta',
+            ]),
+        ]);
+
+        return [
+            'platform' => 'meta',
+            'mode' => 'publish_review',
+            'authorization_url' => $this->authorizationUrl('facebook_page', $state, 'publish_review'),
+            'state' => $state,
+            'redirect_uri' => $this->redirectUri(),
+            'scopes' => $this->scopes('facebook_page', 'publish_review'),
+        ];
+    }
+
     public function callback(?string $platform, string $code, string $state): SocialAccount
     {
         if ($platform) {
@@ -86,6 +114,10 @@ class SocialOAuthService
             'oauth_mode' => data_get($account->metadata, 'oauth_mode', 'connect'),
         ]);
         $grantedScopes = $this->grantedScopes($account->platform, $token, (string) data_get($metadata, 'oauth_mode', 'connect'));
+
+        if (data_get($metadata, 'oauth_mode') === 'publish_review' && $account->platform === 'facebook_page') {
+            return $this->completeMetaPublishReview($account, $token, $grantedScopes, $metadata);
+        }
 
         $account->fill([
             'status' => $account->platform === 'google_business_profile' ? 'needs_location_verification' : 'connected',
@@ -274,9 +306,10 @@ class SocialOAuthService
 
     private function metaScopes(string $mode): array
     {
-        $key = $mode === 'publish' ? 'meta_publish_scopes' : 'meta_connect_scopes';
-        $fallback = $mode === 'publish'
-            ? 'pages_manage_posts,pages_manage_engagement,instagram_basic,instagram_content_publish'
+        $publishMode = in_array($mode, ['publish', 'publish_review'], true);
+        $key = $publishMode ? 'meta_publish_scopes' : 'meta_connect_scopes';
+        $fallback = $publishMode
+            ? 'pages_manage_posts,instagram_content_publish'
             : 'public_profile,pages_show_list,pages_read_engagement,business_management';
 
         $raw = (string) config("services.social_oauth.{$key}", $fallback);
@@ -308,6 +341,81 @@ class SocialOAuthService
         }
 
         return $mode === 'publish' ? 'publish' : 'connect';
+    }
+
+    private function completeMetaPublishReview(SocialAccount $facebookAccount, array $token, array $grantedScopes, array $metadata): SocialAccount
+    {
+        $expiresAt = isset($token['expires_in']) ? now()->addSeconds((int) $token['expires_in']) : $facebookAccount->token_expires_at;
+        $facebookGranted = in_array('pages_manage_posts', $grantedScopes, true);
+        $instagramGranted = in_array('instagram_content_publish', $grantedScopes, true);
+        $reviewMetadata = array_merge($metadata, [
+            'publish_review_completed_at' => now()->toISOString(),
+            'publish_review_requested' => true,
+            'facebook_publish_scope_granted' => $facebookGranted,
+            'instagram_publish_scope_granted' => $instagramGranted,
+        ]);
+
+        $facebookAccount->fill([
+            'status' => $facebookGranted ? 'connected' : $facebookAccount->status,
+            'oauth_state' => null,
+            'last_connected_at' => now(),
+            'last_error' => $facebookGranted ? null : 'Meta publish permission not granted yet.',
+            'scopes' => $this->mergeScopes($facebookAccount->scopes ?: [], $grantedScopes),
+            'token_expires_at' => $expiresAt,
+            'metadata' => array_merge($reviewMetadata, [
+                'publish_enabled' => $facebookGranted,
+                'facebook_publish_scope_granted' => $facebookGranted,
+            ]),
+        ]);
+        $facebookAccount->access_token = (string) ($token['access_token'] ?? $facebookAccount->accessToken() ?? '');
+        $facebookAccount->refresh_token = $token['refresh_token'] ?? $facebookAccount->refreshToken();
+        $facebookAccount->save();
+
+        $instagram = SocialAccount::firstOrCreate(
+            ['platform' => 'instagram_business'],
+            ['account_name' => self::PLATFORMS['instagram_business'], 'status' => 'not_connected', 'metadata' => ['sm2_manual_only' => true]]
+        );
+        $instagram->fill([
+            'status' => $instagramGranted ? 'connected' : $instagram->status,
+            'last_connected_at' => now(),
+            'last_error' => $instagramGranted ? null : 'Meta publish permission not granted yet.',
+            'scopes' => $this->mergeScopes($instagram->scopes ?: [], $grantedScopes),
+            'token_expires_at' => $expiresAt,
+            'metadata' => array_merge($instagram->metadata ?: [], [
+                'sm2_manual_only' => true,
+                'connected_via' => 'oauth',
+                'oauth_mode' => 'publish_review',
+                'publish_review_requested' => true,
+                'publish_review_completed_at' => now()->toISOString(),
+                'connected_facebook_page_id' => $facebookAccount->account_id,
+                'instagram_publish_scope_granted' => $instagramGranted,
+                'publish_enabled' => $instagramGranted,
+            ]),
+        ]);
+        $instagram->access_token = (string) ($token['access_token'] ?? $instagram->accessToken() ?? '');
+        $instagram->refresh_token = $token['refresh_token'] ?? $instagram->refreshToken();
+        $instagram->save();
+
+        return $facebookAccount->fresh();
+    }
+
+    private function mergeScopes(array $existingScopes, array $newScopes): array
+    {
+        return array_values(array_unique(array_filter(array_map(
+            static fn ($scope) => trim((string) $scope),
+            array_merge($existingScopes, $newScopes)
+        ))));
+    }
+
+    private function statePayload(string $mode, string $platform): string
+    {
+        $payload = rtrim(strtr(base64_encode(json_encode([
+            'mode' => $mode,
+            'platform' => $platform,
+            'nonce' => Str::random(32),
+        ]) ?: ''), '+/', '-_'), '=');
+
+        return $payload.'.'.Str::random(16);
     }
 
     private function redirectUri(): string

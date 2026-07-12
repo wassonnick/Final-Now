@@ -303,6 +303,14 @@ class AdminSocialController extends Controller
         ]);
     }
 
+    public function metaPublishReviewUrl(): JsonResponse
+    {
+        return response()->json([
+            'status' => 'ok',
+            'data' => $this->oauth->metaPublishReviewUrl(),
+        ]);
+    }
+
     public function selectMetaGraphPage(Request $request): JsonResponse
     {
         $data = $request->validate([

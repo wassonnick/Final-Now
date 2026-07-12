@@ -114,6 +114,9 @@ export const fetchSocialAccounts = () => adminFetch("/admin/social/accounts").th
 export const fetchMetaPageAccessDebug = () =>
   adminFetch("/admin/social/meta/pages/debug").then(json).then((body) => body.data as MetaPageAccessDebug);
 
+export const fetchMetaPublishReviewUrl = () =>
+  adminFetch("/admin/social/meta/publish-review-url").then(json).then((body) => body.data as SocialOAuthStart);
+
 export const generateSocialPosts = (payload: Record<string, unknown>) =>
   adminFetch("/admin/social/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);
 

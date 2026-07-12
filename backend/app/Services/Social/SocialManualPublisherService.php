@@ -19,9 +19,9 @@ class SocialManualPublisherService
             return $this->whatsappExport($post, $actor);
         }
 
-        $this->validatePublishGate($post, $options);
-
         $account = $this->accountFor($platform, $options['social_account_id'] ?? null);
+
+        $this->validatePublishGate($post, $options, $account, $platform, 'manual_publish', $actor);
 
         return $this->send($post, $account, $platform, 'manual_publish', $actor);
     }
@@ -57,7 +57,7 @@ class SocialManualPublisherService
     {
         $this->ensurePublishingScopes($post, $account, $platform, $action, $actor);
 
-        $asset = $this->validatedAsset($post, in_array($platform, ['instagram_business', 'facebook_page'], true));
+        $asset = $this->validatedAsset($post, $account, $platform, $action, $actor, in_array($platform, ['instagram_business', 'facebook_page'], true));
 
         $this->log($post, $account, $action.'_attempt', 'started', $actor, 'Publish requested.');
 
@@ -108,26 +108,49 @@ class SocialManualPublisherService
             return;
         }
 
-        $granted = array_map('strval', $account->scopes ?: []);
-        $missing = array_values(array_diff($required, $granted));
-        if (! $missing) {
+        if ($this->hasRequiredPublishScope($account, $platform, $required[0])) {
             return;
         }
 
-        $message = 'Meta publish blocked: required publishing permission is not granted.';
+        $missing = $required;
+        $message = match ($platform) {
+            'facebook_page' => 'Facebook publish blocked: pages_manage_posts permission is not granted.',
+            'instagram_business' => 'Instagram publish blocked: instagram_content_publish permission is not granted.',
+            default => 'Meta publish blocked: required publishing permission is not granted.',
+        };
         $post->update(['publish_status' => 'failed', 'publish_error' => $message]);
         $account->update(['last_error' => $message]);
         $this->log($post->fresh(), $account, $action.'_blocked', 'blocked', $actor, $message, [
+            'reason' => 'missing_scope',
             'missing_scopes' => $missing,
         ]);
 
         throw new InvalidArgumentException($message);
     }
 
-    private function validatePublishGate(SocialPost $post, array $options): void
+    private function hasRequiredPublishScope(SocialAccount $account, string $platform, string $scope): bool
+    {
+        $granted = array_map('strval', $account->scopes ?: []);
+        if (in_array($scope, $granted, true)) {
+            return true;
+        }
+
+        return match ($platform) {
+            'facebook_page' => (bool) data_get($account->metadata, 'facebook_publish_scope_granted'),
+            'instagram_business' => (bool) data_get($account->metadata, 'instagram_publish_scope_granted'),
+            default => false,
+        };
+    }
+
+    private function validatePublishGate(SocialPost $post, array $options, SocialAccount $account, string $platform, string $action, ?string $actor): void
     {
         if ($post->status !== 'approved') {
-            throw new InvalidArgumentException('Only approved social posts can be manually published.');
+            $message = 'Only approved social posts can be manually published.';
+            $this->log($post, $account, $action.'_blocked', 'blocked', $actor, $message, [
+                'reason' => 'missing_approval',
+                'platform' => $platform,
+            ]);
+            throw new InvalidArgumentException($message);
         }
 
         if (! (bool) ($options['confirm_publish'] ?? false)) {
@@ -151,7 +174,7 @@ class SocialManualPublisherService
         }
 
         $account = $query->first();
-        if (! $account || $account->status !== 'connected' || ! $account->accessToken()) {
+        if (! $account || ! in_array($account->status, ['connected', 'connected_manual_page'], true) || ! $account->accessToken()) {
             throw new InvalidArgumentException('Connect an authorized '.$platform.' account before publishing.');
         }
 
@@ -162,7 +185,7 @@ class SocialManualPublisherService
         return $account;
     }
 
-    private function validatedAsset(SocialPost $post, bool $required): ?SocialPostAsset
+    private function validatedAsset(SocialPost $post, SocialAccount $account, string $platform, string $action, ?string $actor, bool $required): ?SocialPostAsset
     {
         $asset = $post->assets()
             ->where('status', 'approved')
@@ -171,7 +194,16 @@ class SocialManualPublisherService
             ->first();
 
         if ($required && (! $asset || ! filter_var($asset->public_url, FILTER_VALIDATE_URL))) {
-            throw new InvalidArgumentException('Instagram/Facebook publishing requires an approved, publicly accessible media asset.');
+            $message = $platform === 'instagram_business'
+                ? 'Instagram publish blocked: approved image asset required.'
+                : 'Facebook publish blocked: approved image asset required.';
+            $post->update(['publish_status' => 'failed', 'publish_error' => $message]);
+            $account->update(['last_error' => $message]);
+            $this->log($post->fresh(), $account, $action.'_blocked', 'blocked', $actor, $message, [
+                'reason' => 'missing_asset',
+            ]);
+
+            throw new InvalidArgumentException($message);
         }
 
         return $asset;
