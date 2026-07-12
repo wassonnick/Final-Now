@@ -26,6 +26,26 @@ class SchedulerHeartbeatTest extends TestCase
             ->assertJsonPath('scheduler.last_heartbeat_at', null);
     }
 
+    public function test_stats_reports_queue_backlog_counts(): void
+    {
+        $this->withHeaders(['Authorization' => 'Bearer admin-test-token'])
+            ->getJson('/api/admin/stats')
+            ->assertOk()
+            ->assertJsonPath('queue.pending', 0)
+            ->assertJsonPath('queue.failed', 0);
+
+        \Illuminate\Support\Facades\DB::table('failed_jobs')->insert([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'connection' => 'database', 'queue' => 'default',
+            'payload' => '{}', 'exception' => 'boom', 'failed_at' => now(),
+        ]);
+
+        $this->withHeaders(['Authorization' => 'Bearer admin-test-token'])
+            ->getJson('/api/admin/stats')
+            ->assertOk()
+            ->assertJsonPath('queue.failed', 1);
+    }
+
     public function test_stats_reports_healthy_with_a_fresh_heartbeat_and_stale_after_ten_minutes(): void
     {
         Cache::put(SchedulerHeartbeat::CACHE_KEY, now()->subMinutes(2)->toIso8601String(), now()->addDay());

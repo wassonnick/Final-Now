@@ -97,6 +97,30 @@ class SocietyDraftCompletionTest extends TestCase
         $this->assertTrue((bool) $society->fresh()->is_published);
     }
 
+    public function test_concurrent_completion_of_the_same_society_is_skipped_not_double_billed(): void
+    {
+        // Prevent the double charge: if the auto-dispatched job holds the per-society lock,
+        // a manual sweep on the same society must skip instead of re-running the AI pipeline.
+        $society = $this->draft([
+            'image_candidates' => [['source' => 'google_places', 'photo_reference' => 'ref-x', 'credit' => 'Google Places']],
+        ]);
+
+        // Simulate a completion already in flight by holding the lock.
+        $lock = \Illuminate\Support\Facades\Cache::lock('society-completion:'.$society->id, 300);
+        $this->assertTrue($lock->get());
+
+        // The SEO AI must NOT be called while another completion holds the lock.
+        $this->mock(SocietySeoAiDraftService::class, function ($mock) {
+            $mock->shouldNotReceive('generate');
+        });
+
+        $result = app(SocietyDraftCompletionService::class)->complete($society, false, false);
+
+        $this->assertContains('skipped_already_running', $result['actions']);
+        $this->assertFalse((bool) $society->fresh()->is_published);
+        $lock->release();
+    }
+
     private function draft(array $overrides = []): Society
     {
         return Society::create(array_merge([

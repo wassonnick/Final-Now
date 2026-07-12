@@ -34,6 +34,24 @@ class SocietyDraftCompletionService
      */
     public function complete(Society $society, bool $allowReEnrich = true, bool $gated = true): array
     {
+        // Serialize completion per society. The auto-dispatched import job and a manual
+        // 'Complete draft now' / sweep can otherwise run at the same instant, both see empty
+        // data, and both pay for the same AI enrichment + SEO — a real double charge.
+        $lock = \Illuminate\Support\Facades\Cache::lock('society-completion:'.$society->id, 300);
+        if (! $lock->get()) {
+            return ['society_id' => $society->id, 'name' => $society->name, 'published' => (bool) $society->is_published, 'actions' => ['skipped_already_running'], 'missing' => $this->missing($society), 'blocked_by' => []];
+        }
+
+        try {
+            return $this->runCompletion($society, $allowReEnrich, $gated);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /** @return array{society_id:int,name:string,published:bool,actions:array<int,string>,missing:array<int,string>,blocked_by:array<int,string>} */
+    private function runCompletion(Society $society, bool $allowReEnrich, bool $gated): array
+    {
         $actions = [];
         $blocked = [];
 

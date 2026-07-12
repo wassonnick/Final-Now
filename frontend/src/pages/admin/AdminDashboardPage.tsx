@@ -452,6 +452,7 @@ export function AdminDashboardPage() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [suggestionBusyId, setSuggestionBusyId] = useState<number | null>(null);
   const [scheduler, setScheduler] = useState<{ healthy: boolean; last_heartbeat_at?: string | null; minutes_since?: number | null } | null>(null);
+  const [queue, setQueue] = useState<{ pending: number; failed: number } | null>(null);
 
   const loadStats = async () => {
     try {
@@ -467,6 +468,7 @@ export function AdminDashboardPage() {
 
       setStats({ ...emptyStats, ...json });
       setScheduler(json?.scheduler || null);
+      setQueue(json?.queue || null);
     } catch (err) {
       console.error(err);
       setError("Unable to load live dashboard stats.");
@@ -800,6 +802,16 @@ export function AdminDashboardPage() {
         {scheduler && !scheduler.healthy ? (
           <div className="rounded-2xl border border-rose-300 bg-rose-50 px-5 py-3.5 text-sm font-bold text-rose-800">
             ⚠ Scheduler appears down — {scheduler.last_heartbeat_at ? `last heartbeat ${scheduler.minutes_since} min ago` : "no heartbeat recorded yet"}. All scheduled automation (SEO cycle, social autopilot, market refresh, queue jobs) is stalled until the backend scheduler loop runs again — check the societyflats-api service on Render.
+          </div>
+        ) : null}
+        {queue && queue.failed > 0 ? (
+          <div className="rounded-2xl border border-rose-300 bg-rose-50 px-5 py-3.5 text-sm font-bold text-rose-800">
+            ⚠ {queue.failed} background job{queue.failed === 1 ? "" : "s"} failed — imported drafts that error out won't auto-complete. Inspect with <code className="rounded bg-rose-100 px-1">php artisan queue:failed</code> on Render; use "Complete all drafts now" in the importer to retry those societies.
+          </div>
+        ) : null}
+        {queue && queue.pending > 20 ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3.5 text-sm font-bold text-amber-800">
+            {queue.pending} background jobs are queued and not draining fast — the queue worker may be behind. Imported drafts fill as these process; "Complete all drafts now" in the importer bypasses the queue if you need them finished immediately.
           </div>
         ) : null}
         {(error || leadError || inventoryError) ? (
