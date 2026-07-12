@@ -1003,6 +1003,7 @@ class SocialMediaFoundationTest extends TestCase
     public function test_sm2_instagram_manual_publish_saves_external_id_and_audit_log_without_exposing_token(): void
     {
         Http::fake([
+            'https://graph.facebook.com/v20.0/page-1?*' => Http::response(['access_token' => 'ig-page-token', 'id' => 'page-1'], 200),
             'https://graph.facebook.com/v20.0/ig-user-1/media' => Http::response(['id' => 'container-1'], 200),
             'https://graph.facebook.com/v20.0/ig-user-1/media_publish' => Http::response(['id' => 'ig-post-1'], 200),
         ]);
@@ -1025,13 +1026,22 @@ class SocialMediaFoundationTest extends TestCase
             'risk_level' => 'low',
         ]);
 
+        // The linked Facebook Page holds pages_manage_posts; the IG publish must use ITS page
+        // token, not the IG account's user token (using the user token triggers Meta error #10).
+        $facebook = SocialAccount::create([
+            'platform' => 'facebook_page', 'account_name' => 'Facebook Page', 'account_id' => 'page-1',
+            'status' => 'connected', 'scopes' => ['pages_manage_posts'],
+        ]);
+        $facebook->access_token = 'fb-user-token';
+        $facebook->save();
+
         $account = SocialAccount::create([
             'platform' => 'instagram_business',
             'account_name' => 'Instagram Business',
             'account_id' => 'ig-user-1',
             'status' => 'connected',
             'scopes' => ['instagram_content_publish', 'instagram_basic', 'pages_show_list', 'pages_read_engagement'],
-            'metadata' => ['instagram_business_account_id' => 'ig-user-1'],
+            'metadata' => ['instagram_business_account_id' => 'ig-user-1', 'connected_facebook_page_id' => 'page-1'],
         ]);
         $account->access_token = 'secret-instagram-token';
         $account->save();
@@ -1040,6 +1050,9 @@ class SocialMediaFoundationTest extends TestCase
             'confirm_publish' => true,
             'social_account_id' => $account->id,
         ])->assertOk();
+
+        // The media container was created with the Page token, never the IG user token.
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/ig-user-1/media') && ($request['access_token'] ?? null) === 'ig-page-token');
 
         $responseJson = json_encode($response->json());
         $this->assertStringNotContainsString('secret-instagram-token', $responseJson);

@@ -217,9 +217,19 @@ class SocialManualPublisherService
         }
 
         // Instagram Graph publishing goes through the linked Facebook Page, so it needs that
-        // Page's access token — resolve it from the connected Page id the same way as Facebook.
+        // Page's access token. connected_facebook_page_id can be blank when Meta returned no
+        // pages and the Page was entered manually (its account_id was null at IG-sync time),
+        // so fall back to the Facebook account's own resolved page id, then to its selected page.
         $linkedPageId = (string) data_get($account->metadata, 'connected_facebook_page_id', '');
-        $token = $linkedPageId !== '' ? $this->facebookPageToken($account, $linkedPageId) : (string) $account->accessToken();
+        if ($linkedPageId === '') {
+            $facebook = SocialAccount::where('platform', 'facebook_page')->first();
+            $linkedPageId = (string) ($facebook?->account_id
+                ?: data_get($facebook?->metadata, 'selected_page_id', '')
+                ?: data_get($account->metadata, 'selected_page_id', ''));
+        }
+        // The Page token must come from the Facebook account that holds pages_manage_posts.
+        $tokenAccount = SocialAccount::where('platform', 'facebook_page')->first() ?: $account;
+        $token = $linkedPageId !== '' ? $this->facebookPageToken($tokenAccount, $linkedPageId) : (string) $account->accessToken();
 
         $container = Http::post("https://graph.facebook.com/v20.0/{$igUserId}/media", [
             'image_url' => $asset?->public_url,
