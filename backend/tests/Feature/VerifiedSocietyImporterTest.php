@@ -19,12 +19,35 @@ class VerifiedSocietyImporterTest extends TestCase
     {
         parent::setUp();
         config(['services.admin_api_token' => 'admin-test-token']);
+        // Imports now dispatch the one-click completion job. Under the sync queue that would
+        // run the whole Google/AI enrichment pipeline inline and mutate the very data these
+        // tests assert on — fake the queue so we test dispatch, not execution.
+        \Illuminate\Support\Facades\Queue::fake();
     }
 
     public function test_routes_are_admin_only(): void
     {
         $this->getJson('/api/admin/verified-importer/jobs')->assertUnauthorized();
         $this->postJson('/api/admin/verified-importer/single', ['name' => 'Private Draft'])->assertUnauthorized();
+    }
+
+    public function test_import_dispatches_the_one_click_completion_job_for_created_drafts(): void
+    {
+        // The one-click promise: a V2 import must queue the completion pipeline
+        // (description, cover approval, SEO) — previously only the legacy importer did,
+        // so V2 batches sat empty until manual work. (Queue is faked in setUp.)
+        $this->admin()->postJson('/api/admin/verified-importer/single', [
+            'name' => 'ATS Completion Society',
+            'builder_name' => 'ATS',
+            'city' => 'Gurgaon',
+            'sector' => 'Sector 109',
+        ])->assertCreated();
+
+        $society = Society::where('name', 'ATS Completion Society')->firstOrFail();
+        \Illuminate\Support\Facades\Queue::assertPushed(
+            \App\Jobs\CompleteImportedSocietyDraft::class,
+            fn ($job) => $job->societyId === $society->id,
+        );
     }
 
     public function test_single_import_creates_only_a_source_tracked_unpublished_draft(): void

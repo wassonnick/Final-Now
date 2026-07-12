@@ -144,7 +144,7 @@ class VerifiedSocietyImporterService
             return VerifiedSocietyImportRow::create(['import_job_id'=>$job->id,'row_number'=>$rowNumber,'input_data'=>$input,'normalized_data'=>$data,'matched_society_id'=>$duplicate['matched_society_id'],'status'=>'duplicate','confidence_score'=>$confidence,'warnings'=>$warnings]);
         }
 
-        return DB::transaction(function() use($job,$input,$data,$rowNumber,$sourceType,$confidence,$duplicate,$warnings,$action,$googleFields,$googleRaw,$googleStatus) {
+        $row = DB::transaction(function() use($job,$input,$data,$rowNumber,$sourceType,$confidence,$duplicate,$warnings,$action,$googleFields,$googleRaw,$googleStatus) {
             $attached=$duplicate['matched_society_id']&&$action==='attach';
             if($attached) {
                 $society=Society::findOrFail($duplicate['matched_society_id']);
@@ -180,6 +180,15 @@ class VerifiedSocietyImporterService
 
             return VerifiedSocietyImportRow::create(['import_job_id'=>$job->id,'row_number'=>$rowNumber,'input_data'=>$input,'normalized_data'=>$data,'matched_society_id'=>$duplicate['matched_society_id'],'created_society_id'=>$attached?null:$society->id,'status'=>$attached?'needs_review':'created','confidence_score'=>$confidence,'warnings'=>$warnings]);
         });
+
+        // One-click promise: every freshly created draft goes straight through the completion
+        // pipeline (description/data gaps, cover approval, SEO draft + publish) — the only
+        // manual step left is publishing the society itself.
+        if ($row->created_society_id) {
+            \App\Jobs\CompleteImportedSocietyDraft::dispatch($row->created_society_id);
+        }
+
+        return $row;
     }
 
     private function refreshSummary(VerifiedSocietyImportJob $job,array $confidences=[]): VerifiedSocietyImportJob
