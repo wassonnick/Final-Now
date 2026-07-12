@@ -70,7 +70,7 @@ export function AdminSocialAccountsPage() {
       if (result.authorization_url) {
         setOauthUrl(result.authorization_url);
         setMessage(mode === "publish"
-          ? "Publish-permission OAuth URL generated. Use only after Meta App Review approves publishing permissions."
+          ? "Publish-authorization opened. Approve pages_manage_posts + instagram_content_publish on Meta's screen to enable publishing."
           : "Connect-only OAuth URL generated. Open it to connect the account without requesting Meta publishing permissions.");
         window.open(result.authorization_url, "_blank", "noopener,noreferrer");
       } else {
@@ -87,7 +87,7 @@ export function AdminSocialAccountsPage() {
       const result = await fetchMetaPublishReviewUrl();
       if (result.authorization_url) {
         setOauthUrl(result.authorization_url);
-        setMessage("Meta App Review publish-permission URL generated. Complete it only for pages_manage_posts and instagram_content_publish review.");
+        setMessage("Meta consent opened in a new tab. Approve pages_manage_posts and instagram_content_publish, then return here — the badge flips to Publish enabled once granted.");
         window.open(result.authorization_url, "_blank", "noopener,noreferrer");
       }
       await load();
@@ -219,7 +219,7 @@ export function AdminSocialAccountsPage() {
                   ) : null}
                   {publishMissing ? (
                     <p className="mt-2 text-xs font-bold leading-5 text-amber-800">
-                      Meta publish permission is not approved yet. Connect works, publishing requires Meta App Review.
+                      Publishing needs Meta to grant {account.platform === "instagram_business" ? "instagram_content_publish" : "pages_manage_posts"}. Click <span className="font-black">Authorize publishing</span> below and approve it on Meta&rsquo;s screen. If you are an admin/developer/tester on the Meta app this works immediately; making it available to other users needs Meta App Review.
                     </p>
                   ) : null}
                   {account.account_handle ? <p className="mt-1 text-xs font-bold text-slate-500">Handle: {account.account_handle}</p> : null}
@@ -379,9 +379,9 @@ export function AdminSocialAccountsPage() {
                   variant="outline"
                   className="ml-2 mt-4 rounded-full bg-white text-amber-700"
                   onClick={() => void requestMetaPublishReview()}
-                  title="Use only after Meta App Review approves publishing permissions."
+                  title="Opens Meta's consent screen requesting pages_manage_posts + instagram_content_publish. Approve both to enable publishing."
                 >
-                  Request publish mode
+                  Authorize publishing
                 </Button>
               ) : null}
             </article>
@@ -419,9 +419,9 @@ function MetaAppReviewChecklist({ accounts }: { accounts: SocialAccount[] }) {
 
   return (
     <section className="mt-5 rounded-[1.5rem] border bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-black">Meta App Review Checklist</h2>
+      <h2 className="text-xl font-black">Meta publishing checklist</h2>
       <p className="mt-2 text-sm leading-6 text-slate-600">
-        Use this section while preparing Meta App Review. Publishing remains manual and disabled until Meta grants the required publish scopes.
+        To publish to your own Page/IG: be an admin/developer/tester on the Meta app, then click <span className="font-black">Authorize publishing</span> above and approve pages_manage_posts + instagram_content_publish — no App Review needed for your own assets. App Review is only required to let other users&rsquo; accounts publish.
       </p>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {rows.map(([label, value]) => (
