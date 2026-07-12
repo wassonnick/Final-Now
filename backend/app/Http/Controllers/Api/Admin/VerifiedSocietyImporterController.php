@@ -24,7 +24,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VerifiedSocietyImporterController extends Controller
 {
-    public function __construct(private VerifiedSocietyImporterService $service, private SocietyImportExcelParser $parser, private SocietyImportProfileApplier $profileApplier, private SocietyImportDraftGenerator $generator, private SocietyImportLayerService $layers) {}
+    public function __construct(private VerifiedSocietyImporterService $service, private SocietyImportExcelParser $parser, private SocietyImportProfileApplier $profileApplier, private SocietyImportDraftGenerator $generator, private SocietyImportLayerService $layers, private \App\Services\Society\Import\SocietyDraftCompletionService $completion) {}
 
     public function jobs(Request $request): JsonResponse
     {
@@ -86,7 +86,7 @@ class VerifiedSocietyImporterController extends Controller
         $images=VerifiedSocietyImportImage::query()->where('needs_review',true)->where('admin_rejected',false)->latest()->limit(200)->get();
         $ids=$fields->pluck('society_id')->merge($images->pluck('society_id'))->filter()->unique();
         $sources=VerifiedSocietyImportSource::whereIn('society_id',$ids)->get();
-        $societies=Society::whereIn('id',$ids)->get()->map(function($society)use($fields,$images,$sources){return ['id'=>$society->id,'name'=>$society->name,'slug'=>$society->slug,'builder'=>$society->builder,'sector'=>$society->sector,'city'=>$society->city,'status'=>$society->status,'is_published'=>$society->is_published,'image_approved_by_admin'=>$society->image_approved_by_admin,'has_approved_cover'=>$society->image_approved_by_admin&&(filled($society->cover_image)||filled($society->image_url)||filled($society->image_photo_reference)),'overall_confidence'=>$society->source_confidence_score,'source_count'=>$sources->where('society_id',$society->id)->count(),'field_count'=>$fields->where('society_id',$society->id)->count(),'image_count'=>$images->where('society_id',$society->id)->count(),'layers'=>$this->layers->summary($society)];});
+        $societies=Society::with('seoContent')->whereIn('id',$ids)->get()->map(function($society)use($fields,$images,$sources){return ['id'=>$society->id,'name'=>$society->name,'slug'=>$society->slug,'builder'=>$society->builder,'sector'=>$society->sector,'city'=>$society->city,'status'=>$society->status,'is_published'=>$society->is_published,'image_approved_by_admin'=>$society->image_approved_by_admin,'has_approved_cover'=>$society->image_approved_by_admin&&(filled($society->cover_image)||filled($society->image_url)||filled($society->image_photo_reference)),'overall_confidence'=>$society->source_confidence_score,'source_count'=>$sources->where('society_id',$society->id)->count(),'field_count'=>$fields->where('society_id',$society->id)->count(),'image_count'=>$images->where('society_id',$society->id)->count(),'layers'=>$this->layers->summary($society),'completion'=>$this->completionStatus($society)];});
         $duplicates=VerifiedSocietyImportRow::where('status','duplicate')->latest()->limit(100)->get();
         $lowConfidence=VerifiedSocietyImportRow::whereNotNull('confidence_score')->where('confidence_score','<',70)->latest()->limit(100)->get();
         return response()->json(['data'=>['societies'=>$societies->values(),'fields'=>$fields,'images'=>$images,'duplicates'=>$duplicates,'low_confidence'=>$lowConfidence]]);
@@ -239,9 +239,35 @@ class VerifiedSocietyImporterController extends Controller
         return ['name'=>['required','string','min:2','max:255'],'display_name'=>['nullable','string','max:255'],'legal_name'=>['nullable','string','max:255'],'slug'=>['nullable','string','max:255'],'city'=>['nullable','string','max:100'],'state'=>['nullable','string','max:100'],'sector'=>['nullable','string','max:100'],'locality'=>['nullable','string','max:255'],'builder_name'=>['nullable','string','max:255'],'rera_number'=>['nullable','string','max:120'],'rera_url'=>['nullable','url','max:2000'],'promoter_name'=>['nullable','string','max:255'],'rera_status'=>['nullable','string','max:120'],'registration_validity'=>['nullable','string','max:255'],'certificate_url'=>['nullable','url','max:2000'],'rera_search_url'=>['nullable','url','max:2000'],'google_place_id'=>['nullable','string','max:255'],'google_maps_url'=>['nullable','url','max:2000'],'builder_url'=>['nullable','url','max:2000'],'developer_url'=>['nullable','url','max:2000'],'official_project_url'=>['nullable','url','max:2000'],'brochure_url'=>['nullable','url','max:2000'],'source_url'=>['nullable','url','max:2000'],'source_type'=>['nullable','string','max:50'],'cover_image_url'=>['nullable','url','max:2000'],'image_reference_url'=>['nullable','url','max:2000'],'gallery_image_urls'=>['nullable'],'google_photo_references'=>['nullable'],'image_attribution'=>['nullable','string','max:500'],'notes'=>['nullable','string','max:3000'],'address'=>['nullable','string','max:500'],'description'=>['nullable','string','max:5000'],'project_status'=>['nullable','string','max:100'],'possession_status'=>['nullable','string','max:100'],'possession_date'=>['nullable','string','max:100'],'amenities'=>['nullable','array','max:50'],'nearby_schools'=>['nullable'],'nearby_metro'=>['nullable'],'nearby_hospitals'=>['nullable'],'nearby_office_hubs'=>['nullable'],'rent_range'=>['nullable','string','max:100'],'buy_range'=>['nullable','string','max:100'],'rent_min'=>['nullable','string','max:100'],'rent_max'=>['nullable','string','max:100'],'buy_min'=>['nullable','string','max:100'],'buy_max'=>['nullable','string','max:100'],'resale_min'=>['nullable','string','max:100'],'resale_max'=>['nullable','string','max:100'],'average_rent'=>['nullable','string','max:100'],'average_sale_price'=>['nullable','string','max:100'],'price_per_sqft'=>['nullable','string','max:100'],'rental_yield'=>['nullable','string','max:100'],'maintenance_charges'=>['nullable','string','max:100'],'market_notes'=>['nullable','string','max:3000'],'meta_title'=>['nullable','string','max:255'],'meta_description'=>['nullable','string','max:1000'],'score'=>['nullable','numeric','min:0','max:10'],'security_score'=>['nullable','numeric','min:0','max:10'],'maintenance_score'=>['nullable','numeric','min:0','max:10'],'connectivity_score'=>['nullable','numeric','min:0','max:10'],'lifestyle_score'=>['nullable','numeric','min:0','max:10'],'investment_score'=>['nullable','numeric','min:0','max:10'],'latitude'=>['nullable','numeric','between:-90,90'],'longitude'=>['nullable','numeric','between:-180,180'],'confidence_score'=>['nullable','integer','min:0','max:100']];
     }
 
+    public function completeDraft(Society $society): JsonResponse
+    {
+        $this->assertImporterImageDraft($society);
+        $result=$this->completion->complete($society->fresh());
+        return response()->json(['data'=>['result'=>$result,'completion'=>$this->completionStatus($society->fresh())]]);
+    }
+
     private function reviewer(Request $request): string
     {
         return (string)($request->header('X-Admin-Email')?:'admin');
+    }
+
+    /**
+     * At-a-glance completion state for the Review Queue, using the very gates the one-click
+     * pipeline publishes on. Labels: published (live) / ready (all gates pass, publish it) /
+     * incomplete (list of what's still missing).
+     *
+     * @return array{state:string,label:string,missing:array<int,string>,missing_labels:array<int,string>}
+     */
+    private function completionStatus(Society $society): array
+    {
+        if ($society->is_published) {
+            return ['state'=>'published','label'=>'Published','missing'=>[],'missing_labels'=>[]];
+        }
+        $missing=$this->completion->missing($society);
+        $labels=['description'=>'Description','score'=>'Score','sector_or_locality'=>'Sector / locality','approved_cover_image'=>'Approved cover image','published_seo'=>'Published SEO'];
+        return $missing===[]
+            ? ['state'=>'ready','label'=>'Ready to publish','missing'=>[],'missing_labels'=>[]]
+            : ['state'=>'incomplete','label'=>count($missing).' to complete','missing'=>$missing,'missing_labels'=>array_map(fn($key)=>$labels[$key]??$key,$missing)];
     }
 
     private function assertImporterImageDraft(Society $society): void

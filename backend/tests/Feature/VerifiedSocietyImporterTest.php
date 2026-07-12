@@ -50,6 +50,27 @@ class VerifiedSocietyImporterTest extends TestCase
         );
     }
 
+    public function test_review_queue_reports_per_society_completion_status(): void
+    {
+        // A freshly imported draft with only a name is incomplete against the publish gates;
+        // the badge must enumerate exactly what the one-click pipeline still needs.
+        $this->admin()->postJson('/api/admin/verified-importer/single', [
+            'name' => 'Incomplete Badge Society',
+            'sector' => 'Sector 84',
+        ])->assertCreated();
+
+        $response = $this->admin()->getJson('/api/admin/verified-importer/review')->assertOk();
+        $society = collect($response->json('data.societies'))->firstWhere('name', 'Incomplete Badge Society');
+
+        $this->assertNotNull($society, 'The imported draft must appear in the review queue.');
+        $this->assertSame('incomplete', $society['completion']['state']);
+        $this->assertContains('description', $society['completion']['missing']);
+        $this->assertContains('published_seo', $society['completion']['missing']);
+        $this->assertContains('approved_cover_image', $society['completion']['missing']);
+        // Sector was supplied, so the sector/locality gate must NOT be flagged.
+        $this->assertNotContains('sector_or_locality', $society['completion']['missing']);
+    }
+
     public function test_single_import_creates_only_a_source_tracked_unpublished_draft(): void
     {
         $response = $this->admin()->postJson('/api/admin/verified-importer/single', [

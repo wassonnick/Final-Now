@@ -21,6 +21,7 @@ export const setVerifiedImportCoverImage = (id: number, replace = false) => admi
 export const retryVerifiedImportFailedRows = (id: number) => adminFetch(`/admin/verified-importer/jobs/${id}/retry-failed`, { method: "POST" }).then(json);
 export const applyVerifiedHighConfidenceFields = (societyId: number) => adminFetch(`/admin/verified-importer/societies/${societyId}/apply-high-confidence`, { method: "POST" }).then(json);
 export const enrichExistingVerifiedSocietyDraft = (societyId: number) => adminFetch(`/admin/verified-importer/societies/${societyId}/enrich-google`, { method: "POST" }).then(json);
+export const completeVerifiedSocietyDraft = (societyId: number) => adminFetch(`/admin/verified-importer/societies/${societyId}/complete`, { method: "POST" }).then(json);
 export const importVerifiedSocietySourceLayer = (societyId: number, layer: string, payload: Record<string, unknown>) => adminFetch(`/admin/verified-importer/societies/${societyId}/source-layers/${layer}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);
 export const importVerifiedSocietyGoogleNearby = (societyId: number) => adminFetch(`/admin/verified-importer/societies/${societyId}/nearby-google`, { method: "POST" }).then(json);
 export const generateVerifiedSocietyDescription = (societyId: number, replace = false) => adminFetch(`/admin/verified-importer/societies/${societyId}/generate-description`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ replace }) }).then(json);

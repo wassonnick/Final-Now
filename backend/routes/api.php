@@ -159,6 +159,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
         Route::get('/images/{image}/preview', [VerifiedSocietyImporterController::class, 'previewImage']);
         Route::post('/jobs/{job}/retry-failed', [VerifiedSocietyImporterController::class, 'retryFailedRows']);
         Route::post('/societies/{society}/apply-high-confidence', [VerifiedSocietyImporterController::class, 'applyHighConfidence']);
+        Route::post('/societies/{society}/complete', [VerifiedSocietyImporterController::class, 'completeDraft']);
         Route::post('/societies/{society}/enrich-google', [VerifiedSocietyImporterController::class, 'enrichExistingDraft']);
         Route::post('/societies/{society}/source-layers/{layer}', [VerifiedSocietyImporterController::class, 'importSourceLayer']);
         Route::post('/societies/{society}/nearby-google', [VerifiedSocietyImporterController::class, 'importGoogleNearby']);
