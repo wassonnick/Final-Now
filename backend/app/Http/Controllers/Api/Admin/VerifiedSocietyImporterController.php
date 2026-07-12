@@ -255,6 +255,40 @@ class VerifiedSocietyImporterController extends Controller
         return response()->json(['message'=>$message,'data'=>['result'=>$result,'completion'=>$this->completionStatus($society->fresh())]]);
     }
 
+    public function completeAllDrafts(\App\Services\Ops\AiBudgetGuard $budget): JsonResponse
+    {
+        // The shell sweep, as an admin button. Admin-initiated, so the daily cap is bypassed;
+        // the provider circuit-breaker still stops us. Time-budgeted so the request can't hang —
+        // it reports how many remain so the admin can click again.
+        if ($budget->providerLimited()) {
+            return response()->json(['message'=>'AI completion is paused: the provider reported a billing/quota limit. Clear it, then retry.','data'=>['published'=>0,'processed'=>0,'remaining'=>$this->incompleteImportedDraftsQuery()->count(),'provider_limited'=>true]],200);
+        }
+
+        $deadline=microtime(true)+25.0;
+        $published=0;$processed=0;$timedOut=false;
+        foreach($this->incompleteImportedDraftsQuery()->orderBy('id')->cursor() as $society) {
+            if($budget->providerLimited())break;
+            if(microtime(true)>=$deadline){$timedOut=true;break;}
+            $result=$this->completion->complete($society, true, false);
+            $processed++;$published+=$result['published']?1:0;
+        }
+        $remaining=$this->incompleteImportedDraftsQuery()->count();
+        if($processed===0){
+            $message='No unpublished imported drafts to complete.';
+        } elseif($timedOut){
+            $message="Completed a batch of {$processed}, published {$published}. {$remaining} drafts left — click again to continue the sweep.";
+        } else {
+            $message="Swept every imported draft: processed {$processed}, published {$published}.".($remaining>0?" {$remaining} remain unpublished because a gate still fails (see each badge) — fix the gap or approve a cover, then retry.":' All imported drafts are now live.');
+        }
+        return response()->json(['message'=>$message,'data'=>['published'=>$published,'processed'=>$processed,'remaining'=>$remaining,'timed_out'=>$timedOut,'provider_limited'=>$budget->providerLimited()]]);
+    }
+
+    /** Unpublished importer drafts that still fail at least one completeness gate. */
+    private function incompleteImportedDraftsQuery()
+    {
+        return Society::with('seoContent')->where('is_published',false)->whereNotNull('imported_at');
+    }
+
     private function blockedMessage(array $blockedBy, \App\Services\Ops\AiBudgetGuard $budget): string
     {
         if(in_array('provider_limit',$blockedBy,true)) return 'AI completion is paused: the provider reported a billing/quota limit. Clear it once billing is restored, then retry.';

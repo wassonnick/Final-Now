@@ -97,6 +97,22 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->assertFalse($society->fresh()->is_published);
     }
 
+    public function test_complete_all_drafts_endpoint_sweeps_importer_drafts(): void
+    {
+        // The 'Complete all drafts now' button = the shell sweep, admin-triggered. With the
+        // provider breaker tripped it must not fabricate, and must report the pause.
+        $this->admin()->postJson('/api/admin/verified-importer/single', ['name' => 'Sweep One'])->assertCreated();
+        $this->admin()->postJson('/api/admin/verified-importer/single', ['name' => 'Sweep Two'])->assertCreated();
+        app(\App\Services\Ops\AiBudgetGuard::class)->tripProviderLimit();
+
+        $this->admin()->postJson('/api/admin/verified-importer/complete-all-drafts')
+            ->assertOk()
+            ->assertJsonPath('data.provider_limited', true)
+            ->assertJsonPath('data.published', 0);
+
+        $this->assertSame(0, Society::where('is_published', true)->count(), 'A tripped provider limit must not publish anything.');
+    }
+
     public function test_single_import_creates_only_a_source_tracked_unpublished_draft(): void
     {
         $response = $this->admin()->postJson('/api/admin/verified-importer/single', [

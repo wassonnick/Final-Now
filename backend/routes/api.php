@@ -160,6 +160,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
         Route::post('/jobs/{job}/retry-failed', [VerifiedSocietyImporterController::class, 'retryFailedRows']);
         Route::post('/societies/{society}/apply-high-confidence', [VerifiedSocietyImporterController::class, 'applyHighConfidence']);
         Route::post('/societies/{society}/complete', [VerifiedSocietyImporterController::class, 'completeDraft']);
+        Route::post('/complete-all-drafts', [VerifiedSocietyImporterController::class, 'completeAllDrafts']);
         Route::post('/societies/{society}/enrich-google', [VerifiedSocietyImporterController::class, 'enrichExistingDraft']);
         Route::post('/societies/{society}/source-layers/{layer}', [VerifiedSocietyImporterController::class, 'importSourceLayer']);
         Route::post('/societies/{society}/nearby-google', [VerifiedSocietyImporterController::class, 'importGoogleNearby']);
