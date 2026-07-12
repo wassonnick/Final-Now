@@ -48,6 +48,8 @@ export function AdminSocialAccountsPage() {
   const [selectedPageId, setSelectedPageId] = useState("");
   const [manualPageId, setManualPageId] = useState("");
   const [manualPageName, setManualPageName] = useState("");
+  const [manualInstagramId, setManualInstagramId] = useState("");
+  const [manualInstagramHandle, setManualInstagramHandle] = useState("");
   const [metaDebug, setMetaDebug] = useState<MetaPageAccessDebug | null>(null);
 
   const load = async () => setAccounts(await fetchSocialAccounts());
@@ -92,15 +94,23 @@ export function AdminSocialAccountsPage() {
       setMessage("Enter both Facebook Page ID and Page name before saving the manual fallback.");
       return;
     }
+    if ((manualInstagramId.trim() && !manualInstagramHandle.trim()) || (!manualInstagramId.trim() && manualInstagramHandle.trim())) {
+      setMessage("Enter both Instagram ID and Instagram handle, or leave both blank.");
+      return;
+    }
 
     try {
       await selectMetaPage(manualPageId.trim(), {
         page_name: manualPageName.trim(),
         manual_fallback_confirmed: true,
+        instagram_id: manualInstagramId.trim() || undefined,
+        instagram_handle: manualInstagramHandle.trim() || undefined,
       });
       setMessage("Facebook Page saved manually. Publishing remains disabled until Meta publish permissions are approved.");
       setManualPageId("");
       setManualPageName("");
+      setManualInstagramId("");
+      setManualInstagramHandle("");
       await load();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to save manual Facebook Page.");
@@ -176,7 +186,7 @@ export function AdminSocialAccountsPage() {
                     <p className="mt-2 text-xs font-bold text-slate-600">{String(account.metadata.message)}</p>
                   ) : null}
                 </div>
-                {account.status === "connected" ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <PlugZap className="h-5 w-5 text-slate-400" />}
+                {["connected", "connected_manual_page"].includes(account.status) ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <PlugZap className="h-5 w-5 text-slate-400" />}
               </div>
               {canSelectFacebookPage ? (
                 <div className="mt-4 rounded-2xl border border-blue-100 bg-white p-3">
@@ -227,6 +237,32 @@ export function AdminSocialAccountsPage() {
                             placeholder="Society Flats"
                           />
                         </label>
+                      </div>
+                      <div className="mt-4 rounded-xl border border-amber-100 bg-white/70 p-3">
+                        <p className="text-xs font-black uppercase tracking-wide text-amber-900">Optional Instagram Business asset</p>
+                        <p className="mt-1 text-xs font-bold leading-5 text-amber-800">
+                          Add this only when you have verified the Instagram Business ID and handle in Meta.
+                        </p>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <label className="text-xs font-black uppercase tracking-wide text-slate-500">
+                            Instagram ID
+                            <input
+                              className="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm font-bold normal-case tracking-normal text-slate-800"
+                              value={manualInstagramId}
+                              onChange={(event) => setManualInstagramId(event.target.value)}
+                              placeholder="17841461958211646"
+                            />
+                          </label>
+                          <label className="text-xs font-black uppercase tracking-wide text-slate-500">
+                            Instagram handle
+                            <input
+                              className="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm font-bold normal-case tracking-normal text-slate-800"
+                              value={manualInstagramHandle}
+                              onChange={(event) => setManualInstagramHandle(event.target.value)}
+                              placeholder="societyflats"
+                            />
+                          </label>
+                        </div>
                       </div>
                       <Button size="sm" className="mt-3 rounded-full" onClick={() => void saveManualMetaPage()}>
                         Save as connected page

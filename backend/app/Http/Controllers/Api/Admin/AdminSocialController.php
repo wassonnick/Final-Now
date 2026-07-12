@@ -309,15 +309,29 @@ class AdminSocialController extends Controller
             'page_id' => ['required', 'string'],
             'page_name' => ['nullable', 'string', 'max:255'],
             'manual_fallback_confirmed' => ['sometimes', 'boolean'],
+            'manual_confirm' => ['sometimes', 'boolean'],
+            'allow_manual_fallback' => ['sometimes', 'boolean'],
+            'instagram_id' => ['nullable', 'string', 'max:255'],
+            'instagram_handle' => ['nullable', 'string', 'max:255'],
         ]);
 
         try {
-            $manualFallbackConfirmed = $request->boolean('manual_fallback_confirmed');
+            $manualFallbackConfirmed = $request->boolean('manual_fallback_confirmed')
+                || $request->boolean('manual_confirm')
+                || $request->boolean('allow_manual_fallback');
 
-            if ($manualFallbackConfirmed && blank($data['page_name'] ?? null)) {
+            $hasInstagramAsset = filled($data['instagram_id'] ?? null) || filled($data['instagram_handle'] ?? null);
+            if ($hasInstagramAsset && ! $manualFallbackConfirmed) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Manual Facebook Page ID fallback requires both Page ID and Page name.',
+                    'message' => 'Manual Instagram asset save requires explicit manual confirmation.',
+                ], 422);
+            }
+
+            if ($hasInstagramAsset && (blank($data['instagram_id'] ?? null) || blank($data['instagram_handle'] ?? null))) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Manual Instagram asset save requires both Instagram ID and Instagram handle.',
                 ], 422);
             }
 
@@ -325,6 +339,8 @@ class AdminSocialController extends Controller
                 $data['page_id'],
                 $data['page_name'] ?? null,
                 $manualFallbackConfirmed,
+                $data['instagram_id'] ?? null,
+                $data['instagram_handle'] ?? null,
             );
 
             return response()->json([

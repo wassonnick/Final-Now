@@ -121,24 +121,36 @@ class SocialOAuthService
         return $this->saveSelectedFacebookPage($account, $page);
     }
 
-    public function selectMetaPageFromGraph(string $pageId, ?string $pageName = null, bool $manualFallbackConfirmed = false): SocialAccount
+    public function selectMetaPageFromGraph(
+        string $pageId,
+        ?string $pageName = null,
+        bool $manualFallbackConfirmed = false,
+        ?string $instagramId = null,
+        ?string $instagramHandle = null,
+    ): SocialAccount
     {
         $account = $this->facebookAccountWithToken();
         $metadataPage = $this->findStoredAvailableMetaPage($account, $pageId);
 
         if ($metadataPage) {
-            return $this->saveSelectedFacebookPage($account, $metadataPage, 'available_pages');
+            $saved = $this->saveSelectedFacebookPage($account, $metadataPage, 'available_pages');
+            $this->saveManualInstagramIfProvided($manualFallbackConfirmed, $saved, $instagramId, $instagramHandle);
+
+            return $saved->fresh();
         }
 
         $inventory = $this->metaPageInventory($account);
         $page = $this->findMetaPage($inventory, $pageId);
 
         if ($page) {
-            return $this->saveSelectedFacebookPage($account, $this->pageForSave($page), (string) data_get($page, 'source', 'business_asset_fallback'));
+            $saved = $this->saveSelectedFacebookPage($account, $this->pageForSave($page), (string) data_get($page, 'source', 'business_asset_fallback'));
+            $this->saveManualInstagramIfProvided($manualFallbackConfirmed, $saved, $instagramId, $instagramHandle);
+
+            return $saved->fresh();
         }
 
         if ($manualFallbackConfirmed) {
-            return $this->saveManualFacebookPage($account, $pageId, (string) $pageName);
+            return $this->saveManualFacebookPage($account, $pageId, (string) $pageName, $instagramId, $instagramHandle);
         }
 
         throw new InvalidArgumentException('Selected Facebook Page was not found in Meta Page or Business assets. Manual fallback requires explicit confirmation.');
@@ -389,13 +401,25 @@ class SocialOAuthService
         return $account->fresh();
     }
 
-    private function saveManualFacebookPage(SocialAccount $account, string $pageId, string $pageName): SocialAccount
+    private function saveManualFacebookPage(
+        SocialAccount $account,
+        string $pageId,
+        string $pageName,
+        ?string $instagramId = null,
+        ?string $instagramHandle = null,
+    ): SocialAccount
     {
         $pageId = trim($pageId);
         $pageName = trim($pageName);
+        $instagramId = trim((string) $instagramId);
+        $instagramHandle = $this->normalizeInstagramHandle((string) $instagramHandle);
 
         if ($pageId === '' || $pageName === '') {
             throw new InvalidArgumentException('Manual Facebook Page ID fallback requires both Page ID and Page name.');
+        }
+
+        if (($instagramId !== '' && $instagramHandle === '') || ($instagramId === '' && $instagramHandle !== '')) {
+            throw new InvalidArgumentException('Manual Instagram asset save requires both Instagram ID and Instagram handle.');
         }
 
         $metadata = array_merge($account->metadata ?: [], [
@@ -416,27 +440,82 @@ class SocialOAuthService
             'metadata' => $metadata,
         ]);
 
-        $instagram = SocialAccount::where('platform', 'instagram_business')->first();
-        if (! $instagram || $instagram->status !== 'connected') {
-            SocialAccount::updateOrCreate(
-                ['platform' => 'instagram_business'],
-                [
-                    'account_name' => self::PLATFORMS['instagram_business'],
-                    'account_id' => null,
-                    'account_handle' => null,
-                    'status' => 'connected_missing_ig',
-                    'last_error' => null,
-                    'metadata' => [
-                        'message' => 'Instagram Business account could not be verified through Meta yet.',
-                        'publish_enabled' => false,
-                        'sm2_manual_only' => true,
-                        'sm1a_placeholder' => false,
+        if ($instagramId !== '' && $instagramHandle !== '') {
+            $this->saveManualInstagramBusinessAccount($account->fresh(), $instagramId, $instagramHandle);
+        } else {
+            $instagram = SocialAccount::where('platform', 'instagram_business')->first();
+            if (! $instagram || $instagram->status !== 'connected') {
+                SocialAccount::updateOrCreate(
+                    ['platform' => 'instagram_business'],
+                    [
+                        'account_name' => self::PLATFORMS['instagram_business'],
+                        'account_id' => null,
+                        'account_handle' => null,
+                        'status' => 'connected_missing_ig',
+                        'last_error' => null,
+                        'metadata' => [
+                            'message' => 'Instagram Business account could not be verified through Meta yet.',
+                            'publish_enabled' => false,
+                            'sm2_manual_only' => true,
+                            'sm1a_placeholder' => false,
+                        ],
                     ],
-                ],
-            );
+                );
+            }
         }
 
         return $account->fresh();
+    }
+
+    private function saveManualInstagramBusinessAccount(SocialAccount $facebookAccount, string $instagramId, string $instagramHandle): void
+    {
+        $instagram = SocialAccount::firstOrNew(['platform' => 'instagram_business']);
+        $instagram->fill([
+            'account_name' => $instagramHandle ?: 'societyflats',
+            'account_id' => $instagramId,
+            'account_handle' => $instagramHandle,
+            'status' => 'connected_manual_page',
+            'token_expires_at' => $facebookAccount->token_expires_at,
+            'last_connected_at' => now(),
+            'last_error' => null,
+            'scopes' => $facebookAccount->scopes ?: [],
+            'metadata' => array_merge($instagram->metadata ?: [], [
+                'sm1a_placeholder' => false,
+                'oauth_mode' => 'connect',
+                'sm2_manual_only' => true,
+                'connected_via' => 'oauth',
+                'connected_facebook_page_id' => $facebookAccount->account_id,
+                'source' => 'manual_instagram_id',
+                'publish_enabled' => false,
+                'manual_instagram_warning' => true,
+            ]),
+        ]);
+        $instagram->access_token = $facebookAccount->accessToken();
+        $instagram->save();
+    }
+
+    private function saveManualInstagramIfProvided(
+        bool $manualFallbackConfirmed,
+        SocialAccount $facebookAccount,
+        ?string $instagramId,
+        ?string $instagramHandle,
+    ): void {
+        if (! $manualFallbackConfirmed) {
+            return;
+        }
+
+        $instagramId = trim((string) $instagramId);
+        $instagramHandle = $this->normalizeInstagramHandle((string) $instagramHandle);
+
+        if ($instagramId === '' && $instagramHandle === '') {
+            return;
+        }
+
+        if ($instagramId === '' || $instagramHandle === '') {
+            throw new InvalidArgumentException('Manual Instagram asset save requires both Instagram ID and Instagram handle.');
+        }
+
+        $this->saveManualInstagramBusinessAccount($facebookAccount, $instagramId, $instagramHandle);
     }
 
     private function syncInstagramBusinessAccount(array $page, SocialAccount $facebookAccount): void
@@ -721,6 +800,11 @@ class SocialOAuthService
     private function normalizePageName(string $name): string
     {
         return trim(preg_replace('/\s+/', ' ', mb_strtolower($name)) ?: '');
+    }
+
+    private function normalizeInstagramHandle(string $handle): string
+    {
+        return trim(ltrim($handle, '@'));
     }
 
     private function safeMetaDebugPages(array $pages, string $source = 'me_accounts'): array

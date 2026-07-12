@@ -651,6 +651,111 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertStringNotContainsString('access_token', $json);
     }
 
+    public function test_sm2_manual_meta_select_saves_instagram_asset_when_supplied(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/v20.0/me?*' => Http::response(['id' => 'user-1', 'name' => 'Nitin Wasson'], 200),
+            'https://graph.facebook.com/v20.0/me/accounts*' => Http::response(['data' => []], 200),
+            'https://graph.facebook.com/v20.0/me/businesses*' => Http::response(['data' => []], 200),
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page',
+            'account_name' => 'Facebook Page',
+            'status' => 'connected_no_pages',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement', 'business_management'],
+            'token_expires_at' => now()->addHour(),
+        ]);
+        $account->access_token = 'user-secret-token';
+        $account->save();
+
+        $this->admin()->postJson('/api/admin/social/meta/pages/select', [
+            'page_id' => '275936888926097',
+            'page_name' => 'Society Flats',
+            'instagram_id' => '17841461958211646',
+            'instagram_handle' => '@societyflats',
+            'manual_fallback_confirmed' => true,
+        ])->assertOk();
+
+        $account->refresh();
+        $this->assertSame('connected_manual_page', $account->status);
+        $this->assertSame('275936888926097', $account->account_id);
+        $this->assertFalse((bool) data_get($account->metadata, 'publish_enabled'));
+
+        $instagram = SocialAccount::where('platform', 'instagram_business')->firstOrFail();
+        $this->assertSame('connected_manual_page', $instagram->status);
+        $this->assertSame('societyflats', $instagram->account_name);
+        $this->assertSame('societyflats', $instagram->account_handle);
+        $this->assertSame('17841461958211646', $instagram->account_id);
+        $this->assertSame($account->token_expires_at?->timestamp, $instagram->token_expires_at?->timestamp);
+        $this->assertSame($account->scopes, $instagram->scopes);
+        $this->assertSame('275936888926097', data_get($instagram->metadata, 'connected_facebook_page_id'));
+        $this->assertSame('manual_instagram_id', data_get($instagram->metadata, 'source'));
+        $this->assertSame('oauth', data_get($instagram->metadata, 'connected_via'));
+        $this->assertTrue((bool) data_get($instagram->metadata, 'sm2_manual_only'));
+        $this->assertTrue((bool) data_get($instagram->metadata, 'manual_instagram_warning'));
+        $this->assertFalse((bool) data_get($instagram->metadata, 'sm1a_placeholder'));
+        $this->assertFalse((bool) data_get($instagram->metadata, 'publish_enabled'));
+        $this->assertSame('user-secret-token', $instagram->accessToken());
+    }
+
+    public function test_sm2_manual_instagram_asset_requires_confirmation_and_complete_fields(): void
+    {
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page',
+            'account_name' => 'Facebook Page',
+            'status' => 'connected_no_pages',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement', 'business_management'],
+        ]);
+        $account->access_token = 'user-secret-token';
+        $account->save();
+
+        $this->admin()->postJson('/api/admin/social/meta/pages/select', [
+            'page_id' => '275936888926097',
+            'page_name' => 'Society Flats',
+            'instagram_id' => '17841461958211646',
+            'instagram_handle' => 'societyflats',
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'Manual Instagram asset save requires explicit manual confirmation.');
+
+        $this->admin()->postJson('/api/admin/social/meta/pages/select', [
+            'page_id' => '275936888926097',
+            'page_name' => 'Society Flats',
+            'instagram_id' => '17841461958211646',
+            'manual_fallback_confirmed' => true,
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'Manual Instagram asset save requires both Instagram ID and Instagram handle.');
+    }
+
+    public function test_sm2_manual_instagram_asset_publish_remains_blocked_without_publish_scope(): void
+    {
+        $account = SocialAccount::create([
+            'platform' => 'instagram_business',
+            'account_name' => 'societyflats',
+            'account_handle' => 'societyflats',
+            'account_id' => '17841461958211646',
+            'status' => 'connected_manual_page',
+            'scopes' => ['public_profile', 'pages_show_list', 'pages_read_engagement', 'business_management'],
+            'metadata' => ['publish_enabled' => false, 'source' => 'manual_instagram_id'],
+        ]);
+        $account->access_token = 'user-secret-token';
+        $account->save();
+
+        $post = SocialPost::create([
+            'platform' => 'instagram',
+            'post_type' => 'single_post',
+            'title' => 'Approved Instagram update',
+            'caption' => 'Approved neutral update.',
+            'risk_level' => 'low',
+            'status' => 'approved',
+        ]);
+
+        $this->admin()->postJson("/api/admin/social/posts/{$post->id}/publish", [
+            'confirm_publish' => true,
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'Connect an authorized instagram_business account before publishing.');
+    }
+
     public function test_sm2_meta_page_select_endpoint_rejects_invalid_page_id(): void
     {
         Http::fake([
