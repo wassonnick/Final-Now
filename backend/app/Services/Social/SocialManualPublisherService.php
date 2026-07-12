@@ -216,23 +216,28 @@ class SocialManualPublisherService
             throw new InvalidArgumentException('Instagram Business account ID is missing.');
         }
 
+        // Instagram Graph publishing goes through the linked Facebook Page, so it needs that
+        // Page's access token — resolve it from the connected Page id the same way as Facebook.
+        $linkedPageId = (string) data_get($account->metadata, 'connected_facebook_page_id', '');
+        $token = $linkedPageId !== '' ? $this->facebookPageToken($account, $linkedPageId) : (string) $account->accessToken();
+
         $container = Http::post("https://graph.facebook.com/v20.0/{$igUserId}/media", [
             'image_url' => $asset?->public_url,
             'caption' => $this->caption($post),
-            'access_token' => $account->accessToken(),
+            'access_token' => $token,
         ]);
 
         if (! $container->successful() || ! $container->json('id')) {
-            throw new InvalidArgumentException('Instagram media container creation failed.');
+            throw new InvalidArgumentException('Instagram media container creation failed: '.$this->safeError((string) $container->body()));
         }
 
         $publish = Http::post("https://graph.facebook.com/v20.0/{$igUserId}/media_publish", [
             'creation_id' => $container->json('id'),
-            'access_token' => $account->accessToken(),
+            'access_token' => $token,
         ]);
 
         if (! $publish->successful() || ! $publish->json('id')) {
-            throw new InvalidArgumentException('Instagram manual publish failed.');
+            throw new InvalidArgumentException('Instagram manual publish failed: '.$this->safeError((string) $publish->body()));
         }
 
         return ['external_post_id' => (string) $publish->json('id'), 'metadata' => ['container_id' => $container->json('id')]];
@@ -245,17 +250,47 @@ class SocialManualPublisherService
             throw new InvalidArgumentException('Facebook Page ID is missing.');
         }
 
+        // Posting to a Page's feed requires a PAGE access token, not the connecting user's
+        // token — derive it from the user token (works even when the Page was entered manually).
+        $pageToken = $this->facebookPageToken($account, (string) $pageId);
+
         $endpoint = $asset ? "https://graph.facebook.com/v20.0/{$pageId}/photos" : "https://graph.facebook.com/v20.0/{$pageId}/feed";
         $payload = $asset
-            ? ['url' => $asset->public_url, 'caption' => $this->caption($post), 'access_token' => $account->accessToken()]
-            : ['message' => $this->caption($post), 'access_token' => $account->accessToken()];
+            ? ['url' => $asset->public_url, 'caption' => $this->caption($post), 'access_token' => $pageToken]
+            : ['message' => $this->caption($post), 'access_token' => $pageToken];
 
         $response = Http::post($endpoint, $payload);
         if (! $response->successful() || ! ($response->json('post_id') || $response->json('id'))) {
-            throw new InvalidArgumentException('Facebook manual publish failed.');
+            throw new InvalidArgumentException('Facebook manual publish failed: '.$this->safeError((string) $response->body()));
         }
 
         return ['external_post_id' => (string) ($response->json('post_id') ?: $response->json('id'))];
+    }
+
+    /**
+     * Facebook Page publishing needs a Page access token. The Graph API returns one for any Page
+     * the connecting user manages via GET /{page-id}?fields=access_token with the user token.
+     * Resolved per publish (never cached in metadata, which is returned to the frontend). Falls
+     * back to the user token so a real Graph error surfaces instead of a silent swap.
+     */
+    private function facebookPageToken(SocialAccount $account, string $pageId): string
+    {
+        $userToken = (string) $account->accessToken();
+        if ($pageId === '' || $userToken === '') {
+            return $userToken;
+        }
+
+        try {
+            $response = Http::get("https://graph.facebook.com/v20.0/{$pageId}", [
+                'fields' => 'access_token',
+                'access_token' => $userToken,
+            ]);
+            $pageToken = $response->successful() ? (string) $response->json('access_token', '') : '';
+
+            return $pageToken !== '' ? $pageToken : $userToken;
+        } catch (\Throwable) {
+            return $userToken;
+        }
     }
 
     private function publishLinkedIn(SocialPost $post, SocialAccount $account, ?SocialPostAsset $asset): array

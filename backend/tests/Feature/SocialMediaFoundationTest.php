@@ -1083,6 +1083,41 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertTrue(SocialPublishLog::where('social_post_id', $post->id)->where('metadata->reason', 'missing_scope')->exists());
     }
 
+    public function test_sm2_facebook_publish_resolves_and_uses_a_page_access_token(): void
+    {
+        // Posting to a Page needs a PAGE token, not the connecting user's token — the publisher
+        // must derive it from GET /{page-id}?fields=access_token and post the feed with it.
+        Http::fake([
+            'https://graph.facebook.com/v20.0/page-1?*' => Http::response(['access_token' => 'page-scoped-token', 'id' => 'page-1'], 200),
+            'https://graph.facebook.com/v20.0/page-1/photos' => Http::response(['id' => 'fb-post-1'], 200),
+        ]);
+
+        $post = SocialPost::create([
+            'platform' => 'facebook', 'post_type' => 'single_post', 'title' => 'Approved FB post',
+            'caption' => 'Neutral approved society update.', 'risk_level' => 'low', 'status' => 'approved',
+        ]);
+        SocialPostAsset::create([
+            'social_post_id' => $post->id, 'asset_type' => 'image', 'platform' => 'facebook',
+            'public_url' => 'https://cdn.example.test/social/fb.jpg', 'status' => 'approved', 'risk_level' => 'low',
+        ]);
+        $account = SocialAccount::create([
+            'platform' => 'facebook_page', 'account_name' => 'Society Flats', 'account_id' => 'page-1',
+            'status' => 'connected', 'scopes' => ['pages_show_list', 'pages_manage_posts'],
+            'metadata' => ['facebook_publish_scope_granted' => true, 'publish_enabled' => true],
+        ]);
+        $account->access_token = 'user-token';
+        $account->save();
+
+        $this->admin()->postJson("/api/admin/social/posts/{$post->id}/publish", [
+            'confirm_publish' => true,
+            'social_account_id' => $account->id,
+        ])->assertOk();
+
+        $this->assertDatabaseHas('social_posts', ['id' => $post->id, 'publish_status' => 'published', 'external_post_id' => 'fb-post-1']);
+        // The photo post used the PAGE token, never the raw user token.
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/page-1/photos') && ($request['access_token'] ?? null) === 'page-scoped-token');
+    }
+
     public function test_sm2_instagram_publish_is_blocked_without_instagram_content_publish_scope(): void
     {
         $post = SocialPost::create([
