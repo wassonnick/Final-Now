@@ -27,18 +27,29 @@ class SocietyDraftCompletionService
     ) {}
 
     /**
-     * @return array{society_id:int,name:string,published:bool,actions:array<int,string>,missing:array<int,string>}
+     * @param  bool  $gated  When true (unattended jobs) the daily AI cap applies. Admin-initiated
+     *                        completion passes false to bypass the cap — but the provider-limit
+     *                        circuit-breaker (a real billing/quota failure) is always respected.
+     * @return array{society_id:int,name:string,published:bool,actions:array<int,string>,missing:array<int,string>,blocked_by:array<int,string>}
      */
-    public function complete(Society $society, bool $allowReEnrich = true): array
+    public function complete(Society $society, bool $allowReEnrich = true, bool $gated = true): array
     {
         $actions = [];
+        $blocked = [];
 
         if ($society->is_published) {
-            return ['society_id' => $society->id, 'name' => $society->name, 'published' => true, 'actions' => ['already_published'], 'missing' => []];
+            return ['society_id' => $society->id, 'name' => $society->name, 'published' => true, 'actions' => ['already_published'], 'missing' => [], 'blocked_by' => []];
+        }
+
+        // AI is usable when the provider isn't billing-limited and either this is an admin
+        // action (ungated) or the daily cap still has room.
+        $aiUsable = ! $this->budget->providerLimited() && ($gated ? $this->budget->allow() : true);
+        if (! $aiUsable) {
+            $blocked[] = $this->budget->providerLimited() ? 'provider_limit' : 'ai_budget_cap';
         }
 
         // 1. Fill data gaps with one grounded re-enrich when core fields are missing.
-        if ($allowReEnrich && $this->coreDataMissing($society) && $this->budget->allow() && ! $this->budget->providerLimited()) {
+        if ($allowReEnrich && $this->coreDataMissing($society) && $aiUsable) {
             try {
                 $this->budget->record();
                 $this->importer->reEnrichDraft($society, true);
@@ -59,7 +70,7 @@ class SocietyDraftCompletionService
 
         // 3. SEO: generate + publish the society's SEO content when none is live.
         $seo = $society->seoContent;
-        if (($seo?->status) !== 'published' && $this->budget->allow() && ! $this->budget->providerLimited()) {
+        if (($seo?->status) !== 'published' && $aiUsable) {
             try {
                 $this->budget->record();
                 $result = $this->seoAi->generate($society, 'generate', $seo?->only(SocietySeoAiDraftService::OUTPUT_KEYS) ?: []);
@@ -95,6 +106,7 @@ class SocietyDraftCompletionService
             'published' => $missing === [],
             'actions' => $actions,
             'missing' => $missing,
+            'blocked_by' => $missing === [] ? [] : array_values(array_unique($blocked)),
         ];
     }
 

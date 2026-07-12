@@ -71,6 +71,32 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->assertNotContains('sector_or_locality', $society['completion']['missing']);
     }
 
+    public function test_review_queue_surfaces_ai_budget_state(): void
+    {
+        $this->admin()->postJson('/api/admin/verified-importer/single', ['name' => 'Budget State Society'])->assertCreated();
+        app(\App\Services\Ops\AiBudgetGuard::class)->tripProviderLimit();
+
+        $this->admin()->getJson('/api/admin/verified-importer/review')
+            ->assertOk()
+            ->assertJsonPath('data.ai_budget.provider_limited', true);
+    }
+
+    public function test_manual_complete_reports_provider_limit_and_does_not_fabricate(): void
+    {
+        // When the provider circuit-breaker is tripped, clicking "Complete draft now" must
+        // explain the pause rather than silently leave a bare draft — and must not publish.
+        $this->admin()->postJson('/api/admin/verified-importer/single', ['name' => 'Blocked Complete Society'])->assertCreated();
+        $society = Society::where('name', 'Blocked Complete Society')->firstOrFail();
+        app(\App\Services\Ops\AiBudgetGuard::class)->tripProviderLimit();
+
+        $this->admin()->postJson("/api/admin/verified-importer/societies/{$society->id}/complete")
+            ->assertOk()
+            ->assertJsonPath('data.result.published', false)
+            ->assertJsonPath('data.result.blocked_by', ['provider_limit']);
+
+        $this->assertFalse($society->fresh()->is_published);
+    }
+
     public function test_single_import_creates_only_a_source_tracked_unpublished_draft(): void
     {
         $response = $this->admin()->postJson('/api/admin/verified-importer/single', [
