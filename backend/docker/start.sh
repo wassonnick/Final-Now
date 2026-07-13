@@ -11,21 +11,9 @@ php artisan storage:link --force
 # variable we need so nginx's own $uri/$query_string/etc are left untouched.
 sed "s/\${PORT}/${PORT:-10000}/g" /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
 
-# Run the Laravel scheduler inside this container: there is no separate worker service on
-# Render, so this loop is what drives ALL scheduled automation (SEO autopilot, social
-# autopilot, market refresh, import ticks, queue processing). schedule:run fires whatever is
-# due, once a minute; withoutOverlapping mutexes live in the database cache, so restarts and
-# concurrent instances stay safe.
-(
-    sleep 15
-    while true; do
-        php artisan schedule:run --no-interaction >> storage/logs/scheduler.log 2>&1 || true
-        sleep 60
-    done
-) &
-
-# php-fpm daemonizes into the background; nginx stays foreground as the
-# container's PID 1 so Render's process supervision has something to watch.
-php-fpm -D
-
-nginx -g 'daemon off;'
+# Hand the container off to supervisord, which runs php-fpm + nginx AND the two long-running
+# Laravel processes that drive all automation — the scheduler (schedule:work) and the queue
+# worker (queue:work) — each supervised and auto-restarted. This replaces the old fragile
+# backgrounded subshell that had no restart or visibility (when it stopped, so did every
+# scheduled/queued job — the root cause of "automation only works from the shell").
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/societyflats.conf -n

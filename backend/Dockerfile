@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     nginx \
+    supervisor \
     libpq-dev \
     libzip-dev \
     && docker-php-ext-install pdo pdo_pgsql zip \
@@ -37,6 +38,8 @@ RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
 COPY docker/nginx.conf.template /etc/nginx/conf.d/default.conf.template
 RUN rm -f /etc/nginx/sites-enabled/default
+
+COPY docker/supervisord.conf /etc/supervisor/conf.d/societyflats.conf
 
 COPY docker/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
