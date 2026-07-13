@@ -121,6 +121,10 @@ return [
         'public_api_url' => env('OPS_PUBLIC_API_URL', 'https://final-now.onrender.com/api'),
         // Daily cap on unattended AI calls (scheduled jobs only, not admin actions).
         'ai_daily_call_cap' => env('OPS_AI_DAILY_CALL_CAP', 150),
+        // Shared secret an external cron (e.g. cron-job.org) sends to POST /api/ops/scheduler-tick.
+        // This keeps a free-tier web service's automation alive: the ping wakes the container
+        // and runs catch-up automation + the queue. Empty = the endpoint is disabled.
+        'scheduler_token' => env('OPS_SCHEDULER_TOKEN'),
     ],
 
     'claude' => [

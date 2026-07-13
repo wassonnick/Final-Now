@@ -318,12 +318,43 @@ Artisan::command('imports:tick', function () {
     $this->info("Advanced {$jobs->count()} in-flight import job(s).");
 })->purpose('Drive queued/running auto-import jobs to completion in the background');
 
+// Catch-up runner for a sleeping free-tier web service: exact-minute dailyAt() schedules are
+// missed when the container is asleep at 02:00/05:30/08:30. This runs each daily job ONCE per
+// day the first time the service is awake past its hour, and sweeps imported drafts every tick.
+// Safe to call as often as you like (idempotent per day) — the external tick endpoint does.
+Artisan::command('ops:daily-catchup', function () {
+    $runOncePerDay = function (string $key, int $afterHour, callable $job) {
+        $marker = 'ops:daily-ran:'.$key;
+        if (\Illuminate\Support\Facades\Cache::get($marker) === now()->toDateString()) return;
+        if (now()->hour < $afterHour) return;
+        try {
+            $job();
+            \Illuminate\Support\Facades\Cache::put($marker, now()->toDateString(), now()->addDays(2));
+            $this->info($key.' catch-up ran.');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->warn($key.' catch-up failed: '.$e->getMessage());
+        }
+    };
+
+    $runOncePerDay('seo-autopilot', 2, fn () => Artisan::call('seo:autopilot-run'));
+    $runOncePerDay('market-refresh', 5, fn () => Artisan::call('market:auto-refresh'));
+    $runOncePerDay('social-autopilot', 8, fn () => Artisan::call('social:autopilot'));
+
+    // Idempotent + AI-budget-gated, so run every tick — this is what actually fills imported
+    // drafts (data/cover/SEO) without a live queue worker.
+    Artisan::call('societies:complete-drafts', ['--limit' => 30]);
+    Artisan::call('social:publish-due');
+})->purpose('Run daily automation a sleeping free-tier web service may have missed');
+
 // Scheduler heartbeat: stamped every tick so the admin dashboard can raise a visible
 // "scheduler appears down" warning when automation silently stalls (there is no separate
 // worker service — the web container's schedule:run loop is the only engine).
 Schedule::call(fn () => \Illuminate\Support\Facades\Cache::put(\App\Services\Ops\SchedulerHeartbeat::CACHE_KEY, now()->toIso8601String(), now()->addDays(3)))
     ->everyMinute()->name('scheduler-heartbeat');
 Schedule::command('imports:tick')->everyMinute()->withoutOverlapping();
+// When the container IS awake, catch up any daily automation missed while it slept.
+Schedule::command('ops:daily-catchup')->everyThirtyMinutes()->withoutOverlapping();
 Schedule::command('saved-searches:match')->dailyAt('08:00')->withoutOverlapping();
 Schedule::command('ops:daily-digest')->dailyAt('07:30')->withoutOverlapping();
 Schedule::command('site-visits:send-reminders')->dailyAt('09:00')->withoutOverlapping();

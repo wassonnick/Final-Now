@@ -39,6 +39,21 @@ Route::get('/health', fn () => response()->json([
     'service' => 'societyflats-api',
 ]));
 
+// External scheduler tick. A free external cron (e.g. cron-job.org) POSTs here every ~10 min
+// with the OPS_SCHEDULER_TOKEN secret; this both wakes a sleeping free-tier container and runs
+// the catch-up automation + queue, so SEO/import/social automation runs without a paid worker.
+Route::post('/ops/scheduler-tick', function (\Illuminate\Http\Request $request) {
+    $expected = (string) config('services.ops.scheduler_token');
+    $provided = (string) ($request->header('X-Scheduler-Token') ?: $request->query('token'));
+    abort_if($expected === '' || ! hash_equals($expected, $provided), 403, 'Invalid scheduler token.');
+
+    \Illuminate\Support\Facades\Cache::put(\App\Services\Ops\SchedulerHeartbeat::CACHE_KEY, now()->toIso8601String(), now()->addDays(3));
+    \Illuminate\Support\Facades\Artisan::call('ops:daily-catchup');
+    \Illuminate\Support\Facades\Artisan::call('queue:work', ['--stop-when-empty' => true, '--max-time' => 45, '--tries' => 1]);
+
+    return response()->json(['status' => 'ok', 'ran_at' => now()->toIso8601String()]);
+})->middleware('throttle:10,1');
+
 Route::get('/societies', [SocietyController::class, 'index']);
 Route::get('/societies/lookup', [SocietyController::class, 'lookup']);
 Route::get('/societies/{idOrSlug}/google-place-photo', [SocietyController::class, 'googlePlacePhoto']);
