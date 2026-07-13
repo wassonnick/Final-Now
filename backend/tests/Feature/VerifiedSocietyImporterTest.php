@@ -123,6 +123,27 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->assertSame(0, Society::where('is_published', true)->count(), 'A tripped provider limit must not publish anything.');
     }
 
+    public function test_complete_all_drafts_queues_the_backlog_instead_of_blocking_the_request(): void
+    {
+        // Fix for the 'Failed to fetch' timeout: the button no longer runs the whole backlog
+        // synchronously — after a short head-start it queues the rest for the worker so the
+        // HTTP request returns fast. (Queue is faked in setUp; mock the completion so the
+        // synchronous head-start does no real AI work.)
+        $this->mock(\App\Services\Society\Import\SocietyDraftCompletionService::class, function ($mock) {
+            $mock->shouldReceive('complete')->andReturn(['society_id' => 1, 'name' => 'x', 'published' => false, 'actions' => [], 'missing' => ['published_seo'], 'blocked_by' => []]);
+        });
+        $this->admin()->postJson('/api/admin/verified-importer/single', ['name' => 'Queue Me One'])->assertCreated();
+        $this->admin()->postJson('/api/admin/verified-importer/single', ['name' => 'Queue Me Two'])->assertCreated();
+
+        $this->admin()->postJson('/api/admin/verified-importer/complete-all-drafts')
+            ->assertOk()
+            ->assertJsonPath('data.queued', 2);
+
+        \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\CompleteImportedSocietyDraft::class, 2);
+        // Admin sweep bypasses the daily cap.
+        \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\CompleteImportedSocietyDraft::class, fn ($job) => $job->bypassBudget === true);
+    }
+
     public function test_single_import_creates_only_a_source_tracked_unpublished_draft(): void
     {
         $response = $this->admin()->postJson('/api/admin/verified-importer/single', [

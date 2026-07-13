@@ -24,7 +24,9 @@ class CompleteImportedSocietyDraft implements ShouldQueue
 
     public int $timeout = 240;
 
-    public function __construct(public readonly int $societyId)
+    // $bypassBudget: admin-initiated sweeps ("Complete all drafts now") pass true so the daily
+    // cap doesn't stop an explicit request; the provider circuit-breaker is always respected.
+    public function __construct(public readonly int $societyId, public readonly bool $bypassBudget = false)
     {
     }
 
@@ -39,6 +41,6 @@ class CompleteImportedSocietyDraft implements ShouldQueue
             return;
         }
 
-        $completion->complete($society);
+        $completion->complete($society, true, ! $this->bypassBudget);
     }
 }

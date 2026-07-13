@@ -264,23 +264,35 @@ class VerifiedSocietyImporterController extends Controller
             return response()->json(['message'=>'AI completion is paused: the provider reported a billing/quota limit. Clear it, then retry.','data'=>['published'=>0,'processed'=>0,'remaining'=>$this->incompleteImportedDraftsQuery()->count(),'provider_limited'=>true]],200);
         }
 
-        $deadline=microtime(true)+25.0;
-        $published=0;$processed=0;$timedOut=false;
+        // Do a short synchronous head-start (so progress is visible immediately even if the queue
+        // worker is down), then hand the rest to the queue worker (so the HTTP request returns
+        // fast instead of blocking on many seconds of AI per society — the "Failed to fetch"
+        // timeout). Each society completes exactly once (per-society lock + idempotency).
+        $deadline=microtime(true)+8.0;
+        $published=0;$processed=0;
         foreach($this->incompleteImportedDraftsQuery()->orderBy('id')->cursor() as $society) {
             if($budget->providerLimited())break;
-            if(microtime(true)>=$deadline){$timedOut=true;break;}
+            if(microtime(true)>=$deadline)break;
             $result=$this->completion->complete($society, true, false);
             $processed++;$published+=$result['published']?1:0;
         }
-        $remaining=$this->incompleteImportedDraftsQuery()->count();
-        if($processed===0){
-            $message='No unpublished imported drafts to complete.';
-        } elseif($timedOut){
-            $message="Completed a batch of {$processed}, published {$published}. {$remaining} drafts left — click again to continue the sweep.";
-        } else {
-            $message="Swept every imported draft: processed {$processed}, published {$published}.".($remaining>0?" {$remaining} remain unpublished because a gate still fails (see each badge) — fix the gap or approve a cover, then retry.":' All imported drafts are now live.');
+
+        // Queue whatever is still incomplete for the background worker (admin bypass of the cap).
+        $queued=0;
+        foreach($this->incompleteImportedDraftsQuery()->orderBy('id')->pluck('id') as $id) {
+            \App\Jobs\CompleteImportedSocietyDraft::dispatch((int) $id, true);
+            $queued++;
         }
-        return response()->json(['message'=>$message,'data'=>['published'=>$published,'processed'=>$processed,'remaining'=>$remaining,'timed_out'=>$timedOut,'provider_limited'=>$budget->providerLimited()]]);
+
+        $remaining=$this->incompleteImportedDraftsQuery()->count();
+        if($processed===0 && $queued===0){
+            $message='No unpublished imported drafts to complete.';
+        } elseif($queued>0){
+            $message="Completed {$processed} now (published {$published}); queued {$queued} more for the background worker — refresh in a minute to watch them fill in.";
+        } else {
+            $message="Swept every imported draft: processed {$processed}, published {$published}.".($remaining>0?" {$remaining} remain unpublished because a gate still fails (see each badge).":' All imported drafts are now live.');
+        }
+        return response()->json(['message'=>$message,'data'=>['published'=>$published,'processed'=>$processed,'queued'=>$queued,'remaining'=>$remaining,'provider_limited'=>$budget->providerLimited()]]);
     }
 
     /** Unpublished importer drafts that still fail at least one completeness gate. */
