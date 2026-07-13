@@ -31,19 +31,29 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->postJson('/api/admin/verified-importer/single', ['name' => 'Private Draft'])->assertUnauthorized();
     }
 
-    public function test_import_dispatches_the_one_click_completion_job_for_created_drafts(): void
+    public function test_import_is_zero_spend_by_default_and_does_not_dispatch_completion(): void
     {
-        // The one-click promise: a V2 import must queue the completion pipeline
-        // (description, cover approval, SEO) — previously only the legacy importer did,
-        // so V2 batches sat empty until manual work. (Queue is faked in setUp.)
+        // Cost control: importing must NOT auto-trigger the AI-costed completion by default.
+        // Credits are spent only when an admin clicks "Complete all drafts now". (Queue faked.)
+        config(['services.ops.auto_complete_imports' => false]);
+
         $this->admin()->postJson('/api/admin/verified-importer/single', [
-            'name' => 'ATS Completion Society',
-            'builder_name' => 'ATS',
-            'city' => 'Gurgaon',
-            'sector' => 'Sector 109',
+            'name' => 'ATS Completion Society', 'builder_name' => 'ATS', 'city' => 'Gurgaon', 'sector' => 'Sector 109',
         ])->assertCreated();
 
-        $society = Society::where('name', 'ATS Completion Society')->firstOrFail();
+        \Illuminate\Support\Facades\Queue::assertNotPushed(\App\Jobs\CompleteImportedSocietyDraft::class);
+    }
+
+    public function test_import_auto_completes_only_when_explicitly_enabled(): void
+    {
+        // Opt-in: with IMPORT_AUTO_COMPLETE=true the one-click behaviour returns.
+        config(['services.ops.auto_complete_imports' => true]);
+
+        $this->admin()->postJson('/api/admin/verified-importer/single', [
+            'name' => 'Opt In Society', 'builder_name' => 'ATS', 'city' => 'Gurgaon', 'sector' => 'Sector 109',
+        ])->assertCreated();
+
+        $society = Society::where('name', 'Opt In Society')->firstOrFail();
         \Illuminate\Support\Facades\Queue::assertPushed(
             \App\Jobs\CompleteImportedSocietyDraft::class,
             fn ($job) => $job->societyId === $society->id,

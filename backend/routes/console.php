@@ -341,9 +341,11 @@ Artisan::command('ops:daily-catchup', function () {
     $runOncePerDay('market-refresh', 5, fn () => Artisan::call('market:auto-refresh'));
     $runOncePerDay('social-autopilot', 8, fn () => Artisan::call('social:autopilot'));
 
-    // Idempotent + AI-budget-gated, so run every tick — this is what actually fills imported
-    // drafts (data/cover/SEO) without a live queue worker.
-    Artisan::call('societies:complete-drafts', ['--limit' => 30]);
+    // Imported-draft completion is AI-costed, so it only runs automatically when explicitly
+    // enabled; by default admins complete drafts on demand via "Complete all drafts now".
+    if (config('services.ops.auto_complete_imports')) {
+        Artisan::call('societies:complete-drafts', ['--limit' => 30]);
+    }
     Artisan::call('social:publish-due');
 })->purpose('Run daily automation a sleeping free-tier web service may have missed');
 
@@ -362,9 +364,11 @@ Schedule::command('site-visits:send-reminders')->dailyAt('09:00')->withoutOverla
 // current with no manual intervention. A daily batch of the stalest societies cycles the
 // whole catalogue through within a few days, then rotates as data ages past 30 days.
 Schedule::command('market:auto-refresh')->dailyAt('05:30')->withoutOverlapping();
-// Safety net for the one-click import promise: sweep any draft that missed its per-import
-// completion job (AI budget pause, queue hiccup) and finish it overnight.
-Schedule::command('societies:complete-drafts')->dailyAt('03:00')->withoutOverlapping();
+// Overnight completion sweep — only when auto-complete is enabled. Off by default so imported
+// drafts never spend AI credits until an admin clicks "Complete all drafts now".
+if (config('services.ops.auto_complete_imports')) {
+    Schedule::command('societies:complete-drafts')->dailyAt('03:00')->withoutOverlapping();
+}
 Schedule::command('ops:validate-photo-references')->weeklyOn(2, '05:00')->withoutOverlapping();
 Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=1')->everyMinute()->withoutOverlapping()->runInBackground();
 Schedule::call(fn () => AiConversation::query()->where('expires_at', '<', now())->delete())->dailyAt('03:15')->name('prune-expired-ai-conversations')->withoutOverlapping();

@@ -125,6 +125,10 @@ return [
         // This keeps a free-tier web service's automation alive: the ping wakes the container
         // and runs catch-up automation + the queue. Empty = the endpoint is disabled.
         'scheduler_token' => env('OPS_SCHEDULER_TOKEN'),
+        // When false (default), importing captures data with ZERO AI spend — the AI-costed
+        // completion (re-enrich + cover + SEO) runs only when an admin explicitly clicks
+        // "Complete all drafts now". Set IMPORT_AUTO_COMPLETE=true to auto-complete on import.
+        'auto_complete_imports' => env('IMPORT_AUTO_COMPLETE', false),
     ],
 
     'claude' => [

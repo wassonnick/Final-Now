@@ -181,10 +181,11 @@ class VerifiedSocietyImporterService
             return VerifiedSocietyImportRow::create(['import_job_id'=>$job->id,'row_number'=>$rowNumber,'input_data'=>$input,'normalized_data'=>$data,'matched_society_id'=>$duplicate['matched_society_id'],'created_society_id'=>$attached?null:$society->id,'status'=>$attached?'needs_review':'created','confidence_score'=>$confidence,'warnings'=>$warnings]);
         });
 
-        // One-click promise: every freshly created draft goes straight through the completion
-        // pipeline (description/data gaps, cover approval, SEO draft + publish) — the only
-        // manual step left is publishing the society itself.
-        if ($row->created_society_id) {
+        // Cost control: importing captures data for ZERO AI spend. The AI-costed completion
+        // (re-enrich + cover + SEO) only auto-dispatches when explicitly enabled — by default an
+        // admin runs it deliberately via "Complete all drafts now" so credits are never spent
+        // by surprise on import.
+        if ($row->created_society_id && config('services.ops.auto_complete_imports')) {
             \App\Jobs\CompleteImportedSocietyDraft::dispatch($row->created_society_id);
         }
 
