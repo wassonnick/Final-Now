@@ -42,6 +42,9 @@ return [
         'api_key' => env('OPENAI_API_KEY'),
         'model' => env('OPENAI_MODEL', 'gpt-5.4-mini'),
         'image_model' => env('OPENAI_IMAGE_MODEL', 'gpt-image-1'),
+        // gpt-image-1 quality tier: high (premium, brand visuals) | medium | low. Higher =
+        // richer image but more cost — drop to 'medium' to trim spend.
+        'image_quality' => env('OPENAI_IMAGE_QUALITY', 'high'),
         'processing_mode' => env('OPENAI_PROCESSING_MODE', 'standard'),
     ],
 

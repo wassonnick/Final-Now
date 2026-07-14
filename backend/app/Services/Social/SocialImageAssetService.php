@@ -54,15 +54,21 @@ class SocialImageAssetService
         try {
             // gpt-image-1 always returns b64_json and REJECTS the response_format parameter
             // (it is a dall-e-only option), so only send it to dall-e models.
+            $isDalle = str_starts_with($imageModel, 'dall-e');
+            $size = $this->openAiImageSize($post->platform, (string) $post->post_type, $isDalle);
             $payload = [
                 'model' => $imageModel,
                 'prompt' => $this->safeImagePrompt($imagePrompt),
-                'size' => '1024x1024',
+                'size' => $size,
                 'n' => 1,
             ];
-            if (str_starts_with($imageModel, 'dall-e')) {
+            if ($isDalle) {
                 $payload['response_format'] = 'b64_json';
+            } else {
+                // gpt-image-1 quality tier — premium by default for brand-worthy visuals.
+                $payload['quality'] = (string) config('services.openai.image_quality', 'high');
             }
+            [$sizeW, $sizeH] = array_map('intval', explode('x', $size));
 
             $response = Http::timeout(120)->withToken($apiKey)->post('https://api.openai.com/v1/images/generations', $payload);
 
@@ -93,8 +99,8 @@ class SocialImageAssetService
                 'file_path' => $path,
                 'public_url' => Storage::disk($disk)->url($path),
                 'mime_type' => 'image/png',
-                'width' => 1024,
-                'height' => 1024,
+                'width' => $sizeW,
+                'height' => $sizeH,
                 'status' => 'needs_approval',
                 'risk_level' => $post->risk_level,
                 'ai_model' => $imageModel,
@@ -117,7 +123,26 @@ class SocialImageAssetService
 
     private function safeImagePrompt(string $prompt): string
     {
-        return trim($prompt)."\n\nCreate a branded real-estate marketing graphic or illustration for SocietyFlats.com. Do not create a fake photo of a real society or property. Avoid people faces, builder logos, government seals, RERA badges, guaranteed returns, misleading price or availability claims. The visual must be clearly suitable as a draft creative for admin review.";
+        return trim($prompt)."\n\nART DIRECTION — create a premium, scroll-stopping social-media visual for SocietyFlats.com, a trustworthy modern real-estate brand for Gurgaon home seekers. Make it warm, vibrant and aspirational: natural daylight, inviting lifestyle mood, and rich colour grounded in the brand palette (crisp white, soft sky blue, deep navy accents, warm sunlight) — NOT flat black-and-white, not sterile, not empty clip-art. Include real, relatable, diverse people where it fits — a family, a couple, or a young professional feeling calm and at home — as generic models (never a real, identifiable individual). Strong modern composition with depth, a clean area for a short headline/CTA, and a small tasteful 'SocietyFlats' brand mark. SAFETY: do NOT depict a real, identifiable person, a real named society/building, builder logos, government seals, RERA badges, guaranteed returns, or specific price/availability claims. Draft creative for admin review.";
+    }
+
+    /**
+     * OpenAI image size that best fits the platform's aspect. gpt-image-1 accepts
+     * 1024x1024 / 1024x1536 (portrait) / 1536x1024 (landscape); dall-e stays square for safety.
+     */
+    private function openAiImageSize(string $platform, string $postType, bool $isDalle): string
+    {
+        if ($isDalle) {
+            return '1024x1024';
+        }
+        if (in_array($postType, ['story', 'reel', 'whatsapp_status'], true)) {
+            return '1024x1536';
+        }
+        if (in_array($platform, ['linkedin', 'facebook', 'google_business'], true)) {
+            return '1536x1024';
+        }
+
+        return '1024x1024';
     }
 
     private function dimensionsFor(string $platform, string $postType): array

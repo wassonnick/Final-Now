@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class SocialDraftGeneratorService
 {
-    public const PROMPT_VERSION = 'sm1a-v2';
+    public const PROMPT_VERSION = 'sm1a-v3-engaging';
 
     private const HIGH_RISK_TERMS = [
         'price', 'rent', 'sale', 'available', 'availability', 'builder', 'rera', 'possession',
@@ -237,12 +237,12 @@ class SocialDraftGeneratorService
                 'title' => 'Society-first home search in '.$subject,
                 'hook' => $angle['hook'],
                 'caption' => $angle['caption'],
-                'cta' => 'Explore SocietyFlats.com or request a callback',
-                'hashtags' => ['#SocietyFlats', '#GurgaonHomes', '#SocietyFirstSearch'],
+                'cta' => 'Start your shortlist the smart way on SocietyFlats.com →',
+                'hashtags' => ['#SocietyFlats', '#Gurgaon', '#GurgaonHomes', '#HomeSearch', '#SocietyFirst'],
                 // Prompt copy must avoid the high-risk trigger words (e.g. "premium") or the
                 // classifier will force these fallback drafts to high risk.
-                'creative_prompt' => 'Create a clean branded SocietyFlats graphic showing society-first search, Gurgaon map cues and review-ready content blocks.',
-                'image_prompt' => 'Warm, minimal real-estate illustration for SocietyFlats: Gurgaon skyline abstraction, society cards, map pins, soft neutral background. No fake building photos, no people faces.',
+                'creative_prompt' => 'Create a warm, vibrant branded SocietyFlats social visual: a happy young Gurgaon family or couple feeling at home, natural daylight, brand palette of white/soft sky blue/deep navy, a bold hook overlay and clean space for the CTA.',
+                'image_prompt' => 'Warm, aspirational real-estate lifestyle visual for SocietyFlats.com: a relatable, diverse young Gurgaon family/couple looking calm and happy at home in soft natural daylight, modern apartment community vibe in the background, rich brand colour (crisp white, soft sky blue, deep navy accents, warm sunlight), strong modern composition with a clean area for a headline and CTA, small tasteful SocietyFlats brand mark. Generic models, not a real person or a real named society. Not black-and-white, not empty clip-art.',
                 'image_style' => $input['image_style'] ?? 'premium_real_estate',
                 'carousel_slides' => [
                     ['slide' => 1, 'heading' => 'Choose the society first', 'body' => 'Compare location, amenities and public profile signals before the home.', 'image_prompt' => 'Society-first search card layout'],
@@ -262,18 +262,23 @@ class SocialDraftGeneratorService
     private function systemPrompt(): string
     {
         return <<<'PROMPT'
-You are generating social media draft content for SocietyFlats.com.
+You are the lead social-media creative for SocietyFlats.com — a premium, funded proptech brand for Gurgaon home seekers. Your job is to write scroll-stopping, high-engagement posts that feel like a modern, trustworthy real-estate brand — NOT a dry blog or a generic info card.
 
-You may only use the provided SocietyFlats context.
-You must not invent: prices, availability, builder claims, possession dates, RERA details, testimonials, rankings, market appreciation, investment returns, guarantees, exact distances, legal claims.
-If data is missing, write generally and safely.
-Any content mentioning price, availability, builder, possession, RERA, investment, returns, market trends, ranking, or “best/top/luxury/premium” claims must be marked high risk.
-Generic educational posts can be low risk.
-All outputs are drafts for admin review.
-Do not include phone numbers.
-Do not include private owner/lead data.
-Do not mention unpublished inventory.
-Return only valid JSON in the requested shape.
+VOICE & ENGAGEMENT (make every draft interesting):
+- Open with a genuine scroll-stopper: a bold question, a sharp contrast, a relatable "you" moment, a myth to bust, or a surprising reframe. The first line must earn the second.
+- Write warm, confident, human copy — short punchy sentences, active voice, sensory and emotional cues (the calm evening, the school-run, the community, the peace of mind). Speak to aspirations and real worries of a family choosing a home in Gurgaon.
+- Caption length: 3–6 short lines for Instagram/Facebook, tighter for stories/WhatsApp, a slightly more professional register for LinkedIn. Use tasteful line breaks and at most 1–2 relevant emojis (skip emojis on LinkedIn).
+- ALWAYS end with a clear, specific, action-oriented CTA (e.g. "Compare verified societies on SocietyFlats →", "Start your shortlist the smart way", "See which society actually fits your routine"). Never a weak "learn more".
+- 4–7 targeted, real hashtags mixing brand + Gurgaon + intent (e.g. #Gurgaon #SocietyFlats #HomeSearch #Sector65). No hashtag spam.
+- Reinforce the brand promise naturally: verified, society-first, honest, no fake inventory — as a trust hook, not a disclaimer.
+
+STRICT HONESTY (non-negotiable — this is what makes us trustworthy):
+- Use ONLY the provided SocietyFlats context. Never invent prices, availability, builder claims, possession dates, RERA details, testimonials, rankings, appreciation, investment returns, guarantees, exact distances, or legal claims.
+- If specific data is missing, stay engaging but general — lean on lifestyle, decision-making and brand-trust angles rather than fabricated specifics.
+- Mark risk_level "high" for any post that references price, availability, builder, possession, RERA, investment/returns, market trends, ranking, or "best/top/luxury/premium" claims. Purely educational/lifestyle/brand posts are "low".
+- No phone numbers, no private owner/lead data, no unpublished inventory.
+
+Every output is a draft for admin review. Return ONLY valid JSON in the requested shape.
 PROMPT;
     }
 
@@ -293,6 +298,7 @@ PROMPT;
             .($count > 1 ? 'Each draft must take a distinct angle — do NOT rephrase the same post. Assigned angles: '.$angles.'. Vary the hook style, caption structure, CTA wording, hashtags and image prompt between drafts, and anchor different drafts on different societies/sectors from the context where sensible. ' : '')
             .'Content pillar: '.$input['content_pillar'].'. Objective: '.$input['objective'].'. Target audience: '.$input['target_audience'].'. '
             .'Image style: '.($input['image_style'] ?? 'premium_real_estate').'. '
+            .'For EACH draft write a vivid, art-directed image_prompt that would produce a premium, scroll-stopping social visual — think a funded proptech brand, not a plain infographic. Specify: a warm real-estate lifestyle scene with aspirational Gurgaon home-seekers/families as the emotional focus (diverse, natural, candid — generic people, never a real identifiable person or a real named society), rich and inviting colour grounded in the brand palette (crisp white, soft sky blue, deep navy accents, warm sunlight), depth and modern composition, a small tasteful SocietyFlats brand mark or a bold text overlay of the hook, and a clean space for the CTA. Avoid: flat black-and-white, empty vector clip-art, sterile blank backgrounds. '
             ."Required JSON shape: {\"posts\":[{\"platform\":\"instagram\",\"post_type\":\"single_post | carousel | reel | story | whatsapp_status | google_business_post | linkedin_post\",\"title\":\"string\",\"hook\":\"string\",\"caption\":\"string\",\"cta\":\"string\",\"hashtags\":[\"string\"],\"creative_prompt\":\"string\",\"image_prompt\":\"string\",\"image_style\":\"premium_real_estate | clean_corporate | instagram_carousel | whatsapp_status | google_business | minimal_vector | local_area_guide\",\"carousel_slides\":[{\"slide\":1,\"heading\":\"string\",\"body\":\"string\",\"image_prompt\":\"string\"}],\"reel_script\":\"string or null\",\"source_type\":\"society | property | sector | brand | education | null\",\"source_id\":123,\"risk_level\":\"low | medium | high\",\"risk_reason\":\"string\"}]}.\n\n"
             .'Safe SocietyFlats context JSON: '.json_encode($context, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
