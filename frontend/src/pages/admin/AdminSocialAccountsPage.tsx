@@ -39,6 +39,12 @@ function hasPublishScope(account: SocialAccount, scope: string) {
   return Boolean(account.scopes?.includes(scope));
 }
 
+function safeRetrySeconds(value: unknown) {
+  const seconds = Number(value || 0);
+  if (!Number.isFinite(seconds) || seconds <= 0) return 0;
+  return Math.min(60, Math.ceil(seconds));
+}
+
 function publishEnabled(account: SocialAccount) {
   return Boolean(account.metadata?.publish_enabled);
 }
@@ -172,7 +178,7 @@ export function AdminSocialAccountsPage() {
       const result = await fetchGoogleBusinessLocations();
       setGoogleLocations(result.locations || []);
       setSelectedGoogleLocation(result.locations?.[0]?.name || "");
-      setGoogleRetryAfter(result.retry_after_seconds || 0);
+      setGoogleRetryAfter(safeRetrySeconds(result.retry_after_seconds));
       setGoogleLocationMessage(result.locations_count > 0
         ? `Found ${result.locations_count} Google Business location${result.locations_count === 1 ? "" : "s"}.`
         : result.last_error || "Google connected, but no Business Profile locations were returned.");

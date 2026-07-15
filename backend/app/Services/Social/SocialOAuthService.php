@@ -1015,7 +1015,8 @@ class SocialOAuthService
     {
         $metadata = $account->metadata ?: [];
         $lastCheckedAt = data_get($metadata, 'locations_last_checked_at');
-        $checkedRecently = $lastCheckedAt && now()->diffInSeconds(\Illuminate\Support\Carbon::parse($lastCheckedAt)) < 60;
+        $retryAfterSeconds = $this->googleBusinessRetryAfterSeconds($lastCheckedAt);
+        $checkedRecently = $retryAfterSeconds > 0;
 
         if (! $checkedRecently) {
             return null;
@@ -1034,7 +1035,7 @@ class SocialOAuthService
                 'locations' => $locations,
                 'last_error' => null,
                 'cached' => true,
-                'retry_after_seconds' => 60 - now()->diffInSeconds(\Illuminate\Support\Carbon::parse($lastCheckedAt)),
+                'retry_after_seconds' => $retryAfterSeconds,
             ];
         }
 
@@ -1050,11 +1051,30 @@ class SocialOAuthService
                 'locations' => [],
                 'last_error' => $friendlyQuotaMessage,
                 'cached' => true,
-                'retry_after_seconds' => max(1, 60 - now()->diffInSeconds(\Illuminate\Support\Carbon::parse($lastCheckedAt))),
+                'retry_after_seconds' => $retryAfterSeconds,
             ];
         }
 
         return null;
+    }
+
+    private function googleBusinessRetryAfterSeconds(mixed $lastCheckedAt): int
+    {
+        if (! $lastCheckedAt) {
+            return 0;
+        }
+
+        try {
+            $checkedAt = \Illuminate\Support\Carbon::parse((string) $lastCheckedAt);
+        } catch (\Throwable) {
+            return 0;
+        }
+
+        // Use timestamp math instead of Carbon's signed/absolute diff behavior so a minor
+        // production clock skew cannot create absurd UI cooldowns like "8239 seconds".
+        $elapsed = max(0, now()->getTimestamp() - $checkedAt->getTimestamp());
+
+        return max(0, min(60, 60 - $elapsed));
     }
 
     private function findStoredAvailableMetaPage(SocialAccount $account, string $pageId): ?array

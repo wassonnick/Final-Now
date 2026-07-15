@@ -1442,12 +1442,27 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertSame($friendlyMessage, data_get($account->metadata, 'locations_last_error'));
         $this->assertStringNotContainsString('project_number', $account->last_error);
 
-        $this->admin()
+        $cachedResponse = $this->admin()
             ->getJson('/api/admin/social/google-business/locations')
             ->assertOk()
             ->assertJsonPath('data.cached', true)
             ->assertJsonPath('data.locations_count', 0)
             ->assertJsonPath('data.last_error', $friendlyMessage);
+
+        $this->assertLessThanOrEqual(60, $cachedResponse->json('data.retry_after_seconds'));
+
+        $account->update([
+            'metadata' => array_merge($account->metadata ?: [], [
+                'locations_last_checked_at' => now()->addHours(2)->toISOString(),
+            ]),
+        ]);
+
+        $futureClockResponse = $this->admin()
+            ->getJson('/api/admin/social/google-business/locations')
+            ->assertOk()
+            ->assertJsonPath('data.cached', true);
+
+        $this->assertSame(60, $futureClockResponse->json('data.retry_after_seconds'));
     }
 
     public function test_sm2_social_accounts_mask_saved_google_quota_error(): void
