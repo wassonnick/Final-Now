@@ -248,6 +248,12 @@ class SocialOAuthService
     public function googleBusinessLocations(): array
     {
         $account = $this->googleBusinessAccountWithToken();
+
+        $cached = $this->cachedGoogleBusinessLocations($account);
+        if ($cached) {
+            return $cached;
+        }
+
         $token = $this->validGoogleAccessToken($account);
 
         $accountsResponse = Http::withToken($token)
@@ -260,6 +266,7 @@ class SocialOAuthService
                 'last_error' => $message,
                 'metadata' => array_merge($account->metadata ?: [], [
                     'verified_location' => false,
+                    'locations_last_checked_at' => now()->toISOString(),
                     'locations_last_error' => $message,
                 ]),
             ]);
@@ -295,6 +302,7 @@ class SocialOAuthService
         }
 
         $metadata = array_merge($account->metadata ?: [], [
+            'available_accounts_count' => count($googleAccounts),
             'available_locations_count' => count($locations),
             'available_locations' => $locations,
             'locations_last_checked_at' => now()->toISOString(),
@@ -987,7 +995,66 @@ class SocialOAuthService
 
     private function googleErrorMessage($response, string $fallback): string
     {
-        return (string) ($response->json('error.message') ?: $response->json('error.status') ?: $fallback);
+        $rawMessage = (string) ($response->json('error.message') ?: $response->json('error.status') ?: $fallback);
+
+        if ($this->isGoogleQuotaError($response, $rawMessage)) {
+            return 'Google Business Profile rate limit reached. Please wait a minute, then try “Find Google Business locations” again. OAuth is still connected.';
+        }
+
+        return $rawMessage;
+    }
+
+    private function isGoogleQuotaError($response, string $message): bool
+    {
+        return (int) $response->status() === 429
+            || str_contains(Str::lower($message), 'quota exceeded')
+            || str_contains(Str::lower($message), 'requests per minute');
+    }
+
+    private function cachedGoogleBusinessLocations(SocialAccount $account): ?array
+    {
+        $metadata = $account->metadata ?: [];
+        $lastCheckedAt = data_get($metadata, 'locations_last_checked_at');
+        $checkedRecently = $lastCheckedAt && now()->diffInSeconds(\Illuminate\Support\Carbon::parse($lastCheckedAt)) < 60;
+
+        if (! $checkedRecently) {
+            return null;
+        }
+
+        $locations = data_get($metadata, 'available_locations', []);
+        $locations = is_array($locations) ? $locations : [];
+        $lastError = (string) data_get($metadata, 'locations_last_error', '');
+        $friendlyQuotaMessage = 'Google Business Profile rate limit reached. Please wait a minute, then try “Find Google Business locations” again. OAuth is still connected.';
+
+        if ($locations !== []) {
+            return [
+                'account_status' => $account->status,
+                'accounts_count' => (int) data_get($metadata, 'available_accounts_count', 0),
+                'locations_count' => count($locations),
+                'locations' => $locations,
+                'last_error' => null,
+                'cached' => true,
+                'retry_after_seconds' => 60 - now()->diffInSeconds(\Illuminate\Support\Carbon::parse($lastCheckedAt)),
+            ];
+        }
+
+        if ($lastError && (
+            str_contains(Str::lower($lastError), 'rate limit')
+            || str_contains(Str::lower($lastError), 'quota')
+            || str_contains(Str::lower($lastError), 'requests per minute')
+        )) {
+            return [
+                'account_status' => $account->status,
+                'accounts_count' => (int) data_get($metadata, 'available_accounts_count', 0),
+                'locations_count' => 0,
+                'locations' => [],
+                'last_error' => $friendlyQuotaMessage,
+                'cached' => true,
+                'retry_after_seconds' => max(1, 60 - now()->diffInSeconds(\Illuminate\Support\Carbon::parse($lastCheckedAt))),
+            ];
+        }
+
+        return null;
     }
 
     private function findStoredAvailableMetaPage(SocialAccount $account, string $pageId): ?array

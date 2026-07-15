@@ -1410,6 +1410,66 @@ class SocialMediaFoundationTest extends TestCase
         ]);
     }
 
+    public function test_sm2_google_business_quota_error_is_friendly_and_cached(): void
+    {
+        Http::fake([
+            'https://mybusinessaccountmanagement.googleapis.com/v1/accounts*' => Http::response([
+                'error' => [
+                    'message' => "Quota exceeded for quota metric 'Requests' and limit 'Requests per minute' of service 'mybusinessaccountmanagement.googleapis.com' for consumer 'project_number:584464075588'.",
+                ],
+            ], 429),
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'google_business_profile',
+            'account_name' => 'Google Business Profile',
+            'status' => 'needs_location_verification',
+            'scopes' => ['https://www.googleapis.com/auth/business.manage'],
+            'metadata' => ['publish_enabled' => false],
+        ]);
+        $account->access_token = 'secret-google-access-token';
+        $account->save();
+
+        $friendlyMessage = 'Google Business Profile rate limit reached. Please wait a minute, then try “Find Google Business locations” again. OAuth is still connected.';
+
+        $this->admin()
+            ->getJson('/api/admin/social/google-business/locations')
+            ->assertStatus(422)
+            ->assertJsonPath('message', $friendlyMessage);
+
+        $account->refresh();
+        $this->assertSame($friendlyMessage, $account->last_error);
+        $this->assertSame($friendlyMessage, data_get($account->metadata, 'locations_last_error'));
+        $this->assertStringNotContainsString('project_number', $account->last_error);
+
+        $this->admin()
+            ->getJson('/api/admin/social/google-business/locations')
+            ->assertOk()
+            ->assertJsonPath('data.cached', true)
+            ->assertJsonPath('data.locations_count', 0)
+            ->assertJsonPath('data.last_error', $friendlyMessage);
+    }
+
+    public function test_sm2_social_accounts_mask_saved_google_quota_error(): void
+    {
+        SocialAccount::create([
+            'platform' => 'google_business_profile',
+            'account_name' => 'Google Business Profile',
+            'status' => 'needs_location_verification',
+            'last_error' => "Quota exceeded for quota metric 'Requests' and limit 'Requests per minute' of service 'mybusinessaccountmanagement.googleapis.com' for consumer 'project_number:584464075588'.",
+            'metadata' => [
+                'locations_last_error' => "Quota exceeded for quota metric 'Requests' and limit 'Requests per minute' of service 'mybusinessaccountmanagement.googleapis.com' for consumer 'project_number:584464075588'.",
+            ],
+        ]);
+
+        $response = $this->admin()->getJson('/api/admin/social/accounts')->assertOk();
+        $json = json_encode($response->json());
+
+        $this->assertStringContainsString('Google Business Profile rate limit reached.', $json);
+        $this->assertStringNotContainsString('project_number', $json);
+        $this->assertStringNotContainsString('584464075588', $json);
+    }
+
     public function test_sm2_google_business_selects_authorized_location_and_enables_publish(): void
     {
         $account = SocialAccount::create([

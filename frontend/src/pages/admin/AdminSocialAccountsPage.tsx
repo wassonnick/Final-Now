@@ -66,9 +66,18 @@ export function AdminSocialAccountsPage() {
   const [googleLocations, setGoogleLocations] = useState<GoogleBusinessLocation[]>([]);
   const [selectedGoogleLocation, setSelectedGoogleLocation] = useState("");
   const [googleLocationMessage, setGoogleLocationMessage] = useState("");
+  const [googleRetryAfter, setGoogleRetryAfter] = useState(0);
 
   const load = async () => setAccounts(await fetchSocialAccounts());
   useEffect(() => { void load().catch((error) => setMessage(error instanceof Error ? error.message : "Unable to load social accounts.")); }, []);
+  useEffect(() => {
+    if (googleRetryAfter <= 0) return;
+    const timer = window.setInterval(() => {
+      setGoogleRetryAfter((value) => Math.max(0, value - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [googleRetryAfter]);
 
   async function connect(platform: string, mode: "connect" | "publish" = "connect") {
     try {
@@ -163,6 +172,7 @@ export function AdminSocialAccountsPage() {
       const result = await fetchGoogleBusinessLocations();
       setGoogleLocations(result.locations || []);
       setSelectedGoogleLocation(result.locations?.[0]?.name || "");
+      setGoogleRetryAfter(result.retry_after_seconds || 0);
       setGoogleLocationMessage(result.locations_count > 0
         ? `Found ${result.locations_count} Google Business location${result.locations_count === 1 ? "" : "s"}.`
         : result.last_error || "Google connected, but no Business Profile locations were returned.");
@@ -172,6 +182,9 @@ export function AdminSocialAccountsPage() {
       await load();
     } catch (error) {
       const text = error instanceof Error ? error.message : "Unable to fetch Google Business locations.";
+      if (/rate limit|quota|requests per minute/i.test(text)) {
+        setGoogleRetryAfter(60);
+      }
       setGoogleLocationMessage(text);
       setMessage(text);
     }
@@ -456,8 +469,14 @@ export function AdminSocialAccountsPage() {
                       </Button>
                     </>
                   ) : (
-                    <Button size="sm" variant="outline" className="mt-3 rounded-full bg-white" onClick={() => void checkGoogleBusinessLocations()}>
-                      Find Google Business locations
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-3 rounded-full bg-white"
+                      disabled={googleRetryAfter > 0}
+                      onClick={() => void checkGoogleBusinessLocations()}
+                    >
+                      {googleRetryAfter > 0 ? `Try again in ${googleRetryAfter}s` : "Find Google Business locations"}
                     </Button>
                   )}
                   {googleLocationMessage ? (

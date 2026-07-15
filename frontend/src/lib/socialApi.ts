@@ -114,6 +114,8 @@ export type GoogleBusinessLocationsResponse = {
   locations_count: number;
   locations: GoogleBusinessLocation[];
   last_error?: string | null;
+  cached?: boolean;
+  retry_after_seconds?: number;
 };
 
 async function json(response: Response) {

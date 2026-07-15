@@ -237,9 +237,33 @@ class AdminSocialController extends Controller
         $accounts = SocialAccount::query()
             ->select(['id', 'platform', 'account_name', 'account_handle', 'account_id', 'status', 'token_expires_at', 'last_connected_at', 'last_error', 'scopes', 'metadata', 'created_at', 'updated_at'])
             ->orderBy('id')
-            ->get();
+            ->get()
+            ->map(function (SocialAccount $account) {
+                $account->last_error = $this->safeSocialAccountError($account->last_error);
+                $metadata = $account->metadata ?: [];
+                if (isset($metadata['locations_last_error'])) {
+                    $metadata['locations_last_error'] = $this->safeSocialAccountError((string) $metadata['locations_last_error']);
+                    $account->metadata = $metadata;
+                }
+
+                return $account;
+            });
 
         return response()->json(['status' => 'ok', 'data' => $accounts]);
+    }
+
+    private function safeSocialAccountError(?string $message): ?string
+    {
+        if (! $message) {
+            return $message;
+        }
+
+        $lower = strtolower($message);
+        if (str_contains($lower, 'quota exceeded') || str_contains($lower, 'requests per minute')) {
+            return 'Google Business Profile rate limit reached. Please wait a minute, then try “Find Google Business locations” again. OAuth is still connected.';
+        }
+
+        return $message;
     }
 
     public function startOAuth(Request $request, string $platform): JsonResponse
