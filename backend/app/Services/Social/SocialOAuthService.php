@@ -245,6 +245,133 @@ class SocialOAuthService
         return $debug;
     }
 
+    public function googleBusinessLocations(): array
+    {
+        $account = $this->googleBusinessAccountWithToken();
+        $token = $this->validGoogleAccessToken($account);
+
+        $accountsResponse = Http::withToken($token)
+            ->get('https://mybusinessaccountmanagement.googleapis.com/v1/accounts');
+
+        if (! $accountsResponse->successful()) {
+            $message = $this->googleErrorMessage($accountsResponse, 'Google Business Profile accounts could not be fetched.');
+            $account->update([
+                'status' => 'needs_location_verification',
+                'last_error' => $message,
+                'metadata' => array_merge($account->metadata ?: [], [
+                    'verified_location' => false,
+                    'locations_last_error' => $message,
+                ]),
+            ]);
+
+            throw new InvalidArgumentException($message);
+        }
+
+        $googleAccounts = collect((array) $accountsResponse->json('accounts', []))
+            ->filter(fn ($candidate) => is_array($candidate) && data_get($candidate, 'name'))
+            ->map(fn (array $candidate) => [
+                'name' => (string) data_get($candidate, 'name'),
+                'account_name' => (string) (data_get($candidate, 'accountName') ?: data_get($candidate, 'name')),
+                'type' => data_get($candidate, 'type'),
+            ])
+            ->values()
+            ->all();
+
+        $locations = [];
+        $lastError = null;
+        foreach ($googleAccounts as $googleAccount) {
+            $locationResponse = Http::withToken($token)
+                ->get("https://mybusinessbusinessinformation.googleapis.com/v1/{$googleAccount['name']}/locations", [
+                    'readMask' => 'name,title,storefrontAddress,metadata',
+                ]);
+
+            if (! $locationResponse->successful()) {
+                $lastError = $this->googleErrorMessage($locationResponse, 'Google Business Profile locations could not be fetched.');
+                continue;
+            }
+
+            foreach ((array) $locationResponse->json('locations', []) as $location) {
+                if (! is_array($location) || ! data_get($location, 'name')) {
+                    continue;
+                }
+
+                $locations[] = $this->safeGoogleBusinessLocation($googleAccount, $location);
+            }
+        }
+
+        $metadata = array_merge($account->metadata ?: [], [
+            'available_locations_count' => count($locations),
+            'available_locations' => $locations,
+            'locations_last_checked_at' => now()->toISOString(),
+            'locations_last_error' => $lastError,
+            'publish_enabled' => (bool) data_get($account->metadata, 'verified_location', false),
+        ]);
+
+        $account->update([
+            'status' => count($locations) > 0
+                ? ($account->status === 'connected' ? 'connected' : 'needs_location_selection')
+                : 'needs_location_verification',
+            'last_error' => count($locations) > 0
+                ? null
+                : ($lastError ?: 'Google connected, but no Business Profile locations were returned for this account.'),
+            'metadata' => $metadata,
+        ]);
+
+        return [
+            'account_status' => $account->fresh()->status,
+            'accounts_count' => count($googleAccounts),
+            'locations_count' => count($locations),
+            'locations' => $locations,
+            'last_error' => count($locations) > 0 ? null : ($lastError ?: $account->fresh()->last_error),
+        ];
+    }
+
+    public function selectGoogleBusinessLocation(string $locationName): SocialAccount
+    {
+        $account = $this->googleBusinessAccountWithToken();
+        $locationName = trim($locationName);
+        if ($locationName === '') {
+            throw new InvalidArgumentException('Choose a Google Business Profile location before saving.');
+        }
+
+        $locations = data_get($account->metadata, 'available_locations', []);
+        if (! is_array($locations) || $locations === []) {
+            $locations = $this->googleBusinessLocations()['locations'] ?? [];
+            $account = $account->fresh();
+        }
+
+        $location = collect($locations)
+            ->first(fn ($candidate) => (string) data_get($candidate, 'name') === $locationName);
+
+        if (! is_array($location)) {
+            throw new InvalidArgumentException('Selected Google Business Profile location was not returned by the authorized Google account.');
+        }
+
+        $metadata = array_merge($account->metadata ?: [], [
+            'oauth_mode' => 'connect',
+            'selected_location_name' => (string) data_get($location, 'name'),
+            'location_name' => (string) data_get($location, 'name'),
+            'location_title' => (string) data_get($location, 'title', 'Google Business Profile'),
+            'location_account_name' => (string) data_get($location, 'account_name'),
+            'location_address_summary' => data_get($location, 'address_summary'),
+            'verified_location' => true,
+            'google_location_verified_from_api' => (bool) data_get($location, 'verified', true),
+            'publish_enabled' => true,
+            'sm2_manual_only' => true,
+        ]);
+
+        $account->update([
+            'account_name' => (string) data_get($location, 'title', self::PLATFORMS['google_business_profile']),
+            'account_handle' => null,
+            'account_id' => (string) data_get($location, 'location_id', $locationName),
+            'status' => 'connected',
+            'last_error' => null,
+            'metadata' => $metadata,
+        ]);
+
+        return $account->fresh();
+    }
+
     private function authorizationUrl(string $platform, string $state, string $mode = 'connect'): string
     {
         return match ($platform) {
@@ -746,6 +873,96 @@ class SocialOAuthService
         }
 
         return $account;
+    }
+
+    private function googleBusinessAccountWithToken(): SocialAccount
+    {
+        $account = SocialAccount::where('platform', 'google_business_profile')->first();
+
+        if (! $account || ! $account->accessToken()) {
+            throw new InvalidArgumentException('No encrypted Google Business Profile OAuth token is stored. Connect Google Business OAuth first.');
+        }
+
+        return $account;
+    }
+
+    private function validGoogleAccessToken(SocialAccount $account): string
+    {
+        if (! $account->token_expires_at || $account->token_expires_at->isFuture() || ! $account->refreshToken()) {
+            return (string) $account->accessToken();
+        }
+
+        $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
+            'grant_type' => 'refresh_token',
+            'refresh_token' => $account->refreshToken(),
+            'client_id' => config('services.social_oauth.google_client_id'),
+            'client_secret' => config('services.social_oauth.google_client_secret'),
+        ]);
+
+        if (! $response->successful() || ! $response->json('access_token')) {
+            throw new InvalidArgumentException('Google Business Profile token refresh failed. Reconnect Google Business OAuth.');
+        }
+
+        $account->fill([
+            'token_expires_at' => now()->addSeconds((int) $response->json('expires_in', 3600)),
+            'last_error' => null,
+        ]);
+        $account->access_token = (string) $response->json('access_token');
+        if ($response->json('refresh_token')) {
+            $account->refresh_token = (string) $response->json('refresh_token');
+        }
+        $account->save();
+
+        return (string) $response->json('access_token');
+    }
+
+    private function safeGoogleBusinessLocation(array $googleAccount, array $location): array
+    {
+        $rawName = (string) data_get($location, 'name');
+        $fullName = str_starts_with($rawName, 'accounts/')
+            ? $rawName
+            : "{$googleAccount['name']}/{$rawName}";
+        $metadata = (array) data_get($location, 'metadata', []);
+        $address = (array) data_get($location, 'storefrontAddress', []);
+
+        return array_filter([
+            'name' => $fullName,
+            'location_id' => $this->googleLocationId($fullName),
+            'title' => (string) (data_get($location, 'title') ?: 'Google Business Profile'),
+            'account_name' => (string) data_get($googleAccount, 'name'),
+            'account_display_name' => (string) data_get($googleAccount, 'account_name'),
+            'address_summary' => $this->safeGoogleAddressSummary($address),
+            'verified' => (bool) data_get($metadata, 'hasVoiceOfMerchant', true),
+            'maps_uri' => data_get($metadata, 'mapsUri'),
+        ], fn ($value) => $value !== null && $value !== '');
+    }
+
+    private function safeGoogleAddressSummary(array $address): ?string
+    {
+        $parts = array_filter([
+            implode(', ', array_filter(array_map('strval', (array) data_get($address, 'addressLines', [])))),
+            data_get($address, 'locality'),
+            data_get($address, 'administrativeArea'),
+            data_get($address, 'postalCode'),
+        ]);
+
+        $summary = trim(implode(', ', $parts));
+
+        return $summary !== '' ? $summary : null;
+    }
+
+    private function googleLocationId(string $locationName): string
+    {
+        if (preg_match('/locations\/([^\/]+)/', $locationName, $matches)) {
+            return (string) $matches[1];
+        }
+
+        return $locationName;
+    }
+
+    private function googleErrorMessage($response, string $fallback): string
+    {
+        return (string) ($response->json('error.message') ?: $response->json('error.status') ?: $fallback);
     }
 
     private function findStoredAvailableMetaPage(SocialAccount $account, string $pageId): ?array

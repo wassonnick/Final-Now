@@ -111,6 +111,8 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
         Route::get('/meta/pages/debug', [AdminSocialController::class, 'debugMetaPages']);
         Route::get('/meta/publish-review-url', [AdminSocialController::class, 'metaPublishReviewUrl']);
         Route::post('/meta/pages/select', [AdminSocialController::class, 'selectMetaGraphPage']);
+        Route::get('/google-business/locations', [AdminSocialController::class, 'googleBusinessLocations']);
+        Route::post('/google-business/locations/select', [AdminSocialController::class, 'selectGoogleBusinessLocation']);
         Route::get('/publish-logs', [AdminSocialController::class, 'publishLogs']);
     });
     Route::prefix('seo-autopilot')->group(function () {

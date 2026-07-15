@@ -97,6 +97,25 @@ export type MetaDebugPage = {
   instagram_username?: string | null;
 };
 
+export type GoogleBusinessLocation = {
+  name: string;
+  location_id?: string | null;
+  title: string;
+  account_name?: string | null;
+  account_display_name?: string | null;
+  address_summary?: string | null;
+  verified?: boolean;
+  maps_uri?: string | null;
+};
+
+export type GoogleBusinessLocationsResponse = {
+  account_status: string;
+  accounts_count: number;
+  locations_count: number;
+  locations: GoogleBusinessLocation[];
+  last_error?: string | null;
+};
+
 async function json(response: Response) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body?.message || `Request failed: ${response.status}`);
@@ -116,6 +135,16 @@ export const fetchMetaPageAccessDebug = () =>
 
 export const fetchMetaPublishReviewUrl = () =>
   adminFetch("/admin/social/meta/publish-review-url").then(json).then((body) => body.data as SocialOAuthStart);
+
+export const fetchGoogleBusinessLocations = () =>
+  adminFetch("/admin/social/google-business/locations").then(json).then((body) => body.data as GoogleBusinessLocationsResponse);
+
+export const selectGoogleBusinessLocation = (locationName: string) =>
+  adminFetch("/admin/social/google-business/locations/select", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ location_name: locationName }),
+  }).then(json);
 
 export const generateSocialPosts = (payload: Record<string, unknown>) =>
   adminFetch("/admin/social/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);

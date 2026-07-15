@@ -361,6 +361,37 @@ class AdminSocialController extends Controller
         }
     }
 
+    public function googleBusinessLocations(): JsonResponse
+    {
+        try {
+            return response()->json([
+                'status' => 'ok',
+                'data' => $this->oauth->googleBusinessLocations(),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function selectGoogleBusinessLocation(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'location_name' => ['required', 'string', 'max:255'],
+        ]);
+
+        try {
+            $account = $this->oauth->selectGoogleBusinessLocation($data['location_name']);
+
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Google Business Profile location selected. Tokens remain encrypted and are never returned to the frontend.',
+                'data' => $account->only(['id', 'platform', 'account_name', 'account_handle', 'account_id', 'status', 'token_expires_at', 'last_connected_at', 'scopes', 'metadata']),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
     public function publishLogs(Request $request): JsonResponse
     {
         $query = SocialPublishLog::query()->latest();

@@ -5,11 +5,14 @@ import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { AdminSocialNav } from "./AdminSocialNav";
 import {
+  fetchGoogleBusinessLocations,
   fetchMetaPageAccessDebug,
   fetchMetaPublishReviewUrl,
   fetchSocialAccounts,
   selectMetaPage,
+  selectGoogleBusinessLocation,
   startSocialOAuth,
+  type GoogleBusinessLocation,
   type MetaDebugPage,
   type MetaPageAccessDebug,
   type SocialAccount,
@@ -60,6 +63,8 @@ export function AdminSocialAccountsPage() {
   const [manualInstagramId, setManualInstagramId] = useState("");
   const [manualInstagramHandle, setManualInstagramHandle] = useState("");
   const [metaDebug, setMetaDebug] = useState<MetaPageAccessDebug | null>(null);
+  const [googleLocations, setGoogleLocations] = useState<GoogleBusinessLocation[]>([]);
+  const [selectedGoogleLocation, setSelectedGoogleLocation] = useState("");
 
   const load = async () => setAccounts(await fetchSocialAccounts());
   useEffect(() => { void load().catch((error) => setMessage(error instanceof Error ? error.message : "Unable to load social accounts.")); }, []);
@@ -148,6 +153,37 @@ export function AdminSocialAccountsPage() {
       setMessage(`Meta diagnostic completed. /me/accounts pages: ${result.pages_count_from_me_accounts}. Business asset pages: ${fallbackCount}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to check Meta Page access.");
+    }
+  }
+
+  async function checkGoogleBusinessLocations() {
+    try {
+      const result = await fetchGoogleBusinessLocations();
+      setGoogleLocations(result.locations || []);
+      setSelectedGoogleLocation(result.locations?.[0]?.name || "");
+      setMessage(result.locations_count > 0
+        ? `Google Business locations found: ${result.locations_count}. Choose the SocietyFlats location and connect it.`
+        : result.last_error || "Google connected, but no Business Profile locations were returned.");
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to fetch Google Business locations.");
+    }
+  }
+
+  async function chooseGoogleBusinessLocation() {
+    if (!selectedGoogleLocation) {
+      setMessage("Choose a Google Business Profile location first.");
+      return;
+    }
+
+    try {
+      await selectGoogleBusinessLocation(selectedGoogleLocation);
+      setMessage("Google Business Profile location connected. Google publishing is now enabled for approved manual posts.");
+      setSelectedGoogleLocation("");
+      setGoogleLocations([]);
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to select Google Business Profile location.");
     }
   }
 
@@ -374,6 +410,51 @@ export function AdminSocialAccountsPage() {
                         </div>
                       ) : null}
                     </div>
+                  ) : null}
+                </div>
+              ) : null}
+              {account.platform === "google_business_profile" ? (
+                <div className="mt-4 rounded-2xl border border-blue-100 bg-white p-4">
+                  <p className="text-sm font-black text-slate-900">Google Business location</p>
+                  {account.metadata?.location_title ? (
+                    <div className="mt-2 rounded-xl bg-emerald-50 p-3 text-xs font-bold leading-5 text-emerald-900">
+                      <p>Connected location: {String(account.metadata.location_title)}</p>
+                      {account.metadata.location_address_summary ? <p>{String(account.metadata.location_address_summary)}</p> : null}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-xs font-bold leading-5 text-slate-600">
+                      Google OAuth is connected, but publishing needs the exact Business Profile location. We only enable publishing after Google returns the location for this authorized account.
+                    </p>
+                  )}
+                  {googleLocations.length ? (
+                    <>
+                      <select
+                        className="mt-3 w-full rounded-xl border bg-white px-3 py-2 text-sm font-bold text-slate-700"
+                        value={selectedGoogleLocation}
+                        onChange={(event) => setSelectedGoogleLocation(event.target.value)}
+                      >
+                        <option value="">Select a Google Business location</option>
+                        {googleLocations.map((location) => (
+                          <option key={location.name} value={location.name}>
+                            {location.title}{location.address_summary ? ` · ${location.address_summary}` : ""}{location.location_id ? ` · ${location.location_id}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      <Button size="sm" className="mt-3 rounded-full" onClick={() => void chooseGoogleBusinessLocation()}>
+                        Connect selected location
+                      </Button>
+                    </>
+                  ) : (
+                    <Button size="sm" variant="outline" className="mt-3 rounded-full bg-white" onClick={() => void checkGoogleBusinessLocations()}>
+                      Find Google Business locations
+                    </Button>
+                  )}
+                  {account.status === "needs_location_verification" || account.status === "needs_location_selection" ? (
+                    <ul className="mt-3 list-disc space-y-1 pl-5 text-xs font-bold leading-5 text-amber-900">
+                      <li>Use the Google account that owns or manages the SocietyFlats Business Profile.</li>
+                      <li>The OAuth scope must include Google Business Profile management access.</li>
+                      <li>If no locations appear, confirm the listing exists and this Google account has manager access.</li>
+                    </ul>
                   ) : null}
                 </div>
               ) : null}

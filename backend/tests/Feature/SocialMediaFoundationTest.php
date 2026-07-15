@@ -1347,6 +1347,136 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertTrue(SocialPublishLog::where('social_post_id', $post->id)->where('action', 'whatsapp_manual_export')->exists());
     }
 
+    public function test_sm2_google_business_location_endpoints_are_protected(): void
+    {
+        $this->getJson('/api/admin/social/google-business/locations')->assertUnauthorized();
+        $this->postJson('/api/admin/social/google-business/locations/select', [
+            'location_name' => 'accounts/123/locations/456',
+        ])->assertUnauthorized();
+    }
+
+    public function test_sm2_google_business_lists_safe_authorized_locations(): void
+    {
+        Http::fake([
+            'https://mybusinessaccountmanagement.googleapis.com/v1/accounts*' => Http::response([
+                'accounts' => [
+                    ['name' => 'accounts/123', 'accountName' => 'SocietyFlats GBP'],
+                ],
+            ], 200),
+            'https://mybusinessbusinessinformation.googleapis.com/v1/accounts/123/locations*' => Http::response([
+                'locations' => [
+                    [
+                        'name' => 'locations/456',
+                        'title' => 'SocietyFlats',
+                        'storefrontAddress' => [
+                            'addressLines' => ['Golf Course Road'],
+                            'locality' => 'Gurugram',
+                            'administrativeArea' => 'Haryana',
+                        ],
+                        'metadata' => [
+                            'hasVoiceOfMerchant' => true,
+                            'mapsUri' => 'https://maps.google.com/?cid=456',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'google_business_profile',
+            'account_name' => 'Google Business Profile',
+            'status' => 'needs_location_verification',
+            'scopes' => ['https://www.googleapis.com/auth/business.manage'],
+            'metadata' => ['publish_enabled' => false],
+        ]);
+        $account->access_token = 'secret-google-access-token';
+        $account->refresh_token = 'secret-google-refresh-token';
+        $account->save();
+
+        $response = $this->admin()
+            ->getJson('/api/admin/social/google-business/locations')
+            ->assertOk()
+            ->assertJsonPath('data.locations_count', 1)
+            ->assertJsonPath('data.locations.0.name', 'accounts/123/locations/456')
+            ->assertJsonPath('data.locations.0.title', 'SocietyFlats')
+            ->assertJsonPath('data.locations.0.verified', true);
+
+        $json = json_encode($response->json());
+        $this->assertStringNotContainsString('secret-google-access-token', $json);
+        $this->assertStringNotContainsString('secret-google-refresh-token', $json);
+        $this->assertDatabaseHas('social_accounts', [
+            'id' => $account->id,
+            'status' => 'needs_location_selection',
+        ]);
+    }
+
+    public function test_sm2_google_business_selects_authorized_location_and_enables_publish(): void
+    {
+        $account = SocialAccount::create([
+            'platform' => 'google_business_profile',
+            'account_name' => 'Google Business Profile',
+            'status' => 'needs_location_selection',
+            'scopes' => ['https://www.googleapis.com/auth/business.manage'],
+            'metadata' => [
+                'publish_enabled' => false,
+                'available_locations' => [
+                    [
+                        'name' => 'accounts/123/locations/456',
+                        'location_id' => '456',
+                        'title' => 'SocietyFlats',
+                        'account_name' => 'accounts/123',
+                        'account_display_name' => 'SocietyFlats GBP',
+                        'address_summary' => 'Golf Course Road, Gurugram, Haryana',
+                        'verified' => true,
+                    ],
+                ],
+            ],
+        ]);
+        $account->access_token = 'secret-google-access-token';
+        $account->refresh_token = 'secret-google-refresh-token';
+        $account->save();
+
+        $response = $this->admin()
+            ->postJson('/api/admin/social/google-business/locations/select', [
+                'location_name' => 'accounts/123/locations/456',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.platform', 'google_business_profile')
+            ->assertJsonPath('data.account_name', 'SocietyFlats')
+            ->assertJsonPath('data.account_id', '456')
+            ->assertJsonPath('data.status', 'connected')
+            ->assertJsonPath('data.metadata.location_name', 'accounts/123/locations/456')
+            ->assertJsonPath('data.metadata.verified_location', true)
+            ->assertJsonPath('data.metadata.publish_enabled', true);
+
+        $json = json_encode($response->json());
+        $this->assertStringNotContainsString('secret-google-access-token', $json);
+        $this->assertStringNotContainsString('secret-google-refresh-token', $json);
+    }
+
+    public function test_sm2_google_business_rejects_unreturned_location(): void
+    {
+        $account = SocialAccount::create([
+            'platform' => 'google_business_profile',
+            'account_name' => 'Google Business Profile',
+            'status' => 'needs_location_selection',
+            'metadata' => ['available_locations' => []],
+        ]);
+        $account->access_token = 'secret-google-access-token';
+        $account->save();
+
+        Http::fake([
+            'https://mybusinessaccountmanagement.googleapis.com/v1/accounts*' => Http::response(['accounts' => []], 200),
+        ]);
+
+        $this->admin()
+            ->postJson('/api/admin/social/google-business/locations/select', [
+                'location_name' => 'accounts/999/locations/000',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Selected Google Business Profile location was not returned by the authorized Google account.');
+    }
+
     private function society(array $extra = []): Society
     {
         return Society::create(array_merge([
