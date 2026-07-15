@@ -329,12 +329,16 @@ class SocialOAuthService
         ];
     }
 
-    public function selectGoogleBusinessLocation(string $locationName): SocialAccount
+    public function selectGoogleBusinessLocation(string $locationName, ?string $locationTitle = null, bool $manualFallbackConfirmed = false): SocialAccount
     {
         $account = $this->googleBusinessAccountWithToken();
         $locationName = trim($locationName);
         if ($locationName === '') {
             throw new InvalidArgumentException('Choose a Google Business Profile location before saving.');
+        }
+
+        if ($manualFallbackConfirmed) {
+            return $this->saveManualGoogleBusinessLocation($account, $locationName, $locationTitle);
         }
 
         $locations = data_get($account->metadata, 'available_locations', []);
@@ -369,6 +373,47 @@ class SocialOAuthService
             'account_id' => (string) data_get($location, 'location_id', $locationName),
             'status' => 'connected',
             'last_error' => null,
+            'metadata' => $metadata,
+        ]);
+
+        return $account->fresh();
+    }
+
+    private function saveManualGoogleBusinessLocation(SocialAccount $account, string $locationName, ?string $locationTitle = null): SocialAccount
+    {
+        $locationName = trim($locationName);
+        $locationTitle = trim((string) $locationTitle);
+
+        if (! preg_match('/^(accounts\/[A-Za-z0-9_-]+\/locations\/[A-Za-z0-9_-]+|locations\/[A-Za-z0-9_-]+)$/', $locationName)) {
+            throw new InvalidArgumentException('Manual Google Business location must look like accounts/{accountId}/locations/{locationId} or locations/{locationId}.');
+        }
+
+        if ($locationTitle === '') {
+            $locationTitle = self::PLATFORMS['google_business_profile'];
+        }
+
+        $message = 'Google Business Profile location saved manually. Publishing remains disabled until Google verifies this location through the API.';
+        $metadata = array_merge($account->metadata ?: [], [
+            'oauth_mode' => 'connect',
+            'selected_location_name' => $locationName,
+            'location_name' => $locationName,
+            'location_title' => $locationTitle,
+            'location_account_name' => null,
+            'location_address_summary' => null,
+            'verified_location' => false,
+            'google_location_verified_from_api' => false,
+            'publish_enabled' => false,
+            'sm2_manual_only' => true,
+            'source' => 'manual_google_business_location',
+            'manual_location_warning' => true,
+        ]);
+
+        $account->update([
+            'account_name' => $locationTitle,
+            'account_handle' => null,
+            'account_id' => $this->googleLocationId($locationName),
+            'status' => 'connected_manual_location',
+            'last_error' => $message,
             'metadata' => $metadata,
         ]);
 

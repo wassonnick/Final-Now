@@ -141,11 +141,14 @@ export const fetchMetaPublishReviewUrl = () =>
 export const fetchGoogleBusinessLocations = () =>
   adminFetch("/admin/social/google-business/locations").then(json).then((body) => body.data as GoogleBusinessLocationsResponse);
 
-export const selectGoogleBusinessLocation = (locationName: string) =>
+export const selectGoogleBusinessLocation = (
+  locationName: string,
+  options: { location_title?: string; manual_fallback_confirmed?: boolean } = {},
+) =>
   adminFetch("/admin/social/google-business/locations/select", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ location_name: locationName }),
+    body: JSON.stringify({ location_name: locationName, ...options }),
   }).then(json);
 
 export const generateSocialPosts = (payload: Record<string, unknown>) =>

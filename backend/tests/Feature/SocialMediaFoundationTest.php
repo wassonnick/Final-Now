@@ -1465,6 +1465,65 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertSame(60, $futureClockResponse->json('data.retry_after_seconds'));
     }
 
+    public function test_sm2_google_business_manual_location_fallback_does_not_enable_publishing(): void
+    {
+        $account = SocialAccount::create([
+            'platform' => 'google_business_profile',
+            'account_name' => 'Google Business Profile',
+            'status' => 'needs_location_verification',
+            'scopes' => ['https://www.googleapis.com/auth/business.manage'],
+            'metadata' => ['publish_enabled' => false],
+        ]);
+        $account->access_token = 'secret-google-access-token';
+        $account->save();
+
+        $response = $this->admin()
+            ->postJson('/api/admin/social/google-business/locations/select', [
+                'location_name' => 'accounts/123/locations/456',
+                'location_title' => 'SocietyFlats',
+                'manual_fallback_confirmed' => true,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'connected_manual_location')
+            ->assertJsonPath('data.metadata.source', 'manual_google_business_location')
+            ->assertJsonPath('data.metadata.publish_enabled', false)
+            ->assertJsonPath('data.metadata.google_location_verified_from_api', false);
+
+        $json = json_encode($response->json());
+        $this->assertStringNotContainsString('secret-google-access-token', $json);
+
+        $account->refresh();
+        $this->assertSame('SocietyFlats', $account->account_name);
+        $this->assertSame('456', $account->account_id);
+        $this->assertFalse((bool) data_get($account->metadata, 'publish_enabled'));
+    }
+
+    public function test_sm2_google_business_manual_location_fallback_requires_confirmation(): void
+    {
+        SocialAccount::create([
+            'platform' => 'google_business_profile',
+            'account_name' => 'Google Business Profile',
+            'status' => 'needs_location_verification',
+            'scopes' => ['https://www.googleapis.com/auth/business.manage'],
+            'metadata' => ['publish_enabled' => false],
+        ])->forceFill([
+            'access_token' => encrypt('secret-google-access-token'),
+        ])->save();
+
+        Http::fake([
+            'https://mybusinessaccountmanagement.googleapis.com/v1/accounts*' => Http::response([
+                'error' => ['message' => 'Quota exceeded'],
+            ], 429),
+        ]);
+
+        $this->admin()
+            ->postJson('/api/admin/social/google-business/locations/select', [
+                'location_name' => 'accounts/123/locations/456',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Google Business Profile rate limit reached. Please wait a minute, then try “Find Google Business locations” again. OAuth is still connected.');
+    }
+
     public function test_sm2_social_accounts_mask_saved_google_quota_error(): void
     {
         SocialAccount::create([

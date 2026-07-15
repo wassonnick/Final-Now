@@ -71,6 +71,8 @@ export function AdminSocialAccountsPage() {
   const [metaDebug, setMetaDebug] = useState<MetaPageAccessDebug | null>(null);
   const [googleLocations, setGoogleLocations] = useState<GoogleBusinessLocation[]>([]);
   const [selectedGoogleLocation, setSelectedGoogleLocation] = useState("");
+  const [manualGoogleLocationName, setManualGoogleLocationName] = useState("");
+  const [manualGoogleLocationTitle, setManualGoogleLocationTitle] = useState("SocietyFlats");
   const [googleLocationMessage, setGoogleLocationMessage] = useState("");
   const [googleRetryAfter, setGoogleRetryAfter] = useState(0);
 
@@ -212,6 +214,30 @@ export function AdminSocialAccountsPage() {
       await load();
     } catch (error) {
       const text = error instanceof Error ? error.message : "Unable to select Google Business Profile location.";
+      setGoogleLocationMessage(text);
+      setMessage(text);
+    }
+  }
+
+  async function saveManualGoogleBusinessLocation() {
+    if (!manualGoogleLocationName.trim()) {
+      setMessage("Enter the Google Business location resource name first.");
+      return;
+    }
+
+    try {
+      setGoogleLocationMessage("Saving Google Business Profile location manually...");
+      await selectGoogleBusinessLocation(manualGoogleLocationName.trim(), {
+        location_title: manualGoogleLocationTitle.trim() || "SocietyFlats",
+        manual_fallback_confirmed: true,
+      });
+      setGoogleLocationMessage("Google Business location saved manually. Publishing stays disabled until Google verifies it through the API.");
+      setMessage("Google Business location saved manually for admin tracking. Publishing remains disabled until API verification succeeds.");
+      setManualGoogleLocationName("");
+      setManualGoogleLocationTitle("SocietyFlats");
+      await load();
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Unable to save manual Google Business location.";
       setGoogleLocationMessage(text);
       setMessage(text);
     }
@@ -490,6 +516,34 @@ export function AdminSocialAccountsPage() {
                       {googleLocationMessage}
                     </p>
                   ) : null}
+                  {!googleLocations.length && (
+                    <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3">
+                      <p className="text-xs font-black uppercase tracking-wide text-amber-900">Advanced fallback</p>
+                      <p className="mt-1 text-xs font-bold leading-5 text-amber-900">
+                        If Google keeps rate-limiting location lookup, save the Business Profile location manually for admin tracking. Publishing will remain disabled until Google returns and verifies the location through the API.
+                      </p>
+                      <input
+                        className="mt-3 w-full rounded-xl border bg-white px-3 py-2 text-sm font-bold text-slate-700"
+                        placeholder="accounts/123456789/locations/987654321"
+                        value={manualGoogleLocationName}
+                        onChange={(event) => setManualGoogleLocationName(event.target.value)}
+                      />
+                      <input
+                        className="mt-2 w-full rounded-xl border bg-white px-3 py-2 text-sm font-bold text-slate-700"
+                        placeholder="Display name, e.g. SocietyFlats"
+                        value={manualGoogleLocationTitle}
+                        onChange={(event) => setManualGoogleLocationTitle(event.target.value)}
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-3 rounded-full bg-white text-amber-800"
+                        onClick={() => void saveManualGoogleBusinessLocation()}
+                      >
+                        Save manual location (publish disabled)
+                      </Button>
+                    </div>
+                  )}
                   {account.status === "needs_location_verification" || account.status === "needs_location_selection" ? (
                     <ul className="mt-3 list-disc space-y-1 pl-5 text-xs font-bold leading-5 text-amber-900">
                       <li>Use the Google account that owns or manages the SocietyFlats Business Profile.</li>

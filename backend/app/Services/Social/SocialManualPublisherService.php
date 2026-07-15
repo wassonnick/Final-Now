@@ -347,6 +347,9 @@ class SocialManualPublisherService
         if (! $location) {
             throw new InvalidArgumentException('Google Business Profile location is missing.');
         }
+        if (! data_get($account->metadata, 'publish_enabled') || ! data_get($account->metadata, 'google_location_verified_from_api')) {
+            throw new InvalidArgumentException('Google Business Profile publish blocked: location has not been verified through Google API.');
+        }
 
         $response = Http::withToken($account->accessToken())->post("https://mybusiness.googleapis.com/v4/{$location}/localPosts", [
             'languageCode' => 'en',

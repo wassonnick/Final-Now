@@ -401,10 +401,16 @@ class AdminSocialController extends Controller
     {
         $data = $request->validate([
             'location_name' => ['required', 'string', 'max:255'],
+            'location_title' => ['nullable', 'string', 'max:255'],
+            'manual_fallback_confirmed' => ['sometimes', 'boolean'],
         ]);
 
         try {
-            $account = $this->oauth->selectGoogleBusinessLocation($data['location_name']);
+            $account = $this->oauth->selectGoogleBusinessLocation(
+                $data['location_name'],
+                $data['location_title'] ?? null,
+                (bool) ($data['manual_fallback_confirmed'] ?? false),
+            );
 
             return response()->json([
                 'status' => 'ok',
