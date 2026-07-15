@@ -53,9 +53,10 @@ class SeoPageRegistryService
                     ],
                 ]); $count++;
 
-                // Every published society also has a public RWA community page (announcements,
-                // resident threads) — register it so audits, keywords and the sitemap checks
-                // cover the "<society> RWA" long-tail surface.
+                // Every published society has a public RWA community page, but these pages are
+                // often unclaimed/thin while the RWA module is still being populated. Keep them
+                // visible to users from society pages, but do not push them into SEO index/sitemap
+                // workflows until the community content policy is mature.
                 if ($isPublic) {
                     $this->upsert([
                         'page_key' => 'rwa:'.$society->id,
@@ -64,7 +65,7 @@ class SeoPageRegistryService
                         'title' => $society->name.' RWA — Announcements & Resident Updates | SocietyFlats',
                         'meta_description' => 'Official RWA announcements, resident questions and community updates for '.$society->name.', Gurgaon — on the verified SocietyFlats profile.',
                         'h1' => $society->name.' RWA',
-                        'is_indexable' => true, 'sitemap_included' => true, 'is_public' => true,
+                        'is_indexable' => false, 'sitemap_included' => false, 'is_public' => true,
                         // The rendered RWA page carries society context, the announcements feed,
                         // resident Q&A threads and related links — a genuinely content-rich page.
                         'content_word_count' => 240, 'internal_link_count' => 4,

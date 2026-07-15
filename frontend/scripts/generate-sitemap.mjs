@@ -71,6 +71,21 @@ function slugify(value) {
     .replace(/(^-|-$)+/g, "");
 }
 
+function canonicalLocalitySlug(value) {
+  const slug = slugify(value);
+  if (!slug) return "";
+
+  // Imported sector/locality data sometimes arrives as a bare number ("93", "27").
+  // Publishing /gurgaon/93 creates a thin duplicate of /gurgaon/sector-93 and shows up
+  // in Search Console as a confusing discovered-but-not-indexed URL. Always canonicalize
+  // numeric localities to the sector URL shape before they reach the sitemap.
+  if (/^\d+[a-z]?$/.test(slug)) {
+    return `sector-${slug}`;
+  }
+
+  return slug;
+}
+
 function toAbsoluteUrl(route) {
   if (/^https?:\/\//i.test(route)) return route.replace(/\/$/, "");
   const clean = route === "/" ? "" : route.replace(/\/$/, "");
@@ -203,7 +218,7 @@ function addDerivedLandingRoutes(routes, societies) {
 
   for (const society of societies) {
     const locality = society?.sector || society?.locality;
-    const localitySlug = slugify(locality);
+    const localitySlug = canonicalLocalitySlug(locality);
 
     if (localitySlug) localitySlugs.add(`/gurgaon/${localitySlug}`);
   }
@@ -286,12 +301,10 @@ async function main() {
       lastmod: society?.updated_at?.slice?.(0, 10) || society?.published_at?.slice?.(0, 10),
     });
 
-    routes.push({
-      loc: `/rwa/${slug}`,
-      priority: "0.58",
-      changefreq: "weekly",
-      lastmod: society?.updated_at?.slice?.(0, 10) || society?.published_at?.slice?.(0, 10),
-    });
+    // RWA pages are reachable from society pages, but the module is still review/moderation
+    // led and many pages are unclaimed or thin. Keep them out of the XML sitemap until they
+    // have a mature indexability policy; otherwise Search Console reports sitemap/noindex
+    // conflicts and wastes crawl budget on community placeholders.
   }
 
   for (const property of properties) {

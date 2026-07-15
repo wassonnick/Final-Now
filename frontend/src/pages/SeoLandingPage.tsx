@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowRight,
   BadgeIndianRupee,
@@ -72,6 +72,20 @@ const builderLabels: Record<string, string> = {
   adani: "Adani Realty",
   tulip: "Tulip",
   "alpha-corp": "Alpha Corp",
+};
+
+const builderSlugAliases: Record<string, string> = {
+  "dlf-group": "dlf",
+  "dlf-limited": "dlf",
+  "godrej-properties-limited": "godrej",
+  "tulip-infratech": "tulip",
+  "tulip-infratech-pvt-ltd": "tulip",
+  "tulip-infratech-private-limited": "tulip",
+  "m3m-india": "m3m",
+  "m3m-india-private-limited": "m3m",
+  "emaar-india": "emaar",
+  "ats-infrastructure": "ats",
+  "ats-infrastructure-limited": "ats",
 };
 
 const popularLocalities = [
@@ -496,6 +510,7 @@ function PropertyCard({ property }: { property: any }) {
 
 export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
   const { locality, builderSlug } = useParams();
+  const navigate = useNavigate();
   const copy = useMemo(() => landingCopy(variant, locality, builderSlug), [variant, locality, builderSlug]);
 
   const [societies, setSocieties] = useState<any[]>([]);
@@ -531,6 +546,19 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (variant === "locality" && locality && /^\d+[a-z]?$/i.test(locality)) {
+      navigate(`/gurgaon/sector-${locality.toLowerCase()}`, { replace: true });
+    }
+
+    if (variant === "builder" && builderSlug) {
+      const canonicalBuilderSlug = builderSlugAliases[builderSlug.toLowerCase()];
+      if (canonicalBuilderSlug) {
+        navigate(`/builder/${canonicalBuilderSlug}`, { replace: true });
+      }
+    }
+  }, [builderSlug, locality, navigate, variant]);
 
   const scopedSocieties = useMemo(() => {
     let rows = societies;

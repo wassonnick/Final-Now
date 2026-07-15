@@ -32,6 +32,10 @@ const blockedSitemapPatterns = [
   /sample/i,
   /private-limited/i,
   /mnb-build/i,
+  /<loc>https:\/\/www\.societyflats\.com\/rwa\//i,
+  /<loc>https:\/\/www\.societyflats\.com\/gurgaon\/\d+[a-z]?\//i,
+  /<loc>https:\/\/www\.societyflats\.com\/gurgaon\/\d+[a-z]?<\/loc>/i,
+  /<loc>https:\/\/www\.societyflats\.com\/gurgaon\/(?:ready-to-move|ready-to-move-properties|ready-to-move-apartments|rent|premium-flats|luxury-apartments|3bhk-apartments|4bhk-apartments)\/?<\/loc>/i,
 ];
 
 function fileForRoute(route) {
