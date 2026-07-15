@@ -65,6 +65,7 @@ export function AdminSocialAccountsPage() {
   const [metaDebug, setMetaDebug] = useState<MetaPageAccessDebug | null>(null);
   const [googleLocations, setGoogleLocations] = useState<GoogleBusinessLocation[]>([]);
   const [selectedGoogleLocation, setSelectedGoogleLocation] = useState("");
+  const [googleLocationMessage, setGoogleLocationMessage] = useState("");
 
   const load = async () => setAccounts(await fetchSocialAccounts());
   useEffect(() => { void load().catch((error) => setMessage(error instanceof Error ? error.message : "Unable to load social accounts.")); }, []);
@@ -158,15 +159,21 @@ export function AdminSocialAccountsPage() {
 
   async function checkGoogleBusinessLocations() {
     try {
+      setGoogleLocationMessage("Checking Google Business Profile locations...");
       const result = await fetchGoogleBusinessLocations();
       setGoogleLocations(result.locations || []);
       setSelectedGoogleLocation(result.locations?.[0]?.name || "");
+      setGoogleLocationMessage(result.locations_count > 0
+        ? `Found ${result.locations_count} Google Business location${result.locations_count === 1 ? "" : "s"}.`
+        : result.last_error || "Google connected, but no Business Profile locations were returned.");
       setMessage(result.locations_count > 0
         ? `Google Business locations found: ${result.locations_count}. Choose the SocietyFlats location and connect it.`
         : result.last_error || "Google connected, but no Business Profile locations were returned.");
       await load();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to fetch Google Business locations.");
+      const text = error instanceof Error ? error.message : "Unable to fetch Google Business locations.";
+      setGoogleLocationMessage(text);
+      setMessage(text);
     }
   }
 
@@ -177,13 +184,17 @@ export function AdminSocialAccountsPage() {
     }
 
     try {
+      setGoogleLocationMessage("Saving Google Business Profile location...");
       await selectGoogleBusinessLocation(selectedGoogleLocation);
+      setGoogleLocationMessage("Google Business Profile location connected.");
       setMessage("Google Business Profile location connected. Google publishing is now enabled for approved manual posts.");
       setSelectedGoogleLocation("");
       setGoogleLocations([]);
       await load();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to select Google Business Profile location.");
+      const text = error instanceof Error ? error.message : "Unable to select Google Business Profile location.";
+      setGoogleLocationMessage(text);
+      setMessage(text);
     }
   }
 
@@ -449,6 +460,11 @@ export function AdminSocialAccountsPage() {
                       Find Google Business locations
                     </Button>
                   )}
+                  {googleLocationMessage ? (
+                    <p className="mt-3 rounded-xl bg-blue-50 p-3 text-xs font-bold leading-5 text-blue-900">
+                      {googleLocationMessage}
+                    </p>
+                  ) : null}
                   {account.status === "needs_location_verification" || account.status === "needs_location_selection" ? (
                     <ul className="mt-3 list-disc space-y-1 pl-5 text-xs font-bold leading-5 text-amber-900">
                       <li>Use the Google account that owns or manages the SocietyFlats Business Profile.</li>

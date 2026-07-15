@@ -280,17 +280,12 @@ class SocialOAuthService
         $locations = [];
         $lastError = null;
         foreach ($googleAccounts as $googleAccount) {
-            $locationResponse = Http::withToken($token)
-                ->get("https://mybusinessbusinessinformation.googleapis.com/v1/{$googleAccount['name']}/locations", [
-                    'readMask' => 'name,title,storefrontAddress,metadata',
-                ]);
-
-            if (! $locationResponse->successful()) {
-                $lastError = $this->googleErrorMessage($locationResponse, 'Google Business Profile locations could not be fetched.');
-                continue;
+            [$accountLocations, $locationError] = $this->googleBusinessLocationsForAccount($googleAccount, $token);
+            if ($locationError) {
+                $lastError = $locationError;
             }
 
-            foreach ((array) $locationResponse->json('locations', []) as $location) {
+            foreach ($accountLocations as $location) {
                 if (! is_array($location) || ! data_get($location, 'name')) {
                     continue;
                 }
@@ -923,18 +918,48 @@ class SocialOAuthService
             ? $rawName
             : "{$googleAccount['name']}/{$rawName}";
         $metadata = (array) data_get($location, 'metadata', []);
-        $address = (array) data_get($location, 'storefrontAddress', []);
+        $address = (array) (data_get($location, 'storefrontAddress') ?: data_get($location, 'address', []));
 
         return array_filter([
             'name' => $fullName,
             'location_id' => $this->googleLocationId($fullName),
-            'title' => (string) (data_get($location, 'title') ?: 'Google Business Profile'),
+            'title' => (string) (data_get($location, 'title') ?: data_get($location, 'locationName') ?: 'Google Business Profile'),
             'account_name' => (string) data_get($googleAccount, 'name'),
             'account_display_name' => (string) data_get($googleAccount, 'account_name'),
             'address_summary' => $this->safeGoogleAddressSummary($address),
             'verified' => (bool) data_get($metadata, 'hasVoiceOfMerchant', true),
             'maps_uri' => data_get($metadata, 'mapsUri'),
         ], fn ($value) => $value !== null && $value !== '');
+    }
+
+    private function googleBusinessLocationsForAccount(array $googleAccount, string $token): array
+    {
+        $businessInformationResponse = Http::withToken($token)
+            ->get("https://mybusinessbusinessinformation.googleapis.com/v1/{$googleAccount['name']}/locations", [
+                'readMask' => 'name,title,storefrontAddress,metadata',
+            ]);
+
+        if ($businessInformationResponse->successful()) {
+            return [(array) $businessInformationResponse->json('locations', []), null];
+        }
+
+        $newApiError = $this->googleErrorMessage($businessInformationResponse, 'Google Business Profile locations could not be fetched.');
+
+        // Some older or restricted GBP setups still expose locations through the v4 My Business
+        // endpoint even when Business Information returns a permission/API-not-enabled error.
+        // Keep this as a discovery fallback only; the selected `accounts/.../locations/...`
+        // name still feeds the existing publish gate.
+        $legacyResponse = Http::withToken($token)
+            ->get("https://mybusiness.googleapis.com/v4/{$googleAccount['name']}/locations");
+
+        if ($legacyResponse->successful()) {
+            return [(array) $legacyResponse->json('locations', []), null];
+        }
+
+        return [
+            [],
+            $this->googleErrorMessage($legacyResponse, $newApiError),
+        ];
     }
 
     private function safeGoogleAddressSummary(array $address): ?string
