@@ -384,14 +384,15 @@ class SocialOAuthService
         $locationName = trim($locationName);
         $locationTitle = trim((string) $locationTitle);
 
-        if (! preg_match('/^(accounts\/[A-Za-z0-9_-]+\/locations\/[A-Za-z0-9_-]+|locations\/[A-Za-z0-9_-]+)$/', $locationName)) {
-            throw new InvalidArgumentException('Manual Google Business location must look like accounts/{accountId}/locations/{locationId} or locations/{locationId}.');
+        if ($locationName === '' || strlen($locationName) > 2048) {
+            throw new InvalidArgumentException('Manual Google Business location must be a Google Business/Profile/Maps URL, CID, or location resource name.');
         }
 
         if ($locationTitle === '') {
             $locationTitle = self::PLATFORMS['google_business_profile'];
         }
 
+        $manualIdentifier = $this->manualGoogleBusinessIdentifier($locationName);
         $message = 'Google Business Profile location saved manually. Publishing remains disabled until Google verifies this location through the API.';
         $metadata = array_merge($account->metadata ?: [], [
             'oauth_mode' => 'connect',
@@ -405,19 +406,41 @@ class SocialOAuthService
             'publish_enabled' => false,
             'sm2_manual_only' => true,
             'source' => 'manual_google_business_location',
+            'manual_location_identifier' => $manualIdentifier,
             'manual_location_warning' => true,
         ]);
 
         $account->update([
             'account_name' => $locationTitle,
             'account_handle' => null,
-            'account_id' => $this->googleLocationId($locationName),
+            'account_id' => $manualIdentifier,
             'status' => 'connected_manual_location',
             'last_error' => $message,
             'metadata' => $metadata,
         ]);
 
         return $account->fresh();
+    }
+
+    private function manualGoogleBusinessIdentifier(string $input): string
+    {
+        if (preg_match('/locations\/([^\/\?&#]+)/', $input, $matches)) {
+            return (string) $matches[1];
+        }
+
+        if (preg_match('/(?:cid=|ludocid=)([0-9]+)/i', $input, $matches)) {
+            return 'cid:'.$matches[1];
+        }
+
+        if (preg_match('/^cid:?[0-9]+$/i', $input)) {
+            return Str::startsWith(Str::lower($input), 'cid:') ? $input : 'cid:'.preg_replace('/\D+/', '', $input);
+        }
+
+        if (filter_var($input, FILTER_VALIDATE_URL)) {
+            return 'manual-url:'.substr(sha1($input), 0, 16);
+        }
+
+        return Str::limit(preg_replace('/\s+/', '-', Str::lower($input)) ?: 'manual-google-business-location', 120, '');
     }
 
     private function authorizationUrl(string $platform, string $state, string $mode = 'connect'): string

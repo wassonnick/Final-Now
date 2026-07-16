@@ -1498,6 +1498,36 @@ class SocialMediaFoundationTest extends TestCase
         $this->assertFalse((bool) data_get($account->metadata, 'publish_enabled'));
     }
 
+    public function test_sm2_google_business_manual_location_fallback_accepts_google_profile_url(): void
+    {
+        $account = SocialAccount::create([
+            'platform' => 'google_business_profile',
+            'account_name' => 'Google Business Profile',
+            'status' => 'needs_location_verification',
+            'scopes' => ['https://www.googleapis.com/auth/business.manage'],
+            'metadata' => ['publish_enabled' => false],
+        ]);
+        $account->access_token = 'secret-google-access-token';
+        $account->save();
+
+        $profileUrl = 'https://www.google.com/search?q=SocietyFlats.com&ludocid=1234567890123456789';
+
+        $this->admin()
+            ->postJson('/api/admin/social/google-business/locations/select', [
+                'location_name' => $profileUrl,
+                'location_title' => 'SocietyFlats.com',
+                'manual_fallback_confirmed' => true,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'connected_manual_location')
+            ->assertJsonPath('data.metadata.location_name', $profileUrl)
+            ->assertJsonPath('data.metadata.manual_location_identifier', 'cid:1234567890123456789')
+            ->assertJsonPath('data.metadata.publish_enabled', false);
+
+        $account->refresh();
+        $this->assertSame('cid:1234567890123456789', $account->account_id);
+    }
+
     public function test_sm2_google_business_manual_location_fallback_requires_confirmation(): void
     {
         SocialAccount::create([

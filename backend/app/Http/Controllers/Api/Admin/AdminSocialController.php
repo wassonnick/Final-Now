@@ -400,7 +400,7 @@ class AdminSocialController extends Controller
     public function selectGoogleBusinessLocation(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'location_name' => ['required', 'string', 'max:255'],
+            'location_name' => ['required', 'string', 'max:2048'],
             'location_title' => ['nullable', 'string', 'max:255'],
             'manual_fallback_confirmed' => ['sometimes', 'boolean'],
         ]);

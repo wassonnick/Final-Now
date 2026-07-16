@@ -479,7 +479,7 @@ export function AdminSocialAccountsPage() {
                     </div>
                   ) : (
                     <p className="mt-1 text-xs font-bold leading-5 text-slate-600">
-                      Google OAuth is connected, but publishing needs the exact Business Profile location. We only enable publishing after Google returns the location for this authorized account.
+                      Google OAuth is connected, but publishing needs Google to return the Business Profile location through its API. If the API keeps rate-limiting, save a manual profile reference below so the account card is no longer a dead end.
                     </p>
                   )}
                   {googleLocations.length ? (
@@ -520,11 +520,11 @@ export function AdminSocialAccountsPage() {
                     <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3">
                       <p className="text-xs font-black uppercase tracking-wide text-amber-900">Advanced fallback</p>
                       <p className="mt-1 text-xs font-bold leading-5 text-amber-900">
-                        If Google keeps rate-limiting location lookup, save the Business Profile location manually for admin tracking. Publishing will remain disabled until Google returns and verifies the location through the API.
+                        If Google keeps rate-limiting location lookup, paste a Google Business/Profile/Maps link, CID, or location resource name. This saves the profile for admin tracking only; publishing will remain disabled until Google returns and verifies the location through the API.
                       </p>
                       <input
                         className="mt-3 w-full rounded-xl border bg-white px-3 py-2 text-sm font-bold text-slate-700"
-                        placeholder="accounts/123456789/locations/987654321"
+                        placeholder="Paste Google profile URL, Maps URL, CID, or accounts/.../locations/..."
                         value={manualGoogleLocationName}
                         onChange={(event) => setManualGoogleLocationName(event.target.value)}
                       />
