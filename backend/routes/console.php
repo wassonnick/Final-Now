@@ -141,7 +141,9 @@ Artisan::command('ops:queue-market-refresh {--limit=15}', function () {
     $this->info("Queued market-refresh suggestions for {$societies->count()} societies (results land as pending suggestions, never auto-applied).");
 })->purpose('Queue grounded market-data refresh suggestions for the stalest published societies');
 
-Artisan::command('market:auto-refresh {--limit=12} {--max-age-days=30} {--force}', function () {
+// Default max-age 14 days: at 12 refreshes/day the whole ~80-society catalogue cycles well
+// inside the window, so no public price range is ever older than two weeks.
+Artisan::command('market:auto-refresh {--limit=12} {--max-age-days=14} {--force}', function () {
     // --force (or --max-age-days=0) re-refreshes every published society regardless of how
     // recently its market data was refreshed — used after a sourcing/model change to roll
     // the improvement across the whole catalogue rather than waiting for the age gate.

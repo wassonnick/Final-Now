@@ -17,6 +17,11 @@ class SocietyDraftCompletionTest extends TestCase
     {
         parent::setUp();
         config(['services.admin_api_token' => 'admin-test-token', 'services.claude.api_key' => '']);
+        // Completion now grounds market prices before publish; stub it as a quiet no-op for the
+        // tests that aren't about pricing (the market-specific tests re-mock with expectations).
+        $this->mock(\App\Services\Ops\MarketSuggestionService::class, function ($mock) {
+            $mock->shouldReceive('refreshAndApply')->byDefault()->andReturn(null);
+        });
     }
 
     public function test_complete_draft_gets_cover_seo_and_publishes(): void
@@ -95,6 +100,56 @@ class SocietyDraftCompletionTest extends TestCase
         );
 
         $this->assertTrue((bool) $society->fresh()->is_published);
+    }
+
+    public function test_completion_grounds_market_prices_before_publish(): void
+    {
+        // Import-time price estimates (Excel/AI extraction) are unverified. Completion must
+        // replace them with the grounded portal-consensus fetch before the page goes public.
+        $society = $this->draft([
+            'rent_range' => '₹40,000 - ₹55,000 per month', // stale import-time estimate
+            'image_candidates' => [['source' => 'google_places', 'photo_reference' => 'ref-1', 'credit' => 'Google Places']],
+        ]);
+        $this->mockSeoAi();
+
+        $this->mock(\App\Services\Ops\MarketSuggestionService::class, function ($mock) use ($society) {
+            $mock->shouldReceive('refreshAndApply')->once()->andReturnUsing(function ($arg) use ($society) {
+                $arg->update([
+                    'rent_range' => '₹62,000 - ₹85,000 per month',
+                    'field_sources' => ['market' => ['refreshed_at' => now()->toIso8601String(), 'sources' => ['99acres', 'magicbricks'], 'auto_applied' => true]],
+                ]);
+
+                return ['rent_range' => '₹62,000 - ₹85,000 per month'];
+            });
+        });
+
+        $result = app(SocietyDraftCompletionService::class)->complete($society, allowReEnrich: false);
+
+        $this->assertContains('market_grounded', $result['actions']);
+        $fresh = $society->fresh();
+        $this->assertSame('₹62,000 - ₹85,000 per month', $fresh->rent_range, 'The grounded portal figure must replace the import-time estimate.');
+        $this->assertNotNull(data_get($fresh->field_sources, 'market.refreshed_at'));
+        $this->assertTrue($result['published']);
+    }
+
+    public function test_completion_skips_market_fetch_when_already_grounded(): void
+    {
+        // Idempotency = no double spend: a society that already carries grounded market
+        // provenance must not trigger another portal fetch on re-completion.
+        $society = $this->draft([
+            'field_sources' => ['market' => ['refreshed_at' => now()->subDays(2)->toIso8601String(), 'auto_applied' => true]],
+            'image_candidates' => [['source' => 'google_places', 'photo_reference' => 'ref-2', 'credit' => 'Google Places']],
+        ]);
+        $this->mockSeoAi();
+
+        $this->mock(\App\Services\Ops\MarketSuggestionService::class, function ($mock) {
+            $mock->shouldNotReceive('refreshAndApply');
+        });
+
+        $result = app(SocietyDraftCompletionService::class)->complete($society, allowReEnrich: false);
+
+        $this->assertNotContains('market_grounded', $result['actions']);
+        $this->assertTrue($result['published']);
     }
 
     public function test_concurrent_completion_of_the_same_society_is_skipped_not_double_billed(): void

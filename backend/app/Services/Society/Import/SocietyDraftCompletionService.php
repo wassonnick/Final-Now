@@ -24,6 +24,7 @@ class SocietyDraftCompletionService
         private readonly SocietySeoScoringService $seoScoring,
         private readonly AiBudgetGuard $budget,
         private readonly \App\Services\GooglePlacesSocietyImageService $places,
+        private readonly \App\Services\Ops\MarketSuggestionService $market,
     ) {}
 
     /**
@@ -76,6 +77,27 @@ class SocietyDraftCompletionService
             } catch (\Throwable $e) {
                 report($e);
                 $actions[] = 're_enrich_failed';
+            }
+        }
+
+        // 1.5 Market: replace import-time price estimates (Excel columns, AI extraction —
+        //     explicitly market_confirmed=false) with the grounded portal-consensus fetch
+        //     BEFORE anything goes public. Skipped when the society already carries grounded
+        //     market provenance (field_sources.market.refreshed_at) or admin-locked figures;
+        //     the daily market:auto-refresh keeps it current afterwards.
+        if ($aiUsable && ! data_get($society->field_sources, 'market.refreshed_at')) {
+            try {
+                $this->budget->record();
+                $this->market->refreshAndApply($society);
+                $society->refresh();
+                $actions[] = 'market_grounded';
+            } catch (\App\Exceptions\AiProviderLimitException $e) {
+                report($e);
+                $this->budget->tripProviderLimit();
+                $actions[] = 'market_provider_limited';
+            } catch (\Throwable $e) {
+                report($e);
+                $actions[] = 'market_fetch_failed';
             }
         }
 
