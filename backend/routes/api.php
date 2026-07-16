@@ -61,6 +61,34 @@ Route::get('/societies/{slug}', [SocietyController::class, 'show']);
 Route::get('/properties', [PropertyController::class, 'index']);
 Route::get('/properties/{idOrSlug}', [PropertyController::class, 'show']);
 Route::get('/seo/pages/resolve', [PublicSeoPageController::class, 'resolve'])->middleware('throttle:60,1');
+
+// Live sitemap built from the SEO page registry. The static-host sitemap.xml only updates on
+// frontend deploys, so societies published between deploys were invisible to crawlers until
+// the next build. robots.txt references this URL too (cross-host sitemaps are valid when
+// declared in robots.txt), making new pages discoverable the day they publish.
+Route::get('/seo/sitemap.xml', function () {
+    $xml = \Illuminate\Support\Facades\Cache::remember('seo:live-sitemap', now()->addHour(), function () {
+        $base = rtrim((string) config('services.lead_notifications.frontend_url', 'https://www.societyflats.com'), '/');
+        $pages = \App\Models\SeoPage::where('is_public', true)
+            ->where('is_indexable', true)
+            ->where('sitemap_included', true)
+            ->orderBy('url')
+            ->get(['canonical_url', 'url', 'freshness_at']);
+
+        $lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'];
+        foreach ($pages as $page) {
+            $loc = $base.($page->canonical_url ?: $page->url);
+            $lines[] = '  <url><loc>'.htmlspecialchars($loc, ENT_XML1).'</loc>'
+                .($page->freshness_at ? '<lastmod>'.$page->freshness_at->toDateString().'</lastmod>' : '')
+                .'</url>';
+        }
+        $lines[] = '</urlset>';
+
+        return implode("\n", $lines);
+    });
+
+    return response($xml, 200)->header('Content-Type', 'application/xml');
+})->middleware('throttle:30,1');
 Route::post('/leads', [LeadController::class, 'store'])->middleware('throttle:10,1');
 Route::post('/nri-cases', [NriCaseController::class, 'store'])->middleware('throttle:5,1');
 Route::post('/ai/advisor', [AIController::class, 'advisor']);

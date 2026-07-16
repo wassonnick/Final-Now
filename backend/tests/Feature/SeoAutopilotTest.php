@@ -320,6 +320,23 @@ class SeoAutopilotTest extends TestCase
         $this->assertTrue(collect($suggested['faq'])->contains(fn($f)=>str_contains($f['question'],'stand out')&&str_contains($f['answer'],'Fact Society A (8.6/10)')),'FAQ must surface top societies with scores.');
     }
 
+    public function test_live_sitemap_serves_registry_pages_and_excludes_private_ones(): void
+    {
+        // The static sitemap only updates on frontend deploys; this endpoint is the always-
+        // current one referenced from robots.txt so new societies are discoverable same-day.
+        $society = $this->society('Sitemap Live Society', 'sitemap-live-society');
+        app(\App\Services\Seo\SeoPageRegistryService::class)->sync();
+        SeoPage::create(['page_key' => 'private:x', 'page_type' => 'guide', 'url' => '/private-x', 'canonical_url' => '/private-x', 'is_public' => false, 'is_indexable' => false, 'sitemap_included' => false]);
+
+        $response = $this->getJson('/api/seo/sitemap.xml')->assertOk();
+        $xml = $response->getContent();
+
+        $this->assertStringContainsString('<urlset', $xml);
+        $this->assertStringContainsString('/society/sitemap-live-society</loc>', $xml);
+        $this->assertStringNotContainsString('/private-x', $xml);
+        $this->assertStringContainsString('application/xml', (string) $response->headers->get('Content-Type'));
+    }
+
     public function test_registry_sync_survives_legacy_rows_holding_urls_under_stale_page_keys(): void
     {
         // Production regression: seo_pages.url is UNIQUE, and old registry versions left rows

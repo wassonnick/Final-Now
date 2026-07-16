@@ -29,33 +29,56 @@ function extractRows(payload) {
   return [];
 }
 
-async function fetchLiveLocalities() {
-  try {
-    const response = await fetch(`${API_BASE}/societies?per_page=200`, {
-      headers: { Accept: "application/json" },
-    });
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    if (!response.ok) return new Map();
-
-    const rows = extractRows(await response.json()).filter((society) =>
-      ["Verified", "Premium"].includes(String(society?.status || "")),
-    );
-
-    const counts = new Map();
-
-    for (const society of rows) {
-      const locality = society?.sector || society?.locality;
-      const slug = slugify(locality);
-
-      if (!slug) continue;
-
-      counts.set(slug, (counts.get(slug) || 0) + 1);
+// The backend redeploys alongside the frontend, so it can be mid-restart when this build step
+// runs. Retry rather than silently shipping a build with no society shells.
+async function fetchJsonWithRetry(url, attempts = 4, delayMs = 15000) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      if (response.ok) return await response.json();
+    } catch {
+      // fall through to retry
     }
-
-    return counts;
-  } catch {
-    return new Map();
+    if (attempt < attempts) {
+      console.warn(`Prerender: ${url} unreachable (attempt ${attempt}/${attempts}) — retrying in ${delayMs / 1000}s.`);
+      await sleep(delayMs);
+    }
   }
+  return null;
+}
+
+async function fetchLiveSocieties() {
+  const payload = await fetchJsonWithRetry(`${API_BASE}/societies?per_page=200`);
+  if (!payload) return [];
+
+  return extractRows(payload).filter(
+    (society) =>
+      ["Verified", "Premium"].includes(String(society?.status || "")) && society?.slug,
+  );
+}
+
+async function fetchLiveProperties() {
+  const payload = await fetchJsonWithRetry(`${API_BASE}/properties?per_page=200`);
+  if (!payload) return [];
+
+  return extractRows(payload).filter((property) => property?.slug);
+}
+
+function localityCountsFrom(societies) {
+  const counts = new Map();
+
+  for (const society of societies) {
+    const locality = society?.sector || society?.locality;
+    const slug = slugify(locality);
+
+    if (!slug) continue;
+
+    counts.set(slug, (counts.get(slug) || 0) + 1);
+  }
+
+  return counts;
 }
 
 const routeMeta = [
@@ -488,6 +511,220 @@ function faqFor(meta) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Society / RWA / property shells — the money pages. Without these, every
+// /society/<slug> URL served the homepage's HTML including a canonical pointing
+// at the homepage, telling crawlers the whole catalogue was a duplicate of "/".
+// ---------------------------------------------------------------------------
+
+function textOf(value) {
+  return String(value ?? "").trim();
+}
+
+function listOf(value) {
+  if (Array.isArray(value)) return value.map(textOf).filter(Boolean);
+  const text = textOf(value);
+  if (!text) return [];
+  return text.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+}
+
+function truncateText(text, max = 158) {
+  const clean = textOf(text).replace(/\s+/g, " ");
+  if (clean.length <= max) return clean;
+  return `${clean.slice(0, max - 1).replace(/\s+\S*$/, "")}…`;
+}
+
+function societyFaqs(society) {
+  const raw = society?.faq;
+  const items = Array.isArray(raw) ? raw : [];
+
+  return items
+    .map((item) => ({
+      question: textOf(item?.question ?? item?.q),
+      answer: textOf(item?.answer ?? item?.a),
+    }))
+    .filter((item) => item.question && item.answer)
+    .slice(0, 6);
+}
+
+function societyImage(society) {
+  const candidate = textOf(society?.cover_image) || textOf(society?.image_url);
+  return /^https:\/\//.test(candidate) ? candidate : null;
+}
+
+function societyScoreText(society) {
+  const raw = Number(society?.score ?? 0);
+  if (!Number.isFinite(raw) || raw <= 0) return null;
+  return (raw > 10 ? raw / 10 : raw).toFixed(1);
+}
+
+function societyDescriptionMeta(society) {
+  const explicit = textOf(society?.meta_description);
+  if (explicit) return truncateText(explicit);
+
+  const bits = [];
+  if (textOf(society?.rent_range)) bits.push(`Rent ${textOf(society.rent_range)}`);
+  if (textOf(society?.buy_range)) bits.push(`resale ${textOf(society.buy_range)}`);
+  const priceLine = bits.length ? ` ${bits.join(", ")}.` : "";
+
+  return truncateText(
+    `${society.name} in ${textOf(society?.sector) || "Gurgaon"}: verified society profile with score, amenities and market context.${priceLine} Reviewed by SocietyFlats.`,
+  );
+}
+
+function societySchema(society, canonicalPath) {
+  const schema = {
+    "@type": "ApartmentComplex",
+    name: society.name,
+    url: `${SITE_URL}${canonicalPath}`,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: textOf(society?.address) || undefined,
+      addressLocality: textOf(society?.sector) || textOf(society?.locality) || "Gurugram",
+      addressRegion: "Haryana",
+      addressCountry: "IN",
+    },
+  };
+
+  const image = societyImage(society);
+  if (image) schema.image = image;
+
+  const lat = Number(society?.latitude);
+  const lng = Number(society?.longitude);
+  if (Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0) {
+    schema.geo = { "@type": "GeoCoordinates", latitude: lat, longitude: lng };
+  }
+
+  const amenities = listOf(society?.amenities).slice(0, 12);
+  if (amenities.length) {
+    schema.amenityFeature = amenities.map((name) => ({ "@type": "LocationFeatureSpecification", name, value: true }));
+  }
+
+  return schema;
+}
+
+function societyFaqSchema(faqs) {
+  if (!faqs.length) return null;
+
+  return {
+    "@type": "FAQPage",
+    mainEntity: faqs.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
+  };
+}
+
+function societySnapshot(society, faqs) {
+  const facts = [];
+  const score = societyScoreText(society);
+  if (score) facts.push(["Society score", `${score} / 10`]);
+  if (textOf(society?.rent_range)) facts.push(["Rent range", textOf(society.rent_range)]);
+  if (textOf(society?.buy_range)) facts.push(["Resale range", textOf(society.buy_range)]);
+  if (textOf(society?.price_per_sqft)) facts.push(["Price per sq ft", textOf(society.price_per_sqft)]);
+  if (textOf(society?.builder)) facts.push(["Builder", textOf(society.builder)]);
+  if (textOf(society?.project_status)) facts.push(["Status", textOf(society.project_status)]);
+  if (textOf(society?.rera_number)) facts.push(["RERA", textOf(society.rera_number)]);
+
+  const amenities = listOf(society?.amenities).slice(0, 14);
+  const sectorSlug = slugify(society?.sector || society?.locality);
+
+  // This snapshot is the same content the React page renders; React replaces it on hydration.
+  // It exists so crawlers (and users on slow connections) get real content on first paint.
+  const parts = [
+    '<div id="sf-prerender" style="max-width:920px;margin:0 auto;padding:28px 20px;font-family:system-ui,-apple-system,sans-serif;color:#25302B;">',
+    '<p style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#2A6147;">SocietyFlats · Verified Gurgaon society</p>',
+    `<h1 style="font-size:28px;margin:6px 0;">${escapeHtml(society.name)}${textOf(society?.sector) ? `, ${escapeHtml(textOf(society.sector))}` : ""} Gurugram</h1>`,
+  ];
+
+  const description = textOf(society?.description);
+  if (description) parts.push(`<p style="line-height:1.6;">${escapeHtml(truncateText(description, 700))}</p>`);
+
+  if (facts.length) {
+    parts.push("<ul style=\"line-height:1.8;padding-left:18px;\">");
+    for (const [label, value] of facts) parts.push(`<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</li>`);
+    parts.push("</ul>");
+  }
+
+  if (amenities.length) {
+    parts.push(`<h2 style="font-size:18px;">Amenities</h2><p>${escapeHtml(amenities.join(" · "))}</p>`);
+  }
+
+  if (faqs.length) {
+    parts.push('<h2 style="font-size:18px;">Frequently asked questions</h2>');
+    for (const item of faqs) {
+      parts.push(`<h3 style="font-size:15px;margin-bottom:2px;">${escapeHtml(item.question)}</h3><p style="margin-top:2px;line-height:1.6;">${escapeHtml(item.answer)}</p>`);
+    }
+  }
+
+  parts.push('<p style="margin-top:18px;">');
+  parts.push('<a href="/societies">All verified Gurgaon societies</a>');
+  if (sectorSlug) parts.push(` · <a href="/gurgaon/${sectorSlug}">More societies in ${escapeHtml(textOf(society?.sector) || "this sector")}</a>`);
+  parts.push(` · <a href="/rwa/${escapeHtml(society.slug)}">${escapeHtml(society.name)} RWA updates</a>`);
+  parts.push("</p></div>");
+
+  return parts.join("");
+}
+
+function societyRoutes(societies) {
+  return societies.map((society) => {
+    const canonicalPath = `/society/${society.slug}`;
+    const faqs = societyFaqs(society);
+    const sector = textOf(society?.sector) || "Gurgaon";
+    const title = textOf(society?.meta_title)
+      || `${society.name}, ${sector} Gurgaon — Rent, Price & Review | SocietyFlats`;
+
+    return {
+      path: canonicalPath,
+      title,
+      description: societyDescriptionMeta(society),
+      schemaType: "WebPage",
+      ogImage: societyImage(society),
+      extraSchemas: [societySchema(society, canonicalPath), societyFaqSchema(faqs)].filter(Boolean),
+      skipGenericFaq: true,
+      rootSnapshot: societySnapshot(society, faqs),
+    };
+  });
+}
+
+function rwaRoutes(societies) {
+  return societies.map((society) => ({
+    path: `/rwa/${society.slug}`,
+    title: `${society.name} RWA — Announcements & Resident Updates | SocietyFlats`,
+    description: truncateText(
+      `Official RWA announcements, resident questions and community updates for ${society.name}, ${textOf(society?.sector) || "Gurgaon"} — on the verified SocietyFlats profile.`,
+    ),
+    schemaType: "WebPage",
+    skipGenericFaq: true,
+    rootSnapshot: [
+      '<div id="sf-prerender" style="max-width:920px;margin:0 auto;padding:28px 20px;font-family:system-ui,-apple-system,sans-serif;color:#25302B;">',
+      `<h1 style="font-size:26px;">${escapeHtml(society.name)} RWA — Announcements &amp; Resident Updates</h1>`,
+      `<p style="line-height:1.6;">Community announcements, resident Q&amp;A and verified society context for ${escapeHtml(society.name)}${textOf(society?.sector) ? `, ${escapeHtml(textOf(society.sector))}` : ""}, Gurugram.</p>`,
+      `<p><a href="/society/${escapeHtml(society.slug)}">View the full verified ${escapeHtml(society.name)} society profile</a> · <a href="/societies">All verified Gurgaon societies</a></p>`,
+      "</div>",
+    ].join(""),
+  }));
+}
+
+function propertyRoutes(properties) {
+  return properties.map((property) => {
+    const title = textOf(property?.title) || "Verified Gurgaon home";
+    const price = textOf(property?.price);
+
+    return {
+      path: `/property/${property.slug}`,
+      title: `${title}${price ? ` — ${price}` : ""} | SocietyFlats`,
+      description: truncateText(
+        textOf(property?.description)
+          || `${title} — a verified listing on SocietyFlats, reviewed against the published society record. No fake inventory.`,
+      ),
+      schemaType: "WebPage",
+      skipGenericFaq: true,
+    };
+  });
+}
+
 function schemaFor(meta) {
   const canonical = canonicalFor(meta.path);
 
@@ -538,7 +775,12 @@ function schemaFor(meta) {
   };
 
   const graph = meta.path === "/" ? [organization, website] : [organization, website, page, breadcrumbItems(meta)];
-  const faq = faqFor(meta);
+
+  // Entity-specific schema (ApartmentComplex, per-society FAQPage, …) replaces the generic
+  // brand FAQ so a page never carries two competing FAQPage blocks.
+  if (Array.isArray(meta.extraSchemas)) graph.push(...meta.extraSchemas);
+
+  const faq = meta.skipGenericFaq ? null : faqFor(meta);
 
   if (faq) graph.push(faq);
 
@@ -578,9 +820,11 @@ function seoTags(meta) {
     `    <meta property="og:url" content="${escapeHtml(canonical)}" />`,
     `    <meta property="og:title" content="${title}" />`,
     `    <meta property="og:description" content="${description}" />`,
-    `    <meta name="twitter:card" content="summary" />`,
+    ...(meta.ogImage ? [`    <meta property="og:image" content="${escapeHtml(meta.ogImage)}" />`] : []),
+    `    <meta name="twitter:card" content="${meta.ogImage ? "summary_large_image" : "summary"}" />`,
     `    <meta name="twitter:title" content="${title}" />`,
     `    <meta name="twitter:description" content="${description}" />`,
+    ...(meta.ogImage ? [`    <meta name="twitter:image" content="${escapeHtml(meta.ogImage)}" />`] : []),
     `    <script id="sf-static-jsonld" type="application/ld+json">${schema}</script>`,
   ].join("\n");
 }
@@ -627,7 +871,11 @@ function staticCrawlLinks() {
 
 function injectStaticCrawlLinks(html) {
   if (html.includes('id="sf-static-crawl-links"')) return html;
-  return html.replace('<div id="root"></div>', `<div id="root"></div>${staticCrawlLinks()}`);
+  if (html.includes('<div id="root"></div>')) {
+    return html.replace('<div id="root"></div>', `<div id="root"></div>${staticCrawlLinks()}`);
+  }
+  // Pages with a baked #root snapshot: append the crawl nav before </body> instead.
+  return html.replace("</body>", `${staticCrawlLinks()}</body>`);
 }
 
 function injectMeta(baseHtml, meta) {
@@ -644,7 +892,14 @@ function injectMeta(baseHtml, meta) {
 }
 
 async function writeRouteHtml(baseHtml, meta) {
-  const html = injectMeta(baseHtml, meta);
+  let html = injectMeta(baseHtml, meta);
+
+  // Bake the crawlable content snapshot inside #root: crawlers and slow connections get real
+  // content on first paint; React replaces it with the live page on hydration.
+  if (meta.rootSnapshot) {
+    html = html.replace('<div id="root"></div>', `<div id="root">${meta.rootSnapshot}</div>`);
+  }
+
   const routeDir = meta.path === "/" ? DIST_DIR : path.join(DIST_DIR, meta.path.replace(/^\//, ""));
   const outputPath = path.join(routeDir, "index.html");
 
@@ -679,18 +934,30 @@ function derivedLocalityRoutes(localityCounts) {
 
 async function main() {
   const baseHtml = await fs.readFile(INDEX_PATH, "utf8");
-  const localityCounts = await fetchLiveLocalities();
-  const allRoutes = [...routeMeta, ...derivedLocalityRoutes(localityCounts)];
+  const societies = await fetchLiveSocieties();
+  const properties = await fetchLiveProperties();
+
+  if (societies.length === 0) {
+    console.warn("Prerender: no societies fetched — society/RWA shells skipped this build (static routes still written).");
+  }
+
+  const allRoutes = [
+    ...routeMeta,
+    ...derivedLocalityRoutes(localityCountsFrom(societies)),
+    ...societyRoutes(societies),
+    ...rwaRoutes(societies),
+    ...propertyRoutes(properties),
+  ];
   const written = [];
 
   for (const meta of allRoutes) {
     written.push(await writeRouteHtml(baseHtml, meta));
   }
 
-  console.log(`C33 static meta generated for ${written.length} routes.`);
-  for (const file of written) {
-    console.log(`- ${path.relative(DIST_DIR, file)}`);
-  }
+  console.log(
+    `Static SEO shells generated for ${written.length} routes ` +
+      `(${societies.length} societies, ${societies.length} RWA pages, ${properties.length} properties).`,
+  );
 }
 
 main().catch((error) => {
