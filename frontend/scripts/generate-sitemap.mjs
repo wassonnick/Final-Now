@@ -13,6 +13,7 @@ const staticRoutes = [
   { loc: "/search", priority: "0.9", changefreq: "daily" },
   { loc: "/societies", priority: "0.9", changefreq: "daily" },
   { loc: "/properties", priority: "0.9", changefreq: "daily" },
+  { loc: "/compare", priority: "0.82", changefreq: "weekly" },
   { loc: "/gurgaon/societies", priority: "0.9", changefreq: "daily" },
   { loc: "/gurgaon/properties", priority: "0.9", changefreq: "daily" },
   { loc: "/sell", priority: "0.7", changefreq: "weekly" },
@@ -276,13 +277,15 @@ async function main() {
 
   const societyResult = await fetchRowsWithRetry("/societies");
   const propertyResult = await fetchRowsWithRetry("/properties");
+  const comparePageResult = await fetchRowsWithRetry("/compare-pages");
 
-  if (!societyResult.reachedApi || !propertyResult.reachedApi) {
+  if (!societyResult.reachedApi || !propertyResult.reachedApi || !comparePageResult.reachedApi) {
     throw new Error(`Could not reach the public API at ${API_BASE}.`);
   }
 
   const societies = societyResult.rows.filter(isPublicSociety);
   const properties = propertyResult.rows.filter(isHighQualityProperty);
+  const comparePages = comparePageResult.rows.filter((page) => page?.status === "published");
 
   if (societies.length < MIN_PUBLIC_SOCIETIES) {
     throw new Error(`Refusing to replace sitemap: public society count fell to ${societies.length}, below safety threshold ${MIN_PUBLIC_SOCIETIES}.`);
@@ -319,11 +322,23 @@ async function main() {
     });
   }
 
+  for (const page of comparePages) {
+    const slug = page?.slug || page?.id;
+    if (!slug || page?.status !== "published") continue;
+
+    routes.push({
+      loc: `/compare/${slug}`,
+      priority: "0.72",
+      changefreq: "weekly",
+      lastmod: page?.updated_at?.slice?.(0, 10) || page?.published_at?.slice?.(0, 10),
+    });
+  }
+
   const xml = buildXml(routes);
   await fs.writeFile(SITEMAP_PATH, xml, "utf8");
 
   console.log(`Generated sitemap with ${uniqueRoutes(routes).length} URLs at ${SITEMAP_PATH}`);
-  console.log(`Included ${societies.length} public societies and ${properties.length} high-quality public properties.`);
+  console.log(`Included ${societies.length} public societies, ${properties.length} high-quality public properties and ${comparePages.length} published comparison pages.`);
 }
 
 main().catch(async (error) => {

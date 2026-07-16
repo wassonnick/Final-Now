@@ -137,6 +137,15 @@ const routeMeta = [
     schemaType: "CollectionPage",
   },
   {
+    path: "/compare",
+    title: "Compare Gurgaon Societies | SocietyFlats",
+    description:
+      "Browse published 3-way SocietyFlats comparison pages for Gurgaon societies using admin-reviewed society data.",
+    priority: "0.82",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  },
+  {
     path: "/gurgaon/sector-65",
     title: "Societies and Properties in Sector 65 Gurgaon | SocietyFlats",
     description:
