@@ -8,9 +8,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Search, Menu, X, Heart, Scale, MapPin, Building2, Sparkles, BarChart3, User, Home,
   KeyRound, BadgeIndianRupee, Globe2, LayoutGrid, MessageCircle, Calculator, Landmark,
-  ShieldCheck, LifeBuoy, Gift, Briefcase, Layers, ChevronDown,
+  ShieldCheck, LifeBuoy, Gift, Briefcase, Layers, ChevronDown, Phone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { BRAND_PHONE_DISPLAY, BRAND_PHONE_HREF } from '@/config/contact';
 import { useAppStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { CUSTOMER_ACCOUNT_EVENT } from "@/lib/customerAccount";
@@ -214,6 +215,16 @@ export function Navbar() {
             <Heart className="h-5 w-5 text-[#233B6E]" />
             {shortlist.length > 0 && <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-[#B4975A] text-[10px] font-bold text-white">{shortlist.length}</span>}
           </Link>
+
+          {/* Helpline is shown on every page: tappable icon on mobile, full number on desktop. */}
+          <a
+            href={BRAND_PHONE_HREF}
+            className="inline-flex items-center gap-1.5 rounded-full p-2.5 text-[#233B6E] transition-colors hover:bg-[#EEF2FA] lg:h-auto lg:border lg:border-[#D8DFEC] lg:px-3 lg:py-[9px] lg:text-[13.5px] lg:font-bold"
+            aria-label={`Call SocietyFlats on ${BRAND_PHONE_DISPLAY}`}
+          >
+            <Phone className="h-5 w-5 lg:h-3.5 lg:w-3.5" />
+            <span className="hidden lg:inline">{BRAND_PHONE_DISPLAY}</span>
+          </a>
 
           <Link to="/sell" className="hidden lg:block"><Button size="sm" className="h-auto rounded-full bg-[#233B6E] px-4 py-[9px] text-[13.5px] font-bold text-white shadow-none hover:bg-[#1B2E57]">List Your Flat</Button></Link>
           <button

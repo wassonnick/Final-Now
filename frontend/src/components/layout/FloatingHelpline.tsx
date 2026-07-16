@@ -1,10 +1,10 @@
 import { MessageCircle, Phone } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { BRAND_PHONE_DISPLAY, BRAND_PHONE_TEL, BRAND_WHATSAPP_URL } from "@/config/contact";
 
-const PHONE_DISPLAY = "+91 99118 86222";
-const PHONE_TEL = "+919911886222";
-const WHATSAPP_URL =
-  "https://wa.me/919911886222?text=Hi%20SocietyFlats%2C%20I%20need%20help%20shortlisting%20a%20Gurgaon%20society%20or%20home.";
+const PHONE_DISPLAY = BRAND_PHONE_DISPLAY;
+const PHONE_TEL = BRAND_PHONE_TEL;
+const WHATSAPP_URL = BRAND_WHATSAPP_URL;
 
 export function FloatingHelpline() {
   const location = useLocation();
