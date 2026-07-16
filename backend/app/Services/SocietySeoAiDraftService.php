@@ -31,7 +31,7 @@ class SocietySeoAiDraftService
 
         $facts = $this->facts($society);
         $warnings = $this->missingFacts($society);
-        $prompt = $this->prompt($facts, $mode, $existing, $warnings);
+        $prompt = $this->prompt($facts, $mode, $existing, $warnings, $this->searchSignals($society));
         $raw = $this->provider() === 'claude' ? $this->claude($prompt) : $this->gemini($prompt);
         $draft = $this->normalize($raw);
 
@@ -97,7 +97,52 @@ class SocietySeoAiDraftService
         ];
     }
 
-    private function prompt(array $facts, string $mode, array $existing, array $warnings): string
+    /**
+     * What people ACTUALLY search for this society — real Google Search Console queries for its
+     * page (last 28 days, ranked by clicks then impressions) plus the autopilot's mapped
+     * keywords. Fed to the writer so titles/H1s/sections answer the live demand instead of
+     * generic phrasing. Empty for societies with no search history yet — that's fine.
+     *
+     * @return array<int,string>
+     */
+    private function searchSignals(Society $society): array
+    {
+        try {
+            $page = \App\Models\SeoPage::where('page_key', 'society:'.$society->id)->first();
+            if (! $page) {
+                return [];
+            }
+
+            $queries = \App\Models\SeoSearchConsoleMetric::where('seo_page_id', $page->id)
+                ->where('metric_date', '>=', now()->subDays(28))
+                ->where('query', '!=', '')
+                ->selectRaw('query, SUM(clicks) as clicks, SUM(impressions) as impressions')
+                ->groupBy('query')
+                ->orderByDesc('clicks')
+                ->orderByDesc('impressions')
+                ->limit(8)
+                ->pluck('query');
+
+            $keywords = \App\Models\SeoKeyword::where('seo_page_id', $page->id)
+                ->orderBy('id')
+                ->limit(6)
+                ->pluck('keyword');
+
+            return $queries->merge($keywords)
+                ->map(fn ($term) => mb_strtolower(trim((string) $term)))
+                ->filter()
+                ->unique()
+                ->take(10)
+                ->values()
+                ->all();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return [];
+        }
+    }
+
+    private function prompt(array $facts, string $mode, array $existing, array $warnings, array $searchSignals = []): string
     {
         $shape = array_fill_keys(self::OUTPUT_KEYS, '');
         foreach (['pros_json', 'cons_json', 'best_for_json', 'nearby_highlights_json', 'faq_json', 'internal_link_suggestions_json'] as $key) $shape[$key] = [];
@@ -106,6 +151,7 @@ class SocietySeoAiDraftService
         return "Create a {$mode} SocietyFlats SEO draft for an Indian real-estate user considering rent, resale, shortlisting or verified availability in Gurgaon.\n\n"
             ."VOICE & TONE (SocietyFlats brand — match it exactly):\n- Warm, human and reassuring, like a knowledgeable local friend — never corporate, robotic or salesy.\n- Premium and confident but calm: short, clear sentences and strong verbs; no hype, no exclamation marks, no clichés ('nestled', 'dream home', 'prime location', 'stone's throw', 'luxury living at its finest').\n- Lead with how the place actually lives — how safe it feels, how it commutes, everyday life — supported by the scores and checked data. Intelligence delivered warmly, not as a spec sheet.\n- Address the reader as 'you'. Be honest about what is verified versus still to confirm; confidence should come from evidence, not adjectives.\n- No inflated claims, no fake scale, no '#1 / best-in-India' language, no guaranteed outcomes.\n- Headlines (seo_h1 and seo_title): lead with the place, its location and character. Avoid generic filler endings like 'Luxury Residential Living', 'Luxury Living at its Finest' or 'Premium Living' — say something specific and grounded instead.\n\n"
             ."STRICT SAFETY RULES (override tone if they ever conflict):\n- Use only the supplied facts JSON.\n- Never invent towers, units, acres, prices, amenities, RERA, possession, distances, schools, hospitals, ratings, reviews or availability.\n- If a fact is missing, skip the claim or state that it needs verification without filler.\n- Do not promise appreciation, yield, inventory or returns.\n- Use natural helpful language without keyword stuffing.\n- Internal links must be safe relative SocietyFlats paths only; use an empty array if uncertain.\n- FAQ answers must match the visible draft content.\n- Output valid JSON only with exactly the requested keys.\n\n"
+            .($searchSignals !== [] ? "TARGET SEARCH QUERIES (what people really type into Google for this society — from Search Console + keyword mapping):\n".json_encode($searchSignals, JSON_UNESCAPED_UNICODE)."\n- Make the seo_title, seo_h1 and section content directly ANSWER these queries where the facts support it (e.g. a rent query -> lead the rent section with the verified range).\n- Weave the phrasing naturally; never stuff or repeat keywords mechanically, and never fabricate a fact to satisfy a query.\n\n" : '')
             .'SUPPLIED FACTS JSON: '.json_encode($facts, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n"
             .'MISSING FACT WARNINGS: '.json_encode($warnings)."\n"
             .($existing ? 'EXISTING DRAFT TO IMPROVE: '.json_encode($existing, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n" : '')

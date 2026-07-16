@@ -169,6 +169,42 @@ class SocietySeoContentTest extends TestCase
         $this->assertNull($draftSociety->seoContent()->firstOrFail()->published_at);
     }
 
+    public function test_ai_generation_targets_real_search_console_queries(): void
+    {
+        // The writer must receive what people ACTUALLY search for this society (GSC queries +
+        // mapped keywords) so titles and sections answer live demand, not generic phrasing.
+        config(['services.ai_import_provider' => 'gemini', 'services.gemini.api_key' => 'test-key']);
+        Http::fake(['https://generativelanguage.googleapis.com/*' => Http::response([
+            'candidates' => [['content' => ['parts' => [['text' => json_encode($this->completePayload())]]]]],
+        ])]);
+
+        $society = $this->society();
+        $page = \App\Models\SeoPage::create([
+            'page_key' => 'society:'.$society->id, 'page_type' => 'society',
+            'url' => '/society/'.$society->slug, 'canonical_url' => '/society/'.$society->slug,
+            'is_public' => true, 'is_indexable' => true,
+        ]);
+        \App\Models\SeoSearchConsoleMetric::create([
+            'seo_page_id' => $page->id, 'metric_date' => now()->subDays(3)->toDateString(),
+            'page_url' => '/society/'.$society->slug, 'query' => 'tulip crimson rent 3bhk',
+            'clicks' => 12, 'impressions' => 480, 'ctr' => 0.025, 'position' => 8.4,
+        ]);
+        \App\Models\SeoKeyword::create([
+            'keyword' => 'tulip crimson sector 70 review', 'cluster_type' => 'society',
+            'intent' => 'research', 'seo_page_id' => $page->id, 'source' => 'seed', 'status' => 'mapped',
+        ]);
+
+        $this->admin()->postJson("/api/admin/societies/{$society->id}/seo-content/generate-ai-draft")->assertOk();
+
+        Http::assertSent(function ($request) {
+            $body = (string) $request->body();
+
+            return str_contains($body, 'TARGET SEARCH QUERIES')
+                && str_contains($body, 'tulip crimson rent 3bhk')
+                && str_contains($body, 'tulip crimson sector 70 review');
+        });
+    }
+
     private function society(): Society
     {
         return Society::create([

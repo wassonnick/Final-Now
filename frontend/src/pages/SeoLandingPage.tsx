@@ -157,6 +157,90 @@ function sortByQuality(rows: any[]) {
   return [...rows].sort((a, b) => qualityRank(b) - qualityRank(a));
 }
 
+// ---------------------------------------------------------------------------
+// Data-led landing facts: every sector/builder page leads with numbers computed
+// from ITS societies (count, rent/resale entry points, score leader) instead of
+// the same template copy repeated across 20+ pages — unique content per URL,
+// and only claims the loaded data actually supports.
+// ---------------------------------------------------------------------------
+
+function parseInrAmounts(text: unknown): number[] {
+  const raw = String(text ?? "");
+  if (!raw) return [];
+  const matches = raw.matchAll(/₹?\s*([\d,]+(?:\.\d+)?)\s*(cr|crore|l|lakh|lac|k)?/gi);
+  const amounts: number[] = [];
+  for (const match of matches) {
+    const base = Number(String(match[1]).replace(/,/g, ""));
+    if (!Number.isFinite(base) || base <= 0) continue;
+    const unit = (match[2] || "").toLowerCase();
+    const multiplier = unit.startsWith("cr") ? 1e7 : unit.startsWith("l") ? 1e5 : unit === "k" ? 1e3 : 1;
+    const value = base * multiplier;
+    if (value >= 1000) amounts.push(value); // ignore stray small numbers (BHK counts etc.)
+  }
+  return amounts;
+}
+
+function formatInr(value: number): string {
+  if (value >= 1e7) return `₹${(value / 1e7).toFixed(value % 1e7 === 0 ? 0 : 1)} Cr`;
+  if (value >= 1e5) return `₹${(value / 1e5).toFixed(value % 1e5 === 0 ? 0 : 1)} L`;
+  return `₹${Math.round(value).toLocaleString("en-IN")}`;
+}
+
+type LandingFacts = {
+  count: number;
+  rentFrom: string | null;
+  buyFrom: string | null;
+  topSociety: { name: string; score: string } | null;
+  builderCount: number;
+};
+
+function computeLandingFacts(rows: any[]): LandingFacts {
+  const rentLows = rows
+    .map((society) => parseInrAmounts(society?.rentRange ?? society?.rent_range))
+    .filter((amounts) => amounts.length > 0)
+    .map((amounts) => Math.min(...amounts));
+  const buyLows = rows
+    .map((society) => parseInrAmounts(society?.buyRange ?? society?.buy_range))
+    .filter((amounts) => amounts.length > 0)
+    .map((amounts) => Math.min(...amounts));
+
+  const scored = rows
+    .map((society) => ({ society, score: scoreNumber(society) }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  const builders = new Set(
+    rows.map((society) => String(society?.builder ?? "").trim().toLowerCase()).filter(Boolean),
+  );
+
+  return {
+    count: rows.length,
+    rentFrom: rentLows.length >= 2 ? formatInr(Math.min(...rentLows)) : null,
+    buyFrom: buyLows.length >= 2 ? formatInr(Math.min(...buyLows)) : null,
+    topSociety: scored[0] ? { name: String(scored[0].society.name), score: scored[0].score.toFixed(1) } : null,
+    builderCount: builders.size,
+  };
+}
+
+function dataLedInsight(facts: LandingFacts, label: string, variant: LandingVariant): string | null {
+  if (facts.count < 2) return null;
+
+  const bits: string[] = [];
+  bits.push(
+    variant === "builder"
+      ? `SocietyFlats has reviewed ${facts.count} ${label} societies field by field.`
+      : `SocietyFlats has reviewed ${facts.count} societies around ${label} field by field.`,
+  );
+  if (facts.topSociety) bits.push(`${facts.topSociety.name} currently leads on our checks with a ${facts.topSociety.score} score.`);
+  const price: string[] = [];
+  if (facts.rentFrom) price.push(`rents start near ${facts.rentFrom}/month`);
+  if (facts.buyFrom) price.push(`resale entries from about ${facts.buyFrom}`);
+  if (price.length) bits.push(`Across the group, ${price.join(" and ")} — portal-consensus figures we refresh continuously.`);
+  if (variant === "locality" && facts.builderCount >= 2) bits.push(`${facts.builderCount} different builders are represented here, so compare the society, not just the address.`);
+
+  return bits.join(" ");
+}
+
 function landingLabel(variant: LandingVariant, localitySlug?: string, builderSlug?: string) {
   if (variant === "locality") return localityLabels[localitySlug || ""] || readableFromSlug(localitySlug, "Gurgaon");
   if (variant === "builder") return builderLabels[builderSlug || ""] || readableFromSlug(builderSlug, "Gurgaon builder");
@@ -576,6 +660,14 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
     return sortByQuality(rows);
   }, [societies, variant, locality, builderSlug]);
 
+  const landingFacts = useMemo(() => computeLandingFacts(scopedSocieties), [scopedSocieties]);
+  const computedInsight = useMemo(
+    () => (variant === "locality" || variant === "builder"
+      ? dataLedInsight(landingFacts, landingLabel(variant, locality, builderSlug), variant)
+      : null),
+    [landingFacts, variant, locality, builderSlug],
+  );
+
   const shouldNoindexEmptyLanding =
     (variant === "locality" || variant === "builder") &&
     !loading &&
@@ -649,6 +741,29 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
               <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-blue-500 md:text-[17px] md:leading-7">
                 {seoOverride?.intro_summary || seoOverride?.seo_description || copy.description}
               </p>
+
+              {landingFacts.count > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="inline-flex items-center rounded-full border border-blue-100 bg-white px-3.5 py-1.5 text-[12.5px] font-black text-navy-950">
+                    {landingFacts.count} verified {landingFacts.count === 1 ? "society" : "societies"}
+                  </span>
+                  {landingFacts.rentFrom ? (
+                    <span className="inline-flex items-center rounded-full border border-blue-100 bg-white px-3.5 py-1.5 text-[12.5px] font-black text-navy-950">
+                      Rent from {landingFacts.rentFrom}/mo
+                    </span>
+                  ) : null}
+                  {landingFacts.buyFrom ? (
+                    <span className="inline-flex items-center rounded-full border border-blue-100 bg-white px-3.5 py-1.5 text-[12.5px] font-black text-navy-950">
+                      Resale from {landingFacts.buyFrom}
+                    </span>
+                  ) : null}
+                  {landingFacts.topSociety ? (
+                    <span className="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-3.5 py-1.5 text-[12.5px] font-black text-emerald-800">
+                      Top scored: {landingFacts.topSociety.name} · {landingFacts.topSociety.score}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <Button asChild className="h-12 rounded-full bg-blue-700 px-6 font-black text-white hover:bg-blue-800">
@@ -806,7 +921,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
               <section className="rounded-[1.75rem] border border-blue-100 bg-[linear-gradient(135deg,#EEF5F1,#FFFBF3)] p-4 shadow-sm md:p-5">
                 <p className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-700">SocietyFlats view</p>
                 <h2 className="mt-2 font-display text-3xl font-black text-navy-950">{copy.insightTitle}</h2>
-                <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-blue-500">{copy.insightText}</p>
+                <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-blue-500">{computedInsight || copy.insightText}</p>
 
                 <div className="mt-5 grid gap-3 md:grid-cols-3">
                   {[
