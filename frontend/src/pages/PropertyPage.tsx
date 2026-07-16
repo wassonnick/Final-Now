@@ -165,7 +165,10 @@ function getSocietyName(property: Property | null): string {
 function getSocietySlug(property: Property | null): string {
   if (!property) return "";
   if (typeof property.society === "object" && property.society?.slug) return property.society.slug;
-  return "";
+  // The API serialises `society` as the plain name string (Property has both a society name
+  // column and a society() relation), so the slug arrives on its own field. Without this the
+  // society link/context silently degrades even though the society is known.
+  return (property as any).society_slug || (property as any).societySlug || "";
 }
 
 function getSocietyLocality(property: Property | null): string {
@@ -293,6 +296,9 @@ export function PropertyPage() {
   const [tenureYears, setTenureYears] = useState(20);
   const [isShortlisted, setIsShortlisted] = useState(false);
   const [similarProperties, setSimilarProperties] = useState<Property[]>([]);
+  // The society this flat sits inside — powers the society-context module, which is the whole
+  // SocietyFlats promise: judge the society, not just the flat.
+  const [society, setSociety] = useState<any | null>(null);
 
   const [leadOpen, setLeadOpen] = useState(false);
   const [leadType, setLeadType] = useState<"callback" | "enquiry">("callback");
@@ -584,6 +590,78 @@ export function PropertyPage() {
     };
   }, [property, societyName, societyLocality, slug]);
 
+  // Pull the parent society so the page can show real, verified society context instead of
+  // leaving the flat with no sense of the place it sits in.
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchSociety() {
+      if (!societySlug) {
+        setSociety(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/societies/${encodeURIComponent(societySlug)}`);
+        if (!response.ok) throw new Error("Society API failed");
+        const json = await response.json();
+        if (mounted) setSociety(json?.data ?? null);
+      } catch {
+        if (mounted) setSociety(null);
+      }
+    }
+
+    fetchSociety();
+
+    return () => {
+      mounted = false;
+    };
+  }, [societySlug]);
+
+  // Society context shown on the flat: only real, published values — anything missing is simply
+  // omitted rather than filled with a placeholder.
+  const societyScore = useMemo(() => {
+    const raw = Number(society?.score ?? society?.overallScore ?? 0);
+    if (!Number.isFinite(raw) || raw <= 0) return null;
+    return (raw > 10 ? raw / 10 : raw).toFixed(1);
+  }, [society]);
+
+  const societyAmenities = useMemo(() => parseList(society?.amenities), [society?.amenities]);
+
+  const societyHighlights = useMemo(() => {
+    const rows: Array<[string, string]> = [];
+    const push = (label: string, value: unknown) => {
+      const text = parseList(value).join(" · ") || String(value ?? "").trim();
+      if (text) rows.push([label, text]);
+    };
+    push("Schools nearby", society?.nearbySchools ?? society?.nearby_schools);
+    push("Metro & transit", society?.nearbyMetro ?? society?.nearby_metro);
+    push("Hospitals", society?.nearbyHospitals ?? society?.nearby_hospitals);
+    push("Office hubs", society?.nearbyOfficeHubs ?? society?.nearby_office_hubs);
+    return rows.slice(0, 4);
+  }, [society]);
+
+  const propertyFaqs = useMemo(() => {
+    const rows: Array<[string, string]> = [];
+    if (societyName) {
+      rows.push([
+        "Which society is this home in?",
+        `This home is inside ${societyName}${societyLocality ? `, ${societyLocality}` : ""}. You can review the full verified society profile — security, commute, amenities and resident context — before you shortlist it.`,
+      ]);
+    }
+    rows.push([
+      "Is this listing verified?",
+      property?.verified
+        ? "Yes. SocietyFlats reviewed this listing against the published society record before showing it. We never publish fake inventory — but always inspect in person before any payment."
+        : "This listing is under review. SocietyFlats checks every listing against the published society record before it is marked verified, and we never publish fake inventory.",
+    ]);
+    rows.push([
+      "How do I arrange a visit?",
+      "Request a callback or message us on WhatsApp and our team will arrange a site visit. Never pay anything before visiting the home in person.",
+    ]);
+    return rows;
+  }, [societyName, societyLocality, property?.verified]);
+
   const whatsappMessage = encodeURIComponent(
     `Hi, I am interested in ${title}. Please share details.`,
   );
@@ -807,6 +885,81 @@ export function PropertyPage() {
             <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Floor plan</h2>
             <div className="mt-3.5 flex h-[240px] items-center justify-center overflow-hidden rounded-[16px] border border-[#E7E3DA] bg-[repeating-linear-gradient(135deg,#E5EAE5_0_1px,transparent_1px_15px)]">
               {floorPlanUrl ? <img src={floorPlanUrl} alt={`${title} floor plan`} className="h-full w-full object-contain" /> : <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#66716B]">Floor plan under review</span>}
+            </div>
+
+            {amenities.length ? (
+              <>
+                <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">What this home offers</h2>
+                <div className="mt-3.5 flex flex-wrap gap-2">
+                  {amenities.map((item) => (
+                    <span key={item} className="inline-flex items-center gap-1.5 rounded-full border border-[#E7E3DA] bg-white px-3.5 py-2 text-[13px] font-semibold text-[#4A534E]">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-[#2A6147]" />
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            {society ? (
+              <section className="mt-8 rounded-[18px] border border-[#E7E3DA] bg-[#F8FAF8] p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#2A6147]">The society around this home</p>
+                    <h2 className="mt-1 text-[19px] font-bold text-[#25302B]">{societyName}</h2>
+                    {societyLocality ? <p className="mt-1 text-[13px] text-[#6E756E]">{societyLocality}</p> : null}
+                  </div>
+                  {societyScore ? (
+                    <div className="rounded-[12px] bg-white px-3.5 py-2 text-center shadow-sm">
+                      <p className="text-[18px] font-extrabold text-[#233B6E]">{societyScore}</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-[#7A817D]">Society score</p>
+                    </div>
+                  ) : null}
+                </div>
+
+                <p className="mt-3 max-w-[720px] text-[13.5px] leading-6 text-[#4A534E]">
+                  At SocietyFlats we believe the society decides your daily life more than the floor plan does. Here is the verified context for the community this home sits in.
+                </p>
+
+                {societyHighlights.length ? (
+                  <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+                    {societyHighlights.map(([label, value]) => (
+                      <div key={label} className="rounded-[12px] border border-[#E7E3DA] bg-white p-3">
+                        <p className="text-[11px] font-semibold text-[#7A817D]">{label}</p>
+                        <p className="mt-1 text-[13px] font-medium leading-5 text-[#25302B]">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {societyAmenities.length ? (
+                  <div className="mt-4">
+                    <p className="text-[11px] font-semibold text-[#7A817D]">Society amenities</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {societyAmenities.slice(0, 10).map((item) => (
+                        <span key={item} className="rounded-full bg-white px-2.5 py-1 text-[12px] font-medium text-[#4A534E] ring-1 ring-[#E7E3DA]">{item}</span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {societySlug ? (
+                  <Link to={`/society/${societySlug}`} className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#123C32] px-4 py-2.5 text-[13.5px] font-bold text-white transition hover:bg-[#0D2C25]">
+                    See the full {societyName} profile
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                ) : null}
+              </section>
+            ) : null}
+
+            <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Good to know</h2>
+            <div className="mt-3.5 space-y-2.5">
+              {propertyFaqs.map(([question, answer]) => (
+                <details key={question} className="group rounded-[14px] border border-[#E7E3DA] bg-white p-4">
+                  <summary className="cursor-pointer list-none text-[14px] font-bold text-[#25302B]">{question}</summary>
+                  <p className="mt-2 text-[13.5px] leading-6 text-[#4A534E]">{answer}</p>
+                </details>
+              ))}
             </div>
           </section>
 

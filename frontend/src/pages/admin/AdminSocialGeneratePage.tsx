@@ -146,9 +146,14 @@ export function AdminSocialGeneratePage() {
               </select>
             </label>
 
-            <label className="flex items-center gap-3 rounded-2xl border p-4 md:col-span-2">
-              <input type="checkbox" checked={form.generate_images} onChange={(event) => setForm({ ...form, generate_images: event.target.checked })} />
-              <span className="text-sm font-bold text-slate-700">Generate image draft assets when image model is configured; otherwise save creative briefs.</span>
+            <label className="flex items-start gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4 md:col-span-2">
+              <input className="mt-1" type="checkbox" checked={form.generate_images} onChange={(event) => setForm({ ...form, generate_images: event.target.checked })} />
+              <span className="text-sm font-bold text-slate-800">
+                Generate real images for each draft
+                <span className="mt-1 block text-xs font-semibold text-slate-600">
+                  Leave this OFF and you only get a text creative brief — this is why drafts show &ldquo;no image file generated yet&rdquo;. Ticking it renders a branded visual per draft (uses image credits). You can also generate one image at a time from any draft later.
+                </span>
+              </span>
             </label>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-3">
