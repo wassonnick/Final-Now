@@ -271,6 +271,8 @@ export function AdminSocialAccountsPage() {
               : [];
             const fallbackSocietyFlatsPage = societyFlatsDebugPage(metaDebug);
             const canSelectFacebookPage = account.platform === "facebook_page" && ["pending_page_selection", "connected_no_pages"].includes(account.status);
+            const manualGoogleLocationSaved = account.platform === "google_business_profile" && account.status === "connected_manual_location";
+            const googleLocationVerified = account.platform === "google_business_profile" && Boolean(account.metadata?.google_location_verified_from_api);
 
             return (
             <article key={account.id} className="rounded-2xl border bg-slate-50 p-4">
@@ -279,9 +281,14 @@ export function AdminSocialAccountsPage() {
                   <p className="text-xs font-black uppercase tracking-wide text-blue-700">{account.platform.replace(/_/g, " ")}</p>
                   <h3 className="mt-1 text-lg font-black">{account.account_name || account.platform}</h3>
                   <p className="mt-1 text-sm font-bold text-slate-500">Status: {account.status.replace(/_/g, " ")}</p>
-                  {["connected", "connected_manual_page"].includes(account.status) ? (
+                  {["connected", "connected_manual_page", "connected_manual_location"].includes(account.status) ? (
                     <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">
                       Connected
+                    </p>
+                  ) : null}
+                  {manualGoogleLocationSaved ? (
+                    <p className="mt-2 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">
+                      Manual reference saved / Publish not enabled
                     </p>
                   ) : null}
                   {publishMissing ? (
@@ -323,12 +330,12 @@ export function AdminSocialAccountsPage() {
                   {account.account_handle ? <p className="mt-1 text-xs font-bold text-slate-500">Handle: {account.account_handle}</p> : null}
                   {account.account_id ? <p className="mt-1 text-xs font-bold text-slate-500">Account ID: {account.account_id}</p> : null}
                   {account.last_connected_at ? <p className="mt-1 text-xs font-bold text-emerald-700">Connected: {new Date(account.last_connected_at).toLocaleString("en-IN")}</p> : null}
-                  {account.last_error ? <p className="mt-2 text-xs font-bold text-rose-700">{account.last_error}</p> : null}
+                  {account.last_error && !manualGoogleLocationSaved ? <p className="mt-2 text-xs font-bold text-rose-700">{account.last_error}</p> : null}
                   {account.platform === "instagram_business" && account.status !== "connected" && account.metadata?.message ? (
                     <p className="mt-2 text-xs font-bold text-slate-600">{String(account.metadata.message)}</p>
                   ) : null}
                 </div>
-                {["connected", "connected_manual_page"].includes(account.status) ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <PlugZap className="h-5 w-5 text-slate-400" />}
+                {["connected", "connected_manual_page", "connected_manual_location"].includes(account.status) ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <PlugZap className="h-5 w-5 text-slate-400" />}
               </div>
               {canSelectFacebookPage ? (
                 <div className="mt-4 rounded-2xl border border-blue-100 bg-white p-3">
@@ -473,9 +480,12 @@ export function AdminSocialAccountsPage() {
                 <div className="mt-4 rounded-2xl border border-blue-100 bg-white p-4">
                   <p className="text-sm font-black text-slate-900">Google Business location</p>
                   {account.metadata?.location_title ? (
-                    <div className="mt-2 rounded-xl bg-emerald-50 p-3 text-xs font-bold leading-5 text-emerald-900">
-                      <p>Connected location: {String(account.metadata.location_title)}</p>
+                    <div className={`mt-2 rounded-xl p-3 text-xs font-bold leading-5 ${googleLocationVerified ? "bg-emerald-50 text-emerald-900" : "bg-amber-50 text-amber-900"}`}>
+                      <p>{googleLocationVerified ? "Connected location" : "Manual location reference"}: {String(account.metadata.location_title)}</p>
                       {account.metadata.location_address_summary ? <p>{String(account.metadata.location_address_summary)}</p> : null}
+                      {!googleLocationVerified ? (
+                        <p className="mt-1">Publishing stays disabled until Google returns and verifies this location through the API.</p>
+                      ) : null}
                     </div>
                   ) : (
                     <p className="mt-1 text-xs font-bold leading-5 text-slate-600">
@@ -500,7 +510,7 @@ export function AdminSocialAccountsPage() {
                         Connect selected location
                       </Button>
                     </>
-                  ) : (
+                  ) : !manualGoogleLocationSaved ? (
                     <Button
                       size="sm"
                       variant="outline"
@@ -510,13 +520,13 @@ export function AdminSocialAccountsPage() {
                     >
                       {googleRetryAfter > 0 ? `Try again in ${googleRetryAfter}s` : "Find Google Business locations"}
                     </Button>
-                  )}
-                  {googleLocationMessage ? (
+                  ) : null}
+                  {googleLocationMessage && !manualGoogleLocationSaved ? (
                     <p className="mt-3 rounded-xl bg-blue-50 p-3 text-xs font-bold leading-5 text-blue-900">
                       {googleLocationMessage}
                     </p>
                   ) : null}
-                  {!googleLocations.length && (
+                  {!googleLocations.length && !manualGoogleLocationSaved && (
                     <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3">
                       <p className="text-xs font-black uppercase tracking-wide text-amber-900">Advanced fallback</p>
                       <p className="mt-1 text-xs font-bold leading-5 text-amber-900">

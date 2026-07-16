@@ -408,6 +408,7 @@ class SocialOAuthService
             'source' => 'manual_google_business_location',
             'manual_location_identifier' => $manualIdentifier,
             'manual_location_warning' => true,
+            'manual_location_message' => $message,
         ]);
 
         $account->update([
@@ -415,7 +416,7 @@ class SocialOAuthService
             'account_handle' => null,
             'account_id' => $manualIdentifier,
             'status' => 'connected_manual_location',
-            'last_error' => $message,
+            'last_error' => null,
             'metadata' => $metadata,
         ]);
 
