@@ -12,6 +12,7 @@ const staticRoutes = [
   { loc: "/search", priority: "0.9", changefreq: "daily" },
   { loc: "/societies", priority: "0.9", changefreq: "daily" },
   { loc: "/properties", priority: "0.9", changefreq: "daily" },
+  { loc: "/compare", priority: "0.82", changefreq: "weekly" },
   { loc: "/gurgaon/societies", priority: "0.9", changefreq: "daily" },
   { loc: "/gurgaon/properties", priority: "0.9", changefreq: "daily" },
   { loc: "/sell", priority: "0.7", changefreq: "weekly" },
@@ -211,6 +212,7 @@ async function main() {
 
   const societies = (await fetchRows("/societies")).filter(isPublicSociety);
   const properties = (await fetchRows("/properties")).filter(isHighQualityProperty);
+  const comparePages = await fetchRows("/compare-pages");
 
   addDerivedLandingRoutes(routes, societies);
 
@@ -238,11 +240,23 @@ async function main() {
     });
   }
 
+  for (const page of comparePages) {
+    const slug = page?.slug || page?.id;
+    if (!slug || page?.status !== "published") continue;
+
+    routes.push({
+      loc: `/compare/${slug}`,
+      priority: "0.72",
+      changefreq: "weekly",
+      lastmod: page?.updated_at?.slice?.(0, 10) || page?.published_at?.slice?.(0, 10),
+    });
+  }
+
   const xml = buildXml(routes);
   await fs.writeFile(SITEMAP_PATH, xml, "utf8");
 
   console.log(`Generated sitemap with ${uniqueRoutes(routes).length} URLs at ${SITEMAP_PATH}`);
-  console.log(`Included ${societies.length} public societies and ${properties.length} high-quality public properties.`);
+  console.log(`Included ${societies.length} public societies, ${properties.length} high-quality public properties and ${comparePages.length} published comparison pages.`);
 }
 
 main().catch(async (error) => {

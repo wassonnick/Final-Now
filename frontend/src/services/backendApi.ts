@@ -54,6 +54,20 @@ export const backendApi = {
     });
   },
 
+  listComparePages(params = '') {
+    const query = params ? `?${params}` : '';
+
+    return request(`/compare-pages${query}`, {
+      method: 'GET',
+    });
+  },
+
+  getComparePage(slug: string) {
+    return request(`/compare-pages/${encodeURIComponent(slug)}`, {
+      method: 'GET',
+    });
+  },
+
   listLeads(params = '') {
     const query = params ? `?${params}` : '';
 

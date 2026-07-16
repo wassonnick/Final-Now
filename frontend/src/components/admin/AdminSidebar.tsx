@@ -16,6 +16,7 @@ import {
   Users,
   CalendarCheck,
   ShieldCheck,
+  FileSearch,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ const links = [
   { label: "Analytics", href: "/admin/analytics", icon: LineChart },
   { label: "Advanced Search", href: "/admin/advanced-search", icon: Search },
   { label: "Recommendations", href: "/admin/recommendations", icon: Target },
+  { label: "Compare SEO", href: "/admin/seo/compare-pages", icon: FileSearch },
   { label: "Reviews", href: "/admin/reviews", icon: Star },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Settings", href: "/admin/settings", icon: Settings },

@@ -17,6 +17,7 @@ const SearchPage = lazy(() => import('@/pages/SearchPage').then((module) => ({ d
 const SocietyPage = lazy(() => import('@/pages/SocietyPage').then((module) => ({ default: module.SocietyPage })));
 const PropertyPage = lazy(() => import('@/pages/PropertyPage').then((module) => ({ default: module.PropertyPage })));
 const ComparePage = lazy(() => import('@/pages/ComparePage').then((module) => ({ default: module.ComparePage })));
+const CompareSeoPage = lazy(() => import('@/pages/CompareSeoPage').then((module) => ({ default: module.CompareSeoPage })));
 const AIAdvisorPage = lazy(() => import('@/pages/AIAdvisorPage').then((module) => ({ default: module.AIAdvisorPage })));
 const MapsPage = lazy(() => import('@/pages/MapsPage').then((module) => ({ default: module.MapsPage })));
 const InsightsPage = lazy(() => import('@/pages/InsightsPage').then((module) => ({ default: module.InsightsPage })));
@@ -53,6 +54,7 @@ const AdminFeatureHubPage = lazy(() => import('@/pages/admin/AdminFeatureHubPage
 const AdminSiteVisitsPage = lazy(() => import('@/pages/admin/AdminSiteVisitsPage').then((module) => ({ default: module.AdminSiteVisitsPage })));
 const AdminRentHistoryPage = lazy(() => import('@/pages/admin/AdminRentHistoryPage').then((module) => ({ default: module.AdminRentHistoryPage })));
 const AdminBuilderPortalPage = lazy(() => import('@/pages/admin/AdminBuilderPortalPage').then((module) => ({ default: module.AdminBuilderPortalPage })));
+const AdminComparePagesPage = lazy(() => import('@/pages/admin/AdminComparePagesPage').then((module) => ({ default: module.AdminComparePagesPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -126,7 +128,8 @@ function AppShell() {
             <Route path="/gurgaon/:locality" element={<SeoLandingPage variant="locality" />} />
             <Route path="/builder/:builderSlug" element={<SeoLandingPage variant="builder" />} />
 
-            <Route path="/compare" element={<ComparePage />} />
+            <Route path="/compare" element={<CompareSeoPage />} />
+            <Route path="/compare/:slug" element={<CompareSeoPage />} />
             <Route path="/ai-advisor" element={<AIAdvisorPage />} />
             <Route path="/insights" element={<InsightsPage />} />
             <Route path="/maps" element={<MapsPage />} />
@@ -204,6 +207,7 @@ function AppShell() {
             <Route path="/admin/analytics" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="analytics" /></ProtectedAdminRoute>} />
             <Route path="/admin/advanced-search" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="advanced-search" /></ProtectedAdminRoute>} />
             <Route path="/admin/recommendations" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="recommendations" /></ProtectedAdminRoute>} />
+            <Route path="/admin/seo/compare-pages" element={<ProtectedAdminRoute><AdminComparePagesPage /></ProtectedAdminRoute>} />
             <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettingsPage /></ProtectedAdminRoute>} />
 
             <Route path="*" element={<NotFoundPage />} />

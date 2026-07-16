@@ -1,6 +1,6 @@
 // C86 internal SEO links polish: clearer Gurgaon locality/builder discovery blocks.
 import { Link } from "react-router-dom";
-import { ArrowRight, Building2, Home, MapPin, Search, Sparkles } from "lucide-react";
+import { ArrowRight, Building2, GitCompareArrows, Home, MapPin, Sparkles } from "lucide-react";
 
 const primaryLinks = [
   {
@@ -20,6 +20,12 @@ const primaryLinks = [
     href: "/gurgaon/properties",
     description: "Browse live homes inside verified Gurgaon societies.",
     icon: Home,
+  },
+  {
+    label: "Society comparisons",
+    href: "/compare",
+    description: "Review published 3-way society comparison pages.",
+    icon: GitCompareArrows,
   },
 ];
 
