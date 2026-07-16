@@ -1430,7 +1430,7 @@ class SocialMediaFoundationTest extends TestCase
         $account->access_token = 'secret-google-access-token';
         $account->save();
 
-        $friendlyMessage = 'Google Business Profile rate limit reached. Please wait a minute, then try “Find Google Business locations” again. OAuth is still connected.';
+        $friendlyMessage = \App\Services\Social\SocialOAuthService::GBP_QUOTA_MESSAGE;
 
         $this->admin()
             ->getJson('/api/admin/social/google-business/locations')
@@ -1551,7 +1551,7 @@ class SocialMediaFoundationTest extends TestCase
                 'location_name' => 'accounts/123/locations/456',
             ])
             ->assertStatus(422)
-            ->assertJsonPath('message', 'Google Business Profile rate limit reached. Please wait a minute, then try “Find Google Business locations” again. OAuth is still connected.');
+            ->assertJsonPath('message', \App\Services\Social\SocialOAuthService::GBP_QUOTA_MESSAGE);
     }
 
     public function test_sm2_social_accounts_mask_saved_google_quota_error(): void
@@ -1569,7 +1569,7 @@ class SocialMediaFoundationTest extends TestCase
         $response = $this->admin()->getJson('/api/admin/social/accounts')->assertOk();
         $json = json_encode($response->json());
 
-        $this->assertStringContainsString('Google Business Profile rate limit reached.', $json);
+        $this->assertStringContainsString('Business Profile API quota is likely 0', $json);
         $this->assertStringNotContainsString('project_number', $json);
         $this->assertStringNotContainsString('584464075588', $json);
     }

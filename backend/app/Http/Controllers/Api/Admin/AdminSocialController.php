@@ -260,7 +260,7 @@ class AdminSocialController extends Controller
 
         $lower = strtolower($message);
         if (str_contains($lower, 'quota exceeded') || str_contains($lower, 'requests per minute')) {
-            return 'Google Business Profile rate limit reached. Please wait a minute, then try “Find Google Business locations” again. OAuth is still connected.';
+            return \App\Services\Social\SocialOAuthService::GBP_QUOTA_MESSAGE;
         }
 
         return $message;

@@ -9,6 +9,11 @@ use InvalidArgumentException;
 
 class SocialOAuthService
 {
+    // Google Business Profile APIs ship with a DEFAULT quota of 0 requests/minute until Google
+    // approves an access request for the Cloud project — so the lookup 429s forever, and
+    // "wait a minute" is misleading. Point the admin at the real, one-time fix.
+    public const GBP_QUOTA_MESSAGE = 'Google Business Profile API returned a quota/rate-limit error (HTTP 429). If this keeps happening no matter how long you wait, your Google Cloud project\'s Business Profile API quota is likely 0 — request access at https://support.google.com/business/contact/api_default (approval can take a few days). OAuth is still connected; use the Advanced Fallback below to save the location meanwhile.';
+
     public const PLATFORMS = [
         'instagram_business' => 'Instagram Business',
         'facebook_page' => 'Facebook Page',
@@ -1067,7 +1072,7 @@ class SocialOAuthService
         $rawMessage = (string) ($response->json('error.message') ?: $response->json('error.status') ?: $fallback);
 
         if ($this->isGoogleQuotaError($response, $rawMessage)) {
-            return 'Google Business Profile rate limit reached. Please wait a minute, then try “Find Google Business locations” again. OAuth is still connected.';
+            return self::GBP_QUOTA_MESSAGE;
         }
 
         return $rawMessage;
@@ -1094,7 +1099,7 @@ class SocialOAuthService
         $locations = data_get($metadata, 'available_locations', []);
         $locations = is_array($locations) ? $locations : [];
         $lastError = (string) data_get($metadata, 'locations_last_error', '');
-        $friendlyQuotaMessage = 'Google Business Profile rate limit reached. Please wait a minute, then try “Find Google Business locations” again. OAuth is still connected.';
+        $friendlyQuotaMessage = self::GBP_QUOTA_MESSAGE;
 
         if ($locations !== []) {
             return [
