@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Eye, FileSearch, RefreshCw, Rocket, XCircle } from "lucide-react";
 
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
-import { backendApi } from "@/services/backendApi";
+import { API_BASE_URL, backendApi } from "@/services/backendApi";
 
 type AdminComparePage = {
   id: number;
@@ -16,6 +16,27 @@ type AdminComparePage = {
   society_b?: { name: string; slug: string };
   society_c?: { name: string; slug: string };
   stale_reason?: string;
+  h1?: string;
+  intro?: string;
+  comparison_summary?: string;
+  recommendation_copy?: string;
+  best_for_json?: Array<{ society: string; label: string }>;
+  comparison_table_json?: {
+    columns?: Array<{ id: number; name: string; slug: string }>;
+    rows?: Array<{ label: string; values: string[] }>;
+  };
+  society_summaries_json?: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    sector?: string;
+    locality?: string;
+    builder?: string;
+    score?: number;
+    rent_range?: string;
+    buy_range?: string;
+  }>;
+  faq_json?: Array<{ question: string; answer: string }>;
 };
 
 type Summary = {
@@ -74,6 +95,24 @@ export function AdminComparePagesPage() {
       loadPages();
     } catch (error: any) {
       setMessage(error?.message || `${label} failed.`);
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const openAuthenticatedApiJson = async (page: AdminComparePage) => {
+    setBusy(`API #${page.id}`);
+    setMessage("");
+
+    try {
+      const payload = await backendApi.request(`/admin/seo/compare-pages/${page.id}`);
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      setMessage(`Opened authenticated API JSON for #${page.id}.`);
+    } catch (error: any) {
+      setMessage(error?.message || `Unable to open API JSON for #${page.id}.`);
     } finally {
       setBusy("");
     }
@@ -143,11 +182,18 @@ export function AdminComparePagesPage() {
 
                   <div className="flex flex-wrap gap-2">
                     <Button asChild variant="outline" className="rounded-full">
-                      <Link to={`/compare/${page.slug}`} target="_blank">
+                      <Link to={`/admin/seo/compare-pages/${page.id}/preview`} target="_blank">
                         <Eye className="mr-2 h-4 w-4" />
                         Preview
                       </Link>
                     </Button>
+                    {page.status === "published" ? (
+                      <Button asChild variant="outline" className="rounded-full">
+                        <Link to={`/compare/${page.slug}`} target="_blank">
+                          Public page
+                        </Link>
+                      </Button>
+                    ) : null}
                     <Button
                       variant="outline"
                       className="rounded-full"
@@ -182,10 +228,15 @@ export function AdminComparePagesPage() {
                       <XCircle className="mr-2 h-4 w-4" />
                       Unpublish
                     </Button>
-                    <Button asChild variant="ghost" className="rounded-full text-blue-700">
-                      <a href={`/api/admin/seo/compare-pages/${page.id}`} target="_blank" rel="noreferrer">
-                        API <ArrowRight className="ml-2 h-4 w-4" />
-                      </a>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="rounded-full text-blue-700"
+                      onClick={() => openAuthenticatedApiJson(page)}
+                      disabled={Boolean(busy)}
+                      title={`${API_BASE_URL}/admin/seo/compare-pages/${page.id}`}
+                    >
+                      API <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -199,3 +250,145 @@ export function AdminComparePagesPage() {
 }
 
 export default AdminComparePagesPage;
+
+function adminPageFromPayload(payload: any): AdminComparePage | null {
+  if (payload?.data && typeof payload.data === "object") return payload.data;
+  return null;
+}
+
+export function AdminComparePagePreviewPage() {
+  const { id } = useParams();
+  const [page, setPage] = useState<AdminComparePage | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!id) {
+      setMessage("Missing compare page ID.");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    backendApi
+      .request(`/admin/seo/compare-pages/${id}`)
+      .then((payload) => {
+        const record = adminPageFromPayload(payload);
+        setPage(record);
+        setMessage(record ? "" : "Compare page not found.");
+      })
+      .catch((error) => setMessage(error?.message || "Unable to load compare preview."))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const rows = page?.comparison_table_json?.rows || [];
+  const summaries = page?.society_summaries_json || [];
+  const columns = page?.comparison_table_json?.columns || summaries.map((summary) => ({ id: summary.id, name: summary.name, slug: summary.slug }));
+
+  if (loading) {
+    return (
+      <AdminLayout title="Compare page preview" subtitle="Loading authenticated preview…">
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 text-slate-500">Loading compare page preview…</div>
+      </AdminLayout>
+    );
+  }
+
+  if (!page) {
+    return (
+      <AdminLayout title="Compare page preview" subtitle="The requested comparison could not be loaded.">
+        <div className="rounded-3xl border border-red-100 bg-white p-8 text-red-700">{message || "Compare page not found."}</div>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout
+      title="Compare page preview"
+      subtitle="Authenticated admin preview. Public visitors can only see this after publishing."
+    >
+      <div className="space-y-6">
+        <div className="rounded-[2rem] border border-[#dfded6] bg-[#F8F3EA] p-6 text-[#1f271f] shadow-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#153f2b]">{page.status}</span>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[#9a552e]">Quality {page.content_quality_score || 0}</span>
+          </div>
+          <h1 className="mt-5 font-serif text-4xl leading-tight text-[#19231c] md:text-6xl">{page.h1 || page.title}</h1>
+          <p className="mt-4 max-w-4xl text-lg leading-8 text-[#667064]">{page.intro || page.comparison_summary}</p>
+        </div>
+
+        <div className="rounded-[1.5rem] bg-[#143f2b] px-6 py-5 text-white">
+          <div className="flex flex-wrap gap-4">
+            <span className="text-sm font-bold uppercase tracking-[0.18em] text-[#a8d8b3]">AI summary</span>
+            {(page.best_for_json || []).map((item) => (
+              <span key={`${item.society}-${item.label}`}>
+                <strong>{item.label}:</strong> {item.society}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {summaries.map((society) => (
+            <div key={society.id} className="rounded-[1.75rem] border border-[#dfded6] bg-white p-5 shadow-sm">
+              <h2 className="font-serif text-2xl text-[#19231c]">{society.name}</h2>
+              <p className="mt-2 text-[#667064]">{society.sector || society.locality || "Gurgaon"} {society.builder ? `· ${society.builder}` : ""}</p>
+              <p className="mt-4 text-sm text-[#667064]">Rent: {society.rent_range || "Not enough verified data"}</p>
+              <p className="mt-1 text-sm text-[#667064]">Resale: {society.buy_range || "Not enough verified data"}</p>
+              <Button asChild variant="outline" className="mt-5 w-full rounded-full border-[#cfd8cc] bg-white">
+                <Link to={`/society/${society.slug}`} target="_blank">Open society</Link>
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        <div className="overflow-hidden rounded-[1.75rem] border border-[#dfded6] bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left">
+              <thead>
+                <tr className="border-b border-[#e6e1d6]">
+                  <th className="bg-[#f4f0e7] p-5 text-sm font-bold text-[#4e574e]">Comparison point</th>
+                  {columns.map((column) => (
+                    <th key={column.id} className="p-5 text-lg font-bold text-[#19231c]">{column.name}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.label} className="border-b border-[#e6e1d6] last:border-b-0">
+                    <td className="bg-[#f4f0e7] p-5 font-semibold text-[#4e574e]">{row.label}</td>
+                    {row.values.map((value, index) => (
+                      <td key={`${row.label}-${index}`} className="p-5 text-[#273127]">{String(value)}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <section className="rounded-[2rem] border border-[#dfded6] bg-white p-6">
+          <h2 className="font-serif text-3xl text-[#19231c]">Frequently asked questions</h2>
+          <div className="mt-5 divide-y divide-[#ece6dc]">
+            {(page.faq_json || []).map((faq) => (
+              <details key={faq.question} className="group py-4 first:pt-0" open>
+                <summary className="cursor-pointer list-none font-semibold text-[#19231c]">{faq.question}</summary>
+                <p className="mt-3 leading-7 text-[#667064]">{faq.answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        <div className="flex flex-wrap gap-3">
+          <Button asChild variant="outline" className="rounded-full">
+            <Link to="/admin/seo/compare-pages">Back to compare SEO admin</Link>
+          </Button>
+          {page.status === "published" ? (
+            <Button asChild className="rounded-full bg-[#153f2b] text-white hover:bg-[#0e2f20]">
+              <Link to={`/compare/${page.slug}`} target="_blank">Open public page</Link>
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </AdminLayout>
+  );
+}
