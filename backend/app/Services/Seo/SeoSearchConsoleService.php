@@ -38,7 +38,28 @@ class SeoSearchConsoleService
     {
         if(!$this->configured())return 0;
         $count=$this->import($this->queryApi($days,['date','page']));
-        return $count+$this->import($this->queryApi($days,['date','page','query']));
+        $count+=$this->import($this->queryApi($days,['date','page','query']));
+        $this->reconcileOpportunityTasks($days);
+        return $count;
+    }
+
+    /**
+     * GSC opportunity tasks were created but never resolved, so a page that fixed its CTR or
+     * climbed out of striking distance kept its task open forever. After each import, resolve
+     * any open gsc_* task whose page no longer qualifies in the fresh window — improvement is
+     * the closure signal.
+     */
+    public function reconcileOpportunityTasks(int $days=28): void
+    {
+        $since=now()->subDays($days)->startOfDay();
+
+        $stillLowCtr=SeoSearchConsoleMetric::where('metric_date','>=',$since)->whereNotNull('seo_page_id')
+            ->where('impressions','>=',100)->where('ctr','<',0.02)->pluck('seo_page_id')->unique()->all();
+        $stillStriking=SeoSearchConsoleMetric::where('metric_date','>=',$since)->whereNotNull('seo_page_id')
+            ->where('impressions','>=',20)->whereNotNull('position')->whereBetween('position',[4,20])->pluck('seo_page_id')->unique()->all();
+
+        SeoTask::where('status','open')->where('task_type','gsc_low_ctr')->whereNotIn('seo_page_id',$stillLowCtr)->update(['status'=>'resolved','resolved_at'=>now()]);
+        SeoTask::where('status','open')->where('task_type','gsc_striking_distance')->whereNotIn('seo_page_id',$stillStriking)->update(['status'=>'resolved','resolved_at'=>now()]);
     }
 
     private function queryApi(int $days,array $dimensions): array

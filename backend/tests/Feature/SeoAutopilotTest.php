@@ -477,6 +477,53 @@ class SeoAutopilotTest extends TestCase
         $this->assertDatabaseMissing('seo_tasks', ['seo_page_id' => $page->id, 'task_type' => 'audit_content_depth', 'status' => 'open']);
     }
 
+    public function test_gsc_opportunity_tasks_resolve_when_the_page_improves(): void
+    {
+        // gsc_low_ctr / gsc_striking_distance were created but never resolved — a page that
+        // fixed its CTR or climbed out of positions 4–20 kept its task open forever.
+        $improved=SeoPage::create(['page_key'=>'guide:improved','page_type'=>'guide','url'=>'/improved','canonical_url'=>'/improved','is_public'=>true,'is_indexable'=>true]);
+        $stillBad=SeoPage::create(['page_key'=>'guide:still-bad','page_type'=>'guide','url'=>'/still-bad','canonical_url'=>'/still-bad','is_public'=>true,'is_indexable'=>true]);
+
+        foreach([[$improved,'gsc_low_ctr'],[$improved,'gsc_striking_distance'],[$stillBad,'gsc_low_ctr']] as [$page,$type]){
+            SeoTask::create(['seo_page_id'=>$page->id,'task_type'=>$type,'status'=>'open','priority'=>'high','title'=>'t','description'=>'d','source'=>'search_console']);
+        }
+
+        // Fresh window: improved page now has healthy CTR + position 2; still-bad keeps low CTR.
+        \App\Models\SeoSearchConsoleMetric::create(['seo_page_id'=>$improved->id,'metric_date'=>now()->subDays(2),'page_url'=>'/improved','query'=>'q','clicks'=>30,'impressions'=>500,'ctr'=>0.06,'position'=>2.1]);
+        \App\Models\SeoSearchConsoleMetric::create(['seo_page_id'=>$stillBad->id,'metric_date'=>now()->subDays(2),'page_url'=>'/still-bad','query'=>'q','clicks'=>1,'impressions'=>400,'ctr'=>0.0025,'position'=>9.0]);
+
+        app(\App\Services\Seo\SeoSearchConsoleService::class)->reconcileOpportunityTasks();
+
+        $this->assertSame('resolved',SeoTask::where('seo_page_id',$improved->id)->where('task_type','gsc_low_ctr')->firstOrFail()->status);
+        $this->assertSame('resolved',SeoTask::where('seo_page_id',$improved->id)->where('task_type','gsc_striking_distance')->firstOrFail()->status);
+        $this->assertSame('open',SeoTask::where('seo_page_id',$stillBad->id)->where('task_type','gsc_low_ctr')->firstOrFail()->status,'A page that still qualifies must keep its task.');
+    }
+
+    public function test_insufficient_societies_task_resolves_when_landing_page_gains_societies(): void
+    {
+        $page=SeoPage::create(['page_key'=>'sector:test-84','page_type'=>'sector','url'=>'/gurgaon/test-84','canonical_url'=>'/gurgaon/test-84','is_public'=>true,'is_indexable'=>true,'title'=>'Best Societies in Sector 84, Gurgaon','meta_description'=>str_repeat('Verified societies with honest rent and resale context in Sector 84. ',2),'h1'=>'Best Societies in Sector 84','content_word_count'=>400,'internal_link_count'=>4,'image_alt_coverage'=>100,'schema_types'=>['WebPage'],'freshness_at'=>now(),'metadata'=>['sector'=>'Sector 84','approved_society_count'=>3,'has_cta'=>true,'heading_count'=>4]]);
+        SeoTask::create(['seo_page_id'=>$page->id,'task_type'=>'insufficient_approved_societies','status'=>'open','priority'=>'high','title'=>'t','description'=>'d','source'=>'generator']);
+
+        app(\App\Services\Seo\SeoAutopilotAuditService::class)->audit($page);
+
+        $this->assertSame('resolved',SeoTask::where('seo_page_id',$page->id)->where('task_type','insufficient_approved_societies')->firstOrFail()->status);
+    }
+
+    public function test_nightly_run_clears_orphaned_page_tasks_but_keeps_site_level_technical_ones(): void
+    {
+        // Registry cleanup can delete a stale page, nulling its tasks' page id — those can never
+        // be re-checked and must close. Site-level technical tasks (null page id by design) keep
+        // their own pass/fail lifecycle.
+        SeoAutomationSetting::create(['enabled'=>true,'audit_enabled'=>false,'technical_checks_enabled'=>false,'search_console_enabled'=>false,'keyword_refresh_enabled'=>false,'draft_generation_enabled'=>false,'reports_enabled'=>false,'auto_publish_enabled'=>false,'drafts_per_run'=>5,'timezone'=>'Asia/Kolkata','auto_publish_min_confidence'=>80]);
+        $orphan=SeoTask::create(['seo_page_id'=>null,'task_type'=>'gsc_low_ctr','status'=>'open','priority'=>'high','title'=>'t','description'=>'d','source'=>'search_console']);
+        $siteLevel=SeoTask::create(['seo_page_id'=>null,'task_type'=>'technical_robots_accessible','status'=>'open','priority'=>'critical','title'=>'t','description'=>'d','source'=>'technical']);
+
+        $this->admin()->postJson('/api/admin/seo-autopilot/automation/run')->assertOk();
+
+        $this->assertSame('resolved',$orphan->fresh()->status);
+        $this->assertSame('open',$siteLevel->fresh()->status);
+    }
+
     private function society(string $name,string $slug,string $sector='Sector 65'): Society
     {
         return Society::create(['name'=>$name,'slug'=>$slug,'builder'=>'Verified Builder','sector'=>$sector,'locality'=>$sector,'city'=>'Gurugram','state'=>'Haryana','description'=>'Verified society information for Gurgaon residents considering rent or resale homes.','status'=>'Verified','verification_status'=>'Verified','is_published'=>true,'published_at'=>now(),'score'=>8.2,'amenities'=>['Gym'],'image_alt_text'=>$name.' Gurgaon society']);

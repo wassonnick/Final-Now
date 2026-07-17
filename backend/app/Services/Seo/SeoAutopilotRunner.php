@@ -49,7 +49,9 @@ class SeoAutopilotRunner
         try {
             // Fill SEO content for published societies that lack it FIRST, so the sync + audit
             // that follow see the new content and auto-resolve those societies' tasks this cycle.
-            $summary['society_seo_published']=$this->autoCompleteSocietySeo((int)($settings->drafts_per_run ?: 12));
+            // Floor of 12/run: pre-existing settings rows still carry the old drafts_per_run=5
+            // default, which drained a 130+ society backlog far too slowly.
+            $summary['society_seo_published']=$this->autoCompleteSocietySeo(max(12,(int)$settings->drafts_per_run));
 
             $summary['pages_registered']=$this->registry->sync();
 
@@ -58,6 +60,13 @@ class SeoAutopilotRunner
                 $summary['pages_audited']=$audit['checked'];
                 $summary['average_score']=$audit['average_score'];
             }
+
+            // Registry cleanup can delete stale pages (nulling their tasks' page id via FK);
+            // page-scoped tasks without a page can never be re-checked, so close them instead
+            // of letting them sit open forever. Site-level technical_* tasks legitimately have
+            // no page id and keep their own pass/fail resolution.
+            $summary['orphan_tasks_cleared']=SeoTask::whereNull('seo_page_id')->where('status','open')
+                ->where('task_type','not like','technical%')->update(['status'=>'resolved','resolved_at'=>now()]);
             if($settings->technical_checks_enabled){
                 $technical=$this->technical->run();
                 $summary['technical_failures']=$technical['failed'];

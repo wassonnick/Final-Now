@@ -47,6 +47,10 @@ class SeoAutopilotAuditService
         foreach($missingData as $field)$this->task($page,'missing_data','medium','Verify missing '.str_replace('_',' ',$field),'A verified source is required before AI may make this claim.',['field'=>$field]);
         // Data arrived since the task was opened — close it automatically.
         if($missingData===[])SeoTask::where('seo_page_id',$page->id)->where('task_type','missing_data')->where('status','open')->update(['status'=>'resolved','resolved_at'=>now()]);
+        // Landing page gained enough approved societies since the generator blocked it.
+        if(in_array($page->page_type,['sector','builder'],true)&&(int)($meta['approved_society_count']??0)>=2){
+            SeoTask::where('seo_page_id',$page->id)->where('task_type','insufficient_approved_societies')->where('status','open')->update(['status'=>'resolved','resolved_at'=>now()]);
+        }
         return $audit;
     }
 
