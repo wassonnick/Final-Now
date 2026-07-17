@@ -1,39 +1,52 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1748" height="2480" viewBox="0 0 1748 2480" fill="none">
   <rect width="1748" height="2480" fill="#F8F3EA"/>
-  <rect width="1748" height="880" fill="#153F2B"/>
+  <rect width="1748" height="880" fill="#233B6E"/>
   <g transform="translate(140 130) scale(0.29296875)">
-  <rect width="512" height="512" rx="118" fill="#0E2F20"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#18254A"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="330" y="238" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="88" font-weight="600" fill="#F8F3EA">Society<tspan fill="#E6F4E9">Flats</tspan></text>
+  <text x="330" y="238" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="88" font-weight="600" fill="#F8F3EA">Society<tspan fill="#DCE6F7">Flats</tspan></text>
   <text x="144" y="470" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="104" font-weight="600" fill="#F8F3EA">Find the home by choosing</text>
-  <text x="144" y="590" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="104" font-weight="600" fill="#E6F4E9">the society first.</text>
-  <text x="146" y="720" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="40" font-weight="600" fill="#E6F4E9">Admin-verified societies · Real availability · No fake listings</text>
+  <text x="144" y="590" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="104" font-weight="600" fill="#DCE6F7">the society first.</text>
+  <text x="146" y="720" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="40" font-weight="600" fill="#DCE6F7">Admin-verified societies · Real availability · No fake listings</text>
   <g transform="translate(1310 620) scale(1.4)" opacity="0.92">
-    <rect x="0" y="72" width="52" height="150" rx="16" fill="#0E2F20"/>
-    <rect x="62" y="24" width="52" height="198" rx="16" fill="#0E2F20"/>
-    <rect x="124" y="96" width="52" height="126" rx="16" fill="#0E2F20"/>
-    <rect x="186" y="48" width="52" height="174" rx="16" fill="#0E2F20"/>
-    <rect x="77" y="44" width="22" height="22" rx="6" fill="#C8793F"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#B08A3E"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#18254A"/>
   </g>
-  <circle cx="190" cy="1080" r="16" fill="#C8793F"/>
-  <text x="240" y="1096" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#19231C">Verified society profiles</text>
-  <text x="240" y="1156" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#667064">Scores for connectivity, lifestyle, security — checked against published data.</text>
-  <circle cx="190" cy="1340" r="16" fill="#C8793F"/>
-  <text x="240" y="1356" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#19231C">Live verified homes</text>
-  <text x="240" y="1416" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#667064">Every listing reviewed against its society record before it goes live.</text>
-  <circle cx="190" cy="1600" r="16" fill="#C8793F"/>
-  <text x="240" y="1616" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#19231C">Compare before you visit</text>
-  <text x="240" y="1676" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#667064">3-way society comparisons with verified rent and resale ranges.</text>
-  <circle cx="190" cy="1860" r="16" fill="#C8793F"/>
-  <text x="240" y="1876" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#19231C">Human help on WhatsApp</text>
-  <text x="240" y="1936" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#667064">Real availability checks with owners and brokers — no spam.</text>
-  <rect x="140" y="2160" width="1468" height="180" rx="90" fill="#153F2B"/>
+  <circle cx="190" cy="1080" r="16" fill="#B08A3E"/>
+  <text x="240" y="1096" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#1C2434">Verified society profiles</text>
+  <text x="240" y="1156" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#6A7080">Scores for connectivity, lifestyle, security — checked against published data.</text>
+  <circle cx="190" cy="1340" r="16" fill="#B08A3E"/>
+  <text x="240" y="1356" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#1C2434">Live verified homes</text>
+  <text x="240" y="1416" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#6A7080">Every listing reviewed against its society record before it goes live.</text>
+  <circle cx="190" cy="1600" r="16" fill="#B08A3E"/>
+  <text x="240" y="1616" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#1C2434">Compare before you visit</text>
+  <text x="240" y="1676" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#6A7080">3-way society comparisons with verified rent and resale ranges.</text>
+  <circle cx="190" cy="1860" r="16" fill="#B08A3E"/>
+  <text x="240" y="1876" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#1C2434">Human help on WhatsApp</text>
+  <text x="240" y="1936" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#6A7080">Real availability checks with owners and brokers — no spam.</text>
+  <rect x="140" y="2160" width="1468" height="180" rx="90" fill="#233B6E"/>
   <text x="874" y="2238" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="48" font-weight="700" fill="#F8F3EA" text-anchor="middle">societyflats.com  ·  +91 99118 86222</text>
-  <text x="874" y="2300" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="600" fill="#E6F4E9" text-anchor="middle">WhatsApp us for verified availability today</text>
+  <text x="874" y="2300" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="600" fill="#DCE6F7" text-anchor="middle">WhatsApp us for verified availability today</text>
 </svg>

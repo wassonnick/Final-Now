@@ -10,17 +10,19 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 
 // ————— Brand tokens (matches the live product UI) —————
+// Palette follows the live homepage: navy headlines and CTAs, gold italic accent,
+// cream canvas. (Key names kept short; display names live in the guidelines.)
 export const C = {
-  estate: "#153F2B", // primary deep green
-  ink: "#19231C", // near-black text
+  estate: "#233B6E", // Ink Navy — primary. Tiles, headers, CTAs.
+  ink: "#1C2434", // near-navy black text
   cream: "#F8F3EA", // canvas
-  clay: "#C8793F", // accent — "the flat you find"
-  clayDeep: "#9A552E",
-  sage: "#DFDED6", // hairlines
-  leaf: "#E6F4E9", // success tint
-  forest: "#0E2F20", // hover/deep green
+  clay: "#B08A3E", // Brass Gold — the accent, "the flat you find"
+  clayDeep: "#8C6E2F", // gold for text on cream
+  sage: "#E3DFD3", // hairlines
+  leaf: "#DCE6F7", // Sky Tint — text/tints on navy
+  forest: "#18254A", // Midnight — hover/deep panels
   white: "#FFFFFF",
-  grey: "#667064", // secondary text
+  grey: "#6A7080", // secondary text
 };
 const SERIF = "Newsreader, Georgia, 'Times New Roman', serif";
 const SANS = "'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif";
@@ -28,24 +30,25 @@ const SITE = "societyflats.com";
 const PHONE = "+91 99118 86222";
 const TAGLINE = "Verified society homes in Gurgaon";
 
-// ————— The mark: three-tower skyline + clay window, in a rounded tile —————
-// Geometry lives in a 512×512 box. `tile:false` renders green towers for light
-// backgrounds; `tile:true` renders cream towers on the estate-green tile.
-function mark({ tile = true, towerFill, windowFill = C.clay, tileFill = C.estate } = {}) {
-  const towers = towerFill || (tile ? C.cream : C.estate);
-  // Side-tower windows use the background colour (cutouts) so the shapes read as
-  // buildings, not a bar chart; they vanish gracefully at favicon sizes. The single
-  // clay window stays the star — "the verified flat you find".
-  const cut = tile ? tileFill : C.cream;
-  return [
-    tile ? `<rect width="512" height="512" rx="118" fill="${tileFill}"/>` : "",
-    `<rect x="128" y="208" width="76" height="168" rx="22" fill="${towers}"/>`,
-    `<rect x="218" y="136" width="76" height="240" rx="22" fill="${towers}"/>`,
-    `<rect x="308" y="240" width="76" height="136" rx="22" fill="${towers}"/>`,
-    `<rect x="150" y="234" width="24" height="24" rx="7" fill="${cut}"/>`,
-    `<rect x="330" y="266" width="24" height="24" rx="7" fill="${cut}"/>`,
-    `<rect x="240" y="164" width="32" height="32" rx="9" fill="${windowFill}"/>`,
-  ].join("\n  ");
+// ————— The mark: a society facade — 3×3 window grid, one lit gold —————
+// Geometry lives in a 512×512 box. Nine homes in a facade; the single gold window
+// is the verified flat you find. `tile:true` renders cream windows on the navy
+// tile; `tile:false` renders navy windows for light backgrounds. mono:true keeps
+// every window one colour (single-ink printing).
+function mark({ tile = true, towerFill, windowFill = C.clay, tileFill = C.estate, mono = false } = {}) {
+  const windows = towerFill || (tile ? C.cream : C.estate);
+  const size = 76, gap = 32, start = (512 - (3 * size + 2 * gap)) / 2;
+  const cells = [];
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      const lit = ! mono && row === 1 && col === 2; // middle-right — the flat that's yours
+      // The bottom-centre cell is the door — taller, so the grid reads as a
+      // building facade rather than a keypad.
+      const door = row === 2 && col === 1;
+      cells.push(`<rect x="${start + col * (size + gap)}" y="${start + row * (size + gap)}" width="${size}" height="${door ? size + 34 : size}" rx="20" fill="${lit ? windowFill : windows}"/>`);
+    }
+  }
+  return [tile ? `<rect width="512" height="512" rx="118" fill="${tileFill}"/>` : "", ...cells].join("\n  ");
 }
 
 function svg(w, h, body, { unit = "" } = {}) {
@@ -75,9 +78,9 @@ const files = {};
 
 // ————— 1. Logo suite —————
 files["logo/mark-tile.svg"] = svg(512, 512, mark({ tile: true }));
-files["logo/mark-green.svg"] = svg(512, 512, mark({ tile: false }));
-files["logo/mark-mono-black.svg"] = svg(512, 512, mark({ tile: false, towerFill: "#000000", windowFill: "#000000" }));
-files["logo/mark-mono-white.svg"] = svg(512, 512, mark({ tile: false, towerFill: "#FFFFFF", windowFill: "#FFFFFF" }));
+files["logo/mark-on-cream.svg"] = svg(512, 512, mark({ tile: false }));
+files["logo/mark-mono-black.svg"] = svg(512, 512, mark({ tile: false, towerFill: "#000000", mono: true }));
+files["logo/mark-mono-white.svg"] = svg(512, 512, mark({ tile: false, towerFill: "#FFFFFF", mono: true }));
 files["logo/favicon.svg"] = svg(512, 512, mark({ tile: true }));
 
 // Horizontal lockup: tile mark + wordmark (+ optional tagline).
@@ -111,15 +114,17 @@ files["logo/stacked-light.svg"] = stacked({ dark: false });
 files["logo/stacked-dark.svg"] = stacked({ dark: true });
 
 // ————— 2. Social media —————
-// Shared decorative skyline strip (product motif) for banner right-edges.
+// Shared decorative facade strip (window-grid motif) for banner edges — echoes
+// the mark: rows of homes, one lit gold.
 function skylineStrip(x, y, scale, fill, windowFill) {
-  return `<g transform="translate(${x} ${y}) scale(${scale})" opacity="0.92">
-    <rect x="0" y="72" width="52" height="150" rx="16" fill="${fill}"/>
-    <rect x="62" y="24" width="52" height="198" rx="16" fill="${fill}"/>
-    <rect x="124" y="96" width="52" height="126" rx="16" fill="${fill}"/>
-    <rect x="186" y="48" width="52" height="174" rx="16" fill="${fill}"/>
-    <rect x="77" y="44" width="22" height="22" rx="6" fill="${windowFill}"/>
-  </g>`;
+  const cells = [];
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 5; col++) {
+      const lit = row === 1 && col === 3;
+      cells.push(`<rect x="${col * 62}" y="${row * 62}" width="42" height="42" rx="12" fill="${lit ? windowFill : fill}"/>`);
+    }
+  }
+  return `<g transform="translate(${x} ${y}) scale(${scale})" opacity="0.92">\n    ${cells.join("\n    ")}\n  </g>`;
 }
 
 // OG / link-share image 1200×630 (also the default social card).
@@ -325,27 +330,27 @@ figcaption span{color:${C.grey};font-family:ui-monospace,monospace;font-size:12p
 </style></head><body>
 <header><h1>SocietyFlats — Brand Guidelines</h1><p>${TAGLINE}. Premium, verified, product-first. Every asset on this page is generated from <code>brand-kit/generate.mjs</code> — change the tokens, regenerate, and the whole kit stays consistent.</p></header>
 <main>
-<section><h2>Colour</h2><p class="note">Deep Estate Green carries trust and premium calm; Cream is the canvas; Clay is reserved for the single accent — the verified flat, the CTA, never decoration everywhere. Never place Clay text on Estate Green.</p>
+<section><h2>Colour</h2><p class="note">Ink Navy carries the trust and the headlines — exactly as the live homepage does; Cream is the canvas; Brass Gold is reserved for the single accent — the verified flat, the italic emphasis, one per layout. Never set gold text on navy at small sizes.</p>
 <div class="swatches">
-${swatch(C.estate, "Estate Green", "Primary. Tiles, headers, CTAs.")}
-${swatch(C.forest, "Forest", "Hover states, panels on green.")}
+${swatch(C.estate, "Ink Navy", "Primary. Tiles, headers, CTAs.")}
+${swatch(C.forest, "Midnight", "Hover states, panels on navy.")}
 ${swatch(C.ink, "Ink", "Headlines and body text.")}
 ${swatch(C.cream, "Cream", "Background canvas everywhere.")}
-${swatch(C.clay, "Clay", "The accent. One per layout.")}
-${swatch(C.clayDeep, "Deep Clay", "Clay text on cream.")}
-${swatch(C.leaf, "Leaf", "Success tints, text on green.")}
-${swatch(C.sage, "Sage", "Hairlines and card borders.")}
+${swatch(C.clay, "Brass Gold", "The accent. One per layout.")}
+${swatch(C.clayDeep, "Deep Brass", "Gold text on cream.")}
+${swatch(C.leaf, "Sky Tint", "Tints and text on navy.")}
+${swatch(C.sage, "Sand", "Hairlines and card borders.")}
 </div></section>
 <section><h2>Typography</h2><p class="note">Newsreader (serif) for display and headlines — editorial, premium, human. Hanken Grotesk for UI, labels and body. Both are free Google Fonts (OFL licence) — install them before producing print files.</p>
 <div class="type-card"><div class="serif">Find the home by choosing the society first.</div><div class="sans">Hanken Grotesk carries the interface: labels, buttons, numbers, captions — 400/600/700/800. Uppercase labels get +5% letter-spacing.</div></div></section>
-${section("The mark", "Three towers on an Estate Green tile; the single clay window is the verified flat you find. Clear space: keep a margin of half the tile's width on all sides. Never recolour, outline, rotate or add effects.", [["logo/mark-tile.svg", "Primary mark (tile)", 240], ["logo/mark-green.svg", "Mark on cream", 240], ["logo/mark-mono-black.svg", "Mono black", 200], ["logo/mark-mono-white.svg", "Mono white — dark surfaces only", 200, true]])}
+${section("The mark", "A society facade on an Ink Navy tile — nine homes, one lit Brass Gold: the verified flat you find. Clear space: keep a margin of half the tile's width on all sides. Never recolour, outline, rotate or add effects.", [["logo/mark-tile.svg", "Primary mark (tile)", 240], ["logo/mark-on-cream.svg", "Mark on cream", 240], ["logo/mark-mono-black.svg", "Mono black", 200], ["logo/mark-mono-white.svg", "Mono white — dark surfaces only", 200, true]])}
 ${section("Lockups", "Horizontal is the default. Stacked for square placements (profiles, stamps). Use the dark variants only on Estate Green or photography dark enough to hold cream text.", [["logo/horizontal-light.svg", "Horizontal — light", 640], ["logo/horizontal-tagline-light.svg", "Horizontal + tagline", 640], ["logo/horizontal-dark.svg", "Horizontal — dark", 640], ["logo/stacked-light.svg", "Stacked — light", 420], ["logo/stacked-dark.svg", "Stacked — dark", 420]])}
 ${section("Social", "Sized to each platform's current spec with safe areas respected. Photo/video zones are placeholders — drop real society photography (verified societies only) and keep one clay CTA per layout.", [["social/og-image.svg", "Link share / OG · 1200×630", 640], ["social/facebook-cover.svg", "Facebook cover · 1640×624", 640], ["social/x-header.svg", "X header · 1500×500", 640], ["social/linkedin-company-banner.svg", "LinkedIn company · 1128×191", 640], ["social/linkedin-personal-banner.svg", "LinkedIn founder · 1584×396", 640], ["social/youtube-banner.svg", "YouTube · 2560×1440 (safe centre)", 640], ["social/profile-picture.svg", "Profile picture · 1000×1000", 300], ["social/instagram-post-template.svg", "Instagram post template · 1080", 460], ["social/instagram-story-template.svg", "Instagram story template · 1080×1920", 340]])}
 ${section("Print", "Built at 300dpi equivalents. Business card includes 0.125in bleed on every edge — give printers the SVG/PDF export and this page. Print in CMYK: Estate Green ≈ C85 M45 Y70 K45, Clay ≈ C15 M55 Y80 K5.", [["print/business-card-front.svg", "Business card — front · 3.5×2in + bleed", 560], ["print/business-card-back.svg", "Business card — back", 560], ["print/letterhead-a4.svg", "Letterhead · A4", 460], ["print/flyer-a5.svg", "Flyer · A5", 420]])}
 <section><h2>Rules</h2><ul class="rules">
 <li><strong>Voice:</strong> a knowledgeable local friend — warm, specific, honest. No hype, no exclamation marks, no "luxury living at its finest".</li>
 <li><strong>Claims:</strong> only verified data. "Admin-verified" and "no fake inventory" are the brand promise — never dilute them with unverifiable claims.</li>
-<li><strong>One clay accent per layout</strong> — the CTA or the key fact. If everything is clay, nothing is.</li>
+<li><strong>One gold accent per layout</strong> — the CTA or the key fact. If everything is gold, nothing is.</li>
 <li><strong>Photography:</strong> real societies, daylight, uncluttered. Never stock towers that aren't ours to show.</li>
 <li><strong>Minimum mark size:</strong> 24px digital / 8mm print. Below that, use the tile mark alone, never the lockups.</li>
 <li><strong>Backgrounds:</strong> cream or white for light layouts; Estate Green for dark. Never place the mark on busy photography without the tile.</li>

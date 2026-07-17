@@ -3,469 +3,635 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap');
 *{margin:0;box-sizing:border-box}
-body{font-family:'Hanken Grotesk',system-ui,sans-serif;background:#F8F3EA;color:#19231C;padding:0 0 80px}
-header{background:#153F2B;color:#F8F3EA;padding:64px 6vw 56px}
+body{font-family:'Hanken Grotesk',system-ui,sans-serif;background:#F8F3EA;color:#1C2434;padding:0 0 80px}
+header{background:#233B6E;color:#F8F3EA;padding:64px 6vw 56px}
 header h1{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:clamp(34px,5vw,56px)}
-header p{margin-top:10px;color:#E6F4E9;font-size:17px;max-width:640px}
+header p{margin-top:10px;color:#DCE6F7;font-size:17px;max-width:640px}
 main{padding:0 6vw}
 section{margin-top:56px}
 h2{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:30px}
-.note{margin:8px 0 20px;color:#667064;max-width:720px;line-height:1.55}
+.note{margin:8px 0 20px;color:#6A7080;max-width:720px;line-height:1.55}
 .grid{display:flex;flex-wrap:wrap;gap:24px}
-.asset{background:#fff;border:1px solid #DFDED6;border-radius:20px;padding:20px;flex:1 1 320px;max-width:640px}
-.asset.dark{background:#0E2F20}
+.asset{background:#fff;border:1px solid #E3DFD3;border-radius:20px;padding:20px;flex:1 1 320px;max-width:640px}
+.asset.dark{background:#18254A}
 .asset .art{margin:0 auto}
 figcaption{display:flex;justify-content:space-between;gap:12px;margin-top:14px;font-size:13.5px}
 .asset.dark figcaption{color:#F8F3EA}
-figcaption span{color:#667064;font-family:ui-monospace,monospace;font-size:12px}
+figcaption span{color:#6A7080;font-family:ui-monospace,monospace;font-size:12px}
 .swatches{display:flex;flex-wrap:wrap;gap:18px}
-.swatch{background:#fff;border:1px solid #DFDED6;border-radius:16px;padding:14px;width:190px;font-size:13.5px;display:grid;gap:4px}
+.swatch{background:#fff;border:1px solid #E3DFD3;border-radius:16px;padding:14px;width:190px;font-size:13.5px;display:grid;gap:4px}
 .chip{height:74px;border-radius:10px;border:1px solid rgba(0,0,0,.06)}
-.swatch code{color:#667064}
-.swatch span{color:#667064;line-height:1.4}
-.rules{columns:2;gap:36px;max-width:1000px;color:#19231C;line-height:1.65;font-size:15px}
+.swatch code{color:#6A7080}
+.swatch span{color:#6A7080;line-height:1.4}
+.rules{columns:2;gap:36px;max-width:1000px;color:#1C2434;line-height:1.65;font-size:15px}
 .rules li{break-inside:avoid;margin-bottom:10px}
-.type-card{background:#fff;border:1px solid #DFDED6;border-radius:20px;padding:26px;max-width:760px}
+.type-card{background:#fff;border:1px solid #E3DFD3;border-radius:20px;padding:26px;max-width:760px}
 .type-card .serif{font-family:Newsreader,Georgia,serif;font-size:40px;font-weight:600}
-.type-card .sans{font-size:17px;margin-top:10px;color:#667064}
+.type-card .sans{font-size:17px;margin-top:10px;color:#6A7080}
 </style></head><body>
 <header><h1>SocietyFlats — Brand Guidelines</h1><p>Verified society homes in Gurgaon. Premium, verified, product-first. Every asset on this page is generated from <code>brand-kit/generate.mjs</code> — change the tokens, regenerate, and the whole kit stays consistent.</p></header>
 <main>
-<section><h2>Colour</h2><p class="note">Deep Estate Green carries trust and premium calm; Cream is the canvas; Clay is reserved for the single accent — the verified flat, the CTA, never decoration everywhere. Never place Clay text on Estate Green.</p>
+<section><h2>Colour</h2><p class="note">Ink Navy carries the trust and the headlines — exactly as the live homepage does; Cream is the canvas; Brass Gold is reserved for the single accent — the verified flat, the italic emphasis, one per layout. Never set gold text on navy at small sizes.</p>
 <div class="swatches">
-<div class="swatch"><div class="chip" style="background:#153F2B"></div><strong>Estate Green</strong><code>#153F2B</code><span>Primary. Tiles, headers, CTAs.</span></div>
-<div class="swatch"><div class="chip" style="background:#0E2F20"></div><strong>Forest</strong><code>#0E2F20</code><span>Hover states, panels on green.</span></div>
-<div class="swatch"><div class="chip" style="background:#19231C"></div><strong>Ink</strong><code>#19231C</code><span>Headlines and body text.</span></div>
+<div class="swatch"><div class="chip" style="background:#233B6E"></div><strong>Ink Navy</strong><code>#233B6E</code><span>Primary. Tiles, headers, CTAs.</span></div>
+<div class="swatch"><div class="chip" style="background:#18254A"></div><strong>Midnight</strong><code>#18254A</code><span>Hover states, panels on navy.</span></div>
+<div class="swatch"><div class="chip" style="background:#1C2434"></div><strong>Ink</strong><code>#1C2434</code><span>Headlines and body text.</span></div>
 <div class="swatch"><div class="chip" style="background:#F8F3EA"></div><strong>Cream</strong><code>#F8F3EA</code><span>Background canvas everywhere.</span></div>
-<div class="swatch"><div class="chip" style="background:#C8793F"></div><strong>Clay</strong><code>#C8793F</code><span>The accent. One per layout.</span></div>
-<div class="swatch"><div class="chip" style="background:#9A552E"></div><strong>Deep Clay</strong><code>#9A552E</code><span>Clay text on cream.</span></div>
-<div class="swatch"><div class="chip" style="background:#E6F4E9"></div><strong>Leaf</strong><code>#E6F4E9</code><span>Success tints, text on green.</span></div>
-<div class="swatch"><div class="chip" style="background:#DFDED6"></div><strong>Sage</strong><code>#DFDED6</code><span>Hairlines and card borders.</span></div>
+<div class="swatch"><div class="chip" style="background:#B08A3E"></div><strong>Brass Gold</strong><code>#B08A3E</code><span>The accent. One per layout.</span></div>
+<div class="swatch"><div class="chip" style="background:#8C6E2F"></div><strong>Deep Brass</strong><code>#8C6E2F</code><span>Gold text on cream.</span></div>
+<div class="swatch"><div class="chip" style="background:#DCE6F7"></div><strong>Sky Tint</strong><code>#DCE6F7</code><span>Tints and text on navy.</span></div>
+<div class="swatch"><div class="chip" style="background:#E3DFD3"></div><strong>Sand</strong><code>#E3DFD3</code><span>Hairlines and card borders.</span></div>
 </div></section>
 <section><h2>Typography</h2><p class="note">Newsreader (serif) for display and headlines — editorial, premium, human. Hanken Grotesk for UI, labels and body. Both are free Google Fonts (OFL licence) — install them before producing print files.</p>
 <div class="type-card"><div class="serif">Find the home by choosing the society first.</div><div class="sans">Hanken Grotesk carries the interface: labels, buttons, numbers, captions — 400/600/700/800. Uppercase labels get +5% letter-spacing.</div></div></section>
-<section><h2>The mark</h2><p class="note">Three towers on an Estate Green tile; the single clay window is the verified flat you find. Clear space: keep a margin of half the tile's width on all sides. Never recolour, outline, rotate or add effects.</p><div class="grid"><figure class="asset"><div class="art" style="max-width:240px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
-  <rect width="512" height="512" rx="118" fill="#153F2B"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+<section><h2>The mark</h2><p class="note">A society facade on an Ink Navy tile — nine homes, one lit Brass Gold: the verified flat you find. Clear space: keep a margin of half the tile's width on all sides. Never recolour, outline, rotate or add effects.</p><div class="grid"><figure class="asset"><div class="art" style="max-width:240px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="118" fill="#233B6E"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
 </svg>
 </div><figcaption><strong>Primary mark (tile)</strong><span>logo/mark-tile.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:240px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
   
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#153F2B"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#153F2B"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#153F2B"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#F8F3EA"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#F8F3EA"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#233B6E"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#233B6E"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#233B6E"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#233B6E"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#233B6E"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#233B6E"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#233B6E"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#233B6E"/>
 </svg>
-</div><figcaption><strong>Mark on cream</strong><span>logo/mark-green.svg</span></figcaption></figure>
+</div><figcaption><strong>Mark on cream</strong><span>logo/mark-on-cream.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:200px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
   
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#000000"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#000000"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#000000"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#F8F3EA"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#F8F3EA"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#000000"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#000000"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#000000"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#000000"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#000000"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#000000"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#000000"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#000000"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#000000"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#000000"/>
 </svg>
 </div><figcaption><strong>Mono black</strong><span>logo/mark-mono-black.svg</span></figcaption></figure>
 <figure class="asset dark"><div class="art" style="max-width:200px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
   
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#FFFFFF"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#FFFFFF"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#FFFFFF"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#F8F3EA"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#F8F3EA"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#FFFFFF"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
 </svg>
 </div><figcaption><strong>Mono white — dark surfaces only</strong><span>logo/mark-mono-white.svg</span></figcaption></figure></div></section>
 <section><h2>Lockups</h2><p class="note">Horizontal is the default. Stacked for square placements (profiles, stamps). Use the dark variants only on Estate Green or photography dark enough to hold cream text.</p><div class="grid"><figure class="asset"><div class="art" style="max-width:640px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" fill="none">
   <g transform="translate(40 56) scale(0.40625)">
-  <rect width="512" height="512" rx="118" fill="#153F2B"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#233B6E"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="292" y="202" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="128" font-weight="600" fill="#19231C">Society<tspan fill="#153F2B">Flats</tspan></text>
+  <text x="292" y="202" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="128" font-weight="600" fill="#1C2434">Society<tspan fill="#233B6E">Flats</tspan></text>
 </svg>
 </div><figcaption><strong>Horizontal — light</strong><span>logo/horizontal-light.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:640px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1320" height="320" viewBox="0 0 1320 320" fill="none">
   <g transform="translate(40 56) scale(0.40625)">
-  <rect width="512" height="512" rx="118" fill="#153F2B"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#233B6E"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="292" y="178" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="128" font-weight="600" fill="#19231C">Society<tspan fill="#153F2B">Flats</tspan></text>
-  <text x="296" y="236" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#9A552E" letter-spacing="6">VERIFIED SOCIETY HOMES IN GURGAON</text>
+  <text x="292" y="178" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="128" font-weight="600" fill="#1C2434">Society<tspan fill="#233B6E">Flats</tspan></text>
+  <text x="296" y="236" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#8C6E2F" letter-spacing="6">VERIFIED SOCIETY HOMES IN GURGAON</text>
 </svg>
 </div><figcaption><strong>Horizontal + tagline</strong><span>logo/horizontal-tagline-light.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:640px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" fill="none">
-  <rect width="1280" height="320" fill="#153F2B"/>
+  <rect width="1280" height="320" fill="#233B6E"/>
   <g transform="translate(40 56) scale(0.40625)">
-  <rect width="512" height="512" rx="118" fill="#0E2F20"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#18254A"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="292" y="202" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="128" font-weight="600" fill="#F8F3EA">Society<tspan fill="#E6F4E9">Flats</tspan></text>
+  <text x="292" y="202" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="128" font-weight="600" fill="#F8F3EA">Society<tspan fill="#DCE6F7">Flats</tspan></text>
 </svg>
 </div><figcaption><strong>Horizontal — dark</strong><span>logo/horizontal-dark.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:420px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="880" height="760" viewBox="0 0 880 760" fill="none">
   <g transform="translate(320 80) scale(0.46875)">
-  <rect width="512" height="512" rx="118" fill="#153F2B"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#233B6E"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="440" y="500" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="104" font-weight="600" text-anchor="middle" fill="#19231C">Society<tspan fill="#153F2B">Flats</tspan></text>
-  <text x="440" y="572" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="700" fill="#9A552E" letter-spacing="5.5" text-anchor="middle">VERIFIED SOCIETY HOMES IN GURGAON</text>
+  <text x="440" y="500" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="104" font-weight="600" text-anchor="middle" fill="#1C2434">Society<tspan fill="#233B6E">Flats</tspan></text>
+  <text x="440" y="572" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="700" fill="#8C6E2F" letter-spacing="5.5" text-anchor="middle">VERIFIED SOCIETY HOMES IN GURGAON</text>
 </svg>
 </div><figcaption><strong>Stacked — light</strong><span>logo/stacked-light.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:420px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="880" height="760" viewBox="0 0 880 760" fill="none">
-  <rect width="880" height="760" fill="#153F2B"/>
+  <rect width="880" height="760" fill="#233B6E"/>
   <g transform="translate(320 80) scale(0.46875)">
-  <rect width="512" height="512" rx="118" fill="#0E2F20"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#18254A"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="440" y="500" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="104" font-weight="600" text-anchor="middle" fill="#F8F3EA">Society<tspan fill="#E6F4E9">Flats</tspan></text>
-  <text x="440" y="572" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="700" fill="#E6F4E9" letter-spacing="5.5" text-anchor="middle">VERIFIED SOCIETY HOMES IN GURGAON</text>
+  <text x="440" y="500" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="104" font-weight="600" text-anchor="middle" fill="#F8F3EA">Society<tspan fill="#DCE6F7">Flats</tspan></text>
+  <text x="440" y="572" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="700" fill="#DCE6F7" letter-spacing="5.5" text-anchor="middle">VERIFIED SOCIETY HOMES IN GURGAON</text>
 </svg>
 </div><figcaption><strong>Stacked — dark</strong><span>logo/stacked-dark.svg</span></figcaption></figure></div></section>
 <section><h2>Social</h2><p class="note">Sized to each platform's current spec with safe areas respected. Photo/video zones are placeholders — drop real society photography (verified societies only) and keep one clay CTA per layout.</p><div class="grid"><figure class="asset"><div class="art" style="max-width:640px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
   <rect width="1200" height="630" fill="#F8F3EA"/>
-  <rect x="840" width="360" height="630" fill="#153F2B"/>
+  <rect x="840" width="360" height="630" fill="#233B6E"/>
   <g transform="translate(880 340) scale(1.15)" opacity="0.92">
-    <rect x="0" y="72" width="52" height="150" rx="16" fill="#F8F3EA"/>
-    <rect x="62" y="24" width="52" height="198" rx="16" fill="#F8F3EA"/>
-    <rect x="124" y="96" width="52" height="126" rx="16" fill="#F8F3EA"/>
-    <rect x="186" y="48" width="52" height="174" rx="16" fill="#F8F3EA"/>
-    <rect x="77" y="44" width="22" height="22" rx="6" fill="#C8793F"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#B08A3E"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#F8F3EA"/>
   </g>
   <g transform="translate(72 64) scale(0.234375)">
-  <rect width="512" height="512" rx="118" fill="#153F2B"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#233B6E"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="72" y="308" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="64" font-weight="600" fill="#19231C">Verified society homes</text>
-  <text x="72" y="386" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="64" font-weight="600" fill="#153F2B">in Gurgaon.</text>
-  <text x="72" y="470" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="600" fill="#667064">Society-first search · Admin-verified data · Real availability</text>
-  <text x="72" y="560" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="700" fill="#9A552E">societyflats.com   ·   +91 99118 86222</text>
+  <text x="72" y="308" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="64" font-weight="600" fill="#1C2434">Verified society homes</text>
+  <text x="72" y="386" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="64" font-weight="600" fill="#233B6E">in Gurgaon.</text>
+  <text x="72" y="470" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="600" fill="#6A7080">Society-first search · Admin-verified data · Real availability</text>
+  <text x="72" y="560" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="700" fill="#8C6E2F">societyflats.com   ·   +91 99118 86222</text>
 </svg>
 </div><figcaption><strong>Link share / OG · 1200×630</strong><span>social/og-image.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:640px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1640" height="624" viewBox="0 0 1640 624" fill="none">
-  <rect width="1640" height="624" fill="#153F2B"/>
+  <rect width="1640" height="624" fill="#233B6E"/>
   <g transform="translate(1390 330) scale(1)" opacity="0.92">
-    <rect x="0" y="72" width="52" height="150" rx="16" fill="#0E2F20"/>
-    <rect x="62" y="24" width="52" height="198" rx="16" fill="#0E2F20"/>
-    <rect x="124" y="96" width="52" height="126" rx="16" fill="#0E2F20"/>
-    <rect x="186" y="48" width="52" height="174" rx="16" fill="#0E2F20"/>
-    <rect x="77" y="44" width="22" height="22" rx="6" fill="#C8793F"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#B08A3E"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#18254A"/>
   </g>
   <g transform="translate(190 120) scale(0.25)">
-  <rect width="512" height="512" rx="118" fill="#0E2F20"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#18254A"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="352" y="212" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="88" font-weight="600" fill="#F8F3EA">Society<tspan fill="#E6F4E9">Flats</tspan></text>
+  <text x="352" y="212" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="88" font-weight="600" fill="#F8F3EA">Society<tspan fill="#DCE6F7">Flats</tspan></text>
   <text x="192" y="356" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="44" font-weight="500" fill="#F8F3EA">Every home verified against its society. No fake inventory.</text>
-  <text x="192" y="436" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#E6F4E9">societyflats.com  ·  +91 99118 86222  ·  WhatsApp us for verified availability</text>
+  <text x="192" y="436" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#DCE6F7">societyflats.com  ·  +91 99118 86222  ·  WhatsApp us for verified availability</text>
 </svg>
 </div><figcaption><strong>Facebook cover · 1640×624</strong><span>social/facebook-cover.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:640px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500" fill="none">
   <rect width="1500" height="500" fill="#F8F3EA"/>
-  <rect y="428" width="1500" height="72" fill="#153F2B"/>
+  <rect y="428" width="1500" height="72" fill="#233B6E"/>
   <g transform="translate(1200 150) scale(1.15)" opacity="0.92">
-    <rect x="0" y="72" width="52" height="150" rx="16" fill="#153F2B"/>
-    <rect x="62" y="24" width="52" height="198" rx="16" fill="#153F2B"/>
-    <rect x="124" y="96" width="52" height="126" rx="16" fill="#153F2B"/>
-    <rect x="186" y="48" width="52" height="174" rx="16" fill="#153F2B"/>
-    <rect x="77" y="44" width="22" height="22" rx="6" fill="#C8793F"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#B08A3E"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#233B6E"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#233B6E"/>
   </g>
   <g transform="translate(96 110) scale(0.234375)">
-  <rect width="512" height="512" rx="118" fill="#153F2B"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#233B6E"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="252" y="196" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="80" font-weight="600" fill="#19231C">Society<tspan fill="#153F2B">Flats</tspan></text>
-  <text x="98" y="300" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#9A552E" letter-spacing="6">VERIFIED SOCIETY HOMES IN GURGAON</text>
+  <text x="252" y="196" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="80" font-weight="600" fill="#1C2434">Society<tspan fill="#233B6E">Flats</tspan></text>
+  <text x="98" y="300" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#8C6E2F" letter-spacing="6">VERIFIED SOCIETY HOMES IN GURGAON</text>
   <text x="96" y="476" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="700" fill="#F8F3EA">societyflats.com</text>
 </svg>
 </div><figcaption><strong>X header · 1500×500</strong><span>social/x-header.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:640px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1128" height="191" viewBox="0 0 1128 191" fill="none">
-  <rect width="1128" height="191" fill="#153F2B"/>
+  <rect width="1128" height="191" fill="#233B6E"/>
   <g transform="translate(920 30) scale(0.72)" opacity="0.92">
-    <rect x="0" y="72" width="52" height="150" rx="16" fill="#0E2F20"/>
-    <rect x="62" y="24" width="52" height="198" rx="16" fill="#0E2F20"/>
-    <rect x="124" y="96" width="52" height="126" rx="16" fill="#0E2F20"/>
-    <rect x="186" y="48" width="52" height="174" rx="16" fill="#0E2F20"/>
-    <rect x="77" y="44" width="22" height="22" rx="6" fill="#C8793F"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#B08A3E"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#18254A"/>
   </g>
   <g transform="translate(48 40) scale(0.21484375)">
-  <rect width="512" height="512" rx="118" fill="#0E2F20"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#18254A"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="186" y="112" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#F8F3EA">Society<tspan fill="#E6F4E9">Flats</tspan></text>
-  <text x="188" y="156" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="600" fill="#E6F4E9">Verified society homes in Gurgaon</text>
+  <text x="186" y="112" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#F8F3EA">Society<tspan fill="#DCE6F7">Flats</tspan></text>
+  <text x="188" y="156" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="600" fill="#DCE6F7">Verified society homes in Gurgaon</text>
 </svg>
 </div><figcaption><strong>LinkedIn company · 1128×191</strong><span>social/linkedin-company-banner.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:640px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1584" height="396" viewBox="0 0 1584 396" fill="none">
   <rect width="1584" height="396" fill="#F8F3EA"/>
-  <rect x="1130" width="454" height="396" fill="#153F2B"/>
+  <rect x="1130" width="454" height="396" fill="#233B6E"/>
   <g transform="translate(1190 160) scale(1.15)" opacity="0.92">
-    <rect x="0" y="72" width="52" height="150" rx="16" fill="#F8F3EA"/>
-    <rect x="62" y="24" width="52" height="198" rx="16" fill="#F8F3EA"/>
-    <rect x="124" y="96" width="52" height="126" rx="16" fill="#F8F3EA"/>
-    <rect x="186" y="48" width="52" height="174" rx="16" fill="#F8F3EA"/>
-    <rect x="77" y="44" width="22" height="22" rx="6" fill="#C8793F"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#B08A3E"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#F8F3EA"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#F8F3EA"/>
   </g>
   <g transform="translate(90 90) scale(0.2109375)">
-  <rect width="512" height="512" rx="118" fill="#153F2B"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#233B6E"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="232" y="168" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="64" font-weight="600" fill="#19231C">Society<tspan fill="#153F2B">Flats</tspan></text>
-  <text x="92" y="266" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="34" font-weight="500" fill="#667064">Building Gurgaon's society-first, verified rental &amp; resale marketplace.</text>
-  <text x="92" y="330" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="700" fill="#9A552E">societyflats.com</text>
+  <text x="232" y="168" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="64" font-weight="600" fill="#1C2434">Society<tspan fill="#233B6E">Flats</tspan></text>
+  <text x="92" y="266" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="34" font-weight="500" fill="#6A7080">Building Gurgaon's society-first, verified rental &amp; resale marketplace.</text>
+  <text x="92" y="330" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="700" fill="#8C6E2F">societyflats.com</text>
 </svg>
 </div><figcaption><strong>LinkedIn founder · 1584×396</strong><span>social/linkedin-personal-banner.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:640px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="2560" height="1440" viewBox="0 0 2560 1440" fill="none">
-  <rect width="2560" height="1440" fill="#153F2B"/>
+  <rect width="2560" height="1440" fill="#233B6E"/>
   <g transform="translate(180 900) scale(2.4)" opacity="0.92">
-    <rect x="0" y="72" width="52" height="150" rx="16" fill="#0E2F20"/>
-    <rect x="62" y="24" width="52" height="198" rx="16" fill="#0E2F20"/>
-    <rect x="124" y="96" width="52" height="126" rx="16" fill="#0E2F20"/>
-    <rect x="186" y="48" width="52" height="174" rx="16" fill="#0E2F20"/>
-    <rect x="77" y="44" width="22" height="22" rx="6" fill="#0E2F20"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#18254A"/>
   </g>
   <g transform="translate(1900 880) scale(2.4)" opacity="0.92">
-    <rect x="0" y="72" width="52" height="150" rx="16" fill="#0E2F20"/>
-    <rect x="62" y="24" width="52" height="198" rx="16" fill="#0E2F20"/>
-    <rect x="124" y="96" width="52" height="126" rx="16" fill="#0E2F20"/>
-    <rect x="186" y="48" width="52" height="174" rx="16" fill="#0E2F20"/>
-    <rect x="77" y="44" width="22" height="22" rx="6" fill="#C8793F"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#B08A3E"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#18254A"/>
   </g>
   <g transform="translate(1120 430) scale(0.3125)">
-  <rect width="512" height="512" rx="118" fill="#0E2F20"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#18254A"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="1280" y="700" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="96" font-weight="600" text-anchor="middle" fill="#F8F3EA">Society<tspan fill="#E6F4E9">Flats</tspan></text>
-  <text x="1280" y="780" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#E6F4E9" letter-spacing="6" text-anchor="middle">VERIFIED SOCIETY HOMES IN GURGAON</text>
+  <text x="1280" y="700" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="96" font-weight="600" text-anchor="middle" fill="#F8F3EA">Society<tspan fill="#DCE6F7">Flats</tspan></text>
+  <text x="1280" y="780" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#DCE6F7" letter-spacing="6" text-anchor="middle">VERIFIED SOCIETY HOMES IN GURGAON</text>
   <text x="1280" y="850" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#F8F3EA" text-anchor="middle">societyflats.com</text>
 </svg>
 </div><figcaption><strong>YouTube · 2560×1440 (safe centre)</strong><span>social/youtube-banner.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:300px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000" fill="none">
-  <rect width="1000" height="1000" fill="#153F2B"/>
+  <rect width="1000" height="1000" fill="#233B6E"/>
   <g transform="translate(244 244) scale(1)">
   
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#F8F3EA"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#F8F3EA"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
 </svg>
 </div><figcaption><strong>Profile picture · 1000×1000</strong><span>social/profile-picture.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:460px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" fill="none">
   <rect width="1080" height="1080" fill="#F8F3EA"/>
-  <rect x="60" y="60" width="960" height="640" rx="36" fill="#DFDED6"/>
-  <text x="540" y="390" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#667064" text-anchor="middle">PHOTO ZONE — drop society/property image here</text>
-  <text x="64" y="806" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#19231C">Headline goes here — one clear</text>
-  <text x="64" y="874" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#153F2B">benefit, no hype.</text>
-  <rect x="60" y="932" width="430" height="76" rx="38" fill="#153F2B"/>
+  <rect x="60" y="60" width="960" height="640" rx="36" fill="#E3DFD3"/>
+  <text x="540" y="390" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#6A7080" text-anchor="middle">PHOTO ZONE — drop society/property image here</text>
+  <text x="64" y="806" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#1C2434">Headline goes here — one clear</text>
+  <text x="64" y="874" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#233B6E">benefit, no hype.</text>
+  <rect x="60" y="932" width="430" height="76" rx="38" fill="#233B6E"/>
   <text x="275" y="981" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#F8F3EA" text-anchor="middle">Check availability →</text>
   <g transform="translate(944 936) scale(0.140625)">
-  <rect width="512" height="512" rx="118" fill="#153F2B"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#233B6E"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="64" y="1048" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="600" fill="#667064">societyflats.com · +91 99118 86222</text>
+  <text x="64" y="1048" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="600" fill="#6A7080">societyflats.com · +91 99118 86222</text>
 </svg>
 </div><figcaption><strong>Instagram post template · 1080</strong><span>social/instagram-post-template.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:340px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" fill="none">
-  <rect width="1080" height="1920" fill="#153F2B"/>
-  <rect x="60" y="220" width="960" height="1060" rx="44" fill="#0E2F20"/>
-  <text x="540" y="760" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="700" fill="#E6F4E9" text-anchor="middle">PHOTO / VIDEO ZONE</text>
+  <rect width="1080" height="1920" fill="#233B6E"/>
+  <rect x="60" y="220" width="960" height="1060" rx="44" fill="#18254A"/>
+  <text x="540" y="760" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="700" fill="#DCE6F7" text-anchor="middle">PHOTO / VIDEO ZONE</text>
   <g transform="translate(60 72) scale(0.1875)">
-  <rect width="512" height="512" rx="118" fill="#0E2F20"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#18254A"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="184" y="138" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="52" font-weight="600" fill="#F8F3EA">Society<tspan fill="#E6F4E9">Flats</tspan></text>
+  <text x="184" y="138" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="52" font-weight="600" fill="#F8F3EA">Society<tspan fill="#DCE6F7">Flats</tspan></text>
   <text x="72" y="1420" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="66" font-weight="600" fill="#F8F3EA">Two-line story headline</text>
-  <text x="72" y="1498" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="66" font-weight="600" fill="#E6F4E9">with the key fact.</text>
-  <rect x="72" y="1580" width="500" height="88" rx="44" fill="#C8793F"/>
+  <text x="72" y="1498" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="66" font-weight="600" fill="#DCE6F7">with the key fact.</text>
+  <rect x="72" y="1580" width="500" height="88" rx="44" fill="#B08A3E"/>
   <text x="322" y="1636" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="700" fill="#FFFFFF" text-anchor="middle">WhatsApp us →</text>
-  <text x="72" y="1800" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#E6F4E9">societyflats.com · +91 99118 86222</text>
+  <text x="72" y="1800" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#DCE6F7">societyflats.com · +91 99118 86222</text>
 </svg>
 </div><figcaption><strong>Instagram story template · 1080×1920</strong><span>social/instagram-story-template.svg</span></figcaption></figure></div></section>
 <section><h2>Print</h2><p class="note">Built at 300dpi equivalents. Business card includes 0.125in bleed on every edge — give printers the SVG/PDF export and this page. Print in CMYK: Estate Green ≈ C85 M45 Y70 K45, Clay ≈ C15 M55 Y80 K5.</p><div class="grid"><figure class="asset"><div class="art" style="max-width:560px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1125" height="675" viewBox="0 0 1125 675" fill="none">
   <rect width="1125" height="675" fill="#F8F3EA"/>
   <g transform="translate(85 85) scale(0.29296875)">
-  <rect width="512" height="512" rx="118" fill="#153F2B"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#233B6E"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="272" y="188" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="84" font-weight="600" fill="#19231C">Society<tspan fill="#153F2B">Flats</tspan></text>
-  <text x="88" y="320" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="800" fill="#19231C" letter-spacing="4">NITIN WASSON</text>
-  <text x="88" y="368" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="600" fill="#667064">Founder</text>
-  <text x="88" y="480" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="700" fill="#19231C">+91 99118 86222</text>
-  <text x="88" y="530" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#667064">hello@societyflats.com</text>
-  <text x="88" y="580" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#9A552E">societyflats.com</text>
+  <text x="272" y="188" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="84" font-weight="600" fill="#1C2434">Society<tspan fill="#233B6E">Flats</tspan></text>
+  <text x="88" y="320" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="800" fill="#1C2434" letter-spacing="4">NITIN WASSON</text>
+  <text x="88" y="368" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="600" fill="#6A7080">Founder</text>
+  <text x="88" y="480" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="700" fill="#1C2434">+91 99118 86222</text>
+  <text x="88" y="530" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#6A7080">hello@societyflats.com</text>
+  <text x="88" y="580" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#8C6E2F">societyflats.com</text>
   <g transform="translate(830 400) scale(1)" opacity="0.92">
-    <rect x="0" y="72" width="52" height="150" rx="16" fill="#DFDED6"/>
-    <rect x="62" y="24" width="52" height="198" rx="16" fill="#DFDED6"/>
-    <rect x="124" y="96" width="52" height="126" rx="16" fill="#DFDED6"/>
-    <rect x="186" y="48" width="52" height="174" rx="16" fill="#DFDED6"/>
-    <rect x="77" y="44" width="22" height="22" rx="6" fill="#C8793F"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#B08A3E"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
   </g>
 </svg>
 </div><figcaption><strong>Business card — front · 3.5×2in + bleed</strong><span>print/business-card-front.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:560px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1125" height="675" viewBox="0 0 1125 675" fill="none">
-  <rect width="1125" height="675" fill="#153F2B"/>
+  <rect width="1125" height="675" fill="#233B6E"/>
   <g transform="translate(430 155) scale(0.517578125)">
-  <rect width="512" height="512" rx="118" fill="#0E2F20"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#18254A"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="562" y="520" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#E6F4E9" letter-spacing="5" text-anchor="middle">VERIFIED SOCIETY HOMES IN GURGAON</text>
+  <text x="562" y="520" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#DCE6F7" letter-spacing="5" text-anchor="middle">VERIFIED SOCIETY HOMES IN GURGAON</text>
 </svg>
 </div><figcaption><strong>Business card — back</strong><span>print/business-card-back.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:460px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="2480" height="3508" viewBox="0 0 2480 3508" fill="none">
   <rect width="2480" height="3508" fill="#FFFFFF"/>
-  <rect width="2480" height="24" fill="#153F2B"/>
+  <rect width="2480" height="24" fill="#233B6E"/>
   <g transform="translate(180 140) scale(0.33203125)">
-  <rect width="512" height="512" rx="118" fill="#153F2B"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#233B6E"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="392" y="262" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="96" font-weight="600" fill="#19231C">Society<tspan fill="#153F2B">Flats</tspan></text>
-  <text x="184" y="356" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#9A552E" letter-spacing="5">VERIFIED SOCIETY HOMES IN GURGAON</text>
-  <line x1="180" y1="420" x2="2300" y2="420" stroke="#DFDED6" stroke-width="3"/>
-  <text x="180" y="3330" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="600" fill="#667064">societyflats.com   ·   +91 99118 86222   ·   Gurugram, Haryana, India</text>
-  <line x1="180" y1="3260" x2="2300" y2="3260" stroke="#DFDED6" stroke-width="3"/>
+  <text x="392" y="262" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="96" font-weight="600" fill="#1C2434">Society<tspan fill="#233B6E">Flats</tspan></text>
+  <text x="184" y="356" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#8C6E2F" letter-spacing="5">VERIFIED SOCIETY HOMES IN GURGAON</text>
+  <line x1="180" y1="420" x2="2300" y2="420" stroke="#E3DFD3" stroke-width="3"/>
+  <text x="180" y="3330" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="600" fill="#6A7080">societyflats.com   ·   +91 99118 86222   ·   Gurugram, Haryana, India</text>
+  <line x1="180" y1="3260" x2="2300" y2="3260" stroke="#E3DFD3" stroke-width="3"/>
   <g transform="translate(2020 3300) scale(1)" opacity="0.92">
-    <rect x="0" y="72" width="52" height="150" rx="16" fill="#DFDED6"/>
-    <rect x="62" y="24" width="52" height="198" rx="16" fill="#DFDED6"/>
-    <rect x="124" y="96" width="52" height="126" rx="16" fill="#DFDED6"/>
-    <rect x="186" y="48" width="52" height="174" rx="16" fill="#DFDED6"/>
-    <rect x="77" y="44" width="22" height="22" rx="6" fill="#C8793F"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#B08A3E"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
   </g>
 </svg>
 </div><figcaption><strong>Letterhead · A4</strong><span>print/letterhead-a4.svg</span></figcaption></figure>
 <figure class="asset"><div class="art" style="max-width:420px"><svg style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" width="1748" height="2480" viewBox="0 0 1748 2480" fill="none">
   <rect width="1748" height="2480" fill="#F8F3EA"/>
-  <rect width="1748" height="880" fill="#153F2B"/>
+  <rect width="1748" height="880" fill="#233B6E"/>
   <g transform="translate(140 130) scale(0.29296875)">
-  <rect width="512" height="512" rx="118" fill="#0E2F20"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#18254A"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="330" y="238" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="88" font-weight="600" fill="#F8F3EA">Society<tspan fill="#E6F4E9">Flats</tspan></text>
+  <text x="330" y="238" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="88" font-weight="600" fill="#F8F3EA">Society<tspan fill="#DCE6F7">Flats</tspan></text>
   <text x="144" y="470" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="104" font-weight="600" fill="#F8F3EA">Find the home by choosing</text>
-  <text x="144" y="590" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="104" font-weight="600" fill="#E6F4E9">the society first.</text>
-  <text x="146" y="720" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="40" font-weight="600" fill="#E6F4E9">Admin-verified societies · Real availability · No fake listings</text>
+  <text x="144" y="590" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="104" font-weight="600" fill="#DCE6F7">the society first.</text>
+  <text x="146" y="720" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="40" font-weight="600" fill="#DCE6F7">Admin-verified societies · Real availability · No fake listings</text>
   <g transform="translate(1310 620) scale(1.4)" opacity="0.92">
-    <rect x="0" y="72" width="52" height="150" rx="16" fill="#0E2F20"/>
-    <rect x="62" y="24" width="52" height="198" rx="16" fill="#0E2F20"/>
-    <rect x="124" y="96" width="52" height="126" rx="16" fill="#0E2F20"/>
-    <rect x="186" y="48" width="52" height="174" rx="16" fill="#0E2F20"/>
-    <rect x="77" y="44" width="22" height="22" rx="6" fill="#C8793F"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#B08A3E"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#18254A"/>
   </g>
-  <circle cx="190" cy="1080" r="16" fill="#C8793F"/>
-  <text x="240" y="1096" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#19231C">Verified society profiles</text>
-  <text x="240" y="1156" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#667064">Scores for connectivity, lifestyle, security — checked against published data.</text>
-  <circle cx="190" cy="1340" r="16" fill="#C8793F"/>
-  <text x="240" y="1356" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#19231C">Live verified homes</text>
-  <text x="240" y="1416" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#667064">Every listing reviewed against its society record before it goes live.</text>
-  <circle cx="190" cy="1600" r="16" fill="#C8793F"/>
-  <text x="240" y="1616" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#19231C">Compare before you visit</text>
-  <text x="240" y="1676" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#667064">3-way society comparisons with verified rent and resale ranges.</text>
-  <circle cx="190" cy="1860" r="16" fill="#C8793F"/>
-  <text x="240" y="1876" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#19231C">Human help on WhatsApp</text>
-  <text x="240" y="1936" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#667064">Real availability checks with owners and brokers — no spam.</text>
-  <rect x="140" y="2160" width="1468" height="180" rx="90" fill="#153F2B"/>
+  <circle cx="190" cy="1080" r="16" fill="#B08A3E"/>
+  <text x="240" y="1096" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#1C2434">Verified society profiles</text>
+  <text x="240" y="1156" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#6A7080">Scores for connectivity, lifestyle, security — checked against published data.</text>
+  <circle cx="190" cy="1340" r="16" fill="#B08A3E"/>
+  <text x="240" y="1356" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#1C2434">Live verified homes</text>
+  <text x="240" y="1416" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#6A7080">Every listing reviewed against its society record before it goes live.</text>
+  <circle cx="190" cy="1600" r="16" fill="#B08A3E"/>
+  <text x="240" y="1616" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#1C2434">Compare before you visit</text>
+  <text x="240" y="1676" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#6A7080">3-way society comparisons with verified rent and resale ranges.</text>
+  <circle cx="190" cy="1860" r="16" fill="#B08A3E"/>
+  <text x="240" y="1876" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="60" font-weight="600" fill="#1C2434">Human help on WhatsApp</text>
+  <text x="240" y="1936" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="500" fill="#6A7080">Real availability checks with owners and brokers — no spam.</text>
+  <rect x="140" y="2160" width="1468" height="180" rx="90" fill="#233B6E"/>
   <text x="874" y="2238" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="48" font-weight="700" fill="#F8F3EA" text-anchor="middle">societyflats.com  ·  +91 99118 86222</text>
-  <text x="874" y="2300" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="600" fill="#E6F4E9" text-anchor="middle">WhatsApp us for verified availability today</text>
+  <text x="874" y="2300" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="600" fill="#DCE6F7" text-anchor="middle">WhatsApp us for verified availability today</text>
 </svg>
 </div><figcaption><strong>Flyer · A5</strong><span>print/flyer-a5.svg</span></figcaption></figure></div></section>
 <section><h2>Rules</h2><ul class="rules">
 <li><strong>Voice:</strong> a knowledgeable local friend — warm, specific, honest. No hype, no exclamation marks, no "luxury living at its finest".</li>
 <li><strong>Claims:</strong> only verified data. "Admin-verified" and "no fake inventory" are the brand promise — never dilute them with unverifiable claims.</li>
-<li><strong>One clay accent per layout</strong> — the CTA or the key fact. If everything is clay, nothing is.</li>
+<li><strong>One gold accent per layout</strong> — the CTA or the key fact. If everything is gold, nothing is.</li>
 <li><strong>Photography:</strong> real societies, daylight, uncluttered. Never stock towers that aren't ours to show.</li>
 <li><strong>Minimum mark size:</strong> 24px digital / 8mm print. Below that, use the tile mark alone, never the lockups.</li>
 <li><strong>Backgrounds:</strong> cream or white for light layouts; Estate Green for dark. Never place the mark on busy photography without the tile.</li>

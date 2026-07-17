@@ -1,20 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" fill="none">
-  <rect width="1080" height="1920" fill="#153F2B"/>
-  <rect x="60" y="220" width="960" height="1060" rx="44" fill="#0E2F20"/>
-  <text x="540" y="760" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="700" fill="#E6F4E9" text-anchor="middle">PHOTO / VIDEO ZONE</text>
+  <rect width="1080" height="1920" fill="#233B6E"/>
+  <rect x="60" y="220" width="960" height="1060" rx="44" fill="#18254A"/>
+  <text x="540" y="760" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="700" fill="#DCE6F7" text-anchor="middle">PHOTO / VIDEO ZONE</text>
   <g transform="translate(60 72) scale(0.1875)">
-  <rect width="512" height="512" rx="118" fill="#0E2F20"/>
-  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
-  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
-  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
-  <rect x="150" y="234" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="330" y="266" width="24" height="24" rx="7" fill="#0E2F20"/>
-  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  <rect width="512" height="512" rx="118" fill="#18254A"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="184" y="138" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="52" font-weight="600" fill="#F8F3EA">Society<tspan fill="#E6F4E9">Flats</tspan></text>
+  <text x="184" y="138" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="52" font-weight="600" fill="#F8F3EA">Society<tspan fill="#DCE6F7">Flats</tspan></text>
   <text x="72" y="1420" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="66" font-weight="600" fill="#F8F3EA">Two-line story headline</text>
-  <text x="72" y="1498" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="66" font-weight="600" fill="#E6F4E9">with the key fact.</text>
-  <rect x="72" y="1580" width="500" height="88" rx="44" fill="#C8793F"/>
+  <text x="72" y="1498" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="66" font-weight="600" fill="#DCE6F7">with the key fact.</text>
+  <rect x="72" y="1580" width="500" height="88" rx="44" fill="#B08A3E"/>
   <text x="322" y="1636" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="700" fill="#FFFFFF" text-anchor="middle">WhatsApp us →</text>
-  <text x="72" y="1800" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#E6F4E9">societyflats.com · +91 99118 86222</text>
+  <text x="72" y="1800" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#DCE6F7">societyflats.com · +91 99118 86222</text>
 </svg>

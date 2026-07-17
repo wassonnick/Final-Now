@@ -25,8 +25,8 @@ from Google Fonts so you see the real faces.
 
 - **Uploading to platforms:** use the PNGs in `png/` — platforms don't accept SVG.
 - **Print shops:** hand over the SVGs (vector, any size) plus this note:
-  CMYK approximations — Estate Green `#153F2B` ≈ C85 M45 Y70 K45,
-  Clay `#C8793F` ≈ C15 M55 Y80 K5. Fonts: Newsreader + Hanken Grotesk
+  CMYK approximations — Ink Navy `#233B6E` ≈ C90 M75 Y25 K10,
+  Brass Gold `#B08A3E` ≈ C30 M42 Y90 K10. Fonts: Newsreader + Hanken Grotesk
   (free on Google Fonts, OFL licence) — install before export.
 - **Regenerating PNGs (macOS):** `qlmanage -t -s <size> -o out file.svg`
   then `sips -z <h> <w>` for exact dimensions.
@@ -36,6 +36,6 @@ from Google Fonts so you see the real faces.
 
 ## The mark, in one sentence
 
-Three towers on an Estate Green tile; the single clay window is the verified
-flat you find — never recolour, outline, rotate, or place on busy photography
-without the tile.
+A society facade on an Ink Navy tile — nine homes, one lit Brass Gold: the
+verified flat you find — never recolour, outline, rotate, or place on busy
+photography without the tile.
