@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2480" height="3508" viewBox="0 0 2480 3508" fill="none">
+  <rect width="2480" height="3508" fill="#FFFFFF"/>
+  <rect width="2480" height="24" fill="#153F2B"/>
+  <g transform="translate(180 140) scale(0.33203125)">
+  <rect width="512" height="512" rx="118" fill="#153F2B"/>
+  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
+  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
+  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
+  <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
+  <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
+  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  </g>
+  <text x="392" y="262" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="96" font-weight="600" fill="#19231C">Society<tspan fill="#153F2B">Flats</tspan></text>
+  <text x="184" y="356" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#9A552E" letter-spacing="5">VERIFIED SOCIETY HOMES IN GURGAON</text>
+  <line x1="180" y1="420" x2="2300" y2="420" stroke="#DFDED6" stroke-width="3"/>
+  <text x="180" y="3330" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="600" fill="#667064">societyflats.com   ·   +91 99118 86222   ·   Gurugram, Haryana, India</text>
+  <line x1="180" y1="3260" x2="2300" y2="3260" stroke="#DFDED6" stroke-width="3"/>
+  <g transform="translate(2020 3300) scale(1)" opacity="0.92">
+    <rect x="0" y="72" width="52" height="150" rx="16" fill="#DFDED6"/>
+    <rect x="62" y="24" width="52" height="198" rx="16" fill="#DFDED6"/>
+    <rect x="124" y="96" width="52" height="126" rx="16" fill="#DFDED6"/>
+    <rect x="186" y="48" width="52" height="174" rx="16" fill="#DFDED6"/>
+    <rect x="77" y="44" width="22" height="22" rx="6" fill="#C8793F"/>
+  </g>
+</svg>

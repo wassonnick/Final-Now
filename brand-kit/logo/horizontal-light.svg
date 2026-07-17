@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" fill="none">
+  <g transform="translate(40 56) scale(0.40625)">
   <rect width="512" height="512" rx="118" fill="#153F2B"/>
   <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
   <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
@@ -6,4 +7,6 @@
   <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
   <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
   <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  </g>
+  <text x="292" y="202" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="128" font-weight="600" fill="#19231C">Society<tspan fill="#153F2B">Flats</tspan></text>
 </svg>

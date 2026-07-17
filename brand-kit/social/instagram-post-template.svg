@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" fill="none">
+  <rect width="1080" height="1080" fill="#F8F3EA"/>
+  <rect x="60" y="60" width="960" height="640" rx="36" fill="#DFDED6"/>
+  <text x="540" y="390" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#667064" text-anchor="middle">PHOTO ZONE — drop society/property image here</text>
+  <text x="64" y="806" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#19231C">Headline goes here — one clear</text>
+  <text x="64" y="874" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#153F2B">benefit, no hype.</text>
+  <rect x="60" y="932" width="430" height="76" rx="38" fill="#153F2B"/>
+  <text x="275" y="981" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#F8F3EA" text-anchor="middle">Check availability →</text>
+  <g transform="translate(944 936) scale(0.140625)">
+  <rect width="512" height="512" rx="118" fill="#153F2B"/>
+  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
+  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
+  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
+  <rect x="150" y="234" width="24" height="24" rx="7" fill="#153F2B"/>
+  <rect x="330" y="266" width="24" height="24" rx="7" fill="#153F2B"/>
+  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  </g>
+  <text x="64" y="1048" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="600" fill="#667064">societyflats.com · +91 99118 86222</text>
+</svg>

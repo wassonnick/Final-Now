@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" fill="none">
+  <rect width="1280" height="320" fill="#153F2B"/>
+  <g transform="translate(40 56) scale(0.40625)">
+  <rect width="512" height="512" rx="118" fill="#0E2F20"/>
+  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
+  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
+  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
+  <rect x="150" y="234" width="24" height="24" rx="7" fill="#0E2F20"/>
+  <rect x="330" y="266" width="24" height="24" rx="7" fill="#0E2F20"/>
+  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  </g>
+  <text x="292" y="202" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="128" font-weight="600" fill="#F8F3EA">Society<tspan fill="#E6F4E9">Flats</tspan></text>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1640" height="624" viewBox="0 0 1640 624" fill="none">
+  <rect width="1640" height="624" fill="#153F2B"/>
+  <g transform="translate(1390 330) scale(1)" opacity="0.92">
+    <rect x="0" y="72" width="52" height="150" rx="16" fill="#0E2F20"/>
+    <rect x="62" y="24" width="52" height="198" rx="16" fill="#0E2F20"/>
+    <rect x="124" y="96" width="52" height="126" rx="16" fill="#0E2F20"/>
+    <rect x="186" y="48" width="52" height="174" rx="16" fill="#0E2F20"/>
+    <rect x="77" y="44" width="22" height="22" rx="6" fill="#C8793F"/>
+  </g>
+  <g transform="translate(190 120) scale(0.25)">
+  <rect width="512" height="512" rx="118" fill="#0E2F20"/>
+  <rect x="128" y="208" width="76" height="168" rx="22" fill="#F8F3EA"/>
+  <rect x="218" y="136" width="76" height="240" rx="22" fill="#F8F3EA"/>
+  <rect x="308" y="240" width="76" height="136" rx="22" fill="#F8F3EA"/>
+  <rect x="150" y="234" width="24" height="24" rx="7" fill="#0E2F20"/>
+  <rect x="330" y="266" width="24" height="24" rx="7" fill="#0E2F20"/>
+  <rect x="240" y="164" width="32" height="32" rx="9" fill="#C8793F"/>
+  </g>
+  <text x="352" y="212" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="88" font-weight="600" fill="#F8F3EA">Society<tspan fill="#E6F4E9">Flats</tspan></text>
+  <text x="192" y="356" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="44" font-weight="500" fill="#F8F3EA">Every home verified against its society. No fake inventory.</text>
+  <text x="192" y="436" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#E6F4E9">societyflats.com  ·  +91 99118 86222  ·  WhatsApp us for verified availability</text>
+</svg>
