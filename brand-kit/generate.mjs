@@ -246,7 +246,9 @@ files["social/instagram-post-template.svg"] = svg(1080, 1080, [
 ].join("\n  "));
 
 // Instagram story template 1080×1920 — dusk skyline, arch photo window, gold CTA.
-files["social/instagram-story-template.svg"] = svg(1080, 1920, [
+// storyTemplate(sector) also powers per-sector variants (see CLI at the bottom).
+function storyTemplate(sector) {
+  return svg(1080, 1920, [
   `<defs><linearGradient id="storysky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101B38"/><stop offset="1" stop-color="${C.estate}"/></linearGradient></defs>`,
   `<rect width="1080" height="1920" fill="url(#storysky)"/>`,
   `<rect x="1010" y="1180" width="90" height="740" rx="12" fill="#1E2F5C"/>`,
@@ -259,12 +261,27 @@ files["social/instagram-story-template.svg"] = svg(1080, 1920, [
   text(500, 900, "PHOTO / VIDEO ZONE — mask to this window", { size: 26, fill: C.leaf, anchor: "middle", weight: 600 }),
   `<path d="M140 1150 L140 660 A360 360 0 0 1 860 660 L860 1150 Z" fill="none" stroke="#F3EBDA" stroke-width="12"/>`,
   `<rect x="812" y="640" width="48" height="48" rx="13" fill="${C.clay}"/>`,
-  `<text x="140" y="1300" font-family="${SERIF}" font-size="64" font-weight="600" fill="${C.cream}">This week in <tspan font-style="italic" fill="${C.clay}">Sector 65.</tspan></text>`,
+  `<text x="140" y="1300" font-family="${SERIF}" font-size="64" font-weight="600" fill="${C.cream}">This week in <tspan font-style="italic" fill="${C.clay}">${esc(sector)}.</tspan></text>`,
   text(140, 1372, "Swap this line for the story's key verified fact.", { size: 30, fill: C.leaf, weight: 600 }),
   `<rect x="140" y="1450" width="460" height="92" rx="46" fill="${C.clay}"/>`,
   text(370, 1508, "WhatsApp us →", { size: 34, fill: C.ink, anchor: "middle", weight: 800 }),
   text(320, 1820, `${SITE} · ${PHONE}`, { size: 30, fill: C.leaf, weight: 600 }),
 ].join("\n  "));
+}
+files["social/instagram-story-template.svg"] = storyTemplate("Sector 65");
+
+// ————— Variants CLI —————
+// Per-sector story variants: node brand-kit/generate.mjs --story-sectors "Sector 102, Golf Course Ext"
+// Each lands in social/variants/ as ig-story-<slug>.svg.
+{
+  const flag = process.argv.indexOf("--story-sectors");
+  if (flag !== -1 && process.argv[flag + 1]) {
+    for (const sector of process.argv[flag + 1].split(",").map((s) => s.trim()).filter(Boolean)) {
+      const slug = sector.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      files[`social/variants/ig-story-${slug}.svg`] = storyTemplate(sector);
+    }
+  }
+}
 
 // ————— 3. Print (300dpi-equivalent px; 1in = 300px; includes 0.125in bleed) —————
 // Business card 3.5×2in + bleed → 1125×675. Trim box: 37.5px inset.

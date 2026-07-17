@@ -21,6 +21,23 @@ from Google Fonts so you see the real faces.
 | `print/` | Business card 3.5×2in front/back (0.125in bleed included), A4 letterhead, A5 flyer — all at 300dpi-equivalent sizes |
 | `png/` | Ready-to-upload PNG exports at exact platform sizes |
 
+## Generating variants
+
+Two commands, run from the project folder (`Final Now`), in Terminal:
+
+```bash
+# 1. Regenerate all SVGs — with optional per-sector story variants:
+node brand-kit/generate.mjs --story-sectors "Sector 102, Golf Course Ext, Sector 65"
+
+# 2. Export every SVG (variants included) to upload-ready PNGs:
+bash brand-kit/export-pngs.sh
+```
+
+Variants land in `social/variants/` (SVG) and `png/social/variants/` (PNG),
+one per sector, ready to post. For anything beyond sectors — headline changes,
+festive editions, new asset types — edit the tokens/copy at the top of
+`generate.mjs` (or ask Claude) and rerun both commands.
+
 ## Using it
 
 - **Uploading to platforms:** use the PNGs in `png/` — platforms don't accept SVG.
