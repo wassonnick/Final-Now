@@ -13,8 +13,13 @@ class SocietyComparePageController extends Controller
         $pages = SocietyComparePage::query()
             ->with(['societyA:id,name,slug,sector,locality,builder,score', 'societyB:id,name,slug,sector,locality,builder,score', 'societyC:id,name,slug,sector,locality,builder,score'])
             ->published()
+            // Society pages link to the comparisons they appear in — the internal-link path
+            // that gets these pages crawled.
+            ->when(request()->integer('society_id'), fn ($query, $societyId) => $query->where(
+                fn ($q) => $q->where('society_a_id', $societyId)->orWhere('society_b_id', $societyId)->orWhere('society_c_id', $societyId)
+            ))
             ->orderByDesc('published_at')
-            ->paginate((int) request()->integer('per_page', 24));
+            ->paginate(min(200, max(1, (int) request()->integer('per_page', 24))));
 
         return response()->json([
             'status' => 'ok',

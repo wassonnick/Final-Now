@@ -96,6 +96,40 @@ class SeoPageRegistryService
             }
         });
 
+        // Comparison pages: registering them puts them in the live sitemap, nightly audits
+        // and GSC mapping like every other money page. Unpublished/stale pages flip to
+        // non-public here so the sitemap drops them the same cycle they disappear.
+        \App\Models\SocietyComparePage::with(['societyA:id,is_published,status', 'societyB:id,is_published,status', 'societyC:id,is_published,status'])
+            ->orderBy('id')->chunk(100, function ($comparePages) use (&$count) {
+                foreach ($comparePages as $cp) {
+                    $isPublic = $cp->status === \App\Models\SocietyComparePage::STATUS_PUBLISHED && $cp->published_at
+                        && collect([$cp->societyA, $cp->societyB, $cp->societyC])
+                            ->every(fn ($s) => $s && $s->is_published && in_array($s->status, ['Verified', 'Premium'], true));
+                    $content = implode(' ', array_filter([
+                        $cp->intro, $cp->comparison_summary, $cp->recommendation_copy,
+                        collect((array) $cp->faq_json)->map(fn ($f) => ($f['question'] ?? '').' '.($f['answer'] ?? ''))->join(' '),
+                        collect((array) ($cp->comparison_table_json['rows'] ?? []))->map(fn ($r) => ($r['label'] ?? '').' '.implode(' ', (array) ($r['values'] ?? [])))->join(' '),
+                    ]));
+
+                    $this->upsert([
+                        'page_key' => 'compare:'.$cp->id,
+                        'page_type' => 'compare', 'entity_type' => \App\Models\SocietyComparePage::class, 'entity_id' => $cp->id,
+                        'url' => '/compare/'.$cp->slug, 'canonical_url' => '/compare/'.$cp->slug,
+                        'title' => $cp->meta_title ?: $cp->title, 'meta_description' => $cp->meta_description, 'h1' => $cp->h1 ?: $cp->title,
+                        'is_indexable' => $isPublic, 'sitemap_included' => $isPublic, 'is_public' => $isPublic,
+                        'content_word_count' => $this->words($content),
+                        'internal_link_count' => count((array) $cp->internal_links_json) + 4,
+                        'image_alt_coverage' => 100, 'schema_types' => ['BreadcrumbList', 'FAQPage', 'ItemList'],
+                        'freshness_at' => $cp->updated_at,
+                        'metadata' => [
+                            'name' => $cp->title, 'sector' => $cp->sector_cluster, 'city' => $cp->city ?: 'Gurgaon',
+                            'compare_status' => $cp->status, 'quality' => (float) $cp->content_quality_score,
+                            'has_cta' => true, 'heading_count' => 6,
+                        ],
+                    ]); $count++;
+                }
+            });
+
         $publicSocieties = Society::query()->where('is_published', true)->whereIn('status', ['Verified','Premium'])->get();
         foreach ($publicSocieties->groupBy('sector')->filter(fn ($items, $key) => filled($key)) as $sector => $items) {
             $slug=Str::slug($sector);

@@ -53,6 +53,11 @@ class SeoAutopilotRunner
             // default, which drained a 130+ society backlog far too slowly.
             $summary['society_seo_published']=$this->autoCompleteSocietySeo(max(12,(int)$settings->drafts_per_run));
 
+            // Compare pages are deterministic (no AI spend): repair stale ones in place,
+            // fill coverage gaps, and auto-publish above the higher quality bar — BEFORE the
+            // registry sync so new pages enter the sitemap and audits this same cycle.
+            $summary['compare_pages']=$this->refreshComparePages($settings->auto_publish_enabled);
+
             $summary['pages_registered']=$this->registry->sync();
 
             if($settings->audit_enabled){
@@ -126,6 +131,52 @@ class SeoAutopilotRunner
         return $published;
     }
 
+    /**
+     * Keeps the comparison-page catalog alive without a human in the loop. Society updates
+     * (including the automatic market refresh) unpublish compare pages via the stale hook;
+     * this step rebuilds them in place (same slug), publishes system-generated pages that
+     * clear the AUTO_PUBLISH_THRESHOLD, and generates pages for uncovered societies.
+     * Zero AI calls — everything derives from admin-reviewed published data.
+     */
+    private function refreshComparePages(bool $autoPublish): array
+    {
+        $generator=app(\App\Services\SocietyComparePageGenerator::class);
+        $result=['repaired'=>0,'generated'=>0,'published'=>0];
+
+        foreach(\App\Models\SocietyComparePage::with(['societyA','societyB','societyC'])
+            ->where('status',\App\Models\SocietyComparePage::STATUS_STALE)->orderBy('updated_at')->limit(25)->get() as $stale){
+            $status=$generator->rebuildPage($stale,$autoPublish);
+            if($status!==null)$result['repaired']++;
+            if($status===\App\Models\SocietyComparePage::STATUS_PUBLISHED)$result['published']++;
+        }
+
+        $coveredIds=\App\Models\SocietyComparePage::where('status','!=',\App\Models\SocietyComparePage::STATUS_REJECTED)
+            ->get(['society_a_id','society_b_id','society_c_id'])
+            ->flatMap(fn($p)=>[$p->society_a_id,$p->society_b_id,$p->society_c_id])->unique();
+        $uncovered=Society::query()->where('is_published',true)->whereIn('status',['Verified','Premium'])
+            ->whereNotIn('id',$coveredIds)->orderByDesc('score')->limit(10)->get();
+        foreach($uncovered as $society){
+            $outcome=$generator->generateForSociety($society);
+            if(in_array($outcome['status']??'',['created','updated'],true))$result['generated']++;
+        }
+
+        if($autoPublish){
+            $pending=\App\Models\SocietyComparePage::with(['societyA','societyB','societyC'])
+                ->where('status',\App\Models\SocietyComparePage::STATUS_NEEDS_REVIEW)
+                ->where('generated_by','system')
+                ->where('content_quality_score','>=',\App\Services\SocietyComparePageGenerator::AUTO_PUBLISH_THRESHOLD)
+                ->orderBy('id')->limit(40)->get();
+            foreach($pending as $page){
+                $societies=collect([$page->societyA,$page->societyB,$page->societyC]);
+                if($societies->contains(fn($s)=>!$s||!$s->is_published||!in_array($s->status,['Verified','Premium'],true)))continue;
+                $page->update(['status'=>\App\Models\SocietyComparePage::STATUS_PUBLISHED,'published_at'=>now(),'reviewed_by'=>'autopilot','reviewed_at'=>now(),'stale_reason'=>null]);
+                $result['published']++;
+            }
+        }
+
+        return $result;
+    }
+
     private function generateOpportunityDrafts(int $limit): int
     {
         $types=['audit_title','audit_meta_description','audit_h1','audit_content_depth','audit_internal_links','gsc_low_ctr','gsc_striking_distance'];
@@ -137,6 +188,8 @@ class SeoAutopilotRunner
             if($generated>=max(0,min($limit,20)))break;
             $page=SeoPage::find($pageId);
             if(!$page||!$page->is_public||SeoDraft::where('seo_page_id',$page->id)->whereIn('status',['needs_review','approved'])->exists())continue;
+            // Compare-page content is deterministic; a rebuild would clobber AI metadata drafts.
+            if($page->page_type==='compare')continue;
             if($page->page_type==='society'&&$page->entity_type===Society::class&&$page->entity_id&&(($page->metadata?:[])['seo_status']??null)==='published')continue;
             try{$this->drafts->generate($page);$generated++;}
             catch(\InvalidArgumentException){continue;}

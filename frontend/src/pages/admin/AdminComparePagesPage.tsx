@@ -121,7 +121,7 @@ export function AdminComparePagesPage() {
   return (
     <AdminLayout
       title="Compare SEO Pages"
-      subtitle="Generate, review and publish 3-way society comparison pages. Generated pages stay review-only until approved."
+      subtitle="3-way society comparison pages. The nightly autopilot generates coverage, repairs stale pages and auto-publishes quality ≥ 60; pages scoring 45–59 wait here for manual review."
     >
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">

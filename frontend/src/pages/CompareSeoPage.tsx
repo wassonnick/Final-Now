@@ -201,6 +201,9 @@ function CompareDetail({ slug }: { slug: string }) {
           </Link>
           <h1 className="mt-6 font-serif text-4xl leading-tight text-[#19231c] md:text-6xl">{page.h1 || page.title}</h1>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-[#667064]">{page.intro}</p>
+          {page.comparison_summary ? (
+            <p className="mt-3 max-w-3xl leading-7 text-[#4e574e]">{page.comparison_summary}</p>
+          ) : null}
 
           <div className="mt-8 rounded-[1.5rem] bg-[#143f2b] px-6 py-5 text-white">
             <div className="flex flex-wrap gap-4">

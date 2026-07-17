@@ -337,6 +337,7 @@ export function SocietyPage() {
   const [apiSociety, setApiSociety] = useState<any | null>(null);
   const [apiProperties, setApiProperties] = useState<any[]>([]);
   const [relatedSocieties, setRelatedSocieties] = useState<any[]>([]);
+  const [comparePages, setComparePages] = useState<any[]>([]);
   const [loading, setLoading] = useState(Boolean(API_BASE_URL));
   const [error, setError] = useState<string | null>(null);
   const [callbackOpen, setCallbackOpen] = useState(false);
@@ -396,6 +397,25 @@ export function SocietyPage() {
   };
 
   const fallbackSociety = useMemo(() => findPublicSociety(slug), [slug]);
+
+  // Published comparison pages featuring this society — internal links that get the
+  // /compare/{slug} pages crawled and give visitors a decision shortcut.
+  useEffect(() => {
+    const societyId = apiSociety?.id;
+    if (!API_BASE_URL || !societyId) return;
+
+    let mounted = true;
+    fetch(`${API_BASE_URL}/compare-pages?society_id=${societyId}&per_page=6`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (mounted && payload) setComparePages(extractApiArray<any>(payload));
+      })
+      .catch(() => undefined);
+
+    return () => {
+      mounted = false;
+    };
+  }, [apiSociety?.id]);
 
   useEffect(() => {
     let mounted = true;
@@ -1120,6 +1140,8 @@ export function SocietyPage() {
         )}
 
         {seoInternalLinks.length ? <section className="mt-11"><h2 className="text-[22px] font-bold text-[#25302B]">Explore similar Gurgaon societies</h2><div className="mt-4 flex flex-wrap gap-3">{seoInternalLinks.map((item: any) => <Link key={`${item.url}-${item.label}`} to={item.url} className="rounded-full border border-[#D8DFEC] bg-white px-4 py-2 text-sm font-semibold text-[#3156A3]">{item.label}</Link>)}</div></section> : null}
+
+        {comparePages.length ? <section className="mt-11"><h2 className="text-[22px] font-bold text-[#25302B]">Compare {society?.name || "this society"} with nearby societies</h2><div className="mt-4 flex flex-wrap gap-3">{comparePages.map((page: any) => <Link key={page.slug} to={`/compare/${page.slug}`} className="rounded-full border border-[#D8DFEC] bg-white px-4 py-2 text-sm font-semibold text-[#3156A3]">{page.title}</Link>)}</div></section> : null}
 
         {seoFaqs.length ? <section className="mt-11"><h2 className="text-[22px] font-bold text-[#25302B]">Frequently asked questions</h2><div className="mt-4 space-y-3">{seoFaqs.map((faq: any) => <details key={faq.question} className="rounded-[16px] border border-[#E7E3DA] bg-white p-4"><summary className="cursor-pointer font-bold text-[#25302B]">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#4A534E]">{faq.answer}</p></details>)}</div></section> : null}
       </main>

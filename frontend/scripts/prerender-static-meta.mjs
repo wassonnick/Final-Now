@@ -66,6 +66,13 @@ async function fetchLiveProperties() {
   return extractRows(payload).filter((property) => property?.slug);
 }
 
+async function fetchLiveComparePages() {
+  const payload = await fetchJsonWithRetry(`${API_BASE}/compare-pages?per_page=200`);
+  if (!payload) return [];
+
+  return extractRows(payload).filter((page) => page?.slug && page?.status === "published");
+}
+
 function localityCountsFrom(societies) {
   const counts = new Map();
 
@@ -734,6 +741,82 @@ function propertyRoutes(properties) {
   });
 }
 
+function comparePageRoutes(comparePages) {
+  return comparePages.map((page) => {
+    const canonicalPath = `/compare/${page.slug}`;
+    const faqs = Array.isArray(page.faq_json) ? page.faq_json.filter((f) => f?.question && f?.answer) : [];
+    const societies = Array.isArray(page.society_summaries_json) ? page.society_summaries_json : [];
+    const rows = Array.isArray(page.comparison_table_json?.rows) ? page.comparison_table_json.rows : [];
+    const columns = Array.isArray(page.comparison_table_json?.columns) ? page.comparison_table_json.columns : [];
+
+    const itemList = societies.length
+      ? {
+          "@type": "ItemList",
+          name: page.title,
+          itemListElement: societies.map((society, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: society.name,
+            url: `${SITE_URL}/society/${society.slug}`,
+          })),
+        }
+      : null;
+    const faqSchema = faqs.length
+      ? {
+          "@type": "FAQPage",
+          mainEntity: faqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.question,
+            acceptedAnswer: { "@type": "Answer", text: faq.answer },
+          })),
+        }
+      : null;
+
+    const snapshot = [
+      '<div id="sf-prerender" style="max-width:960px;margin:0 auto;padding:28px 20px;font-family:system-ui,-apple-system,sans-serif;color:#25302B;">',
+      `<h1 style="font-size:26px;">${escapeHtml(page.h1 || page.title)}</h1>`,
+      page.intro ? `<p style="line-height:1.6;">${escapeHtml(page.intro)}</p>` : "",
+      page.comparison_summary ? `<p style="line-height:1.6;">${escapeHtml(page.comparison_summary)}</p>` : "",
+      rows.length
+        ? `<table style="border-collapse:collapse;width:100%;margin:16px 0;"><thead><tr><th style="text-align:left;padding:6px;border:1px solid #ddd;">Comparison point</th>${columns
+            .map((column) => `<th style="text-align:left;padding:6px;border:1px solid #ddd;">${escapeHtml(column.name || "")}</th>`)
+            .join("")}</tr></thead><tbody>${rows
+            .map(
+              (row) =>
+                `<tr><td style="padding:6px;border:1px solid #ddd;">${escapeHtml(row.label || "")}</td>${(row.values || [])
+                  .map((value) => `<td style="padding:6px;border:1px solid #ddd;">${escapeHtml(String(value ?? ""))}</td>`)
+                  .join("")}</tr>`,
+            )
+            .join("")}</tbody></table>`
+        : "",
+      societies.length
+        ? `<p>${societies
+            .map((society) => `<a href="/society/${escapeHtml(society.slug)}">${escapeHtml(society.name)} society profile</a>`)
+            .join(" · ")}</p>`
+        : "",
+      faqs.length
+        ? `<section>${faqs
+            .map((faq) => `<h2 style="font-size:18px;">${escapeHtml(faq.question)}</h2><p style="line-height:1.6;">${escapeHtml(faq.answer)}</p>`)
+            .join("")}</section>`
+        : "",
+      '<p><a href="/compare">All society comparisons</a> · <a href="/societies">All verified Gurgaon societies</a></p>',
+      "</div>",
+    ]
+      .filter(Boolean)
+      .join("");
+
+    return {
+      path: canonicalPath,
+      title: page.meta_title || `${page.title} | SocietyFlats`,
+      description: truncateText(page.meta_description || page.comparison_summary || page.intro || page.title),
+      schemaType: "WebPage",
+      extraSchemas: [itemList, faqSchema].filter(Boolean),
+      skipGenericFaq: true,
+      rootSnapshot: snapshot,
+    };
+  });
+}
+
 function schemaFor(meta) {
   const canonical = canonicalFor(meta.path);
 
@@ -945,6 +1028,7 @@ async function main() {
   const baseHtml = await fs.readFile(INDEX_PATH, "utf8");
   const societies = await fetchLiveSocieties();
   const properties = await fetchLiveProperties();
+  const comparePages = await fetchLiveComparePages();
 
   if (societies.length === 0) {
     console.warn("Prerender: no societies fetched — society/RWA shells skipped this build (static routes still written).");
@@ -956,6 +1040,7 @@ async function main() {
     ...societyRoutes(societies),
     ...rwaRoutes(societies),
     ...propertyRoutes(properties),
+    ...comparePageRoutes(comparePages),
   ];
   const written = [];
 
@@ -965,7 +1050,7 @@ async function main() {
 
   console.log(
     `Static SEO shells generated for ${written.length} routes ` +
-      `(${societies.length} societies, ${societies.length} RWA pages, ${properties.length} properties).`,
+      `(${societies.length} societies, ${societies.length} RWA pages, ${properties.length} properties, ${comparePages.length} compare pages).`,
   );
 }
 

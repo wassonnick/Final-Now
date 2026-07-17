@@ -11,6 +11,12 @@ class SocietyComparePageGenerator
 {
     public const QUALITY_THRESHOLD = 45;
 
+    /**
+     * Content is deterministic (derived from admin-reviewed published data, no AI), so pages
+     * clearing this higher bar publish without a human in the loop; 45–59 stays in review.
+     */
+    public const AUTO_PUBLISH_THRESHOLD = 60;
+
     public function generateForAll(int $limit = 100): array
     {
         $summary = [
@@ -86,6 +92,38 @@ class SocietyComparePageGenerator
         $page = SocietyComparePage::create($payload);
 
         return ['status' => 'created', 'id' => $page->id, 'slug' => $page->slug, 'quality' => $quality];
+    }
+
+    /**
+     * Repair a stale page in place, keeping its slug (URL equity) and its exact triplet.
+     * Society updates — including the automatic 14-day market refresh — mark pages stale
+     * and unpublish them; without this, published compare pages die and never come back.
+     * Returns the new status, or null when the triplet no longer qualifies (page stays stale).
+     */
+    public function rebuildPage(SocietyComparePage $page, bool $autoPublish = false): ?string
+    {
+        $societies = collect([$page->societyA, $page->societyB, $page->societyC])->filter()->values();
+
+        if ($societies->count() < 3 || $societies->contains(fn (Society $society) => ! $this->isUsableSociety($society))) {
+            return null;
+        }
+
+        $quality = $this->qualityScore($societies);
+        if ($quality < self::QUALITY_THRESHOLD) {
+            return null;
+        }
+
+        $payload = $this->buildPayload($societies, $quality);
+        unset($payload['slug']);
+
+        $publish = $autoPublish && $quality >= self::AUTO_PUBLISH_THRESHOLD;
+        $page->update(array_merge($payload, [
+            'status' => $publish ? SocietyComparePage::STATUS_PUBLISHED : SocietyComparePage::STATUS_NEEDS_REVIEW,
+            'published_at' => $publish ? now() : null,
+            'stale_reason' => null,
+        ]));
+
+        return $page->status;
     }
 
     public function markStaleForSociety(Society $society, string $reason): int
@@ -188,12 +226,15 @@ class SocietyComparePageGenerator
         $title = "{$a->name} vs {$b->name} vs {$c->name}";
         $city = $a->city ?: 'Gurgaon';
         $sectorCluster = collect([$a->sector, $b->sector, $c->sector])->filter()->unique()->join(' / ');
+        $facts = $this->facts($ordered);
 
         return [
             'slug' => $slug,
             'title' => $title,
-            'meta_title' => "{$title} | SocietyFlats Comparison",
-            'meta_description' => "Compare {$a->name}, {$b->name} and {$c->name} using published SocietyFlats society data, amenities, sectors, market ranges and profile links.",
+            // Three society names already push the title long; only append the brand
+            // suffix when it still fits a sane SERP width.
+            'meta_title' => mb_strlen($title) <= 48 ? "{$title} | SocietyFlats" : $title,
+            'meta_description' => $this->metaDescription($ordered, $facts),
             'h1' => $title,
             'society_a_id' => $a->id,
             'society_b_id' => $b->id,
@@ -201,13 +242,13 @@ class SocietyComparePageGenerator
             'comparison_type' => 'nearby_societies',
             'city' => $city,
             'sector_cluster' => $sectorCluster,
-            'intro' => "This comparison uses published, admin-reviewed SocietyFlats society data for {$sectorCluster} in {$city}.",
-            'comparison_summary' => $this->summaryCopy($societies),
-            'best_for_json' => $this->bestFor($societies),
+            'intro' => $this->introCopy($ordered, $facts, $sectorCluster, $city),
+            'comparison_summary' => $this->summaryCopy($ordered, $facts),
+            'best_for_json' => $this->bestFor($ordered, $facts),
             'comparison_table_json' => $this->comparisonTable($societies),
             'society_summaries_json' => $this->societySummaries($societies),
-            'recommendation_copy' => 'Use this page as a shortlist aid, then request current verified availability before planning visits.',
-            'faq_json' => $this->faq($societies),
+            'recommendation_copy' => $this->recommendationCopy($facts),
+            'faq_json' => $this->faq($ordered, $facts),
             'internal_links_json' => $societies->map(fn (Society $society) => [
                 'label' => $society->name,
                 'url' => "/society/{$society->slug}",
@@ -265,42 +306,179 @@ class SocietyComparePageGenerator
         ])->values()->all();
     }
 
-    private function bestFor(Collection $societies): array
+    /**
+     * Every claim below quotes real published values (scores, verified rent/resale entries,
+     * builders). Data-led copy keeps each page unique — identical boilerplate across dozens
+     * of comparison pages reads as doorway pages to Google.
+     *
+     * @return array{scoreLeader:?Society,scores:array<int,float>,rentFloors:array<int,int>,cheapestRent:?Society,builders:array<int,string>,sameBuilder:bool}
+     */
+    private function facts(Collection $societies): array
     {
-        return $societies->map(function (Society $society) {
-            $reason = $society->lifestyle_score && (float) $society->lifestyle_score >= 8
-                ? 'Lifestyle fit'
-                : ($society->connectivity_score && (float) $society->connectivity_score >= 8 ? 'Connectivity' : 'Society shortlist');
+        $matcher = new \App\Services\Ai\SocietyMatchService();
 
-            return ['society' => $society->name, 'label' => $reason];
-        })->values()->all();
-    }
+        $scores = $societies->mapWithKeys(fn (Society $s) => [$s->id => (float) $s->score])->filter(fn ($v) => $v > 0)->all();
+        arsort($scores);
+        $topIds = array_keys($scores);
+        $scoreLeader = count($scores) >= 2 && $scores[$topIds[0]] > $scores[$topIds[1]]
+            ? $societies->firstWhere('id', $topIds[0])
+            : null;
 
-    private function faq(Collection $societies): array
-    {
-        $names = $societies->pluck('name')->join(', ', ' and ');
+        $rentFloors = $societies->mapWithKeys(function (Society $s) use ($matcher) {
+            $value = $matcher->priceFromText($s->rent_range ?: $s->average_rent);
+
+            return [$s->id => ($value && $value >= 5000) ? $value : null];
+        })->filter()->all();
+        asort($rentFloors);
+        $cheapestRent = count($rentFloors) >= 2
+            ? $societies->firstWhere('id', array_key_first($rentFloors))
+            : null;
+
+        $builders = $societies->pluck('builder')->filter()->map(fn ($b) => trim((string) $b))->unique()->values()->all();
 
         return [
-            [
-                'question' => "Which society is best among {$names}?",
-                'answer' => 'The best fit depends on budget, commute, family needs and verified availability. This comparison shows published SocietyFlats data without inventing rankings.',
-            ],
-            [
-                'question' => 'Are prices and availability guaranteed?',
-                'answer' => 'No. Market ranges are shown only when verified data exists. Always request current availability before planning visits.',
-            ],
-            [
-                'question' => 'Can I compare other Gurgaon societies?',
-                'answer' => 'Yes. Open the SocietyFlats AI Advisor or search page to build a custom shortlist.',
-            ],
+            'scoreLeader' => $scoreLeader,
+            'scores' => $scores,
+            'rentFloors' => $rentFloors,
+            'cheapestRent' => $cheapestRent,
+            'builders' => $builders,
+            'sameBuilder' => count($builders) === 1 && $societies->every(fn (Society $s) => filled($s->builder)),
         ];
     }
 
-    private function summaryCopy(Collection $societies): string
+    private function introCopy(Collection $societies, array $facts, string $sectorCluster, string $city): string
+    {
+        [$a, $b, $c] = [$societies[0], $societies[1], $societies[2]];
+        $where = $sectorCluster ? "{$sectorCluster}, {$city}" : $city;
+
+        $builderLine = $facts['sameBuilder']
+            ? " All three are {$facts['builders'][0]} projects, so this comes down to location, pricing and community fit."
+            : (count($facts['builders']) >= 2 ? ' Builders across this shortlist: '.implode(', ', $facts['builders']).'.' : '');
+
+        return "{$a->name}, {$b->name} and {$c->name} are three verified societies in {$where}, compared side by side using admin-reviewed SocietyFlats data — overall scores, verified rent and resale ranges, amenities and location context (updated ".now()->format('F Y').').'.$builderLine;
+    }
+
+    private function summaryCopy(Collection $societies, array $facts): string
+    {
+        $parts = [];
+
+        if ($facts['scoreLeader']) {
+            $others = $societies->where('id', '!=', $facts['scoreLeader']->id)
+                ->map(fn (Society $s) => number_format((float) $s->score, 1))->join(' and ');
+            $parts[] = "{$facts['scoreLeader']->name} leads this comparison on overall SocietyFlats score (".number_format((float) $facts['scoreLeader']->score, 1)." vs {$others})";
+        }
+
+        if ($facts['cheapestRent']) {
+            $parts[] = "verified rent entries start around {$this->formatRent($facts['rentFloors'][$facts['cheapestRent']->id])}/mo at {$facts['cheapestRent']->name}";
+        }
+
+        if ($parts === []) {
+            $names = $societies->pluck('name')->join(', ', ' and ');
+
+            return "Compare {$names} across sector, builder, amenities, verified market ranges and location scores.";
+        }
+
+        return ucfirst(implode('; ', $parts)).'. The full table below covers sector, builder, amenities and verified market ranges.';
+    }
+
+    private function recommendationCopy(array $facts): string
+    {
+        $lead = $facts['scoreLeader']
+            ? "{$facts['scoreLeader']->name} scores highest here, but the right pick depends on budget and commute. "
+            : '';
+
+        return $lead.'Use this page as a shortlist aid, then request current verified availability before planning visits.';
+    }
+
+    private function metaDescription(Collection $societies, array $facts): string
+    {
+        [$a, $b, $c] = [$societies[0], $societies[1], $societies[2]];
+        $scoreBit = $facts['scores'] !== []
+            ? ' — scores '.collect($facts['scores'])->map(fn ($v) => number_format($v, 1))->join('/')
+            : '';
+        $rentBit = $facts['cheapestRent']
+            ? ', rent from '.$this->formatRent($facts['rentFloors'][$facts['cheapestRent']->id]).'/mo'
+            : '';
+
+        return Str::limit("Compare {$a->name}, {$b->name} and {$c->name} side by side{$scoreBit}{$rentBit}, plus verified amenities, builders and market ranges on SocietyFlats.", 168, '.');
+    }
+
+    /**
+     * One distinct, data-backed label per society — never the same generic tag three times.
+     */
+    private function bestFor(Collection $societies, array $facts): array
+    {
+        $assigned = [];
+        $used = [];
+
+        $claim = function (?Society $society, string $label) use (&$assigned, &$used) {
+            if ($society && ! isset($assigned[$society->id]) && ! in_array($label, $used, true)) {
+                $assigned[$society->id] = $label;
+                $used[] = $label;
+            }
+        };
+
+        $claim($facts['scoreLeader'], 'Highest overall score');
+        $claim($facts['cheapestRent'], 'Lowest verified rent entry');
+
+        foreach (['connectivity_score' => 'Best connectivity', 'lifestyle_score' => 'Best lifestyle'] as $field => $label) {
+            $leader = $societies->filter(fn (Society $s) => (float) $s->{$field} > 0 && ! isset($assigned[$s->id]))
+                ->sortByDesc(fn (Society $s) => (float) $s->{$field})->first();
+            $claim($leader, $label);
+        }
+
+        return $societies->map(fn (Society $society) => [
+            'society' => $society->name,
+            'label' => $assigned[$society->id] ?? 'Worth shortlisting',
+        ])->values()->all();
+    }
+
+    private function faq(Collection $societies, array $facts): array
     {
         $names = $societies->pluck('name')->join(', ', ' and ');
+        $faqs = [];
 
-        return "Compare {$names} across sector, locality, builder, amenities, verified market ranges and public profile links.";
+        if ($facts['scoreLeader']) {
+            $others = $societies->where('id', '!=', $facts['scoreLeader']->id)
+                ->map(fn (Society $s) => $s->name.($s->score > 0 ? ' ('.number_format((float) $s->score, 1).')' : ''))->join(' and ');
+            $answer = "{$facts['scoreLeader']->name} has the highest SocietyFlats overall score (".number_format((float) $facts['scoreLeader']->score, 1).") in this comparison, ahead of {$others}. The right choice still depends on budget, commute and current verified availability.";
+        } else {
+            $answer = 'The best fit depends on budget, commute, family needs and verified availability. This comparison shows published SocietyFlats data without inventing rankings.';
+        }
+        $faqs[] = ['question' => "Which society is best among {$names}?", 'answer' => $answer];
+
+        if (count($facts['rentFloors']) >= 2) {
+            $rentBits = $societies->filter(fn (Society $s) => isset($facts['rentFloors'][$s->id]))
+                ->map(fn (Society $s) => "{$this->formatRent($facts['rentFloors'][$s->id])}/mo at {$s->name}")->join(', ', ' and ');
+            $faqs[] = [
+                'question' => 'Which is more affordable to rent — '.$societies->pluck('name')->join(', ', ' or ').'?',
+                'answer' => "Verified rent ranges start around {$rentBits}. Ranges move with the market — request current availability before deciding.",
+            ];
+        }
+
+        if ($facts['sameBuilder']) {
+            $faqs[] = [
+                'question' => 'Are these societies by the same builder?',
+                'answer' => "Yes — all three are {$facts['builders'][0]} projects, so construction pedigree is comparable and the decision comes down to location, pricing and community.",
+            ];
+        } elseif (count($facts['builders']) >= 2) {
+            $faqs[] = [
+                'question' => 'Are these societies by the same builder?',
+                'answer' => 'No. Builders in this comparison: '.implode(', ', $facts['builders']).'. Builder track record affects maintenance and resale, so weigh it alongside location.',
+            ];
+        }
+
+        $faqs[] = [
+            'question' => 'Can I compare other Gurgaon societies?',
+            'answer' => 'Yes. Open the SocietyFlats AI Advisor or search page to build a custom shortlist.',
+        ];
+
+        return $faqs;
+    }
+
+    private function formatRent(int $value): string
+    {
+        return '₹'.number_format($value, 0, '.', ',');
     }
 
     private function qualityScore(Collection $societies): int
