@@ -8,4 +8,6 @@ Disallow: /login
 
 Sitemap: https://www.societyflats.com/sitemap.xml
 # Live registry sitemap — includes societies published between frontend deploys.
-Sitemap: https://final-now.onrender.com/api/seo/sitemap.xml
+# Proxied from the backend via a Render rewrite so it lives on our own domain
+# (GSC only accepts sitemaps hosted inside the verified property).
+Sitemap: https://www.societyflats.com/sitemap-live.xml

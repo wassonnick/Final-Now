@@ -9,6 +9,13 @@ services:
       - key: VITE_API_BASE_URL
         value: https://final-now.onrender.com/api
     routes:
+      # Live registry sitemap, proxied onto the site's own domain. GSC only accepts
+      # sitemap URLs inside the verified property (sc-domain:societyflats.com), so the
+      # backend URL can't be submitted directly — this rewrite serves it same-host.
+      - type: rewrite
+        source: /sitemap-live.xml
+        destination: https://final-now.onrender.com/api/seo/sitemap.xml
+
       # C33 static SEO HTML rewrites. Keep these above the SPA fallback.
       - type: rewrite
         source: /gurgaon
