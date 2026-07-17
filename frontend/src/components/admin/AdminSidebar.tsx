@@ -23,6 +23,7 @@ import {
   Import,
   ClipboardList,
   FileSearch,
+  Palette,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ const groups: Array<{ heading: string | null; links: Array<{ label: string; href
       { label: "SEO Autopilot", href: "/admin/seo-autopilot", icon: Gauge },
       { label: "Compare SEO", href: "/admin/seo/compare-pages", icon: FileSearch },
       { label: "AI Social Media", href: "/admin/social", icon: Sparkles },
+      { label: "Brand Studio", href: "/admin/brand-studio", icon: Palette },
       { label: "Rent Intelligence", href: "/admin/rent-history", icon: LineChart },
       { label: "AI Features", href: "/admin/ai", icon: Bot },
     ],

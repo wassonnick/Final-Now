@@ -68,6 +68,7 @@ const AdminSocialAssetsPage = lazy(() => import('@/pages/admin/AdminSocialAssets
 const AdminSocialAccountsPage = lazy(() => import('@/pages/admin/AdminSocialAccountsPage').then((module) => ({ default: module.AdminSocialAccountsPage })));
 const AdminSocialCalendarPage = lazy(() => import('@/pages/admin/AdminSocialCalendarPage').then((module) => ({ default: module.AdminSocialCalendarPage })));
 const AdminComparePagesPage = lazy(() => import('@/pages/admin/AdminComparePagesPage').then((module) => ({ default: module.AdminComparePagesPage })));
+const AdminBrandStudioPage = lazy(() => import('@/pages/admin/AdminBrandStudioPage').then((module) => ({ default: module.AdminBrandStudioPage })));
 const AdminComparePagePreviewPage = lazy(() => import('@/pages/admin/AdminComparePagesPage').then((module) => ({ default: module.AdminComparePagePreviewPage })));
 
 const queryClient = new QueryClient({
@@ -239,6 +240,7 @@ function AppShell() {
             <Route path="/admin/advanced-search" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="advanced-search" /></ProtectedAdminRoute>} />
             <Route path="/admin/recommendations" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="recommendations" /></ProtectedAdminRoute>} />
             <Route path="/admin/seo/compare-pages" element={<ProtectedAdminRoute><AdminComparePagesPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/brand-studio" element={<ProtectedAdminRoute><AdminBrandStudioPage /></ProtectedAdminRoute>} />
             <Route path="/admin/seo/compare-pages/:id/preview" element={<ProtectedAdminRoute><AdminComparePagePreviewPage /></ProtectedAdminRoute>} />
             <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettingsPage /></ProtectedAdminRoute>} />
 
