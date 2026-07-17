@@ -1,12 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" fill="none">
   <rect width="1080" height="1080" fill="#F8F3EA"/>
-  <rect x="60" y="60" width="960" height="640" rx="36" fill="#E3DFD3"/>
-  <text x="540" y="390" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#6A7080" text-anchor="middle">PHOTO ZONE — drop society/property image here</text>
-  <text x="64" y="806" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#1C2434">Headline goes here — one clear</text>
-  <text x="64" y="874" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#233B6E">benefit, no hype.</text>
-  <rect x="60" y="932" width="430" height="76" rx="38" fill="#233B6E"/>
-  <text x="275" y="981" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#F8F3EA" text-anchor="middle">Check availability →</text>
-  <g transform="translate(944 936) scale(0.140625)">
+  <rect x="28" y="28" width="1024" height="1024" rx="28" fill="none" stroke="#E3DFD3" stroke-width="2"/>
+  <path d="M230 690 L230 430 A310 310 0 0 1 850 430 L850 690 Z" fill="#E3DFD3"/>
+  <text x="540" y="560" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="600" fill="#6A7080" text-anchor="middle">PHOTO ZONE — mask your society photo to this window</text>
+  <path d="M230 690 L230 430 A310 310 0 0 1 850 430 L850 690 Z" fill="none" stroke="#233B6E" stroke-width="14"/>
+  <line x1="540" y1="128" x2="540" y2="690" stroke="#233B6E" stroke-width="8"/>
+  <line x1="232" y1="500" x2="848" y2="500" stroke="#233B6E" stroke-width="8"/>
+  <rect x="806" y="398" width="44" height="44" rx="12" fill="#B08A3E"/>
+  <text x="64" y="810" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="56" font-weight="600" fill="#1C2434">One honest line about</text>
+  <text x="64" y="878" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="56" font-weight="600" fill="#1C2434">the home, <tspan font-style="italic" fill="#8C6E2F">verified.</tspan></text>
+  <rect x="64" y="924" width="380" height="72" rx="36" fill="#233B6E"/>
+  <text x="254" y="971" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="700" fill="#F8F3EA" text-anchor="middle">Check availability →</text>
+  <g transform="translate(944 924) scale(0.140625)">
   <rect width="512" height="512" rx="118" fill="#233B6E"/>
   <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
   <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
@@ -18,5 +23,5 @@
   <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
   <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
   </g>
-  <text x="64" y="1048" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="600" fill="#6A7080">societyflats.com · +91 99118 86222</text>
+  <text x="64" y="1042" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="600" fill="#6A7080">societyflats.com · +91 99118 86222</text>
 </svg>

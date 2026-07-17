@@ -139,14 +139,41 @@ files["social/og-image.svg"] = svg(1200, 630, [
   text(72, 560, `${SITE}   ·   ${PHONE}`, { size: 28, fill: C.clayDeep, weight: 700 }),
 ].join("\n  "));
 
-// Facebook page cover 1640×624 (safe area: centre 1310×624).
+// A dusk building: dark body, mostly-unlit windows, a few lit cream, optionally one
+// gold — the mark's story told as a skyline.
+function duskBuilding(x, top, cols, { body = C.forest, h = 624, cell = 26, gap = 10, pad = 16, lit = [], gold = null } = {}) {
+  const w = pad * 2 + cols * cell + (cols - 1) * gap;
+  const parts = [`<rect x="${x}" y="${top}" width="${w}" height="${h - top + 40}" rx="14" fill="${body}"/>`];
+  const floors = Math.max(0, Math.floor((h - top - pad - 30) / (cell + gap)));
+  for (let r = 0; r < floors; r++) {
+    for (let c = 0; c < cols; c++) {
+      const key = `${r}-${c}`;
+      const fill = gold === key ? C.clay : lit.includes(key) ? "#F3EBDA" : "#2A3C6E";
+      parts.push(`<rect x="${x + pad + c * (cell + gap)}" y="${top + pad + 18 + r * (cell + gap)}" width="${cell}" height="${cell}" rx="7" fill="${fill}"/>`);
+    }
+  }
+  return parts.join("\n  ");
+}
+
+// Facebook page cover 1640×624 (safe area: centre 1310×624) — the society at dusk.
+// Most windows dark, a few lit, exactly one gold: the promise in one image.
 files["social/facebook-cover.svg"] = svg(1640, 624, [
-  `<rect width="1640" height="624" fill="${C.estate}"/>`,
-  skylineStrip(1390, 330, 1.0, C.forest, C.clay),
-  markAt(190, 120, 128, { tile: true, tileFill: C.forest }),
-  `<text x="352" y="212" font-family="${SERIF}" font-size="88" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>`,
-  `<text x="192" y="356" font-family="${SERIF}" font-size="44" font-weight="500" fill="${C.cream}">Every home verified against its society. No fake inventory.</text>`,
-  text(192, 436, `${SITE}  ·  ${PHONE}  ·  WhatsApp us for verified availability`, { size: 30, fill: C.leaf, weight: 600 }),
+  `<defs><linearGradient id="fbsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101B38"/><stop offset="1" stop-color="${C.estate}"/></linearGradient></defs>`,
+  `<rect width="1640" height="624" fill="url(#fbsky)"/>`,
+  // back-row silhouettes
+  `<rect x="1064" y="236" width="120" height="420" rx="12" fill="#1E2F5C"/>`,
+  `<rect x="1560" y="300" width="120" height="360" rx="12" fill="#1E2F5C"/>`,
+  `<rect x="40" y="470" width="130" height="200" rx="12" fill="#1E2F5C"/>`,
+  duskBuilding(1120, 330, 3, { lit: ["1-0", "4-2"] }),
+  duskBuilding(1300, 240, 4, { lit: ["0-3", "3-1", "7-0"], gold: "2-2" }),
+  duskBuilding(1500, 400, 3, { lit: ["2-1"] }),
+  duskBuilding(120, 512, 6, { lit: ["0-4"] }),
+  markAt(140, 56, 88, { tile: true, tileFill: C.forest }),
+  `<text x="252" y="122" font-family="${SERIF}" font-size="56" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>`,
+  `<text x="140" y="298" font-family="${SERIF}" font-size="74" font-weight="600" fill="${C.cream}">One of these windows</text>`,
+  `<text x="140" y="388" font-family="${SERIF}" font-size="74" font-weight="600" fill="${C.cream}">is <tspan font-style="italic" fill="${C.clay}">your next home.</tspan></text>`,
+  text(142, 452, "Admin-verified societies · Real availability · No fake listings", { size: 27, fill: C.leaf, weight: 600 }),
+  text(142, 496, `${SITE}  ·  ${PHONE}`, { size: 27, fill: C.cream, weight: 700 }),
 ].join("\n  "));
 
 // X / Twitter header 1500×500.
@@ -197,31 +224,46 @@ files["social/profile-picture.svg"] = svg(1000, 1000, [
   markAt(244, 244, 512, { tile: false, towerFill: C.cream }),
 ].join("\n  "));
 
-// Instagram post template 1080×1080 — photo zone + caption band, on-brand frame.
+// Instagram post template 1080×1080 — the photo sits inside an arch window: you're
+// looking at the home through a society window. Mask the photo to the arch in
+// Canva/Figma; the frame and cross-bars sit on top.
 files["social/instagram-post-template.svg"] = svg(1080, 1080, [
   `<rect width="1080" height="1080" fill="${C.cream}"/>`,
-  `<rect x="60" y="60" width="960" height="640" rx="36" fill="${C.sage}"/>`,
-  text(540, 390, "PHOTO ZONE — drop society/property image here", { size: 30, fill: C.grey, anchor: "middle", weight: 600 }),
-  `<text x="64" y="806" font-family="${SERIF}" font-size="58" font-weight="600" fill="${C.ink}">Headline goes here — one clear</text>`,
-  `<text x="64" y="874" font-family="${SERIF}" font-size="58" font-weight="600" fill="${C.estate}">benefit, no hype.</text>`,
-  `<rect x="60" y="932" width="430" height="76" rx="38" fill="${C.estate}"/>`,
-  text(275, 981, "Check availability →", { size: 30, fill: C.cream, anchor: "middle", weight: 700 }),
-  markAt(944, 936, 72, { tile: true }),
-  text(64, 1048, `${SITE} · ${PHONE}`, { size: 24, fill: C.grey, weight: 600 }),
+  `<rect x="28" y="28" width="1024" height="1024" rx="28" fill="none" stroke="${C.sage}" stroke-width="2"/>`,
+  // arch window: photo zone
+  `<path d="M230 690 L230 430 A310 310 0 0 1 850 430 L850 690 Z" fill="${C.sage}"/>`,
+  text(540, 560, "PHOTO ZONE — mask your society photo to this window", { size: 24, fill: C.grey, anchor: "middle", weight: 600 }),
+  `<path d="M230 690 L230 430 A310 310 0 0 1 850 430 L850 690 Z" fill="none" stroke="${C.estate}" stroke-width="14"/>`,
+  `<line x1="540" y1="128" x2="540" y2="690" stroke="${C.estate}" stroke-width="8"/>`,
+  `<line x1="232" y1="500" x2="848" y2="500" stroke="${C.estate}" stroke-width="8"/>`,
+  `<rect x="806" y="398" width="44" height="44" rx="12" fill="${C.clay}"/>`,
+  `<text x="64" y="810" font-family="${SERIF}" font-size="56" font-weight="600" fill="${C.ink}">One honest line about</text>`,
+  `<text x="64" y="878" font-family="${SERIF}" font-size="56" font-weight="600" fill="${C.ink}">the home, <tspan font-style="italic" fill="${C.clayDeep}">verified.</tspan></text>`,
+  `<rect x="64" y="924" width="380" height="72" rx="36" fill="${C.estate}"/>`,
+  text(254, 971, "Check availability →", { size: 28, fill: C.cream, anchor: "middle", weight: 700 }),
+  markAt(944, 924, 72, { tile: true }),
+  text(64, 1042, `${SITE} · ${PHONE}`, { size: 24, fill: C.grey, weight: 600 }),
 ].join("\n  "));
 
-// Instagram story template 1080×1920.
+// Instagram story template 1080×1920 — dusk skyline, arch photo window, gold CTA.
 files["social/instagram-story-template.svg"] = svg(1080, 1920, [
-  `<rect width="1080" height="1920" fill="${C.estate}"/>`,
-  `<rect x="60" y="220" width="960" height="1060" rx="44" fill="${C.forest}"/>`,
-  text(540, 760, "PHOTO / VIDEO ZONE", { size: 34, fill: C.leaf, anchor: "middle", weight: 700 }),
-  markAt(60, 72, 96, { tile: true, tileFill: C.forest }),
-  `<text x="184" y="138" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>`,
-  `<text x="72" y="1420" font-family="${SERIF}" font-size="66" font-weight="600" fill="${C.cream}">Two-line story headline</text>`,
-  `<text x="72" y="1498" font-family="${SERIF}" font-size="66" font-weight="600" fill="${C.leaf}">with the key fact.</text>`,
-  `<rect x="72" y="1580" width="500" height="88" rx="44" fill="${C.clay}"/>`,
-  text(322, 1636, "WhatsApp us →", { size: 34, fill: C.white, anchor: "middle", weight: 700 }),
-  text(72, 1800, `${SITE} · ${PHONE}`, { size: 30, fill: C.leaf, weight: 600 }),
+  `<defs><linearGradient id="storysky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101B38"/><stop offset="1" stop-color="${C.estate}"/></linearGradient></defs>`,
+  `<rect width="1080" height="1920" fill="url(#storysky)"/>`,
+  `<rect x="1010" y="1180" width="90" height="740" rx="12" fill="#1E2F5C"/>`,
+  duskBuilding(880, 1260, 3, { h: 1920, lit: ["2-1", "8-0"], gold: "5-2" }),
+  duskBuilding(40, 1660, 5, { h: 1920, lit: ["1-3"] }),
+  markAt(72, 76, 92, { tile: true, tileFill: C.forest }),
+  `<text x="190" y="144" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>`,
+  // arch photo window
+  `<path d="M140 1150 L140 660 A360 360 0 0 1 860 660 L860 1150 Z" fill="${C.forest}"/>`,
+  text(500, 900, "PHOTO / VIDEO ZONE — mask to this window", { size: 26, fill: C.leaf, anchor: "middle", weight: 600 }),
+  `<path d="M140 1150 L140 660 A360 360 0 0 1 860 660 L860 1150 Z" fill="none" stroke="#F3EBDA" stroke-width="12"/>`,
+  `<rect x="812" y="640" width="48" height="48" rx="13" fill="${C.clay}"/>`,
+  `<text x="140" y="1300" font-family="${SERIF}" font-size="64" font-weight="600" fill="${C.cream}">This week in <tspan font-style="italic" fill="${C.clay}">Sector 65.</tspan></text>`,
+  text(140, 1372, "Swap this line for the story's key verified fact.", { size: 30, fill: C.leaf, weight: 600 }),
+  `<rect x="140" y="1450" width="460" height="92" rx="46" fill="${C.clay}"/>`,
+  text(370, 1508, "WhatsApp us →", { size: 34, fill: C.ink, anchor: "middle", weight: 800 }),
+  text(320, 1820, `${SITE} · ${PHONE}`, { size: 30, fill: C.leaf, weight: 600 }),
 ].join("\n  "));
 
 // ————— 3. Print (300dpi-equivalent px; 1in = 300px; includes 0.125in bleed) —————
