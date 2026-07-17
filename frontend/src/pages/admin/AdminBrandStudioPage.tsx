@@ -10,6 +10,9 @@ import {
   fbCover,
   igStory,
   justVerifiedPost,
+  launchFb,
+  launchPost,
+  launchStory,
   mythFactPost,
   rentStory,
   scoreStory,
@@ -106,6 +109,7 @@ export function AdminBrandStudioPage() {
   const verifiedAsset = useMemo(() => justVerifiedPost(verifiedSociety, verifiedSector), [verifiedSociety, verifiedSector]);
   const versusAsset = useMemo(() => versusPost(versusA, versusB), [versusA, versusB]);
   const mythAsset = useMemo(() => mythFactPost(myth, fact), [myth, fact]);
+  const launchAssets = useMemo(() => [launchStory(), launchPost(), launchFb()], []);
 
   const stories = useMemo(
     () =>
@@ -125,6 +129,13 @@ export function AdminBrandStudioPage() {
       subtitle="Generate on-brand social assets in the browser — previews update live, downloads are exact-size PNGs with the real brand fonts. Full kit (print, logos, guidelines): brand-kit/ in the repo."
     >
       <div className="space-y-8">
+        <Section
+          title="Launch announcement — WhatsApp status · Instagram · Facebook"
+          hint="One creative per channel, same dusk-skyline story: Gurgaon, meet SocietyFlats. Download and post as-is."
+          controls={<></>}
+          assets={launchAssets}
+        />
+
         <section>
           <div className="mb-4 flex items-center gap-2">
             <Palette className="h-5 w-5 text-blue-700" />

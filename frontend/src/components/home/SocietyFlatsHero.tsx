@@ -84,7 +84,15 @@ export default function SocietyFlatsHero() {
       .then((items) => {
         if (!active) return;
         setAllSocieties(items);
-        setSocieties(items.filter(hasGooglePlacesDisplayPhoto).slice(0, 2));
+        // Hero picks: admin-flagged "Show in Hero" societies first, then the
+        // top-scored — never just whatever the API returned first.
+        const heroFlag = (s: any) => (s?.showInHero ?? s?.show_in_hero ? 1 : 0);
+        setSocieties(
+          [...items]
+            .filter(hasGooglePlacesDisplayPhoto)
+            .sort((a, b) => heroFlag(b) - heroFlag(a) || (Number(b?.score) || 0) - (Number(a?.score) || 0))
+            .slice(0, 2),
+        );
       })
       .catch(() => {
         if (!active) return;
@@ -339,7 +347,10 @@ export default function SocietyFlatsHero() {
               )}
             </div>
 
-            <div className="absolute right-1 top-0 w-[296px] rotate-2 rounded-[20px] border border-[#E7DCCB] bg-white p-3 shadow-[0_28px_50px_-24px_rgba(15,40,30,.45)]">
+            <Link
+              to={primary?.slug ? `/society/${primary.slug}` : "/societies"}
+              aria-label={primary?.name ? `Open ${primary.name} society profile` : "Browse societies"}
+              className="absolute right-1 top-0 block w-[296px] rotate-2 rounded-[20px] border border-[#E7DCCB] bg-white p-3 shadow-[0_28px_50px_-24px_rgba(15,40,30,.45)] transition hover:rotate-0 hover:shadow-[0_32px_56px_-24px_rgba(15,40,30,.55)]">
               <div className="relative flex h-44 items-center justify-center overflow-hidden rounded-[13px] bg-[#E8EDF7] [background-image:repeating-linear-gradient(135deg,#D8DFEC_0_1px,transparent_1px_12px)]">
                 {primary && hasGooglePlacesDisplayPhoto(primary) ? (
                   <img src={societyDisplayImage(primary)} alt={primary.name} className="absolute inset-0 h-full w-full object-cover" />
@@ -371,9 +382,12 @@ export default function SocietyFlatsHero() {
                   <span className="text-[#6E756E]">Availability: On request</span>
                 </div>
               </div>
-            </div>
+            </Link>
 
-            <div className="absolute bottom-6 left-0 w-[244px] -rotate-3 rounded-[18px] border border-[#E7DCCB] bg-white p-4 shadow-[0_24px_44px_-26px_rgba(15,40,30,.4)]">
+            <Link
+              to={secondary?.slug ? `/society/${secondary.slug}` : "/societies"}
+              aria-label={secondary?.name ? `Open ${secondary.name} society profile` : "Browse societies"}
+              className="absolute bottom-6 left-0 block w-[244px] -rotate-3 rounded-[18px] border border-[#E7DCCB] bg-white p-4 shadow-[0_24px_44px_-26px_rgba(15,40,30,.4)] transition hover:rotate-0 hover:shadow-[0_28px_50px_-26px_rgba(15,40,30,.5)]">
               <div className="flex items-center justify-between">
                 <p className="text-[15px] font-bold">{secondary?.name || "Society intelligence"}</p>
                 {scoreOf(secondary) ? <strong className="text-base text-[#233B6E]">{scoreOf(secondary)}</strong> : null}
@@ -385,7 +399,7 @@ export default function SocietyFlatsHero() {
                 </span>
                 <span className="text-[11px] text-[#6E756E]">Sources reviewed</span>
               </div>
-            </div>
+            </Link>
 
             <div className="absolute left-1.5 top-7 inline-flex items-center gap-1.5 rounded-full border border-[#E7DCCB] bg-white px-[13px] py-2 text-xs font-bold shadow-[0_12px_26px_-16px_rgba(0,0,0,.35)]">
               <Check className="h-3 w-3 stroke-[3] text-[#3156A3]" /> Admin-reviewed data

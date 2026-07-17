@@ -246,6 +246,66 @@ export function mythFactPost(myth: string, fact: string): BrandAsset {
   return { name: "myth-fact", width: 1080, height: 1080, svg };
 }
 
+// ————— Launch announcement suite — one per channel, same dusk-skyline story —————
+// WhatsApp status / IG story 1080×1920.
+export function launchStory(): BrandAsset {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs><linearGradient id="lsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101B38"/><stop offset="1" stop-color="${C.estate}"/></linearGradient></defs>
+  <rect width="1080" height="1920" fill="url(#lsky)"/>
+  <rect x="990" y="1100" width="110" height="820" rx="12" fill="#1E2F5C"/>
+  <rect x="-20" y="1240" width="120" height="680" rx="12" fill="#1E2F5C"/>
+  ${duskBuilding(120, 1300, 4, { h: 1920, lit: ["1-2", "6-0"] })}
+  ${duskBuilding(420, 1180, 5, { h: 1920, lit: ["0-4", "4-1", "9-3"], gold: "2-2" })}
+  ${duskBuilding(760, 1360, 4, { h: 1920, lit: ["3-3"] })}
+  ${markTile(414, 300, 252, C.forest)}
+  <text x="540" y="700" font-family="${SERIF}" font-size="88" font-weight="600" fill="${C.cream}" text-anchor="middle">Gurgaon, meet</text>
+  <text x="540" y="810" font-family="${SERIF}" font-size="96" font-weight="600" fill="${C.cream}" text-anchor="middle">Society<tspan fill="${C.leaf}">Flats</tspan>.</text>
+  <text x="540" y="930" font-family="${SERIF}" font-size="52" font-weight="500" font-style="italic" fill="${C.clay}" text-anchor="middle">Every society verified. Every home real.</text>
+  <text x="540" y="1030" font-family="${SANS}" font-size="32" font-weight="600" fill="${C.leaf}" text-anchor="middle">Scores, live prices and a friendly AI advisor —</text>
+  <text x="540" y="1078" font-family="${SANS}" font-size="32" font-weight="600" fill="${C.leaf}" text-anchor="middle">now live for Gurgaon.</text>
+  <rect x="290" y="1660" width="500" height="96" rx="48" fill="${C.clay}"/>
+  <text x="540" y="1720" font-family="${SANS}" font-size="36" font-weight="800" fill="${C.ink}" text-anchor="middle">${SITE} →</text>
+  <text x="540" y="1830" font-family="${SANS}" font-size="30" font-weight="600" fill="${C.leaf}" text-anchor="middle">${PHONE} · WhatsApp us</text>
+</svg>`;
+  return { name: "launch-whatsapp-status", width: 1080, height: 1920, svg };
+}
+
+// Instagram launch post 1080×1080.
+export function launchPost(): BrandAsset {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <defs><linearGradient id="lpsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101B38"/><stop offset="1" stop-color="${C.estate}"/></linearGradient></defs>
+  <rect width="1080" height="1080" fill="url(#lpsky)"/>
+  ${duskBuilding(60, 700, 4, { h: 1080, lit: ["2-1"] })}
+  ${duskBuilding(820, 640, 4, { h: 1080, lit: ["1-3", "5-0"], gold: "3-2" })}
+  ${markTile(444, 120, 192, C.forest)}
+  <text x="540" y="470" font-family="${SERIF}" font-size="76" font-weight="600" fill="${C.cream}" text-anchor="middle">Gurgaon, meet Society<tspan fill="${C.leaf}">Flats</tspan>.</text>
+  <text x="540" y="560" font-family="${SERIF}" font-size="44" font-weight="500" font-style="italic" fill="${C.clay}" text-anchor="middle">Every society verified. Every home real.</text>
+  <text x="540" y="650" font-family="${SANS}" font-size="30" font-weight="600" fill="${C.leaf}" text-anchor="middle">Society scores · live verified prices · AI advisor · zero fake listings</text>
+  <rect x="330" y="880" width="420" height="88" rx="44" fill="${C.clay}"/>
+  <text x="540" y="936" font-family="${SANS}" font-size="34" font-weight="800" fill="${C.ink}" text-anchor="middle">${SITE} →</text>
+  <text x="540" y="1030" font-family="${SANS}" font-size="26" font-weight="600" fill="${C.leaf}" text-anchor="middle">${PHONE} · WhatsApp for verified availability</text>
+</svg>`;
+  return { name: "launch-instagram-post", width: 1080, height: 1080, svg };
+}
+
+// Facebook launch post / link card 1200×630.
+export function launchFb(): BrandAsset {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs><linearGradient id="lfsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101B38"/><stop offset="1" stop-color="${C.estate}"/></linearGradient></defs>
+  <rect width="1200" height="630" fill="url(#lfsky)"/>
+  <rect x="1090" y="240" width="110" height="390" rx="12" fill="#1E2F5C"/>
+  ${duskBuilding(880, 300, 4, { h: 630, lit: ["1-1", "4-3"], gold: "2-2" })}
+  ${duskBuilding(1040, 380, 3, { h: 630, lit: ["2-0"] })}
+  ${markTile(84, 70, 108, C.forest)}
+  <text x="216" y="146" font-family="${SERIF}" font-size="64" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>
+  <text x="86" y="300" font-family="${SERIF}" font-size="68" font-weight="600" fill="${C.cream}">Gurgaon, meet your</text>
+  <text x="86" y="384" font-family="${SERIF}" font-size="68" font-weight="600" font-style="italic" fill="${C.clay}">society-first home search.</text>
+  <text x="88" y="460" font-family="${SANS}" font-size="27" font-weight="600" fill="${C.leaf}">Every society verified · live prices · AI advisor · zero fake listings</text>
+  <text x="88" y="550" font-family="${SANS}" font-size="30" font-weight="700" fill="${C.cream}">${SITE}  ·  ${PHONE}</text>
+</svg>`;
+  return { name: "launch-facebook-post", width: 1200, height: 630, svg };
+}
+
 // Embed the page's webfonts into an SVG string as data-URI @font-face rules so
 // canvas rasterization renders real Newsreader/Hanken instead of Times fallback.
 let fontCssPromise: Promise<string> | null = null;

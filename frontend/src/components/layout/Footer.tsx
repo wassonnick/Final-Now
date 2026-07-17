@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
-import { Home, Phone } from "lucide-react";
+import { Phone } from "lucide-react";
+
+import { BrandMark } from "@/components/BrandMark";
 import { BRAND_PHONE_DISPLAY, BRAND_PHONE_HREF } from "@/config/contact";
 
 const desktopColumns = [
@@ -81,7 +83,7 @@ export function Footer() {
           <div className="grid grid-cols-[1.3fr_1fr_1fr_1fr_1fr] gap-8">
             <div>
               <Link to="/" className="flex items-center gap-2 font-display text-xl font-medium text-white">
-                <span className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-[#C5A766] text-[#111827]"><Home className="h-3.5 w-3.5" /></span>
+                <BrandMark size={26} className="rounded-[7px]" />
                 SocietyFlats
               </Link>
               <p className="mt-2.5 max-w-[260px] text-[13px] leading-[1.5] text-[#B7C0CF]">

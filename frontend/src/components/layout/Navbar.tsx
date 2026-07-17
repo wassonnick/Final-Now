@@ -10,6 +10,7 @@ import {
   KeyRound, BadgeIndianRupee, Globe2, LayoutGrid, MessageCircle, Calculator, Landmark,
   ShieldCheck, LifeBuoy, Gift, Briefcase, Layers, ChevronDown, Phone,
 } from 'lucide-react';
+import { BrandMark } from '@/components/BrandMark';
 import { Button } from '@/components/ui/button';
 import { BRAND_PHONE_DISPLAY, BRAND_PHONE_HREF } from '@/config/contact';
 import { useAppStore } from '@/store';
@@ -122,9 +123,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-[#DDD7CC] bg-[#FBFAF7]/95 shadow-[0_8px_30px_-28px_rgba(17,24,39,.35)] backdrop-blur-xl">
       <div className="mx-auto flex h-[64px] max-w-[1360px] items-center justify-between gap-3 px-4 sm:gap-5 lg:h-[68px] lg:px-8">
         <Link to="/" className="flex shrink-0 items-center gap-2 rounded-lg focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3156A3] focus-visible:ring-offset-2 lg:gap-[9px]" aria-label="SocietyFlats home">
-          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-[#233B6E] text-white">
-            <Home className="h-4 w-4" />
-          </span>
+          <BrandMark size={30} className="rounded-[9px]" />
           <span className="font-display text-[19px] font-medium tracking-[-0.01em] text-[#111827] lg:text-[21px]">
             SocietyFlats
           </span>
