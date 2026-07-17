@@ -37,6 +37,7 @@ type ComparePageRecord = {
     rent_range?: string;
     buy_range?: string;
     profile_url?: string;
+    blurb?: string;
   }>;
   faq_json?: Array<{ question: string; answer: string }>;
   published_at?: string;
@@ -228,6 +229,7 @@ function CompareDetail({ slug }: { slug: string }) {
                 </div>
                 <h2 className="font-serif text-2xl text-[#19231c]">{society.name}</h2>
                 <p className="mt-2 text-[#667064]">{society.sector || society.locality || "Gurgaon"} {society.builder ? `· ${society.builder}` : ""}</p>
+                {society.blurb ? <p className="mt-3 text-sm leading-6 text-[#4e574e]">{society.blurb}</p> : null}
                 <p className="mt-4 text-sm text-[#667064]">Rent: {society.rent_range || "Not enough verified data"}</p>
                 <p className="mt-1 text-sm text-[#667064]">Resale: {society.buy_range || "Not enough verified data"}</p>
                 <Button asChild variant="outline" className="mt-5 w-full rounded-full border-[#cfd8cc] bg-white">

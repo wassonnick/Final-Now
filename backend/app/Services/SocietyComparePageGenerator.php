@@ -126,6 +126,34 @@ class SocietyComparePageGenerator
         return $page->status;
     }
 
+    /**
+     * Merge AI-written editorial copy into the page (deterministic copy stays for any field
+     * the AI skipped) and stamp provenance. Blurbs slot into the per-society summary cards.
+     * The status is never touched — enhancement is copy-only.
+     */
+    public function applyAiCopy(SocietyComparePage $page, array $copy, string $model): void
+    {
+        $updates = array_filter([
+            'intro' => $copy['intro'] ?? null,
+            'comparison_summary' => $copy['comparison_summary'] ?? null,
+            'recommendation_copy' => $copy['recommendation_copy'] ?? null,
+        ]);
+        if (($copy['faq_json'] ?? []) !== []) {
+            $updates['faq_json'] = $copy['faq_json'];
+        }
+
+        $blurbs = $copy['society_blurbs'] ?? [];
+        if ($blurbs !== []) {
+            $updates['society_summaries_json'] = collect((array) $page->society_summaries_json)->map(function ($summary) use ($blurbs) {
+                $blurb = $blurbs[$summary['slug'] ?? ''] ?? null;
+
+                return $blurb ? array_merge($summary, ['blurb' => $blurb]) : $summary;
+            })->values()->all();
+        }
+
+        $page->update($updates + ['ai_model' => $model]);
+    }
+
     public function markStaleForSociety(Society $society, string $reason): int
     {
         return SocietyComparePage::query()

@@ -790,9 +790,12 @@ function comparePageRoutes(comparePages) {
             .join("")}</tbody></table>`
         : "",
       societies.length
-        ? `<p>${societies
-            .map((society) => `<a href="/society/${escapeHtml(society.slug)}">${escapeHtml(society.name)} society profile</a>`)
-            .join(" · ")}</p>`
+        ? societies
+            .map(
+              (society) =>
+                `<p style="line-height:1.6;"><a href="/society/${escapeHtml(society.slug)}"><strong>${escapeHtml(society.name)}</strong></a>${society.blurb ? ` — ${escapeHtml(society.blurb)}` : " society profile"}</p>`,
+            )
+            .join("")
         : "",
       faqs.length
         ? `<section>${faqs

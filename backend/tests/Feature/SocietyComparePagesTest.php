@@ -214,6 +214,47 @@ class SocietyComparePagesTest extends TestCase
         $this->assertSame(SocietyComparePage::STATUS_PUBLISHED, $page->fresh()->status);
     }
 
+    public function test_ai_copy_merges_into_page_and_stale_rebuild_resets_it(): void
+    {
+        $anchor = $this->society('Alpha Heights', 'alpha-heights', 'Sector 65');
+        $this->society('Beta Heights', 'beta-heights', 'Sector 66');
+        $this->society('Gamma Heights', 'gamma-heights', 'Sector 67');
+
+        app(SocietyComparePageGenerator::class)->generateForSociety($anchor);
+        $page = SocietyComparePage::firstOrFail();
+
+        app(SocietyComparePageGenerator::class)->applyAiCopy($page, [
+            'intro' => 'A unique AI-written introduction for this trio.',
+            'comparison_summary' => null,
+            'recommendation_copy' => 'Shortlist by commute first.',
+            'faq_json' => [['question' => 'Custom question?', 'answer' => 'Grounded answer.']],
+            'society_blurbs' => ['alpha-heights' => 'Quiet towers with a strong morning commute.'],
+        ], 'claude-haiku-4-5');
+
+        $page->refresh();
+        $this->assertSame('A unique AI-written introduction for this trio.', $page->intro);
+        // Fields the AI skipped keep the deterministic copy.
+        $this->assertStringContainsString('Verified rent entries start around', $page->comparison_summary);
+        $this->assertSame('claude-haiku-4-5', $page->ai_model);
+        $blurb = collect($page->society_summaries_json)->firstWhere('slug', 'alpha-heights')['blurb'] ?? null;
+        $this->assertSame('Quiet towers with a strong morning commute.', $blurb);
+        $this->assertSame('Custom question?', $page->faq_json[0]['question']);
+
+        // A stale rebuild returns to deterministic copy and re-queues AI enhancement.
+        $anchor->update(['rent_range' => '₹75k–₹1.3L']);
+        app(SocietyComparePageGenerator::class)->rebuildPage($page->fresh()->load(['societyA', 'societyB', 'societyC']), autoPublish: true);
+        $this->assertNull($page->fresh()->ai_model);
+    }
+
+    public function test_ai_copy_normalization_rejects_empty_payload(): void
+    {
+        $service = new \App\Services\SocietyCompareAiCopyService();
+        $method = new \ReflectionMethod($service, 'normalize');
+
+        $this->expectException(\RuntimeException::class);
+        $method->invoke($service, ['intro' => '', 'faq_json' => 'not-an-array', 'society_blurbs' => ['x' => '  ']]);
+    }
+
     public function test_public_index_filters_by_society_id(): void
     {
         $anchor = $this->society('Alpha Heights', 'alpha-heights', 'Sector 65');

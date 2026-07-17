@@ -174,6 +174,30 @@ class SeoAutopilotRunner
             }
         }
 
+        // Unique editorial copy per page: budget-guarded AI rewrite of intro/summary/verdict/
+        // FAQs/blurbs, grounded in the same published data. Deterministic copy is the fallback,
+        // and a stale rebuild nulls ai_model so the page re-enhances the next night.
+        $result['ai_enhanced']=0;
+        $copyService=app(\App\Services\SocietyCompareAiCopyService::class);
+        if($copyService->isAvailable()){
+            $pending=\App\Models\SocietyComparePage::with(['societyA','societyB','societyC'])
+                ->whereNull('ai_model')
+                ->whereIn('status',[\App\Models\SocietyComparePage::STATUS_NEEDS_REVIEW,\App\Models\SocietyComparePage::STATUS_PUBLISHED])
+                ->orderByDesc('status')->orderBy('updated_at')->limit(10)->get();
+            foreach($pending as $page){
+                if(!$this->budget->allow()||$this->budget->providerLimited())break;
+                try{
+                    $this->budget->record();
+                    $generator->applyAiCopy($page,$copyService->enhance($page),$copyService->model());
+                    $result['ai_enhanced']++;
+                }catch(\Throwable $e){
+                    report($e);
+                    if(\App\Services\Ops\AiBudgetGuard::isProviderLimit(['_ai_error'=>$e->getMessage()]))$this->budget->tripProviderLimit();
+                    break; // one failure per run — never hammer a failing provider
+                }
+            }
+        }
+
         return $result;
     }
 
