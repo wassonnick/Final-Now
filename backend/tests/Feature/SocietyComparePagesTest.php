@@ -271,6 +271,31 @@ class SocietyComparePagesTest extends TestCase
         $this->getJson('/api/compare-pages?society_id='.$unrelated->id)->assertOk()->assertJsonPath('data.data', []);
     }
 
+    public function test_published_page_includes_live_inventory_per_society(): void
+    {
+        $anchor = $this->society('Alpha Heights', 'alpha-heights', 'Sector 65');
+        $this->society('Beta Heights', 'beta-heights', 'Sector 66');
+        $this->society('Gamma Heights', 'gamma-heights', 'Sector 67');
+
+        \App\Models\Property::create(['society_id' => $anchor->id, 'title' => 'Live 3BHK', 'slug' => 'live-3bhk', 'listing_type' => 'Rent', 'status' => 'Live', 'verified' => true, 'verified_at' => now(), 'availability_checked_at' => now(), 'published_at' => now(), 'price' => '₹95,000/mo', 'bedrooms' => 3]);
+        \App\Models\Property::create(['society_id' => $anchor->id, 'title' => 'Hidden draft', 'slug' => 'hidden-draft', 'listing_type' => 'Rent', 'status' => 'Draft', 'price' => '₹80,000/mo']);
+
+        app(SocietyComparePageGenerator::class)->generateForSociety($anchor);
+        $page = SocietyComparePage::firstOrFail();
+        $page->update(['status' => SocietyComparePage::STATUS_PUBLISHED, 'published_at' => now()]);
+
+        $payload = $this->getJson('/api/compare-pages/'.$page->slug)->assertOk()->json('data');
+
+        $alpha = collect($payload['societies'])->firstWhere('slug', 'alpha-heights');
+        $this->assertSame(1, $alpha['live_property_count']);
+        $this->assertSame('Live 3BHK', $alpha['live_properties'][0]['title']);
+        $this->assertStringNotContainsString('Hidden draft', json_encode($payload));
+
+        $beta = collect($payload['societies'])->firstWhere('slug', 'beta-heights');
+        $this->assertSame(0, $beta['live_property_count']);
+        $this->assertSame([], $beta['live_properties']);
+    }
+
     private function society(string $name, string $slug, string $sector, array $overrides = []): Society
     {
         return Society::create(array_merge([

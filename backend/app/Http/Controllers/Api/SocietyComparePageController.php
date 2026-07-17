@@ -84,16 +84,36 @@ class SocietyComparePageController extends Controller
             'status' => $page->status,
             'published_at' => optional($page->published_at)->toISOString(),
             'updated_at' => optional($page->updated_at)->toISOString(),
-            'societies' => collect([$page->societyA, $page->societyB, $page->societyC])->filter()->map(fn ($society) => [
-                'id' => $society->id,
-                'name' => $society->name,
-                'slug' => $society->slug,
-                'sector' => $society->sector,
-                'locality' => $society->locality,
-                'builder' => $society->builder,
-                'score' => $society->score,
-                'profile_url' => "/society/{$society->slug}",
-            ])->values()->all(),
+            'societies' => collect([$page->societyA, $page->societyB, $page->societyC])->filter()->map(function ($society) {
+                // Live inventory is read fresh on every request (never baked into the
+                // generated payload) so the page always shows current verified homes.
+                $liveProperties = $society->properties()->publiclyAvailable()
+                    ->orderByDesc('published_at')->limit(3)
+                    ->get(['id', 'slug', 'title', 'listing_type', 'price', 'sale_price', 'sale_price_unit', 'bedrooms', 'area_sqft', 'furnished_status', 'images']);
+
+                return [
+                    'id' => $society->id,
+                    'name' => $society->name,
+                    'slug' => $society->slug,
+                    'sector' => $society->sector,
+                    'locality' => $society->locality,
+                    'builder' => $society->builder,
+                    'score' => $society->score,
+                    'profile_url' => "/society/{$society->slug}",
+                    'live_property_count' => $society->properties()->publiclyAvailable()->count(),
+                    'live_properties' => $liveProperties->map(fn ($property) => [
+                        'id' => $property->id,
+                        'slug' => $property->slug,
+                        'title' => $property->title,
+                        'listing_type' => $property->listing_type,
+                        'price' => $property->price ?: trim(($property->sale_price ?: '').' '.($property->sale_price_unit ?: '')) ?: null,
+                        'bedrooms' => $property->bedrooms,
+                        'area_sqft' => $property->area_sqft,
+                        'furnished_status' => $property->furnished_status,
+                        'image' => collect((array) $property->images)->first(),
+                    ])->values()->all(),
+                ];
+            })->values()->all(),
         ];
     }
 }

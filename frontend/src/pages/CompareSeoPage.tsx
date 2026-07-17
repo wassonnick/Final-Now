@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Home, MessageCircle, Search, ShieldCheck, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { backendApi } from "@/services/backendApi";
 import { setPublicSeo } from "@/lib/seo";
 
@@ -41,6 +42,24 @@ type ComparePageRecord = {
   }>;
   faq_json?: Array<{ question: string; answer: string }>;
   published_at?: string;
+  societies?: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    sector?: string;
+    builder?: string;
+    live_property_count?: number;
+    live_properties?: Array<{
+      id: number;
+      slug: string;
+      title?: string;
+      listing_type?: string;
+      price?: string;
+      bedrooms?: number | string;
+      area_sqft?: number | string;
+      furnished_status?: string;
+    }>;
+  }>;
 };
 
 function extractRows(payload: any): ComparePageRecord[] {
@@ -152,6 +171,8 @@ function CompareDetail({ slug }: { slug: string }) {
   const [page, setPage] = useState<ComparePageRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // Which society the availability lead modal is open for ("" = closed, "__page__" = whole comparison).
+  const [leadSociety, setLeadSociety] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -239,6 +260,59 @@ function CompareDetail({ slug }: { slug: string }) {
             ))}
           </div>
 
+          <section className="mt-10">
+            <h2 className="font-serif text-3xl text-[#19231c]">Verified homes available right now</h2>
+            <p className="mt-2 text-[#667064]">Live, admin-verified listings inside these societies — shown from current inventory, never cached.</p>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {(page.societies || []).map((society) => (
+                <div key={society.slug} className="flex flex-col rounded-[1.75rem] border border-[#dfded6] bg-white p-5 shadow-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-serif text-xl text-[#19231c]">{society.name}</h3>
+                    <span className="whitespace-nowrap rounded-full bg-[#e6f4e9] px-3 py-1 text-xs font-bold text-[#1b6b3a]">
+                      {society.live_property_count || 0} live
+                    </span>
+                  </div>
+                  <div className="mt-4 flex-1 space-y-3">
+                    {(society.live_properties || []).length ? (
+                      (society.live_properties || []).map((property) => (
+                        <Link
+                          key={property.id}
+                          to={`/property/${property.slug}`}
+                          className="block rounded-[1.1rem] border border-[#ece6dc] p-3.5 transition hover:border-[#153f2b]"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-semibold text-[#19231c]">{property.title || "Verified home"}</span>
+                            <span className="whitespace-nowrap font-bold text-[#153f2b]">{property.price || "On request"}</span>
+                          </div>
+                          <p className="mt-1 text-sm text-[#667064]">
+                            {[
+                              property.bedrooms ? `${property.bedrooms} BHK` : null,
+                              property.area_sqft ? `${property.area_sqft} sq.ft` : null,
+                              property.furnished_status || null,
+                              property.listing_type || null,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="rounded-[1.1rem] border border-dashed border-[#d8d4ca] p-3.5 text-sm leading-6 text-[#667064]">
+                        No verified homes listed right now. Request availability and SocietyFlats will check owner and broker options for you.
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    onClick={() => setLeadSociety(society.name)}
+                    className="mt-4 w-full rounded-full bg-[#153f2b] text-white hover:bg-[#0e2f20]"
+                  >
+                    Check availability in {society.name.split(" ")[0]}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </section>
+
           <div className="mt-10 overflow-hidden rounded-[1.75rem] border border-[#dfded6] bg-white shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-left">
@@ -285,8 +359,12 @@ function CompareDetail({ slug }: { slug: string }) {
               <Button asChild className="rounded-full bg-[#153f2b] text-white hover:bg-[#0e2f20]">
                 <Link to="/ai-advisor"><Sparkles className="mr-2 h-4 w-4" /> Ask AI Advisor</Link>
               </Button>
-              <Button asChild variant="outline" className="rounded-full border-[#153f2b] bg-white text-[#153f2b]">
-                <Link to="/search"><Search className="mr-2 h-4 w-4" /> Request available homes</Link>
+              <Button
+                variant="outline"
+                className="rounded-full border-[#153f2b] bg-white text-[#153f2b]"
+                onClick={() => setLeadSociety("__page__")}
+              >
+                <Search className="mr-2 h-4 w-4" /> Request available homes
               </Button>
               <Button asChild className="rounded-full bg-[#45a049] text-white hover:bg-[#3c8d40]">
                 <a href={`https://wa.me/919911886222?text=${whatsappMessage}`} target="_blank" rel="noreferrer">
@@ -303,6 +381,21 @@ function CompareDetail({ slug }: { slug: string }) {
           </div>
         </aside>
       </section>
+
+      <PublicLeadModal
+        open={leadSociety !== ""}
+        title={leadSociety === "__page__" ? "Request current availability" : `Check availability in ${leadSociety}`}
+        subtitle={
+          leadSociety === "__page__"
+            ? `SocietyFlats will check current verified options across ${page.title}.`
+            : `SocietyFlats will confirm current verified homes and owner/broker options in ${leadSociety}.`
+        }
+        source={leadSociety === "__page__" ? "compare_page_sidebar" : "compare_page_availability"}
+        leadIntent="availability"
+        societyName={leadSociety === "__page__" ? undefined : leadSociety}
+        defaultMessage={`Interested via comparison: ${page.title}`}
+        onClose={() => setLeadSociety("")}
+      />
     </div>
   );
 }
