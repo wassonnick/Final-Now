@@ -21,6 +21,30 @@ const PHONE = "+91 99118 86222";
 
 const esc = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
+// Shrink a font size so `text` fits the width a `maxChars`-long string would use.
+const fitSize = (text: string, base: number, maxChars: number) =>
+  Math.round(base * Math.min(1, maxChars / Math.max(1, text.length)));
+
+// Greedy word-wrap into at most `maxLines` lines of ~`maxChars` (last line ellipsised).
+function wrapLines(text: string, maxChars: number, maxLines = 2): string[] {
+  const words = text.trim().split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    if ((current + " " + word).trim().length <= maxChars || current === "") {
+      current = (current + " " + word).trim();
+    } else {
+      lines.push(current);
+      current = word;
+      if (lines.length === maxLines - 1) break;
+    }
+  }
+  const used = lines.join(" ").split(/\s+/).filter(Boolean).length;
+  const rest = words.slice(used).join(" ");
+  lines.push(rest.length > maxChars ? rest.slice(0, maxChars - 1).trimEnd() + "…" : rest);
+  return lines.filter(Boolean);
+}
+
 function duskBuilding(
   x: number,
   top: number,
@@ -103,6 +127,123 @@ export function fbCover(headlinePlain: string, headlineGold: string): BrandAsset
   <text x="142" y="496" font-family="${SANS}" font-size="27" font-weight="700" fill="${C.cream}">${SITE}  ·  ${PHONE}</text>
 </svg>`;
   return { name: "facebook-cover", width: 1640, height: 624, svg };
+}
+
+// Society report card story — real scores as a shareable card. Weekly content
+// straight from published data; never invent numbers.
+export function scoreStory(
+  society: string,
+  sector: string,
+  overall: string,
+  bars: Array<{ label: string; value: number }>,
+): BrandAsset {
+  const barRows = bars
+    .filter((bar) => bar.label && bar.value > 0)
+    .slice(0, 4)
+    .map((bar, index) => {
+      const y = 1150 + index * 118;
+      const width = Math.max(40, Math.min(10, bar.value) / 10 * 640);
+      return `
+  <text x="140" y="${y}" font-family="${SANS}" font-size="30" font-weight="700" fill="${C.leaf}" letter-spacing="3">${esc(bar.label.toUpperCase())}</text>
+  <rect x="140" y="${y + 22}" width="640" height="18" rx="9" fill="#2A3C6E"/>
+  <rect x="140" y="${y + 22}" width="${width}" height="18" rx="9" fill="#F3EBDA"/>
+  <text x="830" y="${y + 40}" font-family="${SERIF}" font-size="40" font-weight="600" fill="${C.cream}">${bar.value.toFixed(1)}</text>`;
+    })
+    .join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101B38"/><stop offset="1" stop-color="${C.estate}"/></linearGradient></defs>
+  <rect width="1080" height="1920" fill="url(#sky)"/>
+  ${duskBuilding(900, 1500, 2, { h: 1920, lit: ["1-0"], gold: "3-1" })}
+  ${markTile(72, 76, 92, C.forest)}
+  <text x="190" y="144" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>
+  <text x="540" y="340" font-family="${SANS}" font-size="30" font-weight="700" fill="${C.leaf}" text-anchor="middle" letter-spacing="5">SOCIETY REPORT CARD</text>
+  <circle cx="540" cy="600" r="160" fill="none" stroke="${C.clay}" stroke-width="14"/>
+  <circle cx="540" cy="600" r="132" fill="${C.forest}"/>
+  <text x="540" y="640" font-family="${SERIF}" font-size="120" font-weight="600" fill="${C.clay}" text-anchor="middle">${esc(overall)}</text>
+  <text x="540" y="700" font-family="${SANS}" font-size="26" font-weight="700" fill="${C.leaf}" text-anchor="middle">OVERALL / 10</text>
+  <text x="540" y="880" font-family="${SERIF}" font-size="${fitSize(society, 72, 24)}" font-weight="600" fill="${C.cream}" text-anchor="middle">${esc(society)}</text>
+  <text x="540" y="950" font-family="${SANS}" font-size="32" font-weight="600" fill="${C.leaf}" text-anchor="middle">${esc(sector)} · admin-verified data</text>
+  ${barRows}
+  <rect x="140" y="1660" width="520" height="92" rx="46" fill="${C.clay}"/>
+  <text x="400" y="1718" font-family="${SANS}" font-size="34" font-weight="800" fill="${C.ink}" text-anchor="middle">See the full profile →</text>
+  <text x="140" y="1850" font-family="${SANS}" font-size="30" font-weight="600" fill="${C.leaf}">${SITE} · ${PHONE}</text>
+</svg>`;
+  const slug = society.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return { name: `score-card-${slug || "society"}`, width: 1080, height: 1920, svg };
+}
+
+// Rent-check story — the scroll-stopping hook is a giant gold number.
+export function rentStory(amount: string, area: string): BrandAsset {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <rect width="1080" height="1920" fill="${C.cream}"/>
+  ${markTile(72, 76, 92)}
+  <text x="190" y="144" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.ink}">Society<tspan fill="${C.estate}">Flats</tspan></text>
+  <text x="90" y="560" font-family="${SERIF}" font-size="88" font-weight="600" fill="${C.ink}">What does</text>
+  <text x="90" y="780" font-family="${SERIF}" font-size="${fitSize(amount, 150, 11)}" font-weight="600" font-style="italic" fill="${C.clayDeep}">${esc(amount)}</text>
+  <text x="90" y="940" font-family="${SERIF}" font-size="88" font-weight="600" fill="${C.ink}">get you in ${esc(area)}?</text>
+  <text x="92" y="1060" font-family="${SANS}" font-size="34" font-weight="600" fill="${C.grey}">Real options from verified societies — no bait listings.</text>
+  <rect x="90" y="1180" width="560" height="100" rx="50" fill="${C.estate}"/>
+  <text x="370" y="1243" font-family="${SANS}" font-size="36" font-weight="800" fill="${C.cream}" text-anchor="middle">See verified options →</text>
+  <g opacity="0.35">${duskBuilding(120, 1500, 5, { h: 1920, lit: [] })}${duskBuilding(420, 1580, 4, { h: 1920, lit: [] })}${duskBuilding(680, 1460, 5, { h: 1920, lit: [], gold: "2-2" })}</g>
+  <text x="90" y="1420" font-family="${SANS}" font-size="30" font-weight="700" fill="${C.clayDeep}">${SITE} · ${PHONE}</text>
+</svg>`;
+  return { name: "rent-check", width: 1080, height: 1920, svg };
+}
+
+// Just Verified post (1080×1080, FB + IG) — announcement card with a gold seal.
+export function justVerifiedPost(society: string, sector: string): BrandAsset {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <rect width="1080" height="1080" fill="${C.cream}"/>
+  <rect x="28" y="28" width="1024" height="1024" rx="28" fill="none" stroke="${C.sage}" stroke-width="2"/>
+  <path d="M280 620 L280 400 A260 260 0 0 1 800 400 L800 620 Z" fill="${C.sage}"/>
+  <text x="540" y="500" font-family="${SANS}" font-size="24" font-weight="600" fill="${C.grey}" text-anchor="middle">PHOTO — mask to this window</text>
+  <path d="M280 620 L280 400 A260 260 0 0 1 800 400 L800 620 Z" fill="none" stroke="${C.estate}" stroke-width="12"/>
+  <circle cx="800" cy="620" r="86" fill="${C.clay}"/>
+  <circle cx="800" cy="620" r="70" fill="none" stroke="${C.cream}" stroke-width="4"/>
+  <path d="M766 620 L790 646 L836 592" fill="none" stroke="${C.cream}" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="90" y="800" font-family="${SANS}" font-size="28" font-weight="700" fill="${C.clayDeep}" letter-spacing="5">JUST VERIFIED</text>
+  <text x="90" y="878" font-family="${SERIF}" font-size="${fitSize(society, 64, 26)}" font-weight="600" fill="${C.ink}">${esc(society)}</text>
+  <text x="90" y="936" font-family="${SANS}" font-size="30" font-weight="600" fill="${C.grey}">${esc(sector)} · scores, market ranges and amenities now live</text>
+  ${markTile(920, 900, 72)}
+  <text x="90" y="1010" font-family="${SANS}" font-size="26" font-weight="700" fill="${C.estate}">${SITE} · ${PHONE}</text>
+</svg>`;
+  const slug = society.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return { name: `just-verified-${slug || "society"}`, width: 1080, height: 1080, svg };
+}
+
+// Versus post (1080×1080) — split panel comparison teaser; feeds the compare pages.
+export function versusPost(societyA: string, societyB: string): BrandAsset {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <rect width="540" height="1080" fill="${C.cream}"/>
+  <rect x="540" width="540" height="1080" fill="${C.estate}"/>
+  <g opacity="0.5">${duskBuilding(120, 620, 4, { h: 940, lit: [] })}</g>
+  ${duskBuilding(700, 560, 4, { h: 940, lit: ["1-2", "4-0"], gold: "2-3" })}
+  <text x="270" y="380" font-family="${SERIF}" font-size="${fitSize(societyA, 60, 14)}" font-weight="600" fill="${C.ink}" text-anchor="middle">${esc(societyA)}</text>
+  <text x="810" y="380" font-family="${SERIF}" font-size="${fitSize(societyB, 60, 14)}" font-weight="600" fill="${C.cream}" text-anchor="middle">${esc(societyB)}</text>
+  <circle cx="540" cy="480" r="90" fill="${C.clay}"/>
+  <text x="540" y="508" font-family="${SERIF}" font-size="72" font-weight="600" font-style="italic" fill="${C.ink}" text-anchor="middle">vs</text>
+  <rect x="140" y="920" width="800" height="92" rx="46" fill="${C.forest}"/>
+  <text x="540" y="978" font-family="${SANS}" font-size="32" font-weight="800" fill="${C.cream}" text-anchor="middle">Compare them side by side → ${SITE}/compare</text>
+  <text x="270" y="150" font-family="${SANS}" font-size="26" font-weight="700" fill="${C.clayDeep}" text-anchor="middle" letter-spacing="4">WHICH ONE FITS YOU?</text>
+  <text x="810" y="150" font-family="${SANS}" font-size="26" font-weight="700" fill="${C.leaf}" text-anchor="middle" letter-spacing="4">ADMIN-VERIFIED DATA</text>
+</svg>`;
+  return { name: "versus-post", width: 1080, height: 1080, svg };
+}
+
+// Myth/Fact post (1080×1080) — the trust promise as an ongoing series.
+export function mythFactPost(myth: string, fact: string): BrandAsset {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <rect width="1080" height="540" fill="${C.estate}"/>
+  <rect y="540" width="1080" height="540" fill="${C.cream}"/>
+  <g opacity="0.4">${duskBuilding(920, 120, 3, { h: 500, lit: [] })}</g>
+  <text x="90" y="170" font-family="${SANS}" font-size="30" font-weight="800" fill="${C.leaf}" letter-spacing="6">MYTH</text>
+  ${wrapLines(`“${myth}”`, 34).map((line, index) => `<text x="90" y="${252 + index * 74}" font-family="${SERIF}" font-size="56" font-weight="500" font-style="italic" fill="${C.cream}">${esc(line)}</text>`).join("")}
+  <text x="90" y="690" font-family="${SANS}" font-size="30" font-weight="800" fill="${C.clayDeep}" letter-spacing="6">FACT</text>
+  ${wrapLines(fact, 34).map((line, index) => `<text x="90" y="${772 + index * 74}" font-family="${SERIF}" font-size="56" font-weight="600" fill="${C.ink}">${esc(line)}</text>`).join("")}
+  ${markTile(920, 920, 72)}
+  <text x="90" y="990" font-family="${SANS}" font-size="26" font-weight="700" fill="${C.estate}">${SITE} · every society admin-verified</text>
+</svg>`;
+  return { name: "myth-fact", width: 1080, height: 1080, svg };
 }
 
 // Embed the page's webfonts into an SVG string as data-URI @font-face rules so
