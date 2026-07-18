@@ -10,7 +10,11 @@ class SeoAutopilotAuditService
 {
     public function run(?SeoPage $only = null): array
     {
-        $pages=$only?collect([$only]):SeoPage::all();$scores=[];
+        // Audit only pages that are meant to rank. Auditing noindex/non-public pages
+        // (RWA community pages, draft properties) produced hundreds of permanently-open
+        // "failing" tasks for pages that were deliberately kept out of Google — noise
+        // that buried the real work.
+        $pages=$only?collect([$only]):SeoPage::where('is_public',true)->where('is_indexable',true)->get();$scores=[];
         foreach($pages as $page){$audit=$this->audit($page);$scores[]=$audit->score;}
         return ['checked'=>$pages->count(),'average_score'=>$scores?round(array_sum($scores)/count($scores),1):0,'failed'=>collect($scores)->filter(fn($s)=>$s<50)->count()];
     }

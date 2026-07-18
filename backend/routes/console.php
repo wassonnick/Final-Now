@@ -143,7 +143,10 @@ Artisan::command('ops:queue-market-refresh {--limit=15}', function () {
 
 // Default max-age 14 days: at 12 refreshes/day the whole ~80-society catalogue cycles well
 // inside the window, so no public price range is ever older than two weeks.
-Artisan::command('market:auto-refresh {--limit=12} {--max-age-days=14} {--force}', function () {
+// Defaults tuned for cost: web-search refreshes are the most expensive automated call
+// (UNIT_SEARCH). 6/day on a 30-day cycle covers the whole catalogue with headroom —
+// society market ranges do not move fast enough to justify a 14-day cycle at 12/day.
+Artisan::command('market:auto-refresh {--limit=6} {--max-age-days=30} {--force}', function () {
     // --force (or --max-age-days=0) re-refreshes every published society regardless of how
     // recently its market data was refreshed — used after a sourcing/model change to roll
     // the improvement across the whole catalogue rather than waiting for the age gate.

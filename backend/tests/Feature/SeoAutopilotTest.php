@@ -509,6 +509,21 @@ class SeoAutopilotTest extends TestCase
         $this->assertSame('resolved',SeoTask::where('seo_page_id',$page->id)->where('task_type','insufficient_approved_societies')->firstOrFail()->status);
     }
 
+    public function test_audits_skip_noindex_pages_and_nightly_run_clears_their_stale_tasks(): void
+    {
+        // RWA community pages are deliberately noindex; audits on them created hundreds of
+        // permanently-open tasks. Audits must skip them and the nightly run must resolve
+        // any tasks they already accumulated.
+        SeoAutomationSetting::create(['enabled'=>true,'audit_enabled'=>true,'technical_checks_enabled'=>false,'search_console_enabled'=>false,'keyword_refresh_enabled'=>false,'draft_generation_enabled'=>false,'reports_enabled'=>false,'auto_publish_enabled'=>false,'drafts_per_run'=>5,'timezone'=>'Asia/Kolkata','auto_publish_min_confidence'=>80]);
+        $rwaPage=SeoPage::create(['page_key'=>'rwa:999','page_type'=>'rwa','url'=>'/rwa/test-society','canonical_url'=>'/rwa/test-society','title'=>'Test RWA','h1'=>'Test RWA','is_public'=>true,'is_indexable'=>false,'sitemap_included'=>false]);
+        $stale=SeoTask::create(['seo_page_id'=>$rwaPage->id,'task_type'=>'audit_indexability','status'=>'open','priority'=>'high','title'=>'t','description'=>'d','source'=>'audit']);
+
+        $this->admin()->postJson('/api/admin/seo-autopilot/automation/run')->assertOk();
+
+        $this->assertSame('resolved',$stale->fresh()->status);
+        $this->assertSame(0,SeoTask::where('seo_page_id',$rwaPage->id)->where('status','open')->count());
+    }
+
     public function test_nightly_run_clears_orphaned_page_tasks_but_keeps_site_level_technical_ones(): void
     {
         // Registry cleanup can delete a stale page, nulling its tasks' page id — those can never

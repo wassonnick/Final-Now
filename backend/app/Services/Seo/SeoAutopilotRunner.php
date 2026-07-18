@@ -72,6 +72,12 @@ class SeoAutopilotRunner
             // no page id and keep their own pass/fail resolution.
             $summary['orphan_tasks_cleared']=SeoTask::whereNull('seo_page_id')->where('status','open')
                 ->where('task_type','not like','technical%')->update(['status'=>'resolved','resolved_at'=>now()]);
+            // Tasks on pages that are deliberately noindex/non-public (RWA pages, draft
+            // properties, unpublished compare pages) can never matter for rankings —
+            // resolve them so the task list only shows work that moves organic traffic.
+            $summary['noise_tasks_cleared']=SeoTask::where('status','open')->whereNotNull('seo_page_id')
+                ->whereIn('seo_page_id',SeoPage::query()->where(fn($q)=>$q->where('is_public',false)->orWhere('is_indexable',false))->select('id'))
+                ->update(['status'=>'resolved','resolved_at'=>now()]);
             if($settings->technical_checks_enabled){
                 $technical=$this->technical->run();
                 $summary['technical_failures']=$technical['failed'];
@@ -84,6 +90,9 @@ class SeoAutopilotRunner
             if($settings->draft_generation_enabled)$summary['drafts_generated']=$this->generateOpportunityDrafts($settings->drafts_per_run);
             if($settings->auto_publish_enabled)$summary['drafts_auto_published']=$this->autoPublishSafeDrafts((int)$settings->auto_publish_min_confidence);
             if($settings->reports_enabled)$summary['report_id']=$this->reports->generate('daily')->id;
+            // Money transparency: every run reports how much of the day's AI budget is spent.
+            $summary['ai_units_used_today']=$this->budget->used();
+            $summary['ai_units_cap']=$this->budget->cap();
 
             $status=$summary['warnings']||$summary['technical_failures']?'completed_with_warnings':'completed';
             $run->update(['status'=>$status,'finished_at'=>now(),'summary'=>$summary]);

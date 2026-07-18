@@ -43,7 +43,7 @@ class AutoRefreshSocietyMarket implements ShouldQueue
             return;
         }
 
-        $budget->record();
+        $budget->record(\App\Services\Ops\AiBudgetGuard::UNIT_SEARCH);
 
         try {
             $market->refreshAndApply($society);

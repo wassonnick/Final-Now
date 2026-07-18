@@ -87,7 +87,8 @@ class SocietyDraftCompletionService
         //     the daily market:auto-refresh keeps it current afterwards.
         if ($aiUsable && ! data_get($society->field_sources, 'market.refreshed_at')) {
             try {
-                $this->budget->record();
+                // Web-search grounded — the expensive call class.
+                $this->budget->record(\App\Services\Ops\AiBudgetGuard::UNIT_SEARCH);
                 $this->market->refreshAndApply($society);
                 $society->refresh();
                 $actions[] = 'market_grounded';

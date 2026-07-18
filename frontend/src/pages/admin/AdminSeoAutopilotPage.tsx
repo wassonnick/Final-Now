@@ -51,7 +51,12 @@ export function AdminSeoAutopilotPage(){
             </div>
             <Button disabled={Boolean(busy)} onClick={()=>void run('cycle',runSeoAutopilotCycle)} className="bg-white text-slate-950 hover:bg-blue-50"><RefreshCw className={`mr-2 h-4 w-4 ${busy==='cycle'?'animate-spin':''}`}/>Run complete automation</Button>
           </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl bg-white/10 p-4">
+              <p className="text-xs text-slate-300">AI budget today</p>
+              <p className="mt-1 text-sm font-black">{dashboard.automation?.ai_budget?`${dashboard.automation.ai_budget.used} / ${dashboard.automation.ai_budget.cap} units`:'—'}</p>
+              <p className="mt-1 text-[11px] text-slate-400">{dashboard.automation?.ai_budget?.provider_limited?'Provider limit tripped — automation paused for the day':'Automation stops at the cap; web-search calls cost 5 units, images 3'}</p>
+            </div>
             <div className="rounded-2xl bg-white/10 p-4"><p className="text-xs text-slate-300">Next run</p><p className="mt-1 text-sm font-black">{dashboard.automation?.next_run_at?new Date(dashboard.automation.next_run_at).toLocaleString():'—'}</p></div>
             <div className="rounded-2xl bg-white/10 p-4"><p className="text-xs text-slate-300">Last run</p><p className="mt-1 text-sm font-black">{dashboard.automation?.last_run?.status||'No run yet'}</p></div>
             <div className="rounded-2xl bg-white/10 p-4"><p className="text-xs text-slate-300">Drafts per run</p><select disabled={Boolean(busy)} value={dashboard.automation?.settings?.drafts_per_run??5} onChange={e=>void updateAutomation('drafts_per_run',Number(e.target.value))} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 p-2 text-sm font-black text-white"><option value={0}>0</option><option value={3}>3</option><option value={5}>5</option><option value={10}>10</option><option value={20}>20</option></select></div>

@@ -46,6 +46,8 @@ class SocialDraftGeneratorService
             $post = SocialPost::create($normalized);
 
             if (! empty($input['generate_images'])) {
+                // Image generation is real money — count it against the daily AI budget.
+                $this->budget->record(\App\Services\Ops\AiBudgetGuard::UNIT_IMAGE);
                 $this->imageAssets->createForPost($post);
             } elseif (! empty($post->image_prompt) || ! empty($post->creative_prompt)) {
                 $post->assets()->create([

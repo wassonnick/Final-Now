@@ -37,7 +37,7 @@ class RefreshSocietyMarketSuggestion implements ShouldQueue
             return;
         }
 
-        $budget->record();
+        $budget->record(\App\Services\Ops\AiBudgetGuard::UNIT_SEARCH);
         $market->fetchForSociety($society);
     }
 }

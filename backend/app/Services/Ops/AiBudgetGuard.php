@@ -11,6 +11,15 @@ use Illuminate\Support\Facades\Cache;
  */
 class AiBudgetGuard
 {
+    /**
+     * Cost-weighted units — a web-search call costs ~30× a Haiku text call, so counting
+     * "calls" made the cap meaningless. Callers record the unit class that matches what
+     * they actually spend; the daily cap is denominated in these units.
+     */
+    public const UNIT_TEXT = 1;      // plain text generation (Haiku/Gemini Flash)
+    public const UNIT_IMAGE = 3;     // one generated image (gpt-image)
+    public const UNIT_SEARCH = 5;    // web-search grounded call (market refresh)
+
     private function key(): string
     {
         return 'ops:ai-budget:'.now()->toDateString();
