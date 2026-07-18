@@ -1217,6 +1217,70 @@ export function SocietyPage() {
               </section>
             ) : null}
 
+            {(() => {
+              // Buyer's Truth — the pre-purchase verification layer. Surfaces RERA
+              // registration, possession/delivery reality and the legal-confidence signal,
+              // and states plainly what a buyer must independently verify. We never invent
+              // legal status; missing facts are shown as "confirm before you pay".
+              const reraNumber = readableStructuredValue(field(society, "reraNumber", "rera_number", ""));
+              const reraRegistered = Boolean(reraNumber);
+              const legalSignal = Array.isArray(intelligence?.signal_breakdown)
+                ? intelligence.signal_breakdown.find((s: any) => s.key === "legal_rera_confidence_score")
+                : null;
+              const checklist = [
+                reraRegistered
+                  ? { label: "RERA registration", ok: true, detail: `Registered: ${reraNumber}. Cross-check it on the HARERA portal before payment.` }
+                  : { label: "RERA registration", ok: false, detail: "No RERA number on record yet. Ask the seller/builder for it and verify on HARERA before you pay." },
+                { label: "Title & ownership", ok: false, detail: "Confirm a clear, marketable title and chain of ownership with your lawyer — SocietyFlats does not verify unit-level title." },
+                deliveryTone.label === "Delivered / ready"
+                  ? { label: "Possession", ok: true, detail: "Reported delivered — still confirm tower- and unit-level possession and any pending OC/CC." }
+                  : { label: "Possession timeline", ok: false, detail: "Under-construction possession dates are builder-committed, not guaranteed. Confirm the current RERA-registered timeline and grace period." },
+                { label: "Dues & encumbrance", ok: false, detail: "Check for outstanding maintenance, property tax, or loan encumbrance on the specific unit before booking." },
+              ];
+              return (
+                <section className="mt-6 overflow-hidden rounded-[24px] border border-[#233B6E]/15 bg-white shadow-[0_18px_44px_-34px_rgba(0,0,0,.35)]">
+                  <div className="bg-gradient-to-b from-[#101B38] to-[#233B6E] px-5 py-5 text-white">
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#C5A766]">Buyer's Truth</p>
+                    <h2 className="mt-1.5 font-display text-[24px] font-medium">Before you buy, verify what actually matters.</h2>
+                    <p className="mt-1.5 max-w-2xl text-[13.5px] leading-6 text-[#CFD8EC]">We show what's on record and, honestly, what still needs your own check. A brochure is a sales pitch — this is the checklist.</p>
+                  </div>
+                  <div className="grid gap-4 p-5 md:grid-cols-3">
+                    <div className={`rounded-[16px] border p-4 ${reraRegistered ? "border-emerald-100 bg-emerald-50" : "border-amber-100 bg-amber-50"}`}>
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-[#8A8F89]">RERA</p>
+                      <p className={`mt-1 text-sm font-black ${reraRegistered ? "text-emerald-700" : "text-amber-700"}`}>{reraRegistered ? "Registered" : "Not on record"}</p>
+                      <p className="mt-1 break-words text-[12.5px] text-[#59635E]">{reraRegistered ? reraNumber : "Ask before you pay"}</p>
+                      {reraUrl ? <a href={reraUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-[12.5px] font-bold text-[#3156A3] underline">Verify on RERA →</a> : null}
+                    </div>
+                    <div className={`rounded-[16px] border p-4 ${deliveryTone.card}`}>
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-[#8A8F89]">Possession</p>
+                      <p className="mt-1 text-sm font-black text-[#25302B]">{deliveryTone.label}</p>
+                      <p className="mt-1 text-[12.5px] text-[#59635E]">{possessionDateText && possessionDateText !== "—" ? possessionDateText : deliveryTone.helper}</p>
+                    </div>
+                    <div className="rounded-[16px] border border-[#D7E7D8] bg-[#F8FBF8] p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-[#8A8F89]">Legal & RERA confidence</p>
+                      <p className="mt-1 text-sm font-black text-[#123C32]">{legalSignal && legalSignal.score != null ? `${Number(legalSignal.score).toFixed(1)}/10` : "Being verified"}</p>
+                      <p className="mt-1 text-[12.5px] text-[#59635E]">{legalSignal ? (legalSignal.status === "verified" ? "Verified signal" : "Estimated — confirm independently") : "Not yet scored"}</p>
+                    </div>
+                  </div>
+                  <div className="border-t border-[#E7E3DA] px-5 py-4">
+                    <h3 className="text-sm font-black text-[#233B6E]">Your pre-purchase checklist</h3>
+                    <div className="mt-3 space-y-2">
+                      {checklist.map((item) => (
+                        <div key={item.label} className="flex gap-3 rounded-[14px] border border-[#EEE6DA] bg-[#F8F3EA] p-3">
+                          <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[13px] font-black ${item.ok ? "bg-emerald-100 text-emerald-700" : "bg-[#FBEAD3] text-[#9A552E]"}`}>{item.ok ? "✓" : "!"}</span>
+                          <div><p className="text-[13.5px] font-bold text-[#25302B]">{item.label}</p><p className="text-[12.5px] leading-5 text-[#6E756E]">{item.detail}</p></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <button type="button" onClick={() => openSocietyCallback("society_buyer_truth_verify")} className="rounded-full bg-[#233B6E] px-5 py-2.5 text-sm font-bold text-white">Ask us to verify for you</button>
+                      <Link to="/data-sources" className="rounded-full border border-[#E7DCCB] bg-white px-5 py-2.5 text-sm font-bold text-[#9A552E]">How we source this</Link>
+                    </div>
+                  </div>
+                </section>
+              );
+            })()}
+
             {seoContent?.intro_summary ? <p className="mt-6 rounded-[16px] border border-[#E7E3DA] bg-white p-5 text-[15px] leading-7 text-[#35413B]">{seoContent.intro_summary}</p> : null}
 
             {subScores.length ? (
