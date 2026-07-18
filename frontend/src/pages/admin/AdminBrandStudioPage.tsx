@@ -14,6 +14,9 @@ import {
   launchPost,
   launchStory,
   mythFactPost,
+  ownerFb,
+  ownerPost,
+  ownerStory,
   rentStory,
   scoreStory,
   versusPost,
@@ -110,6 +113,8 @@ export function AdminBrandStudioPage() {
   const versusAsset = useMemo(() => versusPost(versusA, versusB), [versusA, versusB]);
   const mythAsset = useMemo(() => mythFactPost(myth, fact), [myth, fact]);
   const launchAssets = useMemo(() => [launchStory(), launchPost(), launchFb()], []);
+  const [ownerSociety, setOwnerSociety] = useState("DLF The Crest");
+  const ownerAssets = useMemo(() => [ownerStory(ownerSociety), ownerPost(), ownerFb()], [ownerSociety]);
 
   const stories = useMemo(
     () =>
@@ -134,6 +139,15 @@ export function AdminBrandStudioPage() {
           hint="One creative per channel, same dusk-skyline story: Gurgaon, meet SocietyFlats. Download and post as-is."
           controls={<></>}
           assets={launchAssets}
+        />
+
+        <Section
+          title="Owner acquisition — get inventory listed"
+          hint="Drives owners to societyflats.com/list-your-flat. The story personalises per society — post it in that society's owner/RWA groups."
+          controls={
+            <Input value={ownerSociety} onChange={(e) => setOwnerSociety(e.target.value)} placeholder="Society for the story" className="rounded-full sm:max-w-64" />
+          }
+          assets={ownerAssets}
         />
 
         <section>

@@ -144,6 +144,15 @@ const routeMeta = [
     schemaType: "CollectionPage",
   },
   {
+    path: "/list-your-flat",
+    title: "List Your Gurgaon Flat Free — Verified Tenants & Buyers | SocietyFlats",
+    description:
+      "List your flat on your society's verified SocietyFlats page. Free listing, verified enquiries only, no spam — tenants and buyers who already chose your society.",
+    priority: "0.8",
+    changefreq: "weekly",
+    schemaType: "WebPage",
+  },
+  {
     path: "/compare",
     title: "Compare Gurgaon Societies | SocietyFlats",
     description:

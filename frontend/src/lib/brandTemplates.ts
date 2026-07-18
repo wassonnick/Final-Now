@@ -306,6 +306,75 @@ export function launchFb(): BrandAsset {
   return { name: "launch-facebook-post", width: 1200, height: 630, svg };
 }
 
+// ————— Owner acquisition suite — get inventory: "list your flat" —————
+const CAMPAIGN_URL = `${SITE}/list-your-flat`;
+
+// Instagram story 1080×1920 — personalise per society for owner groups.
+export function ownerStory(society: string): BrandAsset {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs><linearGradient id="osky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101B38"/><stop offset="1" stop-color="${C.estate}"/></linearGradient></defs>
+  <rect width="1080" height="1920" fill="url(#osky)"/>
+  ${duskBuilding(840, 1200, 4, { h: 1920, lit: ["1-1", "5-3"], gold: "3-2" })}
+  ${duskBuilding(40, 1560, 5, { h: 1920, lit: ["0-2"] })}
+  ${markTile(72, 76, 92, C.forest)}
+  <text x="190" y="144" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>
+  <text x="90" y="500" font-family="${SERIF}" font-size="${fitSize(`Own a flat in ${society}?`, 76, 26)}" font-weight="600" fill="${C.cream}">Own a flat in ${esc(society)}?</text>
+  <text x="90" y="620" font-family="${SERIF}" font-size="66" font-weight="500" font-style="italic" fill="${C.clay}">People are searching it right now.</text>
+  <text x="92" y="760" font-family="${SANS}" font-size="34" font-weight="600" fill="${C.leaf}">List free on your society's verified page and meet</text>
+  <text x="92" y="810" font-family="${SANS}" font-size="34" font-weight="600" fill="${C.leaf}">tenants and buyers who already chose your address.</text>
+  ${["No listing fee", "Verified enquiries only", "Your number stays private", "Pause anytime"].map((line, index) => `
+  <circle cx="110" cy="${940 + index * 84}" r="10" fill="${C.clay}"/>
+  <text x="146" y="${952 + index * 84}" font-family="${SANS}" font-size="32" font-weight="700" fill="${C.cream}">${line}</text>`).join("")}
+  <rect x="90" y="1560" width="620" height="96" rx="48" fill="${C.clay}"/>
+  <text x="400" y="1620" font-family="${SANS}" font-size="34" font-weight="800" fill="${C.ink}" text-anchor="middle">List your flat free →</text>
+  <text x="90" y="1740" font-family="${SANS}" font-size="30" font-weight="700" fill="${C.leaf}">${CAMPAIGN_URL}</text>
+  <text x="90" y="1800" font-family="${SANS}" font-size="28" font-weight="600" fill="${C.leaf}">${PHONE} · WhatsApp us</text>
+</svg>`;
+  const slug = society.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return { name: `owner-story-${slug || "society"}`, width: 1080, height: 1920, svg };
+}
+
+// Instagram post 1080×1080.
+export function ownerPost(): BrandAsset {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <rect width="1080" height="1080" fill="${C.cream}"/>
+  <rect x="28" y="28" width="1024" height="1024" rx="28" fill="none" stroke="${C.sage}" stroke-width="2"/>
+  ${markTile(84, 84, 84)}
+  <text x="190" y="142" font-family="${SERIF}" font-size="46" font-weight="600" fill="${C.ink}">Society<tspan fill="${C.estate}">Flats</tspan></text>
+  <text x="88" y="330" font-family="${SERIF}" font-size="72" font-weight="600" fill="${C.ink}">Your flat. Your society's page.</text>
+  <text x="88" y="430" font-family="${SERIF}" font-size="72" font-weight="600" font-style="italic" fill="${C.clayDeep}">Their next home.</text>
+  <text x="90" y="530" font-family="${SANS}" font-size="30" font-weight="600" fill="${C.grey}">Gurgaon seekers on SocietyFlats pick the society first — then the flat.</text>
+  <text x="90" y="578" font-family="${SANS}" font-size="30" font-weight="600" fill="${C.grey}">List yours where they're already looking. Free, verified, no spam.</text>
+  ${["Free listing", "Verified enquiries", "Number stays private"].map((chip, index) => `
+  <rect x="${90 + index * 300}" y="640" width="280" height="64" rx="32" fill="${C.leaf}"/>
+  <text x="${230 + index * 300}" y="681" font-family="${SANS}" font-size="26" font-weight="700" fill="${C.estate}" text-anchor="middle">${chip}</text>`).join("")}
+  <rect x="88" y="800" width="480" height="92" rx="46" fill="${C.estate}"/>
+  <text x="328" y="858" font-family="${SANS}" font-size="32" font-weight="800" fill="${C.cream}" text-anchor="middle">List your flat free →</text>
+  <g opacity="0.35">${duskBuilding(760, 760, 4, { h: 1080, lit: [], gold: "1-2" })}</g>
+  <text x="88" y="990" font-family="${SANS}" font-size="28" font-weight="700" fill="${C.clayDeep}">${CAMPAIGN_URL} · ${PHONE}</text>
+</svg>`;
+  return { name: "owner-instagram-post", width: 1080, height: 1080, svg };
+}
+
+// Facebook post 1200×630.
+export function ownerFb(): BrandAsset {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs><linearGradient id="ofsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101B38"/><stop offset="1" stop-color="${C.estate}"/></linearGradient></defs>
+  <rect width="1200" height="630" fill="url(#ofsky)"/>
+  ${duskBuilding(920, 260, 4, { h: 630, lit: ["1-0", "3-3"], gold: "2-1" })}
+  ${duskBuilding(1090, 350, 2, { h: 630, lit: ["2-0"] })}
+  ${markTile(84, 64, 96, C.forest)}
+  <text x="200" y="132" font-family="${SERIF}" font-size="56" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>
+  <text x="86" y="280" font-family="${SERIF}" font-size="62" font-weight="600" fill="${C.cream}">Own a flat in a Gurgaon society?</text>
+  <text x="86" y="360" font-family="${SERIF}" font-size="62" font-weight="600" font-style="italic" fill="${C.clay}">List it where they're searching.</text>
+  <text x="88" y="436" font-family="${SANS}" font-size="27" font-weight="600" fill="${C.leaf}">Free listing · verified enquiries only · your number stays private</text>
+  <rect x="86" y="490" width="430" height="80" rx="40" fill="${C.clay}"/>
+  <text x="301" y="541" font-family="${SANS}" font-size="30" font-weight="800" fill="${C.ink}" text-anchor="middle">List your flat free →</text>
+  <text x="550" y="541" font-family="${SANS}" font-size="27" font-weight="700" fill="${C.cream}">${CAMPAIGN_URL}</text>
+</svg>`;
+  return { name: "owner-facebook-post", width: 1200, height: 630, svg };
+}
+
 // Embed the page's webfonts into an SVG string as data-URI @font-face rules so
 // canvas rasterization renders real Newsreader/Hanken instead of Times fallback.
 let fontCssPromise: Promise<string> | null = null;

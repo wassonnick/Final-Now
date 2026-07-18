@@ -69,6 +69,7 @@ const AdminSocialAccountsPage = lazy(() => import('@/pages/admin/AdminSocialAcco
 const AdminSocialCalendarPage = lazy(() => import('@/pages/admin/AdminSocialCalendarPage').then((module) => ({ default: module.AdminSocialCalendarPage })));
 const AdminComparePagesPage = lazy(() => import('@/pages/admin/AdminComparePagesPage').then((module) => ({ default: module.AdminComparePagesPage })));
 const AdminBrandStudioPage = lazy(() => import('@/pages/admin/AdminBrandStudioPage').then((module) => ({ default: module.AdminBrandStudioPage })));
+const CampaignLandingPage = lazy(() => import('@/pages/CampaignLandingPage').then((module) => ({ default: module.CampaignLandingPage })));
 const AdminComparePagePreviewPage = lazy(() => import('@/pages/admin/AdminComparePagesPage').then((module) => ({ default: module.AdminComparePagePreviewPage })));
 
 const queryClient = new QueryClient({
@@ -145,6 +146,8 @@ function AppShell() {
 
             <Route path="/compare" element={<CompareSeoPage />} />
             <Route path="/compare/:slug" element={<CompareSeoPage />} />
+            <Route path="/go/:slug" element={<CampaignLandingPage />} />
+            <Route path="/list-your-flat" element={<CampaignLandingPage slugOverride="list-your-flat" />} />
             <Route path="/ai-advisor" element={<AIAdvisorPage />} />
             <Route path="/insights" element={<InsightsPage />} />
             <Route path="/maps" element={<MapsPage />} />
