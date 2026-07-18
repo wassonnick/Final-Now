@@ -149,9 +149,9 @@ export default function SocietyFlatsHero() {
           </div>
 
           <p className="font-display text-[34px] font-medium leading-[1.05] tracking-[-0.02em] text-[#111827]">
-            Your Gurgaon home, <span className="text-[#8B6B32]">chosen with confidence.</span>
+            Know the society before you choose the home.
           </p>
-          <p className="mt-3 text-[14px] leading-6 text-[#667085]">We score every society, check every price and put an advisor by your side — so choosing home feels calm and clear, not overwhelming.</p>
+          <p className="mt-3 text-[14px] leading-6 text-[#667085]">Compare liveability, pricing, builder reliability, important checks and verified homes across Gurgaon societies — all in one place.</p>
 
           <form
             onSubmit={(event) => {
@@ -245,10 +245,10 @@ export default function SocietyFlatsHero() {
               Every Gurgaon society · checked by real people
             </div>
             <h1 className="m-0 font-display text-[64px] font-medium leading-[0.98] tracking-[-0.025em] text-[#111827]">
-              Your Gurgaon home, <em className="font-normal text-[#8B6B32]">chosen with confidence.</em>
+              Know the society before you choose the home.
             </h1>
             <p className="mb-6 mt-[18px] max-w-[560px] text-[17px] leading-[1.6] text-[#667085]">
-              We score every society, check every price and put a friendly AI advisor by your side — so the search feels calm and clear. Compare the honest evidence, not the sales pitch, and ask to visit only when it feels right.
+              Compare liveability, pricing, builder reliability, important checks and verified homes across Gurgaon societies — all in one place.
             </p>
 
             <div className="max-w-[590px] rounded-[22px] border border-[#D8DFEC] bg-white p-[18px] shadow-[0_24px_70px_-42px_rgba(25,40,75,.45)]">

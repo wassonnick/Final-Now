@@ -9,8 +9,17 @@
 // C76B society lower density polish: compact homes, amenities, nearby intelligence and sidebar.
 // C76 society page UX polish: compact hero/gallery, higher facts, tighter inventory, sidebar and sticky CTA.
 // C71 society detail copy: verified society intelligence, similar homes and expert callback language.
-import { trackEvent, trackLeadIntent, trackResultClicked } from "@/lib/analytics";
-import { useEffect, useMemo, useState } from "react";
+import {
+  trackCorrectionFormOpen,
+  trackCorrectionFormSubmit,
+  trackEvent,
+  trackIntelligenceScoreView,
+  trackRiskItemExpand,
+  trackSourceDrawerOpen,
+  trackLeadIntent,
+  trackResultClicked,
+} from "@/lib/analytics";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -49,6 +58,7 @@ import {
 } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
 import { API_BASE_URL } from "@/config/api";
+import { backendApi } from "@/services/backendApi";
 import { PROPERTY_PHOTOS_UNDER_VERIFICATION } from "@/lib/propertyImages";
 import { formatPropertyPrice, hasRealPropertyDisplayPhotos, propertyDisplayPhoto, publicPropertyUrl } from "@/lib/propertyDisplay";
 import {
@@ -114,6 +124,24 @@ function splitLines(value?: unknown) {
     .split(/\n+/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+type IntelligenceListItem = { label: string; detail?: string; confidence?: string };
+
+function intelligenceList(value: unknown): IntelligenceListItem[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item): IntelligenceListItem | null => {
+      if (typeof item === "string") return { label: item };
+      if (!item || typeof item !== "object") return null;
+      const record = item as Record<string, any>;
+      return {
+        label: String(record.label || record.title || record.name || record.summary || record.text || "").trim(),
+        detail: String(record.detail || record.description || record.reason || record.action || "").trim(),
+        confidence: String(record.confidence || record.confidence_level || "").trim(),
+      };
+    })
+    .filter(Boolean) as IntelligenceListItem[];
 }
 
 function safeSeoList(value: unknown): string[] {
@@ -342,6 +370,19 @@ export function SocietyPage() {
   const [error, setError] = useState<string | null>(null);
   const [callbackOpen, setCallbackOpen] = useState(false);
   const [callbackSource, setCallbackSource] = useState("society_page_callback");
+  const [intelligence, setIntelligence] = useState<any | null>(null);
+  const [sourceDrawerOpen, setSourceDrawerOpen] = useState(false);
+  const [correctionOpen, setCorrectionOpen] = useState(false);
+  const [correctionMessage, setCorrectionMessage] = useState("");
+  const [correctionForm, setCorrectionForm] = useState({
+    information_challenged: "",
+    suggested_correction: "",
+    supporting_url: "",
+    name: "",
+    email: "",
+    phone: "",
+    consent: false,
+  });
   const [isSocietyShortlisted, setIsSocietyShortlisted] = useState(false);
   const [activeNearbyCategory, setActiveNearbyCategory] = useState("All");
   const [activeImage, setActiveImage] = useState(0);
@@ -463,12 +504,31 @@ export function SocietyPage() {
           setApiProperties(filterPublicLiveProperties(propertyData));
           setRelatedSocieties(relatedData);
           setError(null);
+
+          backendApi
+            .getSocietyIntelligence(String(societyData?.slug || slug || ""))
+            .then((payload) => {
+              if (!mounted) return;
+              const data = payload?.data || null;
+              setIntelligence(data);
+              if (data?.overall_score) {
+                trackIntelligenceScoreView({
+                  society_slug: societyData?.slug || slug || "",
+                  society_name: societyData?.name || "",
+                  score: data.overall_score,
+                });
+              }
+            })
+            .catch(() => {
+              if (mounted) setIntelligence(null);
+            });
         }
       } catch (err) {
         if (mounted) {
           setError(
             "Unable to load live society data. Showing local fallback if available.",
           );
+          setIntelligence(null);
         }
       } finally {
         if (mounted) setLoading(false);
@@ -911,6 +971,31 @@ export function SocietyPage() {
     buyTextForHandoff(society) === "On request" ? "Resale range needs verification" : "",
     !hasNearbyData ? "Nearby context is still being reviewed" : "",
   ].filter(Boolean).slice(0, 2);
+  const intelligenceBestFor = intelligenceList(intelligence?.best_for_json);
+  const intelligenceNotIdealFor = intelligenceList(intelligence?.not_ideal_for_json);
+  const intelligenceStrengths = intelligenceList(intelligence?.top_strengths_json);
+  const intelligenceRisks = intelligenceList(intelligence?.things_to_verify_json);
+  const intelligenceSources = Array.isArray(intelligence?.sources) ? intelligence.sources : [];
+  const rentCount = properties.filter((property) => /rent/i.test(String(field(property, "listingType", "listing_type", "")))).length;
+  const saleCount = properties.filter((property) => /sale|buy|resale/i.test(String(field(property, "listingType", "listing_type", "")))).length;
+
+  const submitCorrection = async (event: FormEvent) => {
+    event.preventDefault();
+    setCorrectionMessage("");
+    try {
+      await backendApi.submitIntelligenceCorrection({
+        society_id: field(society, "id", "id", null),
+        society_name: society.name,
+        information_key: "society_intelligence",
+        ...correctionForm,
+      });
+      trackCorrectionFormSubmit({ society_slug: slug || "", society_name: society.name });
+      setCorrectionMessage("Correction submitted for admin review.");
+      setCorrectionForm({ information_challenged: "", suggested_correction: "", supporting_url: "", name: "", email: "", phone: "", consent: false });
+    } catch (error: any) {
+      setCorrectionMessage(error?.message || "Unable to submit correction.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F7F4EF] pb-40 text-[#1D2939] md:pb-0">
@@ -1007,6 +1092,97 @@ export function SocietyPage() {
                 ))}
               </div>
             </div>
+
+            {intelligence ? (
+              <section className="mt-6 rounded-[24px] border border-[#D7E7D8] bg-white p-5 shadow-[0_18px_44px_-34px_rgba(0,0,0,.35)]">
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#2A6147]">Decision intelligence dashboard</p>
+                    <h2 className="mt-2 font-display text-[27px] font-medium text-[#123C32]">Know the society before choosing the home.</h2>
+                    <p className="mt-2 max-w-3xl text-[14.5px] leading-7 text-[#59635E]">
+                      {intelligence.editorial_summary || `${society.name} has a published SocietyFlats decision profile. Use it as a shortlist aid, then verify unit-level details before deciding.`}
+                    </p>
+                  </div>
+                  <div className="rounded-[18px] bg-[#123C32] p-4 text-white md:w-[210px]">
+                    <p className="text-xs text-[#CFE6D6]">Society intelligence score</p>
+                    <p className="mt-1 text-4xl font-black">{intelligence.overall_score || "—"}</p>
+                    <p className="mt-1 text-xs text-[#CFE6D6]">{intelligence.overall_score_label || "Coverage-based score"}</p>
+                    <Link to="/score-explained" className="mt-3 inline-flex text-xs font-bold underline">How this is calculated</Link>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-3 md:grid-cols-5">
+                  {[
+                    ["Data confidence", `${intelligence.data_confidence_score || 0}%`],
+                    ["Evidence coverage", `${intelligence.evidence_coverage_score || 0}%`],
+                    ["Freshness", intelligence.freshness_label || "Review status shown"],
+                    ["Rent homes", rentCount ? `${rentCount} live` : "Request check"],
+                    ["Sale homes", saleCount ? `${saleCount} live` : "Request check"],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-[16px] border border-[#E7E3DA] bg-[#F8F3EA] p-3">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-[#8A8F89]">{label}</p>
+                      <p className="mt-1 text-sm font-black text-[#25302B]">{value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <div className="rounded-[18px] bg-[#EAF5ED] p-4">
+                    <h3 className="text-sm font-black text-[#123C32]">Best fit for</h3>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {(intelligenceBestFor.length ? intelligenceBestFor : [{ label: "Users who want source-reviewed society context" }]).map((item) => (
+                        <span key={item.label} className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[#123C32]">{item.label}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="rounded-[18px] bg-[#FFF4E8] p-4">
+                    <h3 className="text-sm font-black text-[#9A552E]">May not be ideal if</h3>
+                    <div className="mt-3 space-y-2 text-sm text-[#6E756E]">
+                      {(intelligenceNotIdealFor.length ? intelligenceNotIdealFor : [{ label: "You need unit-level pricing before requesting availability" }]).map((item) => <p key={item.label}>• {item.label}</p>)}
+                    </div>
+                  </div>
+                </div>
+
+                {intelligenceStrengths.length ? (
+                  <div className="mt-5">
+                    <h3 className="text-sm font-black text-[#123C32]">Top strengths</h3>
+                    <div className="mt-3 grid gap-3 md:grid-cols-3">
+                      {intelligenceStrengths.slice(0, 3).map((item) => (
+                        <div key={item.label} className="rounded-[16px] border border-[#D7E7D8] bg-white p-4">
+                          <p className="font-bold text-[#25302B]">{item.label}</p>
+                          {item.detail ? <p className="mt-1 text-sm leading-6 text-[#6E756E]">{item.detail}</p> : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {intelligenceRisks.length ? (
+                  <div className="mt-5">
+                    <h3 className="text-sm font-black text-[#9A552E]">Important checks before you decide</h3>
+                    <div className="mt-3 space-y-2">
+                      {intelligenceRisks.map((item) => (
+                        <details key={item.label} className="rounded-[16px] border border-[#EBCFAE] bg-[#FFFDF8] p-4" onToggle={(event) => {
+                          if ((event.currentTarget as HTMLDetailsElement).open) trackRiskItemExpand({ society_slug: slug || "", risk: item.label });
+                        }}>
+                          <summary className="cursor-pointer font-bold text-[#25302B]">{item.label}</summary>
+                          <p className="mt-2 text-sm leading-6 text-[#6E756E]">{item.detail || "Verify this point before making a final decision."}</p>
+                          {item.confidence ? <p className="mt-2 text-xs font-bold text-[#9A552E]">Confidence: {item.confidence}</p> : null}
+                        </details>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="mt-5 flex flex-wrap gap-3 border-t border-[#E7E3DA] pt-5">
+                  <button type="button" onClick={() => openSocietyCallback("society_intelligence_available_homes")} className="rounded-full bg-[#123C32] px-5 py-3 text-sm font-bold text-white">Request available homes</button>
+                  <Link to={`/compare?seed=${encodeURIComponent(String(society.slug || slug || ""))}`} className="rounded-full border border-[#123C32] bg-white px-5 py-3 text-sm font-bold text-[#123C32]">Compare society</Link>
+                  <Link to={`/ai-advisor?q=${encodeURIComponent(`Is ${society.name} right for my family?`)}`} className="rounded-full border border-[#E7DCCB] bg-[#F8F3EA] px-5 py-3 text-sm font-bold text-[#9A552E]">Ask AI Advisor</Link>
+                  <button type="button" onClick={() => { setSourceDrawerOpen(true); trackSourceDrawerOpen({ society_slug: slug || "" }); }} className="rounded-full border border-[#E7DCCB] bg-white px-5 py-3 text-sm font-bold text-[#3156A3]">View sources</button>
+                  <button type="button" onClick={() => { setCorrectionOpen(true); trackCorrectionFormOpen({ society_slug: slug || "" }); }} className="rounded-full border border-[#EBCFAE] bg-white px-5 py-3 text-sm font-bold text-[#9A552E]">Report outdated info</button>
+                </div>
+              </section>
+            ) : null}
 
             {seoContent?.intro_summary ? <p className="mt-6 rounded-[16px] border border-[#E7E3DA] bg-white p-5 text-[15px] leading-7 text-[#35413B]">{seoContent.intro_summary}</p> : null}
 
@@ -1161,6 +1337,60 @@ export function SocietyPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" role="dialog" aria-modal="true">
           <button type="button" onClick={() => setLightboxOpen(false)} className="absolute right-5 top-5 rounded-full bg-white/10 p-3 text-white"><X className="h-6 w-6" /></button>
           <img src={gallery[activeImage] || gallery[0]} alt={society.name} className="max-h-[85vh] max-w-[88vw] rounded-2xl object-contain" />
+        </div>
+      ) : null}
+
+      {sourceDrawerOpen ? (
+        <div className="fixed inset-0 z-[110] bg-black/40 p-4" role="dialog" aria-modal="true">
+          <div className="ml-auto h-full max-w-xl overflow-y-auto rounded-[24px] bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#2A6147]">Sources reviewed</p>
+                <h2 className="mt-2 font-display text-3xl text-[#123C32]">{society.name}</h2>
+              </div>
+              <button type="button" onClick={() => setSourceDrawerOpen(false)} className="rounded-full border p-2"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="mt-5 space-y-3">
+              {intelligenceSources.length ? intelligenceSources.map((source: any, index: number) => (
+                <div key={`${source.field_key}-${index}`} className="rounded-2xl border border-[#E7E3DA] p-4">
+                  <p className="text-sm font-black text-[#25302B]">{source.source_name || source.field_key}</p>
+                  <p className="mt-1 text-xs text-[#6E756E]">{source.field_key} · {source.verification_status} · Confidence {source.confidence_level}</p>
+                  {source.public_note ? <p className="mt-2 text-sm leading-6 text-[#4A534E]">{source.public_note}</p> : null}
+                  {source.source_url ? <a href={source.source_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-sm font-bold text-[#3156A3] underline">Open source</a> : null}
+                </div>
+              )) : <p className="rounded-2xl bg-[#F8F3EA] p-4 text-sm text-[#6E756E]">Public source notes are being prepared.</p>}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {correctionOpen ? (
+        <div className="fixed inset-0 z-[115] flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+          <form onSubmit={submitCorrection} className="w-full max-w-2xl rounded-[24px] bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#9A552E]">Correction request</p>
+                <h2 className="mt-2 font-display text-3xl text-[#123C32]">Report outdated information</h2>
+              </div>
+              <button type="button" onClick={() => setCorrectionOpen(false)} className="rounded-full border p-2"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="mt-5 grid gap-3">
+              <textarea required className="min-h-24 rounded-2xl border p-3" placeholder="What looks incorrect or stale?" value={correctionForm.information_challenged} onChange={(e) => setCorrectionForm({ ...correctionForm, information_challenged: e.target.value })} />
+              <textarea required className="min-h-24 rounded-2xl border p-3" placeholder="What should we check or update?" value={correctionForm.suggested_correction} onChange={(e) => setCorrectionForm({ ...correctionForm, suggested_correction: e.target.value })} />
+              <input className="rounded-2xl border p-3" placeholder="Supporting URL optional" value={correctionForm.supporting_url} onChange={(e) => setCorrectionForm({ ...correctionForm, supporting_url: e.target.value })} />
+              <div className="grid gap-3 md:grid-cols-3">
+                <input required className="rounded-2xl border p-3" placeholder="Your name" value={correctionForm.name} onChange={(e) => setCorrectionForm({ ...correctionForm, name: e.target.value })} />
+                <input required type="email" className="rounded-2xl border p-3" placeholder="Email" value={correctionForm.email} onChange={(e) => setCorrectionForm({ ...correctionForm, email: e.target.value })} />
+                <input className="rounded-2xl border p-3" placeholder="Phone optional" value={correctionForm.phone} onChange={(e) => setCorrectionForm({ ...correctionForm, phone: e.target.value })} />
+              </div>
+              <label className="flex gap-3 rounded-2xl bg-[#F8F3EA] p-3 text-sm text-[#6E756E]">
+                <input required type="checkbox" checked={correctionForm.consent} onChange={(e) => setCorrectionForm({ ...correctionForm, consent: e.target.checked })} />
+                I consent to SocietyFlats using this submission for admin review.
+              </label>
+              {correctionMessage ? <p className="text-sm font-bold text-[#123C32]">{correctionMessage}</p> : null}
+              <button className="rounded-full bg-[#123C32] px-5 py-3 text-sm font-bold text-white">Submit for review</button>
+            </div>
+          </form>
         </div>
       ) : null}
 

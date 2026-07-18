@@ -13,6 +13,8 @@ import {
   societyImage,
 } from "@/lib/publicData";
 import { setPublicSeo } from "@/lib/seo";
+import { backendApi } from "@/services/backendApi";
+import { trackHomepageIntelligenceSocietyClick } from "@/lib/analytics";
 import { hasGooglePlacesDisplayPhoto, societyImageAttribution } from "@/lib/societyImages";
 import { PROPERTY_PHOTOS_UNDER_VERIFICATION } from "@/lib/propertyImages";
 import { formatPropertyPrice, hasRealPropertyDisplayPhotos } from "@/lib/propertyDisplay";
@@ -143,6 +145,7 @@ export function HomePage() {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [propertiesStatus, setPropertiesStatus] = useState<"loading" | "ready" | "error">("loading");
   const [leadOpen, setLeadOpen] = useState(false);
+  const [intelligencePreviews, setIntelligencePreviews] = useState<any[]>([]);
 
   useEffect(() => {
     setPublicSeo(
@@ -153,8 +156,24 @@ export function HomePage() {
     fetchPublicSocieties()
       .then((items) => {
         setAllSocietiesCount(items.length);
-        setSocieties(items.filter(hasGooglePlacesDisplayPhoto));
+        const publicSocieties = items.filter(hasGooglePlacesDisplayPhoto);
+        setSocieties(publicSocieties);
         setStatus("ready");
+        Promise.allSettled(
+          publicSocieties.slice(0, 10).map((society) =>
+            backendApi.getSocietyIntelligence(society.slug).then((payload) => ({
+              society,
+              intelligence: payload?.data || null,
+            })),
+          ),
+        ).then((results) => {
+          setIntelligencePreviews(
+            results
+              .map((result) => result.status === "fulfilled" ? result.value : null)
+              .filter((item: any) => item?.intelligence)
+              .slice(0, 3),
+          );
+        });
       })
       .catch(() => setStatus("error"));
     fetchPublicProperties()
@@ -181,6 +200,50 @@ export function HomePage() {
             </p>
           </div>
         </div>
+      ) : null}
+
+      {intelligencePreviews.length ? (
+        <section className="mx-auto max-w-[1360px] px-5 pt-8 lg:px-10 lg:pt-12">
+          <div className="rounded-[26px] border border-[#D7E7D8] bg-white p-5 shadow-[0_18px_44px_-34px_rgba(0,0,0,.35)] lg:p-7">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#2A6147]">Society decision intelligence</p>
+                <h2 className="mt-1 font-display text-[28px] font-medium text-[#123C32] lg:text-[40px]">More than property listings.</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#667085]">Start with the society profile: liveability, pricing context, important checks, data confidence and current verified homes.</p>
+              </div>
+              <Link to="/methodology" className="text-sm font-bold text-[#9A552E]">How SocietyFlats scores →</Link>
+            </div>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-3">
+              {intelligencePreviews.map(({ society, intelligence }) => {
+                const bestFor = Array.isArray(intelligence.best_for_json) ? intelligence.best_for_json[0] : null;
+                const risk = Array.isArray(intelligence.things_to_verify_json) ? intelligence.things_to_verify_json[0] : null;
+                return (
+                  <Link
+                    key={society.slug}
+                    to={`/society/${society.slug}`}
+                    onClick={() => trackHomepageIntelligenceSocietyClick({ society_slug: society.slug, society_name: society.name })}
+                    className="rounded-[20px] border border-[#E7E3DA] bg-[#F8F3EA] p-5 transition hover:-translate-y-1 hover:bg-white"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wide text-[#8A8F89]">{formatPublicLocation(society)}</p>
+                        <h3 className="mt-1 font-display text-2xl font-medium text-[#111827]">{society.name}</h3>
+                      </div>
+                      <span className="rounded-[14px] bg-[#123C32] px-3 py-2 text-lg font-black text-white">{intelligence.overall_score || "—"}</span>
+                    </div>
+                    <div className="mt-4 grid gap-2 text-sm text-[#59635E]">
+                      <p><span className="font-bold text-[#123C32]">Best for:</span> {bestFor?.label || bestFor?.name || "Source-reviewed shortlist"}</p>
+                      <p><span className="font-bold text-[#9A552E]">Verify:</span> {risk?.label || risk?.title || "Unit-level pricing and availability"}</p>
+                      <p><span className="font-bold text-[#3156A3]">Confidence:</span> {intelligence.data_confidence_score || 0}% · {intelligence.freshness_label || "reviewed"}</p>
+                    </div>
+                    <span className="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-bold text-[#123C32]">Open intelligence profile →</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
       ) : null}
 
       <section className="mx-auto max-w-[1360px] px-5 pb-3 pt-8 lg:px-10 lg:pb-4 lg:pt-12">

@@ -12,6 +12,7 @@ use App\Models\SocietyImportJob;
 use App\Services\LeadNotificationService;
 use App\Services\Ops\AdminOpsInboxService;
 use App\Services\SocietyImportService;
+use App\Services\SocietyIntelligenceScoringService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -75,6 +76,49 @@ Artisan::command('seo:autopilot-run {--trigger=scheduled}', function () {
     $summary=$run->summary?:[];
     $this->info("SEO Autopilot run #{$run->id} {$run->status}: ".($summary['pages_audited']??0).' pages audited, '.($summary['drafts_generated']??0).' drafts generated, '.($summary['search_console_rows']??0).' Search Console rows imported.');
 })->purpose('Run the complete closed-loop SEO automation cycle');
+
+Artisan::command('intelligence:backfill {--society=} {--limit=30} {--dry-run} {--force}', function (SocietyIntelligenceScoringService $scoring) {
+    $query = Society::query()->where('is_published', true)->whereIn('status', ['Verified', 'Premium']);
+    $filter = trim((string) $this->option('society'));
+
+    if ($filter !== '') {
+        $query->where(fn ($q) => is_numeric($filter) ? $q->where('id', (int) $filter) : $q->where('slug', $filter));
+    }
+
+    $societies = $query->orderByDesc('score')->orderBy('name')->limit(max(1, min((int) $this->option('limit'), 200)))->get();
+    $dryRun = (bool) $this->option('dry-run');
+    $created = 0;
+
+    foreach ($societies as $society) {
+        $profile = $society->intelligenceProfile;
+        if ($profile && ! $this->option('force')) {
+            $this->line("skip {$society->id} {$society->slug}: profile exists ({$profile->intelligence_status})");
+            continue;
+        }
+
+        $preview = $scoring->calculate($society, $profile);
+        $this->line(sprintf(
+            '%s %s: coverage %.1f%% score %s',
+            $dryRun ? 'dry-run' : 'backfill',
+            $society->slug,
+            (float) $preview['evidence_coverage_score'],
+            $preview['overall_score'] ?? 'insufficient'
+        ));
+
+        if (! $dryRun) {
+            $profile = $society->intelligenceProfile()->updateOrCreate([], $preview + [
+                'intelligence_status' => 'draft',
+                'best_for_json' => [],
+                'not_ideal_for_json' => [],
+                'top_strengths_json' => [],
+                'things_to_verify_json' => [],
+            ]);
+            $created++;
+        }
+    }
+
+    $this->info(($dryRun ? 'Dry run checked' : 'Backfilled').' '.$societies->count()." societies; {$created} draft profile(s) written.");
+})->purpose('Create draft SocietyFlats intelligence profiles from existing verified society data; supports --dry-run and --society=id-or-slug');
 
 Artisan::command('ops:daily-digest', function () {
     $payload = app(AdminOpsInboxService::class)->build(true);

@@ -94,4 +94,14 @@ class Society extends Model
     {
         return $this->hasOne(SocietySeoContent::class);
     }
+
+    public function intelligenceProfile(): HasOne
+    {
+        return $this->hasOne(SocietyIntelligenceProfile::class);
+    }
+
+    public function intelligenceCorrections(): HasMany
+    {
+        return $this->hasMany(IntelligenceCorrection::class);
+    }
 }

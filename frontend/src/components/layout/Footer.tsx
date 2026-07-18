@@ -36,6 +36,11 @@ const desktopColumns = [
     heading: "Company",
     links: [
       ["How verification works", "/trust"],
+      ["Methodology", "/methodology"],
+      ["Data sources", "/data-sources"],
+      ["Score explained", "/score-explained"],
+      ["Corrections", "/corrections"],
+      ["Editorial independence", "/editorial-independence"],
       ["Trust & privacy", "/privacy"],
       ["Gurgaon guide", "/gurgaon"],
       ["Help & FAQ", "/help"],

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Admin\AdminOpsController;
 use App\Http\Controllers\Api\Admin\AdminSeoAutopilotController;
 use App\Http\Controllers\Api\Admin\AdminSocialController;
 use App\Http\Controllers\Api\Admin\AdminSocietyComparePageController;
+use App\Http\Controllers\Api\Admin\AdminSocietyIntelligenceController;
 use App\Http\Controllers\Api\Admin\AdminStatsController;
 use App\Http\Controllers\Api\Admin\AdminSocietySeoContentController;
 use App\Http\Controllers\Api\Admin\AdminSocietySeoReportController;
@@ -34,6 +35,7 @@ use App\Http\Controllers\Api\SavedSearchController;
 use App\Http\Controllers\Api\SiteVisitController;
 use App\Http\Controllers\Api\SocietyComparePageController;
 use App\Http\Controllers\Api\SocietyController;
+use App\Http\Controllers\Api\SocietyIntelligenceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', fn () => response()->json([
@@ -59,7 +61,10 @@ Route::post('/ops/scheduler-tick', function (\Illuminate\Http\Request $request) 
 Route::get('/societies', [SocietyController::class, 'index']);
 Route::get('/societies/lookup', [SocietyController::class, 'lookup']);
 Route::get('/societies/{idOrSlug}/google-place-photo', [SocietyController::class, 'googlePlacePhoto']);
+Route::get('/societies/{slug}/intelligence', [SocietyIntelligenceController::class, 'show']);
+Route::get('/societies/{slug}/sources', [SocietyIntelligenceController::class, 'sources']);
 Route::get('/societies/{slug}', [SocietyController::class, 'show']);
+Route::post('/public/intelligence-corrections', [SocietyIntelligenceController::class, 'storeCorrection'])->middleware('throttle:5,1');
 // Admin-authored campaign landings, rendered at /go/<slug> on the frontend.
 Route::get('/campaigns/{slug}', function (string $slug) {
     $page = \App\Models\CampaignPage::where('slug', $slug)->where('status', \App\Models\CampaignPage::STATUS_PUBLISHED)->first();
@@ -70,6 +75,7 @@ Route::get('/campaigns/{slug}', function (string $slug) {
 })->middleware('throttle:60,1');
 Route::get('/compare-pages', [SocietyComparePageController::class, 'index']);
 Route::get('/compare-pages/{slug}', [SocietyComparePageController::class, 'show']);
+Route::get('/compare/intelligence', [SocietyIntelligenceController::class, 'compare']);
 Route::get('/properties', [PropertyController::class, 'index']);
 Route::get('/properties/{idOrSlug}', [PropertyController::class, 'show']);
 Route::get('/seo/pages/resolve', [PublicSeoPageController::class, 'resolve'])->middleware('throttle:60,1');
@@ -194,6 +200,15 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/societies/fetch-from-brochure', [SocietyController::class, 'fetchFromBrochure']);
     Route::post('/societies/create-from-fetched-data', [SocietyController::class, 'createFromFetchedData']);
     Route::post('/societies/{society}/enrich', [SocietyController::class, 'enrich']);
+    Route::get('/societies/{society}/intelligence', [AdminSocietyIntelligenceController::class, 'show']);
+    Route::put('/societies/{society}/intelligence', [AdminSocietyIntelligenceController::class, 'update']);
+    Route::post('/societies/{society}/intelligence/recalculate', [AdminSocietyIntelligenceController::class, 'recalculate']);
+    Route::post('/societies/{society}/intelligence/approve', [AdminSocietyIntelligenceController::class, 'approve']);
+    Route::post('/societies/{society}/intelligence/publish', [AdminSocietyIntelligenceController::class, 'publish']);
+    Route::post('/societies/{society}/intelligence/unpublish', [AdminSocietyIntelligenceController::class, 'unpublish']);
+    Route::put('/societies/{society}/intelligence/sources', [AdminSocietyIntelligenceController::class, 'upsertSources']);
+    Route::get('/intelligence-corrections', [AdminSocietyIntelligenceController::class, 'corrections']);
+    Route::patch('/intelligence-corrections/{correction}', [AdminSocietyIntelligenceController::class, 'updateCorrection']);
     Route::post('/societies/publish-fields/backfill', [SocietyController::class, 'backfillPublishFields']);
     Route::post('/societies/google-places-image-references/bulk', [SocietyController::class, 'bulkGooglePlacesImageReferences']);
     Route::post('/societies/{society}/google-places-image-reference', [SocietyController::class, 'googlePlacesImageReference']);

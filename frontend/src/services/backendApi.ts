@@ -64,6 +64,25 @@ export const backendApi = {
     });
   },
 
+  getSocietyIntelligence(slug: string) {
+    return request(`/societies/${encodeURIComponent(slug)}/intelligence`, {
+      method: 'GET',
+    });
+  },
+
+  submitIntelligenceCorrection(payload: Record<string, unknown>) {
+    return request('/public/intelligence-corrections', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  getCompareIntelligence(slugs: string[]) {
+    return request(`/compare/intelligence?slugs=${encodeURIComponent(slugs.join(','))}`, {
+      method: 'GET',
+    });
+  },
+
   listLeads(params = '') {
     const query = params ? `?${params}` : '';
 

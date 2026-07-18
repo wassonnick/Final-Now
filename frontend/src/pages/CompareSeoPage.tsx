@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { backendApi } from "@/services/backendApi";
 import { setPublicSeo } from "@/lib/seo";
+import { trackCompareVerdictView } from "@/lib/analytics";
 
 type ComparePageRecord = {
   id: number;
@@ -186,6 +187,11 @@ function CompareDetail({ slug }: { slug: string }) {
           record.meta_description || record.comparison_summary || "Compare published Gurgaon society profiles on SocietyFlats.",
           { canonical: `/compare/${record.slug}`, jsonLd: faqJsonLd(record) },
         );
+        trackCompareVerdictView({
+          compare_slug: record.slug,
+          page_title: record.title,
+          societies: (record.society_summaries_json || []).map((item) => item.slug).join(","),
+        });
       })
       .catch((err) => setError(err?.message || "Comparison page not found."))
       .finally(() => setLoading(false));
@@ -237,6 +243,30 @@ function CompareDetail({ slug }: { slug: string }) {
               ))}
             </div>
           </div>
+
+          <section className="mt-8 rounded-[2rem] border border-[#dfded6] bg-white p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#c8793f]">SocietyFlats verdict system</p>
+            <h2 className="mt-2 font-serif text-3xl text-[#19231c]">Why these societies are being compared</h2>
+            <p className="mt-3 leading-7 text-[#667064]">
+              {page.recommendation_copy || "This comparison uses only published society profiles and avoids claims we cannot verify. Treat it as a shortlist aid, then request current availability before visits."}
+            </p>
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+              {(page.best_for_json || []).slice(0, 3).map((item) => (
+                <div key={`${item.society}-${item.label}`} className="rounded-[1.25rem] bg-[#eef7ef] p-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#1b6b3a]">{item.label}</p>
+                  <p className="mt-1 font-bold text-[#19231c]">{item.society}</p>
+                </div>
+              ))}
+              {!(page.best_for_json || []).length ? (
+                <div className="rounded-[1.25rem] bg-[#f4f0e7] p-4 text-sm text-[#667064]">
+                  Best-fit labels are prepared during admin review.
+                </div>
+              ) : null}
+            </div>
+            <div className="mt-5 rounded-[1.25rem] border border-dashed border-[#d8d4ca] p-4 text-sm leading-6 text-[#667064]">
+              Decision logic: locality fit, available published fields, source coverage, lifestyle and connectivity signals. We do not invent prices, possession dates, RERA data, rankings or travel-time guarantees.
+            </div>
+          </section>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {summaries.map((society) => (

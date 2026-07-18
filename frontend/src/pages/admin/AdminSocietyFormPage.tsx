@@ -1006,6 +1006,15 @@ export function AdminSocietyFormPage() {
               </Button>
             ) : null}
 
+            {isEdit && society.id ? (
+              <Button asChild type="button" variant="outline" className="rounded-full border-emerald-200 text-emerald-700">
+                <Link to={`/admin/societies/${society.id}/intelligence`}>
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Decision Intelligence
+                </Link>
+              </Button>
+            ) : null}
+
             {isEdit ? (
               <Button
                 type="button"

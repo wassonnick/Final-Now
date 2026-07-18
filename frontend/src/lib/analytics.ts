@@ -87,4 +87,36 @@ export function trackResultClicked(params: AnalyticsParams = {}) {
   trackEvent("result_clicked", getTrackingContext(params));
 }
 
+export function trackIntelligenceScoreView(params: AnalyticsParams = {}) {
+  trackEvent("intelligence_score_view", getTrackingContext(params));
+}
+
+export function trackScoreMethodologyOpen(params: AnalyticsParams = {}) {
+  trackEvent("score_methodology_open", getTrackingContext(params));
+}
+
+export function trackSourceDrawerOpen(params: AnalyticsParams = {}) {
+  trackEvent("source_drawer_open", getTrackingContext(params));
+}
+
+export function trackRiskItemExpand(params: AnalyticsParams = {}) {
+  trackEvent("risk_item_expand", getTrackingContext(params));
+}
+
+export function trackCorrectionFormOpen(params: AnalyticsParams = {}) {
+  trackEvent("correction_form_open", getTrackingContext(params));
+}
+
+export function trackCorrectionFormSubmit(params: AnalyticsParams = {}) {
+  trackEvent("correction_form_submit", getTrackingContext(params));
+}
+
+export function trackCompareVerdictView(params: AnalyticsParams = {}) {
+  trackEvent("compare_verdict_view", getTrackingContext(params));
+}
+
+export function trackHomepageIntelligenceSocietyClick(params: AnalyticsParams = {}) {
+  trackEvent("homepage_intelligence_society_click", getTrackingContext(params));
+}
+
 export {};
