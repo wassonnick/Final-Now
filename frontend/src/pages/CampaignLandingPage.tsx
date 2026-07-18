@@ -14,8 +14,27 @@ import { setPublicSeo } from "@/lib/seo";
 export function CampaignLandingPage({ slugOverride }: { slugOverride?: string }) {
   const params = useParams();
   const slug = slugOverride || params.slug || "";
-  const campaign: Campaign | undefined = CAMPAIGNS[slug];
+  // Built-in campaigns come from config; admin-authored ones from the API.
+  const [remote, setRemote] = useState<Campaign | null>(null);
+  const [loading, setLoading] = useState(!CAMPAIGNS[slug]);
+  const campaign: Campaign | undefined = CAMPAIGNS[slug] || remote || undefined;
   const [leadOpen, setLeadOpen] = useState(false);
+
+  useEffect(() => {
+    if (CAMPAIGNS[slug] || !slug) return;
+    let mounted = true;
+    setLoading(true);
+    fetch(`${import.meta.env.VITE_API_BASE_URL || "/api"}/campaigns/${encodeURIComponent(slug)}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (mounted) setRemote(payload?.data ? (payload.data as Campaign) : null);
+      })
+      .catch(() => mounted && setRemote(null))
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, [slug]);
 
   useEffect(() => {
     if (campaign) {
@@ -23,6 +42,10 @@ export function CampaignLandingPage({ slugOverride }: { slugOverride?: string })
       window.scrollTo(0, 0);
     }
   }, [campaign]);
+
+  if (loading) {
+    return <div className="min-h-[60vh] bg-[#F7F4EF] px-5 py-16 text-[#6A7080]">Loading…</div>;
+  }
 
   if (!campaign) {
     return (

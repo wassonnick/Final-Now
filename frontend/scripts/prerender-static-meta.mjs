@@ -153,6 +153,15 @@ const routeMeta = [
     schemaType: "WebPage",
   },
   {
+    path: "/sell-your-flat",
+    title: "Sell Your Gurgaon Flat — Verified Buyers, Free Listing | SocietyFlats",
+    description:
+      "Sell your flat where buyers already research your society: verified scores, honest resale ranges, serious enquiries only. Free listing on SocietyFlats.",
+    priority: "0.8",
+    changefreq: "weekly",
+    schemaType: "WebPage",
+  },
+  {
     path: "/compare",
     title: "Compare Gurgaon Societies | SocietyFlats",
     description:

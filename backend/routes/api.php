@@ -60,6 +60,14 @@ Route::get('/societies', [SocietyController::class, 'index']);
 Route::get('/societies/lookup', [SocietyController::class, 'lookup']);
 Route::get('/societies/{idOrSlug}/google-place-photo', [SocietyController::class, 'googlePlacePhoto']);
 Route::get('/societies/{slug}', [SocietyController::class, 'show']);
+// Admin-authored campaign landings, rendered at /go/<slug> on the frontend.
+Route::get('/campaigns/{slug}', function (string $slug) {
+    $page = \App\Models\CampaignPage::where('slug', $slug)->where('status', \App\Models\CampaignPage::STATUS_PUBLISHED)->first();
+
+    return $page
+        ? response()->json(['status' => 'ok', 'data' => ['slug' => $page->slug] + $page->payload])
+        : response()->json(['status' => 'error', 'message' => 'Campaign not found.'], 404);
+})->middleware('throttle:60,1');
 Route::get('/compare-pages', [SocietyComparePageController::class, 'index']);
 Route::get('/compare-pages/{slug}', [SocietyComparePageController::class, 'show']);
 Route::get('/properties', [PropertyController::class, 'index']);
@@ -118,6 +126,10 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/ops/suggestions', [AdminOpsController::class, 'suggestions']);
     Route::post('/ops/suggestions/{suggestion}/apply', [AdminOpsController::class, 'applySuggestion']);
     Route::post('/ops/suggestions/{suggestion}/dismiss', [AdminOpsController::class, 'dismissSuggestion']);
+    Route::get('/campaigns', [\App\Http\Controllers\Api\Admin\AdminCampaignPageController::class, 'index']);
+    Route::post('/campaigns', [\App\Http\Controllers\Api\Admin\AdminCampaignPageController::class, 'store']);
+    Route::patch('/campaigns/{campaignPage}', [\App\Http\Controllers\Api\Admin\AdminCampaignPageController::class, 'update']);
+    Route::delete('/campaigns/{campaignPage}', [\App\Http\Controllers\Api\Admin\AdminCampaignPageController::class, 'destroy']);
     Route::get('/seo/compare-pages', [AdminSocietyComparePageController::class, 'index']);
     Route::post('/seo/compare-pages/generate', [AdminSocietyComparePageController::class, 'generate']);
     Route::post('/seo/compare-pages/bulk-generate', [AdminSocietyComparePageController::class, 'bulkGenerate']);

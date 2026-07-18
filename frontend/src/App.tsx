@@ -70,6 +70,7 @@ const AdminSocialCalendarPage = lazy(() => import('@/pages/admin/AdminSocialCale
 const AdminComparePagesPage = lazy(() => import('@/pages/admin/AdminComparePagesPage').then((module) => ({ default: module.AdminComparePagesPage })));
 const AdminBrandStudioPage = lazy(() => import('@/pages/admin/AdminBrandStudioPage').then((module) => ({ default: module.AdminBrandStudioPage })));
 const CampaignLandingPage = lazy(() => import('@/pages/CampaignLandingPage').then((module) => ({ default: module.CampaignLandingPage })));
+const AdminCampaignsPage = lazy(() => import('@/pages/admin/AdminCampaignsPage').then((module) => ({ default: module.AdminCampaignsPage })));
 const AdminComparePagePreviewPage = lazy(() => import('@/pages/admin/AdminComparePagesPage').then((module) => ({ default: module.AdminComparePagePreviewPage })));
 
 const queryClient = new QueryClient({
@@ -148,6 +149,7 @@ function AppShell() {
             <Route path="/compare/:slug" element={<CompareSeoPage />} />
             <Route path="/go/:slug" element={<CampaignLandingPage />} />
             <Route path="/list-your-flat" element={<CampaignLandingPage slugOverride="list-your-flat" />} />
+            <Route path="/sell-your-flat" element={<CampaignLandingPage slugOverride="sell-your-flat" />} />
             <Route path="/ai-advisor" element={<AIAdvisorPage />} />
             <Route path="/insights" element={<InsightsPage />} />
             <Route path="/maps" element={<MapsPage />} />
@@ -244,6 +246,7 @@ function AppShell() {
             <Route path="/admin/recommendations" element={<ProtectedAdminRoute><AdminFeatureHubPage feature="recommendations" /></ProtectedAdminRoute>} />
             <Route path="/admin/seo/compare-pages" element={<ProtectedAdminRoute><AdminComparePagesPage /></ProtectedAdminRoute>} />
             <Route path="/admin/brand-studio" element={<ProtectedAdminRoute><AdminBrandStudioPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/campaigns" element={<ProtectedAdminRoute><AdminCampaignsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/seo/compare-pages/:id/preview" element={<ProtectedAdminRoute><AdminComparePagePreviewPage /></ProtectedAdminRoute>} />
             <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettingsPage /></ProtectedAdminRoute>} />
 
