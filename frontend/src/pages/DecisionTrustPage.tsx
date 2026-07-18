@@ -45,6 +45,21 @@ const proofCards = [
   [RefreshCw, "Refreshable profile", "Published intelligence can be marked stale and republished after review when source data changes."],
 ];
 
+// Mirrors backend SocietyIntelligenceScoringService::WEIGHTS — the exact scorecard,
+// shown publicly so the methodology is verifiable, not just described.
+const signalWeights: Array<[string, number, string]> = [
+  ["Everyday liveability", 20, "Lifestyle, amenities and how the society actually lives day to day"],
+  ["Connectivity & commute", 15, "Distance to metro, arterial roads and office hubs"],
+  ["Upkeep & maintenance", 10, "Maintenance standard and society/agency management"],
+  ["Builder track record", 10, "Developer reputation and delivery history"],
+  ["Price for what you get", 10, "Price-per-sq-ft and market range vs quality"],
+  ["Rental demand", 10, "Verified rental range and tenant demand signals"],
+  ["Resale liquidity", 10, "Verified resale range and how easily units move"],
+  ["Safety & security", 5, "Gated security, CCTV and safety amenities"],
+  ["Legal & RERA confidence", 5, "RERA registration and legal-status signals"],
+  ["Environment & resilience", 5, "Green cover, drainage and environmental context"],
+];
+
 const methodologySteps = [
   ["Collect", "Society facts, public records, map references, amenities, market ranges and availability context are gathered for review."],
   ["Score", "Each available signal contributes to a 10-point decision score. Missing fields reduce coverage, not the score itself."],
@@ -196,6 +211,35 @@ export function DecisionTrustPage({ variant }: { variant: Variant }) {
                 ))}
               </div>
             </div>
+
+            {variant === "score-explained" || variant === "methodology" ? (
+              <div className="mt-10 rounded-[28px] border border-[#EEE6DA] bg-white p-6 lg:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#C2724E]">The exact scorecard</p>
+                    <h2 className="mt-2 font-display text-4xl font-medium text-[#111827]">Ten weighted signals — nothing hidden.</h2>
+                  </div>
+                  <p className="text-sm font-bold text-[#8A8F89]">Weights total 100%</p>
+                </div>
+                <div className="mt-6 overflow-hidden rounded-[18px] border border-[#EEE6DA]">
+                  {signalWeights.map(([label, weight, detail], index) => (
+                    <div key={label} className={`flex items-center gap-4 px-4 py-3.5 md:px-6 ${index % 2 ? "bg-[#F8F3EA]" : "bg-white"}`}>
+                      <div className="w-12 shrink-0 text-right font-display text-2xl font-medium text-[#233B6E]">{weight}%</div>
+                      <div className="h-2 w-24 shrink-0 overflow-hidden rounded-full bg-[#E7E3DA]">
+                        <div className="h-full rounded-full bg-[#2A6147]" style={{ width: `${weight * 5}%` }} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-[#25302B]">{label}</p>
+                        <p className="truncate text-[13px] text-[#667085]">{detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-4 text-[13px] leading-6 text-[#667085]">
+                  A society only gets an overall score once verified signals cover at least 60% of the weight. Missing signals are excluded and the remaining weights renormalise — thin data can never inflate a score. Every published society page shows this exact breakdown for that society, marking each signal verified or estimated.
+                </p>
+              </div>
+            ) : null}
 
             <div className="mt-10 rounded-[28px] bg-[#123C32] p-6 text-white lg:flex lg:items-center lg:justify-between lg:p-8">
               <div>
