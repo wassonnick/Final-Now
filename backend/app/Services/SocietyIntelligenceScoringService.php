@@ -23,6 +23,62 @@ class SocietyIntelligenceScoringService
         'environmental_resilience_score' => 5,
     ];
 
+    /** Human labels for each weighted signal — used in the public "Why this score" breakdown. */
+    private const LABELS = [
+        'liveability_score' => 'Everyday liveability',
+        'connectivity_score' => 'Connectivity & commute',
+        'maintenance_score' => 'Upkeep & maintenance',
+        'builder_reliability_score' => 'Builder track record',
+        'price_value_score' => 'Price for what you get',
+        'rental_demand_score' => 'Rental demand',
+        'resale_liquidity_score' => 'Resale liquidity',
+        'safety_security_score' => 'Safety & security',
+        'legal_rera_confidence_score' => 'Legal & RERA confidence',
+        'environmental_resilience_score' => 'Environment & resilience',
+    ];
+
+    /**
+     * Turn the internal score_inputs_json into a public, labelled breakdown — one row per
+     * weighted signal with its score, weight (% of the total), verification status and a
+     * plain-English source. This is the "receipts" behind the headline score: every signal
+     * shown, missing ones flagged rather than hidden.
+     *
+     * @param  array<string,mixed>  $inputs
+     * @return array<int,array<string,mixed>>
+     */
+    public static function publicSignalBreakdown(?array $inputs): array
+    {
+        $inputs ??= [];
+        $rows = [];
+        foreach (self::WEIGHTS as $field => $weight) {
+            $input = $inputs[$field] ?? [];
+            $rows[] = [
+                'key' => $field,
+                'label' => self::LABELS[$field] ?? ucwords(str_replace('_', ' ', $field)),
+                'weight' => $weight,
+                'score' => $input['score'] ?? null,
+                'status' => $input['score'] ?? null ? ($input['status'] ?? 'estimated') : 'missing',
+                'source' => self::sourceLabel($input['source'] ?? null),
+            ];
+        }
+
+        return $rows;
+    }
+
+    private static function sourceLabel(?string $source): string
+    {
+        return match ($source) {
+            'admin_entered' => 'Admin-verified',
+            'lifestyle_score', 'connectivity_score', 'security_score', 'maintenance_score' => 'Scored from checked location & society data',
+            'builder_present' => 'Builder record',
+            'price_context', 'rent_context', 'resale_context' => 'Market range context',
+            'rera_context' => 'RERA record',
+            'environmental_context' => 'Awaiting environmental data',
+            null, '' => 'Not yet sourced',
+            default => 'Reviewed data',
+        };
+    }
+
     public function calculate(Society $society, ?SocietyIntelligenceProfile $profile = null): array
     {
         $profile ??= $society->intelligenceProfile;

@@ -1126,6 +1126,39 @@ export function SocietyPage() {
                   ))}
                 </div>
 
+                {Array.isArray(intelligence.signal_breakdown) && intelligence.signal_breakdown.length ? (
+                  <div className="mt-5 rounded-[18px] border border-[#D7E7D8] bg-[#F8FBF8] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-sm font-black text-[#123C32]">Why this score — every signal we weighed</h3>
+                      <span className="text-[11px] font-bold uppercase tracking-wide text-[#8A8F89]">10 weighted signals</span>
+                    </div>
+                    <div className="mt-3 grid gap-x-6 gap-y-3 md:grid-cols-2">
+                      {intelligence.signal_breakdown.map((sig: any) => {
+                        const missing = sig.status === "missing" || sig.score == null;
+                        const verified = sig.status === "verified";
+                        return (
+                          <div key={sig.key}>
+                            <div className="flex items-baseline justify-between gap-2">
+                              <span className="text-[13px] font-bold text-[#25302B]">{sig.label}</span>
+                              <span className="shrink-0 text-[12px] font-black text-[#123C32]">{missing ? "—" : Number(sig.score).toFixed(1)}<span className="ml-1 text-[10px] font-bold text-[#8A8F89]">/10 · {sig.weight}%</span></span>
+                            </div>
+                            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#E7E3DA]">
+                              <div className="h-full rounded-full" style={{ width: missing ? "0%" : `${Math.min(100, Number(sig.score) * 10)}%`, background: verified ? "#2A6147" : "#C8A24B" }} />
+                            </div>
+                            <p className="mt-1 text-[11px] text-[#8A8F89]">
+                              <span className={`font-bold ${verified ? "text-[#2A6147]" : missing ? "text-[#9A552E]" : "text-[#C8792F]"}`}>{missing ? "Not yet verified" : verified ? "Verified" : "Estimated"}</span>
+                              {sig.source ? ` · ${sig.source}` : ""}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-4 border-t border-[#E7E3DA] pt-3 text-[11px] leading-5 text-[#8A8F89]">
+                      Green bars are verified against checked sources; amber are estimated from society data and shown honestly. Missing signals are excluded from the score, never guessed — that's why coverage matters.
+                    </p>
+                  </div>
+                ) : null}
+
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   <div className="rounded-[18px] bg-[#EAF5ED] p-4">
                     <h3 className="text-sm font-black text-[#123C32]">Best fit for</h3>

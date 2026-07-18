@@ -137,6 +137,9 @@ class SocietyIntelligenceController extends Controller
             'overall_score_label' => $profile->overall_score_label,
             'score_version' => $profile->score_version,
             'score_calculated_at' => $profile->score_calculated_at,
+            // The receipts behind the headline number: every weighted signal, its score,
+            // its share of the total, and whether it's verified or still estimated.
+            'signal_breakdown' => \App\Services\SocietyIntelligenceScoringService::publicSignalBreakdown($profile->score_inputs_json),
             'best_for_json' => $profile->best_for_json ?: [],
             'not_ideal_for_json' => $profile->not_ideal_for_json ?: [],
             'top_strengths_json' => collect($profile->top_strengths_json ?: [])->where('status', 'published')->values()->all(),

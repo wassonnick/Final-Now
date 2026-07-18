@@ -81,6 +81,35 @@ class SocietyIntelligenceTest extends TestCase
         $this->assertStringNotContainsString('Internal call log', $encoded);
     }
 
+    public function test_public_payload_exposes_labelled_signal_breakdown(): void
+    {
+        $society = $this->society();
+        $society->intelligenceProfile()->create([
+            'intelligence_status' => SocietyIntelligenceProfile::STATUS_PUBLISHED,
+            'published_at' => now(),
+            'overall_score' => 8.1,
+            'evidence_coverage_score' => 75,
+            'score_inputs_json' => [
+                'connectivity_score' => ['score' => 8.4, 'status' => 'verified', 'source' => 'connectivity_score'],
+                'legal_rera_confidence_score' => ['score' => 7.0, 'status' => 'estimated', 'source' => 'rera_context'],
+                'environmental_resilience_score' => ['score' => null, 'status' => 'missing', 'source' => 'environmental_context'],
+            ],
+        ]);
+
+        $breakdown = collect($this->getJson('/api/societies/'.$society->slug.'/intelligence')->assertOk()->json('data.signal_breakdown'));
+
+        // All ten weighted signals present, labelled, with weight percentages.
+        $this->assertCount(10, $breakdown);
+        $connectivity = $breakdown->firstWhere('key', 'connectivity_score');
+        $this->assertSame('Connectivity & commute', $connectivity['label']);
+        $this->assertSame(15, $connectivity['weight']);
+        $this->assertSame('verified', $connectivity['status']);
+        // Missing signal is shown honestly, not hidden or guessed.
+        $environmental = $breakdown->firstWhere('key', 'environmental_resilience_score');
+        $this->assertSame('missing', $environmental['status']);
+        $this->assertNull($environmental['score']);
+    }
+
     public function test_recalculation_creates_review_only_profile(): void
     {
         $society = $this->society(['score' => 8.6, 'connectivity_score' => 8.5, 'lifestyle_score' => 8.1]);
