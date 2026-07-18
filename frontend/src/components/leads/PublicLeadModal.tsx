@@ -23,6 +23,7 @@ type PublicLeadModalProps = {
   budget?: string;
   submitLabel?: string;
   successMessage?: string;
+  onSuccess?: () => void;
   onClose: () => void;
 };
 
@@ -76,6 +77,7 @@ export function PublicLeadModal({
   budget = "",
   submitLabel = "Request callback",
   successMessage,
+  onSuccess,
   onClose,
 }: PublicLeadModalProps) {
   const [form, setForm] = useState(emptyForm);
@@ -220,6 +222,7 @@ export function PublicLeadModal({
         property_slug: propertySlug,
       });
       setSuccess(true);
+      onSuccess?.();
     } catch (leadError) {
       console.error("Lead submission failed:", leadError);
       setError("Unable to submit right now. Please try again or message us on WhatsApp.");

@@ -369,6 +369,7 @@ export function SocietyPage() {
   const [loading, setLoading] = useState(Boolean(API_BASE_URL));
   const [error, setError] = useState<string | null>(null);
   const [callbackOpen, setCallbackOpen] = useState(false);
+  const [reportGateOpen, setReportGateOpen] = useState(false);
   const [callbackSource, setCallbackSource] = useState("society_page_callback");
   const [intelligence, setIntelligence] = useState<any | null>(null);
   const [sourceDrawerOpen, setSourceDrawerOpen] = useState(false);
@@ -1273,7 +1274,8 @@ export function SocietyPage() {
                       ))}
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3">
-                      <button type="button" onClick={() => openSocietyCallback("society_buyer_truth_verify")} className="rounded-full bg-[#233B6E] px-5 py-2.5 text-sm font-bold text-white">Ask us to verify for you</button>
+                      <button type="button" onClick={() => setReportGateOpen(true)} className="rounded-full bg-[#233B6E] px-5 py-2.5 text-sm font-bold text-white">Get the free Society Report (PDF)</button>
+                      <button type="button" onClick={() => openSocietyCallback("society_buyer_truth_verify")} className="rounded-full border border-[#233B6E] bg-white px-5 py-2.5 text-sm font-bold text-[#233B6E]">Ask us to verify for you</button>
                       <Link to="/data-sources" className="rounded-full border border-[#E7DCCB] bg-white px-5 py-2.5 text-sm font-bold text-[#9A552E]">How we source this</Link>
                     </div>
                   </div>
@@ -1507,6 +1509,22 @@ export function SocietyPage() {
         submitLabel="Request available homes"
         successMessage="Request received. Our team will call with matching homes, similar societies and visit-ready options."
         onClose={() => { setCallbackOpen(false); setSelectedLeadProperty(null); setCallbackSource("society_page_callback"); }}
+      />
+
+      <PublicLeadModal
+        open={reportGateOpen}
+        title={`Get the ${society.name} Society Report (PDF)`}
+        subtitle="A verified decision report — score breakdown, Buyer's Truth checklist, strengths, watch-outs and sources. Enter your details and it opens instantly."
+        source="society_report_download"
+        ctaLabel="Download Society Report"
+        leadIntent="society_report"
+        trackingContext={{ entity_type: "society", entity_slug: slug || "", entity_name: society.name, cta_label: "Download Society Report", lead_intent: "society_report" }}
+        societyName={society.name}
+        defaultMessage={`Send me the verified Society Report for ${society.name}.`}
+        submitLabel="Get my report"
+        successMessage="Opening your report now — use Download / Print to save it as a PDF."
+        onSuccess={() => { window.open(`/society/${society.slug || slug}/report?print=1`, "_blank", "noopener"); }}
+        onClose={() => setReportGateOpen(false)}
       />
     </div>
   );

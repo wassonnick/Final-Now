@@ -15,6 +15,7 @@ import { setPublicSeo } from "@/lib/seo";
 
 const SearchPage = lazy(() => import('@/pages/SearchPage').then((module) => ({ default: module.SearchPage })));
 const SocietyPage = lazy(() => import('@/pages/SocietyPage').then((module) => ({ default: module.SocietyPage })));
+const SocietyReportPage = lazy(() => import('@/pages/SocietyReportPage').then((module) => ({ default: module.SocietyReportPage })));
 const PropertyPage = lazy(() => import('@/pages/PropertyPage').then((module) => ({ default: module.PropertyPage })));
 const ComparePage = lazy(() => import('@/pages/ComparePage').then((module) => ({ default: module.ComparePage })));
 const CompareSeoPage = lazy(() => import('@/pages/CompareSeoPage').then((module) => ({ default: module.CompareSeoPage })));
@@ -140,6 +141,7 @@ function AppShell() {
             <Route path="/properties/" element={<PropertiesPage />} />
 
             <Route path="/society/:slug" element={<SocietyPage />} />
+            <Route path="/society/:slug/report" element={<SocietyReportPage />} />
             <Route path="/property/:slug" element={<PropertyPage />} />
 
             <Route path="/gurgaon" element={<SeoLandingPage variant="gurgaon" />} />
