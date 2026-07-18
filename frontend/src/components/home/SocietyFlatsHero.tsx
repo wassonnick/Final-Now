@@ -145,13 +145,13 @@ export default function SocietyFlatsHero() {
       <section className="border-b border-[#DDD7CC] bg-[#F7F4EF] lg:hidden">
         <div className="px-5 pb-7 pt-5">
           <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-[#DDD7CC] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#3156A3]">
-            <MapPin className="h-3 w-3" /> Gurgaon · every society checked by real people
+            <MapPin className="h-3 w-3" /> No fake listings · no stale prices · Gurgaon
           </div>
 
           <p className="font-display text-[34px] font-medium leading-[1.05] tracking-[-0.02em] text-[#111827]">
             Your Gurgaon home, <span className="italic text-[#8B6B32]">chosen with confidence.</span>
           </p>
-          <p className="mt-3 text-[14px] leading-6 text-[#667085]">We score every society, check every price and put a friendly AI advisor by your side — so the search feels calm and clear.</p>
+          <p className="mt-3 text-[14px] leading-6 text-[#667085]"><span className="font-semibold text-[#35413B]">Most portals show you flats that are stale, inflated or already gone.</span> We score every society, check every price and put an AI advisor by your side — so you compare honest evidence, not a sales pitch.</p>
 
           <form
             onSubmit={(event) => {
@@ -242,13 +242,13 @@ export default function SocietyFlatsHero() {
           <div>
             <div className="mb-[22px] inline-flex items-center gap-2 rounded-full border border-[#DDD7CC] bg-white px-[13px] py-1.5 text-[12.5px] font-bold text-[#3156A3]">
               <Check className="h-[13px] w-[13px] stroke-[3]" />
-              Every Gurgaon society · checked by real people
+              No fake listings · no stale prices · every society checked by real people
             </div>
             <h1 className="m-0 font-display text-[64px] font-medium leading-[0.98] tracking-[-0.025em] text-[#111827]">
               Your Gurgaon home, <span className="italic text-[#8B6B32]">chosen with confidence.</span>
             </h1>
             <p className="mb-6 mt-[18px] max-w-[560px] text-[17px] leading-[1.6] text-[#667085]">
-              We score every society, check every price and put a friendly AI advisor by your side — so the search feels calm and clear. Compare the honest evidence, not the sales pitch, and ask to visit only when it feels right.
+              <span className="font-semibold text-[#35413B]">Most portals show you flats that are stale, inflated or already gone.</span> We score every society, check every price and put a friendly AI advisor by your side — so you compare honest evidence, not the sales pitch, and ask to visit only when it feels right.
             </p>
 
             <div className="max-w-[590px] rounded-[22px] border border-[#D8DFEC] bg-white p-[18px] shadow-[0_24px_70px_-42px_rgba(25,40,75,.45)]">
