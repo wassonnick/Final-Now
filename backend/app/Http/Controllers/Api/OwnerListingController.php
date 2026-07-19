@@ -7,6 +7,8 @@ use App\Models\Account;
 use App\Models\Lead;
 use App\Models\OwnerListing;
 use App\Models\Society;
+use App\Services\Email\SocietyFlatsEmailService;
+use App\Services\LeadNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -133,7 +135,7 @@ class OwnerListingController extends Controller
         ]);
 
         // Keep the existing ops workflow: every listing also lands as a lead for follow-up.
-        Lead::create([
+        $lead = Lead::create([
             'name' => $listing->name,
             'phone' => $listing->phone,
             'society_id' => $listing->society_id,
@@ -145,6 +147,9 @@ class OwnerListingController extends Controller
             'message' => "Structured owner listing #{$listing->id} submitted with ".count($images).' photo(s). Review it in Admin → Owner Listings.',
             'status' => 'new',
         ]);
+
+        app(LeadNotificationService::class)->notifyNewLead($lead);
+        app(SocietyFlatsEmailService::class)->sendOwnerListingAlert($lead);
 
         return response()->json([
             'status' => 'ok',

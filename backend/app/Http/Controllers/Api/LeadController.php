@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lead;
+use App\Services\Email\SocietyFlatsEmailService;
 use App\Services\LeadNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -117,6 +118,8 @@ class LeadController extends Controller
         $lead = Lead::create($validated);
 
         app(LeadNotificationService::class)->notifyNewLead($lead);
+        app(SocietyFlatsEmailService::class)->sendAdminLeadNotification($lead);
+        app(SocietyFlatsEmailService::class)->sendUserLeadConfirmation($lead);
 
         return response()->json([
             'status' => 'success',

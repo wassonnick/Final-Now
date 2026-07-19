@@ -20,6 +20,7 @@ return [
 
     'resend' => [
         'key' => env('RESEND_API_KEY'),
+        'endpoint' => env('RESEND_API_URL', 'https://api.resend.com/emails'),
     ],
 
     'ses' => [
@@ -81,6 +82,12 @@ return [
         'webhook_token' => env('LEAD_NOTIFICATION_WEBHOOK_TOKEN'),
         'admin_base_url' => env('ADMIN_FRONTEND_URL', 'https://societyflats.com'),
         'frontend_url' => env('FRONTEND_URL', 'https://societyflats.com'),
+    ],
+
+    'societyflats_email' => [
+        'admin_email' => env('SOCIETYFLATS_ADMIN_EMAIL'),
+        'lead_alert_email' => env('SOCIETYFLATS_LEAD_ALERT_EMAIL', env('SOCIETYFLATS_ADMIN_EMAIL')),
+        'admin_base_url' => env('ADMIN_FRONTEND_URL', env('FRONTEND_URL', 'https://www.societyflats.com')),
     ],
 
     'saved_search_alerts' => [

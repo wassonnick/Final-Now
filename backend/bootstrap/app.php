@@ -5,6 +5,7 @@ use App\Console\Commands\FetchSocietyFromUrl;
 use App\Console\Commands\ImportGurgaonMasterSocieties;
 use App\Console\Commands\ImportGurgaonReraSocieties;
 use App\Console\Commands\MatchSavedSearches;
+use App\Console\Commands\TestResendEmail;
 use App\Http\Middleware\ApiCors;
 use App\Http\Middleware\EnsureAdminApiToken;
 use Illuminate\Foundation\Application;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         EnrichOfficialSocietySources::class,
         FetchSocietyFromUrl::class,
         MatchSavedSearches::class,
+        TestResendEmail::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(ApiCors::class);
