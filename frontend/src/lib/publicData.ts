@@ -15,7 +15,7 @@ export function getPublicSocieties() {
 }
 
 export async function fetchPublicSocieties() {
-  const response = await fetch(`${API_BASE_URL}/societies?per_page=100`);
+  const response = await fetch(`${API_BASE_URL}/societies?per_page=300`);
   const json = await response.json().catch(() => ({}));
 
   if (!response.ok) throw new Error(json?.message || 'Unable to fetch societies');
@@ -63,7 +63,7 @@ function mapApiProperty(data: any): AdminProperty {
 }
 
 export async function fetchPublicProperties() {
-  const response = await fetch(`${API_BASE_URL}/properties?per_page=100`);
+  const response = await fetch(`${API_BASE_URL}/properties?per_page=300`);
   const json = await response.json().catch(() => ({}));
 
   if (!response.ok) throw new Error(json?.message || 'Unable to fetch properties');

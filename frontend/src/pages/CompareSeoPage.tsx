@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Home, MessageCircle, Search, ShieldCheck, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { InteractiveComparePage } from "@/pages/InteractiveComparePage";
 import { backendApi } from "@/services/backendApi";
-import { useAppStore } from "@/store";
 import { setPublicSeo } from "@/lib/seo";
 import { trackCompareVerdictView } from "@/lib/analytics";
 
@@ -438,14 +437,12 @@ function CompareDetail({ slug }: { slug: string }) {
 // value for crawlers while giving real users their own side-by-side.
 export function CompareSeoPage({ forceIndex = false }: { forceIndex?: boolean }) {
   const { slug } = useParams();
-  const [params] = useSearchParams();
-  const compareCount = useAppStore((s) => s.compareList.length);
 
   if (slug) return <CompareDetail slug={slug} />;
   if (forceIndex) return <CompareIndex />;
-
-  const hasSelection = compareCount > 0 || Boolean(params.get("seed")) || Boolean(params.get("societies"));
-  return hasSelection ? <InteractiveComparePage /> : <CompareIndex />;
+  // Bare /compare is the interactive builder — it handles the empty state with a society
+  // picker so users can compare ANY set, and links out to ready-made pages for discovery.
+  return <InteractiveComparePage />;
 }
 
 export default CompareSeoPage;

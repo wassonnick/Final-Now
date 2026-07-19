@@ -6,8 +6,65 @@ import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "@/config/api";
 import { backendApi } from "@/services/backendApi";
 import { useAppStore } from "@/store";
+import { fetchPublicSocieties, formatPublicLocation } from "@/lib/publicData";
 import { societyDisplayImage, hasGooglePlacesDisplayPhoto } from "@/lib/societyImages";
 import { setPublicSeo } from "@/lib/seo";
+
+// Typeahead picker — add any published society to the comparison without leaving the page.
+function SocietyPicker({ selectedSlugs }: { selectedSlugs: string[] }) {
+  const addToCompare = useAppStore((s) => s.addToCompare);
+  const [all, setAll] = useState<any[]>([]);
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    fetchPublicSocieties().then((rows) => setAll(Array.isArray(rows) ? rows : [])).catch(() => setAll([]));
+  }, []);
+
+  const matches = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    if (!query) return [];
+    return all
+      .filter((s) => !selectedSlugs.includes(s.slug))
+      .filter((s) => [s.name, s.sector, s.locality, s.builder].some((v) => String(v || "").toLowerCase().includes(query)))
+      .slice(0, 8);
+  }, [q, all, selectedSlugs]);
+
+  const disabled = selectedSlugs.length >= 3;
+
+  return (
+    <div className="relative w-full max-w-md">
+      <div className="flex items-center gap-2 rounded-full border border-[#D8DFEC] bg-white px-4 py-2.5">
+        <Search className="h-4 w-4 shrink-0 text-[#8A8F89]" />
+        <input
+          value={q}
+          onChange={(e) => { setQ(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          placeholder={disabled ? "Remove one to add another" : "Add a society — name, sector or builder"}
+          disabled={disabled}
+          className="w-full bg-transparent text-sm outline-none placeholder:text-[#8A8F89] disabled:cursor-not-allowed"
+        />
+      </div>
+      {open && matches.length ? (
+        <div className="absolute z-20 mt-2 max-h-72 w-full overflow-auto rounded-[16px] border border-[#E7DCCB] bg-white p-1.5 shadow-[0_24px_60px_-30px_rgba(0,0,0,.4)]">
+          {matches.map((s) => (
+            <button
+              key={s.slug}
+              onClick={() => { addToCompare(s); setQ(""); setOpen(false); }}
+              className="flex w-full items-center gap-3 rounded-[12px] px-3 py-2 text-left hover:bg-[#F8F3EA]"
+            >
+              <Plus className="h-4 w-4 shrink-0 text-[#233B6E]" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-[#25302B]">{s.name}</p>
+                <p className="truncate text-[12px] text-[#6E756E]">{formatPublicLocation(s)}{s.builder ? ` · ${s.builder}` : ""}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 // Interactive "society face-off" — the user's own selected societies, side by side.
 // TruthEstate-inspired forensic layout: per-dimension rows with the leader highlighted,
@@ -108,12 +165,15 @@ export function InteractiveComparePage() {
 
   if (!rows.length) {
     return (
-      <div className="min-h-[60vh] bg-[#F7F4EF] px-5 py-16">
-        <div className="mx-auto max-w-xl rounded-[24px] border border-[#E7DCCB] bg-white p-8 text-center">
-          <h1 className="font-display text-3xl font-medium text-[#111827]">Nothing to compare yet.</h1>
-          <p className="mt-3 text-[#667085]">Add up to three societies from search or any society page, then come back here for a side-by-side.</p>
-          <Button asChild className="mt-6 rounded-full bg-[#233B6E] px-6 text-white hover:bg-[#1B2E57]"><Link to="/search?tab=societies"><Search className="mr-2 h-4 w-4" /> Browse societies</Link></Button>
-          <Link to="/compare/browse" className="mt-4 block text-sm font-bold text-[#8C6E2F] underline">Or view ready-made comparison pages</Link>
+      <div className="min-h-[70vh] bg-[#F7F4EF] px-5 py-14 md:py-20">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#8C6E2F]">Society face-off</p>
+          <h1 className="mt-1.5 font-display text-[34px] font-medium leading-tight text-[#111827] md:text-[44px]">Build your own comparison.</h1>
+          <p className="mt-3 text-[15px] leading-7 text-[#667085]">Search and add up to three Gurgaon societies — any combination you like. We line them up on verified scores, Buyer's Truth and market ranges.</p>
+          <div className="mt-6 flex justify-center"><SocietyPicker selectedSlugs={slugs} /></div>
+          <div className="mt-8">
+            <Link to="/compare/browse" className="text-sm font-bold text-[#8C6E2F] underline">Or explore ready-made comparison pages →</Link>
+          </div>
         </div>
       </div>
     );
@@ -208,7 +268,10 @@ export function InteractiveComparePage() {
         </div>
 
         {cols < 3 ? (
-          <Link to="/search?tab=societies" className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#233B6E] bg-white px-5 py-2.5 text-sm font-bold text-[#233B6E]"><Plus className="h-4 w-4" /> Add another society</Link>
+          <div className="mt-5">
+            <p className="mb-2 text-[13px] font-bold text-[#4A534E]">Add another society to the face-off</p>
+            <SocietyPicker selectedSlugs={slugs} />
+          </div>
         ) : null}
 
         <p className="mt-6 text-[12px] leading-6 text-[#8A8F89]">Scores are from admin-reviewed society data; amber signals are estimated and should be confirmed. Verify unit price, exact tower, availability, legal title and RERA status independently before any payment.</p>
