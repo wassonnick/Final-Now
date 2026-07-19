@@ -151,6 +151,7 @@ function AppShell() {
             <Route path="/builder/:builderSlug" element={<SeoLandingPage variant="builder" />} />
 
             <Route path="/compare" element={<CompareSeoPage />} />
+            <Route path="/compare/browse" element={<CompareSeoPage forceIndex />} />
             <Route path="/compare/:slug" element={<CompareSeoPage />} />
             <Route path="/go/:slug" element={<CampaignLandingPage />} />
             <Route path="/list-your-flat" element={<CampaignLandingPage slugOverride="list-your-flat" />} />
