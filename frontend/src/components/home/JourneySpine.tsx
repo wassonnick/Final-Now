@@ -68,7 +68,7 @@ const steps: Step[] = [
 ];
 
 const audiences = [
-  { label: "NRI property desk", hint: "Local coordination from abroad", href: "/nri-services", icon: Globe2 },
+  { label: "NRI management & sales", hint: "Buy, sell or rent out from abroad", href: "/nri-services", icon: Globe2 },
   { label: "List your flat", hint: "Reach verified demand", href: "/sell", icon: BadgeIndianRupee },
   { label: "Broker partnership", hint: "Society-specific enquiries", href: "/broker-crm", icon: Briefcase },
   { label: "Referral partner", hint: "Track qualified introductions", href: "/referrals", icon: Gift },

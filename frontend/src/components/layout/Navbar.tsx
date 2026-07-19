@@ -103,7 +103,7 @@ export function Navbar() {
     },
     {
       key: 'services', label: 'Services', links: [
-        { label: 'NRI desk', href: '/nri-services', icon: Globe2, hint: 'Buy from abroad' },
+        { label: 'NRI management & sales', href: '/nri-services', icon: Globe2, hint: 'Buy, sell, rent out from abroad' },
         { label: 'RWA and builder portal', href: '/builder-portal', icon: Landmark, hint: 'Claim your society' },
         { label: 'Trust and safety', href: '/trust', icon: ShieldCheck, hint: 'How we verify' },
         { label: 'Help center', href: '/help', icon: LifeBuoy, hint: 'FAQs and contact' },

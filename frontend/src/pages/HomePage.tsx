@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Home, MapPin, RefreshCw } from "lucide-react";
+import { ArrowRight, CalendarCheck, Check, FileSearch, Globe2, KeyRound, MapPin, RefreshCw, ShieldCheck } from "lucide-react";
 import SocietyFlatsHero from "@/components/home/SocietyFlatsHero";
 import { DecisionGuideStrip, PropertyToolsStrip, SpecialistServicesStrip } from "@/components/home/ContextualJourneys";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
@@ -201,6 +201,50 @@ export function HomePage() {
           </div>
         </div>
       ) : null}
+
+      <section className="mx-auto max-w-[1360px] px-5 pt-8 lg:px-10 lg:pt-12">
+        <div className="overflow-hidden rounded-[28px] border border-[#27364E] bg-[#111827] shadow-[0_28px_80px_-56px_rgba(17,24,39,.65)]">
+          <div className="grid gap-6 p-6 md:p-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:p-10">
+            <div>
+              <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#E3B36B]">
+                <Globe2 className="h-4 w-4" />
+                NRI property command center
+              </p>
+              <h2 className="mt-4 font-display text-[32px] font-medium leading-[1.04] tracking-[-0.015em] text-white md:text-[48px]">
+                Overseas owner? We manage the Gurgaon property journey locally.
+              </h2>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-[#D0D5DD] md:text-base">
+                Buy, sell, rent out or coordinate follow-ups from abroad with SocietyFlats’ NRI desk — verified society intelligence, private lead routing, local viewing coordination and admin-tracked case updates.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link to="/nri-services" className="inline-flex items-center rounded-[14px] bg-[#C2724E] px-5 py-3 text-sm font-black text-white">
+                  Open NRI desk <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+                <Link to="/search?tab=societies" className="rounded-[14px] border border-white/20 bg-white/10 px-5 py-3 text-sm font-black text-white">
+                  Start with society profile
+                </Link>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                [FileSearch, "Resale brief", "Position the society, tower and unit with reviewed context."],
+                [KeyRound, "Rent-out pipeline", "Capture demand while keeping owner contact details private."],
+                [CalendarCheck, "Visit coordination", "Move family, buyer or tenant follow-ups through clear next steps."],
+                [ShieldCheck, "Scope-safe support", "No fake inventory, no public phone exposure, no legal/tax promises."],
+              ].map(([Icon, title, body]) => {
+                const ItemIcon = Icon as typeof FileSearch;
+                return (
+                  <Link key={String(title)} to="/nri-services" className="rounded-[20px] border border-white/10 bg-white/[0.07] p-5 transition hover:bg-white/[0.12]">
+                    <ItemIcon className="h-6 w-6 text-[#E3B36B]" />
+                    <p className="mt-4 font-black text-white">{String(title)}</p>
+                    <p className="mt-2 text-sm leading-6 text-[#D0D5DD]">{String(body)}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {intelligencePreviews.length ? (
         <section className="mx-auto max-w-[1360px] px-5 pt-8 lg:px-10 lg:pt-12">

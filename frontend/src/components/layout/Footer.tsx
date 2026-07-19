@@ -26,7 +26,7 @@ const desktopColumns = [
   {
     heading: "Services",
     links: [
-      ["NRI services", "/nri-services"],
+      ["NRI management & sales", "/nri-services"],
       ["Builder & RWA", "/builder-portal"],
       ["Builder floors", "/builder-floors"],
       ["Referral partner", "/referrals"],

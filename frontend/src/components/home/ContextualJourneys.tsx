@@ -74,7 +74,7 @@ export function PropertyToolsStrip({ mobile = false }: { mobile?: boolean }) {
 
 export function SpecialistServicesStrip({ mobile = false }: { mobile?: boolean }) {
   const links = [
-    ["NRI desk", "For families and owners abroad", "/nri-services", Globe2],
+    ["NRI management & sales", "Buy, sell or rent out from abroad", "/nri-services", Globe2],
     ["Builder & RWA", "Manage a verified society presence", "/builder-portal", ShieldCheck],
     ["Referral partner", "Track qualified introductions", "/referrals", UsersRound],
     ["Broker partner", "Work with society-specific demand", "/broker-crm", BriefcaseBusiness],
@@ -84,8 +84,8 @@ export function SpecialistServicesStrip({ mobile = false }: { mobile?: boolean }
       <div className={mobile ? "" : "grid grid-cols-[.7fr_1.4fr] gap-12"}>
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8B6B32]">Specialist services</p>
-          <h2 className={`${mobile ? "mt-2 text-[25px]" : "mt-2 text-[32px]"} font-display font-medium leading-none text-[#111827]`}>The right expert at the right moment.</h2>
-          <p className="mt-3 text-[13px] leading-5 text-[#667085]">Dedicated paths when a standard home search is not enough.</p>
+          <h2 className={`${mobile ? "mt-2 text-[25px]" : "mt-2 text-[32px]"} font-display font-medium leading-none text-[#111827]`}>Strong help for complex property moments.</h2>
+          <p className="mt-3 text-[13px] leading-5 text-[#667085]">NRI management, RWA/builder workflows, referrals and broker demand — clearly routed.</p>
         </div>
         <nav className={`${mobile ? "mt-4 divide-y divide-[#DDD7CC]" : "grid grid-cols-2 gap-x-9"}`}>{links.map((item) => <TextLink key={item[0]} item={item} />)}</nav>
       </div>
