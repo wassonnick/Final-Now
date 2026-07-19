@@ -31,6 +31,7 @@ const SellPage = lazy(() => import('@/pages/SellPage').then((module) => ({ defau
 const SocietiesPage = lazy(() => import('@/pages/SocietiesPage').then((module) => ({ default: module.SocietiesPage })));
 const PropertiesPage = lazy(() => import('@/pages/PropertiesPage').then((module) => ({ default: module.PropertiesPage })));
 const SeoLandingPage = lazy(() => import('@/pages/SeoLandingPage').then((module) => ({ default: module.SeoLandingPage })));
+const BudgetLandingPage = lazy(() => import('@/pages/BudgetLandingPage').then((module) => ({ default: module.BudgetLandingPage })));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage })));
 const SiteVisitConfirmationPage = lazy(() => import('@/pages/SiteVisitConfirmationPage').then((module) => ({ default: module.SiteVisitConfirmationPage })));
 const InvestmentCalculatorPage = lazy(() => import('@/pages/InvestmentCalculatorPage').then((module) => ({ default: module.InvestmentCalculatorPage })));
@@ -149,6 +150,7 @@ function AppShell() {
             <Route path="/gurgaon/properties" element={<SeoLandingPage variant="gurgaon-properties" />} />
             <Route path="/gurgaon/:locality" element={<SeoLandingPage variant="locality" />} />
             <Route path="/builder/:builderSlug" element={<SeoLandingPage variant="builder" />} />
+            <Route path="/gurgaon-flats/:segment" element={<BudgetLandingPage />} />
 
             <Route path="/compare" element={<CompareSeoPage />} />
             <Route path="/compare/browse" element={<CompareSeoPage forceIndex />} />

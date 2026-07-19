@@ -143,6 +143,21 @@ const routeMeta = [
     changefreq: "daily",
     schemaType: "CollectionPage",
   },
+  ...[
+    ["affordable", "Affordable Flats in Gurgaon under ₹1.5 Cr — Verified Societies | SocietyFlats", "Browse verified affordable Gurgaon societies with resale ranges up to ₹1.5 Cr. Real scores, honest price context, no fake listings."],
+    ["under-2-cr", "Flats Under ₹2 Cr in Gurgaon — Verified Societies & Prices | SocietyFlats", "Verified Gurgaon societies with resale ranges under ₹2 Cr. Society scores, real price context and no fake inventory."],
+    ["under-3-cr", "Flats Under ₹3 Cr in Gurgaon — Verified Societies & Prices | SocietyFlats", "Verified Gurgaon societies with resale ranges under ₹3 Cr. Real scores, honest pricing, verified inventory only."],
+    ["luxury", "Luxury Flats in Gurgaon (₹3–7 Cr) — Verified Premium Societies | SocietyFlats", "Explore verified luxury Gurgaon societies priced ₹3–7 Cr. Society scores, market ranges and the Buyer's Truth on every profile."],
+    ["elite", "Elite Flats in Gurgaon (₹7–15 Cr) — Verified Prime Societies | SocietyFlats", "Verified elite Gurgaon societies priced ₹7–15 Cr. Real scores, honest market context, verified availability only."],
+    ["ultra-luxury", "Ultra-Luxury Flats in Gurgaon (₹15 Cr+) — Verified Societies | SocietyFlats", "Discover verified ultra-luxury Gurgaon societies above ₹15 Cr. Society intelligence scores and honest market ranges, no fake listings."],
+  ].map(([slug, title, description]) => ({
+    path: `/gurgaon-flats/${slug}`,
+    title,
+    description,
+    priority: "0.78",
+    changefreq: "weekly",
+    schemaType: "CollectionPage",
+  })),
   {
     path: "/list-your-flat",
     title: "List Your Gurgaon Flat Free — Verified Tenants & Buyers | SocietyFlats",

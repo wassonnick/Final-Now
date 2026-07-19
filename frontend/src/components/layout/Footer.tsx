@@ -10,7 +10,9 @@ const desktopColumns = [
     links: [
       ["Societies by sector", "/gurgaon"],
       ["Societies by builder", "/builder/dlf"],
-      ["Popular areas", "/search?tab=societies"],
+      ["Flats under ₹2 Cr", "/gurgaon-flats/under-2-cr"],
+      ["Luxury flats", "/gurgaon-flats/luxury"],
+      ["Ultra-luxury flats", "/gurgaon-flats/ultra-luxury"],
       ["New launches", "/search?tab=societies&q=Under%20Construction"],
     ],
   },
