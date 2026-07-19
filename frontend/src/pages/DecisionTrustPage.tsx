@@ -169,6 +169,61 @@ const workflowSteps = [
   ["Publish", "Show public-safe facts, decision copy, CTAs and correction paths."],
 ];
 
+// Distinct, substantive content per trust page — so each reads as its own page, not a
+// re-skin of the same boilerplate.
+const variantDetail: Record<Variant, { heading: string; intro: string; items: Array<[string, string]> }> = {
+  methodology: {
+    heading: "What we measure, and what we refuse to",
+    intro: "Every public society score is assembled the same way, from the same signal set — no per-society hand-tuning, no paid weighting.",
+    items: [
+      ["Ten weighted signals", "Liveability, connectivity, maintenance, builder, price value, rental demand, resale liquidity, safety, legal/RERA and environment — fixed weights summing to 100%."],
+      ["Coverage gate", "A society only earns an overall score once verified signals cover at least 60% of the weight. Below that, we say 'insufficient data' instead of guessing."],
+      ["Missing is not bad", "Absent signals are excluded and the remaining weights renormalise — thin data can never inflate a score, only lower its coverage."],
+      ["Human sign-off", "AI publishes nothing to the public. An admin reviews and publishes; every override carries a recorded reason."],
+    ],
+  },
+  "data-sources": {
+    heading: "Where each insight comes from",
+    intro: "We prefer whoever is actually authoritative for a field, and we label it. Anything unsourced is shown as unverified, not asserted.",
+    items: [
+      ["Published society data", "Admin-reviewed fields — configuration, amenities, sector, builder — checked before a profile goes public."],
+      ["Public records & RERA", "Registration numbers and legal-status signals from public registries, linked to the official source where available."],
+      ["Google Maps & Places", "Coordinates, locality context and society imagery, with attribution shown on the photo."],
+      ["Market range context", "Rent and resale ranges grounded in portal consensus, refreshed on a schedule — shown only when a realistic range exists."],
+      ["Resident corrections", "Verified user reports, reviewed by an admin before anything public changes."],
+    ],
+  },
+  "score-explained": {
+    heading: "Reading a society score correctly",
+    intro: "The number is a shortlist aid, not a verdict. Here's exactly what it does and doesn't tell you.",
+    items: [
+      ["It reflects the society, not the unit", "Tower, floor, view and finish vary within a society — confirm the specific unit before deciding."],
+      ["Verified vs estimated is marked", "Green signals are verified against sources; amber are estimated from society data and flagged as such on every profile."],
+      ["Coverage is shown alongside", "A high score on thin coverage is weaker than a slightly lower score on full coverage — both numbers are visible."],
+      ["Overrides are accountable", "An admin can override a computed score, but only with a recorded reason that stays on file."],
+    ],
+  },
+  corrections: {
+    heading: "How a correction is handled",
+    intro: "Nothing public changes automatically from a submission. Every correction is reviewed like a source.",
+    items: [
+      ["You flag it", "Tell us what looks wrong and share any supporting link — a listing, a RERA page, an official notice."],
+      ["We review it", "An admin checks the claim against the society's record and the source before touching anything public."],
+      ["We update or explain", "If it's confirmed, the profile is corrected and re-published. If not, it stays as-is — we don't change verified data on an unverifiable claim."],
+    ],
+  },
+  "editorial-independence": {
+    heading: "What we will never do",
+    intro: "Guidance you can trust means guidance that isn't for sale. These are hard lines, not preferences.",
+    items: [
+      ["No invented facts", "We never fabricate prices, possession dates, RERA data, rankings, travel times or investment returns."],
+      ["No paid ranking", "Scores and ordering are not for sale. A builder cannot buy a higher score or a better position."],
+      ["No guaranteed outcomes", "We don't promise rent, resale value, appreciation or a timeline — and we say when something needs professional sign-off."],
+      ["No hidden advertising", "Sponsored placements, if ever shown, would be labelled. Decision copy stays separate from any commercial pressure."],
+    ],
+  },
+};
+
 const signalWeights: Array<[string, number, string]> = [
   ["Everyday liveability", 20, "Lifestyle, amenities and how the society actually functions day to day."],
   ["Connectivity & commute", 15, "Metro, roads, office access and practical movement around Gurgaon."],
@@ -283,6 +338,7 @@ export function DecisionTrustPage({ variant }: { variant: Variant }) {
       </section>
 
       <section className="mx-auto max-w-[1360px] px-5 py-12 md:px-10">
+        <VariantDetailSection variant={variant} />
         {variant === "corrections" ? (
           <CorrectionsSection page={page} form={form} setForm={setForm} message={message} submit={submit} />
         ) : (
@@ -335,6 +391,28 @@ function PrinciplesGrid({ page }: { page: PageConfig }) {
           </article>
         );
       })}
+    </section>
+  );
+}
+
+function VariantDetailSection({ variant }: { variant: Variant }) {
+  const detail = variantDetail[variant];
+  if (!detail) return null;
+  return (
+    <section className="mt-10 rounded-[30px] border border-[#E6DDCF] bg-white p-6 shadow-[0_18px_44px_-36px_rgba(17,24,39,.38)] lg:p-8">
+      <div className="max-w-2xl">
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#C2724E]">In detail</p>
+        <h2 className="mt-2 font-display text-4xl font-medium text-[#111827]">{detail.heading}</h2>
+        <p className="mt-3 text-[15px] leading-7 text-[#667085]">{detail.intro}</p>
+      </div>
+      <div className="mt-7 grid gap-4 md:grid-cols-2">
+        {detail.items.map(([title, body]) => (
+          <div key={title} className="rounded-[20px] border border-[#EFE6DA] bg-[#FAF7F1] p-5">
+            <h3 className="text-[15.5px] font-black text-[#111827]">{title}</h3>
+            <p className="mt-1.5 text-[13.5px] leading-6 text-[#667085]">{body}</p>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
