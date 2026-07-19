@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowRight, Check, MessageCircle, Plus, Search, X } from "lucide-react";
 
@@ -170,34 +170,45 @@ export function InteractiveComparePage() {
     setPublicSeo("Compare Gurgaon Societies Side by Side | SocietyFlats", "Compare your shortlisted Gurgaon societies on verified scores, market ranges and Buyer's Truth.", { canonical: "/compare", noindex: true });
   }, []);
 
+  const reqId = useRef(0);
   useEffect(() => {
     if (!slugs.length) {
       setRows([]);
       setLoading(false);
       return;
     }
-    let mounted = true;
+    const id = ++reqId.current;
     setLoading(true);
+    // Abort any single hung request after 12s so the page can never sit on "Loading…".
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
     Promise.all([
-      Promise.all(slugs.map((slug) => fetch(`${API_BASE_URL}/societies/${encodeURIComponent(slug)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null))),
+      Promise.all(slugs.map((slug) => fetch(`${API_BASE_URL}/societies/${encodeURIComponent(slug)}`, { signal: ctrl.signal }).then((r) => (r.ok ? r.json() : null)).catch(() => null))),
       backendApi.getCompareIntelligence(slugs).catch(() => null),
-    ]).then(([societies, intelResp]: any[]) => {
-      if (!mounted) return;
-      const intelBySlug: Record<string, any> = {};
-      (intelResp?.data || []).forEach((entry: any) => {
-        if (entry?.society?.slug) intelBySlug[entry.society.slug] = entry.intelligence;
+    ])
+      .then(([societies, intelResp]: any[]) => {
+        if (id !== reqId.current) return; // a newer request superseded this one
+        const intelBySlug: Record<string, any> = {};
+        (intelResp?.data || []).forEach((entry: any) => {
+          if (entry?.society?.slug) intelBySlug[entry.society.slug] = entry.intelligence;
+        });
+        const next = slugs
+          .map((slug) => {
+            const soc = societies.find((r: any) => r?.data?.slug === slug)?.data || compareList.find((s: any) => s.slug === slug);
+            return soc ? { society: soc, intel: intelBySlug[slug] || null } : null;
+          })
+          .filter(Boolean) as Row[];
+        setRows(next);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        clearTimeout(timer);
+        // Guaranteed to clear loading for the latest request — the previous mounted-guard
+        // could skip this on a re-run and leave the page stuck loading forever.
+        if (id === reqId.current) setLoading(false);
       });
-      const next = slugs
-        .map((slug) => {
-          const soc = societies.find((r: any) => r?.data?.slug === slug)?.data || compareList.find((s: any) => s.slug === slug);
-          return soc ? { society: soc, intel: intelBySlug[slug] || null } : null;
-        })
-        .filter(Boolean) as Row[];
-      setRows(next);
-      setLoading(false);
-    });
     return () => {
-      mounted = false;
+      clearTimeout(timer);
     };
   }, [slugs]);
 
