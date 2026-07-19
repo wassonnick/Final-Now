@@ -72,6 +72,50 @@ type Row = { society: any; intel: any };
 
 const f = (s: any, camel: string, snake: string, fb = "") => s?.[camel] ?? s?.[snake] ?? fb;
 const num = (v: any) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null);
+const baseScore = (s: any, camel: string, snake: string) => num(f(s, camel, snake));
+
+// Base society scores — available on almost every society even without a full intelligence
+// profile, so the face-off is never thin.
+const BASE_SCORES: Array<[string, string, string]> = [
+  ["Connectivity & commute", "connectivityScore", "connectivity_score"],
+  ["Everyday lifestyle", "lifestyleScore", "lifestyle_score"],
+  ["Safety & security", "securityScore", "security_score"],
+  ["Upkeep & maintenance", "maintenanceScore", "maintenance_score"],
+  ["Investment potential", "investmentScore", "investment_score"],
+];
+
+function amenityCount(s: any): number {
+  const a = s?.amenities;
+  if (Array.isArray(a)) return a.length;
+  if (a && typeof a === "object") return Object.values(a).filter(Boolean).length;
+  return 0;
+}
+
+// Ready-made comparison cards for the empty state — a real starting point, not just a link.
+function PrefilledComparisons() {
+  const [pages, setPages] = useState<any[]>([]);
+  useEffect(() => {
+    backendApi.request("/compare-pages?per_page=6").then((p: any) => {
+      const rows = Array.isArray(p?.data?.data) ? p.data.data : Array.isArray(p?.data) ? p.data : [];
+      setPages(rows);
+    }).catch(() => setPages([]));
+  }, []);
+  if (!pages.length) return null;
+  return (
+    <div className="mx-auto mt-12 max-w-4xl text-left">
+      <p className="text-center text-[13px] font-bold uppercase tracking-[0.16em] text-[#8A8F89]">Or start from a ready-made face-off</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {pages.slice(0, 4).map((p) => (
+          <Link key={p.slug} to={`/compare/${p.slug}`} className="group rounded-[18px] border border-[#E7DCCB] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-lg">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[#C8793F]">{p.sector_cluster || p.city || "Gurgaon"}</p>
+            <p className="mt-1.5 font-display text-lg leading-snug text-[#19231c]">{p.title}</p>
+            <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#233B6E]">Open comparison <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" /></span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function scoreOf(s: any, intel: any) {
   return num(intel?.overall_score) ?? num(f(s, "score", "score"));
@@ -190,8 +234,9 @@ export function InteractiveComparePage() {
           <h1 className="mt-1.5 font-display text-[34px] font-medium leading-tight text-[#111827] md:text-[44px]">Build your own comparison.</h1>
           <p className="mt-3 text-[15px] leading-7 text-[#667085]">Search and add up to three Gurgaon societies — any combination you like. We line them up on verified scores, Buyer's Truth and market ranges.</p>
           <div className="mt-6 flex justify-center"><SocietyPicker selectedSlugs={slugs} onAdd={handleAdd} /></div>
+          <PrefilledComparisons />
           <div className="mt-8">
-            <Link to="/compare/browse" className="text-sm font-bold text-[#8C6E2F] underline">Or explore ready-made comparison pages →</Link>
+            <Link to="/compare/browse" className="text-sm font-bold text-[#8C6E2F] underline">See all comparison pages →</Link>
           </div>
         </div>
       </div>
@@ -199,7 +244,8 @@ export function InteractiveComparePage() {
   }
 
   const cols = rows.length;
-  const gridCols = { gridTemplateColumns: `minmax(120px,1.1fr) repeat(${cols}, minmax(0,1fr))` };
+  // Narrow label column on mobile keeps a 2-way face-off on-screen without scrolling.
+  const gridCols = { gridTemplateColumns: `minmax(88px,0.8fr) repeat(${cols}, minmax(0,1fr))` };
 
   return (
     <div className="bg-[#F7F4EF] text-[#1C2434]">
@@ -225,10 +271,10 @@ export function InteractiveComparePage() {
 
         {/* Comparison grid */}
         <div className="mt-4 overflow-x-auto rounded-[22px] border border-[#E7DCCB] bg-white shadow-[0_18px_44px_-34px_rgba(0,0,0,.35)]">
-          <div className="min-w-[640px]">
+          <div className="min-w-[520px]">
             {/* Sticky society headers */}
             <div className="grid border-b border-[#EEE6DA]" style={gridCols}>
-              <div className="p-4" />
+              <div className="sticky left-0 z-[6] bg-white p-4" />
               {rows.map((r) => {
                 const s = r.society;
                 const sc = scoreOf(s, r.intel);
@@ -254,15 +300,42 @@ export function InteractiveComparePage() {
               {rows.map((r) => { const sc = scoreOf(r.society, r.intel); return <ScoreCell key={r.society.slug} value={sc} status="verified" />; })}
             </CompareRow>
 
-            {/* Weighted signal rows */}
-            {signalRows.map((sig) => {
-              const vals = rows.map((r) => (r.intel?.signal_breakdown || []).find((x: any) => x.key === sig.key));
-              return (
-                <CompareRow key={sig.key} label={sig.label} sub={`${sig.weight}% weight`} cols={gridCols} leaderIdx={leaderIndex(vals.map((v: any) => num(v?.score)))}>
-                  {vals.map((v: any, i) => <ScoreCell key={i} value={num(v?.score)} status={v?.status} />)}
-                </CompareRow>
-              );
-            })}
+            {/* Weighted intelligence signals when a full profile exists; otherwise the base
+                society scores, so the face-off is always substantive. */}
+            {signalRows.length ? (
+              <>
+                <SectionLabel>Weighted intelligence signals</SectionLabel>
+                {signalRows.map((sig) => {
+                  const vals = rows.map((r) => (r.intel?.signal_breakdown || []).find((x: any) => x.key === sig.key));
+                  return (
+                    <CompareRow key={sig.key} label={sig.label} sub={`${sig.weight}% weight`} cols={gridCols} leaderIdx={leaderIndex(vals.map((v: any) => num(v?.score)))}>
+                      {vals.map((v: any, i) => <ScoreCell key={i} value={num(v?.score)} status={v?.status} />)}
+                    </CompareRow>
+                  );
+                })}
+              </>
+            ) : (
+              <>
+                <SectionLabel>Society scores</SectionLabel>
+                {BASE_SCORES.filter(([, c, s]) => rows.some((r) => baseScore(r.society, c, s) != null)).map(([label, camel, snake]) => (
+                  <CompareRow key={snake} label={label} cols={gridCols} leaderIdx={leaderIndex(rows.map((r) => baseScore(r.society, camel, snake)))}>
+                    {rows.map((r) => <ScoreCell key={r.society.slug} value={baseScore(r.society, camel, snake)} status="verified" />)}
+                  </CompareRow>
+                ))}
+              </>
+            )}
+
+            {/* Details */}
+            <SectionLabel>Details</SectionLabel>
+            <CompareRow label="Builder" cols={gridCols}>
+              {rows.map((r) => <div key={r.society.slug} className="border-l border-[#EEE6DA] p-3 text-center text-[12.5px] font-semibold text-[#35413B]">{f(r.society, "builder", "builder", "—")}</div>)}
+            </CompareRow>
+            <CompareRow label="Location" cols={gridCols}>
+              {rows.map((r) => <div key={r.society.slug} className="border-l border-[#EEE6DA] p-3 text-center text-[12.5px] text-[#35413B]">{[f(r.society, "sector", "sector"), f(r.society, "locality", "locality")].filter(Boolean).join(", ") || "Gurgaon"}</div>)}
+            </CompareRow>
+            <CompareRow label="Amenities" cols={gridCols} leaderIdx={leaderIndex(rows.map((r) => amenityCount(r.society) || null))}>
+              {rows.map((r) => { const n = amenityCount(r.society); return <div key={r.society.slug} className="border-l border-[#EEE6DA] p-3 text-center text-[12.5px] font-bold text-[#233B6E]">{n ? `${n} listed` : "—"}</div>; })}
+            </CompareRow>
 
             {/* Buyer's Truth */}
             <SectionLabel>Buyer's Truth</SectionLabel>
@@ -284,7 +357,7 @@ export function InteractiveComparePage() {
 
             {/* CTAs */}
             <div className="grid border-t border-[#EEE6DA]" style={gridCols}>
-              <div className="p-3" />
+              <div className="sticky left-0 z-[6] bg-white p-3" />
               {rows.map((r) => (
                 <div key={r.society.slug} className="border-l border-[#EEE6DA] p-3">
                   <a href={`https://wa.me/919911886222?text=${encodeURIComponent(`Hi SocietyFlats, I want available homes in ${r.society.name}.`)}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-full bg-[#233B6E] px-3 py-2 text-[12.5px] font-bold text-white"><MessageCircle className="h-3.5 w-3.5" /> Get homes</a>
@@ -310,7 +383,7 @@ function leaderIndex(values: (number | null)[]): number {
 function CompareRow({ label, sub, cols, leaderIdx = -1, children }: { label: string; sub?: string; cols: React.CSSProperties; leaderIdx?: number; children: React.ReactNode[] }) {
   return (
     <div className="grid border-t border-[#EEE6DA]" style={cols}>
-      <div className="bg-[#FAF8F2] p-3 md:p-4"><p className="text-[13px] font-bold text-[#4A534E]">{label}</p>{sub ? <p className="text-[11px] text-[#8A8F89]">{sub}</p> : null}</div>
+      <div className="sticky left-0 z-[5] bg-[#FAF8F2] p-3 md:p-4"><p className="text-[13px] font-bold text-[#4A534E]">{label}</p>{sub ? <p className="text-[11px] text-[#8A8F89]">{sub}</p> : null}</div>
       {children.map((child, i) => (
         <div key={i} className={leaderIdx === i ? "relative bg-[#F7FAF7]" : ""}>
           {leaderIdx === i ? <span className="absolute right-1.5 top-1.5 z-10 rounded-full bg-[#2A6147] px-1.5 py-0.5 text-[9px] font-black uppercase text-white">Leads</span> : null}
