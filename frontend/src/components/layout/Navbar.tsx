@@ -228,7 +228,7 @@ export function Navbar() {
           <Link to="/sell" className="hidden lg:block"><Button size="sm" className="h-auto rounded-full bg-[#233B6E] px-4 py-[9px] text-[13.5px] font-bold text-white shadow-none hover:bg-[#1B2E57]">List Your Flat</Button></Link>
           <button
             type="button"
-            onClick={() => navigate(accountDashboardPath || "/login")}
+            onClick={() => navigate(accountDashboardPath || '/signup')}
             className="hidden h-9 w-9 items-center justify-center rounded-full bg-[#EEF2FA] text-[13px] font-bold text-[#233B6E] lg:flex"
             aria-label={accountDashboardPath ? "Open dashboard" : "Open account"}
           >
@@ -255,7 +255,7 @@ export function Navbar() {
                 </div>
               </div>
             ))}
-            <Button variant="outline" className="w-full rounded-full border-[#D8DFEC] bg-white text-[#233B6E] hover:bg-[#EEF2FA]" onClick={() => { navigate(accountDashboardPath || '/login'); setIsMenuOpen(false); }}>
+            <Button variant="outline" className="w-full rounded-full border-[#D8DFEC] bg-white text-[#233B6E] hover:bg-[#EEF2FA]" onClick={() => { navigate(accountDashboardPath || '/signup'); setIsMenuOpen(false); }}>
               {accountDashboardPath ? "Dashboard" : "Login"}
             </Button>
           </div>
@@ -270,7 +270,7 @@ export function Navbar() {
           { label: 'Explore', href: '/search?tab=societies', icon: Search },
           { label: 'Assistant', href: '/ai-advisor', icon: Sparkles },
           { label: 'Services', href: '#services', icon: LayoutGrid, badge: compareList.length },
-          { label: 'Account', href: accountDashboardPath || '/login', icon: User },
+          { label: 'Account', href: accountDashboardPath || '/signup', icon: User },
         ].map((action) => {
           const Icon = action.icon;
           const isServices = action.label === 'Services';

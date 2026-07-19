@@ -27,6 +27,7 @@ const OwnerDashboard = lazy(() => import('@/pages/OwnerDashboard').then((module)
 const CustomerDashboardPage = lazy(() => import('@/pages/CustomerDashboardPage').then((module) => ({ default: module.CustomerDashboardPage })));
 const BrokerDashboardPage = lazy(() => import('@/pages/BrokerDashboardPage').then((module) => ({ default: module.BrokerDashboardPage })));
 const LoginPage = lazy(() => import('@/pages/LoginPage').then((module) => ({ default: module.LoginPage })));
+const SignupPage = lazy(() => import('@/pages/SignupPage').then((module) => ({ default: module.SignupPage })));
 const SellPage = lazy(() => import('@/pages/SellPage').then((module) => ({ default: module.SellPage })));
 const SocietiesPage = lazy(() => import('@/pages/SocietiesPage').then((module) => ({ default: module.SocietiesPage })));
 const PropertiesPage = lazy(() => import('@/pages/PropertiesPage').then((module) => ({ default: module.PropertiesPage })));
@@ -179,6 +180,8 @@ function AppShell() {
             <Route path="/rwa/:slug" element={<RwaSocietyPage />} />
             <Route path="/sell" element={<SellPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/join" element={<SignupPage />} />
             <Route path="/visit/:token" element={<SiteVisitConfirmationPage />} />
             <Route path="/investment-calculator" element={<InvestmentCalculatorPage />} />
             <Route path="/builder-floors" element={<BuilderFloorsPage />} />
