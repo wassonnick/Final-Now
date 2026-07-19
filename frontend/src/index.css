@@ -111,8 +111,14 @@ body,
 }
 
 /* On dark hero bands an explicit white utility must beat the default dark heading colour,
-   otherwise headings render dark-on-dark and disappear. */
-.public-site .text-white { color: #fff !important; }
+   otherwise headings render dark-on-dark and disappear. This must also cascade to headings
+   INSIDE a text-white container — the default `.public-site h1,h2 {color:#111827}` above
+   otherwise re-darkens them even though the section is white-on-dark. */
+.public-site .text-white,
+.public-site .text-white h1,
+.public-site .text-white h2,
+.public-site .text-white h3,
+.public-site .text-white h4 { color: #fff !important; }
 
 .public-site p {
   text-wrap: pretty;
