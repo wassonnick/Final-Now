@@ -11,8 +11,7 @@ import { societyDisplayImage, hasGooglePlacesDisplayPhoto } from "@/lib/societyI
 import { setPublicSeo } from "@/lib/seo";
 
 // Typeahead picker — add any published society to the comparison without leaving the page.
-function SocietyPicker({ selectedSlugs }: { selectedSlugs: string[] }) {
-  const addToCompare = useAppStore((s) => s.addToCompare);
+function SocietyPicker({ selectedSlugs, onAdd }: { selectedSlugs: string[]; onAdd: (society: any) => void }) {
   const [all, setAll] = useState<any[]>([]);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -50,7 +49,7 @@ function SocietyPicker({ selectedSlugs }: { selectedSlugs: string[] }) {
           {matches.map((s) => (
             <button
               key={s.slug}
-              onClick={() => { addToCompare(s); setQ(""); setOpen(false); }}
+              onClick={() => { onAdd(s); setQ(""); setOpen(false); }}
               className="flex w-full items-center gap-3 rounded-[12px] px-3 py-2 text-left hover:bg-[#F8F3EA]"
             >
               <Plus className="h-4 w-4 shrink-0 text-[#233B6E]" />
@@ -95,14 +94,33 @@ export function InteractiveComparePage() {
   const [params] = useSearchParams();
   const compareList = useAppStore((s) => s.compareList);
   const removeFromCompare = useAppStore((s) => s.removeFromCompare);
+  const addToCompare = useAppStore((s) => s.addToCompare);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [slugs, setSlugs] = useState<string[]>([]);
 
-  const slugs = useMemo(() => {
+  const societiesParam = params.get("societies") || "";
+  const seedParam = params.get("seed") || "";
+
+  // Seed the working set once per entry point. ?societies= is authoritative (this is how
+  // "Customise this comparison" prefills a ready-made set); ?seed= appends to the store's
+  // selection; otherwise the store's compareList drives it. After load, add/remove mutate
+  // this local set so the URL is just the entry, not a constraint.
+  useEffect(() => {
     const fromStore = compareList.map((s: any) => s.slug).filter(Boolean);
-    const fromParams = [params.get("seed"), ...(params.get("societies") || "").split(",")].map((v) => (v || "").trim()).filter(Boolean);
-    return Array.from(new Set([...fromStore, ...fromParams])).slice(0, 3);
-  }, [compareList, params]);
+    let next: string[];
+    if (societiesParam) next = societiesParam.split(",").map((v) => v.trim()).filter(Boolean);
+    else if (seedParam) next = [...fromStore, seedParam];
+    else next = fromStore;
+    setSlugs(Array.from(new Set(next)).slice(0, 3));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [societiesParam, seedParam]);
+
+  const handleAdd = (society: any) => {
+    if (!society?.slug) return;
+    setSlugs((cur) => (cur.includes(society.slug) || cur.length >= 3 ? cur : [...cur, society.slug]));
+    addToCompare(society);
+  };
 
   useEffect(() => {
     setPublicSeo("Compare Gurgaon Societies Side by Side | SocietyFlats", "Compare your shortlisted Gurgaon societies on verified scores, market ranges and Buyer's Truth.", { canonical: "/compare", noindex: true });
@@ -141,6 +159,7 @@ export function InteractiveComparePage() {
 
   const remove = (row: Row) => {
     if (row.society?.id) removeFromCompare(String(row.society.id));
+    setSlugs((cur) => cur.filter((s) => s !== row.society.slug));
     setRows((cur) => cur.filter((r) => r.society.slug !== row.society.slug));
   };
 
@@ -170,7 +189,7 @@ export function InteractiveComparePage() {
           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#8C6E2F]">Society face-off</p>
           <h1 className="mt-1.5 font-display text-[34px] font-medium leading-tight text-[#111827] md:text-[44px]">Build your own comparison.</h1>
           <p className="mt-3 text-[15px] leading-7 text-[#667085]">Search and add up to three Gurgaon societies — any combination you like. We line them up on verified scores, Buyer's Truth and market ranges.</p>
-          <div className="mt-6 flex justify-center"><SocietyPicker selectedSlugs={slugs} /></div>
+          <div className="mt-6 flex justify-center"><SocietyPicker selectedSlugs={slugs} onAdd={handleAdd} /></div>
           <div className="mt-8">
             <Link to="/compare/browse" className="text-sm font-bold text-[#8C6E2F] underline">Or explore ready-made comparison pages →</Link>
           </div>
@@ -196,8 +215,16 @@ export function InteractiveComparePage() {
           </div>
         ) : null}
 
+        {/* Add / swap societies — above the grid so it's the first thing you reach */}
+        {cols < 3 ? (
+          <div className="mt-5 flex flex-col gap-2 rounded-[16px] border border-[#D8DFEC] bg-white/70 p-3 sm:flex-row sm:items-center">
+            <p className="shrink-0 text-[13px] font-bold text-[#4A534E]">Add a society ({cols}/3)</p>
+            <SocietyPicker selectedSlugs={slugs} onAdd={handleAdd} />
+          </div>
+        ) : null}
+
         {/* Comparison grid */}
-        <div className="mt-6 overflow-x-auto rounded-[22px] border border-[#E7DCCB] bg-white shadow-[0_18px_44px_-34px_rgba(0,0,0,.35)]">
+        <div className="mt-4 overflow-x-auto rounded-[22px] border border-[#E7DCCB] bg-white shadow-[0_18px_44px_-34px_rgba(0,0,0,.35)]">
           <div className="min-w-[640px]">
             {/* Sticky society headers */}
             <div className="grid border-b border-[#EEE6DA]" style={gridCols}>
@@ -266,13 +293,6 @@ export function InteractiveComparePage() {
             </div>
           </div>
         </div>
-
-        {cols < 3 ? (
-          <div className="mt-5">
-            <p className="mb-2 text-[13px] font-bold text-[#4A534E]">Add another society to the face-off</p>
-            <SocietyPicker selectedSlugs={slugs} />
-          </div>
-        ) : null}
 
         <p className="mt-6 text-[12px] leading-6 text-[#8A8F89]">Scores are from admin-reviewed society data; amber signals are estimated and should be confirmed. Verify unit price, exact tower, availability, legal title and RERA status independently before any payment.</p>
       </section>

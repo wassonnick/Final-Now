@@ -234,6 +234,15 @@ function CompareDetail({ slug }: { slug: string }) {
             <p className="mt-3 max-w-3xl leading-7 text-[#4e574e]">{page.comparison_summary}</p>
           ) : null}
 
+          {summaries.length ? (
+            <Link
+              to={`/compare?societies=${encodeURIComponent(summaries.map((s) => s.slug).filter(Boolean).join(","))}`}
+              className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#143f2b] bg-white px-5 py-2.5 text-sm font-bold text-[#143f2b] transition hover:bg-[#143f2b] hover:text-white"
+            >
+              <Sparkles className="h-4 w-4" /> Customise this comparison — add or swap societies
+            </Link>
+          ) : null}
+
           <div className="mt-8 rounded-[1.5rem] bg-[#143f2b] px-6 py-5 text-white">
             <div className="flex flex-wrap gap-4">
               <span className="text-sm font-bold uppercase tracking-[0.18em] text-[#a8d8b3]">AI summary</span>
