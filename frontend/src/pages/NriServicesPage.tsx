@@ -164,6 +164,35 @@ export function NriServicesPage() {
         </div>
       </section>
 
+      {/* Verifiable remote buying — the NRI-specific safety net, tied to real tools */}
+      <section className="border-b border-[#E6DDCF] bg-[#111827] py-14 text-white md:py-20">
+        <div className="mx-auto max-w-[1360px] px-5 md:px-10">
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#E3B36B]">Buying blind from abroad?</p>
+          <h2 className="mt-2 max-w-3xl font-display text-[32px] font-medium leading-tight md:text-[46px]">We make a remote purchase <em className="not-italic text-[#E3B36B]">verifiable</em> — before you wire a rupee.</h2>
+          <p className="mt-3 max-w-2xl text-[15px] leading-7 text-[#B7C0CF]">You can't fly down for every shortlist. So we bring the flat, the society and the paperwork reality to you — checked, documented and honest about what still needs your own professional sign-off.</p>
+          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              { icon: CalendarCheck, title: "Remote flat verification", body: "We visit the actual unit and society and send you a dated video walkthrough — so \"ready to move\" isn't taken on trust.", cta: "Request a verification", href: `https://wa.me/919911886222?text=${encodeURIComponent("Hi SocietyFlats, I'm an NRI and want a remote video verification of a Gurgaon flat before I buy.")}`, external: true },
+              { icon: FileSearch, title: "Society Report (PDF)", body: "A verified decision report — score breakdown, Buyer's Truth checklist, market ranges — to review across timezones and share with family.", cta: "See a society profile", href: "/search?tab=societies" },
+              { icon: ClipboardCheck, title: "Buyer's Truth checks", body: "RERA registration, possession reality and a title/dues checklist on every society page — what to confirm before payment.", cta: "How verification works", href: "/data-sources" },
+              { icon: BadgeCheck, title: "Compare before you fly", body: "Line up your shortlist side by side on verified scores and market ranges, then plan a single, focused trip.", cta: "Open the face-off", href: "/compare" },
+            ].map(({ icon: Icon, title, body, cta, href, external }) => (
+              <div key={title} className="flex flex-col rounded-[22px] border border-[#27364E] bg-[#1B2536] p-5">
+                <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#233B6E] text-[#E3B36B]"><Icon className="h-5 w-5" /></span>
+                <p className="mt-4 font-display text-xl font-medium">{title}</p>
+                <p className="mt-2 flex-1 text-[13.5px] leading-6 text-[#B7C0CF]">{body}</p>
+                {external ? (
+                  <a href={href} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-[#E3B36B]">{cta} <ArrowRight className="h-3.5 w-3.5" /></a>
+                ) : (
+                  <Link to={href} className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-[#E3B36B]">{cta} <ArrowRight className="h-3.5 w-3.5" /></Link>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 text-[12px] text-[#8792A5]">We verify what we can see and check; we don't give legal, tax, FEMA or remittance advice, and title and payments must be confirmed with your own professionals.</p>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-[1360px] px-5 py-12 md:px-10">
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {nriLanes.map(({ title, body, icon: Icon }) => (
