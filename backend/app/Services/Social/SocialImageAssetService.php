@@ -4,12 +4,17 @@ namespace App\Services\Social;
 
 use App\Models\SocialPost;
 use App\Models\SocialPostAsset;
+use App\Services\Ops\AiSpendTracker;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class SocialImageAssetService
 {
+    public function __construct(private readonly AiSpendTracker $spendTracker)
+    {
+    }
+
     public function createForPost(SocialPost $post, ?string $prompt = null, string $assetType = 'creative_brief'): SocialPostAsset
     {
         $imagePrompt = trim((string) ($prompt ?: $post->image_prompt ?: $post->creative_prompt ?: $post->caption));
@@ -75,6 +80,12 @@ class SocialImageAssetService
             if (! $response->successful()) {
                 throw new \RuntimeException('OpenAI image request failed with HTTP '.$response->status().': '.mb_substr((string) data_get($response->json(), 'error.message', $response->body()), 0, 300));
             }
+            $quality = (string) ($payload['quality'] ?? 'standard');
+            $this->spendTracker->recordOpenAiImage('social_image_assets', 'generate_image', $imageModel, $quality, $size, 1, [
+                'subject_type' => 'social_post',
+                'subject_id' => $post->id,
+                'metadata' => ['platform' => $post->platform, 'post_type' => $post->post_type],
+            ]);
 
             $b64 = data_get($response->json(), 'data.0.b64_json');
             if (! $b64) {
@@ -107,6 +118,11 @@ class SocialImageAssetService
                 'metadata' => $metadata + ['ai_generated' => true],
             ]);
         } catch (\Throwable $e) {
+            $this->spendTracker->recordFailure('openai', 'social_image_assets', 'generate_image', $imageModel, $e, [
+                'subject_type' => 'social_post',
+                'subject_id' => $post->id,
+                'metadata' => ['platform' => $post->platform, 'post_type' => $post->post_type],
+            ]);
             report($e);
 
             return $post->assets()->create([

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\Admin\AdminAccountController;
+use App\Http\Controllers\Api\Admin\AdminAiSpendController;
 use App\Http\Controllers\Api\Admin\AdminBuilderPortalController;
 use App\Http\Controllers\Api\Admin\AdminRentHistoryController;
 use App\Http\Controllers\Api\Admin\AdminReviewController;
@@ -128,6 +129,7 @@ Route::post('/site-visits/{token}/confirm', [SiteVisitController::class, 'confir
 Route::get('/admin/social/oauth/callback', [AdminSocialController::class, 'oauthCallback'])->middleware('throttle:20,1');
 Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/stats', AdminStatsController::class);
+    Route::get('/ai-spend', AdminAiSpendController::class);
     Route::get('/ops/action-inbox', [AdminOpsController::class, 'actionInbox']);
     Route::get('/ops/suggestions', [AdminOpsController::class, 'suggestions']);
     Route::post('/ops/suggestions/{suggestion}/apply', [AdminOpsController::class, 'applySuggestion']);

@@ -49,6 +49,22 @@ return [
         'processing_mode' => env('OPENAI_PROCESSING_MODE', 'standard'),
     ],
 
+    'ai_spend' => [
+        'enabled' => env('AI_SPEND_TRACKING_ENABLED', true),
+        // These are estimates for internal cost visibility. Override if your vendor plan/rates differ.
+        'claude_haiku_input_usd_per_token' => env('AI_SPEND_CLAUDE_HAIKU_INPUT_USD_PER_TOKEN', 0.0000008),
+        'claude_haiku_output_usd_per_token' => env('AI_SPEND_CLAUDE_HAIKU_OUTPUT_USD_PER_TOKEN', 0.000004),
+        'claude_sonnet_input_usd_per_token' => env('AI_SPEND_CLAUDE_SONNET_INPUT_USD_PER_TOKEN', 0.000003),
+        'claude_sonnet_output_usd_per_token' => env('AI_SPEND_CLAUDE_SONNET_OUTPUT_USD_PER_TOKEN', 0.000015),
+        'openai_mini_input_usd_per_token' => env('AI_SPEND_OPENAI_MINI_INPUT_USD_PER_TOKEN', 0.00000015),
+        'openai_mini_output_usd_per_token' => env('AI_SPEND_OPENAI_MINI_OUTPUT_USD_PER_TOKEN', 0.0000006),
+        'default_input_usd_per_token' => env('AI_SPEND_DEFAULT_INPUT_USD_PER_TOKEN', 0.000001),
+        'default_output_usd_per_token' => env('AI_SPEND_DEFAULT_OUTPUT_USD_PER_TOKEN', 0.000003),
+        'openai_image_low_usd' => env('AI_SPEND_OPENAI_IMAGE_LOW_USD', 0.02),
+        'openai_image_medium_usd' => env('AI_SPEND_OPENAI_IMAGE_MEDIUM_USD', 0.07),
+        'openai_image_high_usd' => env('AI_SPEND_OPENAI_IMAGE_HIGH_USD', 0.17),
+    ],
+
     'search_console' => [
         'site_url' => env('GOOGLE_SEARCH_CONSOLE_SITE_URL', 'https://www.societyflats.com'),
         'access_token' => env('GOOGLE_SEARCH_CONSOLE_ACCESS_TOKEN'),

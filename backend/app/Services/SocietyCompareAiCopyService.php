@@ -111,12 +111,19 @@ class SocietyCompareAiCopyService
     private function claude(string $prompt): array
     {
         $client = new \Anthropic\Client(apiKey: trim((string) config('services.claude.api_key', '')));
-        $message = $client->messages->create(
-            maxTokens: 3000,
-            messages: [['role' => 'user', 'content' => $prompt]],
-            model: $this->model(),
-            system: 'You write SocietyFlats comparison copy in a warm, human, premium-but-honest voice — like a knowledgeable local friend helping someone choose between societies. Use only the supplied data, add no facts of your own, and return valid JSON only.',
-        );
+        $model = $this->model();
+        try {
+            $message = $client->messages->create(
+                maxTokens: 3000,
+                messages: [['role' => 'user', 'content' => $prompt]],
+                model: $model,
+                system: 'You write SocietyFlats comparison copy in a warm, human, premium-but-honest voice — like a knowledgeable local friend helping someone choose between societies. Use only the supplied data, add no facts of your own, and return valid JSON only.',
+            );
+            app(\App\Services\Ops\AiSpendTracker::class)->recordAnthropicText('compare_seo', 'enhance_copy', $model, $message);
+        } catch (\Throwable $e) {
+            app(\App\Services\Ops\AiSpendTracker::class)->recordFailure('anthropic', 'compare_seo', 'enhance_copy', $model, $e);
+            throw $e;
+        }
         $text = collect($message->content)->filter(fn ($block) => $block->type === 'text')->map(fn ($block) => $block->text)->join("\n");
 
         return $this->decode($text);

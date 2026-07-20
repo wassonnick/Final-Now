@@ -5,6 +5,7 @@ namespace App\Services\Ai;
 use App\Exceptions\AiProviderLimitException;
 use App\Models\AiConversation;
 use App\Services\Ops\AiBudgetGuard;
+use App\Services\Ops\AiSpendTracker;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -21,6 +22,7 @@ class SocietyAssistantService
     public function __construct(
         private readonly SocietyMatchService $matcher,
         private readonly AiBudgetGuard $budget,
+        private readonly AiSpendTracker $spendTracker,
     ) {
     }
 
@@ -67,7 +69,7 @@ class SocietyAssistantService
         ]];
 
         try {
-            $result = $this->runToolLoop($model, $messages, $tools);
+            $result = $this->runToolLoop($model, $messages, $tools, (int) $conversation->id);
         } catch (AiProviderLimitException $e) {
             $this->budget->tripProviderLimit();
 
@@ -90,7 +92,7 @@ class SocietyAssistantService
      * @param  array<int,array<string,mixed>>  $tools
      * @return array{reply:string,matches:array<int,array<string,mixed>>}
      */
-    private function runToolLoop(string $model, array $messages, array $tools): array
+    private function runToolLoop(string $model, array $messages, array $tools, int $conversationId): array
     {
         $client = new \Anthropic\Client(apiKey: trim((string) config('services.claude.api_key', '')));
         $matches = [];
@@ -110,7 +112,17 @@ class SocietyAssistantService
                     system: $this->systemPrompt(),
                     tools: $tools,
                 );
+                $this->spendTracker->recordAnthropicText('ai_assistant', 'chat_reply_turn', $model, $response, [
+                    'subject_type' => 'ai_conversation',
+                    'subject_id' => $conversationId,
+                    'metadata' => ['turn' => $turn + 1],
+                ]);
             } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
+                $this->spendTracker->recordFailure('anthropic', 'ai_assistant', 'chat_reply_turn', $model, $e, [
+                    'subject_type' => 'ai_conversation',
+                    'subject_id' => $conversationId,
+                    'metadata' => ['turn' => $turn + 1],
+                ]);
                 if (in_array((int) ($e->status ?? 0), [402, 429], true)) {
                     throw new AiProviderLimitException('Assistant hit provider limit: '.$e->getMessage(), 0, $e);
                 }

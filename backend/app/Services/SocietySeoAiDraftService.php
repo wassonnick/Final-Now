@@ -175,13 +175,20 @@ class SocietySeoAiDraftService
 
     private function claude(string $prompt): array
     {
+        $model = trim((string) config('services.claude.model', 'claude-haiku-4-5')) ?: 'claude-haiku-4-5';
         $client = new \Anthropic\Client(apiKey: trim((string) config('services.claude.api_key', '')));
-        $message = $client->messages->create(
-            maxTokens: 5000,
-            messages: [['role' => 'user', 'content' => $prompt]],
-            model: trim((string) config('services.claude.model', 'claude-haiku-4-5')) ?: 'claude-haiku-4-5',
-            system: 'Write SocietyFlats SEO drafts in a warm, human, premium-but-honest voice — like a knowledgeable local friend, never corporate or salesy, no hype or clichés. Use only the supplied data, add no facts of your own, and return valid JSON only.',
-        );
+        try {
+            $message = $client->messages->create(
+                maxTokens: 5000,
+                messages: [['role' => 'user', 'content' => $prompt]],
+                model: $model,
+                system: 'Write SocietyFlats SEO drafts in a warm, human, premium-but-honest voice — like a knowledgeable local friend, never corporate or salesy, no hype or clichés. Use only the supplied data, add no facts of your own, and return valid JSON only.',
+            );
+            app(\App\Services\Ops\AiSpendTracker::class)->recordAnthropicText('society_seo_content', 'generate_draft', $model, $message);
+        } catch (\Throwable $e) {
+            app(\App\Services\Ops\AiSpendTracker::class)->recordFailure('anthropic', 'society_seo_content', 'generate_draft', $model, $e);
+            throw $e;
+        }
         $text = collect($message->content)->filter(fn ($block) => $block->type === 'text')->map(fn ($block) => $block->text)->join("\n");
         return $this->decode($text);
     }

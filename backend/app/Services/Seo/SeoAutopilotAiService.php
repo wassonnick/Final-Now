@@ -26,7 +26,7 @@ class SeoAutopilotAiService
     }
     private function claude(string $prompt): array
     {
-        $client=new \Anthropic\Client(apiKey:(string)config('services.claude.api_key'));$message=$client->messages->create(maxTokens:3500,messages:[['role'=>'user','content'=>$prompt]],model:(string)(config('services.claude.model')?:'claude-haiku-4-5'),system:'Return factual admin-reviewable SocietyFlats SEO JSON from supplied facts only.');$text=collect($message->content)->filter(fn($b)=>$b->type==='text')->map(fn($b)=>$b->text)->join("\n");return $this->decode($text);
+        $model=(string)(config('services.claude.model')?:'claude-haiku-4-5');$client=new \Anthropic\Client(apiKey:(string)config('services.claude.api_key'));try{$message=$client->messages->create(maxTokens:3500,messages:[['role'=>'user','content'=>$prompt]],model:$model,system:'Return factual admin-reviewable SocietyFlats SEO JSON from supplied facts only.');app(\App\Services\Ops\AiSpendTracker::class)->recordAnthropicText('seo_autopilot','improve_page',$model,$message);}catch(\Throwable $e){app(\App\Services\Ops\AiSpendTracker::class)->recordFailure('anthropic','seo_autopilot','improve_page',$model,$e);throw $e;}$text=collect($message->content)->filter(fn($b)=>$b->type==='text')->map(fn($b)=>$b->text)->join("\n");return $this->decode($text);
     }
     private function decode(string $text): array{$clean=trim(Str::of($text)->replaceMatches('/^```(?:json)?\s*|\s*```$/i','')->toString());$data=json_decode($clean,true);if(!is_array($data))throw new \RuntimeException('AI returned invalid SEO Autopilot JSON.');return $data;}
     private function normalize(array $raw,array $fallback): array

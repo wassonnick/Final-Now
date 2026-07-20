@@ -153,7 +153,13 @@ PROMPT;
                 system: 'You are an Indian real-estate pricing researcher. Report the CURRENT RESALE market for the exact named project: the price a buyer actually pays today, backed by the consensus of at least two recent independent sources (property portals and recent market-analysis articles). Build the buy range from real current listings — floor from the typical smallest actively-traded configuration (ignoring lone cheap outliers), ceiling from the largest configuration actually listed. Do NOT inflate the ceiling with a neighbouring project\'s price or a marketing "up to" band that no real unit in this project reaches, and never use a builder launch price or a sector-wide average. Prefer figures 2+ sources agree on, and use null rather than guessing.',
                 tools: [$tool],
             );
+            app(\App\Services\Ops\AiSpendTracker::class)->recordAnthropicText('society_import', 'market_data_search', $model, $message, [
+                'metadata' => ['society_name' => $name, 'sector' => $sector, 'city' => $city, 'web_search' => true],
+            ]);
         } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
+            app(\App\Services\Ops\AiSpendTracker::class)->recordFailure('anthropic', 'society_import', 'market_data_search', $model, $e, [
+                'metadata' => ['society_name' => $name, 'sector' => $sector, 'city' => $city, 'web_search' => true],
+            ]);
             $status = (int) ($e->status ?? 0);
 
             return [
@@ -162,6 +168,9 @@ PROMPT;
                 '_ai_quota_limited' => in_array($status, [402, 429], true),
             ];
         } catch (\Throwable $e) {
+            app(\App\Services\Ops\AiSpendTracker::class)->recordFailure('anthropic', 'society_import', 'market_data_search', $model, $e, [
+                'metadata' => ['society_name' => $name, 'sector' => $sector, 'city' => $city, 'web_search' => true],
+            ]);
             return ['_ai_error' => $e->getMessage()];
         }
 
@@ -273,7 +282,13 @@ PROMPT;
                 system: 'You are a careful Indian real-estate data extraction assistant for SocietyFlats. Return only factual, review-safe structured JSON. Never invent exact coordinates unless highly confident. Use null when unsure.',
                 tools: $tools,
             );
+            app(\App\Services\Ops\AiSpendTracker::class)->recordAnthropicText('society_import', $useSearchGrounding ? 'enrich_with_search' : 'enrich', $model, $message, [
+                'metadata' => ['society_name' => $name, 'source' => $source !== '' ? Str::limit($source, 80, '') : null, 'web_search' => $useSearchGrounding],
+            ]);
         } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
+            app(\App\Services\Ops\AiSpendTracker::class)->recordFailure('anthropic', 'society_import', $useSearchGrounding ? 'enrich_with_search' : 'enrich', $model, $e, [
+                'metadata' => ['society_name' => $name, 'web_search' => $useSearchGrounding],
+            ]);
             $status = $e->status ?? 0;
 
             if ($useSearchGrounding && in_array($status, [429, 503, 529], true)) {
@@ -287,6 +302,9 @@ PROMPT;
                 '_ai_temporarily_unavailable' => in_array($status, [503, 529], true),
             ];
         } catch (\Throwable $e) {
+            app(\App\Services\Ops\AiSpendTracker::class)->recordFailure('anthropic', 'society_import', $useSearchGrounding ? 'enrich_with_search' : 'enrich', $model, $e, [
+                'metadata' => ['society_name' => $name, 'web_search' => $useSearchGrounding],
+            ]);
             return [
                 '_ai_error' => $e->getMessage(),
                 '_ai_error_status' => 0,

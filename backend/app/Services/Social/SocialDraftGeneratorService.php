@@ -3,6 +3,7 @@
 namespace App\Services\Social;
 
 use App\Models\SocialPost;
+use App\Services\Ops\AiSpendTracker;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -23,6 +24,7 @@ class SocialDraftGeneratorService
         private SocialContextService $contextService,
         private SocialImageAssetService $imageAssets,
         private \App\Services\Ops\AiBudgetGuard $budget,
+        private AiSpendTracker $spendTracker,
     ) {}
 
     public function generate(array $input): array
@@ -88,11 +90,13 @@ class SocialDraftGeneratorService
                     return $posts;
                 }
             } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
+                $this->spendTracker->recordFailure('anthropic', 'social_drafts', 'generate_posts', (string) config('services.claude.social_model'), $e);
                 if (in_array((int) ($e->status ?? 0), [402, 429], true)) {
                     $this->budget->tripProviderLimit();
                 }
                 report($e);
             } catch (\Throwable $e) {
+                $this->spendTracker->recordFailure('anthropic', 'social_drafts', 'generate_posts', (string) config('services.claude.social_model'), $e);
                 report($e);
             }
         }
@@ -105,6 +109,7 @@ class SocialDraftGeneratorService
                     return $posts;
                 }
             } catch (\Throwable $e) {
+                $this->spendTracker->recordFailure('openai', 'social_drafts', 'generate_posts', (string) config('services.openai.model'), $e);
                 report($e);
             }
         }
@@ -124,6 +129,7 @@ class SocialDraftGeneratorService
             model: $model,
             system: $this->systemPrompt(),
         );
+        $this->spendTracker->recordAnthropicText('social_drafts', 'generate_posts', $model, $message);
 
         $text = collect($message->content)->filter(fn ($block) => $block->type === 'text')->map(fn ($block) => $block->text)->join("\n");
         $clean = trim((string) preg_replace('/^```(?:json)?\s*|\s*```$/i', '', trim($text)));
@@ -155,7 +161,10 @@ class SocialDraftGeneratorService
             throw new \RuntimeException('OpenAI request failed with HTTP '.$response->status().'.');
         }
 
-        $content = (string) data_get($response->json(), 'choices.0.message.content', '');
+        $body = $response->json();
+        $this->spendTracker->recordOpenAiText('social_drafts', 'generate_posts', $model, is_array($body) ? $body : []);
+
+        $content = (string) data_get($body, 'choices.0.message.content', '');
         $decoded = json_decode($content, true);
         $posts = is_array($decoded['posts'] ?? null) ? $decoded['posts'] : [];
 
