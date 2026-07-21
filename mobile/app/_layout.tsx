@@ -49,6 +49,7 @@ export default function RootLayout() {
             <Stack.Screen name="login" />
             <Stack.Screen name="otp" />
             <Stack.Screen name="list-property" />
+            <Stack.Screen name="my-listings" />
             <Stack.Screen name="notifications" />
           </Stack>
         </QueryClientProvider>
