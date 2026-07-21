@@ -30,7 +30,7 @@ The production API URL is configured centrally in `src/config/env.ts`. Do not ha
 
 ## Architecture
 
-- App framework: Expo SDK 57, React Native, TypeScript
+- App framework: Expo SDK 54, React Native, TypeScript
 - Navigation: Expo Router
 - Server state: TanStack Query
 - Client state: Zustand
@@ -79,4 +79,3 @@ iOS/Android simulator validation should be reported only when actually run local
 - Owner listing image UX is not implemented yet.
 - Push notifications and universal/app links are documented but not configured in native store portals.
 - Mock adapters live in `src/data/mockData.ts` and are isolated for removal.
-

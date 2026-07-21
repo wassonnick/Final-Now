@@ -2,7 +2,7 @@
 
 ## Before SF-APP-2
 
-- Confirm Expo SDK 57 is the desired production SDK.
+- Confirm Expo SDK 54 remains the desired production SDK for Expo Go compatibility.
 - Decide whether to keep Expo Go workflow or move to development builds.
 - Finalize mobile font assets and licensing.
 - Add real saved-item backend endpoints.
@@ -49,4 +49,3 @@
 - No push notification registration yet.
 - No store-ready native assets yet.
 - Mobile owner listing flow is only a route foundation in SF-APP-1.
-

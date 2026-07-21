@@ -14,8 +14,8 @@ The mobile app is intentionally separate in `mobile/` and does not modify web ro
 
 ## Mobile stack
 
-- Expo SDK 57
-- React Native 0.86
+- Expo SDK 54
+- React Native 0.81.5
 - React 19
 - TypeScript strict mode
 - Expo Router
@@ -121,4 +121,3 @@ Events:
 - `list_property_started`
 
 No external trackers are installed in SF-APP-1.
-
