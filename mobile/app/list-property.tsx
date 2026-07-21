@@ -1,4 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { Link } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -25,7 +27,10 @@ const initialForm: OwnerListingPayload = {
 
 export default function ListPropertyScreen() {
   const [form, setForm] = useState<OwnerListingPayload>(initialForm);
+  const [images, setImages] = useState<string[]>([]);
+  const [imageError, setImageError] = useState<string | null>(null);
   const mutation = useMutation({ mutationFn: ownerListingService.submit });
+  const uploadMutation = useMutation({ mutationFn: ownerListingService.uploadImage });
 
   function update<K extends keyof OwnerListingPayload>(key: K, value: OwnerListingPayload[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -37,7 +42,46 @@ export default function ListPropertyScreen() {
       ...form,
       rent_amount: form.purpose === 'rent' && amount > 0 ? amount : undefined,
       sale_price: form.purpose === 'sale' && amount > 0 ? amount : undefined,
+      images,
     });
+  }
+
+  async function pickImages() {
+    setImageError(null);
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setImageError('Photo library permission is needed to attach listing photos.');
+      return;
+    }
+
+    const remainingSlots = Math.max(0, 8 - images.length);
+    if (remainingSlots === 0) {
+      setImageError('You can attach up to 8 photos.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      selectionLimit: remainingSlots,
+      quality: 0.82,
+    });
+
+    if (result.canceled) return;
+
+    const uploaded: string[] = [];
+    for (const asset of result.assets.slice(0, remainingSlots)) {
+      try {
+        const response = await uploadMutation.mutateAsync(asset);
+        if (response.data?.url) uploaded.push(response.data.url);
+      } catch {
+        setImageError('Some photos could not be uploaded. Please try again.');
+      }
+    }
+
+    if (uploaded.length) {
+      setImages((current) => [...current, ...uploaded].slice(0, 8));
+    }
   }
 
   return (
@@ -73,6 +117,19 @@ export default function ListPropertyScreen() {
         <AppTextInput value={form.furnishing} onChangeText={(value) => update('furnishing', value)} placeholder="Furnishing" />
         <AppTextInput value={form.availability} onChangeText={(value) => update('availability', value)} placeholder="Availability" />
         <AppTextInput value={form.details} onChangeText={(value) => update('details', value)} placeholder="Any notes for SocietyFlats review" multiline />
+        <View style={styles.mediaBox}>
+          <Text style={styles.label}>Photos optional</Text>
+          <Text style={styles.helper}>Attach real owner photos if available. If skipped, SocietyFlats can still review the text draft.</Text>
+          {images.length ? (
+            <View style={styles.thumbnails}>
+              {images.map((uri) => <Image key={uri} source={{ uri }} style={styles.thumbnail} contentFit="cover" />)}
+            </View>
+          ) : null}
+          <SecondaryButton onPress={pickImages} disabled={uploadMutation.isPending || images.length >= 8}>
+            {uploadMutation.isPending ? 'Uploading…' : images.length ? `Add more photos (${images.length}/8)` : 'Add photos'}
+          </SecondaryButton>
+          {imageError ? <Text style={styles.errorText}>{imageError}</Text> : null}
+        </View>
         <PrimaryButton onPress={submit} disabled={mutation.isPending}>{mutation.isPending ? 'Submitting…' : 'Submit for review'}</PrimaryButton>
       </View>
       {mutation.data ? (
@@ -96,4 +153,9 @@ const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   twoCol: { flexDirection: 'row', gap: spacing.sm },
   colInput: { flex: 1 },
+  mediaBox: { backgroundColor: colors.paperMuted, borderRadius: radius.lg, padding: spacing.md, gap: spacing.sm },
+  helper: { ...typography.muted, fontSize: 14, lineHeight: 20 },
+  thumbnails: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  thumbnail: { width: 72, height: 72, borderRadius: radius.md, backgroundColor: colors.line },
+  errorText: { color: colors.danger, fontWeight: '800' },
 });
