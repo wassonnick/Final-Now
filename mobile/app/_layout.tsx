@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { analytics } from '../src/lib/analytics';
 import { useAuthStore } from '../src/state/authStore';
 import { useOnboardingStore } from '../src/state/onboardingStore';
+import { useSavedStore } from '../src/state/savedStore';
 import { colors } from '../src/theme/tokens';
 
 void SplashScreen.preventAutoHideAsync();
@@ -22,12 +23,13 @@ export default function RootLayout() {
   }), []);
   const restoreAuth = useAuthStore((state) => state.restore);
   const restoreOnboarding = useOnboardingStore((state) => state.restore);
+  const restoreSaved = useSavedStore((state) => state.restore);
 
   useEffect(() => {
-    Promise.all([restoreAuth(), restoreOnboarding()])
+    Promise.all([restoreAuth(), restoreOnboarding(), restoreSaved()])
       .finally(() => SplashScreen.hideAsync());
     analytics.track('app_open');
-  }, [restoreAuth, restoreOnboarding]);
+  }, [restoreAuth, restoreOnboarding, restoreSaved]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.paper }}>

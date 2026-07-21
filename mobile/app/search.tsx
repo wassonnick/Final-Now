@@ -16,9 +16,9 @@ export default function SearchScreen() {
       {results.isLoading ? <LoadingSkeleton /> : !query ? <EmptyState title="Start typing to search" /> : (
         <>
           <SectionHeader title="Societies" />
-          {results.data?.societies.map((society) => <SocietyCard key={society.id} society={society} />)}
+          {results.data?.societies.length ? results.data.societies.map((society) => <SocietyCard key={society.id} society={society} />) : <EmptyState title="No societies found" body="Try a society, sector, locality or builder name." />}
           <SectionHeader title="Properties" />
-          {results.data?.properties.map((property) => <PropertyCard key={property.id} property={property} />)}
+          {results.data?.properties.length ? results.data.properties.map((property) => <PropertyCard key={property.id} property={property} />) : <EmptyState title="No verified homes found" body="We do not show fake cards when inventory is unavailable." />}
         </>
       )}
     </AppScreen>

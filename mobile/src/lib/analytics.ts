@@ -10,6 +10,7 @@ export type AnalyticsEvent =
   | 'property_saved'
   | 'callback_requested'
   | 'whatsapp_clicked'
+  | 'society_context_opened'
   | 'advisor_started'
   | 'list_property_started';
 

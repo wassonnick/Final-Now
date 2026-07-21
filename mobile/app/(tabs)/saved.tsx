@@ -1,10 +1,14 @@
 import { Link } from 'expo-router';
 import React from 'react';
+import { Text, View } from 'react-native';
 import { AppHeader, AppScreen, EmptyState, PrimaryButton, SectionHeader } from '../../src/components';
 import { useAuthStore } from '../../src/state/authStore';
+import { useSavedStore } from '../../src/state/savedStore';
 
 export default function SavedScreen() {
   const signedIn = useAuthStore((state) => state.status === 'signed_in');
+  const savedSocieties = useSavedStore((state) => state.societies);
+  const savedProperties = useSavedStore((state) => state.properties);
   if (!signedIn) {
     return (
       <AppScreen>
@@ -21,11 +25,23 @@ export default function SavedScreen() {
     <AppScreen>
       <AppHeader title="Saved" subtitle="Your private shortlist foundation." />
       <SectionHeader title="Saved societies" />
-      <EmptyState title="No saved societies yet" />
+      {savedSocieties.length ? <SavedList items={savedSocieties} prefix="/societies/" /> : <EmptyState title="No saved societies yet" />}
       <SectionHeader title="Saved properties" />
-      <EmptyState title="No saved properties yet" />
+      {savedProperties.length ? <SavedList items={savedProperties} prefix="/properties/" /> : <EmptyState title="No saved properties yet" />}
       <SectionHeader title="Saved searches" />
       <EmptyState title="No saved searches yet" />
     </AppScreen>
+  );
+}
+
+function SavedList({ items, prefix }: { items: string[]; prefix: '/societies/' | '/properties/' }) {
+  return (
+    <View>
+      {items.map((item) => (
+        <Link key={item} href={`${prefix}${item}` as any}>
+          <Text style={{ paddingVertical: 12, fontWeight: '800' }}>{item}</Text>
+        </Link>
+      ))}
+    </View>
   );
 }

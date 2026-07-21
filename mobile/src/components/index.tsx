@@ -17,6 +17,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, iconSize, radius, shadows, spacing, typography } from '../theme/tokens';
 import { Property, Society } from '../types/domain';
+import { formatArea, formatLocation, formatPrice } from '../lib/format';
+import { useSavedStore } from '../state/savedStore';
 
 type ButtonProps = PropsWithChildren<{ onPress?: () => void; disabled?: boolean; accessibilityLabel?: string }>;
 
@@ -137,10 +139,7 @@ export function ScoreBadge({ score }: { score?: string | number | null }) {
 }
 
 export function PriceText({ value }: { value?: string | number | null }) {
-  if (!value) return <Text style={styles.mutedText}>Price on request</Text>;
-  const amount = Number(value);
-  const formatted = amount >= 10000000 ? `₹${(amount / 10000000).toFixed(2)} Cr` : amount >= 100000 ? `₹${(amount / 100000).toFixed(1)} L` : `₹${amount.toLocaleString('en-IN')}`;
-  return <Text style={styles.price}>{formatted}</Text>;
+  return <Text style={value ? styles.price : styles.mutedText}>{formatPrice(value)}</Text>;
 }
 
 export function SocietyCard({ society }: { society: Society }) {
@@ -148,7 +147,7 @@ export function SocietyCard({ society }: { society: Society }) {
     <Link href={`/societies/${society.slug}`} asChild>
       <Pressable style={styles.card}>
         <View style={styles.photoBlock}>
-          {society.imageUrl ? <Image source={{ uri: society.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Ionicons name="business" size={iconSize.xl} color={colors.pine} />}
+          {society.imageUrl ? <Image source={{ uri: society.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <PlaceholderVisual icon="business" label="Verified society profile" />}
         </View>
         <View style={styles.cardBody}>
           <View style={styles.rowBetween}>
@@ -156,7 +155,8 @@ export function SocietyCard({ society }: { society: Society }) {
             <ScoreBadge score={society.score} />
           </View>
           <Text style={styles.cardTitle}>{society.name}</Text>
-          <Text style={styles.mutedText}>{[society.sector, society.locality, society.city].filter(Boolean).join(' · ')}</Text>
+          <Text style={styles.mutedText}>{formatLocation([society.sector, society.locality, society.city])}</Text>
+          {society.propertiesCount ? <Text style={styles.microText}>{society.propertiesCount} homes linked</Text> : null}
         </View>
       </Pressable>
     </Link>
@@ -168,16 +168,54 @@ export function PropertyCard({ property }: { property: Property }) {
     <Link href={`/properties/${property.slug || property.id}`} asChild>
       <Pressable style={styles.card}>
         <View style={styles.photoBlockSmall}>
-          {property.imageUrl ? <Image source={{ uri: property.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Ionicons name="home" size={iconSize.xl} color={colors.pine} />}
+          {property.imageUrl ? <Image source={{ uri: property.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <PlaceholderVisual icon="home" label="Photos under verification" compact />}
         </View>
         <View style={styles.cardBody}>
-          <VerificationBadge label="Source reviewed" />
+          <View style={styles.rowBetween}>
+            <VerificationBadge label={property.sourceLabel || 'Source reviewed'} />
+            {property.listingType ? <Text style={styles.typePill}>{property.listingType}</Text> : null}
+          </View>
           <Text style={styles.cardTitle}>{property.title}</Text>
           <Text style={styles.mutedText}>{property.societyName || 'SocietyFlats inventory'}</Text>
-          <PriceText value={property.price} />
+          <View style={styles.rowBetween}>
+            <PriceText value={property.price} />
+            <Text style={styles.mutedText}>{formatLocation([property.bedrooms ? `${property.bedrooms} BHK` : null, formatArea(property.areaSqft)])}</Text>
+          </View>
         </View>
       </Pressable>
     </Link>
+  );
+}
+
+export function PlaceholderVisual({ icon, label, compact = false }: { icon: keyof typeof Ionicons.glyphMap; label: string; compact?: boolean }) {
+  return (
+    <View style={[styles.placeholder, compact && styles.placeholderCompact]}>
+      <Text style={styles.watermark}>SocietyFlats</Text>
+      <Ionicons name={icon} size={compact ? iconSize.lg : iconSize.xl} color={colors.pine} />
+      <Text style={styles.placeholderText}>{label}</Text>
+    </View>
+  );
+}
+
+export function SaveButton({ kind, id }: { kind: 'societies' | 'properties'; id: string | number }) {
+  const saved = useSavedStore((state) => state.isSaved(kind, id));
+  const toggle = useSavedStore((state) => state.toggle);
+
+  return (
+    <Pressable onPress={() => void toggle(kind, id)} accessibilityRole="button" style={styles.saveButton}>
+      <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={iconSize.md} color={colors.pine} />
+      <Text style={styles.saveText}>{saved ? 'Saved' : 'Save'}</Text>
+    </Pressable>
+  );
+}
+
+export function DetailRow({ label, value }: { label: string; value?: string | number | null }) {
+  if (value === null || value === undefined || value === '') return null;
+  return (
+    <View style={styles.detailRow}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue}>{value}</Text>
+    </View>
   );
 }
 
@@ -276,6 +314,17 @@ const styles = StyleSheet.create({
   cardBody: { padding: spacing.md, gap: spacing.sm },
   cardTitle: { ...typography.heading, fontSize: 22, lineHeight: 28 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  microText: { color: colors.clay, fontWeight: '800', fontSize: 12 },
+  typePill: { overflow: 'hidden', borderRadius: radius.pill, backgroundColor: colors.paperMuted, color: colors.pine, fontSize: 12, fontWeight: '800', paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
+  placeholder: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: spacing.xs, padding: spacing.md },
+  placeholderCompact: { gap: spacing.xxs },
+  watermark: { position: 'absolute', transform: [{ rotate: '-20deg' }], color: colors.line, fontWeight: '900', fontSize: 22 },
+  placeholderText: { color: colors.pine, fontWeight: '900', textAlign: 'center' },
+  saveButton: { minHeight: 44, borderRadius: radius.pill, backgroundColor: colors.paperElevated, borderWidth: 1, borderColor: colors.line, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs, paddingHorizontal: spacing.md },
+  saveText: { color: colors.pine, fontWeight: '800' },
+  detailRow: { backgroundColor: colors.paperElevated, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: spacing.md, gap: spacing.xs, flex: 1, minWidth: '45%' },
+  detailLabel: { ...typography.muted, fontSize: 13 },
+  detailValue: { ...typography.body, fontSize: 18, fontWeight: '900' },
   sectionTitle: { ...typography.heading, fontSize: 24, lineHeight: 30 },
   linkText: { color: colors.clay, fontWeight: '800' },
   stateBox: { backgroundColor: colors.paperElevated, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.line, gap: spacing.sm, alignItems: 'flex-start' },

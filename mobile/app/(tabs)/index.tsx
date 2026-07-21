@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppHeader, AppScreen, EmptyState, LoadingSkeleton, PrimaryButton, PropertyCard, SearchBar, SectionHeader, SegmentedControl, SocietyCard } from '../../src/components';
 import { propertyService } from '../../src/api/services/properties';
 import { societyService } from '../../src/api/services/societies';
-import { mockProperties, mockSocieties, popularSectors } from '../../src/data/mockData';
+import { popularSectors } from '../../src/data/mockData';
 import { analytics } from '../../src/lib/analytics';
 import { colors, radius, spacing, typography } from '../../src/theme/tokens';
 
@@ -16,8 +16,8 @@ export default function HomeScreen() {
   const [query, setQuery] = useState('');
   const societies = useQuery({ queryKey: ['home-societies'], queryFn: () => societyService.list({ per_page: 6 }) });
   const properties = useQuery({ queryKey: ['home-properties'], queryFn: () => propertyService.list({ per_page: 4 }) });
-  const recommended = societies.data?.length ? societies.data : mockSocieties;
-  const listings = properties.data?.length ? properties.data : mockProperties;
+  const recommended = societies.data ?? [];
+  const listings = properties.data ?? [];
 
   function submitSearch() {
     analytics.track('search_started', { surface: 'home', mode });
@@ -33,9 +33,9 @@ export default function HomeScreen() {
       <Link href="/advisor" asChild><Pressable style={styles.aiCard}><Text style={styles.aiTitle}>Ask SocietyFlats AI</Text><Text style={styles.aiBody}>Try “family-friendly societies near Sector 65 with good commute”.</Text></Pressable></Link>
 
       <SectionHeader title="Recommended societies" href="/explore" actionLabel="Explore" />
-      {societies.isLoading ? <LoadingSkeleton /> : recommended.map((society) => <SocietyCard key={society.id} society={society} />)}
+      {societies.isLoading ? <LoadingSkeleton /> : recommended.length ? recommended.map((society) => <SocietyCard key={society.id} society={society} />) : <EmptyState title="No published societies loaded" body="Check your connection and try again." />}
 
-      <SectionHeader title="New listings" href="/explore" actionLabel="View all" />
+      <SectionHeader title="Verified homes" href="/explore" actionLabel="View all" />
       {properties.isLoading ? <LoadingSkeleton /> : listings.length ? listings.map((property) => <PropertyCard key={property.id} property={property} />) : <EmptyState title="No verified homes yet" body="We do not show fake listings. Request current availability and SocietyFlats will help." />}
 
       <SectionHeader title="Popular sectors" />

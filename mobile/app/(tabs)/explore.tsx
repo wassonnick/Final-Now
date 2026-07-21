@@ -5,7 +5,6 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { AppHeader, AppScreen, EmptyState, ErrorState, FilterChip, IconButton, LoadingSkeleton, PropertyCard, SearchBar, SegmentedControl, SocietyCard } from '../../src/components';
 import { propertyService } from '../../src/api/services/properties';
 import { societyService } from '../../src/api/services/societies';
-import { mockProperties, mockSocieties } from '../../src/data/mockData';
 import { analytics } from '../../src/lib/analytics';
 import { spacing } from '../../src/theme/tokens';
 
@@ -36,11 +35,10 @@ export default function ExploreScreen() {
         {['Verified', 'High score', 'Near metro', 'Family fit', 'New listing'].map((label) => <FilterChip key={label} label={label} />)}
       </ScrollView>
       {loading ? <LoadingSkeleton /> : error ? <ErrorState body="Could not load live results. Please retry." /> : mode === 'Societies' ? (
-        (societies.data?.length ? societies.data : mockSocieties).map((society) => <SocietyCard key={society.id} society={society} />)
+        societies.data?.length ? societies.data.map((society) => <SocietyCard key={society.id} society={society} />) : <EmptyState title="No matching societies" body="Try searching by society name, sector or builder." />
       ) : (
-        (properties.data?.length ? properties.data : mockProperties).map((property) => <PropertyCard key={property.id} property={property} />)
+        properties.data?.length ? properties.data.map((property) => <PropertyCard key={property.id} property={property} />) : <EmptyState title="No matching verified homes" body="Try a broader sector or check back after new listings are reviewed." />
       )}
-      {!loading && !error && mode === 'Properties' && properties.data?.length === 0 ? <EmptyState title="No matching verified homes" body="Try a broader sector or save this search for alerts." /> : null}
     </AppScreen>
   );
 }
