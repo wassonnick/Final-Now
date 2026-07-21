@@ -86,8 +86,12 @@ Route::get('/seo/pages/resolve', [PublicSeoPageController::class, 'resolve'])->m
 // the next build. robots.txt references this URL too (cross-host sitemaps are valid when
 // declared in robots.txt), making new pages discoverable the day they publish.
 Route::get('/seo/sitemap.xml', function () {
-    $xml = \Illuminate\Support\Facades\Cache::remember('seo:live-sitemap', now()->addHour(), function () {
-        $base = rtrim((string) config('services.lead_notifications.frontend_url', 'https://www.societyflats.com'), '/');
+    $xml = \Illuminate\Support\Facades\Cache::remember('seo:live-sitemap:v2', now()->addHour(), function () {
+        $configuredBase = (string) config('services.search_console.site_url', 'https://www.societyflats.com');
+        $base = str_starts_with($configuredBase, 'http')
+            ? rtrim($configuredBase, '/')
+            : rtrim((string) config('services.lead_notifications.frontend_url', 'https://www.societyflats.com'), '/');
+
         $pages = \App\Models\SeoPage::where('is_public', true)
             ->where('is_indexable', true)
             ->where('sitemap_included', true)

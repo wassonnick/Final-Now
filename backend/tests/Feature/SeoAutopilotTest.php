@@ -332,7 +332,8 @@ class SeoAutopilotTest extends TestCase
         $xml = $response->getContent();
 
         $this->assertStringContainsString('<urlset', $xml);
-        $this->assertStringContainsString('/society/sitemap-live-society</loc>', $xml);
+        $this->assertStringContainsString('https://www.societyflats.com/society/sitemap-live-society</loc>', $xml);
+        $this->assertStringNotContainsString('<loc>https://societyflats.com/', $xml);
         $this->assertStringNotContainsString('/private-x', $xml);
         $this->assertStringContainsString('application/xml', (string) $response->headers->get('Content-Type'));
     }
