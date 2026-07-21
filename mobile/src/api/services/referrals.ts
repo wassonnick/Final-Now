@@ -2,7 +2,7 @@ import { apiClient } from '../client';
 
 export const referralService = {
   async summary() {
-    const response = await apiClient.get('/referrals');
+    const response = await apiClient.get('/accounts/referrals');
     return response.data as {
       referral_code?: string;
       policy?: string;
@@ -11,7 +11,7 @@ export const referralService = {
     };
   },
   async submit(payload: { name: string; phone: string; intent: 'rent' | 'buy' | 'sell'; notes?: string }) {
-    const response = await apiClient.post('/referrals', payload);
+    const response = await apiClient.post('/accounts/referrals', payload);
     return response.data;
   },
 };

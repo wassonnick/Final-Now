@@ -46,7 +46,7 @@ export const ownerListingService = {
     return response.data as { status: string; data?: { url?: string; path?: string } };
   },
   async mine() {
-    const response = await apiClient.get('/account/listings');
+    const response = await apiClient.get('/accounts/listings');
     return extractList<OwnerListing>(response.data);
   },
 };

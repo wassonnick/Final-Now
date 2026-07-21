@@ -7,6 +7,7 @@ import { useAuthStore } from '../../src/state/authStore';
 import { colors, radius, spacing, typography } from '../../src/theme/tokens';
 
 const items = [
+  { label: 'My enquiries', href: '/my-enquiries' },
   { label: 'My listings', href: '/my-listings' },
   { label: 'List your property', href: '/list-property' },
   { label: 'NRI cases', href: '/nri' },

@@ -11,7 +11,7 @@ export default function OtpScreen() {
 
   async function verify() {
     const response = await authService.verifyOtp(phone, otp);
-    const token = response.token || response.data?.token;
+    const token = response.account_access_token || response.token || response.data?.token;
     if (token) {
       await setToken(token);
       router.replace('/(tabs)/account');
