@@ -1,0 +1,65 @@
+import { useQuery } from '@tanstack/react-query';
+import { Link, router } from 'expo-router';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppHeader, AppScreen, EmptyState, LoadingSkeleton, PrimaryButton, PropertyCard, SearchBar, SectionHeader, SegmentedControl, SocietyCard } from '../../src/components';
+import { propertyService } from '../../src/api/services/properties';
+import { societyService } from '../../src/api/services/societies';
+import { mockProperties, mockSocieties, popularSectors } from '../../src/data/mockData';
+import { analytics } from '../../src/lib/analytics';
+import { colors, radius, spacing, typography } from '../../src/theme/tokens';
+
+type Mode = 'Rent' | 'Buy' | 'Societies';
+
+export default function HomeScreen() {
+  const [mode, setMode] = useState<Mode>('Societies');
+  const [query, setQuery] = useState('');
+  const societies = useQuery({ queryKey: ['home-societies'], queryFn: () => societyService.list({ per_page: 6 }) });
+  const properties = useQuery({ queryKey: ['home-properties'], queryFn: () => propertyService.list({ per_page: 4 }) });
+  const recommended = societies.data?.length ? societies.data : mockSocieties;
+  const listings = properties.data?.length ? properties.data : mockProperties;
+
+  function submitSearch() {
+    analytics.track('search_started', { surface: 'home', mode });
+    router.push({ pathname: '/search', params: { q: query, mode } });
+  }
+
+  return (
+    <AppScreen>
+      <AppHeader title="Find your Gurgaon home by society first." subtitle="Verified societies, source-reviewed homes and practical AI help in one clean journey." />
+      <View style={styles.locationPill}><Text style={styles.locationText}>Gurgaon</Text><Text style={styles.locationSub}>Change later</Text></View>
+      <SegmentedControl options={['Rent', 'Buy', 'Societies']} value={mode} onChange={setMode} />
+      <SearchBar value={query} onChangeText={setQuery} onSubmit={submitSearch} />
+      <Link href="/advisor" asChild><Pressable style={styles.aiCard}><Text style={styles.aiTitle}>Ask SocietyFlats AI</Text><Text style={styles.aiBody}>Try “family-friendly societies near Sector 65 with good commute”.</Text></Pressable></Link>
+
+      <SectionHeader title="Recommended societies" href="/explore" actionLabel="Explore" />
+      {societies.isLoading ? <LoadingSkeleton /> : recommended.map((society) => <SocietyCard key={society.id} society={society} />)}
+
+      <SectionHeader title="New listings" href="/explore" actionLabel="View all" />
+      {properties.isLoading ? <LoadingSkeleton /> : listings.length ? listings.map((property) => <PropertyCard key={property.id} property={property} />) : <EmptyState title="No verified homes yet" body="We do not show fake listings. Request current availability and SocietyFlats will help." />}
+
+      <SectionHeader title="Popular sectors" />
+      <View style={styles.sectorGrid}>{popularSectors.map((sector) => <Text key={sector} style={styles.sector}>{sector}</Text>)}</View>
+
+      <View style={styles.listBanner}>
+        <Text style={styles.bannerTitle}>Have a flat to list?</Text>
+        <Text style={styles.bannerBody}>Start with a simple owner listing. SocietyFlats reviews before publishing.</Text>
+        <PrimaryButton onPress={() => { analytics.track('list_property_started'); router.push('/list-property'); }}>List your property</PrimaryButton>
+      </View>
+    </AppScreen>
+  );
+}
+
+const styles = StyleSheet.create({
+  locationPill: { backgroundColor: colors.paperElevated, borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, padding: spacing.md, flexDirection: 'row', justifyContent: 'space-between' },
+  locationText: { color: colors.pine, fontWeight: '900' },
+  locationSub: { color: colors.muted },
+  aiCard: { backgroundColor: colors.pine, borderRadius: radius.xl, padding: spacing.lg, gap: spacing.sm },
+  aiTitle: { ...typography.heading, color: colors.paper, fontSize: 26 },
+  aiBody: { color: colors.pineSoft, fontSize: 16, lineHeight: 24 },
+  sectorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  sector: { backgroundColor: colors.paperElevated, borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, color: colors.pine, fontWeight: '800' },
+  listBanner: { backgroundColor: colors.claySoft, borderRadius: radius.xl, padding: spacing.lg, gap: spacing.sm },
+  bannerTitle: { ...typography.heading, fontSize: 26 },
+  bannerBody: { ...typography.muted, fontSize: 16, lineHeight: 24 },
+});
