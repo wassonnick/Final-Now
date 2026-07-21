@@ -6,7 +6,7 @@ import { AppHeader, AppScreen, EmptyState, PrimaryButton, SecondaryButton } from
 import { useAuthStore } from '../../src/state/authStore';
 import { colors, radius, spacing, typography } from '../../src/theme/tokens';
 
-const items = ['My enquiries', 'My listings', 'Notification preferences', 'Recently viewed', 'Support', 'Privacy policy', 'Terms'];
+const items = ['My enquiries', 'My listings', 'NRI cases', 'RWA claims', 'Referral partner', 'Notification preferences', 'Support', 'Privacy policy', 'Terms'];
 
 export default function AccountScreen() {
   const { status, signOut } = useAuthStore();

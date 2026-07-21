@@ -9,6 +9,7 @@ export default function SavedScreen() {
   const signedIn = useAuthStore((state) => state.status === 'signed_in');
   const savedSocieties = useSavedStore((state) => state.societies);
   const savedProperties = useSavedStore((state) => state.properties);
+  const savedSearches = useSavedStore((state) => state.searches);
   if (!signedIn) {
     return (
       <AppScreen>
@@ -29,12 +30,12 @@ export default function SavedScreen() {
       <SectionHeader title="Saved properties" />
       {savedProperties.length ? <SavedList items={savedProperties} prefix="/properties/" /> : <EmptyState title="No saved properties yet" />}
       <SectionHeader title="Saved searches" />
-      <EmptyState title="No saved searches yet" />
+      {savedSearches.length ? <SavedList items={savedSearches} prefix="/search?q=" /> : <EmptyState title="No saved searches yet" />}
     </AppScreen>
   );
 }
 
-function SavedList({ items, prefix }: { items: string[]; prefix: '/societies/' | '/properties/' }) {
+function SavedList({ items, prefix }: { items: string[]; prefix: '/societies/' | '/properties/' | '/search?q=' }) {
   return (
     <View>
       {items.map((item) => (

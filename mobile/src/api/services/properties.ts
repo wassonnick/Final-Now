@@ -3,7 +3,7 @@ import { Property } from '../../types/domain';
 import { normalizeProperty } from '../normalizers';
 
 export const propertyService = {
-  async list(params?: { q?: string; per_page?: number }): Promise<Property[]> {
+  async list(params?: { q?: string; per_page?: number; listing_type?: string }): Promise<Property[]> {
     const response = await apiClient.get('/properties', { params: { per_page: 8, ...params } });
     return extractList<Property>(response.data).map(normalizeProperty);
   },

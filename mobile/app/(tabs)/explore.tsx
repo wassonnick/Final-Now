@@ -1,22 +1,37 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { AppHeader, AppScreen, EmptyState, ErrorState, FilterChip, IconButton, LoadingSkeleton, PropertyCard, SearchBar, SegmentedControl, SocietyCard } from '../../src/components';
 import { propertyService } from '../../src/api/services/properties';
 import { societyService } from '../../src/api/services/societies';
 import { analytics } from '../../src/lib/analytics';
+import { useFilterStore } from '../../src/state/filterStore';
 import { spacing } from '../../src/theme/tokens';
 
-type Mode = 'Societies' | 'Properties';
-
 export default function ExploreScreen() {
-  const [mode, setMode] = useState<Mode>('Societies');
-  const [query, setQuery] = useState('');
-  const societies = useQuery({ queryKey: ['explore-societies', query], queryFn: () => societyService.list({ q: query, per_page: 20 }) });
-  const properties = useQuery({ queryKey: ['explore-properties', query], queryFn: () => propertyService.list({ q: query, per_page: 20 }) });
+  const { mode, query, listingType, withListings, highScore, sort, setMode, setQuery, toggle } = useFilterStore();
+  const societies = useQuery({ queryKey: ['explore-societies', query], queryFn: () => societyService.list({ q: query, per_page: 30 }) });
+  const properties = useQuery({
+    queryKey: ['explore-properties', query, listingType],
+    queryFn: () => propertyService.list({ q: query, per_page: 30, listing_type: listingType === 'Any' ? undefined : listingType }),
+  });
   const loading = mode === 'Societies' ? societies.isLoading : properties.isLoading;
   const error = mode === 'Societies' ? societies.error : properties.error;
+  const filteredSocieties = useMemo(() => {
+    let rows = societies.data ?? [];
+    if (withListings) rows = rows.filter((society) => Number(society.propertiesCount ?? 0) > 0);
+    if (highScore) rows = rows.filter((society) => Number(society.score ?? 0) >= 8);
+    if (sort === 'Highest score') rows = [...rows].sort((a, b) => Number(b.score ?? 0) - Number(a.score ?? 0));
+    return rows;
+  }, [highScore, societies.data, sort, withListings]);
+
+  const filteredProperties = useMemo(() => {
+    let rows = properties.data ?? [];
+    if (sort === 'Newest') return rows;
+    if (sort === 'Highest score') return rows;
+    return rows;
+  }, [properties.data, sort]);
 
   function submitSearch() {
     analytics.track('search_started', { surface: 'explore', mode });
@@ -32,12 +47,15 @@ export default function ExploreScreen() {
         <IconButton name="swap-vertical" label="Sort results" />
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        {['Verified', 'High score', 'Near metro', 'Family fit', 'New listing'].map((label) => <FilterChip key={label} label={label} />)}
+        <FilterChip label="Verified" selected />
+        <FilterChip label="High score" selected={highScore} onPress={() => toggle('highScore')} />
+        <FilterChip label="With homes" selected={withListings} onPress={() => toggle('withListings')} />
+        <FilterChip label={listingType === 'Any' ? 'Rent/Sale' : listingType} selected={listingType !== 'Any'} onPress={() => router.push('/filters')} />
       </ScrollView>
       {loading ? <LoadingSkeleton /> : error ? <ErrorState body="Could not load live results. Please retry." /> : mode === 'Societies' ? (
-        societies.data?.length ? societies.data.map((society) => <SocietyCard key={society.id} society={society} />) : <EmptyState title="No matching societies" body="Try searching by society name, sector or builder." />
+        filteredSocieties.length ? filteredSocieties.map((society) => <SocietyCard key={society.id} society={society} />) : <EmptyState title="No matching societies" body="Try searching by society name, sector or builder." />
       ) : (
-        properties.data?.length ? properties.data.map((property) => <PropertyCard key={property.id} property={property} />) : <EmptyState title="No matching verified homes" body="Try a broader sector or check back after new listings are reviewed." />
+        filteredProperties.length ? filteredProperties.map((property) => <PropertyCard key={property.id} property={property} />) : <EmptyState title="No matching verified homes" body="Try a broader sector or check back after new listings are reviewed." />
       )}
     </AppScreen>
   );

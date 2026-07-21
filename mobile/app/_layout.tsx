@@ -43,6 +43,9 @@ export default function RootLayout() {
             <Stack.Screen name="search" />
             <Stack.Screen name="filters" />
             <Stack.Screen name="compare" />
+            <Stack.Screen name="nri" />
+            <Stack.Screen name="rwa" />
+            <Stack.Screen name="referrals" />
             <Stack.Screen name="login" />
             <Stack.Screen name="otp" />
             <Stack.Screen name="list-property" />
