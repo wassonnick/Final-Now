@@ -319,6 +319,10 @@ Route::prefix('accounts')->group(function () {
     Route::post('/verify-otp', [AccountController::class, 'verifyOtp'])->middleware('throttle:10,1');
     Route::get('/me', [AccountController::class, 'me']);
     Route::get('/dashboard', [AccountController::class, 'dashboard']);
+    Route::get('/notification-preferences', [\App\Http\Controllers\Api\AccountNotificationController::class, 'preferences']);
+    Route::patch('/notification-preferences', [\App\Http\Controllers\Api\AccountNotificationController::class, 'updatePreferences']);
+    Route::post('/device-tokens', [\App\Http\Controllers\Api\AccountNotificationController::class, 'upsertDevice'])->middleware('throttle:20,1');
+    Route::delete('/device-tokens/{deviceId}', [\App\Http\Controllers\Api\AccountNotificationController::class, 'destroyDevice']);
     Route::get('/referrals', [ReferralController::class, 'index']);
     Route::post('/referrals', [ReferralController::class, 'store'])->middleware('throttle:10,1');
     Route::apiResource('saved-searches', SavedSearchController::class)->only(['index', 'store', 'update', 'destroy']);

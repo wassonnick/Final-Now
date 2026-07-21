@@ -51,4 +51,9 @@ class Account extends Model
     {
         return $this->hasMany(Referral::class, 'referrer_account_id');
     }
+
+    public function devices(): HasMany
+    {
+        return $this->hasMany(AccountDevice::class);
+    }
 }

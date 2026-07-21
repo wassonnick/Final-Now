@@ -2,7 +2,9 @@ import React from 'react';
 import { Link } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppHeader, AppScreen, EmptyState, FilterChip, PrimaryButton, SectionHeader } from '../src/components';
+import { notificationService } from '../src/api/services/notifications';
 import { requestPushNotificationAccess } from '../src/lib/notifications';
+import { useAuthStore } from '../src/state/authStore';
 import { useNotificationStore } from '../src/state/notificationStore';
 import { useSavedStore } from '../src/state/savedStore';
 import { colors, radius, shadows, spacing, typography } from '../src/theme/tokens';
@@ -13,12 +15,21 @@ export default function NotificationsScreen() {
     lastMessage,
     ownerListingUpdates,
     permissionStatus,
+    expoPushToken,
     pushTokenCaptured,
     savedSearchAlerts,
     setPermissionResult,
     setPreference,
     siteVisitReminders,
   } = useNotificationStore();
+  const authStatus = useAuthStore((state) => state.status);
+  const signedIn = authStatus === 'signed_in';
+
+  const currentPreferences = {
+    savedSearchAlerts,
+    siteVisitReminders,
+    ownerListingUpdates,
+  };
 
   const permissionLabel = permissionStatus === 'granted'
     ? pushTokenCaptured ? 'Ready for push alerts' : 'Allowed on this device'
@@ -27,6 +38,27 @@ export default function NotificationsScreen() {
   const enableNotifications = async () => {
     const result = await requestPushNotificationAccess();
     await setPermissionResult(result.status, result.tokenCaptured, result.expoPushToken, result.message);
+
+    if (signedIn && result.expoPushToken) {
+      try {
+        await notificationService.registerDevice(result.expoPushToken, currentPreferences);
+        await setPermissionResult(result.status, true, result.expoPushToken, 'Notifications are connected to your SocietyFlats account.');
+      } catch {
+        await setPermissionResult(result.status, result.tokenCaptured, result.expoPushToken, 'Notifications are allowed, but account registration did not complete. Try again after signing in.');
+      }
+    }
+  };
+
+  const togglePreference = async (key: 'savedSearchAlerts' | 'siteVisitReminders' | 'ownerListingUpdates', value: boolean) => {
+    const next = { ...currentPreferences, [key]: value };
+    await setPreference(key, value);
+    if (signedIn) {
+      try {
+        await notificationService.updatePreferences(next);
+      } catch {
+        await setPermissionResult(permissionStatus, pushTokenCaptured, expoPushToken, 'Preference saved on this phone. Backend sync will retry when your account is reachable.');
+      }
+    }
   };
 
   return (
@@ -39,7 +71,7 @@ export default function NotificationsScreen() {
           <View style={styles.flex}>
             <Text style={styles.cardTitle}>{permissionLabel}</Text>
             <Text style={styles.body}>
-              Push delivery is being prepared for native builds. Your preferences are already saved in the app.
+              Push delivery is being prepared for native builds. Sign in once to link this phone with your SocietyFlats account.
             </Text>
           </View>
         </View>
@@ -54,17 +86,17 @@ export default function NotificationsScreen() {
         <FilterChip
           label="Saved searches"
           selected={savedSearchAlerts}
-          onPress={() => void setPreference('savedSearchAlerts', !savedSearchAlerts)}
+          onPress={() => void togglePreference('savedSearchAlerts', !savedSearchAlerts)}
         />
         <FilterChip
           label="Site visit reminders"
           selected={siteVisitReminders}
-          onPress={() => void setPreference('siteVisitReminders', !siteVisitReminders)}
+          onPress={() => void togglePreference('siteVisitReminders', !siteVisitReminders)}
         />
         <FilterChip
           label="Owner listing updates"
           selected={ownerListingUpdates}
-          onPress={() => void setPreference('ownerListingUpdates', !ownerListingUpdates)}
+          onPress={() => void togglePreference('ownerListingUpdates', !ownerListingUpdates)}
         />
       </View>
 
