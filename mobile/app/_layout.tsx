@@ -5,12 +5,15 @@ import React, { useEffect, useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { analytics } from '../src/lib/analytics';
+import { configureNotificationHandler } from '../src/lib/notifications';
 import { useAuthStore } from '../src/state/authStore';
+import { useNotificationStore } from '../src/state/notificationStore';
 import { useOnboardingStore } from '../src/state/onboardingStore';
 import { useSavedStore } from '../src/state/savedStore';
 import { colors } from '../src/theme/tokens';
 
 void SplashScreen.preventAutoHideAsync();
+configureNotificationHandler();
 
 export default function RootLayout() {
   const queryClient = useMemo(() => new QueryClient({
@@ -22,14 +25,15 @@ export default function RootLayout() {
     },
   }), []);
   const restoreAuth = useAuthStore((state) => state.restore);
+  const restoreNotifications = useNotificationStore((state) => state.restore);
   const restoreOnboarding = useOnboardingStore((state) => state.restore);
   const restoreSaved = useSavedStore((state) => state.restore);
 
   useEffect(() => {
-    Promise.all([restoreAuth(), restoreOnboarding(), restoreSaved()])
+    Promise.all([restoreAuth(), restoreOnboarding(), restoreSaved(), restoreNotifications()])
       .finally(() => SplashScreen.hideAsync());
     analytics.track('app_open');
-  }, [restoreAuth, restoreOnboarding, restoreSaved]);
+  }, [restoreAuth, restoreNotifications, restoreOnboarding, restoreSaved]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.paper }}>
