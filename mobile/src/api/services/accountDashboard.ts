@@ -22,6 +22,8 @@ export type SiteVisit = {
   id: number | string;
   status?: string | null;
   selected_slot?: string | null;
+  proposed_slots?: string[] | null;
+  confirmation_token?: string | null;
   society_name?: string | null;
   society_slug?: string | null;
 };
@@ -43,5 +45,9 @@ export const accountDashboardService = {
   async get() {
     const response = await apiClient.get('/accounts/dashboard');
     return response.data as AccountDashboard;
+  },
+  async confirmSiteVisit(token: string, selectedSlot: string) {
+    const response = await apiClient.post(`/site-visits/${token}/confirm`, { selected_slot: selectedSlot });
+    return response.data as { message?: string; data?: unknown };
   },
 };

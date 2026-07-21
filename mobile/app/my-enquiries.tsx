@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { accountDashboardService, AccountLead, SiteVisit } from '../src/api/services/accountDashboard';
-import { AppHeader, AppScreen, EmptyState, LoadingSkeleton, PrimaryButton } from '../src/components';
+import { AppHeader, AppScreen, EmptyState, FilterChip, LoadingSkeleton, PrimaryButton } from '../src/components';
 import { formatPrice } from '../src/lib/format';
 import { useAuthStore } from '../src/state/authStore';
 import { colors, radius, spacing, typography } from '../src/theme/tokens';
@@ -79,6 +79,15 @@ function LeadCard({ lead }: { lead: AccountLead }) {
 }
 
 function VisitCard({ visit }: { visit: SiteVisit }) {
+  const queryClient = useQueryClient();
+  const proposedSlots = Array.isArray(visit.proposed_slots) ? visit.proposed_slots : [];
+  const [selectedSlot, setSelectedSlot] = useState(visit.selected_slot || proposedSlots[0] || '');
+  const confirmMutation = useMutation({
+    mutationFn: () => accountDashboardService.confirmSiteVisit(visit.confirmation_token || '', selectedSlot),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['account-dashboard'] }),
+  });
+  const canConfirm = Boolean(visit.confirmation_token && selectedSlot && visit.status !== 'confirmed');
+
   return (
     <View style={styles.card}>
       <View style={styles.row}>
@@ -87,6 +96,25 @@ function VisitCard({ visit }: { visit: SiteVisit }) {
       </View>
       <Text style={styles.title}>{visit.society_name || 'Society visit'}</Text>
       <Text style={styles.body}>{visit.selected_slot ? new Date(visit.selected_slot).toLocaleString() : 'Slot pending confirmation'}</Text>
+      {proposedSlots.length && visit.status !== 'confirmed' ? (
+        <View style={styles.slotWrap}>
+          {proposedSlots.map((slot) => (
+            <FilterChip
+              key={slot}
+              label={new Date(slot).toLocaleString()}
+              selected={selectedSlot === slot}
+              onPress={() => setSelectedSlot(slot)}
+            />
+          ))}
+        </View>
+      ) : null}
+      {canConfirm ? (
+        <PrimaryButton onPress={() => confirmMutation.mutate()} disabled={confirmMutation.isPending}>
+          {confirmMutation.isPending ? 'Confirming…' : 'Confirm selected slot'}
+        </PrimaryButton>
+      ) : null}
+      {confirmMutation.data?.message ? <Text style={styles.successText}>{confirmMutation.data.message}</Text> : null}
+      {confirmMutation.error ? <Text style={styles.errorText}>Could not confirm this slot. Please try another proposed slot.</Text> : null}
     </View>
   );
 }
@@ -105,4 +133,7 @@ const styles = StyleSheet.create({
   title: { ...typography.heading, fontSize: 24, lineHeight: 30 },
   body: { ...typography.muted, fontSize: 15, lineHeight: 22 },
   price: { color: colors.pine, fontSize: 18, fontWeight: '900' },
+  slotWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  successText: { color: colors.success, fontWeight: '900' },
+  errorText: { color: colors.danger, fontWeight: '900' },
 });
