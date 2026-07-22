@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Log;
 
 class SavedSearchMatcher
 {
+    public function __construct(private readonly MobilePushNotificationService $mobilePush)
+    {
+    }
+
     public function run(bool $deliver = true): array
     {
         $summary = ['searches_checked' => 0, 'matches_created' => 0, 'sent' => 0, 'pending' => 0, 'failed' => 0];
@@ -74,20 +78,36 @@ class SavedSearchMatcher
 
     private function deliver(SavedSearchAlert $alert): string
     {
-        if (! config('services.saved_search_alerts.enabled') || ! config('services.saved_search_alerts.webhook_url')) {
-            return 'pending';
-        }
+        $webhookConfigured = config('services.saved_search_alerts.enabled') && config('services.saved_search_alerts.webhook_url');
+        $webhookSent = false;
+        $webhookFailed = false;
+
         try {
-            Http::timeout(8)->withToken((string) config('services.saved_search_alerts.webhook_token'))->post((string) config('services.saved_search_alerts.webhook_url'), ['event' => 'saved_search_match', 'channel' => $alert->channel, 'recipient' => $alert->account->phone, 'email' => $alert->account->email, ...$alert->payload])->throw();
+            if ($webhookConfigured) {
+                Http::timeout(8)->withToken((string) config('services.saved_search_alerts.webhook_token'))->post((string) config('services.saved_search_alerts.webhook_url'), ['event' => 'saved_search_match', 'channel' => $alert->channel, 'recipient' => $alert->account->phone, 'email' => $alert->account->email, ...$alert->payload])->throw();
+                $webhookSent = true;
+            }
+        } catch (\Throwable $e) {
+            $webhookFailed = true;
+            $alert->update(['failure_reason' => mb_substr($e->getMessage(), 0, 2000)]);
+            Log::warning('Saved search alert failed', ['alert_id' => $alert->id]);
+        }
+
+        $push = $this->mobilePush->sendSavedSearchAlert($alert);
+
+        if ($webhookSent || $push['sent'] > 0) {
             $alert->update(['status' => 'sent', 'sent_at' => now()]);
             $alert->savedSearch()->update(['last_alert_sent_at' => now()]);
 
             return 'sent';
-        } catch (\Throwable $e) {
-            $alert->update(['status' => 'failed', 'failure_reason' => mb_substr($e->getMessage(), 0, 2000)]);
-            Log::warning('Saved search alert failed', ['alert_id' => $alert->id]);
+        }
+
+        if ($webhookFailed || $push['failed'] > 0) {
+            $alert->update(['status' => 'failed', 'failure_reason' => $alert->failure_reason ?: 'Mobile push delivery failed.']);
 
             return 'failed';
         }
+
+        return 'pending';
     }
 }

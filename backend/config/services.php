@@ -113,6 +113,12 @@ return [
         'frontend_url' => env('FRONTEND_URL', 'https://societyflats.com'),
     ],
 
+    'mobile_push' => [
+        'enabled' => env('MOBILE_PUSH_ENABLED', true),
+        'expo_endpoint' => env('EXPO_PUSH_ENDPOINT', 'https://exp.host/--/api/v2/push/send'),
+        'frontend_url' => env('FRONTEND_URL', 'https://societyflats.com'),
+    ],
+
     'otp' => [
         'enabled' => env('OTP_DELIVERY_ENABLED', false),
         'provider' => env('OTP_PROVIDER', 'log'),

@@ -134,7 +134,7 @@ Artisan::command('ops:daily-digest', function () {
     ));
 })->purpose('Store the daily admin Action Inbox digest (data quality, sitemap drift, lead SLA, visit reminders)');
 
-Artisan::command('site-visits:send-reminders', function (LeadNotificationService $notifications) {
+Artisan::command('site-visits:send-reminders', function (LeadNotificationService $notifications, \App\Services\MobilePushNotificationService $mobilePush) {
     $due = SiteVisit::query()
         ->where('status', 'confirmed')
         ->whereNotNull('selected_slot')
@@ -148,20 +148,22 @@ Artisan::command('site-visits:send-reminders', function (LeadNotificationService
         return;
     }
 
-    // Without a configured webhook notifySiteVisit() is a silent no-op, so
-    // stamping reminder_sent_at would falsely record reminders as sent.
-    if (! config('services.lead_notifications.enabled') || trim((string) config('services.lead_notifications.webhook_url', '')) === '') {
-        $this->warn("{$due->count()} reminder(s) due but the notification webhook is not configured; nothing was sent or stamped.");
-
-        return;
-    }
-
+    $sent = 0;
+    $pending = 0;
     foreach ($due as $visit) {
         $notifications->notifySiteVisit($visit, 'site_visit_reminder');
-        $visit->update(['reminder_sent_at' => now()]);
+        $push = $mobilePush->sendSiteVisitReminder($visit);
+        $webhookConfigured = config('services.lead_notifications.enabled') && trim((string) config('services.lead_notifications.webhook_url', '')) !== '';
+
+        if ($webhookConfigured || $push['sent'] > 0) {
+            $visit->update(['reminder_sent_at' => now()]);
+            $sent++;
+        } else {
+            $pending++;
+        }
     }
-    $this->info("Sent {$due->count()} site-visit reminder(s).");
-})->purpose('Send T-1-day reminders for confirmed site visits through the notification webhook');
+    $this->info("Processed {$due->count()} site-visit reminder(s): {$sent} sent/stamped, {$pending} pending.");
+})->purpose('Send T-1-day reminders for confirmed site visits through webhook/mobile push channels');
 
 Artisan::command('ops:queue-market-refresh {--limit=15}', function () {
     $limit = max(1, min((int) $this->option('limit'), 30));
