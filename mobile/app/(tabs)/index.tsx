@@ -34,6 +34,7 @@ export default function HomeScreen() {
 
       <SectionHeader title="Useful at this stage" />
       <View style={styles.journeyStack}>
+        <JourneyLink href="/compare" title="Compare societies" body="Place shortlisted societies side by side before a visit." />
         <JourneyLink href="/nri" title="NRI management" body="Remote buy, sell, rent-out and property management support." />
         <JourneyLink href="/rwa" title="RWA portal" body="Claims, announcements, resident questions and grievance context." />
         <JourneyLink href="/referrals" title="Referral partner" body="Refer genuine Gurgaon home needs for admin-reviewed rewards." />

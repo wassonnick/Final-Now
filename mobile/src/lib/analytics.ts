@@ -12,6 +12,8 @@ export type AnalyticsEvent =
   | 'whatsapp_clicked'
   | 'society_context_opened'
   | 'advisor_started'
+  | 'compare_society_added'
+  | 'compare_advisor_started'
   | 'list_property_started';
 
 type AnalyticsPayload = Record<string, string | number | boolean | undefined>;
