@@ -11,6 +11,7 @@ type SavedState = {
   isSaved: (kind: SavedKind, id: string | number | null | undefined) => boolean;
   toggle: (kind: SavedKind, id: string | number | null | undefined) => Promise<void>;
   saveSearch: (query: string) => Promise<void>;
+  removeSearch: (query: string) => Promise<void>;
 };
 
 const key = 'sf_mobile_saved_items_v1';
@@ -55,6 +56,13 @@ export const useSavedStore = create<SavedState>((set, get) => ({
     const clean = query.trim();
     if (!clean) return;
     const searches = [clean, ...get().searches.filter((item) => item.toLowerCase() !== clean.toLowerCase())].slice(0, 20);
+    const payload = { societies: get().societies, properties: get().properties, searches };
+    set(payload);
+    await SecureStore.setItemAsync(key, JSON.stringify(payload));
+  },
+  async removeSearch(query) {
+    const clean = query.trim().toLowerCase();
+    const searches = get().searches.filter((item) => item.toLowerCase() !== clean);
     const payload = { societies: get().societies, properties: get().properties, searches };
     set(payload);
     await SecureStore.setItemAsync(key, JSON.stringify(payload));
