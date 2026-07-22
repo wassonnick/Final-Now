@@ -14,6 +14,7 @@ export type AnalyticsEvent =
   | 'advisor_started'
   | 'compare_society_added'
   | 'compare_advisor_started'
+  | 'map_area_opened'
   | 'list_property_started';
 
 type AnalyticsPayload = Record<string, string | number | boolean | undefined>;

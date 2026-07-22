@@ -48,6 +48,7 @@ export default function RootLayout() {
             <Stack.Screen name="search" />
             <Stack.Screen name="filters" />
             <Stack.Screen name="compare" />
+            <Stack.Screen name="map" />
             <Stack.Screen name="nri" />
             <Stack.Screen name="rwa" />
             <Stack.Screen name="referrals" />

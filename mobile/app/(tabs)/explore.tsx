@@ -44,6 +44,7 @@ export default function ExploreScreen() {
       <SegmentedControl options={['Societies', 'Properties']} value={mode} onChange={setMode} />
       <View style={styles.toolbar}>
         <IconButton name="filter" label="Open filters" onPress={() => router.push('/filters')} />
+        <IconButton name="map" label="Open map search" onPress={() => router.push('/map')} />
         <IconButton name="swap-vertical" label="Sort results" />
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>

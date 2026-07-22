@@ -34,6 +34,7 @@ export default function HomeScreen() {
 
       <SectionHeader title="Useful at this stage" />
       <View style={styles.journeyStack}>
+        <JourneyLink href="/map" title="Explore on map" body="Browse Gurgaon pockets by societies, homes and decision context." />
         <JourneyLink href="/compare" title="Compare societies" body="Place shortlisted societies side by side before a visit." />
         <JourneyLink href="/nri" title="NRI management" body="Remote buy, sell, rent-out and property management support." />
         <JourneyLink href="/rwa" title="RWA portal" body="Claims, announcements, resident questions and grievance context." />
