@@ -1,9 +1,10 @@
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
+
+type ExpoNotifications = typeof import('expo-notifications');
 
 type PushAccessResult = {
   status: 'undetermined' | 'granted' | 'denied';
@@ -17,18 +18,44 @@ function getProjectId() {
   return Constants.easConfig?.projectId || expoConfigExtra?.eas?.projectId || null;
 }
 
+function isExpoGoAndroid() {
+  return Constants.appOwnership === 'expo' && Platform.OS === 'android';
+}
+
+async function getNotifications(): Promise<ExpoNotifications | null> {
+  if (isExpoGoAndroid()) return null;
+  try {
+    return await import('expo-notifications');
+  } catch {
+    return null;
+  }
+}
+
 export function configureNotificationHandler() {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldPlaySound: false,
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
+  if (isExpoGoAndroid()) return;
+  void getNotifications().then((Notifications) => {
+    Notifications?.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
   });
 }
 
 export async function requestPushNotificationAccess(): Promise<PushAccessResult> {
+  const Notifications = await getNotifications();
+  if (!Notifications) {
+    return {
+      status: 'undetermined',
+      tokenCaptured: false,
+      expoPushToken: null,
+      message: 'Push alerts need a development build on Android. In-app alerts still work in Expo Go.',
+    };
+  }
+
   if (!Device.isDevice) {
     return {
       status: 'undetermined',
@@ -94,7 +121,7 @@ export function routeFromNotificationData(data: Record<string, unknown>) {
   return '/notifications' as const;
 }
 
-function openNotificationResponse(response: Notifications.NotificationResponse | null | undefined) {
+function openNotificationResponse(response: import('expo-notifications').NotificationResponse | null | undefined) {
   const data = response?.notification.request.content.data;
   if (!data) return;
   router.push(routeFromNotificationData(data));
@@ -102,11 +129,21 @@ function openNotificationResponse(response: Notifications.NotificationResponse |
 
 export function useNotificationResponseRouting() {
   useEffect(() => {
-    Notifications.getLastNotificationResponseAsync()
-      .then(openNotificationResponse)
-      .catch(() => undefined);
+    let active = true;
+    let subscription: { remove: () => void } | null = null;
 
-    const subscription = Notifications.addNotificationResponseReceivedListener(openNotificationResponse);
-    return () => subscription.remove();
+    void getNotifications().then((Notifications) => {
+      if (!Notifications || !active) return;
+      Notifications.getLastNotificationResponseAsync()
+        .then(openNotificationResponse)
+        .catch(() => undefined);
+
+      subscription = Notifications.addNotificationResponseReceivedListener(openNotificationResponse);
+    });
+
+    return () => {
+      active = false;
+      subscription?.remove();
+    };
   }, []);
 }
