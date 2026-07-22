@@ -30,7 +30,9 @@ class BuilderPortalController extends Controller
         if (! $account = $this->accountFromBearer($request)) {
             return response()->json(['message' => 'OTP login required.'], 401);
         }
-        $data = $request->validate(['society_id' => ['required', 'integer', 'exists:societies,id'], 'organisation_name' => ['required', 'string', 'max:255'], 'representative_name' => ['required', 'string', 'max:255'], 'representative_role' => ['required', 'string', 'max:255'], 'phone' => ['required', 'string', 'max:30'], 'email' => ['nullable', 'email', 'max:255'], 'proof_notes' => ['required', 'string', 'min:20', 'max:5000']]);
+        // Verification substance: a builder claim must carry a checkable RERA/CIN number;
+        // official website/email and an authorization letter link strengthen the review.
+        $data = $request->validate(['society_id' => ['required', 'integer', 'exists:societies,id'], 'organisation_name' => ['required', 'string', 'max:255'], 'representative_name' => ['required', 'string', 'max:255'], 'representative_role' => ['required', 'string', 'max:255'], 'phone' => ['required', 'string', 'max:30'], 'email' => ['nullable', 'email', 'max:255'], 'registration_number' => ['required', 'string', 'min:5', 'max:120'], 'official_website' => ['nullable', 'url', 'max:500'], 'official_email' => ['nullable', 'email', 'max:255'], 'authorization_proof_url' => ['nullable', 'url', 'max:1000'], 'gst_number' => ['nullable', 'string', 'max:30'], 'proof_notes' => ['required', 'string', 'min:20', 'max:5000']]);
         $society = Society::query()->whereKey($data['society_id'])->where('is_published', true)->whereIn('status', ['Verified', 'Premium'])->first();
         if (! $society) {
             return response()->json(['message' => 'Claims are accepted only for published societies.'], 422);

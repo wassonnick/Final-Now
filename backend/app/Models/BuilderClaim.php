@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BuilderClaim extends Model
 {
-    protected $fillable = ['account_id', 'society_id', 'claim_type', 'organisation_name', 'representative_name', 'representative_role', 'phone', 'email', 'proof_notes', 'status', 'review_notes', 'reviewed_at'];
+    protected $fillable = ['account_id', 'society_id', 'claim_type', 'organisation_name', 'representative_name', 'representative_role', 'phone', 'email', 'proof_notes', 'registration_number', 'official_website', 'official_email', 'authorization_proof_url', 'gst_number', 'status', 'review_notes', 'reviewed_at'];
 
     protected $casts = ['reviewed_at' => 'datetime'];
 

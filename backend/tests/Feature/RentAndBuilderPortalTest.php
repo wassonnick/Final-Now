@@ -33,7 +33,7 @@ class RentAndBuilderPortalTest extends TestCase
         $society = $this->society();
         $token = str_repeat('x', 48);
         $account = Account::create(['role' => 'customer', 'phone' => '9999999999', 'phone_normalized' => '9999999999', 'name' => 'RWA User', 'status' => 'active', 'api_token_hash' => hash('sha256', $token)]);
-        $payload = ['society_id' => $society->id, 'organisation_name' => 'Test RWA', 'representative_name' => 'RWA User', 'representative_role' => 'Secretary', 'phone' => '9999999999', 'proof_notes' => 'Registration proof available for verification.'];
+        $payload = ['society_id' => $society->id, 'organisation_name' => 'Test RWA', 'representative_name' => 'RWA User', 'representative_role' => 'Secretary', 'phone' => '9999999999', 'registration_number' => 'RWA-REG-3456', 'proof_notes' => 'Registration proof available for verification.'];
         $this->postJson('/api/accounts/builder-claims', $payload)->assertUnauthorized();
         $this->withToken($token)->postJson('/api/accounts/builder-claims', $payload)->assertCreated()->assertJsonPath('data.status', 'pending');
         $claim = BuilderClaim::first();
@@ -41,5 +41,28 @@ class RentAndBuilderPortalTest extends TestCase
         $claim->update(['status' => 'approved']);
         $this->withToken($token)->postJson("/api/accounts/builder-claims/{$claim->id}/announcements", ['title' => 'Water update', 'category' => 'maintenance', 'content' => 'Maintenance timing has changed.'])->assertCreated();
         $this->getJson('/api/societies/test-society/announcements')->assertOk()->assertJsonCount(0, 'data');
+    }
+
+    public function test_claims_require_a_registration_number_and_persist_verification_fields(): void
+    {
+        $society = $this->society();
+        $token = str_repeat('y', 48);
+        Account::create(['role' => 'customer', 'phone' => '9888888888', 'phone_normalized' => '9888888888', 'name' => 'Builder Rep', 'status' => 'active', 'api_token_hash' => hash('sha256', $token)]);
+
+        $base = ['society_id' => $society->id, 'organisation_name' => 'DLF Ltd', 'representative_name' => 'Rep', 'representative_role' => 'AGM Sales', 'phone' => '9888888888', 'proof_notes' => 'Authorization letter available on request for verification.'];
+
+        // No registration number -> rejected: the verification substance is mandatory.
+        $this->withToken($token)->postJson('/api/accounts/builder-claims', $base)->assertStatus(422);
+
+        $this->withToken($token)->postJson('/api/accounts/builder-claims', $base + [
+            'registration_number' => 'RC/REP/HARERA/999OF2020',
+            'official_website' => 'https://www.dlf.in',
+            'official_email' => 'sales@dlf.in',
+            'authorization_proof_url' => 'https://drive.google.com/file/d/abc/view',
+            'gst_number' => '07AAACD1234F1Z5',
+        ])->assertCreated()
+            ->assertJsonPath('data.registration_number', 'RC/REP/HARERA/999OF2020')
+            ->assertJsonPath('data.official_website', 'https://www.dlf.in')
+            ->assertJsonPath('data.status', 'pending');
     }
 }

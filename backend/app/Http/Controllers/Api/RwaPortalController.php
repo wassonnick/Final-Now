@@ -119,6 +119,8 @@ class RwaPortalController extends Controller
             return response()->json(['message' => 'OTP login required.'], 401);
         }
 
+        // Verification substance: an RWA claim must carry the society/RWA registration
+        // number; an authorization proof link (board resolution / letter) helps the review.
         $data = $request->validate([
             'society_id' => ['required', 'integer', 'exists:societies,id'],
             'organisation_name' => ['required', 'string', 'max:255'],
@@ -126,6 +128,10 @@ class RwaPortalController extends Controller
             'representative_role' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
+            'registration_number' => ['required', 'string', 'min:5', 'max:120'],
+            'official_website' => ['nullable', 'url', 'max:500'],
+            'official_email' => ['nullable', 'email', 'max:255'],
+            'authorization_proof_url' => ['nullable', 'url', 'max:1000'],
             'proof_notes' => ['required', 'string', 'min:20', 'max:5000'],
         ]);
 

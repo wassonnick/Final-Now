@@ -44,7 +44,13 @@ export function AdminRwaPortalPage() {
   }, []);
 
   async function updateClaim(id: number, status: string) {
-    await adminUpdateRwaClaim(id, { status });
+    let review_notes: string | undefined;
+    if (status === "rejected") {
+      const notes = window.prompt("Why is this RWA claim being rejected? (shared with the applicant)");
+      if (notes === null) return;
+      review_notes = notes || undefined;
+    }
+    await adminUpdateRwaClaim(id, review_notes ? { status, review_notes } : { status });
     setMessage(`RWA claim ${status}.`);
     await load();
   }
@@ -101,7 +107,17 @@ export function AdminRwaPortalPage() {
                   </div>
                   <span className="h-fit rounded-full bg-slate-50 px-3 py-1 text-xs font-black capitalize text-slate-700">{claim.status}</span>
                 </div>
+                <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/60 p-3 text-sm">
+                  <p className="text-xs font-black uppercase tracking-wide text-amber-800">Verification</p>
+                  <p className="mt-1 font-bold">{claim.registration_number ? `RWA registration: ${claim.registration_number}` : "No registration number provided"}</p>
+                  <p className="mt-1 flex flex-wrap gap-3 text-blue-700">
+                    {claim.official_website ? <a className="underline" href={claim.official_website} target="_blank" rel="noreferrer">Official website</a> : null}
+                    {claim.authorization_proof_url ? <a className="underline" href={claim.authorization_proof_url} target="_blank" rel="noreferrer">Authorization proof</a> : null}
+                    {claim.official_email ? <span className="text-slate-600">{claim.official_email}</span> : null}
+                  </p>
+                </div>
                 <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{claim.proof_notes}</p>
+                {claim.review_notes ? <p className="mt-2 text-xs font-bold text-rose-700">Review notes: {claim.review_notes}</p> : null}
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button size="sm" className="rounded-full bg-emerald-600" onClick={() => void updateClaim(claim.id, "approved")}>
                     <ShieldCheck className="mr-2 h-4 w-4" />

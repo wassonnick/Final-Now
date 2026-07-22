@@ -22,6 +22,11 @@ export type RwaClaim = {
   phone?: string | null;
   email?: string | null;
   proof_notes?: string | null;
+  registration_number?: string | null;
+  official_website?: string | null;
+  official_email?: string | null;
+  authorization_proof_url?: string | null;
+  review_notes?: string | null;
   status: "pending" | "approved" | "rejected" | string;
   reviewed_at?: string | null;
   society?: RwaSociety | null;
@@ -195,7 +200,7 @@ export async function adminListRwaReplies() {
   return (json.data || []) as RwaReply[];
 }
 
-export async function adminUpdateRwaClaim(id: number, payload: { status: string; notes?: string }) {
+export async function adminUpdateRwaClaim(id: number, payload: { status: string; review_notes?: string }) {
   const response = await adminFetch(`/admin/rwa-claims/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },

@@ -60,7 +60,7 @@ class RwaPortalTest extends TestCase
             'representative_name' => 'Builder Rep',
             'representative_role' => 'CRM',
             'phone' => '9999999999',
-            'proof_notes' => 'Builder relationship proof is available for review.',
+            'registration_number' => 'RC-TEST-1234', 'proof_notes' => 'Builder relationship proof is available for review.',
             'status' => 'approved',
         ]);
 
@@ -70,7 +70,7 @@ class RwaPortalTest extends TestCase
             'representative_name' => 'RWA Secretary',
             'representative_role' => 'Secretary',
             'phone' => '9999999999',
-            'proof_notes' => 'AOA registration and society office proof available for SocietyFlats review.',
+            'registration_number' => 'RWA-REG-5678', 'proof_notes' => 'AOA registration and society office proof available for SocietyFlats review.',
         ];
 
         $this->postJson('/api/accounts/rwa/claims', $payload)->assertUnauthorized();
@@ -110,7 +110,7 @@ class RwaPortalTest extends TestCase
             'representative_name' => 'RWA Secretary',
             'representative_role' => 'Secretary',
             'phone' => '9999999999',
-            'proof_notes' => 'AOA registration proof available for review.',
+            'registration_number' => 'RWA-REG-9012', 'proof_notes' => 'AOA registration proof available for review.',
             'status' => 'approved',
             'reviewed_at' => now(),
         ]);
