@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Concerns\AuthenticatesAccount;
 use App\Http\Controllers\Controller;
 use App\Models\AccountDevice;
+use App\Models\AccountNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -12,6 +13,64 @@ use Illuminate\Validation\Rule;
 class AccountNotificationController extends Controller
 {
     use AuthenticatesAccount;
+
+    public function inbox(Request $request): JsonResponse
+    {
+        $account = $this->accountFromBearer($request);
+        if (! $account) {
+            return $this->unauthorized();
+        }
+
+        $notifications = AccountNotification::query()
+            ->where('account_id', $account->id)
+            ->latest()
+            ->limit(min(max((int) $request->integer('limit', 30), 1), 100))
+            ->get();
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => $notifications->map(fn (AccountNotification $notification) => $this->safeNotificationPayload($notification))->values(),
+            'unread_count' => AccountNotification::where('account_id', $account->id)->where('status', 'unread')->count(),
+        ]);
+    }
+
+    public function markRead(Request $request, AccountNotification $notification): JsonResponse
+    {
+        $account = $this->accountFromBearer($request);
+        if (! $account || $notification->account_id !== $account->id) {
+            return $this->unauthorized();
+        }
+
+        $notification->update([
+            'status' => 'read',
+            'read_at' => $notification->read_at ?: now(),
+        ]);
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => $this->safeNotificationPayload($notification->fresh()),
+            'unread_count' => AccountNotification::where('account_id', $account->id)->where('status', 'unread')->count(),
+        ]);
+    }
+
+    public function markAllRead(Request $request): JsonResponse
+    {
+        $account = $this->accountFromBearer($request);
+        if (! $account) {
+            return $this->unauthorized();
+        }
+
+        AccountNotification::query()
+            ->where('account_id', $account->id)
+            ->where('status', 'unread')
+            ->update(['status' => 'read', 'read_at' => now()]);
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Notifications marked read.',
+            'unread_count' => 0,
+        ]);
+    }
 
     public function preferences(Request $request): JsonResponse
     {
@@ -152,6 +211,20 @@ class AccountNotificationController extends Controller
             'push_token_registered' => filled($device->expo_push_token),
             'last_registered_at' => optional($device->last_registered_at)->toISOString(),
             'disabled_at' => optional($device->disabled_at)->toISOString(),
+        ];
+    }
+
+    private function safeNotificationPayload(AccountNotification $notification): array
+    {
+        return [
+            'id' => $notification->id,
+            'event' => $notification->event,
+            'title' => $notification->title,
+            'body' => $notification->body,
+            'status' => $notification->status,
+            'data' => $notification->data ?: [],
+            'read_at' => optional($notification->read_at)->toISOString(),
+            'created_at' => optional($notification->created_at)->toISOString(),
         ];
     }
 

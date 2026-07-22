@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Account;
 use App\Models\AccountDevice;
+use App\Models\AccountNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -106,6 +107,54 @@ class AccountNotificationPreferencesTest extends TestCase
             ->assertJsonPath('data.push_ready', false);
 
         $this->assertNotNull(AccountDevice::where('device_id', 'ios-install-456')->first()?->disabled_at);
+    }
+
+    public function test_account_notification_inbox_is_private_and_markable(): void
+    {
+        [$account, $token] = $this->accountWithToken();
+        $otherAccount = Account::create([
+            'role' => 'customer',
+            'phone' => '9999999997',
+            'phone_normalized' => '9999999997',
+            'status' => 'active',
+        ]);
+
+        $notification = AccountNotification::create([
+            'account_id' => $account->id,
+            'event' => 'saved_search_match',
+            'title' => 'New match',
+            'body' => 'A matching home is ready to review.',
+            'status' => 'unread',
+            'data' => ['property_slug' => 'safe-home'],
+        ]);
+        AccountNotification::create([
+            'account_id' => $otherAccount->id,
+            'event' => 'site_visit_reminder',
+            'title' => 'Other account',
+            'status' => 'unread',
+        ]);
+
+        $this->getJson('/api/accounts/notifications')
+            ->assertUnauthorized();
+
+        $this->withToken($token)->getJson('/api/accounts/notifications')
+            ->assertOk()
+            ->assertJsonPath('unread_count', 1)
+            ->assertJsonPath('data.0.id', $notification->id)
+            ->assertJsonMissing(['title' => 'Other account']);
+
+        $this->withToken($token)->postJson("/api/accounts/notifications/{$notification->id}/read")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'read');
+
+        $this->assertDatabaseHas('account_notifications', [
+            'id' => $notification->id,
+            'status' => 'read',
+        ]);
+
+        $this->withToken($token)->postJson('/api/accounts/notifications/mark-all-read')
+            ->assertOk()
+            ->assertJsonPath('unread_count', 0);
     }
 
     private function accountWithToken(): array

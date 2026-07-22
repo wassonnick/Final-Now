@@ -73,6 +73,12 @@ class MobilePushDeliveryTest extends TestCase
             'expo_ticket_id' => 'ticket-1',
             'status' => 'queued',
         ]);
+        $this->assertDatabaseHas('account_notifications', [
+            'account_id' => $account->id,
+            'event' => 'saved_search_match',
+            'title' => 'New match for your saved search',
+            'status' => 'unread',
+        ]);
 
         Http::assertSent(function ($request) {
             $payload = $request->data();
@@ -186,7 +192,63 @@ class MobilePushDeliveryTest extends TestCase
         $this->assertSame(1, $summary['matches_created']);
         $this->assertSame(0, $summary['sent']);
         $this->assertDatabaseHas('saved_search_alerts', ['status' => 'pending']);
+        $this->assertDatabaseHas('account_device_push_receipts', [
+            'event' => 'saved_search_match',
+            'status' => 'deferred',
+        ]);
+        $this->assertDatabaseHas('account_notifications', [
+            'account_id' => $account->id,
+            'event' => 'saved_search_match',
+            'status' => 'unread',
+        ]);
         Http::assertNothingSent();
+    }
+
+    public function test_deferred_quiet_hours_push_flushes_after_window(): void
+    {
+        config(['services.mobile_push.enabled' => true]);
+
+        Http::fake([
+            'https://exp.host/*' => Http::response(['data' => [['status' => 'ok', 'id' => 'ticket-deferred']]], 200),
+        ]);
+
+        $account = $this->account('9999999991');
+        $device = AccountDevice::create([
+            'account_id' => $account->id,
+            'device_id' => 'deferred-device',
+            'platform' => 'ios',
+            'expo_push_token' => 'ExpoPushToken[deferredDevice]',
+            'quiet_hours_enabled' => false,
+            'last_registered_at' => now(),
+        ]);
+        AccountDevicePushReceipt::create([
+            'account_device_id' => $device->id,
+            'account_id' => $account->id,
+            'event' => 'saved_search_match',
+            'status' => 'deferred',
+            'meta' => [
+                'provider' => 'expo',
+                'deferred_reason' => 'quiet_hours',
+                'title' => 'Deferred title',
+                'body' => 'Deferred body',
+                'data' => ['event' => 'saved_search_match', 'property_slug' => 'deferred-home'],
+                'sound' => 'default',
+            ],
+        ]);
+
+        $this->artisan('mobile-push:flush-deferred')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('account_device_push_receipts', [
+            'account_device_id' => $device->id,
+            'status' => 'queued',
+            'expo_ticket_id' => 'ticket-deferred',
+        ]);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://exp.host/--/api/v2/push/send'
+            && data_get($request->data(), '0.title') === 'Deferred title'
+            && data_get($request->data(), '0.data.property_slug') === 'deferred-home'
+        );
     }
 
     public function test_push_receipt_checker_marks_failed_receipts(): void
@@ -228,6 +290,7 @@ class MobilePushDeliveryTest extends TestCase
             'status' => 'failed',
             'error_code' => 'DeviceNotRegistered',
         ]);
+        $this->assertNotNull($device->fresh()->disabled_at);
     }
 
     private function account(string $phone): Account

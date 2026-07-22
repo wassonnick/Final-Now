@@ -1,7 +1,8 @@
 import React from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
-import { AppHeader, AppScreen, EmptyState, FilterChip, PrimaryButton, SectionHeader } from '../src/components';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppHeader, AppScreen, EmptyState, FilterChip, PrimaryButton, SecondaryButton, SectionHeader } from '../src/components';
 import { notificationService } from '../src/api/services/notifications';
 import { requestPushNotificationAccess } from '../src/lib/notifications';
 import { useAuthStore } from '../src/state/authStore';
@@ -29,6 +30,20 @@ export default function NotificationsScreen() {
   } = useNotificationStore();
   const authStatus = useAuthStore((state) => state.status);
   const signedIn = authStatus === 'signed_in';
+  const queryClient = useQueryClient();
+  const inbox = useQuery({
+    queryKey: ['account-notifications'],
+    queryFn: notificationService.inbox,
+    enabled: signedIn,
+  });
+  const markRead = useMutation({
+    mutationFn: (id: number) => notificationService.markRead(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['account-notifications'] }),
+  });
+  const markAllRead = useMutation({
+    mutationFn: notificationService.markAllRead,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['account-notifications'] }),
+  });
 
   const currentPreferences = {
     savedSearchAlerts,
@@ -143,6 +158,42 @@ export default function NotificationsScreen() {
         />
       </View>
 
+      <SectionHeader title={signedIn && (inbox.data?.unread_count ?? 0) > 0 ? `Notification inbox · ${inbox.data?.unread_count} unread` : 'Notification inbox'} />
+      {!signedIn ? (
+        <EmptyState title="Sign in to see alerts" body="Your matching homes, visit reminders and account updates will appear here once this phone is linked." />
+      ) : inbox.isLoading ? (
+        <View style={styles.inboxCard}>
+          <Text style={styles.body}>Loading your latest SocietyFlats alerts…</Text>
+        </View>
+      ) : inbox.data?.data?.length ? (
+        <View style={styles.inboxCard}>
+          {(inbox.data?.data ?? []).map((item) => (
+            <Pressable
+              key={item.id}
+              style={[styles.notificationItem, item.status === 'unread' && styles.notificationUnread]}
+              onPress={() => item.status === 'unread' ? markRead.mutate(item.id) : undefined}
+              accessibilityRole="button"
+              accessibilityLabel={`Notification: ${item.title}`}
+            >
+              <View style={[styles.notificationDot, item.status === 'read' && styles.notificationDotRead]} />
+              <View style={styles.flex}>
+                <Text style={styles.notificationTitle}>{item.title}</Text>
+                {item.body ? <Text style={styles.notificationBody}>{item.body}</Text> : null}
+                {item.created_at ? <Text style={styles.notificationTime}>{new Date(item.created_at).toLocaleString()}</Text> : null}
+              </View>
+            </Pressable>
+          ))}
+          <SecondaryButton
+            disabled={(inbox.data?.unread_count ?? 0) === 0 || markAllRead.isPending}
+            onPress={() => markAllRead.mutate()}
+          >
+            Mark all as read
+          </SecondaryButton>
+        </View>
+      ) : (
+        <EmptyState title="No app alerts yet" body="When SocietyFlats finds a saved-search match or sends a visit reminder, it will stay here even if push is paused." />
+      )}
+
       <SectionHeader title="Saved-search alerts" />
       {savedSearches.length ? (
         <View>
@@ -185,4 +236,26 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   searchLink: { paddingVertical: spacing.sm, fontWeight: '800', color: colors.pine },
+  inboxCard: {
+    backgroundColor: colors.paperElevated,
+    borderColor: colors.line,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  notificationItem: {
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  notificationUnread: { backgroundColor: colors.paper },
+  notificationDot: { width: 10, height: 10, borderRadius: radius.pill, backgroundColor: colors.clay, marginTop: 6 },
+  notificationDotRead: { backgroundColor: colors.line },
+  notificationTitle: { fontSize: 16, fontWeight: '900', color: colors.ink },
+  notificationBody: { ...typography.muted, fontSize: 14, lineHeight: 20, marginTop: 4 },
+  notificationTime: { ...typography.muted, fontSize: 12, marginTop: 6 },
 });

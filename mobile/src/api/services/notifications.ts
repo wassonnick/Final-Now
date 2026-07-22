@@ -14,6 +14,17 @@ type QuietHoursPayload = {
   timezone?: string | null;
 };
 
+export type AccountNotification = {
+  id: number;
+  event: string;
+  title: string;
+  body?: string | null;
+  status: 'unread' | 'read' | string;
+  data?: Record<string, unknown> | null;
+  read_at?: string | null;
+  created_at?: string | null;
+};
+
 async function getDeviceId() {
   const existing = await AsyncStorage.getItem(DEVICE_ID_KEY);
   if (existing) return existing;
@@ -56,5 +67,20 @@ export const notificationService = {
     });
 
     return response.data as { data?: unknown };
+  },
+  async inbox() {
+    const response = await apiClient.get('/accounts/notifications');
+
+    return response.data as { data: AccountNotification[]; unread_count: number };
+  },
+  async markRead(id: number) {
+    const response = await apiClient.post(`/accounts/notifications/${id}/read`);
+
+    return response.data as { data: AccountNotification; unread_count: number };
+  },
+  async markAllRead() {
+    const response = await apiClient.post('/accounts/notifications/mark-all-read');
+
+    return response.data as { unread_count: number };
   },
 };

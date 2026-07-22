@@ -170,6 +170,11 @@ Artisan::command('mobile-push:check-receipts {--limit=100}', function (\App\Serv
     $this->info("Checked {$summary['checked']} push receipt(s): {$summary['ok']} delivered, {$summary['failed']} failed, {$summary['pending']} pending.");
 })->purpose('Check Expo push delivery receipts without exposing device tokens');
 
+Artisan::command('mobile-push:flush-deferred {--limit=100}', function (\App\Services\MobilePushNotificationService $mobilePush) {
+    $summary = $mobilePush->flushDeferred((int) $this->option('limit'));
+    $this->info("Checked {$summary['checked']} deferred push receipt(s): {$summary['sent']} sent, {$summary['failed']} failed, {$summary['pending']} still quiet, {$summary['skipped']} skipped.");
+})->purpose('Send deferred mobile push alerts after quiet hours without exposing device tokens');
+
 Artisan::command('ops:queue-market-refresh {--limit=15}', function () {
     $limit = max(1, min((int) $this->option('limit'), 30));
 
@@ -417,6 +422,7 @@ Schedule::command('saved-searches:match')->dailyAt('08:00')->withoutOverlapping(
 Schedule::command('ops:daily-digest')->dailyAt('07:30')->withoutOverlapping();
 Schedule::command('site-visits:send-reminders')->dailyAt('09:00')->withoutOverlapping();
 Schedule::command('mobile-push:check-receipts')->everyThirtyMinutes()->withoutOverlapping();
+Schedule::command('mobile-push:flush-deferred')->everyFifteenMinutes()->withoutOverlapping();
 // Fully-automatic daily market refresh keeps every published society's rent/sale ranges
 // current with no manual intervention. A daily batch of the stalest societies cycles the
 // whole catalogue through within a few days, then rotates as data ages past 30 days.

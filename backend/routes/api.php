@@ -321,6 +321,9 @@ Route::prefix('accounts')->group(function () {
     Route::get('/dashboard', [AccountController::class, 'dashboard']);
     Route::get('/notification-preferences', [\App\Http\Controllers\Api\AccountNotificationController::class, 'preferences']);
     Route::patch('/notification-preferences', [\App\Http\Controllers\Api\AccountNotificationController::class, 'updatePreferences']);
+    Route::get('/notifications', [\App\Http\Controllers\Api\AccountNotificationController::class, 'inbox']);
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\Api\AccountNotificationController::class, 'markAllRead']);
+    Route::post('/notifications/{notification}/read', [\App\Http\Controllers\Api\AccountNotificationController::class, 'markRead']);
     Route::post('/device-tokens', [\App\Http\Controllers\Api\AccountNotificationController::class, 'upsertDevice'])->middleware('throttle:20,1');
     Route::delete('/device-tokens/{deviceId}', [\App\Http\Controllers\Api\AccountNotificationController::class, 'destroyDevice']);
     Route::get('/referrals', [ReferralController::class, 'index']);
