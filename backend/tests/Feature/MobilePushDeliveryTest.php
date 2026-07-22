@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Account;
 use App\Models\AccountDevice;
+use App\Models\AccountDevicePushReceipt;
 use App\Models\Lead;
 use App\Models\Property;
 use App\Models\SavedSearch;
@@ -67,6 +68,11 @@ class MobilePushDeliveryTest extends TestCase
         $this->assertSame(1, $summary['matches_created']);
         $this->assertSame(1, $summary['sent']);
         $this->assertDatabaseHas('saved_search_alerts', ['status' => 'sent']);
+        $this->assertDatabaseHas('account_device_push_receipts', [
+            'event' => 'saved_search_match',
+            'expo_ticket_id' => 'ticket-1',
+            'status' => 'queued',
+        ]);
 
         Http::assertSent(function ($request) {
             $payload = $request->data();
@@ -126,6 +132,102 @@ class MobilePushDeliveryTest extends TestCase
         Http::assertSent(fn ($request) => $request->url() === 'https://exp.host/--/api/v2/push/send'
             && data_get($request->data(), '0.data.event') === 'site_visit_reminder'
         );
+    }
+
+    public function test_quiet_hours_skip_push_delivery_without_marking_alert_sent(): void
+    {
+        config([
+            'services.mobile_push.enabled' => true,
+            'services.saved_search_alerts.enabled' => false,
+        ]);
+
+        Http::fake([
+            'https://exp.host/*' => Http::response(['data' => [['status' => 'ok', 'id' => 'ticket-skipped']]], 200),
+        ]);
+
+        $account = $this->account('9999999993');
+        AccountDevice::create([
+            'account_id' => $account->id,
+            'device_id' => 'quiet-device',
+            'platform' => 'ios',
+            'expo_push_token' => 'ExpoPushToken[quietDevice]',
+            'saved_search_alerts' => true,
+            'quiet_hours_enabled' => true,
+            'quiet_hours_start' => '00:00',
+            'quiet_hours_end' => '23:59',
+            'timezone' => config('app.timezone'),
+            'last_registered_at' => now(),
+        ]);
+
+        $society = Society::create(['name' => 'Quiet Society', 'slug' => 'quiet-society', 'status' => 'Verified', 'is_published' => true]);
+        Property::create([
+            'society_id' => $society->id,
+            'title' => 'Quiet matching home',
+            'slug' => 'quiet-matching-home',
+            'listing_type' => 'Rent',
+            'status' => 'Live',
+            'verified' => true,
+            'verified_at' => now(),
+            'availability_checked_at' => now(),
+            'published_at' => now(),
+            'price' => '75000',
+        ]);
+        SavedSearch::create([
+            'account_id' => $account->id,
+            'name' => 'Quiet rentals',
+            'filters' => ['tab' => 'rent'],
+            'alert_enabled' => true,
+            'alert_channel' => 'push',
+            'alert_frequency' => 'daily',
+        ]);
+
+        $summary = app(SavedSearchMatcher::class)->run(true);
+
+        $this->assertSame(1, $summary['matches_created']);
+        $this->assertSame(0, $summary['sent']);
+        $this->assertDatabaseHas('saved_search_alerts', ['status' => 'pending']);
+        Http::assertNothingSent();
+    }
+
+    public function test_push_receipt_checker_marks_failed_receipts(): void
+    {
+        $account = $this->account('9999999992');
+        $device = AccountDevice::create([
+            'account_id' => $account->id,
+            'device_id' => 'receipt-device',
+            'platform' => 'ios',
+            'expo_push_token' => 'ExpoPushToken[receiptDevice]',
+            'last_registered_at' => now(),
+        ]);
+        AccountDevicePushReceipt::create([
+            'account_device_id' => $device->id,
+            'account_id' => $account->id,
+            'event' => 'saved_search_match',
+            'expo_ticket_id' => 'ticket-failed',
+            'status' => 'queued',
+            'sent_at' => now(),
+        ]);
+
+        Http::fake([
+            'https://exp.host/--/api/v2/push/getReceipts' => Http::response([
+                'data' => [
+                    'ticket-failed' => [
+                        'status' => 'error',
+                        'message' => 'Device is not registered.',
+                        'details' => ['error' => 'DeviceNotRegistered'],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $this->artisan('mobile-push:check-receipts')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('account_device_push_receipts', [
+            'expo_ticket_id' => 'ticket-failed',
+            'status' => 'failed',
+            'error_code' => 'DeviceNotRegistered',
+        ]);
     }
 
     private function account(string $phone): Account

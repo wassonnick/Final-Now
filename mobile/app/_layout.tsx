@@ -5,7 +5,7 @@ import React, { useEffect, useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { analytics } from '../src/lib/analytics';
-import { configureNotificationHandler } from '../src/lib/notifications';
+import { configureNotificationHandler, useNotificationResponseRouting } from '../src/lib/notifications';
 import { useAuthStore } from '../src/state/authStore';
 import { useNotificationStore } from '../src/state/notificationStore';
 import { useOnboardingStore } from '../src/state/onboardingStore';
@@ -16,6 +16,7 @@ void SplashScreen.preventAutoHideAsync();
 configureNotificationHandler();
 
 export default function RootLayout() {
+  useNotificationResponseRouting();
   const queryClient = useMemo(() => new QueryClient({
     defaultOptions: {
       queries: {

@@ -165,6 +165,11 @@ Artisan::command('site-visits:send-reminders', function (LeadNotificationService
     $this->info("Processed {$due->count()} site-visit reminder(s): {$sent} sent/stamped, {$pending} pending.");
 })->purpose('Send T-1-day reminders for confirmed site visits through webhook/mobile push channels');
 
+Artisan::command('mobile-push:check-receipts {--limit=100}', function (\App\Services\MobilePushNotificationService $mobilePush) {
+    $summary = $mobilePush->checkReceipts((int) $this->option('limit'));
+    $this->info("Checked {$summary['checked']} push receipt(s): {$summary['ok']} delivered, {$summary['failed']} failed, {$summary['pending']} pending.");
+})->purpose('Check Expo push delivery receipts without exposing device tokens');
+
 Artisan::command('ops:queue-market-refresh {--limit=15}', function () {
     $limit = max(1, min((int) $this->option('limit'), 30));
 
@@ -411,6 +416,7 @@ Schedule::command('ops:daily-catchup')->everyThirtyMinutes()->withoutOverlapping
 Schedule::command('saved-searches:match')->dailyAt('08:00')->withoutOverlapping();
 Schedule::command('ops:daily-digest')->dailyAt('07:30')->withoutOverlapping();
 Schedule::command('site-visits:send-reminders')->dailyAt('09:00')->withoutOverlapping();
+Schedule::command('mobile-push:check-receipts')->everyThirtyMinutes()->withoutOverlapping();
 // Fully-automatic daily market refresh keeps every published society's rent/sale ranges
 // current with no manual intervention. A daily batch of the stalest societies cycles the
 // whole catalogue through within a few days, then rotates as data ages past 30 days.

@@ -32,11 +32,17 @@ class AccountNotificationPreferencesTest extends TestCase
                 'saved_search_alerts' => true,
                 'site_visit_reminders' => false,
                 'owner_listing_updates' => true,
+                'quiet_hours_enabled' => true,
+                'quiet_hours_start' => '22:00',
+                'quiet_hours_end' => '08:00',
+                'timezone' => 'Asia/Kolkata',
             ],
         ])
             ->assertOk()
             ->assertJsonPath('data.device_id', 'ios-install-123')
             ->assertJsonPath('data.push_token_registered', true)
+            ->assertJsonPath('data.quiet_hours_enabled', true)
+            ->assertJsonPath('data.quiet_hours_start', '22:00')
             ->assertJsonMissing(['expo_push_token' => 'ExpoPushToken[abc_123-XYZ]']);
 
         $this->assertDatabaseHas('account_devices', [
@@ -44,6 +50,10 @@ class AccountNotificationPreferencesTest extends TestCase
             'device_id' => 'ios-install-123',
             'platform' => 'ios',
             'site_visit_reminders' => false,
+            'quiet_hours_enabled' => true,
+            'quiet_hours_start' => '22:00',
+            'quiet_hours_end' => '08:00',
+            'timezone' => 'Asia/Kolkata',
         ]);
     }
 
@@ -62,10 +72,16 @@ class AccountNotificationPreferencesTest extends TestCase
         $this->withToken($token)->patchJson('/api/accounts/notification-preferences', [
             'saved_search_alerts' => false,
             'owner_listing_updates' => false,
+            'quiet_hours_enabled' => true,
+            'quiet_hours_start' => '21:30',
+            'quiet_hours_end' => '07:30',
+            'timezone' => 'Asia/Kolkata',
         ])
             ->assertOk()
             ->assertJsonPath('data.saved_search_alerts', false)
             ->assertJsonPath('data.owner_listing_updates', false)
+            ->assertJsonPath('data.quiet_hours_enabled', true)
+            ->assertJsonPath('data.quiet_hours_start', '21:30')
             ->assertJsonPath('data.registered_devices_count', 1);
     }
 

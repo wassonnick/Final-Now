@@ -17,10 +17,15 @@ export default function NotificationsScreen() {
     permissionStatus,
     expoPushToken,
     pushTokenCaptured,
+    quietHoursEnabled,
+    quietHoursEnd,
+    quietHoursStart,
     savedSearchAlerts,
     setPermissionResult,
     setPreference,
+    setQuietHours,
     siteVisitReminders,
+    timezone,
   } = useNotificationStore();
   const authStatus = useAuthStore((state) => state.status);
   const signedIn = authStatus === 'signed_in';
@@ -29,6 +34,10 @@ export default function NotificationsScreen() {
     savedSearchAlerts,
     siteVisitReminders,
     ownerListingUpdates,
+    quietHoursEnabled,
+    quietHoursStart,
+    quietHoursEnd,
+    timezone: timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata',
   };
 
   const permissionLabel = permissionStatus === 'granted'
@@ -45,6 +54,22 @@ export default function NotificationsScreen() {
         await setPermissionResult(result.status, true, result.expoPushToken, 'Notifications are connected to your SocietyFlats account.');
       } catch {
         await setPermissionResult(result.status, result.tokenCaptured, result.expoPushToken, 'Notifications are allowed, but account registration did not complete. Try again after signing in.');
+      }
+    }
+  };
+
+  const toggleQuietHours = async () => {
+    const next = {
+      ...currentPreferences,
+      quietHoursEnabled: !quietHoursEnabled,
+      timezone: currentPreferences.timezone,
+    };
+    await setQuietHours(next.quietHoursEnabled, next.quietHoursStart, next.quietHoursEnd, next.timezone);
+    if (signedIn) {
+      try {
+        await notificationService.updatePreferences(next);
+      } catch {
+        await setPermissionResult(permissionStatus, pushTokenCaptured, expoPushToken, 'Quiet hours saved on this phone. Backend sync will retry when your account is reachable.');
       }
     }
   };
@@ -100,6 +125,24 @@ export default function NotificationsScreen() {
         />
       </View>
 
+      <SectionHeader title="Quiet hours" />
+      <View style={styles.quietCard}>
+        <View style={styles.row}>
+          <View style={[styles.dot, quietHoursEnabled ? styles.dotActive : styles.dotMuted]} />
+          <View style={styles.flex}>
+            <Text style={styles.cardTitle}>{quietHoursEnabled ? 'Quiet hours on' : 'Quiet hours off'}</Text>
+            <Text style={styles.body}>
+              Pause push alerts from {quietHoursStart} to {quietHoursEnd}. Site-visit and saved-search alerts will wait outside this window.
+            </Text>
+          </View>
+        </View>
+        <FilterChip
+          label={quietHoursEnabled ? 'Turn quiet hours off' : 'Pause 10 PM – 8 AM'}
+          selected={quietHoursEnabled}
+          onPress={() => void toggleQuietHours()}
+        />
+      </View>
+
       <SectionHeader title="Saved-search alerts" />
       {savedSearches.length ? (
         <View>
@@ -127,9 +170,19 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },
   flex: { flex: 1 },
   dot: { width: 14, height: 14, borderRadius: radius.pill, backgroundColor: colors.clay, marginTop: 6 },
+  dotActive: { backgroundColor: colors.pine },
+  dotMuted: { backgroundColor: colors.clay },
   cardTitle: { ...typography.heading, fontSize: 22, lineHeight: 28 },
   body: { ...typography.muted, fontSize: 15, lineHeight: 22 },
   message: { color: colors.pine, fontWeight: '800', lineHeight: 22 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  quietCard: {
+    backgroundColor: colors.paperElevated,
+    borderColor: colors.line,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
   searchLink: { paddingVertical: spacing.sm, fontWeight: '800', color: colors.pine },
 });

@@ -1,6 +1,8 @@
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import { router } from 'expo-router';
+import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 type PushAccessResult = {
@@ -76,4 +78,34 @@ export async function requestPushNotificationAccess(): Promise<PushAccessResult>
     expoPushToken: token.data,
     message: 'Notifications are allowed and the push token was captured locally.',
   };
+}
+
+function routeFromNotificationData(data: Record<string, unknown>) {
+  const event = String(data.event || '');
+  const propertySlug = typeof data.property_slug === 'string' ? data.property_slug : null;
+  const societySlug = typeof data.society_slug === 'string' ? data.society_slug : null;
+  const savedSearchId = data.saved_search_id ? String(data.saved_search_id) : null;
+
+  if (propertySlug) return `/properties/${propertySlug}` as const;
+  if (societySlug) return `/societies/${societySlug}` as const;
+  if (event === 'saved_search_match' && savedSearchId) return `/search?saved_search_id=${encodeURIComponent(savedSearchId)}` as const;
+  if (event === 'site_visit_reminder') return '/my-enquiries' as const;
+  return '/notifications' as const;
+}
+
+function openNotificationResponse(response: Notifications.NotificationResponse | null | undefined) {
+  const data = response?.notification.request.content.data;
+  if (!data) return;
+  router.push(routeFromNotificationData(data));
+}
+
+export function useNotificationResponseRouting() {
+  useEffect(() => {
+    Notifications.getLastNotificationResponseAsync()
+      .then(openNotificationResponse)
+      .catch(() => undefined);
+
+    const subscription = Notifications.addNotificationResponseReceivedListener(openNotificationResponse);
+    return () => subscription.remove();
+  }, []);
 }

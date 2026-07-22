@@ -4,13 +4,76 @@ namespace App\Services;
 
 use App\Models\Account;
 use App\Models\AccountDevice;
+use App\Models\AccountDevicePushReceipt;
 use App\Models\SavedSearchAlert;
 use App\Models\SiteVisit;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class MobilePushNotificationService
 {
+    public function checkReceipts(int $limit = 100): array
+    {
+        $summary = ['checked' => 0, 'ok' => 0, 'failed' => 0, 'pending' => 0];
+
+        $receipts = AccountDevicePushReceipt::query()
+            ->where('status', 'queued')
+            ->whereNotNull('expo_ticket_id')
+            ->oldest('sent_at')
+            ->limit(max(1, min($limit, 100)))
+            ->get();
+
+        if ($receipts->isEmpty()) {
+            return $summary;
+        }
+
+        $summary['checked'] = $receipts->count();
+
+        try {
+            $response = Http::timeout(8)
+                ->acceptJson()
+                ->asJson()
+                ->post((string) config('services.mobile_push.expo_receipt_endpoint'), [
+                    'ids' => $receipts->pluck('expo_ticket_id')->values()->all(),
+                ]);
+
+            if (! $response->successful()) {
+                $summary['pending'] = $receipts->count();
+                Log::warning('Mobile push receipt lookup failed', ['status' => $response->status()]);
+
+                return $summary;
+            }
+
+            $data = (array) $response->json('data', []);
+            foreach ($receipts as $receipt) {
+                $ticket = (array) data_get($data, $receipt->expo_ticket_id, []);
+                if ($ticket === []) {
+                    $summary['pending']++;
+                    continue;
+                }
+
+                $failed = data_get($ticket, 'status') === 'error';
+                $receipt->update([
+                    'status' => $failed ? 'failed' : 'delivered',
+                    'error_code' => data_get($ticket, 'details.error'),
+                    'error_message' => data_get($ticket, 'message') ? mb_substr((string) data_get($ticket, 'message'), 0, 2000) : null,
+                    'receipt_checked_at' => now(),
+                    'meta' => [
+                        ...($receipt->meta ?? []),
+                        'receipt_status' => data_get($ticket, 'status'),
+                    ],
+                ]);
+                $summary[$failed ? 'failed' : 'ok']++;
+            }
+        } catch (\Throwable $exception) {
+            $summary['pending'] = $receipts->count();
+            Log::warning('Mobile push receipt exception', ['message' => $exception->getMessage()]);
+        }
+
+        return $summary;
+    }
+
     public function sendToAccount(Account $account, string $event, string $title, string $body, array $data = [], ?string $preferenceColumn = null): array
     {
         $summary = ['attempted' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0];
@@ -34,7 +97,10 @@ class MobilePushNotificationService
             return $summary;
         }
 
-        foreach ($devices->chunk(100) as $chunk) {
+        $eligibleDevices = $devices->reject(fn (AccountDevice $device) => $this->isInsideQuietHours($device))->values();
+        $summary['skipped'] += $devices->count() - $eligibleDevices->count();
+
+        foreach ($eligibleDevices->chunk(100) as $chunk) {
             $messages = $chunk->map(fn (AccountDevice $device) => [
                 'to' => $device->expo_push_token,
                 'sound' => 'default',
@@ -46,6 +112,7 @@ class MobilePushNotificationService
                 ],
             ])->values()->all();
 
+            $deviceIds = $chunk->pluck('id')->values()->all();
             $summary['attempted'] += count($messages);
 
             try {
@@ -56,6 +123,7 @@ class MobilePushNotificationService
 
                 if (! $response->successful()) {
                     $summary['failed'] += count($messages);
+                    $this->recordBatchFailure($chunk, $event, 'http_'.$response->status(), 'Expo push request was not accepted.');
                     Log::warning('Mobile push batch failed', [
                         'event' => $event,
                         'account_id' => $account->id,
@@ -68,8 +136,12 @@ class MobilePushNotificationService
                 $failed = collect($tickets)->filter(fn ($ticket) => data_get($ticket, 'status') === 'error')->count();
                 $summary['failed'] += $failed;
                 $summary['sent'] += max(0, count($messages) - $failed);
+                foreach ($tickets as $index => $ticket) {
+                    $this->recordTicket($deviceIds[$index] ?? null, $account->id, $event, (array) $ticket);
+                }
             } catch (\Throwable $exception) {
                 $summary['failed'] += count($messages);
+                $this->recordBatchFailure($chunk, $event, 'exception', 'Expo push request failed.');
                 Log::warning('Mobile push exception', [
                     'event' => $event,
                     'account_id' => $account->id,
@@ -142,5 +214,69 @@ class MobilePushNotificationService
             ->where('phone_normalized', $normalized)
             ->where('status', 'active')
             ->first();
+    }
+
+    private function isInsideQuietHours(AccountDevice $device): bool
+    {
+        if (! $device->quiet_hours_enabled || ! $device->quiet_hours_start || ! $device->quiet_hours_end) {
+            return false;
+        }
+
+        $timezone = $device->timezone ?: config('app.timezone', 'UTC');
+        try {
+            $now = CarbonImmutable::now($timezone);
+        } catch (\Throwable) {
+            $now = CarbonImmutable::now(config('app.timezone', 'UTC'));
+        }
+
+        [$startHour, $startMinute] = array_map('intval', explode(':', $device->quiet_hours_start));
+        [$endHour, $endMinute] = array_map('intval', explode(':', $device->quiet_hours_end));
+
+        $start = $now->setTime($startHour, $startMinute);
+        $end = $now->setTime($endHour, $endMinute);
+
+        if ($start->equalTo($end)) {
+            return false;
+        }
+
+        if ($start->lessThan($end)) {
+            return $now->greaterThanOrEqualTo($start) && $now->lessThan($end);
+        }
+
+        return $now->greaterThanOrEqualTo($start) || $now->lessThan($end);
+    }
+
+    private function recordTicket(?int $deviceId, int $accountId, string $event, array $ticket): void
+    {
+        AccountDevicePushReceipt::create([
+            'account_device_id' => $deviceId,
+            'account_id' => $accountId,
+            'event' => $event,
+            'expo_ticket_id' => data_get($ticket, 'id'),
+            'status' => data_get($ticket, 'status') === 'error' ? 'failed' : 'queued',
+            'error_code' => data_get($ticket, 'details.error'),
+            'error_message' => data_get($ticket, 'message') ? mb_substr((string) data_get($ticket, 'message'), 0, 2000) : null,
+            'sent_at' => now(),
+            'meta' => [
+                'provider' => 'expo',
+                'ticket_status' => data_get($ticket, 'status'),
+            ],
+        ]);
+    }
+
+    private function recordBatchFailure($devices, string $event, string $code, string $message): void
+    {
+        foreach ($devices as $device) {
+            AccountDevicePushReceipt::create([
+                'account_device_id' => $device->id,
+                'account_id' => $device->account_id,
+                'event' => $event,
+                'status' => 'failed',
+                'error_code' => $code,
+                'error_message' => $message,
+                'sent_at' => now(),
+                'meta' => ['provider' => 'expo'],
+            ]);
+        }
     }
 }

@@ -116,6 +116,7 @@ return [
     'mobile_push' => [
         'enabled' => env('MOBILE_PUSH_ENABLED', true),
         'expo_endpoint' => env('EXPO_PUSH_ENDPOINT', 'https://exp.host/--/api/v2/push/send'),
+        'expo_receipt_endpoint' => env('EXPO_PUSH_RECEIPT_ENDPOINT', 'https://exp.host/--/api/v2/push/getReceipts'),
         'frontend_url' => env('FRONTEND_URL', 'https://societyflats.com'),
     ],
 
