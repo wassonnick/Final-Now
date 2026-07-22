@@ -1,16 +1,18 @@
 import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'expo-router';
+import * as Notifications from 'expo-notifications';
+import { Link, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppHeader, AppScreen, EmptyState, FilterChip, PrimaryButton, SecondaryButton, SectionHeader } from '../src/components';
-import { notificationService } from '../src/api/services/notifications';
-import { requestPushNotificationAccess } from '../src/lib/notifications';
+import { AccountNotification, notificationService } from '../src/api/services/notifications';
+import { requestPushNotificationAccess, routeFromNotificationData } from '../src/lib/notifications';
 import { useAuthStore } from '../src/state/authStore';
 import { useNotificationStore } from '../src/state/notificationStore';
 import { useSavedStore } from '../src/state/savedStore';
 import { colors, radius, shadows, spacing, typography } from '../src/theme/tokens';
 
 export default function NotificationsScreen() {
+  const [filter, setFilter] = React.useState<'all' | 'unread' | 'saved_search_match' | 'site_visit_reminder' | 'owner_listing_update'>('all');
   const savedSearches = useSavedStore((state) => state.searches);
   const {
     lastMessage,
@@ -44,6 +46,19 @@ export default function NotificationsScreen() {
     mutationFn: notificationService.markAllRead,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['account-notifications'] }),
   });
+  const notifications = inbox.data?.data ?? [];
+  const unreadCount = inbox.data?.unread_count ?? 0;
+  const visibleNotifications = notifications.filter((item) => {
+    if (filter === 'all') return true;
+    if (filter === 'unread') return item.status === 'unread';
+    return item.event === filter;
+  });
+
+  React.useEffect(() => {
+    if (signedIn) {
+      Notifications.setBadgeCountAsync(unreadCount).catch(() => undefined);
+    }
+  }, [signedIn, unreadCount]);
 
   const currentPreferences = {
     savedSearchAlerts,
@@ -158,33 +173,33 @@ export default function NotificationsScreen() {
         />
       </View>
 
-      <SectionHeader title={signedIn && (inbox.data?.unread_count ?? 0) > 0 ? `Notification inbox · ${inbox.data?.unread_count} unread` : 'Notification inbox'} />
+      <SectionHeader title={signedIn && unreadCount > 0 ? `Notification inbox · ${unreadCount} unread` : 'Notification inbox'} />
       {!signedIn ? (
         <EmptyState title="Sign in to see alerts" body="Your matching homes, visit reminders and account updates will appear here once this phone is linked." />
       ) : inbox.isLoading ? (
         <View style={styles.inboxCard}>
           <Text style={styles.body}>Loading your latest SocietyFlats alerts…</Text>
         </View>
-      ) : inbox.data?.data?.length ? (
+      ) : notifications.length ? (
         <View style={styles.inboxCard}>
-          {(inbox.data?.data ?? []).map((item) => (
-            <Pressable
+          <View style={styles.chipWrap}>
+            <FilterChip label="All" selected={filter === 'all'} onPress={() => setFilter('all')} />
+            <FilterChip label="Unread" selected={filter === 'unread'} onPress={() => setFilter('unread')} />
+            <FilterChip label="Saved homes" selected={filter === 'saved_search_match'} onPress={() => setFilter('saved_search_match')} />
+            <FilterChip label="Visits" selected={filter === 'site_visit_reminder'} onPress={() => setFilter('site_visit_reminder')} />
+            <FilterChip label="Listings" selected={filter === 'owner_listing_update'} onPress={() => setFilter('owner_listing_update')} />
+          </View>
+          {visibleNotifications.length ? visibleNotifications.map((item) => (
+            <NotificationInboxCard
               key={item.id}
-              style={[styles.notificationItem, item.status === 'unread' && styles.notificationUnread]}
-              onPress={() => item.status === 'unread' ? markRead.mutate(item.id) : undefined}
-              accessibilityRole="button"
-              accessibilityLabel={`Notification: ${item.title}`}
-            >
-              <View style={[styles.notificationDot, item.status === 'read' && styles.notificationDotRead]} />
-              <View style={styles.flex}>
-                <Text style={styles.notificationTitle}>{item.title}</Text>
-                {item.body ? <Text style={styles.notificationBody}>{item.body}</Text> : null}
-                {item.created_at ? <Text style={styles.notificationTime}>{new Date(item.created_at).toLocaleString()}</Text> : null}
-              </View>
-            </Pressable>
-          ))}
+              item={item}
+              onMarkRead={() => markRead.mutate(item.id)}
+            />
+          )) : (
+            <EmptyState title="Nothing in this filter" body="Switch to All to see every SocietyFlats alert saved for this account." />
+          )}
           <SecondaryButton
-            disabled={(inbox.data?.unread_count ?? 0) === 0 || markAllRead.isPending}
+            disabled={unreadCount === 0 || markAllRead.isPending}
             onPress={() => markAllRead.mutate()}
           >
             Mark all as read
@@ -205,6 +220,53 @@ export default function NotificationsScreen() {
         </View>
       ) : <EmptyState title="No saved-search alerts yet" body="Save a search to keep it ready here. Push alerts will use these saved searches once backend delivery is enabled." />}
     </AppScreen>
+  );
+}
+
+function notificationMeta(item: AccountNotification) {
+  if (item.event === 'saved_search_match') {
+    return { label: 'Saved-search match', detail: 'Review matching home', tone: colors.success };
+  }
+  if (item.event === 'site_visit_reminder') {
+    return { label: 'Site visit', detail: 'Open enquiries', tone: colors.clay };
+  }
+  if (item.event === 'owner_listing_update') {
+    return { label: 'Listing update', detail: 'Open my listings', tone: colors.warning };
+  }
+
+  return { label: 'SocietyFlats', detail: 'Open alert', tone: colors.pine };
+}
+
+function NotificationInboxCard({ item, onMarkRead }: { item: AccountNotification; onMarkRead: () => void }) {
+  const meta = notificationMeta(item);
+  const data = item.data && typeof item.data === 'object' ? item.data : {};
+
+  const openAlert = () => {
+    if (item.status === 'unread') onMarkRead();
+    router.push(routeFromNotificationData({ event: item.event, ...data }));
+  };
+
+  return (
+    <Pressable
+      style={[styles.notificationItem, item.status === 'unread' && styles.notificationUnread]}
+      onPress={openAlert}
+      accessibilityRole="button"
+      accessibilityLabel={`Open notification: ${item.title}`}
+    >
+      <View style={[styles.notificationDot, { backgroundColor: item.status === 'read' ? colors.line : meta.tone }]} />
+      <View style={styles.flex}>
+        <View style={styles.notificationHeader}>
+          <Text style={[styles.notificationLabel, { color: meta.tone }]}>{meta.label}</Text>
+          {item.status === 'unread' ? <Text style={styles.unreadPill}>Unread</Text> : null}
+        </View>
+        <Text style={styles.notificationTitle}>{item.title}</Text>
+        {item.body ? <Text style={styles.notificationBody}>{item.body}</Text> : null}
+        <View style={styles.notificationFooter}>
+          {item.created_at ? <Text style={styles.notificationTime}>{new Date(item.created_at).toLocaleString()}</Text> : null}
+          <Text style={styles.openText}>{meta.detail} →</Text>
+        </View>
+      </View>
+    </Pressable>
   );
 }
 
@@ -254,8 +316,21 @@ const styles = StyleSheet.create({
   },
   notificationUnread: { backgroundColor: colors.paper },
   notificationDot: { width: 10, height: 10, borderRadius: radius.pill, backgroundColor: colors.clay, marginTop: 6 },
-  notificationDotRead: { backgroundColor: colors.line },
+  notificationHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm, alignItems: 'center' },
+  notificationLabel: { fontSize: 12, fontWeight: '900', letterSpacing: 0.8, textTransform: 'uppercase' },
   notificationTitle: { fontSize: 16, fontWeight: '900', color: colors.ink },
   notificationBody: { ...typography.muted, fontSize: 14, lineHeight: 20, marginTop: 4 },
+  notificationFooter: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm, alignItems: 'center', marginTop: 6 },
   notificationTime: { ...typography.muted, fontSize: 12, marginTop: 6 },
+  unreadPill: {
+    backgroundColor: colors.pineSoft,
+    borderRadius: radius.pill,
+    color: colors.pine,
+    fontSize: 11,
+    fontWeight: '900',
+    overflow: 'hidden',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 3,
+  },
+  openText: { color: colors.pine, fontSize: 12, fontWeight: '900' },
 });

@@ -80,7 +80,7 @@ export async function requestPushNotificationAccess(): Promise<PushAccessResult>
   };
 }
 
-function routeFromNotificationData(data: Record<string, unknown>) {
+export function routeFromNotificationData(data: Record<string, unknown>) {
   const event = String(data.event || '');
   const propertySlug = typeof data.property_slug === 'string' ? data.property_slug : null;
   const societySlug = typeof data.society_slug === 'string' ? data.society_slug : null;
@@ -90,6 +90,7 @@ function routeFromNotificationData(data: Record<string, unknown>) {
   if (societySlug) return `/societies/${societySlug}` as const;
   if (event === 'saved_search_match' && savedSearchId) return `/search?saved_search_id=${encodeURIComponent(savedSearchId)}` as const;
   if (event === 'site_visit_reminder') return '/my-enquiries' as const;
+  if (event === 'owner_listing_update') return '/my-listings' as const;
   return '/notifications' as const;
 }
 
