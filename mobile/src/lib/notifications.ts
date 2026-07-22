@@ -107,6 +107,18 @@ export async function requestPushNotificationAccess(): Promise<PushAccessResult>
   };
 }
 
+export async function setAppNotificationBadgeCount(count: number) {
+  const Notifications = await getNotifications();
+  if (!Notifications) return false;
+
+  try {
+    await Notifications.setBadgeCountAsync(count);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function routeFromNotificationData(data: Record<string, unknown>) {
   const event = String(data.event || '');
   const propertySlug = typeof data.property_slug === 'string' ? data.property_slug : null;

@@ -1,11 +1,10 @@
 import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import * as Notifications from 'expo-notifications';
 import { Link, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppHeader, AppScreen, EmptyState, FilterChip, PrimaryButton, SecondaryButton, SectionHeader } from '../src/components';
 import { AccountNotification, notificationService } from '../src/api/services/notifications';
-import { requestPushNotificationAccess, routeFromNotificationData } from '../src/lib/notifications';
+import { requestPushNotificationAccess, routeFromNotificationData, setAppNotificationBadgeCount } from '../src/lib/notifications';
 import { useAuthStore } from '../src/state/authStore';
 import { useNotificationStore } from '../src/state/notificationStore';
 import { useSavedStore } from '../src/state/savedStore';
@@ -38,6 +37,11 @@ export default function NotificationsScreen() {
     queryFn: notificationService.inbox,
     enabled: signedIn,
   });
+  const accountPreferences = useQuery({
+    queryKey: ['account-notification-preferences'],
+    queryFn: notificationService.preferences,
+    enabled: signedIn,
+  });
   const markRead = useMutation({
     mutationFn: (id: number) => notificationService.markRead(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['account-notifications'] }),
@@ -56,9 +60,24 @@ export default function NotificationsScreen() {
 
   React.useEffect(() => {
     if (signedIn) {
-      Notifications.setBadgeCountAsync(unreadCount).catch(() => undefined);
+      setAppNotificationBadgeCount(unreadCount).catch(() => undefined);
     }
   }, [signedIn, unreadCount]);
+
+  React.useEffect(() => {
+    const preferences = accountPreferences.data?.data;
+    if (!signedIn || !preferences) return;
+
+    void setPreference('savedSearchAlerts', Boolean(preferences.saved_search_alerts));
+    void setPreference('siteVisitReminders', Boolean(preferences.site_visit_reminders));
+    void setPreference('ownerListingUpdates', Boolean(preferences.owner_listing_updates));
+    void setQuietHours(
+      Boolean(preferences.quiet_hours_enabled),
+      preferences.quiet_hours_start || quietHoursStart,
+      preferences.quiet_hours_end || quietHoursEnd,
+      preferences.timezone || timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata',
+    );
+  }, [accountPreferences.data, quietHoursEnd, quietHoursStart, setPreference, setQuietHours, signedIn, timezone]);
 
   const currentPreferences = {
     savedSearchAlerts,
@@ -81,6 +100,7 @@ export default function NotificationsScreen() {
     if (signedIn && result.expoPushToken) {
       try {
         await notificationService.registerDevice(result.expoPushToken, currentPreferences);
+        await queryClient.invalidateQueries({ queryKey: ['account-notification-preferences'] });
         await setPermissionResult(result.status, true, result.expoPushToken, 'Notifications are connected to your SocietyFlats account.');
       } catch {
         await setPermissionResult(result.status, result.tokenCaptured, result.expoPushToken, 'Notifications are allowed, but account registration did not complete. Try again after signing in.');
@@ -98,6 +118,7 @@ export default function NotificationsScreen() {
     if (signedIn) {
       try {
         await notificationService.updatePreferences(next);
+        await queryClient.invalidateQueries({ queryKey: ['account-notification-preferences'] });
       } catch {
         await setPermissionResult(permissionStatus, pushTokenCaptured, expoPushToken, 'Quiet hours saved on this phone. Backend sync will retry when your account is reachable.');
       }
@@ -110,6 +131,7 @@ export default function NotificationsScreen() {
     if (signedIn) {
       try {
         await notificationService.updatePreferences(next);
+        await queryClient.invalidateQueries({ queryKey: ['account-notification-preferences'] });
       } catch {
         await setPermissionResult(permissionStatus, pushTokenCaptured, expoPushToken, 'Preference saved on this phone. Backend sync will retry when your account is reachable.');
       }
@@ -131,6 +153,15 @@ export default function NotificationsScreen() {
           </View>
         </View>
         {lastMessage ? <Text style={styles.message}>{lastMessage}</Text> : null}
+        {signedIn && accountPreferences.data?.data ? (
+          <View style={styles.deviceStrip}>
+            <Text style={styles.deviceText}>
+              {accountPreferences.data.data.push_ready ? 'Push device registered' : 'No push device registered yet'}
+              {' · '}
+              {accountPreferences.data.data.registered_devices_count || 0} active device{accountPreferences.data.data.registered_devices_count === 1 ? '' : 's'}
+            </Text>
+          </View>
+        ) : null}
         <PrimaryButton onPress={enableNotifications}>
           {permissionStatus === 'granted' ? 'Refresh notification access' : 'Enable app alerts'}
         </PrimaryButton>
@@ -288,6 +319,12 @@ const styles = StyleSheet.create({
   cardTitle: { ...typography.heading, fontSize: 22, lineHeight: 28 },
   body: { ...typography.muted, fontSize: 15, lineHeight: 22 },
   message: { color: colors.pine, fontWeight: '800', lineHeight: 22 },
+  deviceStrip: {
+    backgroundColor: colors.pineSoft,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+  },
+  deviceText: { color: colors.pine, fontSize: 13, fontWeight: '900' },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   quietCard: {
     backgroundColor: colors.paperElevated,

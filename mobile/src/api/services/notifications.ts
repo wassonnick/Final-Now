@@ -25,6 +25,18 @@ export type AccountNotification = {
   created_at?: string | null;
 };
 
+export type AccountNotificationPreferences = {
+  saved_search_alerts: boolean;
+  site_visit_reminders: boolean;
+  owner_listing_updates: boolean;
+  quiet_hours_enabled: boolean;
+  quiet_hours_start?: string | null;
+  quiet_hours_end?: string | null;
+  timezone?: string | null;
+  registered_devices_count?: number;
+  push_ready?: boolean;
+};
+
 async function getDeviceId() {
   const existing = await AsyncStorage.getItem(DEVICE_ID_KEY);
   if (existing) return existing;
@@ -35,6 +47,11 @@ async function getDeviceId() {
 }
 
 export const notificationService = {
+  async preferences() {
+    const response = await apiClient.get('/accounts/notification-preferences');
+
+    return response.data as { data: AccountNotificationPreferences };
+  },
   async registerDevice(expoPushToken: string, preferences: NotificationPreferencesPayload & QuietHoursPayload) {
     const deviceId = await getDeviceId();
     const response = await apiClient.post('/accounts/device-tokens', {
