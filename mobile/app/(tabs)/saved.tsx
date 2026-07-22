@@ -2,19 +2,36 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { propertyService } from '../../src/api/services/properties';
 import { SavedSearchRecord, savedSearchService } from '../../src/api/services/savedSearches';
-import { AppHeader, AppScreen, EmptyState, PrimaryButton, SecondaryButton, SectionHeader } from '../../src/components';
+import { societyService } from '../../src/api/services/societies';
+import { AppHeader, AppScreen, EmptyState, LoadingSkeleton, PrimaryButton, PropertyCard, SecondaryButton, SectionHeader, SocietyCard } from '../../src/components';
 import { useAuthStore } from '../../src/state/authStore';
 import { useSavedStore } from '../../src/state/savedStore';
 import { colors, radius, shadows, spacing, typography } from '../../src/theme/tokens';
+import { Property, Society } from '../../src/types/domain';
+
+type HydratedSociety = { key: string; data: Society | null };
+type HydratedProperty = { key: string; data: Property | null };
 
 export default function SavedScreen() {
   const signedIn = useAuthStore((state) => state.status === 'signed_in');
   const savedSocieties = useSavedStore((state) => state.societies);
   const savedProperties = useSavedStore((state) => state.properties);
   const localSavedSearches = useSavedStore((state) => state.searches);
+  const removeSavedItem = useSavedStore((state) => state.remove);
   const removeLocalSearch = useSavedStore((state) => state.removeSearch);
   const queryClient = useQueryClient();
+  const hydratedSocieties = useQuery({
+    queryKey: ['saved-societies-hydrated', savedSocieties],
+    queryFn: () => hydrateSocieties(savedSocieties),
+    enabled: savedSocieties.length > 0,
+  });
+  const hydratedProperties = useQuery({
+    queryKey: ['saved-properties-hydrated', savedProperties],
+    queryFn: () => hydrateProperties(savedProperties),
+    enabled: savedProperties.length > 0,
+  });
   const serverSavedSearches = useQuery({
     queryKey: ['saved-searches'],
     queryFn: savedSearchService.list,
@@ -46,6 +63,18 @@ export default function SavedScreen() {
             </View>
           </>
         ) : null}
+        <SavedSocietySection
+          savedSocieties={savedSocieties}
+          hydratedSocieties={hydratedSocieties.data}
+          loading={hydratedSocieties.isLoading}
+          onRemove={(id) => void removeSavedItem('societies', id)}
+        />
+        <SavedPropertySection
+          savedProperties={savedProperties}
+          hydratedProperties={hydratedProperties.data}
+          loading={hydratedProperties.isLoading}
+          onRemove={(id) => void removeSavedItem('properties', id)}
+        />
       </AppScreen>
     );
   }
@@ -84,14 +113,40 @@ export default function SavedScreen() {
       )}
 
       <SectionHeader title="Saved societies" />
-      {savedSocieties.length ? <SavedList items={savedSocieties} prefix="/societies/" /> : <EmptyState title="No saved societies yet" body="Tap Save on a society profile to build your shortlist." />}
+      <SavedSocietySection
+        savedSocieties={savedSocieties}
+        hydratedSocieties={hydratedSocieties.data}
+        loading={hydratedSocieties.isLoading}
+        onRemove={(id) => void removeSavedItem('societies', id)}
+      />
 
       <SectionHeader title="Saved properties" />
-      {savedProperties.length ? <SavedList items={savedProperties} prefix="/properties/" /> : <EmptyState title="No saved properties yet" body="Verified homes you save will appear here." />}
+      <SavedPropertySection
+        savedProperties={savedProperties}
+        hydratedProperties={hydratedProperties.data}
+        loading={hydratedProperties.isLoading}
+        onRemove={(id) => void removeSavedItem('properties', id)}
+      />
 
       {serverSavedSearches.error ? <EmptyState title="Could not load account searches" body="Local saved searches are still safe on this phone. Try again after signing in." /> : null}
     </AppScreen>
   );
+}
+
+async function hydrateSocieties(items: string[]): Promise<HydratedSociety[]> {
+  const results = await Promise.allSettled(items.map((item) => societyService.show(item)));
+  return items.map((key, index) => ({
+    key,
+    data: results[index]?.status === 'fulfilled' ? results[index].value : null,
+  }));
+}
+
+async function hydrateProperties(items: string[]): Promise<HydratedProperty[]> {
+  const results = await Promise.allSettled(items.map((item) => propertyService.show(item)));
+  return items.map((key, index) => ({
+    key,
+    data: results[index]?.status === 'fulfilled' ? results[index].value : null,
+  }));
 }
 
 function Stat({ label, value }: { label: string; value: number }) {
@@ -139,18 +194,53 @@ function LocalSearchCard({ search, onRemove }: { search: string; onRemove: () =>
   );
 }
 
-function SavedList({ items, prefix }: { items: string[]; prefix: '/societies/' | '/properties/' }) {
+function SavedSocietySection({ savedSocieties, hydratedSocieties, loading, onRemove }: { savedSocieties: string[]; hydratedSocieties?: HydratedSociety[]; loading?: boolean; onRemove: (id: string) => void }) {
+  if (!savedSocieties.length) {
+    return <EmptyState title="No saved societies yet" body="Tap Save on a society profile to build your shortlist." />;
+  }
+  if (loading && !hydratedSocieties) return <LoadingSkeleton />;
+
   return (
     <View style={styles.cardList}>
-      {items.map((item) => (
-        <Link key={item} href={`${prefix}${item}` as any} asChild>
-          <Pressable style={styles.savedRow}>
-            <Text style={styles.savedText}>{item}</Text>
-            <Text style={styles.openText}>Open →</Text>
-          </Pressable>
-        </Link>
+      {(hydratedSocieties || savedSocieties.map((key) => ({ key, data: null }))).map((item) => (
+        <View key={item.key} style={styles.savedCardWrap}>
+          {item.data ? <SocietyCard society={item.data} /> : <SavedFallbackRow item={item.key} prefix="/societies/" label="Society profile unavailable" />}
+          <SecondaryButton onPress={() => onRemove(item.key)}>Remove from shortlist</SecondaryButton>
+        </View>
       ))}
     </View>
+  );
+}
+
+function SavedPropertySection({ savedProperties, hydratedProperties, loading, onRemove }: { savedProperties: string[]; hydratedProperties?: HydratedProperty[]; loading?: boolean; onRemove: (id: string) => void }) {
+  if (!savedProperties.length) {
+    return <EmptyState title="No saved properties yet" body="Verified homes you save will appear here." />;
+  }
+  if (loading && !hydratedProperties) return <LoadingSkeleton />;
+
+  return (
+    <View style={styles.cardList}>
+      {(hydratedProperties || savedProperties.map((key) => ({ key, data: null }))).map((item) => (
+        <View key={item.key} style={styles.savedCardWrap}>
+          {item.data ? <PropertyCard property={item.data} /> : <SavedFallbackRow item={item.key} prefix="/properties/" label="Property profile unavailable" />}
+          <SecondaryButton onPress={() => onRemove(item.key)}>Remove from shortlist</SecondaryButton>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function SavedFallbackRow({ item, prefix, label }: { item: string; prefix: '/societies/' | '/properties/'; label: string }) {
+  return (
+    <Link href={`${prefix}${item}` as any} asChild>
+      <Pressable style={styles.savedRow}>
+        <View style={styles.flex}>
+          <Text style={styles.savedText}>{item}</Text>
+          <Text style={styles.body}>{label}. Open to retry, or remove it from your shortlist.</Text>
+        </View>
+        <Text style={styles.openText}>Open →</Text>
+      </Pressable>
+    </Link>
   );
 }
 
@@ -160,6 +250,7 @@ const styles = StyleSheet.create({
   statValue: { color: colors.pine, fontSize: 24, fontWeight: '900' },
   statLabel: { color: colors.muted, fontSize: 12, fontWeight: '800' },
   cardList: { gap: spacing.sm },
+  savedCardWrap: { gap: spacing.sm },
   card: { backgroundColor: colors.paperElevated, borderColor: colors.line, borderRadius: radius.xl, borderWidth: 1, gap: spacing.md, padding: spacing.lg, ...shadows.card },
   row: { flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between' },
   flex: { flex: 1 },

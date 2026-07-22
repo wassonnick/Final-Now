@@ -10,6 +10,7 @@ type SavedState = {
   restore: () => Promise<void>;
   isSaved: (kind: SavedKind, id: string | number | null | undefined) => boolean;
   toggle: (kind: SavedKind, id: string | number | null | undefined) => Promise<void>;
+  remove: (kind: SavedKind, id: string | number | null | undefined) => Promise<void>;
   saveSearch: (query: string) => Promise<void>;
   removeSearch: (query: string) => Promise<void>;
 };
@@ -49,6 +50,17 @@ export const useSavedStore = create<SavedState>((set, get) => ({
     const current = get()[kind];
     const next = current.includes(value) ? current.filter((item) => item !== value) : [value, ...current];
     const payload = { societies: get().societies, properties: get().properties, [kind]: next };
+    set(payload);
+    await SecureStore.setItemAsync(key, JSON.stringify(payload));
+  },
+  async remove(kind, id) {
+    if (!id) return;
+    const value = String(id);
+    const payload = {
+      societies: kind === 'societies' ? get().societies.filter((item) => item !== value) : get().societies,
+      properties: kind === 'properties' ? get().properties.filter((item) => item !== value) : get().properties,
+      searches: get().searches,
+    };
     set(payload);
     await SecureStore.setItemAsync(key, JSON.stringify(payload));
   },
