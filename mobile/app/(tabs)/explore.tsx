@@ -39,7 +39,7 @@ export default function ExploreScreen() {
 
   return (
     <AppScreen>
-      <AppHeader title="Explore" subtitle="Search societies and verified homes with filters ready for the next phase." />
+      <AppHeader title="Explore" subtitle="Search verified societies and source-reviewed homes, then filter by score and availability." />
       <SearchBar value={query} onChangeText={setQuery} onSubmit={submitSearch} />
       <SegmentedControl options={['Societies', 'Properties']} value={mode} onChange={setMode} />
       <View style={styles.toolbar}>

@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppScreen, PrimaryButton, SecondaryButton } from '../src/components';
+import { BrandMark } from '../src/components/BrandMark';
 import { analytics } from '../src/lib/analytics';
 import { useOnboardingStore } from '../src/state/onboardingStore';
 import { colors, radius, spacing, typography } from '../src/theme/tokens';
@@ -30,7 +31,7 @@ export default function OnboardingScreen() {
         <Pressable onPress={finish} accessibilityRole="button" style={styles.skip}>
           <Text style={styles.skipText}>Skip</Text>
         </Pressable>
-        <View style={styles.brandMark}><Text style={styles.brandInitial}>SF</Text></View>
+        <BrandMark size={82} />
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.body}>{body}</Text>
         <View style={styles.dots}>
@@ -51,8 +52,6 @@ const styles = StyleSheet.create({
   wrap: { flex: 1, justifyContent: 'center', gap: spacing.lg },
   skip: { position: 'absolute', top: spacing.md, right: spacing.md, minHeight: 44, justifyContent: 'center' },
   skipText: { color: colors.clay, fontWeight: '800' },
-  brandMark: { width: 82, height: 82, borderRadius: radius.xl, backgroundColor: colors.pine, alignItems: 'center', justifyContent: 'center' },
-  brandInitial: { color: colors.paper, fontWeight: '900', fontSize: 24 },
   title: { ...typography.heading, fontSize: 38, lineHeight: 44 },
   body: { ...typography.muted, fontSize: 18, lineHeight: 28 },
   dots: { flexDirection: 'row', gap: spacing.xs },

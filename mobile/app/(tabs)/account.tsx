@@ -35,7 +35,7 @@ export default function AccountScreen() {
     <AppScreen>
       <AppHeader title="Account" subtitle="Your SocietyFlats profile, enquiries and preferences." />
       {!signedIn ? (
-        <EmptyState title="Sign in with OTP" body="Mobile OTP architecture is ready. It uses the existing Laravel account endpoints." action={<Link href="/login" asChild><PrimaryButton>Sign in</PrimaryButton></Link>} />
+        <EmptyState title="Sign in with OTP" body="Verify your phone once to track enquiries, saved searches and alerts across your devices." action={<Link href="/login" asChild><PrimaryButton>Sign in</PrimaryButton></Link>} />
       ) : (
         <View style={styles.profileCard}>
           <View style={styles.avatar}><Text style={styles.avatarText}>{String(account?.name || account?.phone || 'SF').slice(0, 1).toUpperCase()}</Text></View>

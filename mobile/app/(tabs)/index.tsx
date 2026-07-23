@@ -14,9 +14,12 @@ type Mode = 'Rent' | 'Buy' | 'Societies';
 export default function HomeScreen() {
   const [mode, setMode] = useState<Mode>('Societies');
   const [query, setQuery] = useState('');
-  const societies = useQuery({ queryKey: ['home-societies'], queryFn: () => societyService.list({ per_page: 6 }) });
+  const societies = useQuery({ queryKey: ['home-societies'], queryFn: () => societyService.list({ per_page: 40 }) });
   const properties = useQuery({ queryKey: ['home-properties'], queryFn: () => propertyService.list({ per_page: 4 }) });
-  const recommended = societies.data ?? [];
+  // Rank by society score so the strongest profiles lead the home feed.
+  const recommended = [...(societies.data ?? [])]
+    .sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0))
+    .slice(0, 6);
   const listings = properties.data ?? [];
 
   function submitSearch() {
@@ -64,7 +67,7 @@ function JourneyLink({ href, title, body }: { href: string; title: string; body:
   return (
     <Link href={href as any} asChild>
       <Pressable style={styles.journeyLink}>
-        <View>
+        <View style={styles.journeyText}>
           <Text style={styles.journeyTitle}>{title}</Text>
           <Text style={styles.journeyBody}>{body}</Text>
         </View>
@@ -85,6 +88,7 @@ const styles = StyleSheet.create({
   sector: { backgroundColor: colors.paperElevated, borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, color: colors.pine, fontWeight: '800' },
   journeyStack: { gap: spacing.sm },
   journeyLink: { backgroundColor: colors.paperElevated, borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, padding: spacing.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md },
+  journeyText: { flex: 1, gap: spacing.xxs },
   journeyTitle: { ...typography.heading, fontSize: 20, lineHeight: 26 },
   journeyBody: { ...typography.muted, fontSize: 14, lineHeight: 20 },
   arrow: { color: colors.clay, fontSize: 24, fontWeight: '900' },
