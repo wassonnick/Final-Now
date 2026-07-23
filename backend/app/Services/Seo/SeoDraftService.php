@@ -22,13 +22,14 @@ class SeoDraftService
      * landing-page metadata only (never society content), public page, confidence at or
      * above the policy threshold, and no risk warnings beyond the standard boilerplate.
      */
-    public function autoPublishEligible(SeoDraft $draft, int $minConfidence): bool
+    public function autoPublishEligible(SeoDraft $draft, int $minConfidence, bool $allowSociety = false): bool
     {
         $page = $draft->page;
         if (! $page || ! $page->is_public || $draft->status !== 'needs_review') return false;
-        // Only society-content pages are excluded. RWA/module pages may link to a Society
-        // entity but their drafts are plain page metadata — safe to auto-publish when gated.
-        if ($page->page_type === 'society') return false;
+        // Society-content drafts write to SocietySeoContent; approve() refuses to overwrite a
+        // page that already has published content, so auto-publishing a society draft only ever
+        // FILLS a gap — never clobbers live copy. Gated on $allowSociety for full automation.
+        if ($page->page_type === 'society' && ! $allowSociety) return false;
         if ((int) $draft->confidence_score < $minConfidence) return false;
 
         $realWarnings = collect((array) $draft->risk_warnings)

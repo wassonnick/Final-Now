@@ -85,32 +85,8 @@ Route::get('/seo/pages/resolve', [PublicSeoPageController::class, 'resolve'])->m
 // frontend deploys, so societies published between deploys were invisible to crawlers until
 // the next build. robots.txt references this URL too (cross-host sitemaps are valid when
 // declared in robots.txt), making new pages discoverable the day they publish.
-Route::get('/seo/sitemap.xml', function () {
-    $xml = \Illuminate\Support\Facades\Cache::remember('seo:live-sitemap:v2', now()->addHour(), function () {
-        $configuredBase = (string) config('services.search_console.site_url', 'https://www.societyflats.com');
-        $base = str_starts_with($configuredBase, 'http')
-            ? rtrim($configuredBase, '/')
-            : rtrim((string) config('services.lead_notifications.frontend_url', 'https://www.societyflats.com'), '/');
-
-        $pages = \App\Models\SeoPage::where('is_public', true)
-            ->where('is_indexable', true)
-            ->where('sitemap_included', true)
-            ->orderBy('url')
-            ->get(['canonical_url', 'url', 'freshness_at']);
-
-        $lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'];
-        foreach ($pages as $page) {
-            $loc = $base.($page->canonical_url ?: $page->url);
-            $lines[] = '  <url><loc>'.htmlspecialchars($loc, ENT_XML1).'</loc>'
-                .($page->freshness_at ? '<lastmod>'.$page->freshness_at->toDateString().'</lastmod>' : '')
-                .'</url>';
-        }
-        $lines[] = '</urlset>';
-
-        return implode("\n", $lines);
-    });
-
-    return response($xml, 200)->header('Content-Type', 'application/xml');
+Route::get('/seo/sitemap.xml', function (\App\Services\Seo\LiveSitemapService $sitemap) {
+    return response($sitemap->cached(), 200)->header('Content-Type', 'application/xml');
 })->middleware('throttle:30,1');
 Route::post('/leads', [LeadController::class, 'store'])->middleware('throttle:10,1');
 Route::post('/nri-cases', [NriCaseController::class, 'store'])->middleware('throttle:5,1');

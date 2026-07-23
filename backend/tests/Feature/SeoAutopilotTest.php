@@ -290,7 +290,9 @@ class SeoAutopilotTest extends TestCase
         $this->assertSame('Best Societies in Sector 165, Gurgaon | SocietyFlats',$safePage->fresh()->title,'Approval must write the metadata to the page.');
         $this->assertSame('needs_review',$lowConfidence->fresh()->status,'Below-threshold confidence must stay for review.');
         $this->assertSame('needs_review',$warned->fresh()->status,'Real risk warnings must block auto-publish.');
-        $this->assertSame('needs_review',$societyDraft->fresh()->status,'Society drafts must never auto-publish.');
+        // Full automation: society metadata drafts now auto-publish when they only FILL a gap.
+        // approve() still refuses to overwrite already-published society SEO, so live copy is safe.
+        $this->assertSame('published',$societyDraft->fresh()->status,'Gap-fill society drafts auto-publish under full automation.');
         $this->assertTrue(SeoChangeLog::where('action','draft_published')->where('actor','autopilot')->exists());
         $this->assertGreaterThanOrEqual(1,(int) SeoAutomationRun::latest('id')->first()->summary['drafts_auto_published']);
     }
