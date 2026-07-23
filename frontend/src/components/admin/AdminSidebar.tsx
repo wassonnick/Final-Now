@@ -68,6 +68,7 @@ const groups: Array<{ heading: string | null; links: Array<{ label: string; href
       { label: "AI Social Media", href: "/admin/social", icon: Sparkles },
       { label: "Brand Studio", href: "/admin/brand-studio", icon: Palette },
       { label: "AI Spend", href: "/admin/ai-spend", icon: Bot },
+      { label: "User AI Chats", href: "/admin/ai-chats", icon: MessageSquareText },
       { label: "Campaigns", href: "/admin/campaigns", icon: Megaphone },
       { label: "Rent Intelligence", href: "/admin/rent-history", icon: LineChart },
       { label: "AI Features", href: "/admin/ai", icon: Bot },

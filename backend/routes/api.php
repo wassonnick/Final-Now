@@ -134,7 +134,11 @@ Route::get('/admin/social/oauth/callback', [AdminSocialController::class, 'oauth
 Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/stats', AdminStatsController::class);
     Route::get('/ai-spend', AdminAiSpendController::class);
+    Route::get('/ai-chats', [\App\Http\Controllers\Api\Admin\AdminAiChatController::class, 'index']);
+    Route::get('/ai-chats/{conversation}', [\App\Http\Controllers\Api\Admin\AdminAiChatController::class, 'show']);
     Route::get('/ops/action-inbox', [AdminOpsController::class, 'actionInbox']);
+    Route::get('/ops/automation-health', [AdminOpsController::class, 'automationHealth']);
+    Route::post('/ops/clear-provider-limit', [AdminOpsController::class, 'clearProviderLimit']);
     Route::get('/ops/suggestions', [AdminOpsController::class, 'suggestions']);
     Route::post('/ops/suggestions/{suggestion}/apply', [AdminOpsController::class, 'applySuggestion']);
     Route::post('/ops/suggestions/{suggestion}/dismiss', [AdminOpsController::class, 'dismissSuggestion']);
