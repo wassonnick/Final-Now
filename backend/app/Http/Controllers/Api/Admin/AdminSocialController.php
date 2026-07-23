@@ -33,7 +33,11 @@ class AdminSocialController extends Controller
 
     public function automationSettings(\App\Services\Social\SocialAutopilotService $autopilot): JsonResponse
     {
-        return response()->json(['status' => 'ok', 'data' => $autopilot->settings()]);
+        $settings = $autopilot->settings()->toArray();
+        // Global hard pause overrides the toggles below until Meta publishing is approved.
+        $settings['paused_pending_meta_approval'] = (bool) config('services.social.autopilot_paused');
+
+        return response()->json(['status' => 'ok', 'data' => $settings]);
     }
 
     public function updateAutomationSettings(Request $request, \App\Services\Social\SocialAutopilotService $autopilot): JsonResponse

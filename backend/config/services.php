@@ -73,6 +73,12 @@ return [
         'refresh_token' => env('GOOGLE_SEARCH_CONSOLE_REFRESH_TOKEN'),
     ],
 
+    'social' => [
+        // Hard pause on the AI social autopilot (generation + auto-publish). ON by default
+        // until Meta/Instagram publishing is approved; set SOCIAL_AUTOPILOT_PAUSED=false to resume.
+        'autopilot_paused' => (bool) env('SOCIAL_AUTOPILOT_PAUSED', true),
+    ],
+
     'social_oauth' => [
         'redirect_uri' => env('SOCIAL_OAUTH_REDIRECT_URI', 'https://final-now.onrender.com/api/admin/social/oauth/callback'),
         'meta_client_id' => env('META_CLIENT_ID'),
