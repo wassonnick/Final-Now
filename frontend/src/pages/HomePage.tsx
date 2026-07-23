@@ -184,7 +184,16 @@ export function HomePage() {
       .catch(() => setPropertiesStatus("error"));
   }, []);
 
-  const featured = useMemo(() => societies.slice(0, 4), [societies]);
+  // Featured = 4 random image-having societies (societies is already photo-filtered), reshuffled
+  // per load rather than shown in the backend's alphabetical order. Fisher-Yates on a copy.
+  const featured = useMemo(() => {
+    const pool = [...societies];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool.slice(0, 4);
+  }, [societies]);
   const verifiedHomes = useMemo(() => properties.slice(0, 6), [properties]);
 
   return (
