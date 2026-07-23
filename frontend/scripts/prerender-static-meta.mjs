@@ -409,6 +409,8 @@ const routeMeta = [
     priority: "0.6",
     changefreq: "weekly",
     schemaType: "WebPage",
+    // Internal/niche B2B recruitment tool — keep it reachable but out of the index.
+    noindex: true,
   },
   {
     path: "/recommendations",
@@ -418,6 +420,8 @@ const routeMeta = [
     priority: "0.6",
     changefreq: "weekly",
     schemaType: "WebPage",
+    // Personalized shortlist tool ("Your shortlist") — no stable indexable content.
+    noindex: true,
   },
   {
     path: "/nri-services",
@@ -436,6 +440,8 @@ const routeMeta = [
     priority: "0.6",
     changefreq: "weekly",
     schemaType: "WebPage",
+    // Thin tool page and a near-duplicate of /ai-advisor — keep the advisor as the indexable one.
+    noindex: true,
   },
   {
     path: "/404",
