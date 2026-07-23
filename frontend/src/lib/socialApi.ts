@@ -203,6 +203,7 @@ export type SocialAutomationSettings = {
   publish_hours: number[] | null;
   last_run_at?: string | null;
   last_run_summary?: { generated?: number; auto_approved?: number; scheduled?: number; queued_for_review?: number; skipped?: string | null } | null;
+  paused_pending_meta_approval?: boolean;
 };
 
 export const fetchSocialAutomation = () => adminFetch("/admin/social/automation").then(json).then((body) => body.data as SocialAutomationSettings);

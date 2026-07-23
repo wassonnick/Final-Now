@@ -64,6 +64,16 @@ export function AdminSocialCalendarPage() {
       <AdminSocialNav />
       {message ? <p className="mb-5 rounded-2xl bg-blue-50 p-4 text-sm font-bold text-blue-700">{message}</p> : null}
 
+      {automation?.paused_pending_meta_approval ? (
+        <section className="mb-6 rounded-[1.5rem] border border-amber-300 bg-amber-50 p-5">
+          <h2 className="text-lg font-black text-amber-900">Social Autopilot is paused</h2>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-amber-900">
+            AI generation and auto-publishing are held until Meta/Instagram publishing is approved — no posts are created or sent, and no AI budget is spent, regardless of the toggles below.
+            To resume after approval, set <span className="font-black">SOCIAL_AUTOPILOT_PAUSED=false</span> in the backend environment.
+          </p>
+        </section>
+      ) : null}
+
       <section className="mb-6 rounded-[1.5rem] border border-emerald-200 bg-emerald-50 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>

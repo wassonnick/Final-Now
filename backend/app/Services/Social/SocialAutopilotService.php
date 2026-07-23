@@ -37,6 +37,15 @@ class SocialAutopilotService
         $settings = $this->settings();
         $summary = ['plan' => null, 'generated' => 0, 'auto_approved' => 0, 'scheduled' => 0, 'queued_for_review' => 0, 'skipped' => null];
 
+        // Hard pause: overrides the DB toggle. Held ON until Meta/Instagram publishing is
+        // approved (set SOCIAL_AUTOPILOT_PAUSED=false to resume). Stops all AI generation and
+        // scheduling so no budget is spent and nothing queues to publish before approval.
+        if (config('services.social.autopilot_paused')) {
+            $summary['skipped'] = 'paused_pending_meta_approval';
+
+            return $this->finish($settings, $summary);
+        }
+
         if (! $settings->enabled) {
             $summary['skipped'] = 'autopilot_disabled';
 
@@ -98,6 +107,11 @@ class SocialAutopilotService
     {
         $settings = $this->settings();
         $summary = ['published' => 0, 'failed' => 0, 'skipped' => 0];
+
+        // Hard pause until Meta/Instagram publishing is approved — never post automatically.
+        if (config('services.social.autopilot_paused')) {
+            return $summary;
+        }
 
         if (! $settings->enabled || ! $settings->auto_publish_low_risk) {
             return $summary;
