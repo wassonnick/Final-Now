@@ -8,6 +8,7 @@ use App\Models\SeoDraft;
 use App\Models\SeoPage;
 use App\Models\SeoTask;
 use App\Models\Society;
+use App\Services\Seo\LiveSitemapService;
 use Illuminate\Support\Facades\Cache;
 
 class SeoAutopilotRunner
@@ -44,6 +45,7 @@ class SeoAutopilotRunner
         if(!$lock->get())throw new \RuntimeException('An SEO Autopilot cycle is already running.');
 
         $run=SeoAutomationRun::create(['trigger'=>$trigger,'status'=>'running','started_at'=>now()]);
+        $openTasksBefore=SeoTask::where('status','open')->count();
         $summary=['pages_registered'=>0,'society_seo_published'=>0,'pages_audited'=>0,'average_score'=>0,'technical_failures'=>0,'keywords_refreshed'=>0,'search_console_rows'=>0,'drafts_generated'=>0,'drafts_auto_published'=>0,'report_id'=>null,'warnings'=>[]];
 
         try {
@@ -79,6 +81,8 @@ class SeoAutopilotRunner
                 ->whereIn('seo_page_id',SeoPage::query()->where(fn($q)=>$q->where('is_public',false)->orWhere('is_indexable',false))->select('id'))
                 ->update(['status'=>'resolved','resolved_at'=>now()]);
             if($settings->technical_checks_enabled){
+                // Serve a fresh sitemap so the audit (and crawlers) see pages published this run.
+                app(LiveSitemapService::class)->flushCache();
                 $technical=$this->technical->run();
                 $summary['technical_failures']=$technical['failed'];
             }
@@ -93,6 +97,14 @@ class SeoAutopilotRunner
             // Money transparency: every run reports how much of the day's AI budget is spent.
             $summary['ai_units_used_today']=$this->budget->used();
             $summary['ai_units_cap']=$this->budget->cap();
+
+            // Outcome transparency: show the loop closing, not just work queued. A run that
+            // publishes content and drives the open-task count DOWN is the whole point.
+            $openTasksAfter=SeoTask::where('status','open')->count();
+            $summary['open_tasks_before']=$openTasksBefore;
+            $summary['open_tasks_after']=$openTasksAfter;
+            $summary['tasks_resolved_net']=max(0,$openTasksBefore-$openTasksAfter);
+            $summary['pages_published_total']=$summary['society_seo_published']+$summary['drafts_auto_published']+(($summary['compare_pages']['published']??0));
 
             $status=$summary['warnings']||$summary['technical_failures']?'completed_with_warnings':'completed';
             $run->update(['status'=>$status,'finished_at'=>now(),'summary'=>$summary]);
@@ -241,7 +253,9 @@ class SeoAutopilotRunner
         $published=0;
         $pending=SeoDraft::with('page')->where('status','needs_review')->orderBy('id')->get();
         foreach($pending as $draft){
-            if(!$this->drafts->autoPublishEligible($draft,$minConfidence))continue;
+            // Full automation: society metadata drafts are eligible too — approve() never
+            // overwrites already-published society SEO, so this only fills gaps.
+            if(!$this->drafts->autoPublishEligible($draft,$minConfidence,true))continue;
             try{
                 $this->drafts->approve($draft,'autopilot');
                 $this->drafts->publish($draft->fresh(),'autopilot');
