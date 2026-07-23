@@ -8,6 +8,7 @@ async function json(response: Response) {
 
 const base = '/admin/seo-autopilot';
 export const fetchSeoAutopilotDashboard = () => adminFetch(`${base}/dashboard`).then(json);
+export const clearAiProviderLimit = () => adminFetch(`/admin/ops/clear-provider-limit`, { method: 'POST' }).then(json);
 export const fetchSeoAutopilotPages = (params = '') => adminFetch(`${base}/pages${params ? `?${params}` : ''}`).then(json);
 export const runSeoAutopilotAudit = (pageId?: number) => adminFetch(`${base}/audit`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(pageId ? { page_id:pageId } : {}) }).then(json);
 export const runSeoAutopilotCycle = () => adminFetch(`${base}/automation/run`, {method:'POST'}).then(json);

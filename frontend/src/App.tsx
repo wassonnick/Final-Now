@@ -76,6 +76,7 @@ const AdminSocialCalendarPage = lazy(() => import('@/pages/admin/AdminSocialCale
 const AdminComparePagesPage = lazy(() => import('@/pages/admin/AdminComparePagesPage').then((module) => ({ default: module.AdminComparePagesPage })));
 const AdminBrandStudioPage = lazy(() => import('@/pages/admin/AdminBrandStudioPage').then((module) => ({ default: module.AdminBrandStudioPage })));
 const AdminAiSpendPage = lazy(() => import('@/pages/admin/AdminAiSpendPage').then((module) => ({ default: module.AdminAiSpendPage })));
+const AdminAiChatsPage = lazy(() => import('@/pages/admin/AdminAiChatsPage').then((module) => ({ default: module.AdminAiChatsPage })));
 const CampaignLandingPage = lazy(() => import('@/pages/CampaignLandingPage').then((module) => ({ default: module.CampaignLandingPage })));
 const AdminCampaignsPage = lazy(() => import('@/pages/admin/AdminCampaignsPage').then((module) => ({ default: module.AdminCampaignsPage })));
 const AdminComparePagePreviewPage = lazy(() => import('@/pages/admin/AdminComparePagesPage').then((module) => ({ default: module.AdminComparePagePreviewPage })));
@@ -266,6 +267,7 @@ function AppShell() {
             <Route path="/admin/seo/compare-pages" element={<ProtectedAdminRoute><AdminComparePagesPage /></ProtectedAdminRoute>} />
             <Route path="/admin/brand-studio" element={<ProtectedAdminRoute><AdminBrandStudioPage /></ProtectedAdminRoute>} />
             <Route path="/admin/ai-spend" element={<ProtectedAdminRoute><AdminAiSpendPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/ai-chats" element={<ProtectedAdminRoute><AdminAiChatsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/campaigns" element={<ProtectedAdminRoute><AdminCampaignsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/seo/compare-pages/:id/preview" element={<ProtectedAdminRoute><AdminComparePagePreviewPage /></ProtectedAdminRoute>} />
             <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettingsPage /></ProtectedAdminRoute>} />

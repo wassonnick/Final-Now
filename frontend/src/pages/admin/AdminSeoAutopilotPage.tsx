@@ -8,7 +8,7 @@ import {
   generateSeoAutopilotDraft, generateSeoAutopilotReport, rejectSeoAutopilotDraft, runSeoAutopilotAudit,
   seedSeoAutopilotKeywords, updateSeoAutopilotTask, publishSeoAutopilotDraft, updateSeoAutopilotDraft,
   fetchRevoicePending, approveRevoice, rejectRevoice, generateRevoiceBatch, runSeoAutopilotCycle,
-  updateSeoAutopilotSettings,
+  updateSeoAutopilotSettings, clearAiProviderLimit,
 } from '@/lib/seoAutopilotApi';
 
 type Tab='overview'|'pages'|'tasks'|'keywords'|'drafts'|'revoice'|'reports';
@@ -56,6 +56,7 @@ export function AdminSeoAutopilotPage(){
               <p className="text-xs text-slate-300">AI budget today</p>
               <p className="mt-1 text-sm font-black">{dashboard.automation?.ai_budget?`${dashboard.automation.ai_budget.used} / ${dashboard.automation.ai_budget.cap} units`:'—'}</p>
               <p className="mt-1 text-[11px] text-slate-400">{dashboard.automation?.ai_budget?.provider_limited?'Provider limit tripped — automation paused for the day':'Automation stops at the cap; web-search calls cost 5 units, images 3'}</p>
+              {dashboard.automation?.ai_budget?.provider_limited?<Button disabled={Boolean(busy)} onClick={()=>void run('clear-limit',clearAiProviderLimit)} className="mt-3 h-8 w-full bg-amber-400 text-xs font-black text-slate-950 hover:bg-amber-300"><RefreshCw className={`mr-2 h-3.5 w-3.5 ${busy==='clear-limit'?'animate-spin':''}`}/>Clear provider limit</Button>:null}
             </div>
             <div className="rounded-2xl bg-white/10 p-4"><p className="text-xs text-slate-300">Next run</p><p className="mt-1 text-sm font-black">{dashboard.automation?.next_run_at?new Date(dashboard.automation.next_run_at).toLocaleString():'—'}</p></div>
             <div className="rounded-2xl bg-white/10 p-4"><p className="text-xs text-slate-300">Last run</p><p className="mt-1 text-sm font-black">{dashboard.automation?.last_run?.status||'No run yet'}</p></div>
