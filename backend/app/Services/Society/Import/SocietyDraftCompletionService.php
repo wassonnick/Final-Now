@@ -165,14 +165,21 @@ class SocietyDraftCompletionService
         }
     }
 
-    /** @return array<int,string> completeness gates that still fail (empty = ready to publish) */
+    /**
+     * @return array<int,string> completeness gates that still fail (empty = ready to publish)
+     *
+     * A rights-safe cover image is NOT a blocking gate: the public site and mobile app render
+     * a clean branded placeholder when a society has no approved photo, so a missing cover no
+     * longer keeps an otherwise-complete, verified profile out of search. Step 2 still auto-
+     * approves a real Google Places photo when one exists — this only stops the backlog from
+     * stalling on societies that simply have no rights-safe image yet.
+     */
     public function missing(Society $society): array
     {
         return array_values(array_filter([
             blank($society->description) ? 'description' : null,
             (float) $society->score <= 0 ? 'score' : null,
             blank($society->sector) && blank($society->locality) ? 'sector_or_locality' : null,
-            ! $society->image_approved_by_admin ? 'approved_cover_image' : null,
             ($society->seoContent?->status) !== 'published' ? 'published_seo' : null,
         ]));
     }

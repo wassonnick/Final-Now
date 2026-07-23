@@ -102,7 +102,8 @@ class AdminOpsController extends Controller
             ->orderBy('id')
             ->get();
 
-        $gateCounts = ['description' => 0, 'score' => 0, 'sector_or_locality' => 0, 'approved_cover_image' => 0, 'published_seo' => 0];
+        $gateCounts = ['description' => 0, 'score' => 0, 'sector_or_locality' => 0, 'published_seo' => 0];
+        $noCover = 0; // Soft flag — publishes with a placeholder, never blocks.
         $samples = [];
         foreach ($drafts as $society) {
             $missing = $completion->missing($society);
@@ -111,12 +112,16 @@ class AdminOpsController extends Controller
                     $gateCounts[$gate]++;
                 }
             }
+            if (! $society->image_approved_by_admin) {
+                $noCover++;
+            }
             if (count($samples) < 20) {
                 $samples[] = [
                     'id' => $society->id,
                     'name' => $society->name,
                     'slug' => $society->slug,
                     'missing' => $missing,
+                    'no_cover_image' => ! $society->image_approved_by_admin,
                 ];
             }
         }
