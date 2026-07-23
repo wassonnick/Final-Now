@@ -1,5 +1,5 @@
-import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
+import AsyncStorage from './storage';
 
 type SavedKind = 'societies' | 'properties';
 type SavedState = {
@@ -23,7 +23,7 @@ export const useSavedStore = create<SavedState>((set, get) => ({
   searches: [],
   restored: false,
   async restore() {
-    const stored = await SecureStore.getItemAsync(key);
+    const stored = await AsyncStorage.getItem(key);
     if (!stored) {
       set({ restored: true });
       return;
@@ -49,9 +49,9 @@ export const useSavedStore = create<SavedState>((set, get) => ({
     const value = String(id);
     const current = get()[kind];
     const next = current.includes(value) ? current.filter((item) => item !== value) : [value, ...current];
-    const payload = { societies: get().societies, properties: get().properties, [kind]: next };
+    const payload = { societies: get().societies, properties: get().properties, searches: get().searches, [kind]: next };
     set(payload);
-    await SecureStore.setItemAsync(key, JSON.stringify(payload));
+    await AsyncStorage.setItem(key, JSON.stringify(payload));
   },
   async remove(kind, id) {
     if (!id) return;
@@ -62,7 +62,7 @@ export const useSavedStore = create<SavedState>((set, get) => ({
       searches: get().searches,
     };
     set(payload);
-    await SecureStore.setItemAsync(key, JSON.stringify(payload));
+    await AsyncStorage.setItem(key, JSON.stringify(payload));
   },
   async saveSearch(query) {
     const clean = query.trim();
@@ -70,13 +70,13 @@ export const useSavedStore = create<SavedState>((set, get) => ({
     const searches = [clean, ...get().searches.filter((item) => item.toLowerCase() !== clean.toLowerCase())].slice(0, 20);
     const payload = { societies: get().societies, properties: get().properties, searches };
     set(payload);
-    await SecureStore.setItemAsync(key, JSON.stringify(payload));
+    await AsyncStorage.setItem(key, JSON.stringify(payload));
   },
   async removeSearch(query) {
     const clean = query.trim().toLowerCase();
     const searches = get().searches.filter((item) => item.toLowerCase() !== clean);
     const payload = { societies: get().societies, properties: get().properties, searches };
     set(payload);
-    await SecureStore.setItemAsync(key, JSON.stringify(payload));
+    await AsyncStorage.setItem(key, JSON.stringify(payload));
   },
 }));

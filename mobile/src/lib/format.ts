@@ -1,5 +1,16 @@
 export function formatLocation(parts: (string | number | null | undefined)[]) {
-  return parts.map((part) => String(part ?? '').trim()).filter(Boolean).join(' · ');
+  const seen = new Set<string>();
+  return parts
+    .map((part) => String(part ?? '').trim())
+    .filter((part) => {
+      if (!part) return false;
+      // Dedupe repeats like "Sector 99A · Sector 99A" (sector === locality in data).
+      const normalized = part.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    })
+    .join(' · ');
 }
 
 export function formatPrice(value?: string | number | null) {

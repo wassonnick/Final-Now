@@ -1,18 +1,20 @@
 import { TextStyle, ViewStyle } from 'react-native';
 
+// Locked SocietyFlats brand palette (matches web + brand kit):
+// Ink Navy #233B6E primary, Brass Gold #B08A3E accent, cream paper, sage lines.
 export const colors = {
-  paper: '#F7F1E8',
+  paper: '#F8F3EA',
   paperElevated: '#FFFDF8',
-  paperMuted: '#EFE6D8',
-  pine: '#103F36',
-  pineSoft: '#DDEBE5',
-  clay: '#C9773D',
-  claySoft: '#F2DCC8',
-  ink: '#17231F',
-  muted: '#65716C',
-  line: '#E2D7C8',
+  paperMuted: '#EFE9DC',
+  pine: '#233B6E',
+  pineSoft: '#DCE6F7',
+  clay: '#B08A3E',
+  claySoft: '#F0E6D0',
+  ink: '#1C2434',
+  muted: '#6A7080',
+  line: '#E3DFD3',
   success: '#2F8A5B',
-  warning: '#A86516',
+  warning: '#8C6E2F',
   danger: '#B8344A',
   white: '#FFFFFF',
   black: '#000000',
