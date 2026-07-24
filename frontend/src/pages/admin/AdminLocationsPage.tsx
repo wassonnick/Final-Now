@@ -1,10 +1,10 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { MapPinned, Plus, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle2, MapPinned, Plus, RefreshCw } from "lucide-react";
 
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createNcrLocality, createNcrZone, fetchNcrLocations, type NcrLocationsResponse } from "@/lib/ncrLocationsApi";
+import { createNcrLocality, createNcrZone, fetchNcrLocationAudit, fetchNcrLocations, type NcrLocationAuditResponse, type NcrLocationsResponse } from "@/lib/ncrLocationsApi";
 import { isNcrMulticityEnabled } from "@/config/features";
 
 const emptyLocations: NcrLocationsResponse["data"] = {
@@ -34,6 +34,7 @@ function isMissingLocationApiError(message: string) {
 export function AdminLocationsPage() {
   const enabled = isNcrMulticityEnabled();
   const [locations, setLocations] = useState(emptyLocations);
+  const [audit, setAudit] = useState<NcrLocationAuditResponse["data"] | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -49,6 +50,8 @@ export function AdminLocationsPage() {
       setReadOnlyPreview(false);
       const response = await fetchNcrLocations();
       setLocations(response.data || emptyLocations);
+      const auditResponse = await fetchNcrLocationAudit().catch(() => null);
+      setAudit(auditResponse?.data || null);
       if (!zoneForm.city_id && response.data?.cities?.[0]) {
         setZoneForm((current) => ({ ...current, city_id: String(response.data.cities[0].id) }));
         setLocalityForm((current) => ({ ...current, city_id: String(response.data.cities[0].id) }));
@@ -58,6 +61,7 @@ export function AdminLocationsPage() {
       if (isMissingLocationApiError(errorMessage)) {
         setReadOnlyPreview(true);
         setLocations(previewLocations);
+        setAudit(null);
         setZoneForm((current) => ({ ...current, city_id: current.city_id || "1" }));
         setLocalityForm((current) => ({ ...current, city_id: current.city_id || "1" }));
         setError("Your frontend is pointed at an API that does not have NCR admin routes yet. Showing read-only NCR seed data for review; run the matching local backend or deploy this branch to save zones/localities.");
@@ -85,6 +89,12 @@ export function AdminLocationsPage() {
 
   const cityName = (cityId?: number | null) => locations.cities.find((city) => Number(city.id) === Number(cityId))?.name || "Unassigned";
   const zoneName = (zoneId?: number | null) => locations.zones.find((zone) => Number(zone.id) === Number(zoneId))?.name || "No zone";
+  const auditCards = audit ? [
+    { label: "Public societies missing city ID", value: audit.societies.public_missing_city_id || 0, total: audit.societies.total },
+    { label: "Public properties missing city ID", value: audit.properties.public_missing_city_id || 0, total: audit.properties.total },
+    { label: "Leads with target city only", value: audit.leads.has_target_city_without_city_id || 0, total: audit.leads.total },
+    { label: "Import jobs missing target city ID", value: audit.verified_import_jobs.missing_target_city_id || 0, total: audit.verified_import_jobs.total },
+  ] : [];
 
   const saveZone = async (event: FormEvent) => {
     event.preventDefault();
@@ -164,6 +174,44 @@ export function AdminLocationsPage() {
         <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
           Preview mode: these are the NCR seed cities from the branch. Saving is disabled until the API route <code>/api/admin/locations</code> is available on the backend your frontend is using.
         </div>
+      ) : null}
+
+      {audit ? (
+        <section className="mb-5 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">NCR-4 readiness audit</p>
+              <h2 className="mt-1 text-2xl font-black text-slate-950">Structured mapping before public rollout</h2>
+              <p className="mt-2 max-w-3xl text-sm font-semibold text-slate-500">{audit.recommendation.message}</p>
+            </div>
+            <span className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-black ${audit.recommendation.ready_for_public_city_filters ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"}`}>
+              {audit.recommendation.ready_for_public_city_filters ? <CheckCircle2 className="mr-1.5 h-4 w-4" /> : <AlertTriangle className="mr-1.5 h-4 w-4" />}
+              {audit.recommendation.ready_for_public_city_filters ? "Public rows mapped" : "Backfill before public filters"}
+            </span>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-4">
+            {[
+              { label: "Cities", value: audit.summary.cities },
+              { label: "Zones", value: audit.summary.zones },
+              { label: "Localities", value: audit.summary.localities },
+              { label: "Regions", value: audit.summary.regions },
+            ].map((item) => (
+              <div key={item.label} className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                <p className="text-2xl font-black text-blue-950">{item.value}</p>
+                <p className="mt-1 text-xs font-black uppercase tracking-[0.14em] text-blue-500">{item.label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-4">
+            {auditCards.map((item) => (
+              <div key={item.label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className={`text-2xl font-black ${item.value > 0 ? "text-amber-700" : "text-emerald-700"}`}>{item.value}</p>
+                <p className="mt-1 text-sm font-black text-slate-800">{item.label}</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">{item.total} total rows checked</p>
+              </div>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       <section className="grid gap-5 lg:grid-cols-5">

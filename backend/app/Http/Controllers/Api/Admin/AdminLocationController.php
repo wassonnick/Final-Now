@@ -4,11 +4,16 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\City;
+use App\Models\Lead;
 use App\Models\Locality;
+use App\Models\Property;
 use App\Models\Region;
+use App\Models\Society;
+use App\Models\VerifiedSocietyImportJob;
 use App\Models\Zone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class AdminLocationController extends Controller
@@ -30,6 +35,27 @@ class AdminLocationController extends Controller
     public function cities(Request $request): JsonResponse
     {
         return response()->json(['status' => 'ok', 'data' => $this->cityQuery($request)->get()]);
+    }
+
+    public function audit(): JsonResponse
+    {
+        return response()->json([
+            'status' => 'ok',
+            'enabled' => (bool) config('features.ncr_multicity'),
+            'data' => [
+                'summary' => [
+                    'regions' => Region::query()->count(),
+                    'cities' => City::query()->count(),
+                    'zones' => Zone::query()->count(),
+                    'localities' => Locality::query()->count(),
+                ],
+                'societies' => $this->inventoryAudit(Society::query(), ['Verified', 'Premium']),
+                'properties' => $this->inventoryAudit(Property::query(), ['Live']),
+                'leads' => $this->leadAudit(),
+                'verified_import_jobs' => $this->verifiedImporterAudit(),
+                'recommendation' => $this->auditRecommendation(),
+            ],
+        ]);
     }
 
     public function zones(Request $request): JsonResponse
@@ -112,6 +138,84 @@ class AdminLocationController extends Controller
     private function textSearchOperator(): string
     {
         return app('db')->connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'like';
+    }
+
+    private function inventoryAudit($query, array $publicStatuses): array
+    {
+        $model = $query->getModel();
+        $table = $model->getTable();
+
+        return [
+            'total' => (clone $query)->count(),
+            'missing_city_id' => (clone $query)->whereNull('city_id')->count(),
+            'mapped_city_id' => (clone $query)->whereNotNull('city_id')->count(),
+            'public_missing_city_id' => Schema::hasColumn($table, 'status')
+                ? (clone $query)->whereIn('status', $publicStatuses)->whereNull('city_id')->count()
+                : 0,
+            'gurgaon_text_without_city_id' => Schema::hasColumn($table, 'city')
+                ? (clone $query)->whereNull('city_id')->whereIn('city', ['Gurgaon', 'Gurugram'])->count()
+                : 0,
+            'top_unmapped_city_text' => Schema::hasColumn($table, 'city') ? $this->topCityText((clone $query)->whereNull('city_id')) : [],
+        ];
+    }
+
+    private function leadAudit(): array
+    {
+        return [
+            'total' => Lead::query()->count(),
+            'missing_city_id' => Lead::query()->whereNull('city_id')->count(),
+            'mapped_city_id' => Lead::query()->whereNotNull('city_id')->count(),
+            'has_target_city_without_city_id' => Lead::query()->whereNull('city_id')->whereNotNull('target_city')->count(),
+            'top_unmapped_target_city_text' => $this->topCityText(Lead::query()->whereNull('city_id'), 'target_city'),
+        ];
+    }
+
+    private function verifiedImporterAudit(): array
+    {
+        if (! Schema::hasTable('verified_society_import_jobs')) {
+            return [
+                'total' => 0,
+                'missing_target_city_id' => 0,
+                'mapped_target_city_id' => 0,
+                'gurgaon_target_without_city_id' => 0,
+                'top_unmapped_target_city_text' => [],
+            ];
+        }
+
+        return [
+            'total' => VerifiedSocietyImportJob::query()->count(),
+            'missing_target_city_id' => VerifiedSocietyImportJob::query()->whereNull('target_city_id')->count(),
+            'mapped_target_city_id' => VerifiedSocietyImportJob::query()->whereNotNull('target_city_id')->count(),
+            'gurgaon_target_without_city_id' => VerifiedSocietyImportJob::query()->whereNull('target_city_id')->whereIn('target_city', ['Gurgaon', 'Gurugram'])->count(),
+            'top_unmapped_target_city_text' => $this->topCityText(VerifiedSocietyImportJob::query()->whereNull('target_city_id'), 'target_city'),
+        ];
+    }
+
+    private function topCityText($query, string $column = 'city'): array
+    {
+        return $query
+            ->whereNotNull($column)
+            ->selectRaw($column.' as label, count(*) as total')
+            ->groupBy($column)
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get()
+            ->map(fn ($row) => ['label' => $row->label, 'total' => (int) $row->total])
+            ->values()
+            ->all();
+    }
+
+    private function auditRecommendation(): array
+    {
+        $publicSocietiesMissing = Society::query()->whereIn('status', ['Verified', 'Premium'])->whereNull('city_id')->count();
+        $publicPropertiesMissing = Property::query()->where('status', 'Live')->whereNull('city_id')->count();
+
+        return [
+            'ready_for_public_city_filters' => $publicSocietiesMissing === 0 && $publicPropertiesMissing === 0,
+            'message' => $publicSocietiesMissing === 0 && $publicPropertiesMissing === 0
+                ? 'Public society/property rows have structured city IDs. Keep public NCR routes feature-flagged until content and sitemap rollout are approved.'
+                : 'Do not enable public NCR city filters yet. Backfill structured city IDs for public societies/properties first.',
+        ];
     }
 
     private function zonePayload(Request $request, bool $partial = false): array

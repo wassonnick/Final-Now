@@ -54,6 +54,40 @@ export type NcrLocationsResponse = {
   };
 };
 
+export type NcrLocationAuditBucket = {
+  total: number;
+  missing_city_id: number;
+  mapped_city_id: number;
+  public_missing_city_id?: number;
+  gurgaon_text_without_city_id?: number;
+  has_target_city_without_city_id?: number;
+  missing_target_city_id?: number;
+  mapped_target_city_id?: number;
+  gurgaon_target_without_city_id?: number;
+  top_unmapped_city_text?: Array<{ label: string; total: number }>;
+  top_unmapped_target_city_text?: Array<{ label: string; total: number }>;
+};
+
+export type NcrLocationAuditResponse = {
+  enabled: boolean;
+  data: {
+    summary: {
+      regions: number;
+      cities: number;
+      zones: number;
+      localities: number;
+    };
+    societies: NcrLocationAuditBucket;
+    properties: NcrLocationAuditBucket;
+    leads: NcrLocationAuditBucket;
+    verified_import_jobs: NcrLocationAuditBucket;
+    recommendation: {
+      ready_for_public_city_filters: boolean;
+      message: string;
+    };
+  };
+};
+
 async function json(response: Response) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -67,6 +101,13 @@ export async function fetchNcrLocations(): Promise<NcrLocationsResponse> {
   const payload = await json(response);
 
   return payload as NcrLocationsResponse;
+}
+
+export async function fetchNcrLocationAudit(): Promise<NcrLocationAuditResponse> {
+  const response = await adminFetch("/admin/locations/audit");
+  const payload = await json(response);
+
+  return payload as NcrLocationAuditResponse;
 }
 
 export async function createNcrZone(payload: Record<string, unknown>): Promise<NcrZone> {

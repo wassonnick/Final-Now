@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\City;
+use App\Models\Lead;
+use App\Models\Property;
 use App\Models\Region;
 use App\Models\Society;
 use App\Models\VerifiedSocietyImportJob;
@@ -41,6 +43,46 @@ class NcrMulticityFoundationTest extends TestCase
             ->assertJsonFragment(['name' => 'Noida', 'slug' => 'noida'])
             ->assertJsonFragment(['name' => 'Greater Noida', 'slug' => 'greater-noida'])
             ->assertJsonFragment(['name' => 'Faridabad', 'slug' => 'faridabad']);
+    }
+
+    public function test_admin_location_audit_reports_mapping_gaps_without_private_lead_data(): void
+    {
+        $this->getJson('/api/admin/locations/audit')->assertUnauthorized();
+
+        Society::create([
+            'name' => 'Unmapped Public Gurgaon Society',
+            'slug' => 'unmapped-public-gurgaon-society',
+            'city' => 'Gurugram',
+            'status' => 'Verified',
+            'verification_status' => 'Verified',
+            'is_published' => true,
+            'score' => 8,
+        ]);
+
+        Property::create([
+            'title' => 'Unmapped Gurgaon Home',
+            'slug' => 'unmapped-gurgaon-home',
+            'city' => 'Gurugram',
+            'status' => 'Live',
+        ]);
+
+        Lead::create([
+            'name' => 'Private Lead Name',
+            'phone' => '9999999999',
+            'target_city' => 'Noida',
+        ]);
+
+        $response = $this->withToken('ncr-admin-token')
+            ->getJson('/api/admin/locations/audit')
+            ->assertOk()
+            ->assertJsonPath('data.societies.public_missing_city_id', 1)
+            ->assertJsonPath('data.properties.public_missing_city_id', 1)
+            ->assertJsonPath('data.leads.has_target_city_without_city_id', 1)
+            ->assertJsonPath('data.recommendation.ready_for_public_city_filters', false);
+
+        $json = json_encode($response->json());
+        $this->assertStringNotContainsString('Private Lead Name', $json);
+        $this->assertStringNotContainsString('9999999999', $json);
     }
 
     public function test_public_society_city_filters_are_additive_and_do_not_include_drafts(): void
