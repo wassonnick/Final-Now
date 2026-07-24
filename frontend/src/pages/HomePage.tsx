@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, MapPin, RefreshCw } from "lucide-react";
-import SocietyFlatsHero from "@/components/home/SocietyFlatsHero";
+import NcrHomeHero from "@/components/home/NcrHomeHero";
 import { JourneySpine } from "@/components/home/JourneySpine";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import {
@@ -198,7 +198,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] text-[#1D2939]">
-      <SocietyFlatsHero />
+      <NcrHomeHero />
 
       <section className="mx-auto max-w-[1360px] px-5 pb-3 pt-9 lg:px-10 lg:pb-4 lg:pt-14">
         <div className="mb-4 flex items-end justify-between lg:mb-5">
