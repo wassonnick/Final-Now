@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Locality extends Model
@@ -17,7 +18,8 @@ class Locality extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'name', 'slug', 'city', 'state', 'pincode', 'latitude', 'longitude',
+        'region_id', 'city_id', 'zone_id', 'name', 'slug', 'city', 'state', 'pincode', 'latitude', 'longitude',
+        'locality_type', 'sector_code', 'published_status', 'seo_title', 'seo_description',
         'description', 'connectivity_score', 'safety_score', 'lifestyle_score',
         'avg_rent_1bhk', 'avg_rent_2bhk', 'avg_rent_3bhk', 'avg_rent_4bhk',
         'price_per_sqft', 'metro_distance_km', 'airport_distance_km', 'cyber_city_distance_km'
@@ -32,8 +34,23 @@ class Locality extends Model
         'price_per_sqft' => 'decimal:2',
     ];
 
+    public function region(): BelongsTo
+    {
+        return $this->belongsTo(Region::class);
+    }
+
+    public function cityRecord(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'city_id');
+    }
+
+    public function zone(): BelongsTo
+    {
+        return $this->belongsTo(Zone::class);
+    }
+
     public function societies(): HasMany
     {
-        return $this->hasMany(Society::class);
+        return $this->hasMany(Society::class, 'locality_id');
     }
 }

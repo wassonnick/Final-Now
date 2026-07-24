@@ -54,7 +54,7 @@ class SocietyDraftCompletionTest extends TestCase
 
     public function test_incomplete_draft_stays_in_review_and_lists_missing_gates(): void
     {
-        $society = $this->draft(['score' => 0, 'image_candidates' => []]); // no score, no cover candidates
+        $society = $this->draft(['score' => 0, 'image_candidates' => []]); // no score; placeholder image is allowed
 
         // No AI key configured -> SEO generation fails safely; nothing publishes.
         $result = app(SocietyDraftCompletionService::class)->complete($society, allowReEnrich: false);
@@ -63,7 +63,7 @@ class SocietyDraftCompletionTest extends TestCase
         $fresh = $society->fresh();
         $this->assertFalse((bool) $fresh->is_published);
         $this->assertContains('score', $result['missing']);
-        $this->assertContains('approved_cover_image', $result['missing']);
+        $this->assertNotContains('approved_cover_image', $result['missing']);
         $this->assertContains('published_seo', $result['missing']);
     }
 

@@ -53,6 +53,8 @@ class PropertyController extends Controller
             $q->where('listing_type', $request->string('listing_type'));
         }
 
+        $this->applyNcrLocationFilters($q, $request);
+
         if ($request->boolean('featured')) {
             $q->where('featured', true);
         }
@@ -171,6 +173,10 @@ class PropertyController extends Controller
 
         $payload = $r->validate([
             'society_id' => 'nullable|exists:societies,id',
+            'region_id' => 'nullable|integer|exists:regions,id',
+            'city_id' => 'nullable|integer|exists:cities,id',
+            'zone_id' => 'nullable|integer|exists:zones,id',
+            'locality_id' => 'nullable|string|exists:localities,id',
             'source_lead_id' => 'nullable|integer|exists:leads,id',
             'source_type' => 'nullable|in:societyflats_inventory,owner_inventory,broker_inventory,owner_submitted_listing,lead_converted',
             'inventory_owner_type' => 'nullable|in:societyflats,owner,broker,lead',
@@ -186,6 +192,8 @@ class PropertyController extends Controller
             'slug' => 'nullable|string|max:255|unique:properties,slug' . ($propertyId ? ',' . $propertyId : ''),
             'listing_type' => 'nullable|in:Rent,Sale,Rent + Sale,Buy / Resale,Sell Listing,Builder Floor',
             'listing_purpose' => 'nullable|in:Rent,Sale,Rent + Sale,rent,sale,rent_sale',
+            'property_category' => 'nullable|string|max:100',
+            'transaction_type' => 'nullable|string|max:100',
             'property_type' => 'nullable|string|max:100',
             'status' => 'nullable|in:Live,Verification,Draft,Archived',
             'society' => 'nullable|string|max:255',
@@ -231,6 +239,33 @@ class PropertyController extends Controller
         ]);
 
         return $this->normaliseInventorySource($this->normaliseSimplifiedPayload($payload, $partial), $partial);
+    }
+
+    private function applyNcrLocationFilters($query, Request $request): void
+    {
+        if ($request->filled('region_id')) {
+            $query->where('region_id', $request->integer('region_id'));
+        }
+
+        if ($request->filled('city_id')) {
+            $query->where('city_id', $request->integer('city_id'));
+        }
+
+        if ($request->filled('zone_id')) {
+            $query->where('zone_id', $request->integer('zone_id'));
+        }
+
+        if ($request->filled('locality_id')) {
+            $query->where('locality_id', $request->string('locality_id'));
+        }
+
+        if ($request->filled('city')) {
+            $query->where('city', 'ilike', (string) $request->query('city'));
+        }
+
+        if ($request->filled('city_slug')) {
+            $query->whereHas('cityRecord', fn ($city) => $city->where('slug', (string) $request->query('city_slug')));
+        }
     }
 
     private function normaliseInventorySource(array $payload, bool $partial): array

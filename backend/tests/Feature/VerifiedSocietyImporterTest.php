@@ -76,7 +76,7 @@ class VerifiedSocietyImporterTest extends TestCase
         $this->assertSame('incomplete', $society['completion']['state']);
         $this->assertContains('description', $society['completion']['missing']);
         $this->assertContains('published_seo', $society['completion']['missing']);
-        $this->assertContains('approved_cover_image', $society['completion']['missing']);
+        $this->assertNotContains('approved_cover_image', $society['completion']['missing']);
         // Sector was supplied, so the sector/locality gate must NOT be flagged.
         $this->assertNotContains('sector_or_locality', $society['completion']['missing']);
     }

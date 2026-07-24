@@ -35,6 +35,7 @@ class LeadController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Lead::with(['property.society', 'society', 'linkedProperties'])->latest();
+        $operator = $query->getModel()->getConnection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'like';
 
         if ($status = $request->query('status')) {
             $query->where('status', $status);
@@ -44,9 +45,19 @@ class LeadController extends Controller
             $query->where('source', $source);
         }
 
-        if ($search = trim((string) $request->query('q', ''))) {
-            $operator = $query->getModel()->getConnection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'like';
+        if ($request->filled('region_id')) {
+            $query->where('region_id', $request->integer('region_id'));
+        }
 
+        if ($request->filled('city_id')) {
+            $query->where('city_id', $request->integer('city_id'));
+        }
+
+        if ($request->filled('target_city')) {
+            $query->where('target_city', $operator, (string) $request->query('target_city'));
+        }
+
+        if ($search = trim((string) $request->query('q', ''))) {
             $query->where(function ($q) use ($search, $operator) {
                 $q->where('name', $operator, "%{$search}%")
                     ->orWhere('phone', $operator, "%{$search}%")
@@ -81,6 +92,10 @@ class LeadController extends Controller
             'email' => 'nullable|email|max:255',
             'property_id' => 'nullable|integer|exists:properties,id',
             'society_id' => 'nullable|integer|exists:societies,id',
+            'region_id' => 'nullable|integer|exists:regions,id',
+            'city_id' => 'nullable|integer|exists:cities,id',
+            'zone_id' => 'nullable|integer|exists:zones,id',
+            'locality_id' => 'nullable|string|exists:localities,id',
             'property_title' => 'nullable|string|max:255',
             'property_slug' => 'nullable|string|max:255',
             'society_name' => 'nullable|string|max:255',
@@ -102,6 +117,11 @@ class LeadController extends Controller
             'entity_slug' => 'nullable|string|max:1000',
             'requirement' => 'nullable|string',
             'source' => 'nullable|string|max:255',
+            'target_city' => 'nullable|string|max:100',
+            'target_locality' => 'nullable|string|max:255',
+            'target_zone' => 'nullable|string|max:255',
+            'property_intent' => 'nullable|string|max:100',
+            'ncr_context' => 'nullable|array',
         ]);
 
         $phone = $this->normalizePhone($validated['phone'] ?? '');
@@ -136,6 +156,10 @@ class LeadController extends Controller
             'email' => 'nullable|email|max:255',
             'property_id' => 'nullable|integer|exists:properties,id',
             'society_id' => 'nullable|integer|exists:societies,id',
+            'region_id' => 'nullable|integer|exists:regions,id',
+            'city_id' => 'nullable|integer|exists:cities,id',
+            'zone_id' => 'nullable|integer|exists:zones,id',
+            'locality_id' => 'nullable|string|exists:localities,id',
             'property_title' => 'nullable|string|max:255',
             'property_slug' => 'nullable|string|max:255',
             'society_name' => 'nullable|string|max:255',
@@ -148,6 +172,11 @@ class LeadController extends Controller
             'assigned_to' => 'nullable|string|max:255',
             'follow_up_at' => 'nullable|date',
             'notes' => 'nullable|string',
+            'target_city' => 'nullable|string|max:100',
+            'target_locality' => 'nullable|string|max:255',
+            'target_zone' => 'nullable|string|max:255',
+            'property_intent' => 'nullable|string|max:100',
+            'ncr_context' => 'nullable|array',
         ]);
 
         if (array_key_exists('source', $validated)) {

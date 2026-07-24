@@ -38,9 +38,10 @@ class VerifiedSocietyImporterController extends Controller
 
     public function singleImport(Request $request): JsonResponse
     {
-        $data=$request->validate($this->rowRules()+['duplicate_action'=>['nullable',Rule::in(['skip','attach','create_anyway'])],'fetch_google'=>['nullable','boolean']]);
-        $options=['duplicate_action'=>$data['duplicate_action']??'skip','fetch_google'=>(bool)($data['fetch_google']??false)];
+        $data=$request->validate($this->rowRules()+$this->targetLocationRules()+['duplicate_action'=>['nullable',Rule::in(['skip','attach','create_anyway'])],'fetch_google'=>['nullable','boolean']]);
+        $options=$this->importOptions($data)+['duplicate_action'=>$data['duplicate_action']??'skip','fetch_google'=>(bool)($data['fetch_google']??false)];
         unset($data['duplicate_action'],$data['fetch_google']);
+        $data=$this->applyTargetLocationToRow($data,$options);
         $job=$this->service->createJob('single',[$data],$options,null,$request->header('X-Admin-Email')?:'admin');
         $message = $options['fetch_google']
             ? (($job->summary['google_enriched'] ?? false)
@@ -52,12 +53,14 @@ class VerifiedSocietyImporterController extends Controller
 
     public function bulkImport(Request $request): JsonResponse
     {
-        $data=$request->validate(['items'=>['required'],'default_city'=>['nullable','string','max:100'],'duplicate_action'=>['nullable',Rule::in(['skip','attach','create_anyway'])]]);
+        $data=$request->validate(['items'=>['required'],'default_city'=>['nullable','string','max:100'],'duplicate_action'=>['nullable',Rule::in(['skip','attach','create_anyway'])]]+$this->targetLocationRules());
+        $options=$this->importOptions($data)+['duplicate_action'=>$data['duplicate_action']??'skip'];
+        $targetCity=$options['target_city']??($data['default_city']??'Gurugram');
         $lines=is_array($data['items'])?$data['items']:(preg_split('/\r\n|\r|\n/',(string)$data['items'])?:[]);
         $rows=[];
-        foreach($lines as $line){if(is_array($line)){$rows[]=$line;continue;}$line=trim((string)$line);if($line==='')continue;$parts=array_map('trim',preg_split('/\s*[|\t,]\s*/',$line,4)?:[]);$rows[]=['name'=>$parts[0]??'','sector'=>$parts[1]??'','builder_name'=>$parts[2]??'','amenities'=>$parts[3]??'','city'=>$data['default_city']??'Gurugram'];}
+        foreach($lines as $line){if(is_array($line)){$rows[]=$this->applyTargetLocationToRow($line,$options);continue;}$line=trim((string)$line);if($line==='')continue;$parts=array_map('trim',preg_split('/\s*[|\t,]\s*/',$line,4)?:[]);$rows[]=$this->applyTargetLocationToRow(['name'=>$parts[0]??'','sector'=>$parts[1]??'','builder_name'=>$parts[2]??'','amenities'=>$parts[3]??'','city'=>$targetCity],$options);}
         if(count($rows)>100)return response()->json(['message'=>'A maximum of 100 bulk rows is allowed.'],422);
-        $job=$this->service->createJob('bulk',$rows,['duplicate_action'=>$data['duplicate_action']??'skip'],null,$request->header('X-Admin-Email')?:'admin');
+        $job=$this->service->createJob('bulk',$rows,$options,null,$request->header('X-Admin-Email')?:'admin');
         return response()->json(['message'=>'Bulk verified import processed; every created society remains a draft.','data'=>$job],201);
     }
 
@@ -69,8 +72,10 @@ class VerifiedSocietyImporterController extends Controller
 
     public function importExcel(Request $request): JsonResponse
     {
-        $data=$request->validate(['rows'=>['required','array','min:1','max:500'],'rows.*'=>['array'],'file_name'=>['nullable','string','max:255'],'duplicate_action'=>['nullable',Rule::in(['skip','attach','create_anyway'])]]);
-        $job=$this->service->createJob('excel',$data['rows'],['duplicate_action'=>$data['duplicate_action']??'skip'],$data['file_name']??null,$request->header('X-Admin-Email')?:'admin');
+        $data=$request->validate(['rows'=>['required','array','min:1','max:500'],'rows.*'=>['array'],'file_name'=>['nullable','string','max:255'],'duplicate_action'=>['nullable',Rule::in(['skip','attach','create_anyway'])]]+$this->targetLocationRules());
+        $options=$this->importOptions($data)+['duplicate_action'=>$data['duplicate_action']??'skip'];
+        $rows=array_map(fn($row)=>$this->applyTargetLocationToRow((array)$row,$options),$data['rows']);
+        $job=$this->service->createJob('excel',$rows,$options,$data['file_name']??null,$request->header('X-Admin-Email')?:'admin');
         return response()->json(['message'=>'Excel rows imported as source-tracked review-only drafts.','data'=>$job],201);
     }
 
@@ -240,7 +245,41 @@ class VerifiedSocietyImporterController extends Controller
 
     private function rowRules(): array
     {
-        return ['name'=>['required','string','min:2','max:255'],'display_name'=>['nullable','string','max:255'],'legal_name'=>['nullable','string','max:255'],'slug'=>['nullable','string','max:255'],'city'=>['nullable','string','max:100'],'state'=>['nullable','string','max:100'],'sector'=>['nullable','string','max:100'],'locality'=>['nullable','string','max:255'],'builder_name'=>['nullable','string','max:255'],'rera_number'=>['nullable','string','max:120'],'rera_url'=>['nullable','url','max:2000'],'promoter_name'=>['nullable','string','max:255'],'rera_status'=>['nullable','string','max:120'],'registration_validity'=>['nullable','string','max:255'],'certificate_url'=>['nullable','url','max:2000'],'rera_search_url'=>['nullable','url','max:2000'],'google_place_id'=>['nullable','string','max:255'],'google_maps_url'=>['nullable','url','max:2000'],'builder_url'=>['nullable','url','max:2000'],'developer_url'=>['nullable','url','max:2000'],'official_project_url'=>['nullable','url','max:2000'],'brochure_url'=>['nullable','url','max:2000'],'source_url'=>['nullable','url','max:2000'],'source_type'=>['nullable','string','max:50'],'cover_image_url'=>['nullable','url','max:2000'],'image_reference_url'=>['nullable','url','max:2000'],'gallery_image_urls'=>['nullable'],'google_photo_references'=>['nullable'],'image_attribution'=>['nullable','string','max:500'],'notes'=>['nullable','string','max:3000'],'address'=>['nullable','string','max:500'],'description'=>['nullable','string','max:5000'],'project_status'=>['nullable','string','max:100'],'possession_status'=>['nullable','string','max:100'],'possession_date'=>['nullable','string','max:100'],'amenities'=>['nullable','array','max:50'],'nearby_schools'=>['nullable'],'nearby_metro'=>['nullable'],'nearby_hospitals'=>['nullable'],'nearby_office_hubs'=>['nullable'],'rent_range'=>['nullable','string','max:100'],'buy_range'=>['nullable','string','max:100'],'rent_min'=>['nullable','string','max:100'],'rent_max'=>['nullable','string','max:100'],'buy_min'=>['nullable','string','max:100'],'buy_max'=>['nullable','string','max:100'],'resale_min'=>['nullable','string','max:100'],'resale_max'=>['nullable','string','max:100'],'average_rent'=>['nullable','string','max:100'],'average_sale_price'=>['nullable','string','max:100'],'price_per_sqft'=>['nullable','string','max:100'],'rental_yield'=>['nullable','string','max:100'],'maintenance_charges'=>['nullable','string','max:100'],'market_notes'=>['nullable','string','max:3000'],'meta_title'=>['nullable','string','max:255'],'meta_description'=>['nullable','string','max:1000'],'score'=>['nullable','numeric','min:0','max:10'],'security_score'=>['nullable','numeric','min:0','max:10'],'maintenance_score'=>['nullable','numeric','min:0','max:10'],'connectivity_score'=>['nullable','numeric','min:0','max:10'],'lifestyle_score'=>['nullable','numeric','min:0','max:10'],'investment_score'=>['nullable','numeric','min:0','max:10'],'latitude'=>['nullable','numeric','between:-90,90'],'longitude'=>['nullable','numeric','between:-180,180'],'confidence_score'=>['nullable','integer','min:0','max:100']];
+        return ['name'=>['required','string','min:2','max:255'],'display_name'=>['nullable','string','max:255'],'legal_name'=>['nullable','string','max:255'],'slug'=>['nullable','string','max:255'],'city'=>['nullable','string','max:100'],'state'=>['nullable','string','max:100'],'sector'=>['nullable','string','max:100'],'locality'=>['nullable','string','max:255'],'builder_name'=>['nullable','string','max:255'],'rera_number'=>['nullable','string','max:120'],'rera_url'=>['nullable','url','max:2000'],'promoter_name'=>['nullable','string','max:255'],'rera_status'=>['nullable','string','max:120'],'registration_validity'=>['nullable','string','max:255'],'certificate_url'=>['nullable','url','max:2000'],'rera_search_url'=>['nullable','url','max:2000'],'google_place_id'=>['nullable','string','max:255'],'google_maps_url'=>['nullable','url','max:2000'],'builder_url'=>['nullable','url','max:2000'],'developer_url'=>['nullable','url','max:2000'],'official_project_url'=>['nullable','url','max:2000'],'brochure_url'=>['nullable','url','max:2000'],'source_url'=>['nullable','url','max:2000'],'source_type'=>['nullable','string','max:50'],'cover_image_url'=>['nullable','url','max:2000'],'image_reference_url'=>['nullable','url','max:2000'],'gallery_image_urls'=>['nullable'],'google_photo_references'=>['nullable'],'image_attribution'=>['nullable','string','max:500'],'notes'=>['nullable','string','max:3000'],'address'=>['nullable','string','max:500'],'description'=>['nullable','string','max:5000'],'project_status'=>['nullable','string','max:100'],'possession_status'=>['nullable','string','max:100'],'possession_date'=>['nullable','string','max:100'],'amenities'=>['nullable','array','max:50'],'nearby_schools'=>['nullable'],'nearby_metro'=>['nullable'],'nearby_hospitals'=>['nullable'],'nearby_office_hubs'=>['nullable'],'rent_range'=>['nullable','string','max:100'],'buy_range'=>['nullable','string','max:100'],'rent_min'=>['nullable','string','max:100'],'rent_max'=>['nullable','string','max:100'],'buy_min'=>['nullable','string','max:100'],'buy_max'=>['nullable','string','max:100'],'resale_min'=>['nullable','string','max:100'],'resale_max'=>['nullable','string','max:100'],'average_rent'=>['nullable','string','max:100'],'average_sale_price'=>['nullable','string','max:100'],'price_per_sqft'=>['nullable','string','max:100'],'rental_yield'=>['nullable','string','max:100'],'maintenance_charges'=>['nullable','string','max:100'],'market_notes'=>['nullable','string','max:3000'],'meta_title'=>['nullable','string','max:255'],'meta_description'=>['nullable','string','max:1000'],'score'=>['nullable','numeric','min:0','max:10'],'security_score'=>['nullable','numeric','min:0','max:10'],'maintenance_score'=>['nullable','numeric','min:0','max:10'],'connectivity_score'=>['nullable','numeric','min:0','max:10'],'lifestyle_score'=>['nullable','numeric','min:0','max:10'],'investment_score'=>['nullable','numeric','min:0','max:10'],'latitude'=>['nullable','numeric','between:-90,90'],'longitude'=>['nullable','numeric','between:-180,180'],'confidence_score'=>['nullable','integer','min:0','max:100'],'region_id'=>['nullable','integer','exists:regions,id'],'city_id'=>['nullable','integer','exists:cities,id'],'zone_id'=>['nullable','integer','exists:zones,id'],'locality_id'=>['nullable','string','exists:localities,id'],'micro_market'=>['nullable','string','max:255'],'authority'=>['nullable','string','max:100'],'pincode'=>['nullable','string','max:20']];
+    }
+
+    private function targetLocationRules(): array
+    {
+        return [
+            'target_region_id'=>['nullable','integer','exists:regions,id'],
+            'target_city_id'=>['nullable','integer','exists:cities,id'],
+            'target_zone_id'=>['nullable','integer','exists:zones,id'],
+            'target_locality_id'=>['nullable','string','exists:localities,id'],
+            'target_city'=>['nullable','string','max:100'],
+        ];
+    }
+
+    private function importOptions(array $data): array
+    {
+        return array_filter([
+            'target_region_id'=>$data['target_region_id']??null,
+            'target_city_id'=>$data['target_city_id']??null,
+            'target_zone_id'=>$data['target_zone_id']??null,
+            'target_locality_id'=>$data['target_locality_id']??null,
+            'target_city'=>$data['target_city']??($data['default_city']??null),
+        ], fn($value)=>$value!==null&&$value!=='');
+    }
+
+    private function applyTargetLocationToRow(array $row, array $options): array
+    {
+        if(!empty($options['target_city'])&&empty($row['city']))$row['city']=$options['target_city'];
+        foreach(['region_id'=>'target_region_id','city_id'=>'target_city_id','zone_id'=>'target_zone_id','locality_id'=>'target_locality_id'] as $rowKey=>$optionKey){
+            if(!empty($options[$optionKey])&&empty($row[$rowKey]))$row[$rowKey]=$options[$optionKey];
+        }
+        foreach(['target_region_id','target_city_id','target_zone_id','target_locality_id','target_city'] as $targetKey){
+            unset($row[$targetKey]);
+        }
+        return $row;
     }
 
     public function completeDraft(Society $society, \App\Services\Ops\AiBudgetGuard $budget): JsonResponse

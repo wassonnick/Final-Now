@@ -11,6 +11,10 @@ class Property extends Model
 {
     protected $fillable = [
         'society_id',
+        'region_id',
+        'city_id',
+        'zone_id',
+        'locality_id',
         'source_lead_id',
         'source_type',
         'inventory_owner_type',
@@ -25,6 +29,8 @@ class Property extends Model
         'title',
         'slug',
         'listing_type',
+        'property_category',
+        'transaction_type',
         'property_type',
         'status',
         'society',
@@ -97,6 +103,26 @@ class Property extends Model
     public function society(): BelongsTo
     {
         return $this->belongsTo(Society::class);
+    }
+
+    public function region(): BelongsTo
+    {
+        return $this->belongsTo(Region::class);
+    }
+
+    public function cityRecord(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'city_id');
+    }
+
+    public function zone(): BelongsTo
+    {
+        return $this->belongsTo(Zone::class);
+    }
+
+    public function localityRecord(): BelongsTo
+    {
+        return $this->belongsTo(Locality::class, 'locality_id');
     }
 
     public function sourceLead(): BelongsTo

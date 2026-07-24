@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class VerifiedSocietyImportJob extends Model
 {
-    protected $fillable = ['job_type', 'input_payload', 'input_file_name', 'input_file_path', 'status', 'total_rows', 'processed_rows', 'created_societies_count', 'updated_societies_count', 'skipped_count', 'failed_count', 'overall_confidence', 'error_log', 'summary', 'created_by'];
+    protected $fillable = ['job_type', 'input_payload', 'input_file_name', 'input_file_path', 'status', 'total_rows', 'processed_rows', 'created_societies_count', 'updated_societies_count', 'skipped_count', 'failed_count', 'overall_confidence', 'error_log', 'summary', 'created_by', 'target_region_id', 'target_city_id', 'target_zone_id', 'target_locality_id', 'target_city'];
     protected $casts = ['input_payload' => 'array', 'error_log' => 'array', 'summary' => 'array'];
 
     public function rows(): HasMany { return $this->hasMany(VerifiedSocietyImportRow::class, 'import_job_id'); }

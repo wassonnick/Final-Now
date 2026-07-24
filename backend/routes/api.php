@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\Admin\AdminAccountController;
 use App\Http\Controllers\Api\Admin\AdminAiSpendController;
 use App\Http\Controllers\Api\Admin\AdminBuilderPortalController;
+use App\Http\Controllers\Api\Admin\AdminLocationController;
 use App\Http\Controllers\Api\Admin\AdminRentHistoryController;
 use App\Http\Controllers\Api\Admin\AdminReviewController;
 use App\Http\Controllers\Api\Admin\AdminReferralController;
@@ -109,6 +110,14 @@ Route::post('/site-visits/{token}/confirm', [SiteVisitController::class, 'confir
 Route::get('/admin/social/oauth/callback', [AdminSocialController::class, 'oauthCallback'])->middleware('throttle:20,1');
 Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/stats', AdminStatsController::class);
+    Route::get('/locations', [AdminLocationController::class, 'index']);
+    Route::get('/locations/cities', [AdminLocationController::class, 'cities']);
+    Route::get('/locations/zones', [AdminLocationController::class, 'zones']);
+    Route::post('/locations/zones', [AdminLocationController::class, 'storeZone']);
+    Route::patch('/locations/zones/{zone}', [AdminLocationController::class, 'updateZone']);
+    Route::get('/locations/localities', [AdminLocationController::class, 'localities']);
+    Route::post('/locations/localities', [AdminLocationController::class, 'storeLocality']);
+    Route::patch('/locations/localities/{locality}', [AdminLocationController::class, 'updateLocality']);
     Route::get('/ai-spend', AdminAiSpendController::class);
     Route::get('/ai-chats', [\App\Http\Controllers\Api\Admin\AdminAiChatController::class, 'index']);
     Route::get('/ai-chats/{conversation}', [\App\Http\Controllers\Api\Admin\AdminAiChatController::class, 'show']);

@@ -24,10 +24,16 @@ class VerifiedSocietyImporterService
 
     public function createJob(string $type, array $rows, array $options = [], ?string $fileName = null, ?string $createdBy = null): VerifiedSocietyImportJob
     {
-        $job = VerifiedSocietyImportJob::create([
+        $jobAttributes = [
             'job_type'=>$type,'input_payload'=>['options'=>$options],'input_file_name'=>$fileName,
             'status'=>'running','total_rows'=>count($rows),'created_by'=>$createdBy,
-        ]);
+        ];
+        foreach (['target_region_id','target_city_id','target_zone_id','target_locality_id','target_city'] as $field) {
+            if (array_key_exists($field, $options)) {
+                $jobAttributes[$field] = $options[$field];
+            }
+        }
+        $job = VerifiedSocietyImportJob::create($jobAttributes);
         return $this->process($job,$rows,$options);
     }
 
