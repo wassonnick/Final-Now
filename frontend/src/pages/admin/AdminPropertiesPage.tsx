@@ -9,6 +9,7 @@ import {
   Eye,
   Home,
   MapPin,
+  MessageSquareText,
   Plus,
   RefreshCw,
   Search,
@@ -608,170 +609,76 @@ const [properties, setProperties] = useState<any[]>([]);
                 </Button>
               </div>
             ) : null}
-
             {!loading && filtered.length ? (
-              <div className="grid gap-3 md:gap-4">
-                {filtered.map((item: any) => {
-                  const itemStatus = getStatus(item);
-                  const listingType = getListingType(item);
-                  const propertyUrl = getPropertyUrl(item);
-                  const editUrl = `/admin/properties/${item.id}/edit`;
-                  const sourceBadge = getSourceBadge(item);
+              <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                <table className="w-full min-w-[920px] border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
+                      <th className="px-3 py-2.5">Property</th>
+                      <th className="px-3 py-2.5">Type</th>
+                      <th className="px-3 py-2.5">Status</th>
+                      <th className="px-3 py-2.5">Price</th>
+                      <th className="px-3 py-2.5">Config</th>
+                      <th className="px-3 py-2.5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((item: any) => {
+                      const itemStatus = getStatus(item);
+                      const listingType = getListingType(item);
+                      const propertyUrl = getPropertyUrl(item);
+                      const editUrl = `/admin/properties/${item.id}/edit`;
+                      const img = getPropertyImage(item);
 
-                  return (
-                    <article
-                      key={item.id || item.slug}
-                      className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition hover:border-blue-100 hover:shadow-lg md:rounded-[28px] xl:grid xl:grid-cols-[220px_1fr]"
-                    >
-                      <Link to={propertyUrl} className="block h-28 bg-slate-100 sm:h-36 xl:h-full">
-                        {getPropertyImage(item) ? (
-                          <img
-                            src={getPropertyImage(item)}
-                            alt={item?.title || "Property"}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="flex h-full items-center justify-center text-xs font-semibold text-slate-400">No real photo uploaded</span>
-                        )}
-                      </Link>
-
-                      <div className="p-3.5 md:p-4">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap gap-2">
+                      return (
+                        <tr key={item.id || item.slug} className="border-b border-slate-100 align-middle transition hover:bg-slate-50/70">
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-3">
+                              <Link to={propertyUrl} className="block h-11 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                                {img ? <img src={img} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-[9px] text-slate-400">No photo</span>}
+                              </Link>
+                              <div className="min-w-0">
+                                <p className="max-w-[260px] truncate font-bold text-slate-950">{item?.title || "Untitled property"}</p>
+                                <p className="max-w-[260px] truncate text-xs text-slate-500">{getSocietyName(item)} · {item?.locality || "Gurgaon"}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3"><AdminBadge value={listingType}>{listingType}</AdminBadge></td>
+                          <td className="px-3 py-3">
+                            <div className="flex flex-col items-start gap-1">
                               <AdminBadge value={itemStatus}>{itemStatus}</AdminBadge>
-                              <AdminBadge value={listingType}>{listingType}</AdminBadge>
-                              {item?.featured ? (
-                                <span className="rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-                                  Featured
-                                </span>
+                              {item?.featured ? <span className="text-[10px] font-black uppercase tracking-wide text-amber-600">Featured</span> : null}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 font-bold text-blue-700">{item?.price || "—"}</td>
+                          <td className="px-3 py-3 text-xs text-slate-600">
+                            {(item?.bedrooms || "-")} BHK · {getArea(item)} · Fl {item?.floor || "-"}
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button asChild size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-slate-500 hover:text-blue-700" title="View"><Link to={propertyUrl}><Eye className="h-4 w-4" /></Link></Button>
+                              <Button asChild size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-slate-500 hover:text-blue-700" title="Edit"><Link to={editUrl}><Edit3 className="h-4 w-4" /></Link></Button>
+                              {c14SourceLeadId(item) ? (
+                                <Button asChild size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-slate-500 hover:text-blue-700" title="Source lead"><a href={`/admin/leads/${c14SourceLeadId(item)}`}><MessageSquareText className="h-4 w-4" /></a></Button>
                               ) : null}
-                              {item?.verified ? (
-                                <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
-                                  Verified
-                                </span>
-                              ) : null}
-                              <span className={`rounded-full border px-3 py-1 text-xs font-bold ${sourceBadge.className}`}>
-                                {sourceBadge.label}
-                              </span>
-                              {c42PropertyQualityIssues(item).length ? (
-                                <span className="rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-                                  Quality: {c42PropertyQualityIssues(item).length} issue{c42PropertyQualityIssues(item).length > 1 ? "s" : ""}
-                                </span>
-                              ) : (
-                                <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
-                                  Quality OK
-                                </span>
-                              )}
+                              <Button
+                                type="button"
+                                size="sm"
+                                className={itemStatus === "Live" ? "h-8 rounded-lg border border-amber-200 bg-white px-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50" : "h-8 rounded-lg bg-emerald-600 px-2.5 text-xs font-bold hover:bg-emerald-700"}
+                                onClick={() => quickSetPropertyStatus(item, itemStatus === "Live" ? "Draft" : "Live")}
+                                disabled={publishingId === item.id}
+                              >
+                                {publishingId === item.id ? "…" : itemStatus === "Live" ? "Unpublish" : "Publish"}
+                              </Button>
+                              <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-slate-500 hover:text-slate-900" onClick={() => duplicateProperty(item)} disabled={duplicatingId === item.id} title="Duplicate"><Copy className="h-4 w-4" /></Button>
+                              <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-rose-500 hover:bg-rose-50" onClick={() => deleteProperty(item)} disabled={deletingId === item.id} title="Delete"><Trash2 className="h-4 w-4" /></Button>
                             </div>
-
-                            <h3 className="mt-2 line-clamp-2 text-lg font-bold text-slate-950 md:mt-3 md:text-xl">
-                              {item?.title || "Untitled property"}
-                            </h3>
-
-                            <p className="mt-1.5 text-base font-bold text-blue-700 md:mt-2 md:text-lg">
-                              {item?.price || "Price pending"}
-                            </p>
-
-                            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-slate-500 md:mt-3 md:text-sm">
-                              <span className="inline-flex items-center gap-1">
-                                <Building2 className="h-4 w-4" />
-                                {getSocietyName(item)}
-                              </span>
-                              <span className="inline-flex items-center gap-1">
-                                <MapPin className="h-4 w-4" />
-                                {item?.locality || "Gurgaon"}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-3 gap-2 rounded-[18px] bg-slate-50 p-2.5 text-center lg:min-w-[230px] lg:rounded-[22px] lg:p-3">
-                            <div>
-                              <p className="text-xs text-slate-400">BHK</p>
-                              <p className="mt-1 font-bold text-slate-950">{item?.bedrooms || "-"}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-slate-400">Area</p>
-                              <p className="mt-1 font-bold text-slate-950">{getArea(item)}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-slate-400">Floor</p>
-                              <p className="mt-1 font-bold text-slate-950">{item?.floor || "-"}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 sm:flex sm:flex-wrap sm:border-t-0 sm:pt-0 md:mt-5">
-                          <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
-                            <Link to={propertyUrl}>
-                              <Eye className="mr-1.5 h-4 w-4" />
-                              View
-                            </Link>
-                          </Button>
-
-                          <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
-                            <Link to={editUrl}>
-                              <Edit3 className="mr-1.5 h-4 w-4" />
-                              Edit
-                            </Link>
-                          </Button>
-
-                          {/* C14-B source lead link */}
-                          {c14SourceLeadId(item) ? (
-                            <Button asChild size="sm" variant="outline" className="rounded-full border-blue-200 bg-blue-50 px-3 text-xs font-bold text-blue-700 sm:text-sm">
-                              <a href={`/admin/leads/${c14SourceLeadId(item)}`}>
-                                Source lead
-                              </a>
-                            </Button>
-                          ) : null}
-
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={itemStatus === "Live" ? "outline" : "default"}
-                            className={
-                              itemStatus === "Live"
-                                ? "rounded-full border-amber-200 px-3 text-xs font-bold text-amber-700 sm:text-sm"
-                                : "rounded-full bg-emerald-600 px-3 text-xs font-bold hover:bg-emerald-700 sm:text-sm"
-                            }
-                            onClick={() => quickSetPropertyStatus(item, itemStatus === "Live" ? "Draft" : "Live")}
-                            disabled={publishingId === item.id}
-                          >
-                            {publishingId === item.id
-                              ? "Updating..."
-                              : itemStatus === "Live"
-                                ? "Move Draft"
-                                : "Publish"}
-                          </Button>
-
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="rounded-full border-slate-200"
-                            onClick={() => duplicateProperty(item)}
-                            disabled={duplicatingId === item.id}
-                          >
-                            <Copy className="mr-1.5 h-4 w-4" />
-                            {duplicatingId === item.id ? "Copying..." : "Copy"}
-                          </Button>
-
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="rounded-full text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                            onClick={() => deleteProperty(item)}
-                            disabled={deletingId === item.id}
-                          >
-                            <Trash2 className="mr-1.5 h-4 w-4" />
-                            {deletingId === item.id ? "Deleting..." : "Delete"}
-                          </Button>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             ) : null}
           </div>
