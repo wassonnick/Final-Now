@@ -4,11 +4,11 @@ import { MapPin, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { usePublicSeo } from "@/lib/seo";
 
 const cities = [
-  { name: "Gurgaon", note: "Current live market remains the canonical production city." },
-  { name: "Delhi", note: "Prepared for future society/property discovery." },
-  { name: "Noida", note: "Prepared for future structured locality coverage." },
-  { name: "Greater Noida", note: "Prepared for future zone and micro-market mapping." },
-  { name: "Faridabad", note: "Prepared for future NCR intake and lead routing." },
+  { name: "Gurgaon", slug: "gurgaon", note: "Current live market remains the canonical production city." },
+  { name: "Delhi", slug: "delhi", note: "Prepared for future society/property discovery." },
+  { name: "Noida", slug: "noida", note: "Prepared for future structured locality coverage." },
+  { name: "Greater Noida", slug: "greater-noida", note: "Prepared for future zone and micro-market mapping." },
+  { name: "Faridabad", slug: "faridabad", note: "Prepared for future NCR intake and lead routing." },
 ];
 
 export function NcrPreviewPage() {
@@ -58,10 +58,14 @@ export function NcrPreviewPage() {
 
         <div className="mt-8 grid gap-4 md:grid-cols-5">
           {cities.map((city) => (
-            <article key={city.name} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <Link key={city.name} to={`/ncr/${city.slug}`} className="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
               <h2 className="text-xl font-black text-navy-900">{city.name}</h2>
               <p className="mt-3 text-sm leading-6 text-slate-600">{city.note}</p>
-            </article>
+              <span className="mt-4 inline-flex items-center text-sm font-black text-blue-700">
+                Open city shell
+                <span className="ml-2 transition group-hover:translate-x-1">→</span>
+              </span>
+            </Link>
           ))}
         </div>
 
