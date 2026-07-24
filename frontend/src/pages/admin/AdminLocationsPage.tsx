@@ -31,6 +31,30 @@ function isMissingLocationApiError(message: string) {
   return /api\/admin\/locations|could not be found|404|not found/i.test(message);
 }
 
+function cityStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    core_market_live: "Core market live",
+    approved_for_city_indexing: "Approved for indexing",
+    needs_verified_societies: "Needs verified societies",
+    needs_locality_depth: "Needs locality depth",
+    awaiting_indexing_approval: "Awaiting indexing approval",
+    hold_noindex: "Hold noindex",
+  };
+
+  return labels[status] || status.replace(/_/g, " ");
+}
+
+function cityStatusClasses(status: string) {
+  if (status === "core_market_live" || status === "approved_for_city_indexing") {
+    return "bg-emerald-100 text-emerald-700";
+  }
+  if (status === "needs_verified_societies" || status === "needs_locality_depth") {
+    return "bg-amber-100 text-amber-800";
+  }
+
+  return "bg-slate-100 text-slate-700";
+}
+
 export function AdminLocationsPage() {
   const enabled = isNcrMulticityEnabled();
   const [locations, setLocations] = useState(emptyLocations);
@@ -211,6 +235,72 @@ export function AdminLocationsPage() {
               </div>
             ))}
           </div>
+
+          {audit.city_readiness?.length ? (
+            <div className="mt-6 rounded-[24px] border border-blue-100 bg-blue-50/40 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">NCR-8 city readiness QA</p>
+                  <h3 className="mt-1 text-xl font-black text-slate-950">City launch blockers, still admin-only</h3>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-700">No sitemap change</span>
+              </div>
+              <div className="mt-4 overflow-auto">
+                <table className="min-w-[920px] w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-blue-100 text-xs uppercase tracking-[0.12em] text-slate-500">
+                      <th className="p-3">City</th>
+                      <th>Societies</th>
+                      <th>Localities</th>
+                      <th>Properties</th>
+                      <th>Importer jobs</th>
+                      <th>Indexing</th>
+                      <th>Status</th>
+                      <th>Next action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {audit.city_readiness.map((city) => (
+                      <tr key={city.city_id} className="border-b border-blue-100 align-top">
+                        <td className="p-3">
+                          <p className="font-black text-slate-950">{city.name}</p>
+                          <p className="mt-1 text-xs font-semibold text-slate-500">{city.state || "NCR"} · {city.city_type || "market"}</p>
+                        </td>
+                        <td>
+                          <p className="font-black text-slate-950">{city.public_societies_count}</p>
+                          <p className="text-xs text-slate-500">{city.draft_societies_count} draft/review</p>
+                        </td>
+                        <td>
+                          <p className="font-black text-slate-950">{city.localities_count}</p>
+                          <p className="text-xs text-slate-500">{city.zones_count} zones · {city.published_localities_count} published</p>
+                        </td>
+                        <td className="font-black text-slate-950">{city.public_properties_count}</td>
+                        <td className="font-black text-slate-950">{city.verified_import_jobs_count}</td>
+                        <td>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-black ${city.indexing_approved ? "bg-emerald-100 text-emerald-700" : "bg-white text-slate-600"}`}>
+                            {city.indexing_approved ? "Approved" : "Noindex"}
+                          </span>
+                          {city.unmapped_public_rows_count > 0 ? <p className="mt-2 text-xs font-black text-amber-700">{city.unmapped_public_rows_count} unmapped public rows</p> : null}
+                        </td>
+                        <td>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-black ${cityStatusClasses(city.recommended_status)}`}>
+                            {cityStatusLabel(city.recommended_status)}
+                          </span>
+                        </td>
+                        <td className="max-w-[280px]">
+                          <ul className="space-y-1 text-xs font-semibold text-slate-600">
+                            {city.next_actions.slice(0, 2).map((action) => (
+                              <li key={action}>• {action}</li>
+                            ))}
+                          </ul>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
         </section>
       ) : null}
 

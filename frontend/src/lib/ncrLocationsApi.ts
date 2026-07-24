@@ -81,6 +81,26 @@ export type NcrLocationAuditResponse = {
     properties: NcrLocationAuditBucket;
     leads: NcrLocationAuditBucket;
     verified_import_jobs: NcrLocationAuditBucket;
+    city_readiness: Array<{
+      city_id: number;
+      name: string;
+      slug: string;
+      state?: string | null;
+      city_type?: string | null;
+      zones_count: number;
+      localities_count: number;
+      published_localities_count: number;
+      public_societies_count: number;
+      draft_societies_count: number;
+      public_properties_count: number;
+      verified_import_jobs_count: number;
+      unmapped_public_rows_count: number;
+      content_ready: boolean;
+      indexing_approved: boolean;
+      ready_for_public_rollout: boolean;
+      recommended_status: string;
+      next_actions: string[];
+    }>;
     recommendation: {
       ready_for_public_city_filters: boolean;
       message: string;

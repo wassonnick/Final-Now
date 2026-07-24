@@ -53,6 +53,7 @@ class AdminLocationController extends Controller
                 'properties' => $this->inventoryAudit(Property::query(), ['Live']),
                 'leads' => $this->leadAudit(),
                 'verified_import_jobs' => $this->verifiedImporterAudit(),
+                'city_readiness' => $this->cityReadiness(),
                 'recommendation' => $this->auditRecommendation(),
             ],
         ]);
@@ -216,6 +217,132 @@ class AdminLocationController extends Controller
                 ? 'Public society/property rows have structured city IDs. Keep public NCR routes feature-flagged until content and sitemap rollout are approved.'
                 : 'Do not enable public NCR city filters yet. Backfill structured city IDs for public societies/properties first.',
         ];
+    }
+
+    private function cityReadiness(): array
+    {
+        $indexingEnabled = (bool) config('features.ncr_city_indexing', false);
+        $indexableSlugs = collect((array) config('features.ncr_indexable_city_slugs', []))
+            ->map(fn ($slug) => Str::slug((string) $slug))
+            ->filter()
+            ->values();
+
+        return City::query()
+            ->where('is_active', true)
+            ->whereIn('slug', ['gurgaon', 'delhi', 'noida', 'greater-noida', 'faridabad'])
+            ->orderByRaw("CASE slug WHEN 'gurgaon' THEN 1 WHEN 'delhi' THEN 2 WHEN 'noida' THEN 3 WHEN 'greater-noida' THEN 4 WHEN 'faridabad' THEN 5 ELSE 99 END")
+            ->get()
+            ->map(function (City $city) use ($indexingEnabled, $indexableSlugs) {
+                $publicSocieties = Society::query()
+                    ->where('is_published', true)
+                    ->whereIn('status', ['Verified', 'Premium'])
+                    ->where('city_id', $city->id)
+                    ->count();
+
+                $draftSocieties = Society::query()
+                    ->where('city_id', $city->id)
+                    ->where(function ($query) {
+                        $query->where('is_published', false)
+                            ->orWhereNotIn('status', ['Verified', 'Premium']);
+                    })
+                    ->count();
+
+                $publicProperties = Property::query()
+                    ->where('status', 'Live')
+                    ->where('city_id', $city->id)
+                    ->count();
+
+                $zones = Zone::query()->where('city_id', $city->id)->count();
+                $localities = Locality::query()->where('city_id', $city->id)->count();
+                $publishedLocalities = Locality::query()
+                    ->where('city_id', $city->id)
+                    ->where('published_status', 'published')
+                    ->count();
+
+                $verifiedImportJobs = Schema::hasTable('verified_society_import_jobs')
+                    ? VerifiedSocietyImportJob::query()->where('target_city_id', $city->id)->count()
+                    : 0;
+
+                $cityNames = $city->slug === 'gurgaon' ? ['Gurgaon', 'Gurugram'] : [$city->name];
+                $unmappedPublicSocietiesByText = Society::query()
+                    ->where('is_published', true)
+                    ->whereIn('status', ['Verified', 'Premium'])
+                    ->whereNull('city_id')
+                    ->whereIn('city', $cityNames)
+                    ->count();
+                $unmappedPublicPropertiesByText = Property::query()
+                    ->where('status', 'Live')
+                    ->whereNull('city_id')
+                    ->whereIn('city', $cityNames)
+                    ->count();
+
+                $indexingApproved = $indexingEnabled && $indexableSlugs->contains($city->slug);
+                $contentReady = $publicSocieties >= 5 && $localities >= 3 && ($unmappedPublicSocietiesByText + $unmappedPublicPropertiesByText) === 0;
+                $readyForRollout = $contentReady && $indexingApproved;
+
+                $status = 'hold_noindex';
+                if ($city->slug === 'gurgaon' && $publicSocieties > 0) {
+                    $status = 'core_market_live';
+                } elseif ($readyForRollout) {
+                    $status = 'approved_for_city_indexing';
+                } elseif ($publicSocieties < 5) {
+                    $status = 'needs_verified_societies';
+                } elseif ($localities < 3) {
+                    $status = 'needs_locality_depth';
+                } elseif (! $indexingApproved) {
+                    $status = 'awaiting_indexing_approval';
+                }
+
+                return [
+                    'city_id' => $city->id,
+                    'name' => $city->name,
+                    'slug' => $city->slug,
+                    'state' => $city->state,
+                    'city_type' => $city->city_type,
+                    'zones_count' => $zones,
+                    'localities_count' => $localities,
+                    'published_localities_count' => $publishedLocalities,
+                    'public_societies_count' => $publicSocieties,
+                    'draft_societies_count' => $draftSocieties,
+                    'public_properties_count' => $publicProperties,
+                    'verified_import_jobs_count' => $verifiedImportJobs,
+                    'unmapped_public_rows_count' => $unmappedPublicSocietiesByText + $unmappedPublicPropertiesByText,
+                    'content_ready' => $contentReady,
+                    'indexing_approved' => $indexingApproved,
+                    'ready_for_public_rollout' => $readyForRollout,
+                    'recommended_status' => $status,
+                    'next_actions' => $this->cityNextActions($city, $publicSocieties, $localities, $indexingApproved, $unmappedPublicSocietiesByText + $unmappedPublicPropertiesByText),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function cityNextActions(City $city, int $publicSocieties, int $localities, bool $indexingApproved, int $unmappedPublicRows): array
+    {
+        $actions = [];
+
+        if ($unmappedPublicRows > 0) {
+            $actions[] = 'Backfill structured city IDs for public rows matching this city text.';
+        }
+
+        if ($publicSocieties < 5 && $city->slug !== 'gurgaon') {
+            $actions[] = 'Import and approve at least five verified society profiles before public city SEO.';
+        }
+
+        if ($localities < 3) {
+            $actions[] = 'Add draft/review localities for the main sectors and corridors.';
+        }
+
+        if (! $indexingApproved) {
+            $actions[] = 'Keep noindex and out of sitemap until city launch is explicitly approved.';
+        }
+
+        if ($actions === []) {
+            $actions[] = 'Ready for manual city launch review; do not index until final approval.';
+        }
+
+        return $actions;
     }
 
     private function zonePayload(Request $request, bool $partial = false): array

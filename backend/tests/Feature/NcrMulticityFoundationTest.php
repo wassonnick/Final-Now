@@ -92,6 +92,56 @@ class NcrMulticityFoundationTest extends TestCase
         $this->assertStringNotContainsString('9999999999', $json);
     }
 
+    public function test_admin_location_audit_includes_conservative_city_readiness(): void
+    {
+        config(['features.ncr_multicity' => true]);
+
+        $region = Region::where('slug', 'delhi-ncr')->firstOrFail();
+        $noida = City::where('slug', 'noida')->firstOrFail();
+
+        Society::create([
+            'name' => 'Noida Readiness Society',
+            'slug' => 'noida-readiness-society',
+            'region_id' => $region->id,
+            'city_id' => $noida->id,
+            'city' => 'Noida',
+            'status' => 'Verified',
+            'verification_status' => 'Verified',
+            'is_published' => true,
+            'score' => 8,
+        ]);
+
+        Locality::create([
+            'region_id' => $region->id,
+            'city_id' => $noida->id,
+            'name' => 'Sector 150',
+            'slug' => 'sector-150',
+            'city' => 'Noida',
+            'state' => 'Uttar Pradesh',
+            'published_status' => 'review',
+        ]);
+
+        Lead::create([
+            'name' => 'Sensitive Lead',
+            'phone' => '9888888888',
+            'target_city' => 'Noida',
+        ]);
+
+        $response = $this->withToken('ncr-admin-token')
+            ->getJson('/api/admin/locations/audit')
+            ->assertOk()
+            ->assertJsonPath('data.city_readiness.2.slug', 'noida')
+            ->assertJsonPath('data.city_readiness.2.public_societies_count', 1)
+            ->assertJsonPath('data.city_readiness.2.localities_count', 1)
+            ->assertJsonPath('data.city_readiness.2.indexing_approved', false)
+            ->assertJsonPath('data.city_readiness.2.ready_for_public_rollout', false)
+            ->assertJsonPath('data.city_readiness.2.recommended_status', 'needs_verified_societies');
+
+        $json = json_encode($response->json('data.city_readiness'));
+        $this->assertStringNotContainsString('Sensitive Lead', $json);
+        $this->assertStringNotContainsString('9888888888', $json);
+    }
+
     public function test_public_society_city_filters_are_additive_and_do_not_include_drafts(): void
     {
         $gurgaon = City::where('slug', 'gurgaon')->firstOrFail();
