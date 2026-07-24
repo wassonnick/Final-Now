@@ -41,6 +41,9 @@ import {
 
 type AdminStats = {
   societies: number;
+  published_societies: number;
+  verified_societies: number;
+  draft_societies: number;
   featured_societies: number;
   properties: number;
   live_properties: number;
@@ -48,6 +51,9 @@ type AdminStats = {
 
 const emptyStats: AdminStats = {
   societies: 0,
+  published_societies: 0,
+  verified_societies: 0,
+  draft_societies: 0,
   featured_societies: 0,
   properties: 0,
   live_properties: 0,
@@ -810,8 +816,8 @@ export function AdminDashboardPage() {
   const busy = loading || leadLoading || inventoryLoading;
 
   const kpis = [
-    { label: "Verified societies", value: inventorySummary.verifiedSocieties, sub: `${inventorySummary.totalSocieties} total`, href: "/admin/societies", icon: Building2, tone: "text-blue-700 bg-blue-50" },
-    { label: "Live properties", value: inventorySummary.liveProperties, sub: `${inventorySummary.totalProperties} total`, href: "/admin/properties", icon: Home, tone: "text-indigo-700 bg-indigo-50" },
+    { label: "Live societies", value: stats.published_societies, sub: `${stats.societies} total · ${stats.verified_societies} verified`, href: "/admin/societies", icon: Building2, tone: "text-blue-700 bg-blue-50" },
+    { label: "Live properties", value: stats.live_properties, sub: `${stats.properties} total`, href: "/admin/properties", icon: Home, tone: "text-indigo-700 bg-indigo-50" },
     { label: "Active leads", value: leadSummary.open, sub: "in pipeline", href: "/admin/leads?view=active", icon: MessageSquareText, tone: "text-slate-700 bg-slate-100" },
     { label: "New today", value: leadSummary.today, sub: "fresh enquiries", href: "/admin/leads?view=today", icon: Clock, tone: "text-emerald-700 bg-emerald-50" },
     { label: "Hot & open", value: leadSummary.hotActive, sub: "call first", href: "/admin/leads?view=hot", icon: TrendingUp, tone: "text-rose-700 bg-rose-50" },

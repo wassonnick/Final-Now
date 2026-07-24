@@ -15,6 +15,11 @@ class AdminStatsController extends Controller
     {
         return response()->json([
             'societies' => $this->countIfTableExists('societies', fn () => Society::count()),
+            // Accurate, server-side counts so the dashboard never undercounts from a paginated
+            // client fetch. Published = live public profile; verified = Verified/Premium status.
+            'published_societies' => $this->countIfTableExists('societies', fn () => Society::where('is_published', true)->count()),
+            'verified_societies' => $this->countIfTableExists('societies', fn () => Society::whereIn('status', ['Verified', 'Premium'])->count()),
+            'draft_societies' => $this->countIfTableExists('societies', fn () => Society::where('status', 'Draft')->count()),
             'featured_societies' => $this->countIfTableExists('societies', fn () => Society::where('featured', true)->count()),
             'properties' => $this->countIfTableExists('properties', fn () => Property::count()),
             'live_properties' => $this->countIfTableExists('properties', fn () => Property::publiclyAvailable()->count()),
