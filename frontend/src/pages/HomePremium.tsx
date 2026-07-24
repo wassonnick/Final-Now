@@ -50,6 +50,25 @@ export default function HomePremium() {
     () => [...societies].filter(hasGooglePlacesDisplayPhoto).sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0)).slice(0, 6),
     [societies],
   );
+
+  // Area-tabbed inventory: group verified societies by their micro-market (sector/locality),
+  // data-driven so every tab is genuinely populated. Available-homes signal comes from the
+  // society's live property count where present, honest "on request" otherwise.
+  const areaGroups = useMemo(() => {
+    const map = new Map<string, any[]>();
+    for (const s of societies) {
+      if (!hasGooglePlacesDisplayPhoto(s)) continue;
+      const area = String(s.sector || s.locality || "").trim();
+      if (!area) continue;
+      (map.get(area) ?? map.set(area, []).get(area)!).push(s);
+    }
+    return [...map.entries()]
+      .sort((a, b) => b[1].length - a[1].length)
+      .slice(0, 8)
+      .map(([area, list]) => ({ area, societies: list.sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0)) }));
+  }, [societies]);
+  const [areaTab, setAreaTab] = useState("");
+  const currentArea = areaGroups.find((g) => g.area === areaTab) ?? areaGroups[0];
   const suggestions = useMemo(() => suggestSocieties(societies, query), [societies, query]);
   const submit = (q?: string) => navigate(`/search?tab=societies${(q ?? query).trim() ? `&q=${encodeURIComponent((q ?? query).trim())}` : ""}`);
   const liveCount = societies.length;
@@ -201,6 +220,69 @@ export default function HomePremium() {
           ))}
         </div>
       </section>
+
+      {/* ---------- EXPLORE BY AREA ---------- */}
+      {currentArea ? (
+        <section className="mx-auto max-w-[1120px] px-5 py-16 lg:py-20">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="!font-sans text-[28px] font-semibold tracking-[-0.02em] lg:text-[36px]">Explore homes by area</h2>
+              <p className="mt-2 max-w-[520px] text-[15px] leading-7 text-[#6E6E73]">Pick a Gurgaon micro-market and see the verified societies there — with real homes available now or on request.</p>
+            </div>
+            <Link to="/societies" className="inline-flex items-center gap-1 text-[14px] font-semibold" style={{ color: ACCENT }}>All areas <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+
+          {/* Area tabs */}
+          <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
+            {areaGroups.map((g) => {
+              const active = g.area === currentArea.area;
+              return (
+                <button
+                  key={g.area}
+                  type="button"
+                  onClick={() => setAreaTab(g.area)}
+                  className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold transition ${active ? "bg-[#1D1D1F] text-white" : "bg-[#F5F5F7] text-[#6E6E73] hover:bg-[#ECECEF]"}`}
+                >
+                  {g.area}
+                  <span className={`ml-1.5 text-[11px] ${active ? "text-white/60" : "text-[#98A2B3]"}`}>{g.societies.length}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Area society cards */}
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {currentArea.societies.slice(0, 6).map((s) => {
+              const homes = Number(s?.propertiesCount ?? s?.properties_count ?? 0);
+              return (
+                <Link key={s.id} to={`/society/${s.slug}`} className="group overflow-hidden rounded-[24px] border border-[#E4E4E9] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.3)]">
+                  <div className="relative h-40 overflow-hidden bg-[#F5F5F7]">
+                    <img src={societyDisplayImage(s)} alt={s.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]" />
+                    {scoreOf(s) ? (
+                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-bold text-[#1D1D1F] backdrop-blur">
+                        <Star className="h-3 w-3" style={{ color: ACCENT }} />{scoreOf(s)}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="p-5">
+                    <p className="text-[16px] font-semibold leading-tight">{s.name}</p>
+                    <p className="mt-0.5 text-[13px] text-[#86868B]">{formatPublicLocation(s)}</p>
+                    <p className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: homes > 0 ? ACCENT : "#86868B" }}>
+                      <Building2 className="h-3.5 w-3.5" />
+                      {homes > 0 ? `${homes} home${homes === 1 ? "" : "s"} available` : "Homes on request"}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="mt-6 flex items-center justify-between rounded-[20px] bg-[#F5F5F7] px-6 py-5">
+            <p className="text-[14px] text-[#6E6E73]">Looking for a specific home in <span className="font-semibold text-[#1D1D1F]">{currentArea.area}</span>? We'll surface real availability.</p>
+            <button onClick={() => submit(currentArea.area)} className="shrink-0 rounded-full px-5 py-2.5 text-[13px] font-semibold text-white" style={{ background: ACCENT }}>Request availability</button>
+          </div>
+        </section>
+      ) : null}
 
       {/* ---------- HOW IT WORKS ---------- */}
       <section className="border-y border-[#EEEEF1] bg-[#F5F5F7]">
