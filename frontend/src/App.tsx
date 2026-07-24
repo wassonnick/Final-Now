@@ -9,6 +9,7 @@ import { Footer } from '@/components/layout/Footer';
 import { FloatingHelpline } from '@/components/layout/FloatingHelpline';
 
 import { HomePage } from '@/pages/HomePage';
+import HomePremium from '@/pages/HomePremium';
 
 import { getAdminSession } from '@/hooks/useAdminAuth';
 import { isNcrMulticityEnabled } from "@/config/features";
@@ -138,7 +139,7 @@ function AppShell() {
           <Routes>
 
             {/* Public */}
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<HomePremium />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/search/" element={<SearchPage />} />
 

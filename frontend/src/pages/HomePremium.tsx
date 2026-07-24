@@ -1,0 +1,270 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight, Building2, Check, MapPin, Search, ShieldCheck, Sparkles, Star } from "lucide-react";
+import { fetchPublicSocieties, formatPublicLocation, suggestSocieties } from "@/lib/publicData";
+import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
+import { setPublicSeo } from "@/lib/seo";
+import { NCR_CITIES, NCR_REGION, LIVE_NCR_CITY, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
+
+/*
+  SocietyFlats — new design language (light · Apple-like · premium).
+  Canvas #FFFFFF / #F5F5F7 · ink #1D1D1F · secondary #6E6E73 · line #E4E4E9
+  accent (verified) #0F7B63 · soft accent #ECF6F2 · radius large · soft shadows.
+  Sans throughout (system / Hanken Grotesk). One calm accent, lots of air.
+*/
+
+const ACCENT = "#0F7B63";
+
+function scoreOf(society: any) {
+  const value = Number(society?.score ?? society?.overallScore);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return (value > 10 ? value / 10 : value).toFixed(1);
+}
+
+function statusPill(status: NcrCity["status"]) {
+  if (status === "live") return "bg-[#ECF6F2] text-[#0F7B63]";
+  if (status === "launching") return "bg-amber-50 text-amber-700";
+  return "bg-slate-100 text-slate-500";
+}
+
+export default function HomePremium() {
+  const navigate = useNavigate();
+  const [city, setCity] = useState<NcrCity>(LIVE_NCR_CITY);
+  const [query, setQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [societies, setSocieties] = useState<any[]>([]);
+
+  useEffect(() => {
+    setPublicSeo(
+      "Verified societies and real homes across Delhi NCR | SocietyFlats",
+      "Choose your society first, then the home. Verified profiles, real scores and honest availability — now expanding across Delhi NCR.",
+    );
+    let active = true;
+    fetchPublicSocieties()
+      .then((items) => active && setSocieties(items))
+      .catch(() => active && setSocieties([]));
+    return () => { active = false; };
+  }, []);
+
+  const featured = useMemo(
+    () => [...societies].filter(hasGooglePlacesDisplayPhoto).sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0)).slice(0, 6),
+    [societies],
+  );
+  const suggestions = useMemo(() => suggestSocieties(societies, query), [societies, query]);
+  const submit = (q?: string) => navigate(`/search?tab=societies${(q ?? query).trim() ? `&q=${encodeURIComponent((q ?? query).trim())}` : ""}`);
+  const liveCount = societies.length;
+
+  return (
+    <div className="premium-home bg-white text-[#1D1D1F]">
+      {/* ---------- HERO ---------- */}
+      <section className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(120%_90%_at_50%_-10%,#F1F7F5_0%,#FFFFFF_60%)]" />
+        <div className="relative mx-auto max-w-[1120px] px-5 pb-14 pt-14 text-center lg:pb-20 lg:pt-24">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#E4E4E9] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[#6E6E73] shadow-sm">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: ACCENT }} />
+            Now across {NCR_REGION}
+          </span>
+
+          <h1 className="!font-sans mx-auto mt-6 max-w-[880px] text-[40px] font-semibold leading-[1.04] tracking-[-0.03em] sm:text-[56px] lg:text-[68px]">
+            Choose the society.
+            <br />
+            <span className="text-[#6E6E73]">Then choose the home.</span>
+          </h1>
+          <p className="mx-auto mt-5 max-w-[600px] text-[17px] leading-8 text-[#6E6E73] lg:text-[19px]">
+            Verified society profiles, real homes and honest guidance — the calm way to decide where you'll live in Delhi NCR.
+          </p>
+
+          {/* City selector */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+            {NCR_CITIES.map((item) => {
+              const active = item.slug === city.slug;
+              return (
+                <button
+                  key={item.slug}
+                  type="button"
+                  onClick={() => { setCity(item); setQuery(""); }}
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold transition ${
+                    active ? "bg-[#1D1D1F] text-white" : "bg-[#F5F5F7] text-[#6E6E73] hover:bg-[#ECECEF]"
+                  }`}
+                >
+                  {item.name}
+                  {item.status !== "live" ? (
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${active ? "bg-white/20 text-white" : statusPill(item.status)}`}>
+                      {ncrCityStatusLabel(item.status)}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Search */}
+          {city.status === "live" ? (
+            <form
+              onSubmit={(e) => { e.preventDefault(); submit(); }}
+              className="relative mx-auto mt-6 flex max-w-[640px] items-center gap-2 rounded-full border border-[#E4E4E9] bg-white p-2 shadow-[0_20px_50px_-28px_rgba(0,0,0,.28)]"
+            >
+              <span className="pl-3 text-[#86868B]"><Search className="h-5 w-5" /></span>
+              <input
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
+                placeholder={`Search ${city.name} society, sector or builder`}
+                className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#86868B]"
+                aria-label={`Search ${city.name}`}
+              />
+              <button type="submit" className="shrink-0 rounded-full px-6 py-3 text-[14px] font-semibold text-white transition hover:opacity-90" style={{ background: ACCENT }}>
+                Search
+              </button>
+              {showSuggestions && query.trim() && suggestions.length > 0 ? (
+                <ul className="absolute left-2 right-2 top-[calc(100%+8px)] z-30 max-h-72 overflow-y-auto rounded-2xl border border-[#E4E4E9] bg-white p-1.5 text-left shadow-[0_24px_50px_-28px_rgba(0,0,0,.3)]">
+                  {suggestions.map((s) => (
+                    <li key={s.id}>
+                      <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setShowSuggestions(false); setQuery(s.name); submit(s.name); }} className="flex w-full flex-col rounded-xl px-3 py-2.5 text-left hover:bg-[#F5F5F7]">
+                        <span className="text-sm font-semibold">{s.name}</span>
+                        <span className="text-xs text-[#86868B]">{formatPublicLocation(s)}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </form>
+          ) : (
+            <div className="mx-auto mt-6 max-w-[560px] rounded-3xl border border-[#E4E4E9] bg-white p-6 shadow-sm">
+              <p className="text-[13px] font-semibold" style={{ color: ACCENT }}>{ncrCityStatusLabel(city.status)} in {city.name}</p>
+              <p className="mt-2 text-[15px] leading-7 text-[#6E6E73]">We verify a market before we open it — {city.name} societies are being checked to the same standard as Gurgaon. Get notified the moment it's live.</p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Link to={`/ncr/${city.slug}`} className="rounded-full px-5 py-2.5 text-[14px] font-semibold text-white" style={{ background: ACCENT }}>Notify me about {city.name}</Link>
+                <button onClick={() => setCity(LIVE_NCR_CITY)} className="rounded-full bg-[#F5F5F7] px-5 py-2.5 text-[14px] font-semibold text-[#1D1D1F] hover:bg-[#ECECEF]">Explore Gurgaon</button>
+              </div>
+            </div>
+          )}
+
+          <Link to="/ai-advisor" className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#6E6E73] hover:text-[#1D1D1F]">
+            <Sparkles className="h-4 w-4" style={{ color: ACCENT }} />
+            Or let our AI advisor build a shortlist for you
+          </Link>
+
+          {/* trust chips */}
+          <div className="mx-auto mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[13px] font-medium text-[#6E6E73]">
+            {["No fake listings", "Real, checkable scores", "Verified society profiles", "No paid ranking"].map((t) => (
+              <span key={t} className="inline-flex items-center gap-2"><Check className="h-4 w-4" style={{ color: ACCENT }} />{t}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- STATS ---------- */}
+      <section className="border-y border-[#EEEEF1] bg-[#F5F5F7]">
+        <div className="mx-auto grid max-w-[1120px] grid-cols-2 gap-6 px-5 py-12 sm:grid-cols-4">
+          {[
+            [liveCount ? `${liveCount}` : "240+", "Verified societies"],
+            ["6", "NCR cities on the map"],
+            ["0", "Fabricated listings"],
+            ["1", "Simple, honest journey"],
+          ].map(([v, l]) => (
+            <div key={l as string} className="text-center">
+              <p className="text-[34px] font-semibold tracking-tight">{v}</p>
+              <p className="mt-1 text-[13px] text-[#6E6E73]">{l}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ---------- CITY COVERAGE ---------- */}
+      <section className="mx-auto max-w-[1120px] px-5 py-16 lg:py-20">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 className="!font-sans text-[28px] font-semibold tracking-[-0.02em] lg:text-[36px]">One region, verified city by city</h2>
+            <p className="mt-2 max-w-[520px] text-[15px] leading-7 text-[#6E6E73]">We start where we can verify. Gurgaon is live today; the rest of Delhi NCR is being checked to the same standard.</p>
+          </div>
+        </div>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {NCR_CITIES.map((item) => (
+            <button
+              key={item.slug}
+              type="button"
+              onClick={() => { setCity(item); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              className="group rounded-[24px] border border-[#E4E4E9] bg-white p-6 text-left transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.28)]"
+            >
+              <div className="flex items-center justify-between">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F5F5F7]"><MapPin className="h-5 w-5 text-[#6E6E73]" /></span>
+                <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusPill(item.status)}`}>{ncrCityStatusLabel(item.status)}</span>
+              </div>
+              <p className="mt-4 text-[19px] font-semibold">{item.name}</p>
+              <p className="text-[13px] text-[#86868B]">{item.state}</p>
+              <p className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold" style={{ color: ACCENT }}>
+                {item.status === "live" ? "Explore now" : "Get notified"} <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+              </p>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ---------- HOW IT WORKS ---------- */}
+      <section className="border-y border-[#EEEEF1] bg-[#F5F5F7]">
+        <div className="mx-auto max-w-[1120px] px-5 py-16 lg:py-20">
+          <h2 className="!font-sans text-center text-[28px] font-semibold tracking-[-0.02em] lg:text-[36px]">A calmer way to decide</h2>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {[
+              [ShieldCheck, "Start with the society", "Compare verified profiles — real scores for safety, connectivity and lifestyle. Not brochures."],
+              [Building2, "See the real homes", "Only genuine, currently-available homes in that society. Nothing fabricated, no stale prices."],
+              [Sparkles, "Get honest guidance", "An AI advisor and a human desk help you shortlist, compare and arrange a visit — no pressure."],
+            ].map(([Icon, title, body], i) => (
+              <div key={title as string} className="rounded-[24px] bg-white p-7 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl text-white" style={{ background: ACCENT }}><Icon className="h-5 w-5" /></span>
+                  <span className="text-[13px] font-bold text-[#86868B]">0{i + 1}</span>
+                </div>
+                <p className="mt-5 text-[19px] font-semibold">{title as string}</p>
+                <p className="mt-2 text-[14px] leading-7 text-[#6E6E73]">{body as string}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- FEATURED SOCIETIES ---------- */}
+      <section className="mx-auto max-w-[1120px] px-5 py-16 lg:py-20">
+        <div className="flex items-end justify-between gap-4">
+          <h2 className="!font-sans text-[28px] font-semibold tracking-[-0.02em] lg:text-[36px]">Top verified societies</h2>
+          <Link to="/societies" className="inline-flex items-center gap-1 text-[14px] font-semibold" style={{ color: ACCENT }}>View all <ArrowRight className="h-4 w-4" /></Link>
+        </div>
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {featured.map((s) => (
+            <Link key={s.id} to={`/society/${s.slug}`} className="group overflow-hidden rounded-[24px] border border-[#E4E4E9] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.3)]">
+              <div className="relative h-44 overflow-hidden bg-[#F5F5F7]">
+                <img src={societyDisplayImage(s)} alt={s.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]" />
+                {scoreOf(s) ? (
+                  <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-bold text-[#1D1D1F] backdrop-blur">
+                    <Star className="h-3 w-3" style={{ color: ACCENT }} />{scoreOf(s)}
+                  </span>
+                ) : null}
+              </div>
+              <div className="p-5">
+                <div className="flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: ACCENT }}>
+                  <Check className="h-3.5 w-3.5" /> Verified profile
+                </div>
+                <p className="mt-1.5 text-[17px] font-semibold leading-tight">{s.name}</p>
+                <p className="mt-1 text-[13px] text-[#86868B]">{formatPublicLocation(s)}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ---------- CTA ---------- */}
+      <section className="mx-auto max-w-[1120px] px-5 pb-20">
+        <div className="overflow-hidden rounded-[32px] bg-[#1D1D1F] px-8 py-14 text-center text-white lg:px-16 lg:py-20">
+          <h2 className="!font-sans mx-auto max-w-[640px] text-[30px] font-semibold leading-tight tracking-[-0.02em] lg:text-[42px]">Find your home the calm, verified way.</h2>
+          <p className="mx-auto mt-4 max-w-[500px] text-[16px] leading-8 text-white/70">Start with a society you can trust — then choose the home. We'll help across every step.</p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <button onClick={() => submit()} className="rounded-full px-7 py-3.5 text-[15px] font-semibold text-white" style={{ background: ACCENT }}>Explore Gurgaon societies</button>
+            <Link to="/ai-advisor" className="rounded-full bg-white/10 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:bg-white/20">Ask the AI advisor</Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

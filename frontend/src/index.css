@@ -66,6 +66,12 @@ body,
   .admin-scope h4,
   .admin-scope h5,
   .admin-scope h6 { @apply font-sans text-slate-950; }
+
+  /* New premium home design language — Apple-like: clean sans headings, no serif brand font. */
+  .premium-home h1,
+  .premium-home h2,
+  .premium-home h3,
+  .premium-home h4 { @apply font-sans; color: inherit; letter-spacing: -0.02em; }
 }
 
 @layer components {
