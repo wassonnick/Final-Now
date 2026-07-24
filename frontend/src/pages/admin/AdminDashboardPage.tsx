@@ -7,14 +7,22 @@ import {
   Bot,
   Building2,
   CalendarDays,
+  CheckCircle2,
+  ClipboardList,
   Clock,
+  Download,
+  Gauge,
   Home,
+  Import,
+  MapPin,
   MessageSquareText,
   Phone,
   Plus,
   RefreshCw,
   Search,
   ShieldCheck,
+  Sparkles,
+  Star,
   TrendingUp,
   Target,
   Users,
@@ -796,22 +804,69 @@ export function AdminDashboardPage() {
     return [...urgentLeads, ...ownerDrafts, ...draftSocieties].slice(0, 8);
   }, [leads, properties, societies]);
 
+  const now = new Date();
+  const greeting = now.getHours() < 12 ? "Good morning" : now.getHours() < 17 ? "Good afternoon" : "Good evening";
+  const todayLabel = now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+  const busy = loading || leadLoading || inventoryLoading;
+
+  const kpis = [
+    { label: "Verified societies", value: inventorySummary.verifiedSocieties, sub: `${inventorySummary.totalSocieties} total`, href: "/admin/societies", icon: Building2, tone: "text-blue-700 bg-blue-50" },
+    { label: "Live properties", value: inventorySummary.liveProperties, sub: `${inventorySummary.totalProperties} total`, href: "/admin/properties", icon: Home, tone: "text-indigo-700 bg-indigo-50" },
+    { label: "Active leads", value: leadSummary.open, sub: "in pipeline", href: "/admin/leads?view=active", icon: MessageSquareText, tone: "text-slate-700 bg-slate-100" },
+    { label: "New today", value: leadSummary.today, sub: "fresh enquiries", href: "/admin/leads?view=today", icon: Clock, tone: "text-emerald-700 bg-emerald-50" },
+    { label: "Hot & open", value: leadSummary.hotActive, sub: "call first", href: "/admin/leads?view=hot", icon: TrendingUp, tone: "text-rose-700 bg-rose-50" },
+    { label: "Booked", value: leadSummary.booked, sub: "closed wins", href: "/admin/leads?view=booked", icon: CheckCircle2, tone: "text-emerald-700 bg-emerald-50" },
+  ];
+
+  const attention = inbox?.live
+    ? [
+        { value: inbox.live.leads.breaches.count, label: "Lead SLA breaches", sub: `${inbox.live.leads.escalations_over_72h.count} over 72h`, href: "/admin/leads?view=overdue", bad: inbox.live.leads.breaches.count > 0 },
+        { value: leadSummary.overdue, label: "Overdue follow-ups", sub: "past due", href: "/admin/leads?view=overdue", bad: leadSummary.overdue > 0 },
+        { value: inbox.live.societies.missing_cover.count, label: "Missing cover photo", sub: "published societies", href: "/admin/societies", bad: inbox.live.societies.missing_cover.count > 0 },
+        { value: inbox.live.societies.missing_published_seo.count, label: "No published SEO", sub: "content backlog", href: "/admin/seo-autopilot", bad: inbox.live.societies.missing_published_seo.count > 0 },
+        { value: inbox.live.societies.low_confidence.count, label: "Low confidence", sub: "below 60% verified", href: "/admin/societies", bad: inbox.live.societies.low_confidence.count > 0 },
+        { value: inbox.live.site_visits.reminders_due, label: "Visit reminders due", sub: `${inbox.live.site_visits.upcoming_48h} in 48h`, href: "/admin/site-visits", bad: inbox.live.site_visits.reminders_due > 0 },
+      ]
+    : [];
+
+  const quickLinks = [
+    { label: "Societies", href: "/admin/societies", icon: Building2 },
+    { label: "Society Importer", href: "/admin/verified-society-importer", icon: Import },
+    { label: "Properties", href: "/admin/properties", icon: Home },
+    { label: "Owner Listings", href: "/admin/owner-listings", icon: ClipboardList },
+    { label: "Leads", href: "/admin/leads", icon: MessageSquareText },
+    { label: "Site Visits", href: "/admin/site-visits", icon: CalendarDays },
+    { label: "SEO Autopilot", href: "/admin/seo-autopilot", icon: Gauge },
+    { label: "AI Social", href: "/admin/social", icon: Sparkles },
+    { label: "User AI Chats", href: "/admin/ai-chats", icon: Bot },
+    { label: "Reviews", href: "/admin/reviews", icon: Star },
+    { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+    { label: "Settings", href: "/admin/settings", icon: ShieldCheck },
+  ];
+
+  const leadMeta = (lead: AdminLead) =>
+    [lead.requirement, lead.property, lead.society].filter(Boolean).join(" · ") || "General enquiry";
+  const waLink = (lead: AdminLead) => {
+    const digits = String(lead.phone || "").replace(/\D/g, "");
+    return digits ? `https://wa.me/${digits.length === 10 ? "91" + digits : digits}` : "";
+  };
+
   return (
     <AdminLayout title="Dashboard" subtitle="SocietyFlats command center">
-      <div className="space-y-4 md:space-y-6">
+      <div className="space-y-5">
         {scheduler && !scheduler.healthy ? (
           <div className="rounded-2xl border border-rose-300 bg-rose-50 px-5 py-3.5 text-sm font-bold text-rose-800">
-            ⚠ Scheduler appears down — {scheduler.last_heartbeat_at ? `last heartbeat ${scheduler.minutes_since} min ago` : "no heartbeat recorded yet"}. All scheduled automation (SEO cycle, social autopilot, market refresh, queue jobs) is stalled until the backend scheduler loop runs again — check the societyflats-api service on Render.
+            ⚠ Scheduler appears down — {scheduler.last_heartbeat_at ? `last heartbeat ${scheduler.minutes_since} min ago` : "no heartbeat recorded yet"}. All scheduled automation is stalled until the backend scheduler loop runs again — check the societyflats-api service on Render.
           </div>
         ) : null}
         {queue && queue.failed > 0 ? (
           <div className="rounded-2xl border border-rose-300 bg-rose-50 px-5 py-3.5 text-sm font-bold text-rose-800">
-            ⚠ {queue.failed} background job{queue.failed === 1 ? "" : "s"} failed — imported drafts that error out won't auto-complete. Inspect with <code className="rounded bg-rose-100 px-1">php artisan queue:failed</code> on Render; use "Complete all drafts now" in the importer to retry those societies.
+            ⚠ {queue.failed} background job{queue.failed === 1 ? "" : "s"} failed. Inspect with <code className="rounded bg-rose-100 px-1">php artisan queue:failed</code>; use "Complete all drafts now" in the importer to retry.
           </div>
         ) : null}
         {queue && queue.pending > 20 ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3.5 text-sm font-bold text-amber-800">
-            {queue.pending} background jobs are queued and not draining fast — the queue worker may be behind. Imported drafts fill as these process; "Complete all drafts now" in the importer bypasses the queue if you need them finished immediately.
+            {queue.pending} background jobs are queued and draining slowly — the queue worker may be behind.
           </div>
         ) : null}
         {(error || leadError || inventoryError) ? (
@@ -820,715 +875,145 @@ export function AdminDashboardPage() {
           </div>
         ) : null}
 
-        <div className="flex flex-col gap-3 rounded-[24px] border border-blue-100 bg-blue-50 p-4 md:flex-row md:items-center md:justify-between md:rounded-[32px] md:p-5">
+        {/* Header */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
-              Command center
-            </p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 md:text-3xl">
-              Today’s control room
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">
-              Leads, drafts, owner inventory and society verification in one place.
-            </p>
+            <h1 className="text-2xl font-black tracking-tight text-slate-950 md:text-3xl">{greeting}, Nitin</h1>
+            <p className="mt-1 text-sm text-slate-500">{todayLabel} · your leads, inventory and automation at a glance</p>
           </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="rounded-full border-blue-200 bg-white"
-            onClick={refreshAll}
-            disabled={loading || leadLoading || inventoryLoading}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${(loading || leadLoading || inventoryLoading) ? "animate-spin" : ""}`} />
+          <Button type="button" variant="outline" className="rounded-full border-slate-200 bg-white" onClick={refreshAll} disabled={busy}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${busy ? "animate-spin" : ""}`} />
             Refresh
           </Button>
         </div>
 
+        {/* KPI row */}
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          {kpis.map((kpi) => {
+            const Icon = kpi.icon;
+            return (
+              <Link key={kpi.label} to={kpi.href} className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+                <span className={`inline-flex rounded-xl p-2 ${kpi.tone}`}><Icon className="h-4 w-4" /></span>
+                <p className="mt-3 text-3xl font-black tracking-tight text-slate-950">{dashboardValue(kpi.value, busy)}</p>
+                <p className="mt-1 text-sm font-bold text-slate-700">{kpi.label}</p>
+                <p className="text-xs text-slate-400">{kpi.sub}</p>
+              </Link>
+            );
+          })}
+        </section>
+
+        {/* Needs attention */}
         {inbox?.live ? (
-          <section className="rounded-[24px] border border-slate-200 bg-white p-4 md:p-5">
+          <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Action inbox</p>
-                <p className="mt-1 text-sm text-slate-600">Automated daily checks — data quality, sitemap, lead SLA and visit reminders.</p>
+                <h2 className="text-lg font-black text-slate-950">Needs your attention</h2>
+                <p className="text-sm text-slate-500">Automated daily checks across leads, societies and visits.</p>
               </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600">
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-500">
                 {inbox?.last_digest?.digest_date ? `Last digest ${inbox.last_digest.digest_date}` : "First digest runs 07:30"}
               </span>
             </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              <Link to="/admin/leads" className={`rounded-2xl border p-3 ${inbox.live.leads.breaches.count > 0 ? "border-rose-200 bg-rose-50" : "border-emerald-100 bg-emerald-50"}`}>
-                <p className={`text-2xl font-black ${inbox.live.leads.breaches.count > 0 ? "text-rose-700" : "text-emerald-700"}`}>{inbox.live.leads.breaches.count}</p>
-                <p className="mt-1 text-xs font-bold text-slate-700">Lead SLA breaches</p>
-                <p className="text-[11px] text-slate-500">{inbox.live.leads.escalations_over_72h.count} over 72h</p>
-              </Link>
-              <Link to="/admin/societies" className={`rounded-2xl border p-3 ${inbox.live.societies.missing_cover.count > 0 ? "border-amber-200 bg-amber-50" : "border-emerald-100 bg-emerald-50"}`}>
-                <p className={`text-2xl font-black ${inbox.live.societies.missing_cover.count > 0 ? "text-amber-700" : "text-emerald-700"}`}>{inbox.live.societies.missing_cover.count}</p>
-                <p className="mt-1 text-xs font-bold text-slate-700">Missing cover photo</p>
-                <p className="text-[11px] text-slate-500">published societies</p>
-              </Link>
-              <Link to="/admin/societies" className={`rounded-2xl border p-3 ${inbox.live.societies.missing_published_seo.count > 0 ? "border-amber-200 bg-amber-50" : "border-emerald-100 bg-emerald-50"}`}>
-                <p className={`text-2xl font-black ${inbox.live.societies.missing_published_seo.count > 0 ? "text-amber-700" : "text-emerald-700"}`}>{inbox.live.societies.missing_published_seo.count}</p>
-                <p className="mt-1 text-xs font-bold text-slate-700">No published SEO</p>
-                <p className="text-[11px] text-slate-500">content rollout backlog</p>
-              </Link>
-              <Link to="/admin/societies" className={`rounded-2xl border p-3 ${inbox.live.societies.low_confidence.count > 0 ? "border-rose-200 bg-rose-50" : "border-emerald-100 bg-emerald-50"}`}>
-                <p className={`text-2xl font-black ${inbox.live.societies.low_confidence.count > 0 ? "text-rose-700" : "text-emerald-700"}`}>{inbox.live.societies.low_confidence.count}</p>
-                <p className="mt-1 text-xs font-bold text-slate-700">Low confidence</p>
-                <p className="text-[11px] text-slate-500">below 60% verified</p>
-              </Link>
-              <Link to="/admin/site-visits" className={`rounded-2xl border p-3 ${inbox.live.site_visits.reminders_due > 0 ? "border-amber-200 bg-amber-50" : "border-emerald-100 bg-emerald-50"}`}>
-                <p className={`text-2xl font-black ${inbox.live.site_visits.reminders_due > 0 ? "text-amber-700" : "text-emerald-700"}`}>{inbox.live.site_visits.reminders_due}</p>
-                <p className="mt-1 text-xs font-bold text-slate-700">Visit reminders due</p>
-                <p className="text-[11px] text-slate-500">{inbox.live.site_visits.upcoming_48h} visits in 48h</p>
-              </Link>
+            <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+              {attention.map((item) => (
+                <Link key={item.label} to={item.href} className={`rounded-2xl border p-3 transition hover:shadow-sm ${item.bad ? "border-rose-200 bg-rose-50" : "border-emerald-100 bg-emerald-50"}`}>
+                  <p className={`text-2xl font-black ${item.bad ? "text-rose-700" : "text-emerald-700"}`}>{item.value}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-700">{item.label}</p>
+                  <p className="text-[11px] text-slate-500">{item.sub}</p>
+                </Link>
+              ))}
             </div>
-            {inbox.live.leads.breaches.count > 0 ? (
-              <div className="mt-3 rounded-2xl border border-rose-100 bg-rose-50/60 p-3 text-xs text-rose-800">
-                {inbox.live.leads.breaches.items.slice(0, 3).map((item: any) => (
-                  <p key={item.id} className="py-0.5">
-                    <span className="font-bold">{item.name}</span>
-                    {item.society_name ? ` · ${item.society_name}` : ""} · waiting {item.waiting_hours}h ({item.source})
-                  </p>
-                ))}
-              </div>
-            ) : null}
             {suggestions.length > 0 ? (
-              <div className="mt-3 rounded-2xl border border-blue-100 bg-blue-50/50 p-3">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Automation suggestions awaiting your decision</p>
+              <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-3">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Automation suggestions awaiting your decision</p>
                 <div className="mt-2 space-y-2">
-                  {suggestions.slice(0, 5).map((item: any) => (
-                    <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs">
-                      <div className="min-w-0">
-                        <p className="font-bold text-slate-800">
-                          {item.society_name}
-                          <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
-                            {item.kind === "market_refresh" ? "Market data" : "Cover photo"}
-                          </span>
-                        </p>
-                        <p className="mt-0.5 text-slate-500">
-                          {item.kind === "market_refresh"
-                            ? Object.entries(item.payload?.updates || {}).slice(0, 2).map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`).join(" · ")
-                            : item.payload?.reason || "Needs a fresh approved photo."}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 gap-1.5">
-                        {item.kind === "market_refresh" ? (
-                          <button type="button" disabled={suggestionBusyId === item.id} onClick={() => void resolveSuggestion(item.id, "apply")} className="rounded-full bg-emerald-600 px-3 py-1.5 text-[11px] font-black text-white disabled:opacity-50">Apply</button>
-                        ) : (
-                          <Link to={`/admin/societies/${item.society_id}/edit`} className="rounded-full bg-blue-600 px-3 py-1.5 text-[11px] font-black text-white">Fix image</Link>
-                        )}
-                        <button type="button" disabled={suggestionBusyId === item.id} onClick={() => void resolveSuggestion(item.id, "dismiss")} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-black text-slate-600 disabled:opacity-50">Dismiss</button>
-                      </div>
+                  {suggestions.slice(0, 4).map((suggestion) => (
+                    <div key={suggestion.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-sm">
+                      <span className="font-semibold text-slate-800">
+                        {suggestion.society_name ? `${suggestion.society_name} · ` : ""}{suggestion.kind === "market_refresh" ? "Market data refresh" : suggestion.kind}
+                      </span>
+                      <span className="flex gap-2">
+                        <Button size="sm" className="h-8 rounded-full bg-blue-600 text-xs hover:bg-blue-700" disabled={suggestionBusyId === suggestion.id} onClick={() => void resolveSuggestion(suggestion.id, "apply")}>Apply</Button>
+                        <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" disabled={suggestionBusyId === suggestion.id} onClick={() => void resolveSuggestion(suggestion.id, "dismiss")}>Dismiss</Button>
+                      </span>
                     </div>
                   ))}
-                  {suggestions.length > 5 ? <p className="text-[11px] text-slate-500">+{suggestions.length - 5} more pending</p> : null}
                 </div>
               </div>
             ) : null}
           </section>
         ) : null}
 
-        <section className="grid grid-cols-2 gap-3 xl:grid-cols-6">
-          {[
-            {
-              label: "Overdue",
-              value: dashboardValue(leadSummary.overdue, leadLoading),
-              helper: "Call first",
-              href: "/admin/leads?view=overdue",
-              icon: Target,
-              tone: "rose" as const,
-            },
-            {
-              label: "Due Today",
-              value: dashboardValue(leadSummary.followUpsToday, leadLoading),
-              helper: "Follow-ups",
-              href: "/admin/leads?view=followups",
-              icon: Clock,
-              tone: "emerald" as const,
-            },
-            {
-              label: "No Follow-up",
-              value: dashboardValue(leadSummary.noFollowUp, leadLoading),
-              helper: "Set reminder",
-              href: "/admin/leads?view=no_followup",
-              icon: CalendarDays,
-              tone: "slate" as const,
-            },
-            {
-              label: "Hot Active",
-              value: dashboardValue(leadSummary.hotActive, leadLoading),
-              helper: "Priority open",
-              href: "/admin/leads?view=hot",
-              icon: TrendingUp,
-              tone: "rose" as const,
-            },
-            {
-              label: "Owner Leads",
-              value: dashboardValue(leadSummary.owner, leadLoading),
-              helper: "Inventory source",
-              href: "/admin/leads?view=owner",
-              icon: Home,
-              tone: "emerald" as const,
-            },
-            {
-              label: "Broker Leads",
-              value: dashboardValue(leadSummary.broker, leadLoading),
-              helper: "Partner source",
-              href: "/admin/leads?view=broker",
-              icon: Users,
-              tone: "blue" as const,
-            },
-          ].map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Link key={item.label} to={item.href} className={statCardClass(item.tone)}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">{item.label}</p>
-                    <p className="mt-2 text-2xl font-bold text-slate-950 md:mt-3 md:text-3xl">
-                      {item.value}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold text-blue-600 md:mt-2 md:text-sm">
-                      {item.helper}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-blue-50 p-2.5 text-blue-700 md:p-3">
-                    <Icon className="h-5 w-5 md:h-6 md:w-6" />
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </section>
-
-        <section className="rounded-[24px] border border-blue-100 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
-                C56 lead command center
-              </p>
-              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
-                Start here for today’s admin work
-              </h2>
-              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
-                Overdue, due today, hot and no-follow-up leads are surfaced first. Use “Set tomorrow + note” to create a CRM trail.
-              </p>
+        {/* Two columns: today's leads + to finish */}
+        <div className="grid gap-5 xl:grid-cols-2">
+          <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-black text-slate-950">Today's priority leads</h2>
+              <Link to="/admin/leads?view=call_sheet" className="text-sm font-bold text-blue-600 hover:underline">Call sheet →</Link>
             </div>
-
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-              <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
-                <Link to="/admin/leads">Lead Inbox</Link>
-              </Button>
-              <Button asChild variant="outline" className="rounded-full border-blue-200 text-xs font-bold text-blue-700 md:text-sm">
-                <Link to="/admin/leads?view=call_sheet">Call Sheet</Link>
-              </Button>
-              <Button asChild variant="outline" className="rounded-full border-rose-200 text-xs font-bold text-rose-700 md:text-sm">
-                <Link to="/admin/leads?view=overdue">Overdue</Link>
-              </Button>
-              <Button asChild variant="outline" className="rounded-full border-amber-200 text-xs font-bold text-amber-700 md:text-sm">
-                <Link to="/admin/leads?view=no_followup">No Follow-up</Link>
-              </Button>
-              <Button asChild variant="outline" className="rounded-full border-emerald-200 text-xs font-bold text-emerald-700 md:text-sm">
-                <Link to="/admin/leads?view=owner">Owner Leads</Link>
-              </Button>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-3 xl:grid-cols-5">
-            {commandLeads.length ? (
-              commandLeads.map((lead) => (
-                <div
-                  key={lead.id}
-                  className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-md"
-                >
-                  <Link to={`/admin/leads/${lead.id}`} className="block">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className={`rounded-full border px-3 py-1 text-[11px] font-black ${leadCommandClass(lead)}`}>
-                        {leadCommandLabel(lead)}
-                      </span>
-                      <ArrowRight className="h-4 w-4 text-slate-300" />
+            <div className="mt-3 space-y-2">
+              {leadLoading ? (
+                <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">Loading leads…</p>
+              ) : callSheetLeads.length ? (
+                callSheetLeads.slice(0, 5).map((lead) => (
+                  <div key={lead.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-100 bg-slate-50/60 px-3 py-2.5">
+                    <div className="min-w-0">
+                      <p className="truncate font-bold text-slate-900">{lead.name || "Unnamed lead"}</p>
+                      <p className="truncate text-xs text-slate-500">{leadMeta(lead)}</p>
                     </div>
-                    <p className="mt-3 truncate text-sm font-black text-slate-950">
-                      {lead.name || "Unnamed lead"}
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
-                      {lead.property || lead.society || lead.requirement || "Lead follow-up"}
-                    </p>
-                    <p className="mt-3 text-xs font-bold text-blue-700">
-                      {leadCommandMeta(lead)}
-                    </p>
-                    {lead.phone ? (
-                      <p className="mt-2 inline-flex items-center text-[11px] text-slate-400">
-                        <Phone className="mr-1 h-3.5 w-3.5" />
-                        {lead.phone}
-                      </p>
-                    ) : null}
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <Button asChild size="sm" variant="outline" className="h-8 rounded-full border-slate-200 text-xs"><Link to={`/admin/leads/${lead.id}`}>Open</Link></Button>
+                      {lead.phone ? <a href={`tel:${lead.phone}`} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:text-blue-700" title="Call"><Phone className="h-4 w-4" /></a> : null}
+                      {waLink(lead) ? <a href={waLink(lead)} target="_blank" rel="noreferrer" className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-200 text-emerald-600 hover:bg-emerald-50" title="WhatsApp"><MessageSquareText className="h-4 w-4" /></a> : null}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-2xl bg-emerald-50 p-4 text-sm font-medium text-emerald-700">No priority leads waiting. Nicely done.</p>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-black text-slate-950">To finish</h2>
+              <span className="text-xs font-bold text-slate-400">Drafts & follow-ups</span>
+            </div>
+            <div className="mt-3 space-y-2">
+              {actionQueue.length ? (
+                actionQueue.map((task) => (
+                  <Link key={task.key} to={task.href} className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 px-3 py-2.5 transition hover:border-blue-200 hover:bg-white">
+                    <div className="min-w-0">
+                      <p className="truncate font-bold text-slate-900">{task.title}</p>
+                      <p className="truncate text-xs text-slate-500">{task.meta}</p>
+                    </div>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <span className="rounded-full bg-slate-200/70 px-2.5 py-1 text-[11px] font-black text-slate-600">{task.label}</span>
+                      <ArrowRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-blue-600" />
+                    </span>
                   </Link>
-
-                  <button
-                    type="button"
-                    disabled={savingLeadId === lead.id}
-                    onClick={() => void handleDashboardTomorrow(lead)}
-                    className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-amber-100 bg-white px-3 py-2 text-xs font-black text-amber-700 transition hover:bg-amber-50 disabled:opacity-50"
-                  >
-                    {savingLeadId === lead.id ? "Saving..." : "Set tomorrow + note"}
-                  </button>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-[22px] border border-dashed border-slate-200 p-5 text-sm text-slate-500 xl:col-span-5">
-                No open command leads right now.
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                C58 attribution command
-              </p>
-              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
-                Lead source intelligence
-              </h2>
-              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
-                Jump into leads by public journey: AI, search, property, society, owner or broker.
-              </p>
+                ))
+              ) : (
+                <p className="rounded-2xl bg-emerald-50 p-4 text-sm font-medium text-emerald-700">Nothing pending — drafts and follow-ups are all clear.</p>
+              )}
             </div>
-            <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
-              <Link to="/admin/leads">All leads</Link>
-            </Button>
-          </div>
+          </section>
+        </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-            {sourceSummary.map((item) => (
-              <Link
-                key={item.bucket}
-                to={item.href}
-                className={`rounded-[22px] border p-4 transition hover:-translate-y-0.5 hover:shadow-md ${sourceCardClass(item.bucket)}`}
-              >
-                <p className="text-xs font-black uppercase tracking-[0.14em] opacity-70">{item.label}</p>
-                <p className="mt-2 text-2xl font-black">{dashboardValue(item.count, leadLoading)}</p>
-                <p className="mt-1 text-xs font-semibold opacity-75">{item.helper}</p>
-                {item.latest ? (
-                  <p className="mt-2 line-clamp-2 text-[11px] leading-5 opacity-70">
-                    Latest: {item.latest.name || "Unnamed"} · {dashboardLeadSourceLabel(item.latest)}
-                  </p>
-                ) : (
-                  <p className="mt-2 text-[11px] opacity-60">No leads yet.</p>
-                )}
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-[24px] border border-blue-100 bg-blue-50 p-4 shadow-sm md:rounded-[32px] md:p-6">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
-                C63 daily call sheet
-              </p>
-              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
-                Today’s priority follow-up queue
-              </h2>
-              <p className="mt-1 text-xs leading-5 text-blue-900/70 md:text-sm">
-                Work in order: overdue, hot SLA, due today, untouched, then stale. Use call, WhatsApp, open lead or set tomorrow.
-              </p>
-            </div>
-            <Button asChild variant="outline" className="rounded-full border-blue-200 bg-white text-xs font-bold text-blue-700 md:text-sm">
-              <Link to="/admin/leads?view=call_sheet">Open full call sheet</Link>
-            </Button>
-          </div>
-
-          <div className="mt-5 grid gap-3 xl:grid-cols-3">
-            {callSheetLeads.length ? (
-              callSheetLeads.map((lead) => {
-                const phoneDigits = String(lead.phone || "").replace(/[^0-9]/g, "").slice(-10);
-                const canCallLead = phoneDigits.length >= 10;
-
-                return (
-                  <div key={lead.id} className="rounded-[18px] border border-blue-100 bg-white p-3.5 shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <span className={`rounded-full border px-3 py-1 text-[11px] font-black ${callSheetReasonClass(lead)}`}>
-                        {callSheetReason(lead)}
-                      </span>
-                      <span className="text-[11px] font-bold text-slate-400">
-                        {formatLeadDate(lead.followUpAt || lead.createdAt)}
-                      </span>
-                    </div>
-
-                    <p className="mt-2 text-sm font-black text-slate-950">{lead.name || "Unnamed lead"}</p>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
-                      {lead.property || lead.society || lead.requirement || "Lead follow-up"}
-                    </p>
-                    <p className="mt-2 text-xs font-bold text-blue-700">
-                      Owner: {lead.assignedTo || "Unassigned"}
-                    </p>
-
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
-                        <Link to={`/admin/leads/${lead.id}`}>Open</Link>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={savingLeadId === lead.id}
-                        onClick={() => void handleDashboardTomorrow(lead)}
-                        className="rounded-full border-amber-200 text-xs font-bold text-amber-700 md:text-sm"
-                      >
-                        Tomorrow
-                      </Button>
-                      {canCallLead ? (
-                        <Button asChild variant="outline" size="sm" className="rounded-full border-blue-200 text-xs font-bold text-blue-700 md:text-sm">
-                          <a href={`tel:${phoneDigits}`}>Call</a>
-                        </Button>
-                      ) : null}
-                      {canCallLead ? (
-                        <Button asChild variant="outline" size="sm" className="rounded-full border-emerald-200 text-xs font-bold text-emerald-700 md:text-sm">
-                          <a href={callSheetWhatsAppUrl(lead)} target="_blank" rel="noreferrer">WhatsApp</a>
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="rounded-[22px] border border-dashed border-blue-200 bg-white p-6 text-sm font-semibold text-blue-700 xl:col-span-3">
-                No leads in today’s call sheet.
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                C62 SLA / aging control
-              </p>
-              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
-                Lead aging and response risk
-              </h2>
-              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
-                Track fresh enquiries, aging leads, stale records and hot leads that still need first contact.
-              </p>
-            </div>
-            <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
-              <Link to="/admin/leads?view=stale">Review stale leads</Link>
-            </Button>
-          </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            {slaSummary.map((item) => (
-              <Link
-                key={item.label}
-                to={item.href}
-                className={`rounded-[22px] border p-4 transition hover:-translate-y-0.5 hover:shadow-md ${slaCardClass(item.tone)}`}
-              >
-                <p className="text-xs font-black uppercase tracking-[0.14em] opacity-70">{item.label}</p>
-                <p className="mt-2 text-2xl font-black">{dashboardValue(item.value, leadLoading)}</p>
-                <p className="mt-1 text-xs font-semibold opacity-75">{item.helper}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                C61 team follow-up control
-              </p>
-              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
-                Lead owner workload
-              </h2>
-              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
-                See who owns the current lead pipeline and jump directly into each team member’s queue.
-              </p>
-            </div>
-            <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
-              <Link to="/admin/leads?assignee=Unassigned">Review unassigned</Link>
-            </Button>
-          </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            {teamSummary.map((item) => (
-              <Link
-                key={item.agent}
-                to={item.href}
-                className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-md"
-              >
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{item.agent}</p>
-                <p className="mt-3 text-3xl font-black text-slate-950">{dashboardValue(item.open, leadLoading)}</p>
-                <p className="mt-1 text-xs font-semibold text-slate-500">Open leads</p>
-                <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-bold">
-                  <span className="rounded-full bg-white px-2 py-1 text-amber-700">Due {dashboardValue(item.dueToday, leadLoading)}</span>
-                  <span className="rounded-full bg-white px-2 py-1 text-rose-700">Late {dashboardValue(item.overdue, leadLoading)}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                C59 lead quality command
-              </p>
-              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
-                Quality and duplicate detection
-              </h2>
-              <p className="mt-1 text-xs leading-5 text-slate-500 md:text-sm">
-                Spot duplicate phones, missing fields and high-intent leads before follow-up.
-              </p>
-            </div>
-            <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
-              <Link to="/admin/leads?view=duplicates">Review duplicates</Link>
-            </Button>
-          </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {qualitySummary.map((item) => (
-              <Link
-                key={item.label}
-                to={item.href}
-                className={`rounded-[22px] border p-4 transition hover:-translate-y-0.5 hover:shadow-md ${qualityCardClass(item.tone)}`}
-              >
-                <p className="text-xs font-black uppercase tracking-[0.14em] opacity-70">{item.label}</p>
-                <p className="mt-2 text-2xl font-black">{dashboardValue(item.value, leadLoading)}</p>
-                <p className="mt-1 text-xs font-semibold opacity-75">{item.helper}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
-                  Inventory action summary
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Drafts and profiles that need admin action.
-                </p>
-              </div>
-              <ShieldCheck className="h-5 w-5 text-blue-600" />
-            </div>
-
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              {[
-                ["Live properties", inventorySummary.liveProperties, "Public inventory", "/admin/properties"],
-                ["Draft properties", inventorySummary.draftProperties, "Pending publish", "/admin/properties"],
-                ["Owner drafts", inventorySummary.ownerDrafts, "From Owner CRM", "/admin/owner-crm"],
-                ["Draft societies", inventorySummary.draftSocieties, "Need verification", "/admin/societies"],
-                ["Verified societies", inventorySummary.verifiedSocieties, "Public-safe profiles", "/admin/societies"],
-                ["Active leads", leadSummary.open, "Pipeline", "/admin/leads?view=active"],
-              ].map(([label, value, meta, href]) => (
-                <Link
-                  key={String(label)}
-                  to={String(href)}
-                  className="rounded-[20px] bg-slate-50 p-4 transition hover:bg-blue-50 md:rounded-[24px] md:p-5"
-                >
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                    {label}
-                  </p>
-                  <p className="mt-2 text-2xl font-bold text-slate-950 md:text-3xl">
-                    {dashboardValue(value as number | string, inventoryLoading && !String(label).includes("leads"))}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500 md:text-sm">{meta}</p>
+        {/* Quick access */}
+        <section>
+          <h2 className="mb-3 text-lg font-black text-slate-950">Quick access</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+            {quickLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link key={link.href} to={link.href} className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+                  <span className="inline-flex rounded-xl bg-slate-100 p-2 text-slate-600 transition group-hover:bg-blue-50 group-hover:text-blue-700"><Icon className="h-4 w-4" /></span>
+                  <span className="text-sm font-bold text-slate-800">{link.label}</span>
                 </Link>
-              ))}
-            </div>
+              );
+            })}
           </div>
-
-          <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
-            <h2 className="text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
-              Quick actions
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Jump directly into common admin tasks.
-            </p>
-
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <Link to="/admin/societies/new" className={actionCardClass(true)}>
-                <Plus className="h-5 w-5" />
-                <p className="mt-3 font-bold">Add Society</p>
-                <p className="mt-1 text-sm opacity-80">Create profile</p>
-              </Link>
-
-              <Link to="/admin/properties/new" className={actionCardClass(false)}>
-                <Plus className="h-5 w-5 text-blue-600" />
-                <p className="mt-3 font-bold">Add Property</p>
-                <p className="mt-1 text-sm text-slate-500">List inventory</p>
-              </Link>
-
-              <Link to="/admin/leads?view=overdue" className={actionCardClass(false)}>
-                <MessageSquareText className="h-5 w-5 text-blue-600" />
-                <p className="mt-3 font-bold">Overdue Leads</p>
-                <p className="mt-1 text-sm text-slate-500">Call first</p>
-              </Link>
-
-              <Link to="/admin/properties" className={actionCardClass(false)}>
-                <Building2 className="h-5 w-5 text-blue-600" />
-                <p className="mt-3 font-bold">Properties</p>
-                <p className="mt-1 text-sm text-slate-500">Publish drafts</p>
-              </Link>
-
-              <Link to="/admin/owner-crm" className={actionCardClass(false)}>
-                <Home className="h-5 w-5 text-blue-600" />
-                <p className="mt-3 font-bold">Owner CRM</p>
-                <p className="mt-1 text-sm text-slate-500">Owner leads</p>
-              </Link>
-
-              <Link to="/admin/broker-crm" className={actionCardClass(false)}>
-                <Users className="h-5 w-5 text-blue-600" />
-                <p className="mt-3 font-bold">Broker CRM</p>
-                <p className="mt-1 text-sm text-slate-500">Partner leads</p>
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
-                Action queue
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Hot leads, owner drafts and society drafts needing attention.
-              </p>
-            </div>
-            <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
-              <Link to="/admin/leads">Open CRM</Link>
-            </Button>
-          </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {actionQueue.length ? (
-              actionQueue.map((item) => (
-                <Link
-                  key={item.key}
-                  to={item.href}
-                  className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 transition hover:bg-blue-50"
-                >
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-blue-700">
-                    {item.label}
-                  </span>
-                  <p className="mt-3 truncate text-sm font-bold text-slate-950">
-                    {item.title}
-                  </p>
-                  <p className="mt-1 line-clamp-2 text-xs text-slate-500">
-                    {item.meta}
-                  </p>
-                  <p className="mt-3 inline-flex items-center text-xs font-bold text-blue-700">
-                    Open <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                  </p>
-                </Link>
-              ))
-            ) : (
-              <div className="rounded-[22px] border border-dashed border-slate-200 p-5 text-sm text-slate-500 md:col-span-2 xl:col-span-4">
-                No urgent action items right now.
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:rounded-[32px] md:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-950 md:text-2xl">
-                Recent lead activity
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Latest enquiries from Lead CRM.
-              </p>
-            </div>
-            <Button asChild variant="outline" className="rounded-full border-slate-200 text-xs font-bold md:text-sm">
-              <Link to="/admin/leads">Open CRM</Link>
-            </Button>
-          </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            {recentLeads.length ? (
-              recentLeads.map((lead) => (
-                <Link
-                  key={lead.id}
-                  to={`/admin/leads/${lead.id}`}
-                  className="rounded-[22px] border border-slate-200 bg-slate-50 p-4 transition hover:bg-blue-50"
-                >
-                  <p className="truncate text-sm font-bold text-slate-950">
-                    {lead.name || "Unnamed lead"}
-                  </p>
-                  <p className="mt-1 truncate text-xs text-slate-500">
-                    {lead.property || lead.society || "General enquiry"}
-                  </p>
-                  <p className="mt-3 text-xs font-semibold text-blue-700">
-                    {lead.requirement || "Requirement pending"}
-                  </p>
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    {formatLeadDate(lead.createdAt)}
-                  </p>
-                </Link>
-              ))
-            ) : (
-              <div className="rounded-[22px] border border-dashed border-slate-200 p-5 text-sm text-slate-500 md:col-span-2 xl:col-span-5">
-                No leads found yet.
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="grid gap-3 md:grid-cols-3">
-          {[
-            {
-              title: "AI Features",
-              text: "Manage advisor, recommendations and AI matching.",
-              href: "/admin/ai",
-              icon: Bot,
-            },
-            {
-              title: "Recommendations",
-              text: "Review recommendation and matching modules.",
-              href: "/admin/recommendations",
-              icon: Target,
-            },
-            {
-              title: "Users",
-              text: "Review accounts and user modules.",
-              href: "/admin/users",
-              icon: Users,
-            },
-          ].map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                className="group rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg md:rounded-[28px]"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <Icon className="h-5 w-5 text-blue-600" />
-                    <h3 className="mt-4 text-lg font-bold text-slate-950">
-                      {item.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                      {item.text}
-                    </p>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-blue-600" />
-                </div>
-              </Link>
-            );
-          })}
         </section>
       </div>
     </AdminLayout>
