@@ -38,6 +38,7 @@ export type NcrLocality = {
   slug: string;
   city?: string | null;
   state?: string | null;
+  pincode?: string | null;
   locality_type?: string | null;
   sector_code?: string | null;
   published_status?: "draft" | "review" | "published" | "archived";
@@ -53,13 +54,37 @@ export type NcrLocationsResponse = {
   };
 };
 
+async function json(response: Response) {
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload?.message || Object.values(payload?.errors || {}).flat().join(" ") || "NCR location request failed.");
+  }
+  return payload;
+}
+
 export async function fetchNcrLocations(): Promise<NcrLocationsResponse> {
   const response = await adminFetch("/admin/locations");
-  const json = await response.json().catch(() => ({}));
+  const payload = await json(response);
 
-  if (!response.ok) {
-    throw new Error(json?.message || "Unable to load NCR locations.");
-  }
+  return payload as NcrLocationsResponse;
+}
 
-  return json as NcrLocationsResponse;
+export async function createNcrZone(payload: Record<string, unknown>): Promise<NcrZone> {
+  const body = await adminFetch("/admin/locations/zones", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }).then(json);
+
+  return body.data as NcrZone;
+}
+
+export async function createNcrLocality(payload: Record<string, unknown>): Promise<NcrLocality> {
+  const body = await adminFetch("/admin/locations/localities", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }).then(json);
+
+  return body.data as NcrLocality;
 }

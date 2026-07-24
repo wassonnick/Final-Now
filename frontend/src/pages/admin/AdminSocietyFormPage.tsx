@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { VerifiedImportImageCard, type VerifiedImportImage } from "@/components/admin/VerifiedImportImageCard";
+import { NcrLocationSelector } from "@/components/admin/NcrLocationSelector";
 import { SocietySeoStudio } from "@/components/admin/SocietySeoStudio";
 import { adminFetch, uploadAdminImage } from "@/lib/adminApi";
 import { googlePlacesSocietyPhotoUrl, societyPlaceholderImage } from "@/lib/societyImages";
@@ -1274,20 +1275,35 @@ export function AdminSocietyFormPage() {
                 </label>
 
                 {ncrMulticityEnabled && (
-                  <div className="md:col-span-2 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">NCR structured location</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                      Review-only IDs for region/city/zone/locality mapping. Current city, sector and locality text remains the public fallback.
-                    </p>
-                    <div className="mt-3 grid gap-3 md:grid-cols-4">
-                      <Input value={society.regionId || ""} onChange={(event) => updateField("regionId", event.target.value ? Number(event.target.value) : "")} placeholder="Region ID" className="h-10 rounded-xl border-blue-100" />
-                      <Input value={society.cityId || ""} onChange={(event) => updateField("cityId", event.target.value ? Number(event.target.value) : "")} placeholder="City ID" className="h-10 rounded-xl border-blue-100" />
-                      <Input value={society.zoneId || ""} onChange={(event) => updateField("zoneId", event.target.value ? Number(event.target.value) : "")} placeholder="Zone ID" className="h-10 rounded-xl border-blue-100" />
-                      <Input value={society.localityId || ""} onChange={(event) => updateField("localityId", event.target.value)} placeholder="Locality UUID" className="h-10 rounded-xl border-blue-100" />
-                      <Input value={society.microMarket || ""} onChange={(event) => updateField("microMarket", event.target.value)} placeholder="Micro-market" className="h-10 rounded-xl border-blue-100" />
-                      <Input value={society.authority || ""} onChange={(event) => updateField("authority", event.target.value)} placeholder="Authority" className="h-10 rounded-xl border-blue-100" />
-                      <Input value={society.pincode || ""} onChange={(event) => updateField("pincode", event.target.value)} placeholder="Pincode" className="h-10 rounded-xl border-blue-100" />
-                    </div>
+                  <div className="md:col-span-2">
+                    <NcrLocationSelector
+                      value={{
+                        regionId: society.regionId,
+                        cityId: society.cityId,
+                        zoneId: society.zoneId,
+                        localityId: society.localityId,
+                        city: society.city,
+                        state: society.state,
+                        locality: society.locality,
+                        sector: society.sector,
+                        microMarket: society.microMarket,
+                        authority: society.authority,
+                        pincode: society.pincode,
+                      }}
+                      onChange={(next) => {
+                        if (next.regionId !== undefined) updateField("regionId", next.regionId);
+                        if (next.cityId !== undefined) updateField("cityId", next.cityId);
+                        if (next.zoneId !== undefined) updateField("zoneId", next.zoneId);
+                        if (next.localityId !== undefined) updateField("localityId", next.localityId);
+                        if (next.city !== undefined) updateField("city", next.city);
+                        if (next.state !== undefined) updateField("state", next.state);
+                        if (next.locality !== undefined) updateField("locality", next.locality);
+                        if (next.sector !== undefined) updateField("sector", next.sector);
+                        if (next.microMarket !== undefined) updateField("microMarket", next.microMarket);
+                        if (next.authority !== undefined) updateField("authority", next.authority);
+                        if (next.pincode !== undefined) updateField("pincode", next.pincode);
+                      }}
+                    />
                   </div>
                 )}
 

@@ -52,6 +52,7 @@ const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage')
 const AdminSocietiesPage = lazy(() => import('@/pages/admin/AdminSocietiesPage').then((module) => ({ default: module.AdminSocietiesPage })));
 const AdminVerifiedSocietyImporterPage = lazy(() => import('@/pages/admin/AdminVerifiedSocietyImporterPage').then((module) => ({ default: module.AdminVerifiedSocietyImporterPage })));
 const AdminSocietyFormPage = lazy(() => import('@/pages/admin/AdminSocietyFormPage').then((module) => ({ default: module.AdminSocietyFormPage })));
+const AdminLocationsPage = lazy(() => import('@/pages/admin/AdminLocationsPage').then((module) => ({ default: module.AdminLocationsPage })));
 const AdminSocietyIntelligencePage = lazy(() => import('@/pages/admin/AdminSocietyIntelligencePage').then((module) => ({ default: module.AdminSocietyIntelligencePage })));
 const AdminIntelligenceCorrectionsPage = lazy(() => import('@/pages/admin/AdminIntelligenceCorrectionsPage').then((module) => ({ default: module.AdminIntelligenceCorrectionsPage })));
 const AdminPropertiesPage = lazy(() => import('@/pages/admin/AdminPropertiesPage').then((module) => ({ default: module.AdminPropertiesPage })));
@@ -214,6 +215,7 @@ function AppShell() {
             <Route path="/admin/societies/import" element={<Navigate to="/admin/verified-society-importer" replace />} />
             <Route path="/admin/society-importer" element={<Navigate to="/admin/verified-society-importer" replace />} />
             <Route path="/admin/verified-society-importer" element={<ProtectedAdminRoute><AdminVerifiedSocietyImporterPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/locations" element={<ProtectedAdminRoute>{isNcrMulticityEnabled() ? <AdminLocationsPage /> : <Navigate to="/admin/dashboard" replace />}</ProtectedAdminRoute>} />
             <Route path="/admin/societies/new" element={<ProtectedAdminRoute><AdminSocietyFormPage /></ProtectedAdminRoute>} />
             <Route path="/admin/societies/:id/edit" element={<ProtectedAdminRoute><AdminSocietyFormPage /></ProtectedAdminRoute>} />
             <Route path="/admin/societies/:id/intelligence" element={<ProtectedAdminRoute><AdminSocietyIntelligencePage /></ProtectedAdminRoute>} />

@@ -30,6 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { clearAdminSession } from "@/hooks/useAdminAuth";
+import { isNcrMulticityEnabled } from "@/config/features";
 
 type AdminSidebarProps = {
   onNavigate?: () => void;
@@ -100,6 +101,16 @@ const groups: Array<{ heading: string | null; links: Array<{ label: string; href
 
 export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   const location = useLocation();
+  const links = groups.map((group) => ({
+    ...group,
+    links: group.heading === "Inventory" && isNcrMulticityEnabled()
+      ? [
+          ...group.links.slice(0, 2),
+          { label: "NCR Locations", href: "/admin/locations", icon: MapPinned },
+          ...group.links.slice(2),
+        ]
+      : group.links,
+  }));
 
   const logout = () => {
     clearAdminSession();
@@ -110,7 +121,7 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
     location.pathname === href ||
     (location.pathname.startsWith(`${href}/`) &&
       // "/admin/societies" must not light up while on "/admin/societies/import".
-      !groups.some((group) => group.links.some((link) => link.href !== href && link.href.startsWith(`${href}/`) && (location.pathname === link.href || location.pathname.startsWith(`${link.href}/`)))));
+      !links.some((group) => group.links.some((link) => link.href !== href && link.href.startsWith(`${href}/`) && (location.pathname === link.href || location.pathname.startsWith(`${link.href}/`)))));
 
   return (
     <aside className="flex h-full flex-col bg-white">
@@ -124,7 +135,7 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-3">
-        {groups.map((group, index) => (
+        {links.map((group, index) => (
           <div key={group.heading || "top"} className={index > 0 ? "mt-4" : ""}>
             {group.heading ? (
               <p className="px-4 pb-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
