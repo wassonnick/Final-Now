@@ -25,6 +25,22 @@ class AiChatTest extends TestCase
         $this->assertSame('/society/published-heights', $result['matches'][0]['url']);
     }
 
+    public function test_matcher_finds_a_society_named_directly_even_with_a_low_score(): void
+    {
+        // A published society with a modest score, plus higher-scored noise. Naming it directly
+        // must surface it — the exact case where users were told "not in our database".
+        Society::create(['name' => 'M3M Escala', 'slug' => 'm3m-escala-sector-70a', 'sector' => 'Sector 70A', 'locality' => 'Sector 70A', 'status' => 'Verified', 'verification_status' => 'Verified', 'is_published' => true, 'score' => 6.2]);
+        foreach (range(1, 5) as $i) {
+            Society::create(['name' => "Noise Society {$i}", 'slug' => "noise-{$i}", 'sector' => 'Sector 99', 'status' => 'Verified', 'verification_status' => 'Verified', 'is_published' => true, 'score' => 9.5]);
+        }
+
+        $result = app(SocietyMatchService::class)->searchStructured(['intent' => 'buy', 'keywords' => ['m3m', 'escala'], 'free_text' => 'Tell me about living in M3M Escala']);
+
+        $names = collect($result['matches'])->pluck('society_name');
+        $this->assertTrue($names->contains('M3M Escala'), 'A directly-named published society must always be found.');
+        $this->assertSame('M3M Escala', $result['matches'][0]['society_name'], 'The named society should lead the results.');
+    }
+
     public function test_chat_returns_safe_fallback_when_assistant_is_unconfigured_and_persists_private_history(): void
     {
         config(['services.claude.api_key' => '']); // assistant unavailable

@@ -78,6 +78,63 @@ class SocietyMatchService
      * @param  array<string,mixed>  $signals
      * @return array{intent:string,signals:array<string,mixed>,matches:array<int,array<string,mixed>>,reply:string}
      */
+    /** Query tokens too generic to identify a specific society by name. */
+    private const GENERIC_NAME_TOKENS = [
+        'gurgaon', 'gurugram', 'sector', 'society', 'societies', 'flat', 'flats', 'home', 'homes',
+        'apartment', 'apartments', 'about', 'living', 'live', 'tell', 'the', 'and', 'with', 'near',
+        'property', 'properties', 'rent', 'buy', 'resale', 'builder', 'floor', 'floors', 'price',
+        'details', 'detail', 'info', 'information', 'compare', 'versus', 'area', 'project', 'projects',
+    ];
+
+    /**
+     * Society ids whose NAME the user typed directly (e.g. "M3M Escala", "DLF The Crest"). These
+     * bypass the score-ranked candidate slice and the relevance threshold so a specifically-named,
+     * published society is never wrongly reported as "not in our database".
+     *
+     * @param  array<string,mixed>  $signals
+     * @return array<int,int>
+     */
+    private function namedSocietyIds(array $signals): array
+    {
+        $tokens = collect(array_merge(
+            (array) ($signals['keywords'] ?? []),
+            preg_split('/\s+/', (string) ($signals['text'] ?? '')) ?: [],
+        ))
+            ->map(fn ($t) => Str::lower(trim((string) $t)))
+            ->filter(fn ($t) => strlen($t) >= 3 && ! in_array($t, self::GENERIC_NAME_TOKENS, true))
+            ->unique()
+            ->values();
+
+        if ($tokens->isEmpty()) {
+            return [];
+        }
+
+        $candidates = Society::query()
+            ->where('is_published', true)
+            ->whereIn('status', ['Verified', 'Premium'])
+            ->where(function ($query) use ($tokens) {
+                foreach ($tokens as $token) {
+                    $query->orWhereRaw('LOWER(name) LIKE ?', ['%'.$token.'%']);
+                }
+            })
+            ->limit(40)
+            ->get(['id', 'name']);
+
+        // Require the name to contain at least min(2, tokens) of the query tokens, so one common
+        // word can't drag in unrelated societies, but a two-word name the user typed matches.
+        $required = min(2, $tokens->count());
+
+        return $candidates
+            ->filter(function (Society $society) use ($tokens, $required) {
+                $name = Str::lower((string) $society->name);
+
+                return $tokens->filter(fn ($t) => str_contains($name, $t))->count() >= $required;
+            })
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
     private function runSearch(array $signals, string $intent): array
     {
         $listingTypes = $this->listingTypesForIntent($intent);
@@ -88,31 +145,48 @@ class SocietyMatchService
             ->get()
             ->groupBy('society_id');
 
-        $societies = Society::query()
+        $withCount = fn ($query) => $query->withCount(['properties as available_homes' => function ($q) use ($listingTypes) {
+            $q->publiclyAvailable();
+            if ($listingTypes) {
+                $q->whereIn('listing_type', $listingTypes);
+            }
+        }]);
+
+        $namedIds = $this->namedSocietyIds($signals);
+
+        $societies = $withCount(Society::query()
             ->where('is_published', true)
-            ->whereIn('status', ['Verified', 'Premium'])
-            ->withCount(['properties as available_homes' => function ($query) use ($listingTypes) {
-                $query->publiclyAvailable();
-                if ($listingTypes) {
-                    $query->whereIn('listing_type', $listingTypes);
-                }
-            }])
+            ->whereIn('status', ['Verified', 'Premium']))
             ->orderByDesc('featured')
             ->orderByDesc('search_boost')
             ->orderByDesc('score')
             ->limit(120)
             ->get();
 
+        // Always include societies the user named directly, even if they rank below the top slice.
+        // Without this, "tell me about M3M Escala" wrongly returns "not in our database" whenever
+        // that society sits outside the top 120 by score — the exact failure users hit.
+        if ($namedIds) {
+            $missing = array_values(array_diff($namedIds, $societies->pluck('id')->all()));
+            if ($missing) {
+                $societies = $societies->concat($withCount(Society::query()->whereIn('id', $missing))->get())->values();
+            }
+        }
+
         $scored = $societies
             ->map(fn (Society $society) => $this->scoreSociety($society, $properties->get($society->id, collect()), $signals, $intent))
-            ->filter(function (array $match) use ($signals) {
+            ->filter(function (array $match) use ($signals, $namedIds) {
+                // A directly-named society is always kept — the user asked for it by name.
+                if (in_array((int) $match['society']->id, $namedIds, true)) {
+                    return true;
+                }
                 if (! $signals['has_specific_signals']) {
                     return $match['raw_score'] >= 25;
                 }
 
                 return $match['is_relevant'] && $match['raw_score'] >= 25;
             })
-            ->sortByDesc('raw_score')
+            ->sortByDesc(fn (array $match) => (in_array((int) $match['society']->id, $namedIds, true) ? 1000 : 0) + $match['raw_score'])
             ->values();
 
         $matches = $scored->take(6)->map(fn (array $m) => $this->formatMatch($m))->values();
