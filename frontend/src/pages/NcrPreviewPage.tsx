@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
-import { MapPin, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, ClipboardCheck, MapPin, SearchCheck, ShieldCheck, SlidersHorizontal } from "lucide-react";
 
 import { usePublicSeo } from "@/lib/seo";
 
 const cities = [
-  { name: "Gurgaon", slug: "gurgaon", note: "Current live market remains the canonical production city." },
-  { name: "Delhi", slug: "delhi", note: "Prepared for future society/property discovery." },
-  { name: "Noida", slug: "noida", note: "Prepared for future structured locality coverage." },
-  { name: "Greater Noida", slug: "greater-noida", note: "Prepared for future zone and micro-market mapping." },
-  { name: "Faridabad", slug: "faridabad", note: "Prepared for future NCR intake and lead routing." },
+  { name: "Gurgaon", slug: "gurgaon", note: "Current live market remains the canonical production city.", state: "Live baseline" },
+  { name: "Delhi", slug: "delhi", note: "Prepared for future society, owner and NRI workflows.", state: "Review-only" },
+  { name: "Noida", slug: "noida", note: "Prepared for sector-led search and comparison once verified.", state: "Review-only" },
+  { name: "Greater Noida", slug: "greater-noida", note: "Prepared for zone and micro-market mapping.", state: "Review-only" },
+  { name: "Faridabad", slug: "faridabad", note: "Prepared for future NCR intake and lead routing.", state: "Review-only" },
 ];
 
 export function NcrPreviewPage() {
@@ -24,11 +24,11 @@ export function NcrPreviewPage() {
         <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-sm md:p-10">
           <p className="text-xs font-black uppercase tracking-[0.28em] text-blue-700">Review-only foundation</p>
           <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-navy-900 md:text-6xl">
-            Delhi NCR city architecture, safely staged behind a feature flag.
+            Delhi NCR expansion, staged like a control room — not a public launch.
           </h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
-            NCR-1 adds the structured region, city, zone and locality layer needed for SocietyFlats to expand beyond
-            Gurgaon without weakening today’s live filters, sitemap, importer safety or public SEO posture.
+            This preview lets us inspect how SocietyFlats can expand from Gurgaon into Delhi, Noida, Greater Noida
+            and Faridabad without weakening the live filters, sitemap, importer safety or SEO posture already working today.
           </p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -59,15 +59,49 @@ export function NcrPreviewPage() {
         <div className="mt-8 grid gap-4 md:grid-cols-5">
           {cities.map((city) => (
             <Link key={city.name} to={`/ncr/${city.slug}`} className="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-blue-700">{city.state}</span>
               <h2 className="text-xl font-black text-navy-900">{city.name}</h2>
               <p className="mt-3 text-sm leading-6 text-slate-600">{city.note}</p>
               <span className="mt-4 inline-flex items-center text-sm font-black text-blue-700">
                 Open city shell
-                <span className="ml-2 transition group-hover:translate-x-1">→</span>
+                <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-1" />
               </span>
             </Link>
           ))}
         </div>
+
+        <section className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-700">What to check here</p>
+          <h2 className="mt-3 text-3xl font-black text-navy-900">Use this page to inspect the rollout rules, not live inventory.</h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {[
+              {
+                icon: SearchCheck,
+                title: "City page quality",
+                copy: "Open each shell and check whether the page explains its market role, staged corridors, proof needed and next user path.",
+              },
+              {
+                icon: ClipboardCheck,
+                title: "Admin readiness",
+                copy: "Confirm the admin location board has cities, zones, localities and backfill preview without forcing public indexing.",
+              },
+              {
+                icon: ShieldCheck,
+                title: "SEO safety",
+                copy: "Verify these routes remain noindex and out of sitemap until a city has explicit approval and enough verified content.",
+              },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <article key={item.title} className="rounded-3xl border border-blue-100 bg-blue-50/50 p-5">
+                  <Icon className="h-6 w-6 text-blue-700" />
+                  <h3 className="mt-4 text-lg font-black text-navy-900">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.copy}</p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
 
         <div className="mt-8 rounded-[1.5rem] border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
           <strong>Review note:</strong> this branch is not production-ready. Enable with <code>VITE_NCR_MULTICITY_ENABLED=true</code> only

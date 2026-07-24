@@ -395,6 +395,13 @@ class NcrMulticityFoundationTest extends TestCase
         $this->assertFalse($page->is_indexable);
         $this->assertFalse($page->sitemap_included);
         $this->assertSame('held_noindex_until_approved', $page->metadata['indexing_policy']);
+        $this->assertSame('Noida Society-First Home Search Preview | SocietyFlats', $page->title);
+        $this->assertSame('Noida society-first home search preview', $page->h1);
+        $this->assertStringContainsString('Review-only Noida city coverage preview', $page->meta_description);
+        $this->assertGreaterThanOrEqual(900, $page->content_word_count);
+        $this->assertGreaterThanOrEqual(8, $page->internal_link_count);
+        $this->assertSame('ncr_10_city_shell_content', $page->metadata['content_readiness_version']);
+        $this->assertSame(7, $page->metadata['heading_count']);
 
         $xml = app(LiveSitemapService::class)->body();
 
