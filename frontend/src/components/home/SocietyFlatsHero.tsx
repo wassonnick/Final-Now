@@ -1,37 +1,26 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Check, MapPin, Search, Sparkles } from "lucide-react";
+import { ArrowRight, Check, MapPin, Search, Sparkles } from "lucide-react";
 import { fetchPublicSocieties, formatPublicLocation, suggestSocieties } from "@/lib/publicData";
-import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
-import { loadGoogleMaps } from "@/components/maps/GoogleSocietyMapView";
+import { hasGooglePlacesDisplayPhoto, societyDisplayImage, societyImageAttribution } from "@/lib/societyImages";
 
-const GOOGLE_MAPS_API_KEY = String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();
-
-function heroMapCenter(society: any) {
-  const lat = Number(society?.latitude);
-  const lng = Number(society?.longitude);
-  if (Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0) {
-    return { lat, lng };
-  }
-  return { lat: 28.4595, lng: 77.0266 };
-}
-
-// SEO compatibility anchors: Ask SocietyFlats AI · submitHeroAi · No forced AI page jump.
+// SEO compatibility anchors: submitHeroAi · No forced AI page jump.
 
 type Intent = "buy" | "rent" | "new-launch" | "society";
 
 const tabs: Array<{ key: Intent; label: string }> = [
+  { key: "society", label: "Societies" },
   { key: "buy", label: "Buy" },
   { key: "rent", label: "Rent" },
-  { key: "new-launch", label: "New Launch" },
-  { key: "society", label: "Society" },
+  { key: "new-launch", label: "New launches" },
 ];
 
-const aiChips = [
-  "Family-friendly in Sector 65",
-  "3 BHK near Golf Course Ext",
-  "Pet-friendly with good security",
-];
+const serviceIndex = [
+  { label: "Ask the AI advisor", detail: "Build a grounded shortlist", href: "/ai-advisor", mark: "01" },
+  { label: "Explore Gurgaon maps", detail: "See sectors and nearby context", href: "/maps", mark: "02" },
+  { label: "Compare societies", detail: "Review fit and scores side by side", href: "/compare", mark: "03" },
+  { label: "NRI ownership desk", detail: "Rent-out, resale and local management", href: "/nri-services", mark: "04" },
+] as const;
 
 function searchUrl(intent: Intent, query: string) {
   const params = new URLSearchParams();
@@ -47,237 +36,85 @@ function scoreOf(society: any) {
   return (value > 10 ? value / 10 : value).toFixed(1);
 }
 
-function confidenceOf(society: any) {
-  const value = Number(society?.sourceConfidenceScore ?? society?.source_confidence_score ?? 0);
-  return value > 0 ? `${value}% verified` : "Pending";
-}
-
-// Some older AI-enriched records have a parenthetical aside baked into the range string
-// instead of a bare range — strip it so the card doesn't blow out into several lines.
-function stripRangeAside(value: string) {
-  return value.replace(/\s*[(;].*$/, "").trim();
-}
-
-// Renting out an under-construction unit isn't possible yet, so a rental range only makes
-// sense once the project is actually ready to move into / delivered.
-function rentTextOf(society: any) {
-  const status = String(society?.projectStatus ?? society?.project_status ?? "").toLowerCase();
-  if (/under construction|new launch/.test(status)) return "Available after possession";
-  return society?.rentRange ? stripRangeAside(society.rentRange) : "On request";
-}
-
-function buyTextOf(society: any) {
-  return society?.buyRange ? stripRangeAside(society.buyRange) : "On request";
-}
-
 export default function SocietyFlatsHero() {
   const navigate = useNavigate();
   const [intent, setIntent] = useState<Intent>("society");
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [societies, setSocieties] = useState<any[]>([]);
   const [allSocieties, setAllSocieties] = useState<any[]>([]);
 
   useEffect(() => {
     let active = true;
     fetchPublicSocieties()
       .then((items) => {
-        if (!active) return;
-        setAllSocieties(items);
-        // Hero picks: admin-flagged "Show in Hero" societies first, then the
-        // top-scored — never just whatever the API returned first.
-        const heroFlag = (s: any) => (s?.showInHero ?? s?.show_in_hero ? 1 : 0);
-        setSocieties(
-          [...items]
-            .filter(hasGooglePlacesDisplayPhoto)
-            .sort((a, b) => heroFlag(b) - heroFlag(a) || (Number(b?.score) || 0) - (Number(a?.score) || 0))
-            .slice(0, 2),
-        );
+        if (active) setAllSocieties(items);
       })
       .catch(() => {
-        if (!active) return;
-        setAllSocieties([]);
-        setSocieties([]);
+        if (active) setAllSocieties([]);
       });
     return () => {
       active = false;
     };
   }, []);
 
-  const primary = societies[0];
-  const secondary = societies[1];
+  const primary = useMemo(() => {
+    const heroFlag = (society: any) => (society?.showInHero ?? society?.show_in_hero ? 1 : 0);
+    return [...allSocieties]
+      .filter(hasGooglePlacesDisplayPhoto)
+      .sort((a, b) => heroFlag(b) - heroFlag(a) || (Number(b?.score) || 0) - (Number(a?.score) || 0))[0];
+  }, [allSocieties]);
+
   const suggestions = useMemo(() => suggestSocieties(allSocieties, query), [allSocieties, query]);
   const submit = (overrideQuery?: string) => navigate(searchUrl(intent, overrideQuery ?? query));
 
-  const mapRef = useRef<HTMLDivElement | null>(null);
-  const mapInstanceRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (!GOOGLE_MAPS_API_KEY || !mapRef.current) return;
-    let cancelled = false;
-    const center = heroMapCenter(primary);
-
-    loadGoogleMaps(GOOGLE_MAPS_API_KEY)
-      .then(() => {
-        if (cancelled || !window.google?.maps || !mapRef.current) return;
-        if (!mapInstanceRef.current) {
-          mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
-            center,
-            zoom: 13,
-            disableDefaultUI: true,
-            gestureHandling: "none",
-            keyboardShortcuts: false,
-          });
-        } else {
-          mapInstanceRef.current.setCenter(center);
-        }
-        new window.google.maps.Marker({ position: center, map: mapInstanceRef.current });
-      })
-      .catch((error: Error) => console.error("Hero map load failed", error));
-
-    return () => {
-      cancelled = true;
-    };
-  }, [primary]);
-
   return (
-    <>
-      <section className="border-b border-[#DDD7CC] bg-[#F7F4EF] lg:hidden">
-        <div className="px-5 pb-7 pt-5">
-          <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-[#DDD7CC] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#3156A3]">
-            <MapPin className="h-3 w-3" /> No fake listings · no stale prices · Gurgaon
-          </div>
-
-          <p className="font-display text-[34px] font-medium leading-[1.05] tracking-[-0.02em] text-[#111827]">
-            Your Gurgaon home, <span className="italic text-[#8B6B32]">chosen with confidence.</span>
-          </p>
-          <p className="mt-3 text-[14px] leading-6 text-[#667085]"><span className="font-semibold text-[#35413B]">Most portals show you flats that are stale, inflated or already gone.</span> We score every society, check every price and put an AI advisor by your side — so you compare honest evidence, not a sales pitch.</p>
-
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              submit();
-            }}
-            className="relative mt-4"
-          >
-            <label className="flex w-full items-center gap-2.5 rounded-[16px] border border-[#E7DCCB] bg-white px-4 py-1.5 shadow-[0_6px_18px_-12px_rgba(0,0,0,.25)]">
-              <Search className="h-[19px] w-[19px] shrink-0 text-[#3156A3]" />
-              <input
-                type="search"
-                inputMode="search"
-                enterKeyHint="search"
-                autoComplete="off"
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setShowSuggestions(true);
-                }}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") setShowSuggestions(false);
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    submit();
-                  }
-                }}
-                placeholder="Search sector, society or builder"
-                aria-label="Search sector, society or builder"
-                className="search-bare-input min-w-0 flex-1 bg-transparent py-3 text-[15px] text-[#25302B] outline-none placeholder:text-[#8A8F89]"
-              />
-              <button type="submit" aria-label="Submit search" className="shrink-0 rounded-[10px] bg-[#233B6E] px-3 py-2 text-xs font-bold text-white">
-                Search
-              </button>
-            </label>
-            {showSuggestions && query.trim() && suggestions.length > 0 ? (
-              <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-64 overflow-y-auto rounded-[14px] border border-[#E7DCCB] bg-white p-1.5 shadow-[0_18px_40px_-28px_rgba(0,0,0,.35)]">
-                {suggestions.map((society) => (
-                  <li key={society.id}>
-                    <button
-                      type="button"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => {
-                        setShowSuggestions(false);
-                        setQuery(society.name);
-                        submit(society.name);
-                      }}
-                      className="flex w-full flex-col rounded-[10px] px-3 py-2 text-left hover:bg-[#F8F3EA]"
-                    >
-                      <span className="text-sm font-semibold text-[#25302B]">{society.name}</span>
-                      <span className="text-xs text-[#6E756E]">{formatPublicLocation(society)}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </form>
-          <Link to="/ai-advisor?q=3+BHK+near+Cyber+City+under+80k" className="mt-2.5 flex items-center gap-1.5 px-1 text-[11.5px] leading-5 text-[#667085]">
-            <Sparkles className="h-3 w-3 text-[#8B6B32]" /> Ask SocietyFlats AI: “3 BHK near Cyber City under ₹80k”
-          </Link>
-
-          <div className="mt-[14px] flex gap-2">
-            {tabs.slice(0, 3).map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => {
-                  setIntent(tab.key);
-                  navigate(searchUrl(tab.key, ""));
-                }}
-                className={`flex-1 rounded-[11px] border px-2 py-2.5 text-sm font-semibold ${
-                  intent === tab.key
-                    ? "border-[#233B6E] bg-[#233B6E] text-white"
-                    : "border-[#D8DFEC] bg-white text-[#475467]"
-                }`}
-              >
-                {tab.label === "New Launch" ? "New launch" : tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="hidden overflow-hidden border-b border-[#DDD7CC] bg-[#F7F4EF] lg:block">
-        <div className="mx-auto grid max-w-[1360px] grid-cols-[1.03fr_0.97fr] items-center gap-14 px-10 pb-12 pt-12">
-          <div>
-            <div className="mb-[22px] inline-flex items-center gap-2 rounded-full border border-[#DDD7CC] bg-white px-[13px] py-1.5 text-[12.5px] font-bold text-[#3156A3]">
-              <Check className="h-[13px] w-[13px] stroke-[3]" />
-              No fake listings · no stale prices · every society checked by real people
+    <section className="overflow-hidden border-b border-[#DDE2EC] bg-[linear-gradient(135deg,#F8F6F1_0%,#F5F7FC_55%,#EEF3FC_100%)]">
+      <div className="mx-auto max-w-[1440px] px-5 pb-7 pt-7 lg:px-10 lg:pb-10 lg:pt-12">
+        <div className="grid gap-7 lg:grid-cols-[1.08fr_.92fr] lg:items-stretch lg:gap-12">
+          <div className="flex flex-col justify-center">
+            <div className="inline-flex w-fit items-center gap-2 border-b border-[#B59657] pb-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#233B6E] lg:text-[11px]">
+              <MapPin className="h-3.5 w-3.5" />
+              Gurgaon society intelligence
             </div>
-            <h1 className="m-0 font-display text-[64px] font-medium leading-[0.98] tracking-[-0.025em] text-[#111827]">
-              Your Gurgaon home, <span className="italic text-[#8B6B32]">chosen with confidence.</span>
+
+            <h1 className="mt-5 max-w-[800px] font-display text-[46px] font-medium leading-[.94] tracking-[-0.045em] text-[#101828] sm:text-[58px] lg:text-[76px]">
+              Find the society.
+              <span className="block italic text-[#3156A3]">Then choose the home.</span>
             </h1>
-            <p className="mb-6 mt-[18px] max-w-[560px] text-[17px] leading-[1.6] text-[#667085]">
-              <span className="font-semibold text-[#35413B]">Most portals show you flats that are stale, inflated or already gone.</span> We score every society, check every price and put a friendly AI advisor by your side — so you compare honest evidence, not the sales pitch, and ask to visit only when it feels right.
+            <p className="mt-5 max-w-[710px] text-[15px] leading-7 text-[#5F6B7C] lg:text-[18px] lg:leading-8">
+              Verified society profiles, current homes and human-backed property services for Gurgaon—brought together around the decision you are actually making.
             </p>
 
-            <div className="max-w-[590px] rounded-[22px] border border-[#D8DFEC] bg-white p-[18px] shadow-[0_24px_70px_-42px_rgba(25,40,75,.45)]">
-              <div className="mb-[14px] flex gap-2">
+            <div className="mt-6 rounded-[22px] border border-[#D8DFEC] bg-white p-3 shadow-[0_28px_70px_-52px_rgba(35,59,110,.65)] lg:mt-8 lg:p-4">
+              <div className="mb-3 flex gap-1 overflow-x-auto scrollbar-hide">
                 {tabs.map((tab) => (
                   <button
                     key={tab.key}
                     type="button"
                     onClick={() => setIntent(tab.key)}
-                    className={`rounded-[10px] border px-4 py-2 text-sm font-semibold ${
-                      intent === tab.key
-                        ? "border-[#233B6E] bg-[#233B6E] text-white"
-                        : "border-[#E7DCCB] bg-white text-[#59635E]"
+                    className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-extrabold transition lg:text-[13px] ${
+                      intent === tab.key ? "bg-[#233B6E] text-white" : "text-[#667085] hover:bg-[#F2F5FA]"
                     }`}
                   >
                     {tab.label}
                   </button>
                 ))}
               </div>
+
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
                   submit();
                 }}
-                className="flex gap-2.5"
+                className="flex flex-col gap-2 sm:flex-row"
               >
-                <label className="relative flex min-w-0 flex-1 items-center gap-2 rounded-[12px] border border-[#E7DCCB] bg-[#FFFBF3] px-[15px] py-[13px]">
-                  <Search className="h-[18px] w-[18px] text-[#3156A3]" />
+                <label className="relative flex min-w-0 flex-1 items-center gap-3 rounded-[14px] border border-[#D8DFEC] bg-[#FBFAF7] px-4 py-3.5">
+                  <Search className="h-[19px] w-[19px] shrink-0 text-[#3156A3]" />
                   <input
+                    type="search"
+                    inputMode="search"
+                    enterKeyHint="search"
+                    autoComplete="off"
                     value={query}
                     onChange={(event) => {
                       setQuery(event.target.value);
@@ -288,11 +125,12 @@ export default function SocietyFlatsHero() {
                     onKeyDown={(event) => {
                       if (event.key === "Escape") setShowSuggestions(false);
                     }}
-                    placeholder="Sector, society or builder…"
-                    className="search-bare-input min-w-0 flex-1 bg-transparent text-[15px] text-[#25302B] outline-none placeholder:text-[#8A8F89]"
+                    placeholder="Search society, sector or builder"
+                    aria-label="Search society, sector or builder"
+                    className="search-bare-input min-w-0 flex-1 bg-transparent text-[14px] text-[#1D2939] outline-none placeholder:text-[#98A2B3] lg:text-[15px]"
                   />
                   {showSuggestions && query.trim() && suggestions.length > 0 ? (
-                    <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-72 overflow-y-auto rounded-[14px] border border-[#E7DCCB] bg-white p-1.5 shadow-[0_18px_40px_-28px_rgba(0,0,0,.35)]">
+                    <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-72 overflow-y-auto rounded-[16px] border border-[#D8DFEC] bg-white p-1.5 shadow-[0_24px_50px_-28px_rgba(16,24,40,.42)]">
                       {suggestions.map((society) => (
                         <li key={society.id}>
                           <button
@@ -303,113 +141,99 @@ export default function SocietyFlatsHero() {
                               setQuery(society.name);
                               submit(society.name);
                             }}
-                            className="flex w-full flex-col rounded-[10px] px-3 py-2 text-left hover:bg-[#F8F3EA]"
+                            className="flex w-full flex-col rounded-[11px] px-3 py-2.5 text-left hover:bg-[#F5F7FB]"
                           >
-                            <span className="text-sm font-semibold text-[#25302B]">{society.name}</span>
-                            <span className="text-xs text-[#6E756E]">{formatPublicLocation(society)}</span>
+                            <span className="text-sm font-bold text-[#1D2939]">{society.name}</span>
+                            <span className="text-xs text-[#667085]">{formatPublicLocation(society)}</span>
                           </button>
                         </li>
                       ))}
                     </ul>
                   ) : null}
                 </label>
-                <button type="submit" className="rounded-[12px] bg-[#233B6E] px-[26px] text-[15px] font-bold text-white hover:bg-[#1B2E57]">
-                  {intent === "society" ? "Search societies" : "Search"}
+                <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-[14px] bg-[#233B6E] px-6 py-3.5 text-[14px] font-black text-white transition hover:bg-[#182F60]">
+                  Search Gurgaon
+                  <ArrowRight className="h-4 w-4" />
                 </button>
               </form>
-              <p className="mt-2.5 text-[12px] leading-5 text-[#6E756E]">
-                Try: “3 BHK near Cyber City under ₹80k” or “family societies in Sector 65”
-              </p>
-              <div className="mt-[14px] flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-[#667085]"><Sparkles className="h-3.5 w-3.5 text-[#8B6B32]" /> Ask SocietyFlats AI:</span>
-                {aiChips.map((chip) => (
-                  <Link
-                    key={chip}
-                    to={`/ai-advisor?q=${encodeURIComponent(chip)}`}
-                    className="rounded-full border border-[#D8DFEC] bg-[#F7F9FD] px-3 py-1.5 text-[12.5px] text-[#3156A3] transition hover:border-[#8FA4CC]"
-                  >
-                    {chip}
-                  </Link>
-                ))}
-              </div>
+
+              <Link
+                to="/ai-advisor?q=Family-friendly+societies+near+Golf+Course+Extension"
+                className="mt-3 inline-flex items-center gap-1.5 px-1 text-[11.5px] font-semibold text-[#3156A3] lg:text-[12.5px]"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-[#B58B3B]" />
+                Ask SocietyFlats AI for a family-friendly shortlist near Golf Course Extension
+              </Link>
             </div>
           </div>
 
-          <div className="relative h-[430px]">
-            <div className="absolute bottom-9 left-6 right-0 top-[14px] -rotate-2 overflow-hidden rounded-[28px] border border-[#D8DFEC] bg-[#E9EEF7]">
-              {GOOGLE_MAPS_API_KEY ? (
-                <div ref={mapRef} role="img" aria-label="Live Gurgaon societies map" className="h-full w-full rotate-2 scale-110" />
+          <Link
+            to={primary?.slug ? `/society/${primary.slug}` : "/search?tab=societies"}
+            className="group relative min-h-[360px] overflow-hidden rounded-[26px] border border-white/70 bg-[#142344] shadow-[0_35px_90px_-58px_rgba(35,59,110,.7)] lg:min-h-[560px]"
+          >
+            <div className="absolute inset-x-0 top-0 h-[58%] overflow-hidden bg-[#E9EEF7] lg:h-[62%]">
+              {primary ? (
+                <img
+                  src={societyDisplayImage(primary)}
+                  alt={primary.name}
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.025]"
+                />
               ) : (
-                <>
-                  <div className="absolute inset-0 [background-image:repeating-linear-gradient(0deg,#D8DFEC_0_1px,transparent_1px_36px),repeating-linear-gradient(90deg,#D8DFEC_0_1px,transparent_1px_36px)]" />
-                  <MapPin className="absolute left-[58%] top-16 h-7 w-7 fill-[#3156A3] text-white" />
-                </>
+                <div className="h-full w-full bg-[linear-gradient(135deg,#E7ECF6,#F8FAFD)] [background-image:linear-gradient(135deg,rgba(49,86,163,.08)_0_1px,transparent_1px_16px)]" />
               )}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#142344]/20 to-transparent" />
             </div>
-
-            <Link
-              to={primary?.slug ? `/society/${primary.slug}` : "/societies"}
-              aria-label={primary?.name ? `Open ${primary.name} society profile` : "Browse societies"}
-              className="absolute right-1 top-0 block w-[296px] rotate-2 rounded-[20px] border border-[#E7DCCB] bg-white p-3 shadow-[0_28px_50px_-24px_rgba(15,40,30,.45)] transition hover:rotate-0 hover:shadow-[0_32px_56px_-24px_rgba(15,40,30,.55)]">
-              <div className="relative flex h-44 items-center justify-center overflow-hidden rounded-[13px] bg-[#E8EDF7] [background-image:repeating-linear-gradient(135deg,#D8DFEC_0_1px,transparent_1px_12px)]">
-                {primary && hasGooglePlacesDisplayPhoto(primary) ? (
-                  <img src={societyDisplayImage(primary)} alt={primary.name} className="absolute inset-0 h-full w-full object-cover" />
-                ) : (
-                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#597167]">
-                    {primary ? "admin-reviewed society image" : "published society data"}
-                  </span>
-                )}
-                <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-[#EEF2FA] px-2.5 py-1 text-[11px] font-bold text-[#3156A3]">
-                  <Check className="h-3 w-3 stroke-[3]" /> Verified
-                </span>
-                {scoreOf(primary) ? (
-                  <span className="absolute right-2 top-2 rounded-[9px] bg-white px-2.5 py-1 text-[13px] font-extrabold text-[#233B6E]">
-                    {scoreOf(primary)}
-                  </span>
-                ) : null}
-              </div>
-              <div className="px-2 pb-1.5 pt-3">
-                <p className="text-base font-bold text-[#25302B]">{primary?.name || "Published society profiles"}</p>
-                <p className="mt-0.5 text-[12.5px] text-[#6E756E]">
-                  {primary ? formatPublicLocation(primary) : "Fresh launch database"}
-                </p>
-                <div className="mt-3 flex gap-4 border-t border-[#EEE6DA] pt-3">
-                  <div><p className="text-[10.5px] text-[#6E756E]">Rent</p><p className="text-[13.5px] font-bold">{rentTextOf(primary)}</p></div>
-                  <div><p className="text-[10.5px] text-[#6E756E]">Buy</p><p className="text-[13.5px] font-bold">{buyTextOf(primary)}</p></div>
-                </div>
-                <div className="mt-3 flex items-center justify-between rounded-[9px] bg-[#F8F3EA] px-3 py-2 text-[11px]">
-                  <span className="font-bold text-[#3156A3]">Data confidence: {confidenceOf(primary)}</span>
-                  <span className="text-[#6E756E]">Availability: On request</span>
-                </div>
-              </div>
-            </Link>
-
-            <Link
-              to={secondary?.slug ? `/society/${secondary.slug}` : "/societies"}
-              aria-label={secondary?.name ? `Open ${secondary.name} society profile` : "Browse societies"}
-              className="absolute bottom-6 left-0 block w-[244px] -rotate-3 rounded-[18px] border border-[#E7DCCB] bg-white p-4 shadow-[0_24px_44px_-26px_rgba(15,40,30,.4)] transition hover:rotate-0 hover:shadow-[0_28px_50px_-26px_rgba(15,40,30,.5)]">
-              <div className="flex items-center justify-between">
-                <p className="text-[15px] font-bold">{secondary?.name || "Society intelligence"}</p>
-                {scoreOf(secondary) ? <strong className="text-base text-[#233B6E]">{scoreOf(secondary)}</strong> : null}
-              </div>
-              <p className="mt-0.5 text-xs text-[#6E756E]">{secondary ? formatPublicLocation(secondary) : "Admin-reviewed data"}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-[#EEF2FA] px-2.5 py-1 text-[11px] font-bold text-[#3156A3]">
-                  Confidence {confidenceOf(secondary)}
-                </span>
-                <span className="text-[11px] text-[#6E756E]">Sources reviewed</span>
-              </div>
-            </Link>
-
-            <div className="absolute left-1.5 top-7 inline-flex items-center gap-1.5 rounded-full border border-[#E7DCCB] bg-white px-[13px] py-2 text-xs font-bold shadow-[0_12px_26px_-16px_rgba(0,0,0,.35)]">
-              <Check className="h-3 w-3 stroke-[3] text-[#3156A3]" /> Admin-reviewed data
+            <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-2 text-[11px] font-black text-[#233B6E] backdrop-blur lg:left-6 lg:top-6 lg:text-xs">
+              <Check className="h-3.5 w-3.5 stroke-[3]" />
+              Published society profile
             </div>
-            <Link to="/maps" className="absolute bottom-0 right-[58px] rounded-full bg-[#233B6E] px-[13px] py-[7px] text-[11.5px] font-bold text-white shadow-sm">
-              Open map intelligence →
-            </Link>
-          </div>
+            {scoreOf(primary) ? (
+              <div className="absolute right-4 top-4 rounded-full bg-white/95 px-3 py-2 text-[13px] font-black text-[#233B6E] backdrop-blur lg:right-6 lg:top-6 lg:text-sm">
+                {scoreOf(primary)}
+              </div>
+            ) : null}
+            <div className="absolute bottom-0 left-0 right-0 p-5 text-white lg:p-7">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#E8D6A9]">Featured in Gurgaon</p>
+              <div className="mt-2 flex items-end justify-between gap-4">
+                <div>
+                  <h2 className="font-display text-[30px] font-medium leading-none text-white lg:text-[42px]">
+                    {primary?.name || "Verified society profiles"}
+                  </h2>
+                  <p className="mt-2 text-sm text-white/75">
+                    {primary ? formatPublicLocation(primary) : "Reviewed data for calmer shortlists"}
+                  </p>
+                  <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/55">
+                    Scores · amenities · location context
+                  </p>
+                </div>
+                <ArrowRight className="h-6 w-6 shrink-0 transition group-hover:translate-x-1" />
+              </div>
+              {primary ? (
+                <p className="mt-3 text-[10px] text-white/55">{societyImageAttribution(primary).label}</p>
+              ) : null}
+            </div>
+          </Link>
         </div>
-      </section>
-    </>
+
+        <nav aria-label="SocietyFlats services" className="mt-7 border-y border-[#CED7E6] lg:mt-10">
+          <div className="grid divide-y divide-[#CED7E6] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+            {serviceIndex.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="group flex items-start gap-3 px-1 py-4 sm:px-4 lg:py-5"
+              >
+                <span className="mt-0.5 font-display text-[12px] italic text-[#B58B3B]">{item.mark}</span>
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-black text-[#1D2939] group-hover:text-[#3156A3] lg:text-[14px]">{item.label}</span>
+                  <span className="mt-1 block text-[11.5px] leading-5 text-[#667085]">{item.detail}</span>
+                </span>
+                <ArrowRight className="ml-auto mt-1 h-3.5 w-3.5 shrink-0 text-[#98A2B3] transition group-hover:translate-x-1 group-hover:text-[#3156A3]" />
+              </Link>
+            ))}
+          </div>
+        </nav>
+      </div>
+    </section>
   );
 }
