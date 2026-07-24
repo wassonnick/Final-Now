@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\City;
 use App\Models\Lead;
+use App\Models\Locality;
 use App\Models\Property;
 use App\Models\SeoPage;
 use App\Models\Region;
 use App\Models\Society;
 use App\Models\VerifiedSocietyImportJob;
+use App\Models\Zone;
 use App\Services\Seo\LiveSitemapService;
 use App\Services\Seo\SeoPageRegistryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -163,6 +165,89 @@ class NcrMulticityFoundationTest extends TestCase
         $this->assertSame($region->id, $job->target_region_id);
         $this->assertSame($noida->id, $job->target_city_id);
         $this->assertSame('Noida', $job->target_city);
+    }
+
+    public function test_non_gurgaon_importer_rows_require_structured_city_context_when_ncr_is_enabled(): void
+    {
+        config(['features.ncr_multicity' => true]);
+
+        $response = $this->withToken('ncr-admin-token')
+            ->postJson('/api/admin/verified-importer/single', [
+                'name' => 'Loose Noida Draft Society',
+                'sector' => 'Sector 150',
+                'builder_name' => 'NCR Builder',
+                'city' => 'Noida',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'failed')
+            ->assertJsonPath('data.failed_count', 1);
+
+        $row = VerifiedSocietyImportJob::findOrFail($response->json('data.id'))->rows()->firstOrFail();
+
+        $this->assertSame('failed', $row->status);
+        $this->assertStringContainsString('structured target city', $row->errors[0]);
+        $this->assertDatabaseMissing('societies', ['slug' => 'loose-noida-draft-society-sector-150-noida']);
+    }
+
+    public function test_importer_rejects_zone_and_locality_that_do_not_match_target_city(): void
+    {
+        config(['features.ncr_multicity' => true]);
+
+        $region = Region::where('slug', 'delhi-ncr')->firstOrFail();
+        $noida = City::where('slug', 'noida')->firstOrFail();
+        $delhi = City::where('slug', 'delhi')->firstOrFail();
+
+        $delhiZone = Zone::create([
+            'region_id' => $region->id,
+            'city_id' => $delhi->id,
+            'name' => 'South Delhi',
+            'slug' => 'south-delhi',
+            'zone_type' => 'zone',
+            'is_active' => true,
+        ]);
+
+        $zoneResponse = $this->withToken('ncr-admin-token')
+            ->postJson('/api/admin/verified-importer/single', [
+                'name' => 'Mismatched Noida Zone Society',
+                'sector' => 'Sector 150',
+                'builder_name' => 'NCR Builder',
+                'target_region_id' => $region->id,
+                'target_city_id' => $noida->id,
+                'target_zone_id' => $delhiZone->id,
+                'target_city' => 'Noida',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'failed');
+
+        $zoneRow = VerifiedSocietyImportJob::findOrFail($zoneResponse->json('data.id'))->rows()->firstOrFail();
+        $this->assertStringContainsString('zone does not belong', $zoneRow->errors[0]);
+
+        $delhiLocality = Locality::create([
+            'region_id' => $region->id,
+            'city_id' => $delhi->id,
+            'zone_id' => $delhiZone->id,
+            'name' => 'Vasant Vihar',
+            'slug' => 'vasant-vihar',
+            'city' => 'Delhi',
+            'state' => 'Delhi',
+            'published_status' => 'draft',
+        ]);
+
+        $localityResponse = $this->withToken('ncr-admin-token')
+            ->postJson('/api/admin/verified-importer/single', [
+                'name' => 'Mismatched Noida Locality Society',
+                'sector' => 'Sector 150',
+                'builder_name' => 'NCR Builder',
+                'target_region_id' => $region->id,
+                'target_city_id' => $noida->id,
+                'target_locality_id' => $delhiLocality->id,
+                'target_city' => 'Noida',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'failed');
+
+        $localityRow = VerifiedSocietyImportJob::findOrFail($localityResponse->json('data.id'))->rows()->firstOrFail();
+        $this->assertStringContainsString('locality does not belong', $localityRow->errors[0]);
     }
 
     public function test_ncr_city_registry_pages_are_noindex_and_not_in_sitemap_by_default(): void

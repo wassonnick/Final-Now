@@ -2,7 +2,10 @@
 
 namespace App\Services\VerifiedSocietyImporter;
 
+use App\Models\City;
+use App\Models\Locality;
 use App\Models\Society;
+use App\Models\Zone;
 use App\Models\VerifiedSocietyImportJob;
 use App\Models\VerifiedSocietyImportRow;
 use App\Models\VerifiedSocietyFieldSource;
@@ -101,6 +104,7 @@ class VerifiedSocietyImporterService
     {
         $data=$this->normalizer->normalize($input);
         if(mb_strlen($data['name'])<2) throw new \InvalidArgumentException('Missing society name.');
+        $locationQualityWarnings=$this->enforceNcrLocationQuality($data);
         $googleFields=[];
         $googleRaw=[];
         $googleStatus=null;
@@ -139,6 +143,7 @@ class VerifiedSocietyImporterService
         $confidence=$this->scorer->forSource($sourceType,$data['confidence_score']??null);
         $duplicate=$this->duplicates->match($data);
         $warnings=[];
+        $warnings=array_merge($warnings,$locationQualityWarnings);
         if($enrichmentMessage!==null)$warnings[]=$enrichmentMessage;
         if(empty($data['rera_number']))$warnings[]='No RERA number provided';
         if(empty($data['google_place_id']))$warnings[]='No Google Place ID provided';
@@ -244,5 +249,96 @@ class VerifiedSocietyImporterService
                 'raw_response' => [$field => $data[$field]],
             ]);
         }
+    }
+
+    /**
+     * NCR expansion must not allow loose text-only non-Gurgaon imports into the draft inventory.
+     * Gurgaon stays backwards-compatible; Delhi/Noida/Greater Noida/Faridabad intake must carry
+     * the structured city relationship and any zone/locality IDs must belong to that city.
+     *
+     * @return array<int, string>
+     */
+    private function enforceNcrLocationQuality(array &$data): array
+    {
+        if (! (bool) config('features.ncr_multicity', false)) {
+            return [];
+        }
+
+        $warnings = [];
+        $hadStructuredCity = ! empty($data['city_id']);
+        $city = $this->resolveCity($data);
+        if ($city) {
+            $data['city_id'] = $city->id;
+            $data['region_id'] = $data['region_id'] ?? $city->region_id;
+            $data['city'] = $city->name;
+            $data['state'] = $data['state'] ?? $city->state;
+        }
+
+        $cityText = $this->citySlug((string) ($data['city'] ?? ''));
+        $isGurgaon = in_array($cityText, ['gurgaon', 'gurugram'], true);
+
+        if (! $isGurgaon && ! $hadStructuredCity) {
+            throw new \InvalidArgumentException('Non-Gurgaon NCR imports require a structured target city. Choose the importer target city before creating drafts.');
+        }
+
+        if (! empty($data['zone_id'])) {
+            $zone = Zone::find((int) $data['zone_id']);
+            if (! $zone) {
+                throw new \InvalidArgumentException('Selected target zone could not be found.');
+            }
+            if (! empty($data['city_id']) && (int) $zone->city_id !== (int) $data['city_id']) {
+                throw new \InvalidArgumentException('Selected target zone does not belong to the selected target city.');
+            }
+            $data['region_id'] = $data['region_id'] ?? $zone->region_id;
+            $warnings[] = 'Structured NCR zone context preserved';
+        }
+
+        if (! empty($data['locality_id'])) {
+            $locality = Locality::find((string) $data['locality_id']);
+            if (! $locality) {
+                throw new \InvalidArgumentException('Selected target locality could not be found.');
+            }
+            if (! empty($data['city_id']) && (int) $locality->city_id !== (int) $data['city_id']) {
+                throw new \InvalidArgumentException('Selected target locality does not belong to the selected target city.');
+            }
+            if (! empty($data['zone_id']) && $locality->zone_id && (int) $locality->zone_id !== (int) $data['zone_id']) {
+                throw new \InvalidArgumentException('Selected target locality does not belong to the selected target zone.');
+            }
+            $data['region_id'] = $data['region_id'] ?? $locality->region_id;
+            $data['zone_id'] = $data['zone_id'] ?? $locality->zone_id;
+            $data['locality'] = $data['locality'] ?? $locality->name;
+            $warnings[] = 'Structured NCR locality context preserved';
+        }
+
+        if (! $isGurgaon) {
+            $warnings[] = 'Non-Gurgaon NCR draft: keep review-only until local source QA is complete';
+        }
+
+        return array_values(array_unique($warnings));
+    }
+
+    private function resolveCity(array $data): ?City
+    {
+        if (! empty($data['city_id'])) {
+            return City::query()->whereKey((int) $data['city_id'])->where('is_active', true)->first();
+        }
+
+        $slug = $this->citySlug((string) ($data['city'] ?? ''));
+        if ($slug === '') {
+            return null;
+        }
+
+        $aliases = [
+            'gurugram' => 'gurgaon',
+            'greaternoida' => 'greater-noida',
+        ];
+        $slug = $aliases[$slug] ?? $slug;
+
+        return City::query()->where('slug', $slug)->where('is_active', true)->first();
+    }
+
+    private function citySlug(string $value): string
+    {
+        return Str::slug(str_replace(['Gurugram'], ['Gurgaon'], trim($value)));
     }
 }
