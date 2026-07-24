@@ -1549,7 +1549,7 @@ export function AdminLeadsPage() {
       const updated = await saveAdminLead(optimisticLead);
       const noted = await addLeadNoteRemote(
         updated,
-        `Admin note: Lead assigned to ${nextAssignee} from C61 team control`,
+        `Admin note: Lead assigned to ${nextAssignee}`,
       );
       setLeads((current) => current.map((item) => (item.id === lead.id ? noted : item)));
     } catch (err) {
@@ -1681,13 +1681,13 @@ export function AdminLeadsPage() {
           ) : null}
           {dashboardView === "call_sheet" ? (
             <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-800">
-              <strong>C63 daily call sheet:</strong> Work this queue in order — Overdue, Hot SLA, Due Today, Untouched, then Stale. Use Call, WhatsApp, Contacted and Tomorrow from each row.
+              <strong>Daily call sheet:</strong> Work this queue in order — Overdue, Hot SLA, Due Today, Untouched, then Stale. Use Call, WhatsApp, Contacted and Tomorrow from each row.
             </div>
           ) : null}
 
           {dashboardView === "no_followup" ? (
             <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-              <strong>C57 workflow:</strong> “Tomorrow”, “Hot”, “Contacted” and “Lost” now also write CRM timeline notes.
+              <strong>Workflow:</strong> “Tomorrow”, “Hot”, “Contacted” and “Lost” now also write CRM timeline notes.
             </div>
           ) : null}
 
@@ -1699,7 +1699,7 @@ export function AdminLeadsPage() {
 
           {["fresh", "aging", "stale", "hot_sla", "untouched"].includes(dashboardView) ? (
             <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800">
-              <strong>C62 SLA control:</strong> Review lead age, hot-not-contacted leads, stale records and untouched enquiries. Use Contacted or Tomorrow to reactivate the pipeline.
+              <strong>SLA control:</strong> Review lead age, hot-not-contacted leads, stale records and untouched enquiries. Use Contacted or Tomorrow to reactivate the pipeline.
             </div>
           ) : null}
 
@@ -1820,7 +1820,7 @@ export function AdminLeadsPage() {
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">
-                  C64A selection foundation
+                  Bulk selection
                 </p>
                 <p className="mt-1 text-sm font-semibold text-blue-900">
                   {selectedTotalCount ? `${selectedTotalCount} selected` : "Select leads, then export the selected list."}
@@ -1857,288 +1857,120 @@ export function AdminLeadsPage() {
               </div>
             </div>
           </div>
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 md:mt-6">
+            <table className="w-full min-w-[1040px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
+                  <th className="w-10 px-3 py-3">
+                    <input
+                      type="checkbox"
+                      aria-label="Select visible leads"
+                      checked={allVisibleSelected}
+                      onChange={() => (allVisibleSelected ? clearSelectedLeads() : selectAllVisibleLeads())}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </th>
+                  <th className="px-3 py-3">Lead</th>
+                  <th className="px-3 py-3">Interest</th>
+                  <th className="px-3 py-3">Status</th>
+                  <th className="px-3 py-3">Priority</th>
+                  <th className="px-3 py-3">Follow-up</th>
+                  <th className="px-3 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan={7} className="p-10 text-center text-slate-500">Loading live backend leads…</td></tr>
+                ) : !filteredLeads.length ? (
+                  <tr><td colSpan={7} className="p-10 text-center text-slate-500">{pipelineEmptyMessage(dashboardView)}</td></tr>
+                ) : (
+                  filteredLeads.map((lead) => {
+                    const hasPhone = canUsePhone(lead.phone);
+                    const selected = selectedLeadIds.includes(lead.id);
+                    const sla = leadSlaBadges(lead)[0];
 
-          <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200 md:mt-6 md:rounded-[24px]">
-            <div className="hidden grid-cols-[1.3fr_1.6fr_150px_110px_150px_230px] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 xl:grid">
-              <span>Lead</span>
-              <span>Interest</span>
-              <span>Status</span>
-              <span>Priority</span>
-              <span>Follow-up</span>
-              <span>Actions</span>
-            </div>
-
-            {loading ? (
-              <div className="p-10 text-center text-slate-500">Loading live backend leads...</div>
-            ) : null}
-
-            {!loading && filteredLeads.map((lead) => {
-              const hasPhone = canUsePhone(lead.phone);
-              const intentSignal = leadIntentSignal(lead);
-
-              return (
-                <div
-                  key={lead.id}
-                  className={`border-b border-slate-200 bg-white px-3 py-4 last:border-0 xl:grid xl:grid-cols-[1.3fr_1.6fr_150px_110px_150px_230px] xl:items-center xl:gap-4 xl:px-5 xl:py-5 ${leadRowAccentClass(lead)}`}
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-3 xl:block">
-                      <div>
-                        <label className="mb-2 inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">
+                    return (
+                      <tr key={lead.id} className={`border-b border-slate-100 align-top transition hover:bg-slate-50/70 ${selected ? "bg-blue-50/40" : "bg-white"}`}>
+                        <td className="px-3 py-3">
                           <input
                             type="checkbox"
-                            checked={selectedLeadIds.includes(lead.id)}
+                            checked={selected}
                             onChange={() => toggleLeadSelection(lead.id)}
-                            className="h-3.5 w-3.5 rounded border-slate-300"
+                            aria-label={`Select ${lead.name}`}
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                           />
-                          Select
-                        </label>
-                        <p className="text-base font-bold text-slate-950">{lead.name}</p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                        </td>
+
+                        <td className="px-3 py-3">
+                          <p className="font-bold text-slate-950">{lead.name || "Unnamed lead"}</p>
                           {lead.phone ? (
-                            <a href={`tel:${cleanPhone(lead.phone)}`} className="inline-flex items-center gap-1 hover:text-blue-700">
-                              <Phone className="h-3.5 w-3.5" />
-                              {lead.phone}
+                            <a href={`tel:${cleanPhone(lead.phone)}`} className="mt-0.5 inline-flex items-center gap-1 text-xs text-slate-500 hover:text-blue-700">
+                              <Phone className="h-3 w-3" />{lead.phone}
                             </a>
-                          ) : (
-                            <span>No phone</span>
-                          )}
-                          {lead.email ? <span>Email</span> : null}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col items-end gap-1 xl:items-start">
-                        <span className={`rounded-full border px-3 py-1 text-xs font-bold xl:mt-3 inline-flex ${sourceClass(lead.source)}`} title={attributionTitle(lead)}>
-                          {compactLeadTypeLabel(lead)}
-                        </span>
-                        <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
-                          {leadTypeWorkflowLabel(lead)}
-                        </span>
-                        <div className="mt-1 flex flex-wrap justify-end gap-1 xl:justify-start">
-                          {leadQualityBadges(lead, leads).map((badge) => (
-                            <span key={badge} className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${leadQualityBadgeClass(badge)}`}>
-                              {badge}
+                          ) : <span className="text-xs text-slate-400">No phone</span>}
+                          <div className="mt-1.5 flex flex-wrap gap-1">
+                            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-black ${sourceClass(lead.source)}`} title={attributionTitle(lead)}>
+                              {compactLeadTypeLabel(lead)}
                             </span>
-                          ))}
-                        </div>
-                        <div className="mt-1 flex flex-wrap justify-end gap-1 xl:justify-start">
-                          {leadSlaBadges(lead).map((badge) => (
-                            <span key={badge} className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${leadSlaBadgeClass(lead, badge)}`}>
-                              {badge}
-                            </span>
-                          ))}
-                        </div>
-                        {dashboardView === "call_sheet" ? (
-                          <span className={`mt-1 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${callSheetReasonClass(lead)}`}>
-                            Call sheet: {callSheetReason(lead)}
-                          </span>
-                        ) : null}
-                        {dashboardView === "duplicates" ? (
-                          <p className="mt-1 text-[11px] font-bold text-amber-700">
-                            Same phone leads: {samePhoneLeadCount(lead, leads)}
-                          </p>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
+                            {sla ? <span className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${leadSlaBadgeClass(lead, sla)}`}>{sla}</span> : null}
+                          </div>
+                        </td>
 
-                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 xl:mt-0 xl:bg-transparent xl:p-0">
-                    <p className="font-semibold text-slate-950">{lead.society || "Not specified"}</p>
-                    <p className="mt-1 text-sm text-slate-500">{cleanLeadInterestMeta(lead)}</p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <span
-                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-black ${intentSignal.className}`}
-                        title={`C112G-FIX2 compact intent: ${intentSignal.helper}`}
-                      >
-                        {intentSignal.label}
-                      </span>
-                      {cleanLeadInterestRequirement(lead) && cleanLeadInterestRequirement(lead) !== intentSignal.label ? (
-                        <span className="text-xs font-bold text-slate-500">
-                          {cleanLeadInterestRequirement(lead)}
-                        </span>
-                      ) : null}
-                    </div>
-                    {intentSignal.helper ? (
-                      <p className="mt-1 line-clamp-1 text-[11px] font-bold text-slate-400">
-                        {intentSignal.helper}
-                      </p>
-                    ) : null}
-                    <p className={`mt-2 inline-flex rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.1em] xl:hidden ${workflowNextActionClass(lead)}`}>
-                      Next: {workflowNextAction(lead)}
-                    </p>
-                    {(lead.search_query || lead.ai_query || lead.cta_label || lead.utm_campaign) ? (
-                      <p className="mt-2 line-clamp-2 text-[11px] font-semibold text-slate-400">
-                        Source detail: {[lead.ai_query ? `AI: ${lead.ai_query}` : "", lead.search_query ? `Search: ${lead.search_query}` : "", lead.cta_label ? `CTA: ${lead.cta_label}` : "", lead.utm_campaign ? `Campaign: ${lead.utm_campaign}` : ""].filter(Boolean).join(" · ")}
-                      </p>
-                    ) : null}
-                  </div>
+                        <td className="px-3 py-3">
+                          <p className="max-w-[220px] truncate font-semibold text-slate-900">{lead.society || "Not specified"}</p>
+                          <p className="max-w-[220px] truncate text-xs text-slate-500">{cleanLeadInterestMeta(lead)}</p>
+                        </td>
 
-                  <div className="mt-3 grid grid-cols-3 gap-2 xl:contents">
-                    <div className="rounded-2xl border border-slate-100 bg-white p-2 xl:border-0 xl:p-0">
-                      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Status</p>
-                      <select
-                        value={lead.status}
-                        disabled={savingLeadId === lead.id}
-                        onChange={(event) => handleStatusChange(lead, event.target.value as LeadStatus)}
-                        className={`h-9 max-w-full rounded-full border-0 px-2 text-xs font-bold outline-none disabled:opacity-60 xl:h-10 xl:px-3 xl:text-sm ${statusClass(lead.status)}`}
-                      >
-                        {statuses
-                          .filter((item) => item !== "All")
-                          .map((item) => (
-                            <option key={item} value={item}>{displayLeadStatusOptionLabel(lead, item)}</option>
-                          ))}
-                      </select>
-                    </div>
+                        <td className="px-3 py-3">
+                          <select
+                            value={lead.status}
+                            disabled={savingLeadId === lead.id}
+                            onChange={(event) => handleStatusChange(lead, event.target.value as LeadStatus)}
+                            className={`h-9 rounded-lg border-0 px-2 text-xs font-bold outline-none disabled:opacity-60 ${statusClass(lead.status)}`}
+                          >
+                            {statuses.filter((item) => item !== "All").map((item) => (
+                              <option key={item} value={item}>{displayLeadStatusOptionLabel(lead, item)}</option>
+                            ))}
+                          </select>
+                        </td>
 
-                    <div className="rounded-2xl border border-slate-100 bg-white p-2 xl:border-0 xl:p-0">
-                      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Priority</p>
-                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-bold xl:px-3 ${priorityClass(lead.priority)}`}>
-                        {lead.priority}
-                      </span>
-                    </div>
+                        <td className="px-3 py-3">
+                          <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${priorityClass(lead.priority)}`}>{lead.priority}</span>
+                        </td>
 
-                    <div className="rounded-2xl border border-slate-100 bg-white p-2 text-slate-500 xl:border-0 xl:p-0">
-                      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 xl:hidden">Follow-up</p>
-                      <span className={`inline-flex rounded-full border px-2 py-1 text-[11px] font-bold xl:px-3 xl:text-xs ${followUpClass(lead)}`}>
-                        {followUpLabel(lead)}
-                      </span>
-                      <p className="mt-1 hidden items-center gap-1 text-xs xl:flex">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {followUpHelperText(lead)}
-                      </p>
-                      <p className="mt-1 hidden text-xs xl:block">
-                        Owner: {lead.assignedTo || "Unassigned"}
-                      </p>
-                      <select
-                        value={lead.assignedTo || "Unassigned"}
-                        disabled={savingLeadId === lead.id}
-                        onChange={(event) => void handleAssignLead(lead, event.target.value)}
-                        className="mt-2 hidden h-8 w-full rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 outline-none disabled:opacity-50 xl:block"
-                      >
-                        {agents.map((item) => (
-                          <option key={item} value={item}>{item}</option>
-                        ))}
-                      </select>
-                      <p className={`mt-1 hidden w-fit rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] xl:block ${workflowNextActionClass(lead)}`}>
-                        {followUpUrgencyLabel(lead)}
-                      </p>
-                      <p className="mt-1 hidden text-xs font-semibold text-slate-500 xl:block">
-                        Next: {workflowNextAction(lead)}
-                      </p>
-                    </div>
-                  </div>
+                        <td className="px-3 py-3">
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold ${followUpClass(lead)}`}>{followUpLabel(lead)}</span>
+                          <p className="mt-1 text-[11px] text-slate-400">Owner: {lead.assignedTo || "Unassigned"}</p>
+                        </td>
 
-                  <div className="mt-3 grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 border-t border-slate-100 pt-3 xl:mt-0 xl:flex xl:flex-wrap xl:border-t-0 xl:pt-0">
-                    <div className={`col-span-4 grid grid-cols-4 gap-1.5 rounded-2xl border p-2 xl:w-full xl:grid-cols-2 ${workflowStripClass(lead)}`}>
-                      <button
-                        type="button"
-                        disabled={savingLeadId === lead.id}
-                        onClick={() =>
-                          void handleQuickLeadUpdate(
-                            lead,
-                            { followUpAt: tomorrowFollowUpValue() },
-                            "Set tomorrow follow-up",
-                          )
-                        }
-                        className={`rounded-full border px-2 py-1.5 text-[11px] font-black disabled:opacity-50 ${workflowButtonClass(followUpState(lead) === "not_set" ? "amber" : "blue")}`}
-                      >
-                        Tomorrow
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={savingLeadId === lead.id || lead.priority === "Hot"}
-                        onClick={() =>
-                          void handleQuickLeadUpdate(
-                            lead,
-                            { priority: "Hot" },
-                            "Mark Hot",
-                          )
-                        }
-                        className={`rounded-full border px-2 py-1.5 text-[11px] font-black disabled:opacity-50 ${workflowButtonClass("rose")}`}
-                      >
-                        Hot
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={savingLeadId === lead.id || lead.status === "Contacted"}
-                        onClick={() =>
-                          void handleQuickLeadUpdate(
-                            lead,
-                            { status: "Contacted" },
-                            "Mark Contacted",
-                          )
-                        }
-                        className={`rounded-full border px-2 py-1.5 text-[11px] font-black disabled:opacity-50 ${workflowButtonClass("emerald")}`}
-                      >
-                        Contacted
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={savingLeadId === lead.id}
-                        onClick={() =>
-                          void handleQuickLeadUpdate(
-                            lead,
-                            { status: "Lost", priority: "Cold" },
-                            dashboardView === "duplicates" && samePhoneLeadCount(lead, leads) > 1
-                              ? "Duplicate lead reviewed"
-                              : "Mark Lost",
-                          )
-                        }
-                        className={`rounded-full border px-2 py-1.5 text-[11px] font-black disabled:opacity-50 ${
-                          dashboardView === "duplicates" && samePhoneLeadCount(lead, leads) > 1
-                            ? workflowButtonClass("amber")
-                            : workflowButtonClass("slate")
-                        }`}
-                      >
-                        {dashboardView === "duplicates" && samePhoneLeadCount(lead, leads) > 1 ? "Duplicate" : "Lost"}
-                      </button>
-                    </div>
-
-                    <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200 px-3">
-                      <Link to={`/admin/leads/${lead.id}`}>
-                        <Eye className="mr-1.5 h-4 w-4" />
-                        Open
-                      </Link>
-                    </Button>
-
-                    {hasPhone ? (
-                      <Button asChild variant="outline" size="icon" className="rounded-full border-slate-200">
-                        <a href={`tel:${cleanPhone(lead.phone)}`} aria-label="Call lead">
-                          <Phone className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    ) : null}
-
-                    {hasPhone ? (
-                      <Button asChild variant="outline" size="icon" className="rounded-full border-emerald-200 text-emerald-700">
-                        <a href={whatsappUrl(lead)} target="_blank" rel="noreferrer" aria-label="WhatsApp lead">
-                          <MessageCircle className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    ) : null}
-
-                    <Button
-                      onClick={() => handleDelete(lead)}
-                      size="icon"
-                      variant="ghost"
-                      className="h-10 rounded-full text-rose-500 hover:bg-rose-50 hover:text-rose-600"
-                      aria-label="Delete lead"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-
-            {!loading && !filteredLeads.length ? (
-              <div className="p-10 text-center text-slate-500">
-                {pipelineEmptyMessage(dashboardView)}
-              </div>
-            ) : null}
+                        <td className="px-3 py-3">
+                          <div className="flex flex-col items-end gap-1.5">
+                            <div className="flex items-center gap-1">
+                              <Button asChild size="sm" variant="outline" className="h-8 rounded-lg border-slate-200 px-2.5 text-xs">
+                                <Link to={`/admin/leads/${lead.id}`}><Eye className="mr-1 h-3.5 w-3.5" />Open</Link>
+                              </Button>
+                              {hasPhone ? (
+                                <a href={`tel:${cleanPhone(lead.phone)}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:text-blue-700" aria-label="Call"><Phone className="h-4 w-4" /></a>
+                              ) : null}
+                              {hasPhone ? (
+                                <a href={whatsappUrl(lead)} target="_blank" rel="noreferrer" className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50" aria-label="WhatsApp"><MessageCircle className="h-4 w-4" /></a>
+                              ) : null}
+                              <button onClick={() => handleDelete(lead)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50" aria-label="Delete lead"><Trash2 className="h-4 w-4" /></button>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button type="button" disabled={savingLeadId === lead.id} onClick={() => void handleQuickLeadUpdate(lead, { followUpAt: tomorrowFollowUpValue() }, "Set tomorrow follow-up")} className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700 disabled:opacity-50">Tomorrow</button>
+                              <button type="button" disabled={savingLeadId === lead.id || lead.status === "Contacted"} onClick={() => void handleQuickLeadUpdate(lead, { status: "Contacted" }, "Mark Contacted")} className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700 disabled:opacity-50">Contacted</button>
+                              <button type="button" disabled={savingLeadId === lead.id || lead.priority === "Hot"} onClick={() => void handleQuickLeadUpdate(lead, { priority: "Hot" }, "Mark Hot")} className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-bold text-rose-700 disabled:opacity-50">Hot</button>
+                              <button type="button" disabled={savingLeadId === lead.id} onClick={() => void handleQuickLeadUpdate(lead, { status: "Lost", priority: "Cold" }, "Mark Lost")} className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-500 disabled:opacity-50">Lost</button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </section>
       </div>
