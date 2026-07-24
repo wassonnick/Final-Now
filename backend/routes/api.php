@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\AiChatController;
 use App\Http\Controllers\Api\AIController;
 use App\Http\Controllers\Api\BuilderPortalController;
 use App\Http\Controllers\Api\LeadController;
+use App\Http\Controllers\Api\NcrCityController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\PublicSeoPageController;
 use App\Http\Controllers\Api\RentHistoryController;
@@ -80,6 +81,7 @@ Route::get('/compare-pages/{slug}', [SocietyComparePageController::class, 'show'
 Route::get('/compare/intelligence', [SocietyIntelligenceController::class, 'compare']);
 Route::get('/properties', [PropertyController::class, 'index']);
 Route::get('/properties/{idOrSlug}', [PropertyController::class, 'show']);
+Route::get('/ncr/cities/{slug}/launch-policy', [NcrCityController::class, 'launchPolicy'])->middleware('throttle:60,1');
 Route::get('/seo/pages/resolve', [PublicSeoPageController::class, 'resolve'])->middleware('throttle:60,1');
 
 // Live sitemap built from the SEO page registry. The static-host sitemap.xml only updates on

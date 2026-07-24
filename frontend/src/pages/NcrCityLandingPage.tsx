@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { usePublicSeo } from "@/lib/seo";
+import { fallbackNcrCityLaunchPolicy, fetchNcrCityLaunchPolicy, type NcrCityLaunchPolicy } from "@/lib/ncrPublicApi";
 
 type NcrCity = {
   slug: string;
@@ -159,13 +161,34 @@ function cityStatusLabel(city: NcrCity) {
 export function NcrCityLandingPage() {
   const { citySlug = "" } = useParams();
   const city = cityMap[citySlug] || null;
+  const [launchPolicy, setLaunchPolicy] = useState<NcrCityLaunchPolicy>(() => fallbackNcrCityLaunchPolicy(citySlug));
+  const isIndexable = Boolean(city && launchPolicy.is_indexable && launchPolicy.is_sitemap_approved && !launchPolicy.is_review_only);
+  const indexingLabel = isIndexable ? "Indexable after launch approval" : "Noindex";
+  const pageTitle = city
+    ? `${city.name} ${isIndexable ? "Society-First Home Search" : "Society-First Home Search Preview"} | SocietyFlats`
+    : "NCR City Preview | SocietyFlats";
+  const pageDescription = city
+    ? isIndexable
+      ? `${city.name} society-first home search by SocietyFlats, backed by approved launch policy and verified city coverage.`
+      : `Review-only ${city.name} city coverage preview for SocietyFlats. Noindex, feature-flagged and excluded from sitemap until approved.`
+    : "Review-only SocietyFlats NCR city shell.";
+
+  useEffect(() => {
+    let active = true;
+    setLaunchPolicy(fallbackNcrCityLaunchPolicy(citySlug));
+    fetchNcrCityLaunchPolicy(citySlug).then((policy) => {
+      if (active) setLaunchPolicy(policy);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [citySlug]);
 
   usePublicSeo(
-    city ? `${city.name} Society-First Home Search Preview | SocietyFlats` : "NCR City Preview | SocietyFlats",
-    city
-      ? `Review-only ${city.name} city coverage preview for SocietyFlats. Noindex, feature-flagged and excluded from sitemap until approved.`
-      : "Review-only SocietyFlats NCR city shell.",
-    { noindex: true, canonical: city ? `/ncr/${city.slug}` : "/ncr-preview" },
+    pageTitle,
+    pageDescription,
+    { noindex: !isIndexable, canonical: city ? `/ncr/${city.slug}` : "/ncr-preview" },
   );
 
   if (!city) {
@@ -194,7 +217,7 @@ export function NcrCityLandingPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-blue-700">NCR city preview</span>
                 <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-800">{cityStatusLabel(city)}</span>
-                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-600">Noindex</span>
+                <span className={`rounded-full px-3 py-1.5 text-xs font-black ${isIndexable ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{indexingLabel}</span>
               </div>
 
               <h1 className="mt-6 max-w-3xl text-4xl font-black tracking-tight text-navy-900 md:text-6xl">
@@ -303,7 +326,10 @@ export function NcrCityLandingPage() {
         </section>
 
         <div className="mt-6 rounded-[1.75rem] border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
-          <strong>Indexing guard:</strong> this page sets explicit <code>noindex, nofollow</code>, is available only when the NCR feature flag is enabled, and is not added to sitemap generation. Public city SEO should wait for mapping audit, approved content and sitemap policy.
+          <strong>Indexing guard:</strong>{" "}
+          {isIndexable
+            ? "backend launch policy has approved this city for indexing and sitemap inclusion. If that approval is revoked or the API cannot confirm it, the page falls back to noindex."
+            : "this page sets explicit noindex, nofollow unless the backend confirms city launch approval plus sitemap approval. Public city SEO should wait for mapping audit, approved content and sitemap policy."}
         </div>
       </section>
     </div>

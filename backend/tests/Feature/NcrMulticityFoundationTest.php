@@ -436,6 +436,63 @@ class NcrMulticityFoundationTest extends TestCase
         $this->assertStringNotContainsString('/ncr/greater-noida', $xml);
     }
 
+    public function test_public_ncr_city_launch_policy_fails_closed_by_default(): void
+    {
+        config(['features.ncr_multicity' => true]);
+
+        $this->getJson('/api/ncr/cities/noida/launch-policy')
+            ->assertOk()
+            ->assertJsonPath('data.slug', 'noida')
+            ->assertJsonPath('data.is_indexable', false)
+            ->assertJsonPath('data.is_sitemap_approved', false)
+            ->assertJsonPath('data.is_review_only', true)
+            ->assertJsonPath('data.canonical_url', '/ncr/noida')
+            ->assertJsonPath('data.indexing_policy', 'held_noindex_until_approved');
+    }
+
+    public function test_public_ncr_city_launch_policy_allows_only_explicitly_approved_city(): void
+    {
+        config([
+            'features.ncr_multicity' => true,
+            'features.ncr_city_indexing' => true,
+            'features.ncr_indexable_city_slugs' => ['noida'],
+        ]);
+
+        $this->getJson('/api/ncr/cities/noida/launch-policy')
+            ->assertOk()
+            ->assertJsonPath('data.is_indexable', true)
+            ->assertJsonPath('data.is_sitemap_approved', true)
+            ->assertJsonPath('data.is_review_only', false)
+            ->assertJsonPath('data.indexing_policy', 'approved_city_sitemap');
+
+        $this->getJson('/api/ncr/cities/delhi/launch-policy')
+            ->assertOk()
+            ->assertJsonPath('data.is_indexable', false)
+            ->assertJsonPath('data.is_review_only', true);
+    }
+
+    public function test_public_ncr_city_launch_policy_exposes_no_admin_approval_details(): void
+    {
+        config([
+            'features.ncr_multicity' => true,
+            'features.ncr_city_indexing' => true,
+            'features.ncr_indexable_city_slugs' => ['noida'],
+        ]);
+
+        $response = $this->getJson('/api/ncr/cities/noida/launch-policy')->assertOk();
+
+        $json = json_encode($response->json('data'));
+        $this->assertStringNotContainsString('approved_by', $json);
+        $this->assertStringNotContainsString('approval_notes', $json);
+        $this->assertStringNotContainsString('readiness_snapshot', $json);
+        $this->assertStringNotContainsString('admin', $json);
+    }
+
+    public function test_public_ncr_city_launch_policy_rejects_unknown_city(): void
+    {
+        $this->getJson('/api/ncr/cities/fake-city/launch-policy')->assertNotFound();
+    }
+
     public function test_ncr_city_launch_approval_requires_admin_token_global_flag_and_readiness(): void
     {
         config(['features.ncr_multicity' => true]);
