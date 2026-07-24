@@ -27,7 +27,9 @@ class AiChatController extends Controller
 
         $result = DB::transaction(function () use ($conversation, $data, $chatResult, $entities) {
             $conversation->messages()->create(['role' => 'user', 'content' => trim($data['message'])]);
-            $assistant = $conversation->messages()->create(['role' => 'assistant', 'content' => $chatResult['reply'], 'context_entities' => $chatResult['matches']]);
+            // Store the normalized entity list (type/id/name/url) so the profile links render the
+            // same on a page reload as they do live — the raw match shape used society_name.
+            $assistant = $conversation->messages()->create(['role' => 'assistant', 'content' => $chatResult['reply'], 'context_entities' => $entities]);
             $conversation->update(['model' => $chatResult['provider'], 'last_message_at' => now(), 'expires_at' => now()->addDays(30)]);
 
             return [$chatResult, $assistant, $entities];
