@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Building2, Check, MapPin, Search, ShieldCheck, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Building2, Check, CornerDownLeft, MapPin, Search, ShieldCheck, Sparkles, Star } from "lucide-react";
 import { fetchPublicSocieties, formatPublicLocation, suggestSocieties } from "@/lib/publicData";
 import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
 import { setPublicSeo } from "@/lib/seo";
 import { NCR_CITIES, NCR_REGION, LIVE_NCR_CITY, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
+import { MODULES, MODULE_INTENTS, searchModules, type ModuleIntent } from "@/lib/modules";
 
 /*
   SocietyFlats — new design language (light · Apple-like · premium).
@@ -70,6 +71,7 @@ export default function HomePremium() {
   const [areaTab, setAreaTab] = useState("");
   const currentArea = areaGroups.find((g) => g.area === areaTab) ?? areaGroups[0];
   const suggestions = useMemo(() => suggestSocieties(societies, query), [societies, query]);
+  const moduleMatches = useMemo(() => searchModules(query), [query]);
   const submit = (q?: string) => navigate(`/search?tab=societies${(q ?? query).trim() ? `&q=${encodeURIComponent((q ?? query).trim())}` : ""}`);
   const liveCount = societies.length;
 
@@ -129,24 +131,46 @@ export default function HomePremium() {
                 onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); }}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
-                placeholder={`Search ${city.name} society, sector or builder`}
+                placeholder={`Search a ${city.name} society — or try “compare”, “map”, “rent yield”`}
                 className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#86868B]"
                 aria-label={`Search ${city.name}`}
               />
               <button type="submit" className="shrink-0 rounded-full px-6 py-3 text-[14px] font-semibold text-white transition hover:opacity-90" style={{ background: ACCENT }}>
                 Search
               </button>
-              {showSuggestions && query.trim() && suggestions.length > 0 ? (
-                <ul className="absolute left-2 right-2 top-[calc(100%+8px)] z-30 max-h-72 overflow-y-auto rounded-2xl border border-[#E4E4E9] bg-white p-1.5 text-left shadow-[0_24px_50px_-28px_rgba(0,0,0,.3)]">
-                  {suggestions.map((s) => (
-                    <li key={s.id}>
-                      <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setShowSuggestions(false); setQuery(s.name); submit(s.name); }} className="flex w-full flex-col rounded-xl px-3 py-2.5 text-left hover:bg-[#F5F5F7]">
-                        <span className="text-sm font-semibold">{s.name}</span>
-                        <span className="text-xs text-[#86868B]">{formatPublicLocation(s)}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+              {showSuggestions && query.trim() && (moduleMatches.length > 0 || suggestions.length > 0) ? (
+                <div className="absolute left-2 right-2 top-[calc(100%+8px)] z-30 max-h-80 overflow-y-auto rounded-2xl border border-[#E4E4E9] bg-white p-1.5 text-left shadow-[0_24px_50px_-28px_rgba(0,0,0,.3)]">
+                  {/* Command launcher — jump straight to a module */}
+                  {moduleMatches.length > 0 ? (
+                    <div className="mb-1">
+                      <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">Jump to</p>
+                      {moduleMatches.map((m) => {
+                        const Icon = m.icon;
+                        return (
+                          <button key={m.key} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => navigate(m.href)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-[#F5F5F7]">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "#ECF6F2", color: ACCENT }}><Icon className="h-4 w-4" /></span>
+                            <span className="flex-1">
+                              <span className="block text-sm font-semibold">{m.name}</span>
+                              <span className="block text-xs text-[#86868B]">{m.desc}</span>
+                            </span>
+                            <CornerDownLeft className="h-3.5 w-3.5 text-[#C4C4CC]" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                  {suggestions.length > 0 ? (
+                    <div>
+                      {moduleMatches.length > 0 ? <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">Societies</p> : null}
+                      {suggestions.map((s) => (
+                        <button key={s.id} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setShowSuggestions(false); setQuery(s.name); submit(s.name); }} className="flex w-full flex-col rounded-xl px-3 py-2.5 text-left hover:bg-[#F5F5F7]">
+                          <span className="text-sm font-semibold">{s.name}</span>
+                          <span className="text-xs text-[#86868B]">{formatPublicLocation(s)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               ) : null}
             </form>
           ) : (
@@ -304,6 +328,31 @@ export default function HomePremium() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ---------- TOOLKIT (module presentation) ---------- */}
+      <section className="mx-auto max-w-[1120px] px-5 py-16 lg:py-20">
+        <div className="max-w-[560px]">
+          <h2 className="!font-sans text-[28px] font-semibold tracking-[-0.02em] lg:text-[36px]">Everything you need to decide</h2>
+          <p className="mt-2 text-[15px] leading-7 text-[#6E6E73]">Not just listings — a full toolkit that does the hard thinking with you. Search any of these from the box above, too.</p>
+        </div>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {MODULES.map((m) => {
+            const Icon = m.icon;
+            return (
+              <Link key={m.key} to={m.href} className="group flex flex-col rounded-[24px] border border-[#E4E4E9] bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.28)]">
+                <div className="flex items-center justify-between">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl" style={{ background: "#ECF6F2", color: ACCENT }}><Icon className="h-5 w-5" /></span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#B7B7BE]">{MODULE_INTENTS[m.intent as ModuleIntent].split(" ")[0]}</span>
+                </div>
+                <p className="mt-4 text-[18px] font-semibold">{m.name}</p>
+                <p className="mt-1.5 flex-1 text-[14px] leading-6 text-[#6E6E73]">{m.desc}</p>
+                <p className="mt-3 rounded-xl bg-[#F5F5F7] px-3 py-2 text-[12px] text-[#86868B]">{m.example}</p>
+                <span className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold transition group-hover:gap-1.5" style={{ color: ACCENT }}>Open <ArrowRight className="h-3.5 w-3.5" /></span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 

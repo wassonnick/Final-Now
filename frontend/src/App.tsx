@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/layout/Navbar';
+import { PremiumNavbar } from '@/components/layout/PremiumNavbar';
 import { Footer } from '@/components/layout/Footer';
 import { FloatingHelpline } from '@/components/layout/FloatingHelpline';
 
@@ -132,7 +133,7 @@ function AppShell() {
 
   return (
     <div className={`${isAdmin ? "admin-site" : "public-site"} min-h-screen bg-ivory-100 flex flex-col`}>
-      {!isAdmin && <Navbar />}
+      {!isAdmin && <PremiumNavbar />}
 
       <main className="flex-1">
         <Suspense fallback={<RouteLoader />}>
