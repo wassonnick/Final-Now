@@ -12,4 +12,9 @@ return [
     |
     */
     'ncr_multicity' => env('NCR_MULTICITY_ENABLED', false),
+    'ncr_city_indexing' => env('NCR_CITY_INDEXING_ENABLED', false),
+    'ncr_indexable_city_slugs' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('NCR_INDEXABLE_CITY_SLUGS', ''))
+    ))),
 ];

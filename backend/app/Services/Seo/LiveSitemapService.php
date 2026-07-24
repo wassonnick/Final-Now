@@ -26,9 +26,23 @@ class LiveSitemapService
     /** @return \Illuminate\Support\Collection<int,\App\Models\SeoPage> */
     public function includedPages()
     {
+        $allowedNcrCities = collect((array) config('features.ncr_indexable_city_slugs', []))
+            ->map(fn ($slug) => trim((string) $slug))
+            ->filter()
+            ->map(fn ($slug) => '/ncr/'.\Illuminate\Support\Str::slug($slug))
+            ->values()
+            ->all();
+
         return SeoPage::where('is_public', true)
             ->where('is_indexable', true)
             ->where('sitemap_included', true)
+            ->where(function ($query) use ($allowedNcrCities) {
+                $query->where('url', 'not like', '/ncr/%');
+
+                if ((bool) config('features.ncr_city_indexing', false) && count($allowedNcrCities) > 0) {
+                    $query->orWhereIn('url', $allowedNcrCities);
+                }
+            })
             ->orderBy('url')
             ->get(['canonical_url', 'url', 'freshness_at']);
     }

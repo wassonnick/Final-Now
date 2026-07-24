@@ -5,9 +5,12 @@ namespace Tests\Feature;
 use App\Models\City;
 use App\Models\Lead;
 use App\Models\Property;
+use App\Models\SeoPage;
 use App\Models\Region;
 use App\Models\Society;
 use App\Models\VerifiedSocietyImportJob;
+use App\Services\Seo\LiveSitemapService;
+use App\Services\Seo\SeoPageRegistryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,6 +25,8 @@ class NcrMulticityFoundationTest extends TestCase
         config([
             'services.admin_api_token' => 'ncr-admin-token',
             'features.ncr_multicity' => false,
+            'features.ncr_city_indexing' => false,
+            'features.ncr_indexable_city_slugs' => [],
         ]);
     }
 
@@ -158,5 +163,50 @@ class NcrMulticityFoundationTest extends TestCase
         $this->assertSame($region->id, $job->target_region_id);
         $this->assertSame($noida->id, $job->target_city_id);
         $this->assertSame('Noida', $job->target_city);
+    }
+
+    public function test_ncr_city_registry_pages_are_noindex_and_not_in_sitemap_by_default(): void
+    {
+        config(['features.ncr_multicity' => true]);
+
+        app(SeoPageRegistryService::class)->sync();
+
+        $page = SeoPage::where('page_key', 'ncr-city:noida')->firstOrFail();
+
+        $this->assertTrue($page->is_public);
+        $this->assertFalse($page->is_indexable);
+        $this->assertFalse($page->sitemap_included);
+        $this->assertSame('held_noindex_until_approved', $page->metadata['indexing_policy']);
+
+        $xml = app(LiveSitemapService::class)->body();
+
+        $this->assertStringNotContainsString('/ncr/noida', $xml);
+        $this->assertStringNotContainsString('/ncr/gurgaon', $xml);
+    }
+
+    public function test_ncr_city_sitemap_requires_indexing_flag_and_explicit_city_approval(): void
+    {
+        config([
+            'features.ncr_multicity' => true,
+            'features.ncr_city_indexing' => true,
+            'features.ncr_indexable_city_slugs' => ['noida'],
+        ]);
+
+        app(SeoPageRegistryService::class)->sync();
+
+        $noida = SeoPage::where('page_key', 'ncr-city:noida')->firstOrFail();
+        $delhi = SeoPage::where('page_key', 'ncr-city:delhi')->firstOrFail();
+
+        $this->assertTrue($noida->is_indexable);
+        $this->assertTrue($noida->sitemap_included);
+        $this->assertSame('approved_city_sitemap', $noida->metadata['indexing_policy']);
+        $this->assertFalse($delhi->is_indexable);
+        $this->assertFalse($delhi->sitemap_included);
+
+        $xml = app(LiveSitemapService::class)->body();
+
+        $this->assertStringContainsString('https://www.societyflats.com/ncr/noida</loc>', $xml);
+        $this->assertStringNotContainsString('/ncr/delhi', $xml);
+        $this->assertStringNotContainsString('/ncr/greater-noida', $xml);
     }
 }

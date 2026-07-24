@@ -6,6 +6,11 @@ const API_BASE = process.env.VITE_API_BASE_URL || process.env.API_BASE_URL || "h
 const PUBLIC_DIR = path.resolve(process.cwd(), "public");
 const SITEMAP_PATH = path.join(PUBLIC_DIR, "sitemap.xml");
 const MIN_PUBLIC_SOCIETIES = Number.parseInt(process.env.SITEMAP_MIN_PUBLIC_SOCIETIES || "20", 10);
+const NCR_CITY_INDEXING_ENABLED = ["1", "true", "yes", "on"].includes(String(process.env.NCR_CITY_INDEXING_ENABLED || process.env.VITE_NCR_CITY_INDEXING_ENABLED || "").trim().toLowerCase());
+const NCR_INDEXABLE_CITY_SLUGS = String(process.env.NCR_INDEXABLE_CITY_SLUGS || process.env.VITE_NCR_INDEXABLE_CITY_SLUGS || "")
+  .split(",")
+  .map((slug) => slugify(slug))
+  .filter(Boolean);
 
 const staticRoutes = [
   { loc: "/", priority: "1.0", changefreq: "daily" },
@@ -61,6 +66,8 @@ const preferredBuilderRoutes = [
   "/builder/alpha-corp",
 ];
 
+const stagedNcrCitySlugs = new Set(["gurgaon", "delhi", "noida", "greater-noida", "faridabad"]);
+
 function escapeXml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -76,6 +83,20 @@ function slugify(value) {
     .replace(/&/g, " and ")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
+}
+
+function addApprovedNcrCityRoutes(routes) {
+  if (!NCR_CITY_INDEXING_ENABLED) return;
+
+  for (const slug of NCR_INDEXABLE_CITY_SLUGS) {
+    if (!stagedNcrCitySlugs.has(slug)) continue;
+
+    routes.push({
+      loc: `/ncr/${slug}`,
+      priority: slug === "gurgaon" ? "0.75" : "0.62",
+      changefreq: "weekly",
+    });
+  }
 }
 
 function canonicalLocalitySlug(value) {
@@ -298,6 +319,7 @@ async function main() {
   }
 
   addDerivedLandingRoutes(routes, societies);
+  addApprovedNcrCityRoutes(routes);
 
   for (const society of societies) {
     const slug = society?.slug || society?.id;

@@ -5,6 +5,7 @@ namespace App\Services\Seo;
 use App\Models\Property;
 use App\Models\SeoPage;
 use App\Models\Society;
+use App\Models\City;
 use Illuminate\Support\Str;
 
 class SeoPageRegistryService
@@ -142,6 +143,7 @@ class SeoPageRegistryService
         }
 
         foreach ($this->staticPages() as $page) { $this->upsert($page); $count++; }
+        foreach ($this->ncrCityPages() as $page) { $this->upsert($page); $count++; }
         return $count;
     }
 
@@ -179,6 +181,69 @@ class SeoPageRegistryService
             ['guide:help','guide','/help','Help & FAQ | SocietyFlats','Clear answers for society-first home search on SocietyFlats.','Clear answers for society-first home search.',300],
         ];
         return array_map(function($p){$indexable=$p[7]??true;return ['page_key'=>$p[0],'page_type'=>$p[1],'url'=>$p[2],'title'=>$p[3],'meta_description'=>$p[4],'h1'=>$p[5],'canonical_url'=>str_contains($p[2],'?')?strstr($p[2],'?',true):$p[2],'is_indexable'=>$indexable,'sitemap_included'=>$indexable&&!str_contains($p[2],'?'),'is_public'=>true,'content_word_count'=>$p[6],'internal_link_count'=>8,'image_alt_coverage'=>100,'schema_types'=>['WebPage','BreadcrumbList'],'freshness_at'=>now(),'metadata'=>['name'=>$p[5],'city'=>'Gurgaon','has_cta'=>true,'heading_count'=>5]];},$pages);
+    }
+
+    private function ncrCityPages(): array
+    {
+        if (! (bool) config('features.ncr_multicity', false)) {
+            return [];
+        }
+
+        $indexingEnabled = (bool) config('features.ncr_city_indexing', false);
+        $approvedSlugs = collect((array) config('features.ncr_indexable_city_slugs', []))
+            ->map(fn ($slug) => Str::slug((string) $slug))
+            ->filter()
+            ->values();
+
+        return City::query()
+            ->where('is_active', true)
+            ->whereIn('slug', ['gurgaon', 'delhi', 'noida', 'greater-noida', 'faridabad'])
+            ->orderByRaw("CASE slug WHEN 'gurgaon' THEN 1 WHEN 'delhi' THEN 2 WHEN 'noida' THEN 3 WHEN 'greater-noida' THEN 4 WHEN 'faridabad' THEN 5 ELSE 99 END")
+            ->get()
+            ->map(function (City $city) use ($indexingEnabled, $approvedSlugs) {
+                $approved = $indexingEnabled && $approvedSlugs->contains($city->slug);
+                $publishedSocietyCount = Society::query()
+                    ->where('is_published', true)
+                    ->whereIn('status', ['Verified', 'Premium'])
+                    ->where(function ($query) use ($city) {
+                        $query->where('city_id', $city->id);
+                        $cityNames = $city->slug === 'gurgaon' ? ['Gurgaon', 'Gurugram'] : [$city->name];
+                        $query->orWhereIn('city', $cityNames);
+                    })
+                    ->count();
+
+                return [
+                    'page_key' => 'ncr-city:'.$city->slug,
+                    'page_type' => 'ncr_city',
+                    'entity_type' => City::class,
+                    'entity_id' => $city->id,
+                    'url' => '/ncr/'.$city->slug,
+                    'canonical_url' => '/ncr/'.$city->slug,
+                    'title' => $city->name.' NCR City Preview | SocietyFlats',
+                    'meta_description' => 'Review-only SocietyFlats city shell for '.$city->name.'. Indexing requires explicit admin approval and the NCR city indexing flag.',
+                    'h1' => $city->name.' SocietyFlats NCR city shell',
+                    'is_indexable' => $approved,
+                    'sitemap_included' => $approved,
+                    'is_public' => true,
+                    'content_word_count' => 260,
+                    'internal_link_count' => 4,
+                    'image_alt_coverage' => 100,
+                    'schema_types' => ['WebPage', 'BreadcrumbList'],
+                    'freshness_at' => now(),
+                    'metadata' => [
+                        'name' => $city->name,
+                        'city' => $city->name,
+                        'state' => $city->state,
+                        'slug' => $city->slug,
+                        'ncr_review_only' => ! $approved,
+                        'indexing_policy' => $approved ? 'approved_city_sitemap' : 'held_noindex_until_approved',
+                        'approved_society_count' => $publishedSocietyCount,
+                        'has_cta' => true,
+                        'heading_count' => 4,
+                    ],
+                ];
+            })
+            ->all();
     }
 
     /**

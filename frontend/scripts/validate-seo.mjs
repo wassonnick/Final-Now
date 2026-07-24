@@ -5,6 +5,7 @@ const SITE_URL = "https://www.societyflats.com";
 const DIST_DIR = path.resolve(process.cwd(), "dist");
 const PUBLIC_DIR = path.resolve(process.cwd(), "public");
 const MIN_PUBLIC_SOCIETIES = Number.parseInt(process.env.SITEMAP_MIN_PUBLIC_SOCIETIES || "20", 10);
+const NCR_CITY_INDEXING_ENABLED = ["1", "true", "yes", "on"].includes(String(process.env.NCR_CITY_INDEXING_ENABLED || process.env.VITE_NCR_CITY_INDEXING_ENABLED || "").trim().toLowerCase());
 
 const requiredRoutes = [
   "/",
@@ -33,7 +34,7 @@ const blockedSitemapPatterns = [
   /private-limited/i,
   /mnb-build/i,
   /<loc>https:\/\/www\.societyflats\.com\/rwa\//i,
-  /<loc>https:\/\/www\.societyflats\.com\/ncr\//i,
+  ...(!NCR_CITY_INDEXING_ENABLED ? [/<loc>https:\/\/www\.societyflats\.com\/ncr\//i] : []),
   /<loc>https:\/\/www\.societyflats\.com\/gurgaon\/\d+[a-z]?\//i,
   /<loc>https:\/\/www\.societyflats\.com\/gurgaon\/\d+[a-z]?<\/loc>/i,
   /<loc>https:\/\/www\.societyflats\.com\/gurgaon\/(?:ready-to-move|ready-to-move-properties|ready-to-move-apartments|rent|premium-flats|luxury-apartments|3bhk-apartments|4bhk-apartments)\/?<\/loc>/i,
