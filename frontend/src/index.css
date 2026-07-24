@@ -57,6 +57,15 @@ body,
   }
 
   h1, h2, h3, h4, h5, h6 { @apply font-display text-forest-950 tracking-tight; }
+
+  /* The admin is a SaaS tool, not the public brand surface — use the clean sans stack
+     for all its headings and a neutral text color instead of the serif brand font. */
+  .admin-scope h1,
+  .admin-scope h2,
+  .admin-scope h3,
+  .admin-scope h4,
+  .admin-scope h5,
+  .admin-scope h6 { @apply font-sans text-slate-950; }
 }
 
 @layer components {
