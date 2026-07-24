@@ -5,6 +5,7 @@ namespace App\Services\Ai;
 use App\Models\Property;
 use App\Models\Society;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -124,7 +125,7 @@ class SocietyMatchService
         // word can't drag in unrelated societies, but a two-word name the user typed matches.
         $required = min(2, $tokens->count());
 
-        return $candidates
+        $exact = $candidates
             ->filter(function (Society $society) use ($tokens, $required) {
                 $name = Str::lower((string) $society->name);
 
@@ -133,6 +134,41 @@ class SocietyMatchService
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->all();
+
+        // Typo tolerance: "Antaliyas" -> "M3M Antalya Hills". Merge trigram-similar names so a
+        // misspelled society name still resolves instead of dead-ending with "not in our database".
+        // The generic-filtered token phrase is a cleaner probe than the raw message.
+        return array_values(array_unique(array_merge($exact, $this->fuzzySocietyIds($tokens->implode(' ')))));
+    }
+
+    /**
+     * PostgreSQL trigram fuzzy match on society names for misspelled queries. Returns [] on
+     * non-Postgres (SQLite tests) or if pg_trgm isn't available, so exact matching still stands.
+     *
+     * @return array<int,int>
+     */
+    private function fuzzySocietyIds(string $query): array
+    {
+        $query = Str::lower(trim($query));
+        if (strlen($query) < 4 || DB::connection()->getDriverName() !== 'pgsql') {
+            return [];
+        }
+
+        try {
+            return Society::query()
+                ->where('is_published', true)
+                ->whereIn('status', ['Verified', 'Premium'])
+                // word_similarity finds names that closely match a WINDOW of the message, so extra
+                // words ("tell me about …", "compare … with …") don't drown out the name.
+                ->whereRaw('word_similarity(lower(name), ?) >= 0.4', [$query])
+                ->orderByRaw('word_similarity(lower(name), ?) desc', [$query])
+                ->limit(3)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     private function runSearch(array $signals, string $intent): array
