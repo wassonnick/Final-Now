@@ -96,8 +96,12 @@ export type NcrLocationAuditResponse = {
       verified_import_jobs_count: number;
       unmapped_public_rows_count: number;
       content_ready: boolean;
+      indexing_flag_enabled?: boolean;
       indexing_approved: boolean;
       ready_for_public_rollout: boolean;
+      launch_approval_status?: string;
+      launch_approved_at?: string | null;
+      launch_approval_notes?: string | null;
       recommended_status: string;
       next_actions: string[];
     }>;
@@ -201,4 +205,27 @@ export async function createNcrLocality(payload: Record<string, unknown>): Promi
   }).then(json);
 
   return body.data as NcrLocality;
+}
+
+export async function approveNcrCityLaunch(cityId: number, approvalNotes?: string) {
+  const response = await adminFetch(`/admin/locations/cities/${cityId}/launch-approval`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      confirmation: "APPROVE_NCR_CITY_INDEXING",
+      approval_notes: approvalNotes || undefined,
+    }),
+  });
+
+  return json(response);
+}
+
+export async function revokeNcrCityLaunch(cityId: number) {
+  const response = await adminFetch(`/admin/locations/cities/${cityId}/launch-revoke`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ confirmation: "REVOKE_NCR_CITY_INDEXING" }),
+  });
+
+  return json(response);
 }

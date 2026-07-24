@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\City;
 use App\Models\Lead;
 use App\Models\Locality;
+use App\Models\NcrCityLaunchApproval;
 use App\Models\Property;
 use App\Models\SeoPage;
 use App\Models\Region;
@@ -433,5 +434,112 @@ class NcrMulticityFoundationTest extends TestCase
         $this->assertStringContainsString('https://www.societyflats.com/ncr/noida</loc>', $xml);
         $this->assertStringNotContainsString('/ncr/delhi', $xml);
         $this->assertStringNotContainsString('/ncr/greater-noida', $xml);
+    }
+
+    public function test_ncr_city_launch_approval_requires_admin_token_global_flag_and_readiness(): void
+    {
+        config(['features.ncr_multicity' => true]);
+
+        $noida = City::where('slug', 'noida')->firstOrFail();
+
+        $this->postJson("/api/admin/locations/cities/{$noida->id}/launch-approval", [
+            'confirmation' => 'APPROVE_NCR_CITY_INDEXING',
+        ])->assertUnauthorized();
+
+        $this->withToken('ncr-admin-token')
+            ->postJson("/api/admin/locations/cities/{$noida->id}/launch-approval", [
+                'confirmation' => 'APPROVE_NCR_CITY_INDEXING',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'NCR city indexing flag is disabled. Keep this city held until NCR_CITY_INDEXING_ENABLED is intentionally enabled for launch review.');
+
+        config(['features.ncr_city_indexing' => true]);
+
+        $this->withToken('ncr-admin-token')
+            ->postJson("/api/admin/locations/cities/{$noida->id}/launch-approval", [
+                'confirmation' => 'APPROVE_NCR_CITY_INDEXING',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'City is not ready for launch approval yet. Resolve the readiness blockers first.')
+            ->assertJsonPath('data.city_readiness.content_ready', false);
+
+        $this->assertDatabaseMissing('ncr_city_launch_approvals', [
+            'city_slug' => 'noida',
+            'status' => 'approved',
+        ]);
+    }
+
+    public function test_ready_ncr_city_launch_approval_updates_registry_sitemap_and_can_be_revoked(): void
+    {
+        config([
+            'features.ncr_multicity' => true,
+            'features.ncr_city_indexing' => true,
+        ]);
+
+        $region = Region::where('slug', 'delhi-ncr')->firstOrFail();
+        $noida = City::where('slug', 'noida')->firstOrFail();
+
+        for ($i = 1; $i <= 5; $i++) {
+            Society::create([
+                'name' => "Noida Launch Society {$i}",
+                'slug' => "noida-launch-society-{$i}",
+                'region_id' => $region->id,
+                'city_id' => $noida->id,
+                'city' => 'Noida',
+                'status' => 'Verified',
+                'verification_status' => 'Verified',
+                'is_published' => true,
+                'score' => 8,
+            ]);
+        }
+
+        for ($i = 1; $i <= 3; $i++) {
+            Locality::create([
+                'region_id' => $region->id,
+                'city_id' => $noida->id,
+                'name' => "Sector 15{$i}",
+                'slug' => "sector-15{$i}",
+                'city' => 'Noida',
+                'state' => 'Uttar Pradesh',
+                'published_status' => 'review',
+            ]);
+        }
+
+        app(SeoPageRegistryService::class)->sync();
+        $this->assertFalse(SeoPage::where('page_key', 'ncr-city:noida')->firstOrFail()->is_indexable);
+        $this->assertStringNotContainsString('/ncr/noida', app(LiveSitemapService::class)->body());
+
+        $this->withToken('ncr-admin-token')
+            ->postJson("/api/admin/locations/cities/{$noida->id}/launch-approval", [
+                'confirmation' => 'APPROVE_NCR_CITY_INDEXING',
+                'approval_notes' => 'Ready after NCR launch review.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.city_readiness.content_ready', true)
+            ->assertJsonPath('data.city_readiness.indexing_approved', true)
+            ->assertJsonPath('data.city_readiness.launch_approval_status', 'approved');
+
+        $approval = NcrCityLaunchApproval::where('city_slug', 'noida')->firstOrFail();
+        $this->assertTrue($approval->approved_for_indexing);
+        $this->assertTrue($approval->approved_for_sitemap);
+        $this->assertSame('Ready after NCR launch review.', $approval->approval_notes);
+
+        $noidaPage = SeoPage::where('page_key', 'ncr-city:noida')->firstOrFail();
+        $this->assertTrue($noidaPage->is_indexable);
+        $this->assertTrue($noidaPage->sitemap_included);
+        $this->assertStringContainsString('https://www.societyflats.com/ncr/noida</loc>', app(LiveSitemapService::class)->body());
+
+        $this->withToken('ncr-admin-token')
+            ->postJson("/api/admin/locations/cities/{$noida->id}/launch-revoke", [
+                'confirmation' => 'REVOKE_NCR_CITY_INDEXING',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.city_readiness.indexing_approved', false)
+            ->assertJsonPath('data.city_readiness.launch_approval_status', 'revoked');
+
+        $noidaPage = SeoPage::where('page_key', 'ncr-city:noida')->firstOrFail();
+        $this->assertFalse($noidaPage->is_indexable);
+        $this->assertFalse($noidaPage->sitemap_included);
+        $this->assertStringNotContainsString('/ncr/noida', app(LiveSitemapService::class)->body());
     }
 }

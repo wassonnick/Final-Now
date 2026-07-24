@@ -115,6 +115,8 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/locations/backfill/preview', [AdminLocationController::class, 'backfillPreview']);
     Route::post('/locations/backfill/apply', [AdminLocationController::class, 'applyBackfill']);
     Route::get('/locations/cities', [AdminLocationController::class, 'cities']);
+    Route::post('/locations/cities/{city}/launch-approval', [AdminLocationController::class, 'approveCityLaunch']);
+    Route::post('/locations/cities/{city}/launch-revoke', [AdminLocationController::class, 'revokeCityLaunch']);
     Route::get('/locations/zones', [AdminLocationController::class, 'zones']);
     Route::post('/locations/zones', [AdminLocationController::class, 'storeZone']);
     Route::patch('/locations/zones/{zone}', [AdminLocationController::class, 'updateZone']);

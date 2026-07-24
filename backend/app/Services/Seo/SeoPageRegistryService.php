@@ -6,6 +6,7 @@ use App\Models\Property;
 use App\Models\SeoPage;
 use App\Models\Society;
 use App\Models\City;
+use App\Services\Ncr\NcrCityLaunchPolicy;
 use Illuminate\Support\Str;
 
 class SeoPageRegistryService
@@ -189,19 +190,15 @@ class SeoPageRegistryService
             return [];
         }
 
-        $indexingEnabled = (bool) config('features.ncr_city_indexing', false);
-        $approvedSlugs = collect((array) config('features.ncr_indexable_city_slugs', []))
-            ->map(fn ($slug) => Str::slug((string) $slug))
-            ->filter()
-            ->values();
+        $policy = app(NcrCityLaunchPolicy::class);
 
         return City::query()
             ->where('is_active', true)
             ->whereIn('slug', ['gurgaon', 'delhi', 'noida', 'greater-noida', 'faridabad'])
             ->orderByRaw("CASE slug WHEN 'gurgaon' THEN 1 WHEN 'delhi' THEN 2 WHEN 'noida' THEN 3 WHEN 'greater-noida' THEN 4 WHEN 'faridabad' THEN 5 ELSE 99 END")
             ->get()
-            ->map(function (City $city) use ($indexingEnabled, $approvedSlugs) {
-                $approved = $indexingEnabled && $approvedSlugs->contains($city->slug);
+            ->map(function (City $city) use ($policy) {
+                $approved = $policy->cityIsApproved($city);
                 $publishedSocietyCount = Society::query()
                     ->where('is_published', true)
                     ->whereIn('status', ['Verified', 'Premium'])

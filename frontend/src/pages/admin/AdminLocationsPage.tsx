@@ -4,7 +4,7 @@ import { AlertTriangle, CheckCircle2, MapPinned, Plus, RefreshCw } from "lucide-
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { applyNcrCityBackfill, createNcrLocality, createNcrZone, fetchNcrBackfillPreview, fetchNcrLocationAudit, fetchNcrLocations, type NcrBackfillResponse, type NcrLocationAuditResponse, type NcrLocationsResponse } from "@/lib/ncrLocationsApi";
+import { applyNcrCityBackfill, approveNcrCityLaunch, createNcrLocality, createNcrZone, fetchNcrBackfillPreview, fetchNcrLocationAudit, fetchNcrLocations, revokeNcrCityLaunch, type NcrBackfillResponse, type NcrLocationAuditResponse, type NcrLocationsResponse } from "@/lib/ncrLocationsApi";
 import { isNcrMulticityEnabled } from "@/config/features";
 
 const emptyLocations: NcrLocationsResponse["data"] = {
@@ -62,6 +62,7 @@ export function AdminLocationsPage() {
   const [backfill, setBackfill] = useState<NcrBackfillResponse["data"] | null>(null);
   const [loading, setLoading] = useState(false);
   const [backfillLoading, setBackfillLoading] = useState(false);
+  const [approvalLoadingCityId, setApprovalLoadingCityId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [readOnlyPreview, setReadOnlyPreview] = useState(false);
@@ -221,6 +222,52 @@ export function AdminLocationsPage() {
     }
   };
 
+  const approveCity = async (city: NonNullable<NcrLocationAuditResponse["data"]["city_readiness"]>[number]) => {
+    if (readOnlyPreview) {
+      setError("Read-only preview: connect the matching NCR backend before approving city launch.");
+      return;
+    }
+
+    const confirmed = window.confirm(`Approve ${city.name} for NCR city indexing review?\n\nThis requires the backend NCR indexing flag and does not create fake data. Continue only after checking content depth and unmapped rows.`);
+    if (!confirmed) return;
+
+    try {
+      setApprovalLoadingCityId(city.city_id);
+      setError("");
+      setMessage("");
+      const response = await approveNcrCityLaunch(city.city_id, `Approved from NCR Locations admin for ${city.name}.`);
+      setMessage(response?.message || `${city.name} launch approval saved.`);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not approve NCR city launch.");
+    } finally {
+      setApprovalLoadingCityId(null);
+    }
+  };
+
+  const revokeCity = async (city: NonNullable<NcrLocationAuditResponse["data"]["city_readiness"]>[number]) => {
+    if (readOnlyPreview) {
+      setError("Read-only preview: connect the matching NCR backend before revoking city launch.");
+      return;
+    }
+
+    const confirmed = window.confirm(`Revoke NCR city indexing approval for ${city.name}? This holds the city out of NCR sitemap policy.`);
+    if (!confirmed) return;
+
+    try {
+      setApprovalLoadingCityId(city.city_id);
+      setError("");
+      setMessage("");
+      const response = await revokeNcrCityLaunch(city.city_id);
+      setMessage(response?.message || `${city.name} launch approval revoked.`);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not revoke NCR city launch.");
+    } finally {
+      setApprovalLoadingCityId(null);
+    }
+  };
+
   if (!enabled) {
     return (
       <AdminLayout title="NCR Locations" subtitle="Structured city, zone and locality controls.">
@@ -303,7 +350,9 @@ export function AdminLocationsPage() {
                       <th>Importer jobs</th>
                       <th>Indexing</th>
                       <th>Status</th>
+                      <th>Launch approval</th>
                       <th>Next action</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -334,12 +383,33 @@ export function AdminLocationsPage() {
                             {cityStatusLabel(city.recommended_status)}
                           </span>
                         </td>
+                        <td>
+                          <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{city.launch_approval_status || "held"}</p>
+                          {city.launch_approved_at ? <p className="mt-1 text-xs font-semibold text-emerald-700">Approved: {city.launch_approved_at}</p> : null}
+                          {!city.indexing_flag_enabled ? <p className="mt-1 text-xs font-bold text-amber-700">Backend indexing flag off</p> : null}
+                        </td>
                         <td className="max-w-[280px]">
                           <ul className="space-y-1 text-xs font-semibold text-slate-600">
                             {city.next_actions.slice(0, 2).map((action) => (
                               <li key={action}>• {action}</li>
                             ))}
                           </ul>
+                        </td>
+                        <td>
+                          {city.indexing_approved ? (
+                            <Button size="sm" variant="outline" onClick={() => void revokeCity(city)} disabled={approvalLoadingCityId === city.city_id}>
+                              Revoke
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="bg-blue-700"
+                              onClick={() => void approveCity(city)}
+                              disabled={approvalLoadingCityId === city.city_id || !city.content_ready || !city.indexing_flag_enabled}
+                            >
+                              Approve
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))}

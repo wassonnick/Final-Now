@@ -3,7 +3,9 @@
 namespace App\Services\Seo;
 
 use App\Models\SeoPage;
+use App\Services\Ncr\NcrCityLaunchPolicy;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 /**
  * Single source of truth for the live, DB-driven sitemap. The public route serves a
@@ -26,20 +28,21 @@ class LiveSitemapService
     /** @return \Illuminate\Support\Collection<int,\App\Models\SeoPage> */
     public function includedPages()
     {
-        $allowedNcrCities = collect((array) config('features.ncr_indexable_city_slugs', []))
+        $policy = app(NcrCityLaunchPolicy::class);
+        $allowedNcrCities = collect($policy->approvedSlugs())
             ->map(fn ($slug) => trim((string) $slug))
             ->filter()
-            ->map(fn ($slug) => '/ncr/'.\Illuminate\Support\Str::slug($slug))
+            ->map(fn ($slug) => '/ncr/'.Str::slug($slug))
             ->values()
             ->all();
 
         return SeoPage::where('is_public', true)
             ->where('is_indexable', true)
             ->where('sitemap_included', true)
-            ->where(function ($query) use ($allowedNcrCities) {
+            ->where(function ($query) use ($allowedNcrCities, $policy) {
                 $query->where('url', 'not like', '/ncr/%');
 
-                if ((bool) config('features.ncr_city_indexing', false) && count($allowedNcrCities) > 0) {
+                if ($policy->isIndexingEnabled() && count($allowedNcrCities) > 0) {
                     $query->orWhereIn('url', $allowedNcrCities);
                 }
             })

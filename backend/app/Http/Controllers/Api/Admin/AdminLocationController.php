@@ -6,11 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Models\Lead;
 use App\Models\Locality;
+use App\Models\NcrCityLaunchApproval;
 use App\Models\Property;
 use App\Models\Region;
 use App\Models\Society;
 use App\Models\VerifiedSocietyImportJob;
 use App\Models\Zone;
+use App\Services\Ncr\NcrCityLaunchPolicy;
+use App\Services\Seo\LiveSitemapService;
+use App\Services\Seo\SeoPageRegistryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -137,6 +141,102 @@ class AdminLocationController extends Controller
         $locality->update($payload);
 
         return response()->json(['status' => 'ok', 'data' => $locality->fresh()]);
+    }
+
+    public function approveCityLaunch(Request $request, City $city): JsonResponse
+    {
+        $payload = $request->validate([
+            'confirmation' => 'required|string',
+            'approval_notes' => 'nullable|string|max:1000',
+        ]);
+
+        if ($payload['confirmation'] !== 'APPROVE_NCR_CITY_INDEXING') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'City launch approval confirmation mismatch. Send APPROVE_NCR_CITY_INDEXING to approve a ready city.',
+            ], 422);
+        }
+
+        $policy = app(NcrCityLaunchPolicy::class);
+        if (! $policy->isIndexingEnabled()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'NCR city indexing flag is disabled. Keep this city held until NCR_CITY_INDEXING_ENABLED is intentionally enabled for launch review.',
+            ], 422);
+        }
+
+        $readiness = $this->cityReadinessFor($city, $policy);
+        if (! $readiness['content_ready']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'City is not ready for launch approval yet. Resolve the readiness blockers first.',
+                'data' => ['city_readiness' => $readiness],
+            ], 422);
+        }
+
+        $approval = NcrCityLaunchApproval::updateOrCreate(
+            ['city_slug' => $city->slug],
+            [
+                'city_id' => $city->id,
+                'status' => 'approved',
+                'approved_for_indexing' => true,
+                'approved_for_sitemap' => true,
+                'approved_at' => now(),
+                'revoked_at' => null,
+                'approved_by' => $this->adminActor($request),
+                'revoked_by' => null,
+                'approval_notes' => $payload['approval_notes'] ?? null,
+                'readiness_snapshot' => $readiness,
+            ]
+        );
+
+        $this->refreshSeoPolicyOutputs();
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => $city->name.' launch approval saved. Sitemap/indexing still require the global NCR indexing flag and frontend launch policy.',
+            'data' => [
+                'approval' => $approval->fresh(),
+                'city_readiness' => $this->cityReadinessFor($city->fresh(), $policy),
+            ],
+        ]);
+    }
+
+    public function revokeCityLaunch(Request $request, City $city): JsonResponse
+    {
+        $payload = $request->validate([
+            'confirmation' => 'required|string',
+        ]);
+
+        if ($payload['confirmation'] !== 'REVOKE_NCR_CITY_INDEXING') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'City launch revoke confirmation mismatch. Send REVOKE_NCR_CITY_INDEXING to revoke.',
+            ], 422);
+        }
+
+        $approval = NcrCityLaunchApproval::updateOrCreate(
+            ['city_slug' => $city->slug],
+            [
+                'city_id' => $city->id,
+                'status' => 'revoked',
+                'approved_for_indexing' => false,
+                'approved_for_sitemap' => false,
+                'revoked_at' => now(),
+                'revoked_by' => $this->adminActor($request),
+            ]
+        );
+
+        $this->refreshSeoPolicyOutputs();
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => $city->name.' city launch approval revoked. It is held out of NCR sitemap policy.',
+            'data' => [
+                'approval' => $approval->fresh(),
+                'city_readiness' => $this->cityReadinessFor($city->fresh(), app(NcrCityLaunchPolicy::class)),
+            ],
+        ]);
     }
 
     private function cityQuery(Request $request)
@@ -347,101 +447,119 @@ class AdminLocationController extends Controller
 
     private function cityReadiness(): array
     {
-        $indexingEnabled = (bool) config('features.ncr_city_indexing', false);
-        $indexableSlugs = collect((array) config('features.ncr_indexable_city_slugs', []))
-            ->map(fn ($slug) => Str::slug((string) $slug))
-            ->filter()
-            ->values();
+        $policy = app(NcrCityLaunchPolicy::class);
 
         return City::query()
             ->where('is_active', true)
             ->whereIn('slug', ['gurgaon', 'delhi', 'noida', 'greater-noida', 'faridabad'])
             ->orderByRaw("CASE slug WHEN 'gurgaon' THEN 1 WHEN 'delhi' THEN 2 WHEN 'noida' THEN 3 WHEN 'greater-noida' THEN 4 WHEN 'faridabad' THEN 5 ELSE 99 END")
             ->get()
-            ->map(function (City $city) use ($indexingEnabled, $indexableSlugs) {
-                $publicSocieties = Society::query()
-                    ->where('is_published', true)
-                    ->whereIn('status', ['Verified', 'Premium'])
-                    ->where('city_id', $city->id)
-                    ->count();
-
-                $draftSocieties = Society::query()
-                    ->where('city_id', $city->id)
-                    ->where(function ($query) {
-                        $query->where('is_published', false)
-                            ->orWhereNotIn('status', ['Verified', 'Premium']);
-                    })
-                    ->count();
-
-                $publicProperties = Property::query()
-                    ->where('status', 'Live')
-                    ->where('city_id', $city->id)
-                    ->count();
-
-                $zones = Zone::query()->where('city_id', $city->id)->count();
-                $localities = Locality::query()->where('city_id', $city->id)->count();
-                $publishedLocalities = Locality::query()
-                    ->where('city_id', $city->id)
-                    ->where('published_status', 'published')
-                    ->count();
-
-                $verifiedImportJobs = Schema::hasTable('verified_society_import_jobs')
-                    ? VerifiedSocietyImportJob::query()->where('target_city_id', $city->id)->count()
-                    : 0;
-
-                $cityNames = $city->slug === 'gurgaon' ? ['Gurgaon', 'Gurugram'] : [$city->name];
-                $unmappedPublicSocietiesByText = Society::query()
-                    ->where('is_published', true)
-                    ->whereIn('status', ['Verified', 'Premium'])
-                    ->whereNull('city_id')
-                    ->whereIn('city', $cityNames)
-                    ->count();
-                $unmappedPublicPropertiesByText = Property::query()
-                    ->where('status', 'Live')
-                    ->whereNull('city_id')
-                    ->whereIn('city', $cityNames)
-                    ->count();
-
-                $indexingApproved = $indexingEnabled && $indexableSlugs->contains($city->slug);
-                $contentReady = $publicSocieties >= 5 && $localities >= 3 && ($unmappedPublicSocietiesByText + $unmappedPublicPropertiesByText) === 0;
-                $readyForRollout = $contentReady && $indexingApproved;
-
-                $status = 'hold_noindex';
-                if ($city->slug === 'gurgaon' && $publicSocieties > 0) {
-                    $status = 'core_market_live';
-                } elseif ($readyForRollout) {
-                    $status = 'approved_for_city_indexing';
-                } elseif ($publicSocieties < 5) {
-                    $status = 'needs_verified_societies';
-                } elseif ($localities < 3) {
-                    $status = 'needs_locality_depth';
-                } elseif (! $indexingApproved) {
-                    $status = 'awaiting_indexing_approval';
-                }
-
-                return [
-                    'city_id' => $city->id,
-                    'name' => $city->name,
-                    'slug' => $city->slug,
-                    'state' => $city->state,
-                    'city_type' => $city->city_type,
-                    'zones_count' => $zones,
-                    'localities_count' => $localities,
-                    'published_localities_count' => $publishedLocalities,
-                    'public_societies_count' => $publicSocieties,
-                    'draft_societies_count' => $draftSocieties,
-                    'public_properties_count' => $publicProperties,
-                    'verified_import_jobs_count' => $verifiedImportJobs,
-                    'unmapped_public_rows_count' => $unmappedPublicSocietiesByText + $unmappedPublicPropertiesByText,
-                    'content_ready' => $contentReady,
-                    'indexing_approved' => $indexingApproved,
-                    'ready_for_public_rollout' => $readyForRollout,
-                    'recommended_status' => $status,
-                    'next_actions' => $this->cityNextActions($city, $publicSocieties, $localities, $indexingApproved, $unmappedPublicSocietiesByText + $unmappedPublicPropertiesByText),
-                ];
-            })
+            ->map(fn (City $city) => $this->cityReadinessFor($city, $policy))
             ->values()
             ->all();
+    }
+
+    private function cityReadinessFor(City $city, NcrCityLaunchPolicy $policy): array
+    {
+        $approval = Schema::hasTable('ncr_city_launch_approvals')
+            ? NcrCityLaunchApproval::query()->where('city_slug', $city->slug)->first()
+            : null;
+
+        $publicSocieties = Society::query()
+            ->where('is_published', true)
+            ->whereIn('status', ['Verified', 'Premium'])
+            ->where('city_id', $city->id)
+            ->count();
+
+        $draftSocieties = Society::query()
+            ->where('city_id', $city->id)
+            ->where(function ($query) {
+                $query->where('is_published', false)
+                    ->orWhereNotIn('status', ['Verified', 'Premium']);
+            })
+            ->count();
+
+        $publicProperties = Property::query()
+            ->where('status', 'Live')
+            ->where('city_id', $city->id)
+            ->count();
+
+        $zones = Zone::query()->where('city_id', $city->id)->count();
+        $localities = Locality::query()->where('city_id', $city->id)->count();
+        $publishedLocalities = Locality::query()
+            ->where('city_id', $city->id)
+            ->where('published_status', 'published')
+            ->count();
+
+        $verifiedImportJobs = Schema::hasTable('verified_society_import_jobs')
+            ? VerifiedSocietyImportJob::query()->where('target_city_id', $city->id)->count()
+            : 0;
+
+        $cityNames = $city->slug === 'gurgaon' ? ['Gurgaon', 'Gurugram'] : [$city->name];
+        $unmappedPublicSocietiesByText = Society::query()
+            ->where('is_published', true)
+            ->whereIn('status', ['Verified', 'Premium'])
+            ->whereNull('city_id')
+            ->whereIn('city', $cityNames)
+            ->count();
+        $unmappedPublicPropertiesByText = Property::query()
+            ->where('status', 'Live')
+            ->whereNull('city_id')
+            ->whereIn('city', $cityNames)
+            ->count();
+
+        $indexingApproved = $policy->cityIsApproved($city);
+        $contentReady = $publicSocieties >= 5 && $localities >= 3 && ($unmappedPublicSocietiesByText + $unmappedPublicPropertiesByText) === 0;
+        $readyForRollout = $contentReady && $indexingApproved;
+
+        $status = 'hold_noindex';
+        if ($city->slug === 'gurgaon' && $publicSocieties > 0) {
+            $status = 'core_market_live';
+        } elseif ($readyForRollout) {
+            $status = 'approved_for_city_indexing';
+        } elseif ($publicSocieties < 5) {
+            $status = 'needs_verified_societies';
+        } elseif ($localities < 3) {
+            $status = 'needs_locality_depth';
+        } elseif (! $indexingApproved) {
+            $status = 'awaiting_indexing_approval';
+        }
+
+        return [
+            'city_id' => $city->id,
+            'name' => $city->name,
+            'slug' => $city->slug,
+            'state' => $city->state,
+            'city_type' => $city->city_type,
+            'zones_count' => $zones,
+            'localities_count' => $localities,
+            'published_localities_count' => $publishedLocalities,
+            'public_societies_count' => $publicSocieties,
+            'draft_societies_count' => $draftSocieties,
+            'public_properties_count' => $publicProperties,
+            'verified_import_jobs_count' => $verifiedImportJobs,
+            'unmapped_public_rows_count' => $unmappedPublicSocietiesByText + $unmappedPublicPropertiesByText,
+            'content_ready' => $contentReady,
+            'indexing_flag_enabled' => $policy->isIndexingEnabled(),
+            'indexing_approved' => $indexingApproved,
+            'ready_for_public_rollout' => $readyForRollout,
+            'launch_approval_status' => $approval?->status ?? 'held',
+            'launch_approved_at' => $approval?->approved_at?->toISOString(),
+            'launch_approval_notes' => $approval?->approval_notes,
+            'recommended_status' => $status,
+            'next_actions' => $this->cityNextActions($city, $publicSocieties, $localities, $indexingApproved, $unmappedPublicSocietiesByText + $unmappedPublicPropertiesByText),
+        ];
+    }
+
+    private function refreshSeoPolicyOutputs(): void
+    {
+        app(SeoPageRegistryService::class)->sync();
+        app(LiveSitemapService::class)->flushCache();
+    }
+
+    private function adminActor(Request $request): string
+    {
+        return (string) ($request->header('X-Admin-Email') ?: 'admin');
     }
 
     private function cityNextActions(City $city, int $publicSocieties, int $localities, bool $indexingApproved, int $unmappedPublicRows): array
