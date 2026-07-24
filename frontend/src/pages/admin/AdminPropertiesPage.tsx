@@ -69,8 +69,10 @@ function c13NormalizeInventoryStatus(property: any): AdminInventoryStatus {
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { AdminBadge } from "@/components/admin/AdminBadge";
+import { NcrAdminLocationFilter, type NcrAdminLocationFilterValue } from "@/components/admin/NcrAdminLocationFilter";
 import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
 import { adminFetch, adminHeaders } from "@/lib/adminApi";
+import { isNcrMulticityEnabled } from "@/config/features";
 import { propertyDisplayImage } from "@/lib/propertyImages";
 
 function c14SourceLeadId(property: any) {
@@ -174,6 +176,12 @@ function getArea(item: any) {
   return item?.area_sqft || item?.areaSqft || "-";
 }
 
+function getStructuredLocationId(item: any, key: "city" | "zone" | "locality") {
+  const snake = `${key}_id`;
+  const camel = `${key}Id`;
+  return item?.[snake] || item?.[camel] || item?.society?.[snake] || item?.society?.[camel] || "";
+}
+
 function getSourceBadge(item: any) {
   const raw = String(item?.source_label || item?.sourceLabel || item?.source_type || item?.sourceType || "").toLowerCase();
 
@@ -197,11 +205,13 @@ function getSourceBadge(item: any) {
 }
 
 export function AdminPropertiesPage() {
+  const ncrEnabled = isNcrMulticityEnabled();
   const [c13StatusFilter, setC13StatusFilter] = useState<"all" | AdminInventoryStatus>("all");
 const [properties, setProperties] = useState<any[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All");
   const [type, setType] = useState("All");
+  const [ncrFilter, setNcrFilter] = useState<NcrAdminLocationFilterValue>({ cityId: "", zoneId: "", localityId: "" });
   const [loading, setLoading] = useState(true);
   const [actionMessage, setActionMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -213,7 +223,12 @@ const [properties, setProperties] = useState<any[]>([]);
     setLoading(true);
 
     try {
-      const res = await adminFetch("/admin/properties");
+      const params = new URLSearchParams({ per_page: "100" });
+      if (ncrEnabled && ncrFilter.cityId) params.set("city_id", ncrFilter.cityId);
+      if (ncrEnabled && ncrFilter.zoneId) params.set("zone_id", ncrFilter.zoneId);
+      if (ncrEnabled && ncrFilter.localityId) params.set("locality_id", ncrFilter.localityId);
+
+      const res = await adminFetch(`/admin/properties?${params.toString()}`);
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -233,7 +248,7 @@ const [properties, setProperties] = useState<any[]>([]);
 
   useEffect(() => {
     void loadProperties();
-  }, []);
+  }, [ncrFilter.cityId, ncrFilter.zoneId, ncrFilter.localityId]);
 
   const baseFiltered = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -253,10 +268,13 @@ const [properties, setProperties] = useState<any[]>([]);
       const matchesQuery = !term || searchable.includes(term);
       const matchesStatus = status === "All" || getStatus(item) === status;
       const matchesType = type === "All" || getListingType(item) === type;
+      const matchesNcrCity = !ncrEnabled || !ncrFilter.cityId || Number(getStructuredLocationId(item, "city")) === Number(ncrFilter.cityId);
+      const matchesNcrZone = !ncrEnabled || !ncrFilter.zoneId || Number(getStructuredLocationId(item, "zone")) === Number(ncrFilter.zoneId);
+      const matchesNcrLocality = !ncrEnabled || !ncrFilter.localityId || getStructuredLocationId(item, "locality") === ncrFilter.localityId;
 
-      return matchesQuery && matchesStatus && matchesType;
+      return matchesQuery && matchesStatus && matchesType && matchesNcrCity && matchesNcrZone && matchesNcrLocality;
     });
-  }, [properties, query, status, type]);
+  }, [properties, query, status, type, ncrEnabled, ncrFilter]);
 
   const filtered = useMemo(() => {
     return baseFiltered.filter((item: any) => {
@@ -561,6 +579,16 @@ const [properties, setProperties] = useState<any[]>([]);
               ))}
             </select>
           </div>
+
+          {ncrEnabled ? (
+            <div className="mt-3">
+              <NcrAdminLocationFilter
+                value={ncrFilter}
+                onChange={setNcrFilter}
+                label="Filter properties by NCR city / zone / locality"
+              />
+            </div>
+          ) : null}
 
           <div className="mt-3 md:mt-4">
             {loading ? (

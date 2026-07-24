@@ -53,6 +53,14 @@ class PropertyController extends Controller
             $q->where('listing_type', $request->string('listing_type'));
         }
 
+        if ($isAdmin && $request->filled('status')) {
+            $q->where('status', $request->string('status'));
+        }
+
+        if ($isAdmin && $request->filled('property_type')) {
+            $q->where('property_type', $request->string('property_type'));
+        }
+
         $this->applyNcrLocationFilters($q, $request);
 
         if ($request->boolean('featured')) {

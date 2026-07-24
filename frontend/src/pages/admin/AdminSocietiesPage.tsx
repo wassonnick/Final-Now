@@ -20,6 +20,7 @@ import {
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { AdminBadge } from "@/components/admin/AdminBadge";
+import { NcrAdminLocationFilter, type NcrAdminLocationFilterValue } from "@/components/admin/NcrAdminLocationFilter";
 import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
 import { SocietySeoReadinessPanel } from "@/components/admin/SocietySeoReadinessPanel";
 import {
@@ -33,11 +34,12 @@ import {
 } from "@/lib/adminSocietyStore";
 import type { AdminSociety, SocietyStatus } from "@/lib/adminSocietyStore";
 import { bulkFetchGooglePlacesSocietyImageReferences, type BulkGooglePlacesImageFetchSummary } from "@/lib/googlePlacesImageAdminApi";
+import { isNcrMulticityEnabled } from "@/config/features";
 
 const filters = ["All", "Verified", "Premium", "Draft", "Archived"];
 
 function locationText(item: AdminSociety) {
-  return [item.sector, item.locality].filter(Boolean).join(", ") || "Gurgaon";
+  return [item.sector, item.locality, item.city].filter(Boolean).join(", ") || "Gurgaon";
 }
 
 function publicSocietyUrl(item: AdminSociety) {
@@ -133,9 +135,11 @@ function dataCompletionStatus(item: AdminSociety) {
 }
 
 export function AdminSocietiesPage() {
+  const ncrEnabled = isNcrMulticityEnabled();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All");
   const [sortBy, setSortBy] = useState("score");
+  const [ncrFilter, setNcrFilter] = useState<NcrAdminLocationFilterValue>({ cityId: "", zoneId: "", localityId: "" });
   const [societies, setSocieties] = useState<AdminSociety[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -209,7 +213,7 @@ export function AdminSocietiesPage() {
     try {
       setLoading(true);
       setError("");
-      setSocieties(await fetchAdminSocieties());
+      setSocieties(await fetchAdminSocieties(ncrEnabled ? ncrFilter : {}));
     } catch (err) {
       console.error(err);
       setError("Unable to load societies from the live backend.");
@@ -220,7 +224,7 @@ export function AdminSocietiesPage() {
 
   useEffect(() => {
     void loadSocieties();
-  }, []);
+  }, [ncrFilter.cityId, ncrFilter.zoneId, ncrFilter.localityId]);
 
   const filteredSocieties = useMemo(() => {
     const rows = societies.filter((society) => {
@@ -237,8 +241,11 @@ export function AdminSocietiesPage() {
 
       const matchesQuery = searchText.includes(query.toLowerCase());
       const matchesFilter = filter === "All" || society.status === filter;
+      const matchesNcrCity = !ncrEnabled || !ncrFilter.cityId || Number(society.cityId) === Number(ncrFilter.cityId);
+      const matchesNcrZone = !ncrEnabled || !ncrFilter.zoneId || Number(society.zoneId) === Number(ncrFilter.zoneId);
+      const matchesNcrLocality = !ncrEnabled || !ncrFilter.localityId || society.localityId === ncrFilter.localityId;
 
-      return matchesQuery && matchesFilter;
+      return matchesQuery && matchesFilter && matchesNcrCity && matchesNcrZone && matchesNcrLocality;
     });
 
     const sorted = [...rows];
@@ -247,7 +254,7 @@ export function AdminSocietiesPage() {
     else if (sortBy === "newest") sorted.sort((a, b) => Number(b.id) - Number(a.id));
     else sorted.sort((a, b) => Number(b.score || 0) - Number(a.score || 0)); // default: score high→low
     return sorted;
-  }, [societies, query, filter, sortBy]);
+  }, [societies, query, filter, sortBy, ncrEnabled, ncrFilter]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { All: societies.length };
@@ -557,6 +564,16 @@ export function AdminSocietiesPage() {
               <option value="newest">Sort: Newest added</option>
             </select>
           </div>
+
+          {ncrEnabled ? (
+            <div className="mt-3">
+              <NcrAdminLocationFilter
+                value={ncrFilter}
+                onChange={setNcrFilter}
+                label="Filter societies by NCR city / zone / locality"
+              />
+            </div>
+          ) : null}
 
           {/* Bulk action bar — only when rows are selected */}
           {selectedSocieties.length ? (

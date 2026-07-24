@@ -536,13 +536,35 @@ async function request(path: string, options?: RequestInit) {
   return json;
 }
 
-export async function fetchAdminSocieties(): Promise<AdminSociety[]> {
+export type AdminSocietyFetchOptions = {
+  cityId?: string | number;
+  zoneId?: string | number;
+  localityId?: string;
+};
+
+function appendQueryParams(path: string, params: Record<string, string | number | undefined>) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") searchParams.set(key, String(value));
+  });
+
+  const query = searchParams.toString();
+  return query ? `${path}${path.includes("?") ? "&" : "?"}${query}` : path;
+}
+
+export async function fetchAdminSocieties(options: AdminSocietyFetchOptions = {}): Promise<AdminSociety[]> {
   const items: any[] = [];
   let page = 1;
   let lastPage = 1;
 
   do {
-    const json = await request(`/admin/societies?per_page=100&page=${page}`);
+    const json = await request(appendQueryParams("/admin/societies", {
+      per_page: 100,
+      page,
+      city_id: options.cityId,
+      zone_id: options.zoneId,
+      locality_id: options.localityId,
+    }));
     const pageData = Array.isArray(json?.data)
       ? json.data
       : json?.data?.data || [];

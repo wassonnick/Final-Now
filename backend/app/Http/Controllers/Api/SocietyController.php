@@ -17,6 +17,7 @@ class SocietyController extends Controller {
         ->whereIn('status', ['Verified', 'Premium']);
     }
     if($request->filled('q')){ $q=$request->string('q'); $query->where(fn($b)=>$b->where('name','ilike',"%{$q}%")->orWhere('locality','ilike',"%{$q}%")->orWhere('sector','ilike',"%{$q}%")->orWhere('builder','ilike',"%{$q}%")); }
+    if($request->is('api/admin/*') && $request->filled('status')) $query->where('status', (string) $request->query('status'));
     $this->applyNcrLocationFilters($query, $request);
     if($request->boolean('featured')) $query->where('featured',true);
     return response()->json(['status'=>'ok','data'=>$query->withCount('properties')->orderByDesc('featured')->orderByDesc('search_boost')->orderBy('name')->paginate($request->integer('per_page',24))]);
