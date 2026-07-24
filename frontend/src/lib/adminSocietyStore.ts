@@ -69,6 +69,13 @@ export type SocietyImageStatus =
 
 export interface AdminSociety {
   id: number;
+  regionId?: number | '';
+  cityId?: number | '';
+  zoneId?: number | '';
+  localityId?: string;
+  microMarket?: string;
+  authority?: string;
+  pincode?: string;
   name: string;
   slug: string;
   builder: string;
@@ -227,6 +234,13 @@ export function createEmptyAdminSociety(): AdminSociety {
     fieldSources: {},
     officialSourceLastCheckedAt: '',
     id: 0,
+    regionId: '',
+    cityId: '',
+    zoneId: '',
+    localityId: '',
+    microMarket: '',
+    authority: '',
+    pincode: '',
     name: '',
     slug: '',
     builder: '',
@@ -318,6 +332,13 @@ export function mapApiSociety(data: any): AdminSociety {
   return {
     ...createEmptyAdminSociety(),
     id: Number(data?.id || 0),
+    regionId: data?.region_id || '',
+    cityId: data?.city_id || '',
+    zoneId: data?.zone_id || '',
+    localityId: data?.locality_id || '',
+    microMarket: data?.micro_market || '',
+    authority: data?.authority || '',
+    pincode: data?.pincode || '',
     name: data?.name || '',
     slug: data?.slug || '',
     builder: data?.builder || '',
@@ -409,6 +430,13 @@ export function mapApiSociety(data: any): AdminSociety {
 export function toApiSocietyPayload(society: AdminSociety) {
   return {
     name: society.name,
+    region_id: society.regionId || undefined,
+    city_id: society.cityId || undefined,
+    zone_id: society.zoneId || undefined,
+    locality_id: society.localityId || undefined,
+    micro_market: society.microMarket || undefined,
+    authority: society.authority || undefined,
+    pincode: society.pincode || undefined,
     slug: society.slug || slugifySociety(society.name),
     builder: society.builder,
     sector: society.sector,

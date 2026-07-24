@@ -11,6 +11,7 @@ import { FloatingHelpline } from '@/components/layout/FloatingHelpline';
 import { HomePage } from '@/pages/HomePage';
 
 import { getAdminSession } from '@/hooks/useAdminAuth';
+import { isNcrMulticityEnabled } from "@/config/features";
 import { setPublicSeo } from "@/lib/seo";
 
 const SearchPage = lazy(() => import('@/pages/SearchPage').then((module) => ({ default: module.SearchPage })));
@@ -44,6 +45,7 @@ const PublicInfoPage = lazy(() => import('@/pages/PublicInfoPage').then((module)
 const DecisionTrustPage = lazy(() => import('@/pages/DecisionTrustPage').then((module) => ({ default: module.DecisionTrustPage })));
 const ReferralPage = lazy(() => import('@/pages/ReferralPage').then((module) => ({ default: module.ReferralPage })));
 const NriServicesPage = lazy(() => import('@/pages/NriServicesPage').then((module) => ({ default: module.NriServicesPage })));
+const NcrPreviewPage = lazy(() => import('@/pages/NcrPreviewPage').then((module) => ({ default: module.NcrPreviewPage })));
 
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage').then((module) => ({ default: module.AdminLoginPage })));
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })));
@@ -169,6 +171,7 @@ function AppShell() {
             <Route path="/recommendations" element={<FeatureExperiencePage feature="recommendations" />} />
             <Route path="/nri-services" element={<NriServicesPage />} />
             <Route path="/nri" element={<NriServicesPage />} />
+            <Route path="/ncr-preview" element={isNcrMulticityEnabled() ? <NcrPreviewPage /> : <NotFoundPage />} />
 
             <Route path="/customer/dashboard" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/customer" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />

@@ -44,6 +44,7 @@ import {
 } from "@/lib/adminSocietyStore";
 import type { AdminSociety, SocietyStatus } from "@/lib/adminSocietyStore";
 import { approveVerifiedImportImage, rejectVerifiedImportImage, setVerifiedImportCoverImage } from "@/lib/verifiedImporterApi";
+import { isNcrMulticityEnabled } from "@/config/features";
 
 const statusOptions: SocietyStatus[] = ["Draft", "Verified", "Premium", "Archived"];
 
@@ -412,6 +413,7 @@ export function AdminSocietyFormPage() {
     society.dataQuality.toLowerCase().includes("auto-enriched") ||
     society.dataQuality.toLowerCase().includes("enriched from public");
   const enrichDisabled = enriching || !activeSourceUrl || (hasBeenEnriched && !sourceChanged);
+  const ncrMulticityEnabled = isNcrMulticityEnabled();
 
   const updateField = <K extends keyof AdminSociety>(field: K, value: AdminSociety[K]) => {
     setSociety((current) => ({
@@ -1270,6 +1272,24 @@ export function AdminSocietyFormPage() {
                     placeholder="Full address"
                   />
                 </label>
+
+                {ncrMulticityEnabled && (
+                  <div className="md:col-span-2 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">NCR structured location</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Review-only IDs for region/city/zone/locality mapping. Current city, sector and locality text remains the public fallback.
+                    </p>
+                    <div className="mt-3 grid gap-3 md:grid-cols-4">
+                      <Input value={society.regionId || ""} onChange={(event) => updateField("regionId", event.target.value ? Number(event.target.value) : "")} placeholder="Region ID" className="h-10 rounded-xl border-blue-100" />
+                      <Input value={society.cityId || ""} onChange={(event) => updateField("cityId", event.target.value ? Number(event.target.value) : "")} placeholder="City ID" className="h-10 rounded-xl border-blue-100" />
+                      <Input value={society.zoneId || ""} onChange={(event) => updateField("zoneId", event.target.value ? Number(event.target.value) : "")} placeholder="Zone ID" className="h-10 rounded-xl border-blue-100" />
+                      <Input value={society.localityId || ""} onChange={(event) => updateField("localityId", event.target.value)} placeholder="Locality UUID" className="h-10 rounded-xl border-blue-100" />
+                      <Input value={society.microMarket || ""} onChange={(event) => updateField("microMarket", event.target.value)} placeholder="Micro-market" className="h-10 rounded-xl border-blue-100" />
+                      <Input value={society.authority || ""} onChange={(event) => updateField("authority", event.target.value)} placeholder="Authority" className="h-10 rounded-xl border-blue-100" />
+                      <Input value={society.pincode || ""} onChange={(event) => updateField("pincode", event.target.value)} placeholder="Pincode" className="h-10 rounded-xl border-blue-100" />
+                    </div>
+                  </div>
+                )}
 
                 <label className="text-sm font-medium text-slate-700">
                   Google Maps URL
