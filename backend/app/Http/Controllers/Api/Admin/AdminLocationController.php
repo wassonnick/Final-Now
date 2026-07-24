@@ -59,6 +59,37 @@ class AdminLocationController extends Controller
         ]);
     }
 
+    public function backfillPreview(): JsonResponse
+    {
+        return response()->json([
+            'status' => 'ok',
+            'enabled' => (bool) config('features.ncr_multicity'),
+            'mode' => 'preview',
+            'data' => $this->cityBackfillPlan(false),
+        ]);
+    }
+
+    public function applyBackfill(Request $request): JsonResponse
+    {
+        $payload = $request->validate([
+            'confirmation' => 'required|string',
+        ]);
+
+        if ($payload['confirmation'] !== 'APPLY_NCR_CITY_BACKFILL') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Backfill confirmation mismatch. Send APPLY_NCR_CITY_BACKFILL to apply exact city matches.',
+            ], 422);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'enabled' => (bool) config('features.ncr_multicity'),
+            'mode' => 'applied',
+            'data' => $this->cityBackfillPlan(true),
+        ]);
+    }
+
     public function zones(Request $request): JsonResponse
     {
         return response()->json(['status' => 'ok', 'data' => $this->zoneQuery($request)->get()]);
@@ -169,6 +200,101 @@ class AdminLocationController extends Controller
             'has_target_city_without_city_id' => Lead::query()->whereNull('city_id')->whereNotNull('target_city')->count(),
             'top_unmapped_target_city_text' => $this->topCityText(Lead::query()->whereNull('city_id'), 'target_city'),
         ];
+    }
+
+    private function cityBackfillPlan(bool $apply): array
+    {
+        $summary = [
+            'societies' => 0,
+            'properties' => 0,
+            'leads' => 0,
+            'verified_import_jobs' => 0,
+            'total' => 0,
+        ];
+        $cities = [];
+
+        foreach ($this->backfillCities() as $city) {
+            $names = $this->cityTextAliases($city);
+            $citySummary = [
+                'city_id' => $city->id,
+                'name' => $city->name,
+                'slug' => $city->slug,
+                'matched_city_text' => $names,
+                'societies' => $this->backfillBucket(Society::query(), 'city', 'city_id', $city, $names, $apply, ['region_id' => $city->region_id, 'city_id' => $city->id]),
+                'properties' => $this->backfillBucket(Property::query(), 'city', 'city_id', $city, $names, $apply, ['region_id' => $city->region_id, 'city_id' => $city->id]),
+                'leads' => $this->backfillBucket(Lead::query(), 'target_city', 'city_id', $city, $names, $apply, ['region_id' => $city->region_id, 'city_id' => $city->id]),
+                'verified_import_jobs' => Schema::hasTable('verified_society_import_jobs')
+                    ? $this->backfillBucket(VerifiedSocietyImportJob::query(), 'target_city', 'target_city_id', $city, $names, $apply, ['target_region_id' => $city->region_id, 'target_city_id' => $city->id])
+                    : $this->emptyBackfillBucket(),
+            ];
+
+            foreach (['societies', 'properties', 'leads', 'verified_import_jobs'] as $bucket) {
+                $summary[$bucket] += $citySummary[$bucket]['count'];
+                $summary['total'] += $citySummary[$bucket]['count'];
+            }
+
+            $cities[] = $citySummary;
+        }
+
+        return [
+            'applied' => $apply,
+            'confirmation_required' => 'APPLY_NCR_CITY_BACKFILL',
+            'matching_policy' => 'Exact known city text only. No fuzzy matching, no locality guessing, no publication changes.',
+            'summary' => $summary,
+            'cities' => $cities,
+        ];
+    }
+
+    private function backfillBucket($query, string $textColumn, string $idColumn, City $city, array $names, bool $apply, array $updates): array
+    {
+        $model = $query->getModel();
+        $table = $model->getTable();
+
+        if (! Schema::hasColumn($table, $textColumn) || ! Schema::hasColumn($table, $idColumn)) {
+            return $this->emptyBackfillBucket();
+        }
+
+        $matchQuery = (clone $query)
+            ->whereNull($idColumn)
+            ->whereIn($textColumn, $names);
+
+        $ids = (clone $matchQuery)->orderBy('id')->limit(10)->pluck('id')->values()->all();
+        $count = (clone $matchQuery)->count();
+
+        if ($apply && $count > 0) {
+            (clone $matchQuery)->update($updates);
+        }
+
+        return [
+            'count' => $count,
+            'sample_ids' => $ids,
+            'applied' => $apply && $count > 0,
+        ];
+    }
+
+    private function emptyBackfillBucket(): array
+    {
+        return [
+            'count' => 0,
+            'sample_ids' => [],
+            'applied' => false,
+        ];
+    }
+
+    private function backfillCities()
+    {
+        return City::query()
+            ->where('is_active', true)
+            ->whereIn('slug', ['gurgaon', 'delhi', 'noida', 'greater-noida', 'faridabad'])
+            ->orderByRaw("CASE slug WHEN 'gurgaon' THEN 1 WHEN 'delhi' THEN 2 WHEN 'noida' THEN 3 WHEN 'greater-noida' THEN 4 WHEN 'faridabad' THEN 5 ELSE 99 END")
+            ->get();
+    }
+
+    private function cityTextAliases(City $city): array
+    {
+        return $city->slug === 'gurgaon'
+            ? ['Gurgaon', 'Gurugram']
+            : [$city->name];
     }
 
     private function verifiedImporterAudit(): array

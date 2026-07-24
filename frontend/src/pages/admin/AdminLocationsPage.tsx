@@ -4,7 +4,7 @@ import { AlertTriangle, CheckCircle2, MapPinned, Plus, RefreshCw } from "lucide-
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createNcrLocality, createNcrZone, fetchNcrLocationAudit, fetchNcrLocations, type NcrLocationAuditResponse, type NcrLocationsResponse } from "@/lib/ncrLocationsApi";
+import { applyNcrCityBackfill, createNcrLocality, createNcrZone, fetchNcrBackfillPreview, fetchNcrLocationAudit, fetchNcrLocations, type NcrBackfillResponse, type NcrLocationAuditResponse, type NcrLocationsResponse } from "@/lib/ncrLocationsApi";
 import { isNcrMulticityEnabled } from "@/config/features";
 
 const emptyLocations: NcrLocationsResponse["data"] = {
@@ -59,7 +59,9 @@ export function AdminLocationsPage() {
   const enabled = isNcrMulticityEnabled();
   const [locations, setLocations] = useState(emptyLocations);
   const [audit, setAudit] = useState<NcrLocationAuditResponse["data"] | null>(null);
+  const [backfill, setBackfill] = useState<NcrBackfillResponse["data"] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [backfillLoading, setBackfillLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [readOnlyPreview, setReadOnlyPreview] = useState(false);
@@ -86,6 +88,7 @@ export function AdminLocationsPage() {
         setReadOnlyPreview(true);
         setLocations(previewLocations);
         setAudit(null);
+        setBackfill(null);
         setZoneForm((current) => ({ ...current, city_id: current.city_id || "1" }));
         setLocalityForm((current) => ({ ...current, city_id: current.city_id || "1" }));
         setError("Your frontend is pointed at an API that does not have NCR admin routes yet. Showing read-only NCR seed data for review; run the matching local backend or deploy this branch to save zones/localities.");
@@ -171,6 +174,50 @@ export function AdminLocationsPage() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save locality.");
+    }
+  };
+
+  const previewBackfill = async () => {
+    if (readOnlyPreview) {
+      setError("Read-only preview: connect the matching NCR backend before previewing backfill.");
+      return;
+    }
+
+    try {
+      setBackfillLoading(true);
+      setError("");
+      setMessage("");
+      const response = await fetchNcrBackfillPreview();
+      setBackfill(response.data);
+      setMessage(response.data.summary.total > 0 ? "Backfill preview ready. Review the counts before applying." : "Backfill preview found no exact city-text matches to apply.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not preview NCR city backfill.");
+    } finally {
+      setBackfillLoading(false);
+    }
+  };
+
+  const applyBackfill = async () => {
+    if (readOnlyPreview) {
+      setError("Read-only preview: connect the matching NCR backend before applying backfill.");
+      return;
+    }
+
+    const confirmed = window.confirm("Apply NCR city backfill for exact known city text only? This updates structured city IDs but does not publish, index, or add sitemap URLs.");
+    if (!confirmed) return;
+
+    try {
+      setBackfillLoading(true);
+      setError("");
+      setMessage("");
+      const response = await applyNcrCityBackfill();
+      setBackfill(response.data);
+      setMessage(`NCR city backfill applied: ${response.data.summary.total} rows updated from exact city-text matches.`);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not apply NCR city backfill.");
+    } finally {
+      setBackfillLoading(false);
     }
   };
 
@@ -303,6 +350,83 @@ export function AdminLocationsPage() {
           ) : null}
         </section>
       ) : null}
+
+      <section className="mb-5 rounded-[28px] border border-amber-200 bg-amber-50/70 p-6 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-700">NCR-9 city ID backfill</p>
+            <h2 className="mt-1 text-2xl font-black text-slate-950">Preview exact city-text matches before applying</h2>
+            <p className="mt-2 max-w-3xl text-sm font-semibold text-amber-900">
+              This only links existing rows to structured NCR city IDs when the text is an exact known city match. It does not publish drafts, change filters, index city pages, or touch sitemap policy.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => void previewBackfill()} disabled={readOnlyPreview || backfillLoading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${backfillLoading ? "animate-spin" : ""}`} />
+              Preview backfill
+            </Button>
+            <Button className="bg-amber-700 hover:bg-amber-800" onClick={() => void applyBackfill()} disabled={readOnlyPreview || backfillLoading || !backfill || backfill.summary.total === 0}>
+              Apply exact matches
+            </Button>
+          </div>
+        </div>
+
+        {backfill ? (
+          <div className="mt-5">
+            <div className="grid gap-3 md:grid-cols-5">
+              {[
+                { label: "Total", value: backfill.summary.total },
+                { label: "Societies", value: backfill.summary.societies },
+                { label: "Properties", value: backfill.summary.properties },
+                { label: "Leads", value: backfill.summary.leads },
+                { label: "Importer jobs", value: backfill.summary.verified_import_jobs },
+              ].map((item) => (
+                <div key={item.label} className="rounded-2xl border border-amber-200 bg-white p-4">
+                  <p className="text-2xl font-black text-amber-800">{item.value}</p>
+                  <p className="mt-1 text-xs font-black uppercase tracking-[0.14em] text-amber-600">{item.label}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs font-bold text-amber-900">{backfill.matching_policy}</p>
+            <div className="mt-4 overflow-auto">
+              <table className="min-w-[820px] w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-amber-200 text-xs uppercase tracking-[0.12em] text-amber-700">
+                    <th className="p-3">City</th>
+                    <th>Matched text</th>
+                    <th>Societies</th>
+                    <th>Properties</th>
+                    <th>Leads</th>
+                    <th>Importer jobs</th>
+                    <th>Sample IDs</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {backfill.cities.map((city) => {
+                    const samples = [
+                      ...city.societies.sample_ids,
+                      ...city.properties.sample_ids,
+                      ...city.leads.sample_ids,
+                      ...city.verified_import_jobs.sample_ids,
+                    ].slice(0, 8);
+                    return (
+                      <tr key={city.city_id} className="border-b border-amber-100 align-top">
+                        <td className="p-3 font-black text-slate-950">{city.name}</td>
+                        <td className="text-xs font-semibold text-slate-600">{city.matched_city_text.join(", ")}</td>
+                        <td className="font-black">{city.societies.count}</td>
+                        <td className="font-black">{city.properties.count}</td>
+                        <td className="font-black">{city.leads.count}</td>
+                        <td className="font-black">{city.verified_import_jobs.count}</td>
+                        <td className="font-mono text-xs text-slate-500">{samples.length ? samples.join(", ") : "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : null}
+      </section>
 
       <section className="grid gap-5 lg:grid-cols-5">
         <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm lg:col-span-3">

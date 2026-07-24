@@ -108,6 +108,41 @@ export type NcrLocationAuditResponse = {
   };
 };
 
+export type NcrBackfillBucket = {
+  count: number;
+  sample_ids: Array<number | string>;
+  applied: boolean;
+};
+
+export type NcrCityBackfillPlan = {
+  city_id: number;
+  name: string;
+  slug: string;
+  matched_city_text: string[];
+  societies: NcrBackfillBucket;
+  properties: NcrBackfillBucket;
+  leads: NcrBackfillBucket;
+  verified_import_jobs: NcrBackfillBucket;
+};
+
+export type NcrBackfillResponse = {
+  enabled: boolean;
+  mode: "preview" | "applied";
+  data: {
+    applied: boolean;
+    confirmation_required: string;
+    matching_policy: string;
+    summary: {
+      societies: number;
+      properties: number;
+      leads: number;
+      verified_import_jobs: number;
+      total: number;
+    };
+    cities: NcrCityBackfillPlan[];
+  };
+};
+
 async function json(response: Response) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -128,6 +163,24 @@ export async function fetchNcrLocationAudit(): Promise<NcrLocationAuditResponse>
   const payload = await json(response);
 
   return payload as NcrLocationAuditResponse;
+}
+
+export async function fetchNcrBackfillPreview(): Promise<NcrBackfillResponse> {
+  const response = await adminFetch("/admin/locations/backfill/preview");
+  const payload = await json(response);
+
+  return payload as NcrBackfillResponse;
+}
+
+export async function applyNcrCityBackfill(): Promise<NcrBackfillResponse> {
+  const response = await adminFetch("/admin/locations/backfill/apply", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ confirmation: "APPLY_NCR_CITY_BACKFILL" }),
+  });
+  const payload = await json(response);
+
+  return payload as NcrBackfillResponse;
 }
 
 export async function createNcrZone(payload: Record<string, unknown>): Promise<NcrZone> {

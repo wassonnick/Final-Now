@@ -112,6 +112,8 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/stats', AdminStatsController::class);
     Route::get('/locations', [AdminLocationController::class, 'index']);
     Route::get('/locations/audit', [AdminLocationController::class, 'audit']);
+    Route::get('/locations/backfill/preview', [AdminLocationController::class, 'backfillPreview']);
+    Route::post('/locations/backfill/apply', [AdminLocationController::class, 'applyBackfill']);
     Route::get('/locations/cities', [AdminLocationController::class, 'cities']);
     Route::get('/locations/zones', [AdminLocationController::class, 'zones']);
     Route::post('/locations/zones', [AdminLocationController::class, 'storeZone']);

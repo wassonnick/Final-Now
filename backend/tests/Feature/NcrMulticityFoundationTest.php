@@ -142,6 +142,89 @@ class NcrMulticityFoundationTest extends TestCase
         $this->assertStringNotContainsString('9888888888', $json);
     }
 
+    public function test_ncr_city_backfill_preview_and_apply_are_explicit_and_exact(): void
+    {
+        config(['features.ncr_multicity' => true]);
+
+        $this->getJson('/api/admin/locations/backfill/preview')->assertUnauthorized();
+        $this->postJson('/api/admin/locations/backfill/apply')->assertUnauthorized();
+
+        $region = Region::where('slug', 'delhi-ncr')->firstOrFail();
+        $noida = City::where('slug', 'noida')->firstOrFail();
+        $faridabad = City::where('slug', 'faridabad')->firstOrFail();
+
+        $society = Society::create([
+            'name' => 'Loose Noida Public Society',
+            'slug' => 'loose-noida-public-society',
+            'city' => 'Noida',
+            'status' => 'Verified',
+            'verification_status' => 'Verified',
+            'is_published' => true,
+            'score' => 8,
+        ]);
+
+        $property = Property::create([
+            'title' => 'Loose Faridabad Home',
+            'slug' => 'loose-faridabad-home',
+            'city' => 'Faridabad',
+            'status' => 'Live',
+        ]);
+
+        $lead = Lead::create([
+            'name' => 'Private Backfill Lead',
+            'phone' => '9777777777',
+            'target_city' => 'Noida',
+        ]);
+
+        $job = VerifiedSocietyImportJob::create([
+            'job_type' => 'single',
+            'status' => 'needs_review',
+            'total_rows' => 1,
+            'target_city' => 'Faridabad',
+        ]);
+
+        $this->withToken('ncr-admin-token')
+            ->getJson('/api/admin/locations/backfill/preview')
+            ->assertOk()
+            ->assertJsonPath('mode', 'preview')
+            ->assertJsonPath('data.applied', false)
+            ->assertJsonPath('data.summary.societies', 1)
+            ->assertJsonPath('data.summary.properties', 1)
+            ->assertJsonPath('data.summary.leads', 1)
+            ->assertJsonPath('data.summary.verified_import_jobs', 1)
+            ->assertJsonPath('data.summary.total', 4);
+
+        $this->withToken('ncr-admin-token')
+            ->postJson('/api/admin/locations/backfill/apply', ['confirmation' => 'WRONG'])
+            ->assertStatus(422);
+
+        $this->assertNull($society->fresh()->city_id);
+        $this->assertNull($property->fresh()->city_id);
+        $this->assertNull($lead->fresh()->city_id);
+        $this->assertNull($job->fresh()->target_city_id);
+
+        $this->withToken('ncr-admin-token')
+            ->postJson('/api/admin/locations/backfill/apply', ['confirmation' => 'APPLY_NCR_CITY_BACKFILL'])
+            ->assertOk()
+            ->assertJsonPath('mode', 'applied')
+            ->assertJsonPath('data.applied', true)
+            ->assertJsonPath('data.summary.total', 4);
+
+        $this->assertSame($region->id, $society->fresh()->region_id);
+        $this->assertSame($noida->id, $society->fresh()->city_id);
+        $this->assertTrue($society->fresh()->is_published);
+        $this->assertSame('Verified', $society->fresh()->status);
+
+        $this->assertSame($region->id, $property->fresh()->region_id);
+        $this->assertSame($faridabad->id, $property->fresh()->city_id);
+
+        $this->assertSame($region->id, $lead->fresh()->region_id);
+        $this->assertSame($noida->id, $lead->fresh()->city_id);
+
+        $this->assertSame($region->id, $job->fresh()->target_region_id);
+        $this->assertSame($faridabad->id, $job->fresh()->target_city_id);
+    }
+
     public function test_public_society_city_filters_are_additive_and_do_not_include_drafts(): void
     {
         $gurgaon = City::where('slug', 'gurgaon')->firstOrFail();
