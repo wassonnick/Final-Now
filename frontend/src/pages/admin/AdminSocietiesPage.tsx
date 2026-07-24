@@ -2,7 +2,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  BarChart3,
   Building2,
   Edit3,
   Eye,
@@ -136,6 +135,7 @@ function dataCompletionStatus(item: AdminSociety) {
 export function AdminSocietiesPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("score");
   const [societies, setSocieties] = useState<AdminSociety[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -223,7 +223,7 @@ export function AdminSocietiesPage() {
   }, []);
 
   const filteredSocieties = useMemo(() => {
-    return societies.filter((society) => {
+    const rows = societies.filter((society) => {
       const searchText = [
         society.name,
         society.builder,
@@ -240,7 +240,23 @@ export function AdminSocietiesPage() {
 
       return matchesQuery && matchesFilter;
     });
-  }, [societies, query, filter]);
+
+    const sorted = [...rows];
+    if (sortBy === "name") sorted.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    else if (sortBy === "listings") sorted.sort((a, b) => Number(b.propertiesCount || 0) - Number(a.propertiesCount || 0));
+    else if (sortBy === "newest") sorted.sort((a, b) => Number(b.id) - Number(a.id));
+    else sorted.sort((a, b) => Number(b.score || 0) - Number(a.score || 0)); // default: score high→low
+    return sorted;
+  }, [societies, query, filter, sortBy]);
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: societies.length };
+    for (const item of societies) {
+      const status = item.status || "Draft";
+      counts[status] = (counts[status] || 0) + 1;
+    }
+    return counts;
+  }, [societies]);
 
   const publishedCount = societies.filter((item) => item.isPublished || item.status === "Verified" || item.status === "Premium").length;
   const featuredCount = societies.filter((item) => item.featured).length;
@@ -455,10 +471,15 @@ export function AdminSocietiesPage() {
     }
   };
 
+  const tabTone = (item: string) =>
+    filter === item
+      ? "bg-slate-900 text-white"
+      : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50";
+
   return (
     <AdminLayout title="Societies" subtitle="Manage society intelligence, status and public profiles">
-      <div className="space-y-3.5 md:space-y-5">
-        <section className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
+      <div className="space-y-4">
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
             ["Total societies", societies.length, "All profiles"],
             ["Published", publishedCount, "Live public profiles"],
@@ -469,93 +490,52 @@ export function AdminSocietiesPage() {
           ))}
         </section>
 
-        <section className="rounded-[20px] border border-blue-100 bg-blue-50/60 p-3.5 shadow-sm md:rounded-[24px] md:p-4">
-          <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">
-                C106 data completion
-              </p>
-              <h2 className="mt-1 text-lg font-bold text-slate-950">
-                Location and nearby intelligence readiness
-              </h2>
-            </div>
-            <p className="text-xs font-semibold text-slate-500">
-              Track which societies have map coordinates and complete nearby intelligence before featuring them. New auto-imports fill this automatically.
-            </p>
-          </div>
-
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-            {[
-              ["Map ready", locationDataSummary.mapReady, "Valid coordinates"],
-              ["Google URL", locationDataSummary.googleMapReady, "Map link saved"],
-              ["Nearby partial", locationDataSummary.nearbyPartial, "Some nearby data"],
-              ["Nearby complete", locationDataSummary.nearbyComplete, "All nearby fields"],
-              ["Launch ready", locationDataSummary.launchReady, "Map + nearby complete"],
-            ].map(([label, value, helper]) => (
-              <div key={String(label)} className="rounded-2xl border border-blue-100 bg-white px-3 py-2.5">
-                <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-500">
-                  {label}
-                </p>
-                <p className="mt-1 text-2xl font-black text-slate-950">{loading ? "-" : value}</p>
-                <p className="mt-0.5 text-xs font-semibold text-slate-500">{helper}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <SocietySeoReadinessPanel />
-
         {message ? (
-          <div className="rounded-2xl bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-700">
-            {message}
-          </div>
+          <div className="rounded-2xl bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-700">{message}</div>
         ) : null}
-
         {error ? (
-          <div className="rounded-2xl bg-amber-50 px-5 py-3 text-sm font-medium text-amber-700">
-            {error}
-          </div>
+          <div className="rounded-2xl bg-amber-50 px-5 py-3 text-sm font-medium text-amber-700">{error}</div>
         ) : null}
 
-        <section className="rounded-[20px] border border-slate-200 bg-white p-3.5 shadow-sm md:rounded-[24px] md:p-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-950">
-                Society directory
-              </h2>
-              <p className="mt-1 text-xs text-slate-500 md:text-sm">
-                Search, edit and publish Gurgaon society profiles.
-              </p>
+              <h2 className="text-xl font-bold tracking-tight text-slate-950">Society directory</h2>
+              <p className="mt-0.5 text-sm text-slate-500">Search, sort, edit and publish Gurgaon society profiles.</p>
             </div>
-
             <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-full border-slate-200 px-3 text-xs sm:text-sm"
-                onClick={loadSocieties}
-                disabled={loading}
-              >
+              <Button type="button" variant="outline" className="rounded-full border-slate-200 text-sm" onClick={loadSocieties} disabled={loading}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
                 Refresh
               </Button>
-
-              <Button asChild variant="outline" className="rounded-full border-blue-100 bg-blue-50 px-3 text-xs font-bold text-blue-700 hover:bg-blue-100 sm:text-sm">
-                <Link to="/admin/verified-society-importer">
-                  Auto Import
-                </Link>
+              <Button asChild variant="outline" className="rounded-full border-blue-100 bg-blue-50 text-sm font-bold text-blue-700 hover:bg-blue-100">
+                <Link to="/admin/verified-society-importer">Auto Import</Link>
               </Button>
-
               <Button asChild className="rounded-full bg-blue-600 hover:bg-blue-700">
-                <Link to="/admin/societies/new">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Society
-                </Link>
+                <Link to="/admin/societies/new"><Plus className="mr-2 h-4 w-4" />Add Society</Link>
               </Button>
             </div>
           </div>
 
-          <div className="mt-3 grid gap-2.5 lg:mt-4 lg:grid-cols-[1fr_180px] lg:gap-3">
+          {/* Status tabs with live counts */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {filters.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setFilter(item)}
+                className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-bold transition ${tabTone(item)}`}
+              >
+                {item}
+                <span className={`rounded-full px-1.5 py-0.5 text-[11px] ${filter === item ? "bg-white/20" : "bg-slate-100 text-slate-500"}`}>
+                  {statusCounts[item] || 0}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Search + sort */}
+          <div className="mt-3 grid gap-2.5 lg:grid-cols-[1fr_200px]">
             <div className="flex h-10 items-center gap-2.5 rounded-xl border border-slate-200 px-3">
               <Search className="h-4 w-4 text-slate-400" />
               <input
@@ -565,49 +545,23 @@ export function AdminSocietiesPage() {
                 className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
               />
             </div>
-
             <select
-              value={filter}
-              onChange={(event) => setFilter(event.target.value)}
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
               className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+              aria-label="Sort societies"
             >
-              {filters.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
+              <option value="score">Sort: Score (high→low)</option>
+              <option value="name">Sort: Name (A→Z)</option>
+              <option value="listings">Sort: Most listings</option>
+              <option value="newest">Sort: Newest added</option>
             </select>
           </div>
 
-          <div className="mt-3 flex flex-col gap-2.5 rounded-[18px] border border-slate-200 bg-slate-50 p-3 md:mt-4 lg:flex-row lg:items-center lg:justify-between">
-            <p className="text-sm text-slate-500">
-              <span className="font-semibold text-slate-900">{filteredSocieties.length}</span>{" "}
-              matching societies.{" "}
-              <span className="font-semibold text-slate-900">{selectedSocieties.length}</span>{" "}
-              selected.
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="rounded-full border-slate-200 px-3 text-xs sm:text-sm"
-                onClick={selectFiltered}
-                disabled={!filteredSocieties.length}
-              >
-                Select all
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="rounded-full border-slate-200 px-3 text-xs sm:text-sm"
-                onClick={() => setSelectedIds([])}
-                disabled={!selectedIds.length}
-              >
-                Clear
-              </Button>
-
+          {/* Bulk action bar — only when rows are selected */}
+          {selectedSocieties.length ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50/60 p-2.5">
+              <span className="px-1 text-sm font-bold text-blue-900">{selectedSocieties.length} selected</span>
               <select
                 value={bulkStatus}
                 onChange={(event) => setBulkStatus(event.target.value as SocietyStatus)}
@@ -618,288 +572,191 @@ export function AdminSocietiesPage() {
                 <option>Premium</option>
                 <option>Archived</option>
               </select>
-
-              <Button
-                type="button"
-                size="sm"
-                className="rounded-full bg-blue-600 hover:bg-blue-700"
-                onClick={applyBulkStatus}
-                disabled={!selectedIds.length || bulkWorking}
-              >
+              <Button type="button" size="sm" className="rounded-full bg-blue-600 hover:bg-blue-700" onClick={applyBulkStatus} disabled={bulkWorking}>
                 {bulkWorking ? "Applying..." : "Apply status"}
               </Button>
-
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
                 className="rounded-full border-violet-200 text-violet-700"
                 onClick={handleBulkReEnrich}
-                disabled={!selectedIds.length || bulkReEnrichLoading}
+                disabled={bulkReEnrichLoading}
                 title={`Re-runs grounded AI research + scoring for up to ${BULK_REENRICH_MAX} selected societies per click. Published ones are unpublished for review.`}
               >
-                {bulkReEnrichLoading
-                  ? "Re-enriching..."
-                  : `Re-enrich with AI${selectedIds.length > BULK_REENRICH_MAX ? ` (first ${BULK_REENRICH_MAX})` : ""}`}
+                {bulkReEnrichLoading ? "Re-enriching..." : `Re-enrich with AI${selectedIds.length > BULK_REENRICH_MAX ? ` (first ${BULK_REENRICH_MAX})` : ""}`}
+              </Button>
+              <Button type="button" size="sm" variant="ghost" className="rounded-full text-slate-500" onClick={() => setSelectedIds([])}>
+                Clear
               </Button>
             </div>
-          </div>
+          ) : null}
 
-          <div className="mt-3 md:mt-4">
-  
           {googleImageFetchError && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {googleImageFetchError}
-            </div>
+            <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{googleImageFetchError}</div>
           )}
-
           {googleImageFetchSummary && (
-            <div className="rounded-2xl border border-amber-100 bg-amber-50/70 px-4 py-3">
-              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-amber-950">
-                    Google Places image reference fetch complete
-                  </p>
-                  <p className="mt-1 text-xs text-amber-800">
-                    Reference-only images remain unapproved for ownership/licensing review.
-                  </p>
-                </div>
-                <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                  <div className="rounded-xl bg-white/80 px-3 py-2">
-                    <p className="text-amber-700">Checked</p>
-                    <p className="font-semibold text-amber-950">{googleImageFetchSummary.total_checked}</p>
-                  </div>
-                  <div className="rounded-xl bg-white/80 px-3 py-2">
-                    <p className="text-amber-700">Updated</p>
-                    <p className="font-semibold text-amber-950">{googleImageFetchSummary.updated}</p>
-                  </div>
-                  <div className="rounded-xl bg-white/80 px-3 py-2">
-                    <p className="text-amber-700">Failed</p>
-                    <p className="font-semibold text-amber-950">{googleImageFetchSummary.failed}</p>
-                  </div>
-                  <div className="rounded-xl bg-white/80 px-3 py-2">
-                    <p className="text-amber-700">Limit</p>
-                    <p className="font-semibold text-amber-950">{googleImageFetchSummary.limit}</p>
-                  </div>
-                </div>
-              </div>
+            <div className="mt-3 rounded-2xl border border-amber-100 bg-amber-50/70 px-4 py-3 text-sm text-amber-900">
+              Google Places image fetch complete — checked {googleImageFetchSummary.total_checked}, updated {googleImageFetchSummary.updated}, failed {googleImageFetchSummary.failed}. Reference-only images stay unapproved for licensing review.
             </div>
           )}
 
-          {loading ? (
-              <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
-                Loading societies...
-              </div>
-            ) : null}
-
-            {!loading && !filteredSocieties.length ? (
-              <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-10 text-center">
+          {/* Table */}
+          <div className="mt-4">
+            {loading ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">Loading societies...</div>
+            ) : !filteredSocieties.length ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-10 text-center">
                 <p className="text-lg font-bold text-slate-950">No societies found</p>
-                <p className="mt-2 text-sm text-slate-500">
-                  Try changing filters or create a new society profile.
-                </p>
-                <Button asChild className="mt-5 rounded-full bg-blue-600 hover:bg-blue-700">
-                  <Link to="/admin/societies/new">Add Society</Link>
-                </Button>
+                <p className="mt-2 text-sm text-slate-500">Try changing filters or create a new society profile.</p>
+                <Button asChild className="mt-5 rounded-full bg-blue-600 hover:bg-blue-700"><Link to="/admin/societies/new">Add Society</Link></Button>
               </div>
-            ) : null}
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                <table className="w-full min-w-[860px] border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
+                      <th className="w-10 px-3 py-2.5">
+                        <input
+                          type="checkbox"
+                          aria-label="Select all filtered"
+                          checked={filteredSocieties.length > 0 && filteredSocieties.every((s) => selectedIds.includes(s.id))}
+                          onChange={(event) => (event.target.checked ? selectFiltered() : setSelectedIds([]))}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </th>
+                      <th className="px-3 py-2.5">Society</th>
+                      <th className="px-3 py-2.5">Status</th>
+                      <th className="px-3 py-2.5 text-center">Score</th>
+                      <th className="px-3 py-2.5 text-center">Listings</th>
+                      <th className="px-3 py-2.5">Data</th>
+                      <th className="px-3 py-2.5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSocieties.map((item) => {
+                      const selected = selectedIds.includes(item.id);
+                      const status = getStatus(item);
+                      const completion = dataCompletionStatus(item);
+                      const primary = quickSocietyPrimaryAction(status);
+                      const archive = quickSocietyArchiveAction(status);
 
-            {!loading && filteredSocieties.length ? (
-              <div className="grid gap-2.5 md:gap-3">
-                {filteredSocieties.map((item) => {
-                  const selected = selectedIds.includes(item.id);
-                  const status = getStatus(item);
-
-                  return (
-                    <article
-                      key={item.id}
-                      className={`rounded-[18px] border bg-white p-3.5 shadow-sm transition hover:border-blue-100 hover:shadow-md md:rounded-[22px] md:p-4 ${
-                        selected ? "border-blue-200 ring-2 ring-blue-50" : "border-slate-200"
-                      }`}
-                    >
-                      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-                        <div className="flex gap-3">
-                          <input
-                            type="checkbox"
-                            checked={selected}
-                            onChange={(event) => toggleSelected(item.id, event.target.checked)}
-                            aria-label={`Select ${item.name}`}
-                            className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                          />
-
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap gap-2">
+                      return (
+                        <tr key={item.id} className={`border-b border-slate-100 align-middle transition hover:bg-slate-50/70 ${selected ? "bg-blue-50/40" : "bg-white"}`}>
+                          <td className="px-3 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              onChange={(event) => toggleSelected(item.id, event.target.checked)}
+                              aria-label={`Select ${item.name}`}
+                              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                            />
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-950">{item.name}</span>
+                              {item.featured ? <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> : null}
+                              {item.coverImage ? <Image className="h-3.5 w-3.5 text-slate-400" /> : null}
+                            </div>
+                            <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+                              <MapPin className="h-3 w-3" />
+                              {locationText(item)} · {item.builder || "Builder n/a"}
+                            </p>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex flex-col items-start gap-1">
                               <AdminBadge value={status}>{status}</AdminBadge>
-
-                              <AdminBadge value={publishLabel(item)}>
-                                <Globe2 className="mr-1 h-3 w-3" />
-                                {publishLabel(item)}
-                              </AdminBadge>
-
-                              {item.featured ? (
-                                <span className="inline-flex items-center rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-                                  <Star className="mr-1 h-3 w-3" />
-                                  Featured
-                                </span>
-                              ) : null}
-
-                              {item.coverImage ? (
-                                <span className="inline-flex items-center rounded-full border border-slate-100 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
-                                  <Image className="mr-1 h-3 w-3" />
-                                  Image
-                                </span>
-                              ) : null}
-
-                              {(() => {
-                                const completion = dataCompletionStatus(item);
-
-                                return (
-                                  <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${completion.tone}`} title={completion.helper}>
-                                    <MapPin className="mr-1 h-3 w-3" />
-                                    {completion.label}
-                                  </span>
-                                );
-                              })()}
-                            </div>
-
-                            <h3 className="mt-2 text-base font-bold text-slate-950 md:text-lg">
-                              {item.name}
-                            </h3>
-
-                            <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-500 md:text-sm">
-                              <MapPin className="h-4 w-4" />
-                              {locationText(item)}
-                            </p>
-
-                            <p className="mt-1 text-sm text-slate-500">
-                              {item.builder || "Builder n/a"} • /{item.slug}
-                            </p>
-
-                            <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-bold">
-                              <span className={`rounded-full px-2 py-1 ${hasValidAdminCoordinates(item) ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                                {hasValidAdminCoordinates(item) ? "Coordinates OK" : "Coordinates missing"}
-                              </span>
-                              <span className={`rounded-full px-2 py-1 ${hasGoogleMapLink(item) ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
-                                {hasGoogleMapLink(item) ? "Google map URL" : "No map URL"}
-                              </span>
-                              <span className={`rounded-full px-2 py-1 ${hasFullNearbyIntelligence(item) ? "bg-emerald-50 text-emerald-700" : hasNearbyIntelligence(item) ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-500"}`}>
-                                {hasFullNearbyIntelligence(item) ? "Nearby complete" : hasNearbyIntelligence(item) ? "Nearby partial" : "Nearby pending"}
+                              <span className={`inline-flex items-center gap-1 text-[11px] font-bold ${publishLabel(item) === "Published" ? "text-emerald-600" : "text-slate-400"}`}>
+                                <Globe2 className="h-3 w-3" />{publishLabel(item)}
                               </span>
                             </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-2 rounded-[16px] bg-slate-50 p-2.5 text-center xl:min-w-[280px]">
-                          <div>
-                            <p className="text-xs text-slate-400">Score</p>
-                            <p className="mt-1 font-bold text-slate-950">{item.score || "-"}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-400">Rent</p>
-                            <p className="mt-1 truncate font-bold text-slate-950">
-                              {item.rentRange || "n/a"}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-400">Listings</p>
-                            <p className="mt-1 font-bold text-slate-950">
-                              {item.propertiesCount || 0}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 sm:flex sm:flex-wrap sm:border-t-0 sm:pt-0 md:mt-4">
-                        <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
-                          <Link to={publicSocietyUrl(item)}>
-                            <Eye className="mr-1.5 h-4 w-4" />
-                            View
-                          </Link>
-                        </Button>
-
-                        <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
-                          <Link to={editSocietyUrl(item)}>
-                            <Edit3 className="mr-1.5 h-4 w-4" />
-                            Edit
-                          </Link>
-                        </Button>
-
-                        <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
-                          <Link to={`/admin/properties?society=${encodeURIComponent(item.name)}`}>
-                            <Building2 className="mr-1.5 h-4 w-4" />
-                            Properties
-                          </Link>
-                        </Button>
-
-                        <Button asChild size="sm" variant="outline" className="rounded-full border-slate-200">
-                          <Link to={`/admin/leads?q=${encodeURIComponent(item.name)}`}>
-                            <MessageSquareText className="mr-1.5 h-4 w-4" />
-                            Leads
-                          </Link>
-                        </Button>
-
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={quickSocietyPrimaryAction(status).nextStatus === "Verified" ? "default" : "outline"}
-                          className={
-                            quickSocietyPrimaryAction(status).nextStatus === "Verified"
-                              ? "rounded-full bg-emerald-600 px-3 text-xs font-bold hover:bg-emerald-700 sm:text-sm"
-                              : "rounded-full border-blue-200 px-3 text-xs font-bold text-blue-700 sm:text-sm"
-                          }
-                          onClick={() => quickUpdateSocietyStatus(item, quickSocietyPrimaryAction(status).nextStatus)}
-                          disabled={statusUpdatingId === item.id}
-                        >
-                          {statusUpdatingId === item.id ? "Updating..." : quickSocietyPrimaryAction(status).label}
-                        </Button>
-
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className={
-                            quickSocietyArchiveAction(status).nextStatus === "Archived"
-                              ? "rounded-full border-rose-200 px-3 text-xs font-bold text-rose-700 sm:text-sm"
-                              : "rounded-full border-slate-200 px-3 text-xs font-bold text-slate-700 sm:text-sm"
-                          }
-                          onClick={() => quickUpdateSocietyStatus(item, quickSocietyArchiveAction(status).nextStatus)}
-                          disabled={statusUpdatingId === item.id}
-                        >
-                          {quickSocietyArchiveAction(status).label}
-                        </Button>
-
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          className="rounded-full text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                          onClick={() => handleDelete(item)}
-                          disabled={deletingId === item.id}
-                        >
-                          <Trash2 className="mr-1.5 h-4 w-4" />
-                          {deletingId === item.id ? "Deleting..." : "Delete"}
-                        </Button>
-                      </div>
-                    </article>
-                  );
-                })}
+                          </td>
+                          <td className="px-3 py-3 text-center font-bold text-slate-950">{item.score || "-"}</td>
+                          <td className="px-3 py-3 text-center font-semibold text-slate-700">{item.propertiesCount || 0}</td>
+                          <td className="px-3 py-3">
+                            <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold ${completion.tone}`} title={completion.helper}>
+                              {completion.label}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button asChild size="icon" variant="ghost" className="h-8 w-8 rounded-full text-slate-500 hover:text-blue-700" title="View public profile">
+                                <Link to={publicSocietyUrl(item)}><Eye className="h-4 w-4" /></Link>
+                              </Button>
+                              <Button asChild size="icon" variant="ghost" className="h-8 w-8 rounded-full text-slate-500 hover:text-blue-700" title="Edit">
+                                <Link to={editSocietyUrl(item)}><Edit3 className="h-4 w-4" /></Link>
+                              </Button>
+                              <Button asChild size="icon" variant="ghost" className="h-8 w-8 rounded-full text-slate-500 hover:text-blue-700" title="Properties">
+                                <Link to={`/admin/properties?society=${encodeURIComponent(item.name)}`}><Building2 className="h-4 w-4" /></Link>
+                              </Button>
+                              <Button asChild size="icon" variant="ghost" className="h-8 w-8 rounded-full text-slate-500 hover:text-blue-700" title="Leads">
+                                <Link to={`/admin/leads?q=${encodeURIComponent(item.name)}`}><MessageSquareText className="h-4 w-4" /></Link>
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                className={primary.nextStatus === "Verified" ? "h-8 rounded-full bg-emerald-600 px-3 text-xs font-bold hover:bg-emerald-700" : "h-8 rounded-full bg-blue-600 px-3 text-xs font-bold hover:bg-blue-700"}
+                                onClick={() => quickUpdateSocietyStatus(item, primary.nextStatus)}
+                                disabled={statusUpdatingId === item.id}
+                              >
+                                {statusUpdatingId === item.id ? "..." : primary.label}
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className={archive.nextStatus === "Archived" ? "h-8 rounded-full border-rose-200 px-3 text-xs font-bold text-rose-700" : "h-8 rounded-full border-slate-200 px-3 text-xs font-bold text-slate-600"}
+                                onClick={() => quickUpdateSocietyStatus(item, archive.nextStatus)}
+                                disabled={statusUpdatingId === item.id}
+                              >
+                                {archive.label}
+                              </Button>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 rounded-full text-rose-500 hover:bg-rose-50 hover:text-rose-700"
+                                onClick={() => handleDelete(item)}
+                                disabled={deletingId === item.id}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            ) : null}
+            )}
           </div>
         </section>
 
-        <section className="rounded-[20px] border border-blue-100 bg-blue-50 p-4">
-          <div className="flex items-start gap-3">
-            <BarChart3 className="mt-1 h-5 w-5 text-blue-700" />
-            <div>
-              <h3 className="font-bold text-slate-950">Society workflow note</h3>
-              <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                Keep societies in Draft while data/images are being verified. Move them
-                to Verified or Premium only after public-safe details are ready. C112E keeps status, verification_status, is_published and published_at in sync.
-              </p>
+        {/* Secondary readiness panels, de-emphasized below the directory */}
+        <details className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <summary className="cursor-pointer px-5 py-4 text-sm font-bold text-slate-700">
+            Data completion & SEO readiness
+          </summary>
+          <div className="space-y-3 border-t border-slate-100 p-4">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+              {[
+                ["Map ready", locationDataSummary.mapReady],
+                ["Google URL", locationDataSummary.googleMapReady],
+                ["Nearby partial", locationDataSummary.nearbyPartial],
+                ["Nearby complete", locationDataSummary.nearbyComplete],
+                ["Launch ready", locationDataSummary.launchReady],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
+                  <p className="mt-1 text-2xl font-black text-slate-950">{loading ? "-" : value}</p>
+                </div>
+              ))}
             </div>
+            <SocietySeoReadinessPanel />
           </div>
-        </section>
+        </details>
       </div>
     </AdminLayout>
   );

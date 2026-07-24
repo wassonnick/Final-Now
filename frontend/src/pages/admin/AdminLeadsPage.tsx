@@ -1337,6 +1337,7 @@ export function AdminLeadsPage() {
   const setStatus = (value: "All" | LeadStatus) => setFilterParam("status", value);
   const setPriority = (value: "All" | LeadPriority) => setFilterParam("priority", value);
   const setAssignee = (value: string) => setFilterParam("assignee", value);
+  const setDashboardView = (value: string) => setFilterParam("view", value === "all" ? "" : value);
 
   const activeFilterCount = ["q", "status", "priority", "assignee", "view"].filter((key) => searchParams.get(key)).length;
 
@@ -1612,34 +1613,22 @@ export function AdminLeadsPage() {
           </div>
         ) : null}
 
+        {/* At-a-glance KPIs. Every finer segment (Fresh/Aging/Stale/Duplicates/etc.) lives in the
+            pipeline tabs below, so the top row stays to the four numbers that drive daily action. */}
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {[
-            ["Today", todayLeads, "New enquiries", "/admin/leads?view=today"],
-            ["Active Leads", activeLeads, "In pipeline", "/admin/leads?view=active"],
-            ["Call Sheet", callSheetLeads, "Priority queue", "/admin/leads?view=call_sheet"],
-            ["Follow-ups", followUpsToday, "Due today", "/admin/leads?view=followups"],
-            ["Overdue", overdueFollowUps, "Needs action", "/admin/leads?view=overdue"],
-            ["Upcoming", upcomingFollowUps, "Scheduled", "/admin/leads?view=upcoming"],
-            ["No Follow-up", noFollowUps, "Needs reminder", "/admin/leads?view=no_followup"],
-            ["Duplicates", duplicateLeads, "Same phone", "/admin/leads?view=duplicates"],
-            ["Missing Phone", missingPhoneLeads, "Incomplete", "/admin/leads?view=missing_phone"],
-            ["Missing Req.", missingRequirementLeads, "Incomplete", "/admin/leads?view=missing_requirement"],
-            ["High Intent", highIntentLeads, "Priority quality", "/admin/leads?view=high_intent"],
-            ["Fresh", freshLeads, "New today", "/admin/leads?view=fresh"],
-            ["Aging", agingLeads, "1–2 days", "/admin/leads?view=aging"],
-            ["Stale", staleLeads, "3+ days", "/admin/leads?view=stale"],
-            ["Hot SLA", hotSlaLeads, "Hot + New", "/admin/leads?view=hot_sla"],
-            ["Untouched", untouchedLeads, "No follow-up", "/admin/leads?view=untouched"],
-            ["Hot Leads", hotLeads, "Priority follow-ups", "/admin/leads?view=hot"],
-            ["Booked", bookedLeads, "Closed wins", "/admin/leads?view=booked"],
-          ].map(([label, value, helper, href]) => (
+            ["Today", todayLeads, "New enquiries", "/admin/leads?view=today", "text-blue-600"],
+            ["Active", activeLeads, "In pipeline", "/admin/leads?view=active", "text-slate-600"],
+            ["Overdue", overdueFollowUps, "Needs action now", "/admin/leads?view=overdue", "text-rose-600"],
+            ["Booked", bookedLeads, "Closed wins", "/admin/leads?view=booked", "text-emerald-600"],
+          ].map(([label, value, helper, href, tone]) => (
             <Link
               key={String(label)}
               to={String(href)}
-              className="rounded-[20px] border border-slate-200 bg-white p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-blue-100"
+              className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-blue-100"
             >
               <p className="text-3xl font-bold text-slate-950">{value}</p>
-              <p className="mt-2 text-sm font-medium text-blue-600">{label}</p>
+              <p className={`mt-2 text-sm font-bold ${tone}`}>{label}</p>
               <p className="mt-1 text-xs text-slate-400">{helper}</p>
             </Link>
           ))}
@@ -1752,7 +1741,7 @@ export function AdminLeadsPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2.5 lg:mt-6 lg:grid-cols-[1fr_180px_180px_190px] lg:gap-3">
+          <div className="mt-4 grid gap-2.5 lg:mt-6 lg:grid-cols-[1fr_190px_150px_140px_160px] lg:gap-3">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
@@ -1762,6 +1751,38 @@ export function AdminLeadsPage() {
                 className="h-12 rounded-2xl border-slate-200 pl-11"
               />
             </div>
+
+            {/* Segments — every operational queue in one control, replacing the old wall of tiles. */}
+            <select
+              value={dashboardView}
+              onChange={(event) => setDashboardView(event.target.value)}
+              className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+              aria-label="Lead segment"
+            >
+              {[
+                ["all", "All segments", leads.length],
+                ["today", "Today", todayLeads],
+                ["active", "Active pipeline", activeLeads],
+                ["call_sheet", "Call sheet", callSheetLeads],
+                ["followups", "Follow-ups due", followUpsToday],
+                ["overdue", "Overdue", overdueFollowUps],
+                ["upcoming", "Upcoming", upcomingFollowUps],
+                ["no_followup", "No follow-up set", noFollowUps],
+                ["hot", "Hot leads", hotLeads],
+                ["hot_sla", "Hot + new (SLA)", hotSlaLeads],
+                ["high_intent", "High intent", highIntentLeads],
+                ["fresh", "Fresh (today)", freshLeads],
+                ["aging", "Aging (1–2d)", agingLeads],
+                ["stale", "Stale (3d+)", staleLeads],
+                ["untouched", "Untouched", untouchedLeads],
+                ["duplicates", "Duplicates", duplicateLeads],
+                ["missing_phone", "Missing phone", missingPhoneLeads],
+                ["missing_requirement", "Missing requirement", missingRequirementLeads],
+                ["booked", "Booked", bookedLeads],
+              ].map(([value, label, count]) => (
+                <option key={String(value)} value={String(value)}>{label} ({count})</option>
+              ))}
+            </select>
 
             <select
               value={status}
