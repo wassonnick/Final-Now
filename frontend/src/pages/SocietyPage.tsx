@@ -999,7 +999,7 @@ export function SocietyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F4EF] pb-40 text-[#1D2939] md:pb-0">
+    <div className="ncr-skin min-h-screen bg-white pb-40 text-[#1D2939] md:pb-0">
       <main className="mx-auto max-w-[1360px] px-4 py-5 md:px-10 md:pb-14 md:pt-7">
         <div className="mb-4 flex items-center gap-1.5 text-[13px] text-[#6E756E]">
           <Link to="/search?tab=societies">Societies</Link>

@@ -911,7 +911,7 @@ export function SearchPage() {
           : `Society enquiry for ${callbackTarget?.societyName || "this society"}`;
 
   return (
-    <div className="min-h-screen bg-[#F8F3EA]">
+    <div className="ncr-skin min-h-screen bg-white">
       <section className="sticky top-0 z-30 border-b border-navy-100 bg-white/95 backdrop-blur">
         <div className="container mx-auto px-3 py-2 md:px-4 md:py-2.5">
           <h1 className="sr-only">Search Gurgaon societies and homes</h1>

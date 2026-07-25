@@ -314,3 +314,48 @@ body,
     box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07) !important;
   }
 }
+
+/* ============================================================================
+   NCR design-language skin — a scoped re-theme applied to large existing public
+   pages (search, society, property) so they adopt the new calm/verified look
+   without a full rewrite. Maps the old navy/blue/ivory brand palette to the new
+   neutral canvas + single verified-green accent, and sans headings.
+   ============================================================================ */
+.ncr-skin { background-color: #FFFFFF; color: #1D1D1F; }
+.ncr-skin :is(h1, h2, h3, h4, h5, h6) { font-family: 'Hanken Grotesk', 'DM Sans', Inter, ui-sans-serif, system-ui, sans-serif !important; letter-spacing: -0.02em; color: #1D1D1F; }
+
+/* accent: blue → verified green */
+.ncr-skin .bg-blue-600, .ncr-skin .bg-blue-700, .ncr-skin .bg-blue-800 { background-color: #0F7B63 !important; }
+.ncr-skin .hover\:bg-blue-700:hover, .ncr-skin .hover\:bg-blue-800:hover { background-color: #0C6853 !important; }
+.ncr-skin .text-blue-600, .ncr-skin .text-blue-700, .ncr-skin .text-blue-800 { color: #0F7B63 !important; }
+.ncr-skin .hover\:text-blue-700:hover { color: #0C6853 !important; }
+.ncr-skin .bg-blue-50, .ncr-skin .bg-blue-100 { background-color: #ECF6F2 !important; }
+.ncr-skin .border-blue-100, .ncr-skin .border-blue-200 { border-color: #E4E4E9 !important; }
+.ncr-skin .ring-blue-100 { --tw-ring-color: #ECF6F2 !important; }
+.ncr-skin .fill-blue-600, .ncr-skin .fill-blue-700 { fill: #0F7B63 !important; }
+
+/* neutrals: navy/ivory → grays */
+.ncr-skin .text-navy-950, .ncr-skin .text-navy-900, .ncr-skin .text-navy-800 { color: #1D1D1F !important; }
+.ncr-skin .text-navy-700, .ncr-skin .text-navy-600, .ncr-skin .text-navy-500 { color: #6E6E73 !important; }
+.ncr-skin .text-navy-400 { color: #86868B !important; }
+.ncr-skin .border-navy-100, .ncr-skin .border-navy-200 { border-color: #E4E4E9 !important; }
+.ncr-skin .bg-navy-50 { background-color: #F5F5F7 !important; }
+.ncr-skin .bg-navy-600, .ncr-skin .bg-navy-700, .ncr-skin .bg-navy-800, .ncr-skin .bg-navy-900, .ncr-skin .bg-navy-950 { background-color: #1D1D1F !important; }
+.ncr-skin .bg-ivory-100, .ncr-skin .bg-ivory-200, .ncr-skin .bg-slate-50 { background-color: #F5F5F7 !important; }
+
+/* remap the brand arbitrary-hex navy/blue used across Search/Society/Property */
+.ncr-skin .text-\[\#233B6E\], .ncr-skin .text-\[\#1D2939\] { color: #1D1D1F !important; }
+.ncr-skin .text-\[\#3156A3\] { color: #0F7B63 !important; }
+.ncr-skin .text-\[\#CFD8EC\] { color: #D0D0D6 !important; }
+.ncr-skin .bg-\[\#233B6E\], .ncr-skin .bg-\[\#3156A3\] { background-color: #0F7B63 !important; }
+.ncr-skin .border-\[\#233B6E\] { border-color: #0F7B63 !important; }
+.ncr-skin .from-\[\#101B38\] { --tw-gradient-from: #1D1D1F var(--tw-gradient-from-position) !important; }
+.ncr-skin .to-\[\#233B6E\] { --tw-gradient-to: #2A2A2E var(--tw-gradient-to-position) !important; }
+/* brand cream canvases → white (incl. the global .public-site main cream) */
+.ncr-skin main, .ncr-skin .bg-\[\#F7F4EF\], .ncr-skin .bg-\[\#F8F3EA\], .ncr-skin .bg-\[\#F7F0EA\] { background-color: #FFFFFF !important; }
+/* subtle warm panels → calm grey */
+.ncr-skin .bg-\[\#FBF8F2\], .ncr-skin .bg-\[\#FAF6EF\], .ncr-skin .bg-\[\#F3ECE0\] { background-color: #F5F5F7 !important; }
+/* brand terracotta primary CTA → verified green */
+.ncr-skin .bg-\[\#C8783F\] { background-color: #0F7B63 !important; }
+.ncr-skin .text-\[\#C8783F\] { color: #0F7B63 !important; }
+.ncr-skin .border-\[\#C8783F\] { border-color: #0F7B63 !important; }

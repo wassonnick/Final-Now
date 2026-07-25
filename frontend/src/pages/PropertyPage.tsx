@@ -828,7 +828,7 @@ export function PropertyPage() {
     .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#F8F3EA] pb-40 md:pb-0">
+    <div className="ncr-skin min-h-screen bg-white pb-40 md:pb-0">
       <main className="mx-auto max-w-[1360px] px-4 py-6 md:px-10 md:pb-16">
         <div className="mb-4 flex items-center gap-1.5 text-[13px] text-[#6E756E]">
           <Link to={societySlug ? `/society/${societySlug}` : "/properties"}>{societyName || "Properties"}</Link>
