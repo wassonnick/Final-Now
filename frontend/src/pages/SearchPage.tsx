@@ -479,9 +479,7 @@ export function SearchPage() {
   const [query, setQuery] = useState(initialQuery);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [showMap, setShowMap] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(min-width: 1200px)").matches,
-  );
+  const [showMap, setShowMap] = useState(false);
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [leadName, setLeadName] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
@@ -1169,6 +1167,37 @@ export function SearchPage() {
                   Ask AI Advisor
                 </Link>
               </Button>
+            </div>
+
+            <div className="rounded-[1.25rem] border border-navy-100 bg-white p-3.5 shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#ECF6F2] text-[#0F7B63]">
+                  <PhoneCall className="h-4 w-4" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-black text-navy-900">Talk to an advisor</h3>
+                  <p className="text-[11px] font-bold text-navy-500">Free, no obligation</p>
+                </div>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-navy-600">
+                Get a callback to shortlist societies, arrange visits and negotiate — from a real SocietyFlats expert.
+              </p>
+              <Button
+                onClick={openMapSearchCallback}
+                className="mt-3 h-9 w-full rounded-full bg-[#0F7B63] text-xs font-black text-white hover:bg-[#0C6853]"
+              >
+                Book a free visit
+              </Button>
+            </div>
+
+            <div className="rounded-[1.25rem] border border-dashed border-navy-100 bg-ivory-200 p-3.5 text-center shadow-sm">
+              <p className="text-xs font-bold text-navy-600">Own a flat here?</p>
+              <Link
+                to="/sell"
+                className="mt-1 inline-flex items-center gap-1 text-sm font-black text-[#0F7B63] hover:underline"
+              >
+                List it free <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
           </aside>
 

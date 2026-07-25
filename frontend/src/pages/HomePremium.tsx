@@ -48,7 +48,7 @@ export default function HomePremium() {
   }, []);
 
   const featured = useMemo(
-    () => [...societies].filter(hasGooglePlacesDisplayPhoto).sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0)).slice(0, 6),
+    () => [...societies].filter(hasGooglePlacesDisplayPhoto).sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0)).slice(0, 8),
     [societies],
   );
 
@@ -245,9 +245,41 @@ export default function HomePremium() {
         </div>
       </section>
 
+      {/* ---------- FEATURED SOCIETIES ---------- */}
+      <section className="mx-auto max-w-[1120px] px-5 py-14 lg:py-16">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 className="!font-sans text-[28px] font-semibold tracking-[-0.02em] lg:text-[36px]">Top verified societies</h2>
+            <p className="mt-2 max-w-[520px] text-[15px] leading-7 text-[#6E6E73]">Start with a society you can trust — every profile is verified, with real scores and genuine homes.</p>
+          </div>
+          <Link to="/societies" className="inline-flex shrink-0 items-center gap-1 text-[14px] font-semibold" style={{ color: ACCENT }}>View all <ArrowRight className="h-4 w-4" /></Link>
+        </div>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {featured.slice(0, 8).map((s) => (
+            <Link key={s.id} to={`/society/${s.slug}`} className="group overflow-hidden rounded-[20px] border border-[#E4E4E9] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.3)]">
+              <div className="relative h-32 overflow-hidden bg-[#F5F5F7]">
+                <img src={societyDisplayImage(s)} alt={s.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]" />
+                {scoreOf(s) ? (
+                  <span className="absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-bold text-[#1D1D1F] backdrop-blur">
+                    <Star className="h-2.5 w-2.5" style={{ color: ACCENT }} />{scoreOf(s)}
+                  </span>
+                ) : null}
+              </div>
+              <div className="p-3.5">
+                <div className="flex items-center gap-1 text-[11px] font-semibold" style={{ color: ACCENT }}>
+                  <Check className="h-3 w-3" /> Verified
+                </div>
+                <p className="mt-1 text-[14.5px] font-semibold leading-tight">{s.name}</p>
+                <p className="mt-0.5 text-[12px] text-[#86868B]">{formatPublicLocation(s)}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* ---------- EXPLORE BY AREA ---------- */}
       {currentArea ? (
-        <section className="mx-auto max-w-[1120px] px-5 py-16 lg:py-20">
+        <section className="mx-auto max-w-[1120px] px-5 py-14 lg:py-16">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 className="!font-sans text-[28px] font-semibold tracking-[-0.02em] lg:text-[36px]">Explore homes by area</h2>
@@ -275,25 +307,25 @@ export default function HomePremium() {
           </div>
 
           {/* Area society cards */}
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {currentArea.societies.slice(0, 6).map((s) => {
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {currentArea.societies.slice(0, 8).map((s) => {
               const homes = Number(s?.propertiesCount ?? s?.properties_count ?? 0);
               return (
-                <Link key={s.id} to={`/society/${s.slug}`} className="group overflow-hidden rounded-[24px] border border-[#E4E4E9] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.3)]">
-                  <div className="relative h-40 overflow-hidden bg-[#F5F5F7]">
+                <Link key={s.id} to={`/society/${s.slug}`} className="group overflow-hidden rounded-[20px] border border-[#E4E4E9] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.3)]">
+                  <div className="relative h-32 overflow-hidden bg-[#F5F5F7]">
                     <img src={societyDisplayImage(s)} alt={s.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]" />
                     {scoreOf(s) ? (
-                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-bold text-[#1D1D1F] backdrop-blur">
-                        <Star className="h-3 w-3" style={{ color: ACCENT }} />{scoreOf(s)}
+                      <span className="absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-bold text-[#1D1D1F] backdrop-blur">
+                        <Star className="h-2.5 w-2.5" style={{ color: ACCENT }} />{scoreOf(s)}
                       </span>
                     ) : null}
                   </div>
-                  <div className="p-5">
-                    <p className="text-[16px] font-semibold leading-tight">{s.name}</p>
-                    <p className="mt-0.5 text-[13px] text-[#86868B]">{formatPublicLocation(s)}</p>
-                    <p className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: homes > 0 ? ACCENT : "#86868B" }}>
-                      <Building2 className="h-3.5 w-3.5" />
-                      {homes > 0 ? `${homes} home${homes === 1 ? "" : "s"} available` : "Homes on request"}
+                  <div className="p-3.5">
+                    <p className="text-[14.5px] font-semibold leading-tight">{s.name}</p>
+                    <p className="mt-0.5 text-[12px] text-[#86868B]">{formatPublicLocation(s)}</p>
+                    <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: homes > 0 ? ACCENT : "#86868B" }}>
+                      <Building2 className="h-3 w-3" />
+                      {homes > 0 ? `${homes} home${homes === 1 ? "" : "s"}` : "On request"}
                     </p>
                   </div>
                 </Link>
@@ -353,35 +385,6 @@ export default function HomePremium() {
               </Link>
             );
           })}
-        </div>
-      </section>
-
-      {/* ---------- FEATURED SOCIETIES ---------- */}
-      <section className="mx-auto max-w-[1120px] px-5 py-16 lg:py-20">
-        <div className="flex items-end justify-between gap-4">
-          <h2 className="!font-sans text-[28px] font-semibold tracking-[-0.02em] lg:text-[36px]">Top verified societies</h2>
-          <Link to="/societies" className="inline-flex items-center gap-1 text-[14px] font-semibold" style={{ color: ACCENT }}>View all <ArrowRight className="h-4 w-4" /></Link>
-        </div>
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((s) => (
-            <Link key={s.id} to={`/society/${s.slug}`} className="group overflow-hidden rounded-[24px] border border-[#E4E4E9] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.3)]">
-              <div className="relative h-44 overflow-hidden bg-[#F5F5F7]">
-                <img src={societyDisplayImage(s)} alt={s.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]" />
-                {scoreOf(s) ? (
-                  <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-bold text-[#1D1D1F] backdrop-blur">
-                    <Star className="h-3 w-3" style={{ color: ACCENT }} />{scoreOf(s)}
-                  </span>
-                ) : null}
-              </div>
-              <div className="p-5">
-                <div className="flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: ACCENT }}>
-                  <Check className="h-3.5 w-3.5" /> Verified profile
-                </div>
-                <p className="mt-1.5 text-[17px] font-semibold leading-tight">{s.name}</p>
-                <p className="mt-1 text-[13px] text-[#86868B]">{formatPublicLocation(s)}</p>
-              </div>
-            </Link>
-          ))}
         </div>
       </section>
 
