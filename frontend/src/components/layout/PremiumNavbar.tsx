@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronDown, Menu, Phone, Search, User, X } from "lucide-react";
+import { ChevronDown, MapPin, Menu, Phone, Search, User, X } from "lucide-react";
 import { MODULES, MODULE_INTENTS, type ModuleIntent } from "@/lib/modules";
 import { NCR_CITIES, LIVE_NCR_CITY, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
 
@@ -37,21 +37,23 @@ export function PremiumNavbar() {
 
   return (
     <header ref={rootRef} className="sticky top-0 z-50 border-b border-[#ECECEF] bg-white/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-[1320px] items-center gap-3 px-4 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-2 px-4 lg:gap-3 lg:px-6">
         {/* Logo */}
         <Link to="/" className="flex shrink-0 items-center gap-2" onClick={() => setOpen("")}>
           <span className="flex h-8 w-8 items-center justify-center rounded-lg text-[13px] font-black text-white" style={{ background: "#1D1D1F" }}>SF</span>
-          <span className="text-[17px] font-semibold tracking-tight text-[#1D1D1F]">SocietyFlats</span>
+          <span className="hidden text-[17px] font-semibold tracking-tight text-[#1D1D1F] sm:inline">SocietyFlats</span>
         </Link>
 
-        {/* City selector */}
-        <div className="relative">
-          <button type="button" onClick={() => setOpen(open === "city" ? "" : "city")} className="flex items-center gap-1.5 rounded-full bg-[#F5F5F7] px-3 py-2 text-[13px] font-semibold text-[#1D1D1F] hover:bg-[#ECECEF]">
-            <span className="hidden text-[#86868B] sm:inline">Delhi NCR ·</span> {city.name}
+        {/* City selector — compact, never wraps */}
+        <div className="relative shrink-0">
+          <button type="button" onClick={() => setOpen(open === "city" ? "" : "city")} className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-[#F5F5F7] px-3 py-2 text-[13px] font-semibold text-[#1D1D1F] hover:bg-[#ECECEF]">
+            <MapPin className="h-3.5 w-3.5" style={{ color: ACCENT }} />
+            {city.name}
             <ChevronDown className="h-3.5 w-3.5 text-[#86868B]" />
           </button>
           {open === "city" ? (
             <div className="absolute left-0 top-[calc(100%+8px)] w-64 rounded-2xl border border-[#E4E4E9] bg-white p-1.5 shadow-[0_24px_50px_-28px_rgba(0,0,0,.3)]">
+              <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">Delhi NCR</p>
               {NCR_CITIES.map((c) => (
                 <button key={c.slug} type="button" onClick={() => { setCity(c); setOpen(""); if (c.status !== "live") navigate(`/ncr/${c.slug}`); }} className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left hover:bg-[#F5F5F7]">
                   <span className="text-sm font-semibold text-[#1D1D1F]">{c.name}</span>
@@ -63,23 +65,26 @@ export function PremiumNavbar() {
         </div>
 
         {/* Desktop primary + menus */}
-        <nav className="ml-1 hidden items-center gap-1 lg:flex">
+        <nav className="hidden shrink-0 items-center gap-0.5 lg:flex">
           {PRIMARY.map((p) => (
-            <Link key={p.href} to={p.href} className="rounded-full px-3 py-2 text-[14px] font-semibold text-[#43434A] hover:bg-[#F5F5F7] hover:text-[#1D1D1F]">{p.label}</Link>
+            <Link key={p.href} to={p.href} className="whitespace-nowrap rounded-full px-2.5 py-2 text-[14px] font-semibold text-[#43434A] hover:bg-[#F5F5F7] hover:text-[#1D1D1F]">{p.label}</Link>
           ))}
-          <button type="button" onClick={() => setOpen(open === "explore" ? "" : "explore")} className={`flex items-center gap-1 rounded-full px-3 py-2 text-[14px] font-semibold hover:bg-[#F5F5F7] ${open === "explore" ? "text-[#1D1D1F]" : "text-[#43434A]"}`}>Explore <ChevronDown className={`h-3.5 w-3.5 transition ${open === "explore" ? "rotate-180" : ""}`} /></button>
-          <button type="button" onClick={() => setOpen(open === "partner" ? "" : "partner")} className={`flex items-center gap-1 rounded-full px-3 py-2 text-[14px] font-semibold hover:bg-[#F5F5F7] ${open === "partner" ? "text-[#1D1D1F]" : "text-[#43434A]"}`}>Partner <ChevronDown className={`h-3.5 w-3.5 transition ${open === "partner" ? "rotate-180" : ""}`} /></button>
+          <button type="button" onClick={() => setOpen(open === "explore" ? "" : "explore")} className={`flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-2 text-[14px] font-semibold hover:bg-[#F5F5F7] ${open === "explore" ? "text-[#1D1D1F]" : "text-[#43434A]"}`}>Explore <ChevronDown className={`h-3.5 w-3.5 transition ${open === "explore" ? "rotate-180" : ""}`} /></button>
+          <button type="button" onClick={() => setOpen(open === "partner" ? "" : "partner")} className={`flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-2 text-[14px] font-semibold hover:bg-[#F5F5F7] ${open === "partner" ? "text-[#1D1D1F]" : "text-[#43434A]"}`}>Partner <ChevronDown className={`h-3.5 w-3.5 transition ${open === "partner" ? "rotate-180" : ""}`} /></button>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
-          <form onSubmit={submitSearch} className="hidden items-center gap-2 rounded-full border border-[#E4E4E9] bg-[#F5F5F7] px-3 py-2 md:flex">
-            <Search className="h-4 w-4 text-[#86868B]" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search or type a tool…" className="w-40 bg-transparent text-[13px] outline-none placeholder:text-[#98A2B3] xl:w-52" />
-          </form>
-          <a href="tel:+919911886222" className="hidden items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold text-[#1D1D1F] hover:bg-[#F5F5F7] lg:flex"><Phone className="h-4 w-4" style={{ color: ACCENT }} />+91 99118 86222</a>
-          <Link to="/sell" className="hidden rounded-full px-4 py-2 text-[13px] font-semibold text-white sm:inline-flex" style={{ background: ACCENT }}>List your flat</Link>
-          <Link to="/login" className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F7] text-[#43434A] hover:bg-[#ECECEF]"><User className="h-4 w-4" /></Link>
-          <button type="button" onClick={() => setMobile(true)} className="flex h-9 w-9 items-center justify-center rounded-full text-[#43434A] lg:hidden"><Menu className="h-5 w-5" /></button>
+        {/* Search — the one flexible element; shrinks before anything wraps */}
+        <form onSubmit={submitSearch} className="ml-auto hidden min-w-0 max-w-[320px] flex-1 items-center gap-2 rounded-full border border-[#E4E4E9] bg-[#F5F5F7] px-3 py-2 md:flex">
+          <Search className="h-4 w-4 shrink-0 text-[#86868B]" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search or type a tool…" className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[#98A2B3]" />
+        </form>
+
+        {/* Right actions — never wrap */}
+        <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-2">
+          <a href="tel:+919911886222" className="hidden items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-2 text-[13px] font-semibold text-[#1D1D1F] hover:bg-[#F5F5F7] xl:flex"><Phone className="h-4 w-4" style={{ color: ACCENT }} />+91 99118 86222</a>
+          <Link to="/sell" className="hidden whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-semibold text-white sm:inline-flex" style={{ background: ACCENT }}>List your flat</Link>
+          <Link to="/login" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F5F5F7] text-[#43434A] hover:bg-[#ECECEF]"><User className="h-4 w-4" /></Link>
+          <button type="button" onClick={() => setMobile(true)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#43434A] lg:hidden"><Menu className="h-5 w-5" /></button>
         </div>
       </div>
 
