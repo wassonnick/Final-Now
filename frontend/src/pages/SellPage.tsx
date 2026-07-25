@@ -164,8 +164,8 @@ export function SellPage() {
 
   useEffect(() => {
     setPublicSeo(
-      "List Your Gurgaon Flat — Reach Verified Buyers & Tenants Directly | SocietyFlats",
-      "List your Gurgaon home once and meet buyers and tenants already searching your exact society — genuine, ready people. No endless broker calls, no listing spam.",
+      "List Your Delhi NCR Flat — Reach Verified Buyers & Tenants Directly | SocietyFlats",
+      "List your Delhi NCR home once and meet buyers and tenants already searching your exact society — genuine, ready people. No endless broker calls, no listing spam.",
       { canonical: "/sell" },
     );
     window.scrollTo(0, 0);
@@ -387,7 +387,7 @@ export function SellPage() {
                 Owner listing
               </Badge>
               <h1 className="max-w-2xl text-3xl font-black tracking-[-0.045em] leading-[0.98] text-slate-950 md:text-5xl">
-                Own a home in Gurgaon? List it once, and meet the right people.
+                Own a home in Delhi NCR? List it once, and meet the right people.
               </h1>
               <p className="mt-4 max-w-xl text-sm leading-6 text-slate-600 md:text-base md:leading-7">
                 We introduce your home to buyers and tenants already searching your exact society — genuine, ready people. No endless broker calls, no listing spam.

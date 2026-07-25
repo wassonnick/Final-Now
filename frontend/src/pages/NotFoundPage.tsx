@@ -9,7 +9,7 @@ export function NotFoundPage() {
   useEffect(() => {
     setPublicSeo(
       "Page Not Found | SocietyFlats",
-      "This SocietyFlats page could not be found. Search verified Gurgaon societies and live homes instead.",
+      "This SocietyFlats page could not be found. Search verified Delhi NCR societies and live homes instead.",
       { noindex: true, canonical: "/404" },
     );
   }, []);
@@ -26,7 +26,7 @@ export function NotFoundPage() {
         </h1>
 
         <p className="mt-4 max-w-2xl text-sm leading-6 text-navy-500 md:text-base md:leading-7">
-          The page may have moved, or the listing may no longer be live. You can continue with verified Gurgaon societies and available homes.
+          The page may have moved, or the listing may no longer be live. You can continue with verified Delhi NCR societies and available homes.
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
