@@ -116,7 +116,7 @@ function CompareIndex() {
   }, []);
 
   return (
-    <div className="bg-[#F8F3EA] text-[#1f271f]">
+    <div className="ncr-skin bg-[#F8F3EA] text-[#1f271f]">
       <section className="mx-auto max-w-[1180px] px-5 py-12 md:px-8 md:py-16">
         <div className="max-w-3xl">
           <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#dbe4d6] bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#1b4732]">
@@ -222,7 +222,7 @@ function CompareDetail({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="bg-[#F8F3EA] text-[#1f271f]">
+    <div className="ncr-skin bg-[#F8F3EA] text-[#1f271f]">
       <section className="mx-auto grid max-w-[1180px] gap-8 px-5 py-10 md:px-8 lg:grid-cols-[1fr_330px]">
         <div>
           <Link to="/compare" className="inline-flex items-center gap-2 text-sm font-semibold text-[#667064] hover:text-[#153f2b]">

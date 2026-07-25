@@ -123,7 +123,7 @@ export function NriServicesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F2EA] text-[#111827]">
+    <main className="ncr-skin min-h-screen bg-[#F7F2EA] text-[#111827]">
       <section className="border-b border-[#E6DDCF] bg-[radial-gradient(circle_at_82%_12%,rgba(194,114,78,.16),transparent_30%),radial-gradient(circle_at_12%_20%,rgba(35,59,110,.12),transparent_28%),linear-gradient(180deg,#FFFCF7,#F7F2EA)]">
         <div className="mx-auto grid max-w-[1360px] gap-9 px-5 py-14 md:px-10 md:py-20 lg:grid-cols-[1fr_430px] lg:items-center">
           <div>

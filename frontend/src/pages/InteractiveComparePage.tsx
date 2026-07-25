@@ -235,11 +235,11 @@ export function InteractiveComparePage() {
     };
   }, [rows]);
 
-  if (loading) return <div className="min-h-[50vh] bg-[#F7F4EF] p-16 text-center text-[#667085]">Loading your comparison…</div>;
+  if (loading) return <div className="ncr-skin min-h-[50vh] bg-[#F7F4EF] p-16 text-center text-[#667085]">Loading your comparison…</div>;
 
   if (!rows.length) {
     return (
-      <div className="min-h-[70vh] bg-[#F7F4EF] px-5 py-14 md:py-20">
+      <div className="ncr-skin min-h-[70vh] bg-[#F7F4EF] px-5 py-14 md:py-20">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#8C6E2F]">Society face-off</p>
           <h1 className="mt-1.5 font-display text-[34px] font-medium leading-tight text-[#111827] md:text-[44px]">Build your own comparison.</h1>
@@ -259,7 +259,7 @@ export function InteractiveComparePage() {
   const gridCols = { gridTemplateColumns: `minmax(88px,0.8fr) repeat(${cols}, minmax(0,1fr))` };
 
   return (
-    <div className="bg-[#F7F4EF] text-[#1C2434]">
+    <div className="ncr-skin bg-[#F7F4EF] text-[#1C2434]">
       <section className="mx-auto max-w-[1180px] px-4 py-8 md:px-6 md:py-12">
         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#8C6E2F]">Society face-off</p>
         <h1 className="mt-1.5 font-display text-[34px] font-medium leading-tight text-[#111827] md:text-[46px]">Compare, honestly — side by side.</h1>

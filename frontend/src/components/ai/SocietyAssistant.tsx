@@ -141,7 +141,7 @@ export function SocietyAssistant({ initialQuery }: { initialQuery?: string } = {
       <div className="flex items-center justify-between gap-3 border-b border-[#F0E9DC] bg-[#F7F4EF] px-4 py-3">
         <div className="flex items-center gap-2.5">
           <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#10251F] text-white"><Sparkles className="h-4 w-4" /><span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#F7F4EF] bg-emerald-500" /></span>
-          <div><p className="text-sm font-bold text-[#10251F]">SocietyFlats Assistant</p><p className="text-[11px] text-[#6E756E]">Reasons over 66 verified societies · never invents</p></div>
+          <div><p className="text-sm font-bold text-[#10251F]">SocietyFlats Assistant</p><p className="text-[11px] text-[#6E756E]">Reasons over verified societies only · never invents</p></div>
         </div>
         {started ? <button onClick={reset} className="inline-flex items-center gap-1.5 rounded-full border border-[#E7DCCB] px-3 py-1.5 text-xs font-bold text-[#6E756E] hover:bg-[#F8F3EA]"><RotateCcw className="h-3.5 w-3.5" />New chat</button> : null}
       </div>

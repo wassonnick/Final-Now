@@ -176,7 +176,7 @@ export function MapsPage() {
   const matchCount = filteredSocieties.length;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-blue-50/35 to-white">
+    <main className="ncr-skin min-h-screen bg-gradient-to-b from-white via-blue-50/35 to-white">
       <section className="border-b border-blue-100 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">

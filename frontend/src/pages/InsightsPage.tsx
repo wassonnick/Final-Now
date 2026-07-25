@@ -216,7 +216,7 @@ export function InsightsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8F3EA]">
+    <div className="ncr-skin min-h-screen bg-[#F8F3EA]">
       <section className="border-b border-[#E7DCCB] bg-[radial-gradient(circle_at_80%_10%,rgba(194,114,78,0.10),transparent_30%),linear-gradient(180deg,#FFFBF3_0%,#F8F3EA_100%)] px-4 py-8 md:py-10">
         <div className="container mx-auto">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-center">
