@@ -1,30 +1,16 @@
-// The SocietyFlats mark — a society facade with a taller door and one gold window
-// (the verified flat you find). Inline SVG so it's crisp at any size with zero
-// asset requests. Keep geometry in sync with brand-kit/generate.mjs.
+// The SocietyFlats mark — an architectural society arch with a verified-green
+// doorway (the home journey). Original geometry, recoloured to Calm & Verified:
+// charcoal tile, white arch, single green accent. Crisp at favicon size.
 export function BrandMark({ size = 30, className = "" }: { size?: number; className?: string }) {
-  const cells: JSX.Element[] = [];
-  const cell = 76, gap = 32, start = (512 - (3 * cell + 2 * gap)) / 2;
-  for (let row = 0; row < 3; row++) {
-    for (let col = 0; col < 3; col++) {
-      const lit = row === 1 && col === 2;
-      const door = row === 2 && col === 1;
-      cells.push(
-        <rect
-          key={`${row}-${col}`}
-          x={start + col * (cell + gap)}
-          y={start + row * (cell + gap)}
-          width={cell}
-          height={door ? cell + 34 : cell}
-          rx={20}
-          fill={lit ? "#B08A3E" : "#F8F3EA"}
-        />,
-      );
-    }
-  }
   return (
     <svg width={size} height={size} viewBox="0 0 512 512" className={className} aria-hidden="true" focusable="false">
-      <rect width="512" height="512" rx="118" fill="#233B6E" />
-      {cells}
+      <rect width="512" height="512" rx="120" fill="#1D1D1F" />
+      <path
+        d="M118 392V238C118 157 179 98 256 98s138 59 138 140v154h-58V238c0-50-35-82-80-82s-80 32-80 82v154h-58Z"
+        fill="#FFFFFF"
+      />
+      <rect x="92" y="378" width="328" height="42" rx="21" fill="#FFFFFF" />
+      <path d="M220 392v-94c0-27 15-44 36-44s36 17 36 44v94h-72Z" fill="#0F7B63" />
     </svg>
   );
 }

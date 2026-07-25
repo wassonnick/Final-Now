@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown, MapPin, Menu, Phone, Search, User, X } from "lucide-react";
 import { MODULES, MODULE_INTENTS, type ModuleIntent } from "@/lib/modules";
 import { NCR_CITIES, LIVE_NCR_CITY, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
+import { BrandMark } from "@/components/BrandMark";
 
 const ACCENT = "#0F7B63";
 const PRIMARY = [
@@ -40,7 +41,7 @@ export function PremiumNavbar() {
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-2 px-4 lg:gap-3 lg:px-6">
         {/* Logo */}
         <Link to="/" className="flex shrink-0 items-center gap-2" onClick={() => setOpen("")}>
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg text-[13px] font-black text-white" style={{ background: "#1D1D1F" }}>SF</span>
+          <BrandMark size={32} className="rounded-[9px] shrink-0" />
           <span className="hidden text-[17px] font-semibold tracking-tight text-[#1D1D1F] sm:inline">SocietyFlats</span>
         </Link>
 
