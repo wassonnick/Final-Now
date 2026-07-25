@@ -334,8 +334,8 @@ function EmptyResults({
 
               <p className="mt-2 text-sm leading-6 text-navy-500 md:text-sm">
                 {query
-                  ? `No live result is currently matching “${query}”. Share your number and our Gurgaon team will check offline inventory, fresh owner listings and similar options.`
-                  : `Tell us your requirement and our Gurgaon team will shortlist verified ${isSocietySearch ? "societies" : "homes"} for you.`}
+                  ? `No live result is currently matching “${query}”. Share your number and our local team will check offline inventory, fresh owner listings and similar options.`
+                  : `Tell us your requirement and our local team will shortlist verified ${isSocietySearch ? "societies" : "homes"} for you.`}
               </p>
 
               <div className="mt-4 flex flex-wrap justify-center gap-2 md:justify-start">
@@ -383,7 +383,7 @@ function EmptyResults({
 
               {leadStatus === "success" ? (
                 <p className="mt-3 rounded-2xl bg-emerald-50 px-3 py-2 text-center text-sm font-bold text-emerald-700">
-                  Request received. We will call with matching Gurgaon societies and homes.
+                  Request received. We will call with matching societies and homes.
                 </p>
               ) : null}
               {leadStatus === "error" ? (
@@ -528,7 +528,7 @@ export function SearchPage() {
 
     setPublicSeo(
       `SocietyFlats Search${nextQuery ? ` | ${nextQuery}` : ""}`,
-      "Search live verified Gurgaon society homes, published society profiles and AI-assisted recommendations on SocietyFlats.",
+      "Search live verified Delhi NCR society homes, published society profiles and AI-assisted recommendations on SocietyFlats.",
     );
   }, [searchParams]);
 
@@ -912,7 +912,7 @@ export function SearchPage() {
     <div className="ncr-skin min-h-screen bg-white">
       <section className="sticky top-0 z-30 border-b border-navy-100 bg-white/95 backdrop-blur">
         <div className="container mx-auto px-3 py-2 md:px-4 md:py-2.5">
-          <h1 className="sr-only">Search Gurgaon societies and homes</h1>
+          <h1 className="sr-only">Search Delhi NCR societies and homes</h1>
 
           <div className="rounded-[1.25rem] border border-blue-100 bg-white p-2 shadow-sm md:p-2.5">
             <div className="flex flex-col gap-2 md:grid md:grid-cols-[auto_1fr_auto_auto] md:items-center md:gap-2">
@@ -1661,7 +1661,7 @@ export function SearchPage() {
                   </p>
                   <h3 className="mt-1 text-lg font-black tracking-tight text-navy-950 md:text-xl">
                     Similar matches for{" "}
-                    {query ? `“${query}”` : "your Gurgaon search"}
+                    {query ? `“${query}”` : "your search"}
                   </h3>
                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-navy-500 md:text-sm md:leading-6">
                     Based on your search intent, budget signals, locality and

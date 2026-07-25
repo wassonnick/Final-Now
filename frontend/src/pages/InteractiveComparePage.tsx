@@ -107,7 +107,7 @@ function PrefilledComparisons() {
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {pages.slice(0, 4).map((p) => (
           <Link key={p.slug} to={`/compare/${p.slug}`} className="group rounded-[18px] border border-[#E7DCCB] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-lg">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-[#C8793F]">{p.sector_cluster || p.city || "Gurgaon"}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[#C8793F]">{p.sector_cluster || p.city || "Delhi NCR"}</p>
             <p className="mt-1.5 font-display text-lg leading-snug text-[#19231c]">{p.title}</p>
             <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#233B6E]">Open comparison <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" /></span>
           </Link>
@@ -167,7 +167,7 @@ export function InteractiveComparePage() {
   };
 
   useEffect(() => {
-    setPublicSeo("Compare Gurgaon Societies Side by Side | SocietyFlats", "Compare your shortlisted Gurgaon societies on verified scores, market ranges and Buyer's Truth.", { canonical: "/compare", noindex: true });
+    setPublicSeo("Compare Delhi NCR Societies Side by Side | SocietyFlats", "Compare your shortlisted Delhi NCR societies on verified scores, market ranges and Buyer's Truth.", { canonical: "/compare", noindex: true });
   }, []);
 
   const reqId = useRef(0);
@@ -328,7 +328,7 @@ export function InteractiveComparePage() {
                     </div>
                     <p className="inline-flex items-center gap-1 rounded-full bg-[#EEF2FA] px-2 py-0.5 text-[10px] font-bold text-[#3156A3]"><Check className="h-3 w-3 stroke-[3]" /> Verified</p>
                     <p className="mt-1.5 truncate font-bold text-[#25302B]">{s.name}</p>
-                    <p className="truncate text-[12.5px] text-[#6E756E]">{[f(s, "sector", "sector"), f(s, "builder", "builder")].filter(Boolean).join(" · ") || "Gurgaon"}</p>
+                    <p className="truncate text-[12.5px] text-[#6E756E]">{[f(s, "sector", "sector"), f(s, "builder", "builder")].filter(Boolean).join(" · ") || "Delhi NCR"}</p>
                     <Link to={`/society/${s.slug}`} className="mt-2 inline-flex items-center gap-1 text-[12.5px] font-bold text-[#233B6E]">View society <ArrowRight className="h-3 w-3" /></Link>
                   </div>
                 );
@@ -371,7 +371,7 @@ export function InteractiveComparePage() {
               {rows.map((r) => <div key={r.society.slug} className="border-l border-[#EEE6DA] p-3 text-center text-[12.5px] font-semibold text-[#35413B]">{f(r.society, "builder", "builder", "—")}</div>)}
             </CompareRow>
             <CompareRow label="Location" cols={gridCols}>
-              {rows.map((r) => <div key={r.society.slug} className="border-l border-[#EEE6DA] p-3 text-center text-[12.5px] text-[#35413B]">{[f(r.society, "sector", "sector"), f(r.society, "locality", "locality")].filter(Boolean).join(", ") || "Gurgaon"}</div>)}
+              {rows.map((r) => <div key={r.society.slug} className="border-l border-[#EEE6DA] p-3 text-center text-[12.5px] text-[#35413B]">{[f(r.society, "sector", "sector"), f(r.society, "locality", "locality")].filter(Boolean).join(", ") || "Delhi NCR"}</div>)}
             </CompareRow>
             <CompareRow label="Amenities" cols={gridCols} leaderIdx={leaderIndex(rows.map((r) => amenityCount(r.society) || null))}>
               {rows.map((r) => { const n = amenityCount(r.society); return <div key={r.society.slug} className="border-l border-[#EEE6DA] p-3 text-center text-[12.5px] font-bold text-[#233B6E]">{n ? `${n} listed` : "—"}</div>; })}

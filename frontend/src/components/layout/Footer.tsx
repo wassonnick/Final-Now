@@ -58,7 +58,7 @@ export function Footer() {
           Society<span className="text-[#C5A766]">Flats</span>
         </Link>
         <p className="mt-3 max-w-sm text-sm leading-6 text-[#B7C0CF]">
-          Gurgaon&apos;s society-first real estate intelligence platform. Verified data, no fake inventory.
+          Delhi NCR&apos;s society-first real estate intelligence platform. Verified data, no fake inventory.
         </p>
         <a href={BRAND_PHONE_HREF} className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#27364E] bg-[#1B2536] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#243149]">
           <Phone className="h-4 w-4 text-[#C5A766]" />
@@ -94,7 +94,7 @@ export function Footer() {
                 SocietyFlats
               </Link>
               <p className="mt-2.5 max-w-[260px] text-[13px] leading-[1.5] text-[#B7C0CF]">
-                Gurgaon&apos;s society-first real estate intelligence platform. Verified data, no fake inventory.
+                Delhi NCR&apos;s society-first real estate intelligence platform. Verified data, no fake inventory.
               </p>
               <a href={BRAND_PHONE_HREF} className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#27364E] bg-[#1B2536] px-4 py-2.5 text-[13.5px] font-bold text-white transition hover:bg-[#243149]">
                 <Phone className="h-4 w-4 text-[#C5A766]" />
