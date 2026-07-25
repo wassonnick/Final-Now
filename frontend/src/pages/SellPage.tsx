@@ -376,7 +376,7 @@ export function SellPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F3EA]">
+    <div className="ncr-skin min-h-screen bg-[#F8F3EA]">
       <section className="relative overflow-hidden border-b border-[#E7DCCB] bg-gradient-to-br from-[#FFFBF3] via-[#F8F3EA] to-[#EEF5F1]">
         <div className="absolute left-[-12rem] top-[-10rem] h-96 w-96 rounded-full bg-blue-200/30 blur-3xl" />
         <div className="absolute right-[-10rem] top-24 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl" />

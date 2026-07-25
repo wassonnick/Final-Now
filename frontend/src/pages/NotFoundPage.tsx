@@ -15,7 +15,7 @@ export function NotFoundPage() {
   }, []);
 
   return (
-    <section className="bg-gradient-to-b from-blue-50/70 via-white to-white px-4 py-16 md:py-24">
+    <section className="ncr-skin bg-gradient-to-b from-blue-50/70 via-white to-white px-4 py-16 md:py-24">
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
         <div className="rounded-full border border-blue-100 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-blue-700 shadow-sm">
           404

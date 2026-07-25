@@ -120,7 +120,7 @@ export function SocietiesPage() {
   }, [query, societies]);
 
   return (
-    <div className="min-h-screen bg-ivory-100">
+    <div className="ncr-skin min-h-screen bg-ivory-100">
       <section className="border-b border-navy-100 bg-white">
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-3xl">
