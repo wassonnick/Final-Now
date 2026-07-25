@@ -24,8 +24,8 @@ export function AIAdvisorPage() {
 
   useEffect(() => {
     setPublicSeo(
-      "SocietyFlats AI Advisor — Your Gurgaon Home Search, Made Simple",
-      "Just tell our AI advisor what matters — your commute, budget, schools, the feel you're after — and it'll gently shortlist the Gurgaon societies and homes that genuinely fit.",
+      "SocietyFlats AI Advisor — Your Delhi NCR Home Search, Made Simple",
+      "Just tell our AI advisor what matters — your commute, budget, schools, the feel you're after — and it'll gently shortlist the Delhi NCR societies and homes that genuinely fit.",
     );
     window.scrollTo(0, 0);
   }, []);
