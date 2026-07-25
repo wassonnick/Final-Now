@@ -1,335 +1,181 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import {
-  ArrowRight,
-  BadgeCheck,
-  Building2,
-  ClipboardCheck,
-  FileCheck2,
-  Landmark,
-  Map,
-  MessageCircle,
-  Route,
-  ShieldCheck,
-  Sparkles,
-  UsersRound,
-} from "lucide-react";
-
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowRight, Check, MapPin, ShieldCheck } from "lucide-react";
 import { usePublicSeo } from "@/lib/seo";
 import { fallbackNcrCityLaunchPolicy, fetchNcrCityLaunchPolicy, type NcrCityLaunchPolicy } from "@/lib/ncrPublicApi";
+import { NCR_CITIES, NCR_REGION, LIVE_NCR_CITY, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
+import { MODULES } from "@/lib/modules";
 
-type NcrCity = {
-  slug: string;
-  name: string;
-  state: string;
-  status: "current-market" | "review-market";
-  headline: string;
-  intro: string;
-  corridors: string[];
-  proofPoints: string[];
-  readiness: Array<{ label: string; state: string; copy: string }>;
-  modules: Array<{ title: string; copy: string; icon: typeof Map }>;
+const ACCENT = "#0F7B63";
+
+// Micro-markets we cover (or will cover) per city — presented as navigation, never as an
+// availability claim. Kept front-end so a launching city can preview its corridors.
+const CORRIDORS: Record<string, string[]> = {
+  gurgaon: ["Golf Course Road", "Golf Course Extension", "Dwarka Expressway", "Southern Peripheral Road", "Sohna Road", "New Gurgaon"],
+  noida: ["Noida Expressway", "Sector 150", "Sector 137", "Central Noida"],
+  "greater-noida": ["Greater Noida West", "Pari Chowk", "Yamuna Expressway", "Techzone"],
+  delhi: ["South Delhi", "West Delhi", "Dwarka", "Rohini"],
+  faridabad: ["Neharpar", "Sector 79", "Sector 85", "Surajkund"],
+  ghaziabad: ["Indirapuram", "Raj Nagar Extension", "Vaishali", "Crossings Republik"],
 };
 
-const cityMap: Record<string, NcrCity> = {
-  gurgaon: {
-    slug: "gurgaon",
-    name: "Gurgaon",
-    state: "Haryana",
-    status: "current-market",
-    headline: "Gurgaon remains the live SocietyFlats market.",
-    intro: "Gurgaon stays the production benchmark: verified society profiles, real rental and resale demand, RWA/builder workflows, NRI support and public lead routing all continue to run from the same society-first model.",
-    corridors: ["Golf Course Road", "Golf Course Extension Road", "Dwarka Expressway", "Southern Peripheral Road"],
-    proofPoints: [
-      "Published society profiles remain governed by current verification and publication filters.",
-      "Live property inventory appears only when a real listing is verified or intentionally published.",
-      "Search, compare, AI advisor, RWA and NRI journeys continue to point users back to society context.",
-    ],
-    readiness: [
-      { label: "City mapping", state: "Live baseline", copy: "Gurgaon and Gurugram text stay compatible while structured city IDs are backfilled safely." },
-      { label: "Society depth", state: "In production", copy: "Existing public societies remain the proof model for future NCR cities." },
-      { label: "Indexing", state: "Current route live", copy: "The existing `/gurgaon` experience remains canonical; this `/ncr/gurgaon` shell stays noindex." },
-    ],
-    modules: [
-      { title: "Verified society discovery", copy: "Public Gurgaon society pages continue to be filtered by current publication rules.", icon: BadgeCheck },
-      { title: "Property requests", copy: "Rental and resale enquiries continue to route through SocietyFlats lead capture.", icon: Building2 },
-      { title: "RWA and builder workflows", copy: "Claim, review and announcement workflows stay attached to existing society pages.", icon: UsersRound },
-    ],
-  },
-  delhi: {
-    slug: "delhi",
-    name: "Delhi",
-    state: "Delhi",
-    status: "review-market",
-    headline: "Delhi is staged for future society-first discovery.",
-    intro: "Delhi coverage should launch only after the team has enough society-level evidence to answer practical questions: where the building is, who manages it, how residents reach daily services, and how owners or NRIs can route requests without exposing private details.",
-    corridors: ["South Delhi", "West Delhi", "Dwarka", "Rohini"],
-    proofPoints: [
-      "No Delhi society, property or locality URL is added to public sitemap by this shell.",
-      "Future Delhi pages should be backed by admin-reviewed society records, not scraped or invented inventory.",
-      "NRI and owner-management flows can be attached once verified listings and handover rules are ready.",
-    ],
-    readiness: [
-      { label: "City mapping", state: "Staged", copy: "Delhi is present in the NCR city layer for admin review." },
-      { label: "Locality evidence", state: "Pending", copy: "Zones such as South Delhi, West Delhi and Dwarka need curated locality mapping before launch." },
-      { label: "Indexing", state: "Held", copy: "Public indexing requires explicit city approval plus the NCR indexing flag." },
-    ],
-    modules: [
-      { title: "Society profile intake", copy: "Admin can map Delhi societies to structured city, zone and locality records before publication.", icon: ClipboardCheck },
-      { title: "NRI owner support", copy: "Delhi can use the same NRI management, resale and tenant coordination workflows when verified inventory exists.", icon: ShieldCheck },
-      { title: "Lead routing", copy: "Buyer, tenant and owner demand can be tagged to Delhi without changing Gurgaon search behavior.", icon: Sparkles },
-    ],
-  },
-  noida: {
-    slug: "noida",
-    name: "Noida",
-    state: "Uttar Pradesh",
-    status: "review-market",
-    headline: "Noida is prepared for structured sector and expressway coverage.",
-    intro: "Noida needs a sector-aware experience because users often shortlist by expressway access, office commute and society operations before they shortlist a flat. This shell shows where that future structure will live once verified data is ready.",
-    corridors: ["Noida Expressway", "Sector 150", "Sector 137", "Central Noida"],
-    proofPoints: [
-      "Sector and corridor language is staged as navigation structure, not as a published inventory claim.",
-      "Property cards should remain absent until real rental or resale listings pass admin verification.",
-      "Comparisons can be reused only after society profiles have consistent scores and source-reviewed amenities.",
-    ],
-    readiness: [
-      { label: "Sector structure", state: "Staged", copy: "Noida can support sector-first navigation when locality records are reviewed." },
-      { label: "Inventory", state: "Not live", copy: "No fake listings are created for this city shell." },
-      { label: "Indexing", state: "Held", copy: "The page remains noindex and out of sitemap until approved." },
-    ],
-    modules: [
-      { title: "Sector-first navigation", copy: "Noida sectors can be staged as localities before they appear in public SEO.", icon: Map },
-      { title: "Verified homes only", copy: "Property cards will appear only after real listings pass admin verification.", icon: BadgeCheck },
-      { title: "Compare before calling", copy: "Future Noida society comparisons can reuse the existing SocietyFlats compare framework.", icon: Building2 },
-    ],
-  },
-  "greater-noida": {
-    slug: "greater-noida",
-    name: "Greater Noida",
-    state: "Uttar Pradesh",
-    status: "review-market",
-    headline: "Greater Noida is staged for zone-led expansion.",
-    intro: "Greater Noida should be organized around zones, corridors and verified society records so that future users can separate location fit, society operations and inventory source before speaking to anyone.",
-    corridors: ["Greater Noida West", "Pari Chowk", "Yamuna Expressway", "Techzone"],
-    proofPoints: [
-      "Zone mapping can be reviewed without making public SEO promises.",
-      "Owner-submitted, broker-assigned and SocietyFlats inventory sources stay separate.",
-      "RWA or builder pages should connect only after the underlying society profile is approved.",
-    ],
-    readiness: [
-      { label: "Zone mapping", state: "Staged", copy: "Future micro-markets can be grouped under reviewed zones." },
-      { label: "Source rules", state: "Ready", copy: "Property ownership/source labels already support safe future intake." },
-      { label: "Indexing", state: "Held", copy: "The shell is intentionally excluded from sitemap until city readiness passes." },
-    ],
-    modules: [
-      { title: "Zone mapping", copy: "Micro-markets can be reviewed in admin before they become public navigation.", icon: Map },
-      { title: "Owner inventory pipeline", copy: "Owner-submitted and SocietyFlats inventory sources stay separated during rollout.", icon: ClipboardCheck },
-      { title: "No premature indexing", copy: "The template is intentionally noindex until content depth and inventory quality are approved.", icon: ShieldCheck },
-    ],
-  },
-  faridabad: {
-    slug: "faridabad",
-    name: "Faridabad",
-    state: "Haryana",
-    status: "review-market",
-    headline: "Faridabad is ready for admin-only NCR intake.",
-    intro: "Faridabad can become a practical family-first market only after locality mapping, society verification and real lead routing are ready. This noindex shell is the review surface for that rollout.",
-    corridors: ["Neharpar", "Sector 79", "Sector 85", "Surajkund"],
-    proofPoints: [
-      "Lead demand can be tagged internally before any public city page is launched.",
-      "Society checks should cover location, management context, amenities and correction flow.",
-      "The public route does not imply availability, ranking or verified inventory.",
-    ],
-    readiness: [
-      { label: "Locality intake", state: "Staged", copy: "Faridabad sectors and corridors can be added behind admin controls." },
-      { label: "Verification", state: "Pending", copy: "Public pages should wait for source-reviewed society records." },
-      { label: "Indexing", state: "Held", copy: "No sitemap inclusion until city approval is explicit." },
-    ],
-    modules: [
-      { title: "Lead qualification", copy: "Faridabad demand can be tagged without making public SEO promises.", icon: Sparkles },
-      { title: "Society verification", copy: "Profiles remain draft/review until sources, location and checks are approved.", icon: BadgeCheck },
-      { title: "Admin-first rollout", copy: "The public page stays behind the NCR feature flag and remains out of sitemap.", icon: ShieldCheck },
-    ],
-  },
-};
+const STANDARD = [
+  ["Real location & builder", "Every society is placed on the map with its real builder and address — verified, not scraped."],
+  ["Reviewed photos & honest scores", "Approved images and checkable scores for safety, connectivity and lifestyle. No brochures."],
+  ["Honest availability", "Only genuinely available homes appear — nothing fabricated, no stale prices."],
+];
 
-function cityStatusLabel(city: NcrCity) {
-  return city.status === "current-market" ? "Current live market" : "Review-only market";
+function statusPill(status: NcrCity["status"]) {
+  if (status === "live") return "bg-[#ECF6F2] text-[#0F7B63]";
+  if (status === "launching") return "bg-amber-50 text-amber-700";
+  return "bg-slate-100 text-slate-500";
 }
 
 export function NcrCityLandingPage() {
   const { citySlug = "" } = useParams();
-  const city = cityMap[citySlug] || null;
+  const navigate = useNavigate();
+  const city = NCR_CITIES.find((c) => c.slug === citySlug) || null;
   const [launchPolicy, setLaunchPolicy] = useState<NcrCityLaunchPolicy>(() => fallbackNcrCityLaunchPolicy(citySlug));
   const isIndexable = Boolean(city && launchPolicy.is_indexable && launchPolicy.is_sitemap_approved && !launchPolicy.is_review_only);
-  const indexingLabel = isIndexable ? "Indexable after launch approval" : "Noindex";
-  const pageTitle = city
-    ? `${city.name} ${isIndexable ? "Society-First Home Search" : "Society-First Home Search Preview"} | SocietyFlats`
-    : "NCR City Preview | SocietyFlats";
-  const pageDescription = city
-    ? isIndexable
-      ? `${city.name} society-first home search by SocietyFlats, backed by approved launch policy and verified city coverage.`
-      : `Review-only ${city.name} city coverage preview for SocietyFlats. Noindex, feature-flagged and excluded from sitemap until approved.`
-    : "Review-only SocietyFlats NCR city shell.";
 
   useEffect(() => {
     let active = true;
     setLaunchPolicy(fallbackNcrCityLaunchPolicy(citySlug));
-    fetchNcrCityLaunchPolicy(citySlug).then((policy) => {
-      if (active) setLaunchPolicy(policy);
-    });
-
-    return () => {
-      active = false;
-    };
+    fetchNcrCityLaunchPolicy(citySlug).then((policy) => { if (active) setLaunchPolicy(policy); });
+    return () => { active = false; };
   }, [citySlug]);
 
   usePublicSeo(
-    pageTitle,
-    pageDescription,
+    city ? `${city.name} — verified societies & homes | SocietyFlats` : "Delhi NCR city | SocietyFlats",
+    city
+      ? isIndexable
+        ? `Choose your ${city.name} society first, then the home — verified profiles, real scores and honest availability across ${NCR_REGION}.`
+        : `${city.name} is being verified to SocietyFlats' standard before launch. Get notified when ${city.name} goes live.`
+      : "Verified societies across Delhi NCR.",
     { noindex: !isIndexable, canonical: city ? `/ncr/${city.slug}` : "/ncr-preview" },
   );
 
   if (!city) {
     return (
-      <div className="bg-ivory-100">
-        <section className="mx-auto max-w-4xl px-4 py-16">
-          <div className="rounded-[2rem] border border-amber-200 bg-white p-8 shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-amber-700">Review-only NCR route</p>
-            <h1 className="mt-4 text-4xl font-black text-navy-900">This NCR city is not staged yet.</h1>
-            <p className="mt-4 text-slate-600">Choose one of the staged NCR cities from the preview page.</p>
-            <Link className="mt-6 inline-flex rounded-full bg-blue-700 px-5 py-3 text-sm font-black text-white" to="/ncr-preview">
-              Back to NCR preview
-            </Link>
-          </div>
+      <div className="premium-home bg-white text-[#1D1D1F]">
+        <section className="mx-auto max-w-[720px] px-5 py-24 text-center">
+          <h1 className="!font-sans text-[32px] font-semibold tracking-[-0.02em]">That NCR city isn't here yet</h1>
+          <p className="mt-3 text-[15px] text-[#6E6E73]">We're rolling out across Delhi NCR one verified market at a time. Explore the live one meanwhile.</p>
+          <Link to="/" className="mt-6 inline-flex rounded-full px-6 py-3 text-[14px] font-semibold text-white" style={{ background: ACCENT }}>Explore Gurgaon</Link>
         </section>
       </div>
     );
   }
 
+  const live = city.status === "live";
+  const corridors = CORRIDORS[city.slug] || [];
+
   return (
-    <div className="bg-ivory-100">
-      <section className="mx-auto max-w-6xl px-4 py-10 md:py-14">
-        <div className="overflow-hidden rounded-[2.25rem] border border-blue-100 bg-white shadow-sm">
-          <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="p-6 md:p-10">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-blue-700">NCR city preview</span>
-                <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-800">{cityStatusLabel(city)}</span>
-                <span className={`rounded-full px-3 py-1.5 text-xs font-black ${isIndexable ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{indexingLabel}</span>
-              </div>
-
-              <h1 className="mt-6 max-w-3xl text-4xl font-black tracking-tight text-navy-900 md:text-6xl">
-                {city.headline}
-              </h1>
-              <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">{city.intro}</p>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link className="inline-flex items-center rounded-full bg-blue-700 px-5 py-3 text-sm font-black text-white" to={city.slug === "gurgaon" ? "/gurgaon" : "/search"}>
-                  {city.slug === "gurgaon" ? "Open live Gurgaon" : "Review current search"}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-                <Link className="inline-flex items-center rounded-full border border-blue-100 bg-white px-5 py-3 text-sm font-black text-blue-700" to="/ai-advisor">
-                  Ask AI advisor
-                </Link>
-                <Link className="inline-flex items-center rounded-full border border-blue-100 bg-white px-5 py-3 text-sm font-black text-blue-700" to="/trust">
-                  How verification works
-                </Link>
-              </div>
-            </div>
-
-            <div className="border-t border-blue-100 bg-gradient-to-br from-blue-50 via-white to-amber-50 p-6 md:p-10 lg:border-l lg:border-t-0">
-              <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-700">Prepared corridors</p>
-              <div className="mt-5 grid gap-3">
-                {city.corridors.map((corridor) => (
-                  <div key={corridor} className="rounded-2xl border border-white bg-white/80 p-4 shadow-sm">
-                    <p className="font-black text-navy-900">{corridor}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500">Can become a reviewed zone/locality before public SEO rollout.</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+    <div className="premium-home bg-white text-[#1D1D1F]">
+      {/* HERO */}
+      <section className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[440px] bg-[radial-gradient(120%_90%_at_50%_-10%,#F1F7F5_0%,#FFFFFF_60%)]" />
+        <div className="relative mx-auto max-w-[1120px] px-5 pb-14 pt-16 text-center lg:pt-20">
+          <div className="flex items-center justify-center gap-2">
+            <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#6E6E73]"><MapPin className="h-3.5 w-3.5" />{NCR_REGION} · {city.state}</span>
+            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusPill(city.status)}`}>{ncrCityStatusLabel(city.status)}</span>
+          </div>
+          <h1 className="!font-sans mx-auto mt-5 max-w-[820px] text-[42px] font-semibold leading-[1.04] tracking-[-0.03em] sm:text-[56px] lg:text-[64px]">
+            {live ? <>Verified societies in <span className="text-[#6E6E73]">{city.name}</span></> : <>{city.name} is coming — <span className="text-[#6E6E73]">verified first</span></>}
+          </h1>
+          <p className="mx-auto mt-5 max-w-[600px] text-[16px] leading-8 text-[#6E6E73] lg:text-[18px]">
+            {live
+              ? `Choose the society, then the home. Real profiles, checkable scores and honest availability across ${city.name}.`
+              : `We open a market only after it's verified to the same standard as Gurgaon. Tell us what you're looking for and we'll reach out the moment ${city.name} is live.`}
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            {live ? (
+              <>
+                <button onClick={() => navigate("/search?tab=societies")} className="rounded-full px-6 py-3.5 text-[15px] font-semibold text-white" style={{ background: ACCENT }}>Explore {city.name} societies</button>
+                <Link to="/ai-advisor" className="rounded-full bg-[#F5F5F7] px-6 py-3.5 text-[15px] font-semibold text-[#1D1D1F] hover:bg-[#ECECEF]">Ask the AI advisor</Link>
+              </>
+            ) : (
+              <>
+                <button onClick={() => navigate(`/sell?notify=${city.slug}`)} className="rounded-full px-6 py-3.5 text-[15px] font-semibold text-white" style={{ background: ACCENT }}>Notify me about {city.name}</button>
+                <Link to="/" className="rounded-full bg-[#F5F5F7] px-6 py-3.5 text-[15px] font-semibold text-[#1D1D1F] hover:bg-[#ECECEF]">Explore Gurgaon (live)</Link>
+              </>
+            )}
           </div>
         </div>
+      </section>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {city.modules.map((module) => {
-            const Icon = module.icon;
+      {/* CORRIDORS */}
+      {corridors.length ? (
+        <section className="mx-auto max-w-[1120px] px-5 pb-4">
+          <p className="text-center text-[13px] font-semibold uppercase tracking-[0.14em] text-[#98A2B3]">{live ? "Popular micro-markets" : "Micro-markets we'll cover"}</p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {corridors.map((c) => (
+              live ? (
+                <button key={c} onClick={() => navigate(`/search?tab=societies&q=${encodeURIComponent(c)}`)} className="rounded-full border border-[#E4E4E9] bg-white px-4 py-2 text-[13px] font-semibold text-[#43434A] hover:border-[#C9D6D1] hover:text-[#1D1D1F]">{c}</button>
+              ) : (
+                <span key={c} className="rounded-full bg-[#F5F5F7] px-4 py-2 text-[13px] font-semibold text-[#6E6E73]">{c}</span>
+              )
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* OUR STANDARD */}
+      <section className="border-y border-[#EEEEF1] bg-[#F5F5F7]">
+        <div className="mx-auto max-w-[1120px] px-5 py-16 lg:py-20">
+          <div className="mx-auto max-w-[560px] text-center">
+            <h2 className="!font-sans text-[28px] font-semibold tracking-[-0.02em] lg:text-[34px]">The standard every city must clear</h2>
+            <p className="mt-2 text-[15px] leading-7 text-[#6E6E73]">The reason we're calm and honest — and the reason {city.name} launches only when it's ready.</p>
+          </div>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {STANDARD.map(([title, body], i) => (
+              <div key={title} className="rounded-[24px] bg-white p-7 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl text-white" style={{ background: ACCENT }}><ShieldCheck className="h-5 w-5" /></span>
+                  <span className="text-[13px] font-bold text-[#86868B]">0{i + 1}</span>
+                </div>
+                <p className="mt-5 text-[18px] font-semibold">{title}</p>
+                <p className="mt-2 text-[14px] leading-7 text-[#6E6E73]">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TOOLKIT */}
+      <section className="mx-auto max-w-[1120px] px-5 py-16 lg:py-20">
+        <h2 className="!font-sans text-center text-[28px] font-semibold tracking-[-0.02em] lg:text-[34px]">Everything you need to decide</h2>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {MODULES.map((m) => {
+            const Icon = m.icon;
             return (
-              <article key={module.title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <Icon className="h-6 w-6 text-blue-700" />
-                <h2 className="mt-4 text-xl font-black text-navy-900">{module.title}</h2>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{module.copy}</p>
-              </article>
+              <Link key={m.key} to={m.href} className="group flex items-start gap-3 rounded-[20px] border border-[#E4E4E9] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.28)]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: "#ECF6F2", color: ACCENT }}><Icon className="h-4 w-4" /></span>
+                <span>
+                  <span className="block text-[15px] font-semibold">{m.name}</span>
+                  <span className="mt-0.5 block text-[13px] leading-5 text-[#86868B]">{m.desc}</span>
+                </span>
+              </Link>
             );
           })}
         </div>
+      </section>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">What must be true before launch</p>
-            <h2 className="mt-3 text-2xl font-black text-navy-900">No city goes public on a label alone.</h2>
-            <div className="mt-5 space-y-4">
-              {city.proofPoints.map((point) => (
-                <div key={point} className="flex gap-3 rounded-2xl bg-slate-50 p-4">
-                  <FileCheck2 className="mt-0.5 h-5 w-5 flex-none text-blue-700" />
-                  <p className="text-sm leading-6 text-slate-600">{point}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">City readiness path</p>
-            <h2 className="mt-3 text-2xl font-black text-navy-900">The rollout is intentionally gated.</h2>
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              {city.readiness.map((item) => (
-                <article key={item.label} className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">{item.state}</p>
-                  <h3 className="mt-2 font-black text-navy-900">{item.label}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.copy}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <section className="mt-6 rounded-[1.75rem] border border-blue-100 bg-white p-6 shadow-sm">
-          <div className="grid gap-5 md:grid-cols-[0.9fr_1.1fr] md:items-center">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Connected SocietyFlats journeys</p>
-              <h2 className="mt-3 text-2xl font-black text-navy-900">Every city should plug into the same user journey.</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                The city page is not a standalone brochure. It should guide users into society comparison, map-led discovery,
-                RWA context, NRI owner support, verified homes and correction workflows when those pieces are ready.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {[
-                { label: "Compare societies", href: "/compare", icon: Route },
-                { label: "Explore on map", href: "/maps", icon: Map },
-                { label: "NRI owner support", href: "/nri", icon: Landmark },
-                { label: "Corrections & data", href: "/corrections", icon: MessageCircle },
-              ].map((link) => {
-                const Icon = link.icon;
-                return (
-                  <Link key={link.label} to={link.href} className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-black text-navy-900 transition hover:border-blue-200 hover:bg-blue-50">
-                    <Icon className="h-5 w-5 text-blue-700" />
-                    <span>{link.label}</span>
-                    <ArrowRight className="ml-auto h-4 w-4 text-blue-700 transition group-hover:translate-x-1" />
-                  </Link>
-                );
-              })}
-            </div>
+      {/* CTA */}
+      <section className="mx-auto max-w-[1120px] px-5 pb-20">
+        <div className="overflow-hidden rounded-[32px] bg-[#1D1D1F] px-8 py-14 text-center text-white lg:px-16 lg:py-16">
+          <h2 className="!font-sans mx-auto max-w-[600px] text-[28px] font-semibold leading-tight tracking-[-0.02em] lg:text-[38px]">
+            {live ? `Find your ${city.name} home, calmly.` : `Be first when ${city.name} goes live.`}
+          </h2>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            {live ? (
+              <button onClick={() => navigate("/search?tab=societies")} className="rounded-full px-7 py-3.5 text-[15px] font-semibold text-white" style={{ background: ACCENT }}>Explore {city.name}</button>
+            ) : (
+              <button onClick={() => navigate(`/sell?notify=${city.slug}`)} className="rounded-full px-7 py-3.5 text-[15px] font-semibold text-white" style={{ background: ACCENT }}>Notify me about {city.name}</button>
+            )}
+            <Link to="/ai-advisor" className="rounded-full bg-white/10 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:bg-white/20">Ask the AI advisor</Link>
           </div>
-        </section>
-
-        <div className="mt-6 rounded-[1.75rem] border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
-          <strong>Indexing guard:</strong>{" "}
-          {isIndexable
-            ? "backend launch policy has approved this city for indexing and sitemap inclusion. If that approval is revoked or the API cannot confirm it, the page falls back to noindex."
-            : "this page sets explicit noindex, nofollow unless the backend confirms city launch approval plus sitemap approval. Public city SEO should wait for mapping audit, approved content and sitemap policy."}
+          <p className="mt-6 inline-flex items-center gap-1.5 text-[12px] text-white/50"><Check className="h-3.5 w-3.5" style={{ color: "#9FE0CE" }} />No fake listings · real scores · no paid ranking</p>
         </div>
       </section>
     </div>
