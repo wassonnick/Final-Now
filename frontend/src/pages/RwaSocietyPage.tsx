@@ -139,7 +139,7 @@ export function RwaSocietyPage() {
   }
 
   return (
-    <main className="bg-[#F8F3EA]">
+    <main className="ncr-skin bg-[#F8F3EA]">
       <section className="border-b border-[#E7DCCB] bg-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 lg:grid-cols-[1fr_360px] lg:items-end">
           <div>

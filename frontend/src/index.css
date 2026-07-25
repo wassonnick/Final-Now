@@ -453,3 +453,10 @@ body,
 .ncr-skin .hover\:bg-\[\#1B2E57\]:hover { background-color: #0C6853 !important; }
 .ncr-skin .bg-\[\#1B2E57\] { background-color: #1D1D1F !important; }
 .ncr-skin .text-\[\#8B6B32\], .ncr-skin .text-\[\#8C6E2F\], .ncr-skin .text-\[\#C5A766\] { color: #0F7B63 !important; }
+
+/* Content / legal pages — extra hexes */
+.ncr-skin .border-\[\#D0D5DD\] { border-color: #E4E4E9 !important; }
+.ncr-skin .text-\[\#1d315b\], .ncr-skin .bg-\[\#1d315b\] { color: #1D1D1F !important; }
+.ncr-skin .bg-\[\#1d315b\] { background-color: #1D1D1F !important; }
+.ncr-skin .bg-\[\#F2F4F7\], .ncr-skin .bg-\[\#F4E3D8\], .ncr-skin .bg-\[\#FBF3EE\] { background-color: #F5F5F7 !important; }
+.ncr-skin .bg-\[\#F4E3D8\] { background-color: #F5F5F7 !important; }

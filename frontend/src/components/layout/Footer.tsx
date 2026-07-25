@@ -90,7 +90,7 @@ export function Footer() {
               <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#6E6E73]">{column.heading}</h3>
               <div className="mt-3 grid gap-2.5">
                 {column.links.map(([label, href]) => (
-                  <Link key={href} to={href} className="text-[13.5px] text-[#C7C7CD]">
+                  <Link key={href} to={href} className="w-fit text-[13.5px] text-[#C7C7CD]">
                     {label}
                   </Link>
                 ))}
@@ -128,7 +128,7 @@ export function Footer() {
                     <Link
                       key={`${column.heading}-${href}`}
                       to={href}
-                      className="text-[13.5px] text-[#C7C7CD] transition hover:text-white"
+                      className="w-fit text-[13.5px] text-[#C7C7CD] transition hover:text-white"
                     >
                       {label}
                     </Link>

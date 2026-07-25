@@ -716,7 +716,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
   const pageLabel = landingLabel(variant, locality, builderSlug);
 
   return (
-    <div className="min-h-screen bg-[#F8F3EA]">
+    <div className="ncr-skin min-h-screen bg-[#F8F3EA]">
       <section className="relative overflow-hidden border-b border-[#E7DCCB] bg-[radial-gradient(circle_at_82%_14%,rgba(194,114,78,0.10),transparent_30%),linear-gradient(180deg,#FFFBF3_0%,#F8F3EA_100%)]">
         <div className="container mx-auto px-4 py-6 md:py-8">
           <nav className="mb-5 flex items-center gap-2 text-xs font-black text-blue-300">

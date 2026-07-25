@@ -36,7 +36,7 @@ type PageConfig = {
 const pageConfigs: Record<Variant, PageConfig> = {
   methodology: {
     eyebrow: "Decision methodology",
-    title: "How SocietyFlats turns Gurgaon society data into practical home-search intelligence.",
+    title: "How SocietyFlats turns Delhi NCR society data into practical home-search intelligence.",
     description:
       "Our methodology is society-first: we verify location, liveability, amenities, maintenance, connectivity, builder context, market signals and correction history before turning a profile into public guidance.",
     canonical: "/methodology",
@@ -290,7 +290,7 @@ export function DecisionTrustPage({ variant }: { variant: Variant }) {
   };
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#F7F2EA] text-[#1D2939]">
+    <main className="ncr-skin min-h-screen overflow-hidden bg-[#F7F2EA] text-[#1D2939]">
       <section className="relative border-b border-[#E6DDCF] bg-[radial-gradient(circle_at_84%_12%,rgba(194,114,78,.14),transparent_28%),radial-gradient(circle_at_10%_18%,rgba(35,59,110,.10),transparent_25%),linear-gradient(180deg,#FFFCF7,#F7F2EA)]">
         <div className="mx-auto grid max-w-[1360px] gap-10 px-5 py-14 md:px-10 md:py-20 lg:grid-cols-[1fr_430px] lg:items-center">
           <div>
