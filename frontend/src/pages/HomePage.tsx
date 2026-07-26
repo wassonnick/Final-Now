@@ -49,7 +49,7 @@ const areas = [
 ];
 
 const faqs = [
-  ["How does SocietyFlats verify a society?", "Imported society data and images remain private until an admin reviews and publishes them."],
+  ["How does SocietyFlats verify a society?", "Imported society data and images remain private until our team reviews and publishes them."],
   ["Why do some societies show no available homes?", "Society profiles and property availability are reviewed separately. We never fabricate inventory."],
   ["Is there any brokerage or fee for tenants?", "Any applicable commercial terms are clarified before a visit or transaction."],
   ["How is the AI Advisor recommendation calculated?", "It matches your stated needs — budget, commute, configuration — against the scored, currently published SocietyFlats dataset. No paid placements, no sponsored ranking."],
@@ -227,7 +227,7 @@ export function HomePage() {
         ) : (
           <div className="rounded-[18px] border border-[#DDD7CC] bg-white p-5 lg:p-7">
             <p className="font-display text-xl font-medium text-[#111827]">Fresh verified societies are being prepared.</p>
-            <p className="mt-1 text-sm leading-6 text-[#667085]">Profiles appear here after society data and images pass admin review.</p>
+            <p className="mt-1 text-sm leading-6 text-[#667085]">Profiles appear here after society data and images pass our review.</p>
           </div>
         )}
       </section>

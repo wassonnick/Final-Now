@@ -215,7 +215,7 @@ export function SocietiesPage() {
                   </div>
 
                   <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-navy-500">
-                    {society.description || 'Admin-reviewed Gurgaon society profile with published location and market context.'}
+                    {society.description || 'Reviewed society profile with published location and market context.'}
                   </p>
 
                   <div className="mt-5 grid grid-cols-2 gap-3">

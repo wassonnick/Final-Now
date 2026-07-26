@@ -23,7 +23,7 @@ import type { AdminSociety } from "@/lib/adminSocietyStore";
 
 type InsightMode = "rent" | "buy" | "sell";
 
-type Confidence = "Admin reviewed" | "Guide range" | "Needs verification";
+type Confidence = "Reviewed" | "Guide range" | "Needs verification";
 
 type MarketInfo = {
   confidence?: string;
@@ -55,7 +55,7 @@ function marketRank(market: MarketInfo | undefined) {
 
 function confidenceLabel(market: MarketInfo | undefined): Confidence {
   const rank = marketRank(market);
-  if (rank === 3) return "Admin reviewed";
+  if (rank === 3) return "Reviewed";
   if (rank >= 1) return "Guide range";
   return "Needs verification";
 }
@@ -63,7 +63,7 @@ function confidenceLabel(market: MarketInfo | undefined): Confidence {
 function sourceLabelFor(market: MarketInfo | undefined) {
   if (!market) return "Not yet sourced";
   const count = market.sources?.length || 0;
-  return `Claude-grounded market research${count ? ` · ${count} sources` : ""}`;
+  return `AI-assisted market research${count ? ` · ${count} sources` : ""}`;
 }
 
 function formatSourcedDate(iso: string | undefined) {
@@ -115,7 +115,7 @@ function buildMarketRows(societies: AdminSociety[]): MarketRow[] {
 
 const sourceStack = [
   {
-    title: "Admin-reviewed society data",
+    title: "Reviewed society data",
     text: "Rent range, buy range and source confidence are pulled live from each published society's reviewed fields — not a static guide.",
     icon: ShieldCheck,
   },
@@ -126,7 +126,7 @@ const sourceStack = [
   },
   {
     title: "Public source references",
-    text: "Each row shows whether its range came from Claude-grounded research, an admin entry, or is still unverified — and when it was last checked.",
+    text: "Each row shows whether its range came from AI-assisted research, a reviewed entry, or is still unverified — and when it was last checked.",
     icon: FileSearch,
   },
 ];
@@ -160,9 +160,9 @@ function modeValue(row: MarketRow, mode: InsightMode) {
 function modeSignal(row: MarketRow, mode: InsightMode) {
   const plural = row.societyCount === 1 ? "society" : "societies";
   if (mode === "sell") {
-    return `${row.societyCount} admin-reviewed ${plural} here — list yours to compare directly against them.`;
+    return `${row.societyCount} reviewed ${plural} here — list yours to compare directly against them.`;
   }
-  return `Based on ${row.societyCount} admin-reviewed ${plural} in ${row.locality}.`;
+  return `Based on ${row.societyCount} reviewed ${plural} in ${row.locality}.`;
 }
 
 function modeHref(mode: InsightMode) {
@@ -172,13 +172,13 @@ function modeHref(mode: InsightMode) {
 }
 
 function confidenceClass(confidence: Confidence) {
-  if (confidence === "Admin reviewed") return "bg-emerald-50 text-emerald-700";
+  if (confidence === "Reviewed") return "bg-emerald-50 text-emerald-700";
   if (confidence === "Guide range") return "bg-blue-50 text-blue-700";
   return "bg-amber-50 text-amber-700";
 }
 
 function confidenceText(confidence: Confidence) {
-  if (confidence === "Admin reviewed") return "Admin reviewed";
+  if (confidence === "Reviewed") return "Reviewed";
   if (confidence === "Guide range") return "Guide range";
   return "Verify before use";
 }
@@ -208,7 +208,7 @@ export function InsightsPage() {
   const heroMetrics = useMemo(
     () => [
       ["Data status", "Live society data", "Not final pricing"],
-      ["Societies covered", String(societies.length || 0), "Admin-reviewed only"],
+      ["Societies covered", String(societies.length || 0), "Reviewed only"],
       ["Signals covered", "Rent / Buy / Sell", "Separate decision lenses"],
       ["Next action", "Search or callback", "Society-specific decision"],
     ],
@@ -415,7 +415,7 @@ export function InsightsPage() {
               <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">Verification note</p>
               <h2 className="mt-1.5 font-display text-2xl font-black text-navy-950">Use insights as guidance, not final pricing.</h2>
               <p className="mt-2 text-sm font-semibold leading-6 text-navy-600">
-                Gurgaon prices change by tower, floor, view, furnishing, inventory and owner urgency. Future admin enrichment should attach source URL, official/RERA URL, confidence score and last-reviewed date to every market signal.
+                Prices change by tower, floor, view, furnishing, live inventory and owner urgency. Treat every range here as a starting point, and confirm the exact number against the specific home before you commit.
               </p>
             </div>
             <Button asChild className="h-12 rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">

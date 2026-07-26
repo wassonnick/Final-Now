@@ -309,8 +309,8 @@ export function OwnerDashboard() {
     () =>
       listingSubmissions.map((lead) => ({
         title: `Lead tracking for ${lead.title}`,
-        meta: "Admin will verify, publish and share privacy-safe enquiry updates here. Buyer/tenant phone remains protected until SocietyFlats unlocks the next stage.",
-        status: "Admin controlled",
+        meta: "We'll verify, publish and share privacy-safe enquiry updates here. Buyer/tenant phone remains protected until SocietyFlats unlocks the next stage.",
+        status: "SocietyFlats-managed",
       })),
     [listingSubmissions],
   );
@@ -321,7 +321,7 @@ export function OwnerDashboard() {
 
   const ownerStats = [
     { label: "Submitted listings", value: String(backendOwnerLeadCount ?? listingSubmissions.length), helper: hasBackendDashboard ? "Account verified" : "Saved to this account", icon: Home },
-    { label: "Admin review", value: String(backendLinkedPropertyCount ?? listingSubmissions.length), helper: "Verification pipeline", icon: ShieldCheck },
+    { label: "In review", value: String(backendLinkedPropertyCount ?? listingSubmissions.length), helper: "Being verified", icon: ShieldCheck },
     { label: "Safe lead updates", value: String(propertyLeadItems.length), helper: "Contact privacy locked", icon: MessageCircle },
     { label: "Other enquiries", value: String(enquirySubmissions.length), helper: "Search/society callbacks", icon: Phone },
   ];
@@ -443,7 +443,7 @@ export function OwnerDashboard() {
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-950">Admin-controlled visibility</h2>
+                  <h2 className="text-xl font-black text-slate-950">SocietyFlats-managed visibility</h2>
                   <p className="mt-1 text-sm text-slate-500">Protected owner dashboard with listing and enquiry updates.</p>
                 </div>
               </div>
@@ -453,8 +453,8 @@ export function OwnerDashboard() {
               <div className="mt-5 grid gap-3">
                 {[
                   "Owner listings are linked by this login phone",
-                  "Admin verifies ownership, photos, pricing and availability",
-                  "Public publishing remains admin-approved",
+                  "We verify ownership, photos, pricing and availability",
+                  "Public publishing stays reviewed by our team",
                   "Contact details are shared only after the enquiry is reviewed",
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700">

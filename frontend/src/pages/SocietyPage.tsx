@@ -233,7 +233,7 @@ function deliveryStatusTone(status: string) {
     badge: "border-slate-200 bg-slate-50 text-slate-700",
     card: "border-slate-200 bg-slate-50",
     label: "Needs review",
-    helper: "Delivery status is pending admin/source verification.",
+    helper: "Delivery status is pending verification.",
   };
 }
 
@@ -767,7 +767,7 @@ export function SocietyPage() {
             Society not found
           </h1>
           <p className="mt-3 text-navy-500">
-            Create or verify this society in the admin panel.
+            This society profile isn.t published yet.
           </p>
           <Button
             asChild
@@ -831,7 +831,7 @@ export function SocietyPage() {
     },
     {
       title: "Hospitals",
-      text: "Nearby hospital and emergency-access context is pending admin review.",
+      text: "Nearby hospital and emergency-access context is pending review.",
       icon: Shield,
     },
     {
@@ -906,7 +906,7 @@ export function SocietyPage() {
     sourceConfidenceScore > 0 ? `${sourceConfidenceScore}% verified` : "Review pending";
   const updatedText =
     readableStructuredValue(field(society, "updatedAt", "updated_at", "")) ||
-    "Admin-reviewed profile";
+    "Reviewed profile";
   const projectStatusText =
     readableStructuredValue(field(society, "projectStatus", "project_status", "")) ||
     "Needs Review";
@@ -939,7 +939,7 @@ export function SocietyPage() {
       icon: Building2,
     },
     {
-      label: "Admin review",
+      label: "Review",
       value: field(
         society,
         "verificationStatus",
@@ -991,7 +991,7 @@ export function SocietyPage() {
         ...correctionForm,
       });
       trackCorrectionFormSubmit({ society_slug: slug || "", society_name: society.name });
-      setCorrectionMessage("Correction submitted for admin review.");
+      setCorrectionMessage("Correction submitted for review.");
       setCorrectionForm({ information_challenged: "", suggested_correction: "", supporting_url: "", name: "", email: "", phone: "", consent: false });
     } catch (error: any) {
       setCorrectionMessage(error?.message || "Unable to submit correction.");
@@ -1484,7 +1484,7 @@ export function SocietyPage() {
               </div>
               <label className="flex gap-3 rounded-2xl bg-[#F8F3EA] p-3 text-sm text-[#6E756E]">
                 <input required type="checkbox" checked={correctionForm.consent} onChange={(e) => setCorrectionForm({ ...correctionForm, consent: e.target.checked })} />
-                I consent to SocietyFlats using this submission for admin review.
+                I consent to SocietyFlats using this submission for review.
               </label>
               {correctionMessage ? <p className="text-sm font-bold text-[#233B6E]">{correctionMessage}</p> : null}
               <button className="rounded-full bg-[#233B6E] px-5 py-3 text-sm font-bold text-white">Submit for review</button>

@@ -196,7 +196,7 @@ function MapsTool({ societies }: { societies: PublicSociety[] }) {
               </div>
               <div className="rounded-2xl bg-white/10 p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-navy-300">Coordinates</p>
-                <p className="mt-2 text-sm">{selected?.latitude && selected?.longitude ? `${selected.latitude}, ${selected.longitude}` : 'Admin review pending'}</p>
+                <p className="mt-2 text-sm">{selected?.latitude && selected?.longitude ? `${selected.latitude}, ${selected.longitude}` : 'Review pending'}</p>
               </div>
               <div className="rounded-2xl bg-white/10 p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-navy-300">Source</p>
@@ -518,7 +518,7 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
             {[
               'Access society-first Gurgaon buyer and renter leads instead of random portal noise.',
               'Submit your active areas and inventory once, then track partner follow-up from the Broker Dashboard.',
-              'Admin verifies broker profile, inventory quality, working societies and lead stages before deeper customer routing.',
+              'We verify broker profile, inventory quality, working societies and lead stages before deeper customer routing.',
               'Get access to owner listing, buyer and tenant opportunities as SocietyFlats grows.',
               'Commission pipeline will be tracked transparently after verified deal stages.',
             ].map((item) => (
@@ -590,7 +590,7 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
         <div className="mt-5 space-y-4">
           {[
             'Your request is saved as a lead.',
-            'Admin reviews source and society context.',
+            'Our team reviews source and society context.',
             'The team follows up by phone or WhatsApp.',
             'Qualified leads can be assigned internally.',
           ].map((item) => (
@@ -659,7 +659,7 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
               <p className="mt-2 text-lg font-bold text-navy-900">Gurgaon societies first</p>
             </div>
             <div className="rounded-[1.5rem] border border-orange-100 bg-white p-5 shadow-sm">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">Admin verified</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">Verified</p>
               <p className="mt-2 text-lg font-bold text-navy-900">Leads + commission tracking</p>
             </div>
           </div>

@@ -53,7 +53,7 @@ const desktopColumns = [
 ];
 
 const Wordmark = () => (
-  <span className="text-[19px] font-semibold tracking-tight text-white">
+  <span className="font-display text-[21px] font-semibold tracking-[-0.02em] text-white">
     Society<span style={{ color: "#3BAE93" }}>Flats</span>
   </span>
 );
@@ -79,7 +79,8 @@ export function Footer() {
     <>
       {/* Mobile */}
       <footer className="border-t border-[#2A2A2E] bg-[#1D1D1F] px-5 pb-28 pt-9 lg:hidden">
-        <Link to="/" onClick={() => window.scrollTo(0, 0)}>
+        <Link to="/" onClick={() => window.scrollTo(0, 0)} className="inline-flex items-center gap-2.5">
+          <BrandMark size={28} className="rounded-[8px]" />
           <Wordmark />
         </Link>
         <Tagline className="mt-3 max-w-sm" />

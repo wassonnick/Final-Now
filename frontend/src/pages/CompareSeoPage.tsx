@@ -127,7 +127,7 @@ function CompareIndex() {
             Compare Gurgaon societies before choosing the home.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-[#667064]">
-            Each page compares three published SocietyFlats society profiles using admin-reviewed data. No draft societies, private fields or unverified promises are shown.
+            Each page compares three published SocietyFlats society profiles using reviewed data. No draft societies, private fields or unverified promises are shown.
           </p>
         </div>
 
@@ -138,7 +138,7 @@ function CompareIndex() {
         ) : pages.length === 0 ? (
           <div className="mt-10 rounded-[2rem] border border-[#dfded6] bg-white p-8">
             <h2 className="text-2xl font-bold text-[#19231c]">No published comparison pages yet.</h2>
-            <p className="mt-3 text-[#667064]">Generated comparison pages stay in admin review until approved and published.</p>
+            <p className="mt-3 text-[#667064]">Generated comparison pages stay in review until approved and published.</p>
             <Button asChild className="mt-6 rounded-full bg-[#153f2b] px-6 text-white hover:bg-[#0e2f20]">
               <Link to="/search">Browse published societies</Link>
             </Button>
@@ -212,7 +212,7 @@ function CompareDetail({ slug }: { slug: string }) {
       <div className="min-h-[60vh] bg-[#F8F3EA] px-5 py-16">
         <div className="mx-auto max-w-3xl rounded-[2rem] border border-[#dfded6] bg-white p-8">
           <h1 className="font-serif text-4xl text-[#19231c]">Comparison not available</h1>
-          <p className="mt-4 text-[#667064]">{error || "This page may still be in admin review."}</p>
+          <p className="mt-4 text-[#667064]">{error || "This page may still be in review."}</p>
           <Button asChild className="mt-6 rounded-full bg-[#153f2b] px-6 text-white hover:bg-[#0e2f20]">
             <Link to="/compare">View published comparisons</Link>
           </Button>
@@ -269,7 +269,7 @@ function CompareDetail({ slug }: { slug: string }) {
               ))}
               {!(page.best_for_json || []).length ? (
                 <div className="rounded-[1.25rem] bg-[#f4f0e7] p-4 text-sm text-[#667064]">
-                  Best-fit labels are prepared during admin review.
+                  Best-fit labels are prepared during our review.
                 </div>
               ) : null}
             </div>
@@ -302,7 +302,7 @@ function CompareDetail({ slug }: { slug: string }) {
 
           <section className="mt-10">
             <h2 className="font-serif text-3xl text-[#19231c]">Verified homes available right now</h2>
-            <p className="mt-2 text-[#667064]">Live, admin-verified listings inside these societies — shown from current inventory, never cached.</p>
+            <p className="mt-2 text-[#667064]">Live, verified listings inside these societies — shown from current inventory, never cached.</p>
             <div className="mt-5 grid gap-4 md:grid-cols-3">
               {(page.societies || []).map((society) => (
                 <div key={society.slug} className="flex flex-col rounded-[1.75rem] border border-[#dfded6] bg-white p-5 shadow-sm">

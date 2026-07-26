@@ -407,7 +407,7 @@ export function InteractiveComparePage() {
           </div>
         </div>
 
-        <p className="mt-6 text-[12px] leading-6 text-[#8A8F89]">Scores are from admin-reviewed society data; amber signals are estimated and should be confirmed. Verify unit price, exact tower, availability, legal title and RERA status independently before any payment.</p>
+        <p className="mt-6 text-[12px] leading-6 text-[#8A8F89]">Scores are from reviewed society data; amber signals are estimated and should be confirmed. Verify unit price, exact tower, availability, legal title and RERA status independently before any payment.</p>
       </section>
     </div>
   );

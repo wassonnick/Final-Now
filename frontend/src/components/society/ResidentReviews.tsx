@@ -91,7 +91,7 @@ export function ResidentReviews({ societyId, societySlug, societyName }: { socie
       });
       const json = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(json?.message || 'Unable to submit review.');
-      setMessage('Review submitted for admin moderation.');
+      setMessage('Review submitted for moderation.');
       setForm((current) => ({ ...current, title: '', content: '', pros: '', cons: '' }));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to submit review.');

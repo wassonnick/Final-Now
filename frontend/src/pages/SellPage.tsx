@@ -43,7 +43,7 @@ const steps = [
   {
     icon: Home,
     title: "We verify and create draft",
-    text: "Our team verifies ownership context, asks for photos and prepares a CRM-ready property draft.",
+    text: "Our team verifies ownership context, asks for photos and prepares your listing for matching.",
   },
   {
     icon: Camera,
@@ -430,7 +430,7 @@ export function SellPage() {
               </div>
               {success ? (
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-sm font-semibold leading-6 text-emerald-700">
-                  <p>Your property has been submitted for admin review. SocietyFlats will verify details before publishing.</p>
+                  <p>Your property has been submitted for review. SocietyFlats will verify details before publishing.</p>
                   {accountCreated ? (
                     <div className="mt-4 rounded-2xl bg-white/80 p-4 text-emerald-800">
                       <p className="font-black">Customer account created automatically.</p>

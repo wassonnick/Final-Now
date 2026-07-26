@@ -39,7 +39,7 @@ const nriLanes = [
   },
   {
     title: "Manage follow-ups",
-    body: "Track calls, documents-to-review, visit status, tenant/buyer interest and next actions from one NRI case queue.",
+    body: "Track calls, documents-to-review, visit status, tenant/buyer interest and next actions in one place, from first call to close-out.",
     icon: ClipboardCheck,
   },
 ];
@@ -55,7 +55,7 @@ const proofPoints = [
   ["Private by design", "Owner, broker and family contact details stay inside protected workflows."],
   ["No fake listings", "If a home has no real photos yet, we show a verification placeholder instead of pretending."],
   ["Society-first sales", "We sell the context: commute, society fit, price sanity, livability and verified demand."],
-  ["Admin case tracking", "NRI requests appear in the admin case queue for follow-up and status updates."],
+  ["Tracked to follow-up", "Your request is tracked from first contact through follow-up, with clear status updates."],
 ];
 
 const serviceOptions = [
@@ -84,7 +84,7 @@ export function NriServicesPage() {
   useEffect(() => {
     setPublicSeo(
       "NRI Property Management & Sales in Delhi NCR | SocietyFlats",
-      "SocietyFlats NRI desk helps overseas owners and families buy, sell, rent out and coordinate Delhi NCR property through verified society intelligence, private lead handling and admin-tracked follow-up.",
+      "SocietyFlats NRI desk helps overseas owners and families buy, sell, rent out and coordinate Delhi NCR property through verified society intelligence, private handling of your details and careful follow-up.",
       { canonical: "/nri-services" },
     );
     window.scrollTo(0, 0);
@@ -135,7 +135,7 @@ export function NriServicesPage() {
               Delhi NCR property, managed from overseas with a local command center.
             </h1>
             <p className="mt-5 max-w-3xl text-base leading-8 text-[#667085] md:text-lg">
-              Buying, selling, renting out or coordinating an existing Delhi NCR home from abroad? SocietyFlats gives NRI owners and families a private, admin-tracked workflow built around verified societies, real inventory and careful local follow-up.
+              Buying, selling, renting out or coordinating an existing Delhi NCR home from abroad? SocietyFlats gives NRI owners and families a private, carefully tracked service built around verified societies, real inventory and careful local follow-up.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a href="#nri-consultation" className="rounded-[14px] bg-[#233B6E] px-6 py-3.5 text-sm font-black text-white">
@@ -232,7 +232,7 @@ export function NriServicesPage() {
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#E3B36B]">Remote-control workflow</p>
             <h2 className="mt-2 font-display text-4xl font-medium">Built for families who cannot keep chasing calls from another timezone.</h2>
             <p className="mt-4 text-sm leading-7 text-[#D8E3FF]">
-              The NRI desk is not just a contact form. It is a managed case pipeline: requirement intake, society matching, owner/listing source clarity, visit coordination, document reminders and follow-up status.
+              The NRI desk is not just a contact form. It is a managed case: requirement intake, society matching, owner/listing source clarity, visit coordination, document reminders and follow-up status.
             </p>
             <div className="mt-6 grid gap-3">
               {proofPoints.map(([title, body]) => (
@@ -265,9 +265,9 @@ export function NriServicesPage() {
           <div className="rounded-[30px] bg-[#1D1D1F] p-6 text-white lg:p-8">
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#E3B36B]">NRI sales strength</p>
             <h2 className="!font-sans mt-3 text-3xl font-semibold md:text-4xl">One desk for owner, buyer, tenant and field follow-up.</h2>
-            <p className="mt-3 max-w-xl text-sm leading-7 text-[#B7C0CF]">Not a contact form that disappears — a managed case pipeline with private routing and admin-tracked status, so nothing slips between timezones.</p>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-[#B7C0CF]">Not a contact form that disappears — a managed case with private handling and clear status, so nothing slips between timezones.</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {["Private lead routing", "Society-first resale pitch", "Rent-out coordination", "Status tracked by admin"].map((item) => (
+              {["Private lead routing", "Society-first resale pitch", "Rent-out coordination", "Clear status tracking"].map((item) => (
                 <div key={item} className="flex items-center gap-3 rounded-[16px] bg-white/10 p-4">
                   <ShieldCheck className="h-5 w-5 text-[#E3B36B]" />
                   <p className="text-sm font-semibold">{item}</p>

@@ -46,10 +46,10 @@ const pageConfigs: Record<Variant, PageConfig> = {
       ["Society before flat", "A good unit can still be a poor fit if the society commute, upkeep or resident rhythm is wrong."],
       ["Evidence before adjectives", "We avoid unsupported words like best or luxury unless the claim is clearly sourced and reviewed."],
       ["Coverage-aware scoring", "Thin data reduces confidence. Missing evidence is not quietly converted into a negative score."],
-      ["Review before publication", "AI drafts, imports and corrections remain private until an admin explicitly publishes them."],
+      ["Review before publication", "AI drafts, imports and corrections remain private until our team explicitly publishes them."],
     ],
     deepDive: [
-      ["What we collect", "Society name, location, builder, public project links, amenities, verified map context, nearby schools/hospitals/transit notes, market ranges, images, corrections and admin review status."],
+      ["What we collect", "Society name, location, builder, public project links, amenities, verified map context, nearby schools/hospitals/transit notes, market ranges, images, corrections and review status."],
       ["How it becomes useful", "Each signal is translated into a decision question: Is the commute workable? Is maintenance visible? Are amenities practical? Is public information consistent?"],
       ["How users should use it", "Shortlist societies first, compare trade-offs, then confirm flat-level details like tower, floor, price, furnishing and visit timing before committing."],
     ],
@@ -63,20 +63,20 @@ const pageConfigs: Record<Variant, PageConfig> = {
     eyebrow: "Data sources",
     title: "Where SocietyFlats information comes from, and what stays out of public pages.",
     description:
-      "Published profiles are built from reviewed public material, admin-entered field checks, maps references, owner/broker workflows and user corrections. Private records remain private.",
+      "Published profiles are built from reviewed public material, team-entered field checks, maps references, owner/broker workflows and user corrections. Private records remain private.",
     canonical: "/data-sources",
     heroMetric: "Public",
     heroMetricLabel: "sources only",
     principles: [
       ["Official references", "Developer pages, project links, public RERA/search references and publicly available documentation can support core profile fields."],
-      ["Map context", "Google Maps links, coordinates and nearby-intelligence notes help place a society, but raw promotional place text is not used as final copy."],
-      ["Admin review", "Importer results, AI suggestions and bulk updates stay review-only until an admin checks and publishes them."],
+      ["Map context", "Google Maps links, coordinates and nearby-place notes help place a society, but raw promotional listing text is never used as final copy."],
+      ["Review", "Imported results, AI suggestions and bulk updates stay review-only until our team checks and publishes them."],
       ["User corrections", "Visitors can flag stale or incorrect information; those submissions are evidence for review, not instant edits."],
     ],
     deepDive: [
       ["Source confidence", "We separate verified fields, needs-review fields and unavailable fields so a user can see the difference between known facts and areas that still need confirmation."],
       ["Inventory separation", "A society profile can be public even when no verified home is available. Property listings have their own source, media and publishing review."],
-      ["Sensitive data boundary", "Lead messages, phone numbers, account IDs, admin notes, OAuth tokens and draft social/SEO content are never part of public profile data."],
+      ["Sensitive data boundary", "Lead messages, phone numbers, account IDs, internal notes, login tokens and draft social/SEO content are never part of public profile data."],
     ],
     donts: [
       "We do not copy raw Google or third-party promotional descriptions into public decision copy.",
@@ -119,12 +119,12 @@ const pageConfigs: Record<Variant, PageConfig> = {
     heroMetricLabel: "before edit",
     principles: [
       ["Useful corrections", "Wrong sector, stale builder name, missing amenities, incorrect public links or outdated location notes are all worth reporting."],
-      ["Helpful evidence", "A project page, public document, map link or clear explanation helps an admin verify the change faster."],
+      ["Helpful evidence", "A project page, public document, map link or clear explanation helps our team verify the change faster."],
       ["Privacy-first", "Do not send private phone numbers, lead messages or owner details unless they are necessary for your own callback."],
-      ["No instant overwrite", "Corrections create an admin review item first. Public data changes only after review."],
+      ["No instant overwrite", "Corrections create a review item first. Public data changes only after review."],
     ],
     deepDive: [
-      ["What happens after submission", "The correction is stored for admin review, checked against public-safe evidence and either applied, parked for follow-up or rejected if unsupported."],
+      ["What happens after submission", "The correction is stored for review, checked against public-safe evidence and either applied, parked for follow-up or rejected if unsupported."],
       ["When we may not change a page", "If evidence conflicts, is promotional, is private, or would create an unsupported claim, we keep the page conservative."],
       ["How to write a good correction", "Name the field, say what is wrong, suggest the replacement, and add a source URL if you have one."],
     ],
@@ -146,7 +146,7 @@ const pageConfigs: Record<Variant, PageConfig> = {
       ["No paid score changes", "A partner, broker, builder or advertiser cannot buy a higher society score."],
       ["No fake urgency", "We avoid unsupported scarcity and sales copy such as limited offer, guaranteed return or book now."],
       ["Clear commercial routing", "Enquiry CTAs may route to SocietyFlats, but public pages should still describe what is verified and what is not."],
-      ["Reviewable AI", "AI can draft summaries, social posts or SEO tasks, but publication remains an admin decision."],
+      ["Reviewable AI", "AI can draft summaries, social posts or SEO tasks, but publication remains an editorial decision."],
     ],
     deepDive: [
       ["Sales vs editorial", "The team may help users find availability, but society profile quality, score and watch-outs should not be overwritten to close a deal."],
@@ -165,7 +165,7 @@ const workflowSteps = [
   ["Collect", "Gather society facts, public references, map context, market ranges, images and correction history."],
   ["Normalize", "Clean duplicates, remove unsafe claims, group evidence and convert messy data into stable fields."],
   ["Score", "Apply weighted society signals only when enough evidence coverage exists."],
-  ["Review", "Keep importer results, AI drafts and corrections private until an admin checks them."],
+  ["Review", "Imported results, AI drafts and corrections stay private until our team checks them."],
   ["Publish", "Show public-safe facts, decision copy, CTAs and correction paths."],
 ];
 
@@ -179,18 +179,18 @@ const variantDetail: Record<Variant, { heading: string; intro: string; items: Ar
       ["Ten weighted signals", "Liveability, connectivity, maintenance, builder, price value, rental demand, resale liquidity, safety, legal/RERA and environment — fixed weights summing to 100%."],
       ["Coverage gate", "A society only earns an overall score once verified signals cover at least 60% of the weight. Below that, we say 'insufficient data' instead of guessing."],
       ["Missing is not bad", "Absent signals are excluded and the remaining weights renormalise — thin data can never inflate a score, only lower its coverage."],
-      ["Human sign-off", "AI publishes nothing to the public. An admin reviews and publishes; every override carries a recorded reason."],
+      ["Human sign-off", "AI publishes nothing to the public. Our team reviews and publishes; every override carries a recorded reason."],
     ],
   },
   "data-sources": {
     heading: "Where each insight comes from",
     intro: "We prefer whoever is actually authoritative for a field, and we label it. Anything unsourced is shown as unverified, not asserted.",
     items: [
-      ["Published society data", "Admin-reviewed fields — configuration, amenities, sector, builder — checked before a profile goes public."],
+      ["Published society data", "Reviewed fields — configuration, amenities, sector, builder — checked before a profile goes public."],
       ["Public records & RERA", "Registration numbers and legal-status signals from public registries, linked to the official source where available."],
       ["Google Maps & Places", "Coordinates, locality context and society imagery, with attribution shown on the photo."],
       ["Market range context", "Rent and resale ranges grounded in portal consensus, refreshed on a schedule — shown only when a realistic range exists."],
-      ["Resident corrections", "Verified user reports, reviewed by an admin before anything public changes."],
+      ["Resident corrections", "Verified user reports, reviewed by our team before anything public changes."],
     ],
   },
   "score-explained": {
@@ -200,7 +200,7 @@ const variantDetail: Record<Variant, { heading: string; intro: string; items: Ar
       ["It reflects the society, not the unit", "Tower, floor, view and finish vary within a society — confirm the specific unit before deciding."],
       ["Verified vs estimated is marked", "Green signals are verified against sources; amber are estimated from society data and flagged as such on every profile."],
       ["Coverage is shown alongside", "A high score on thin coverage is weaker than a slightly lower score on full coverage — both numbers are visible."],
-      ["Overrides are accountable", "An admin can override a computed score, but only with a recorded reason that stays on file."],
+      ["Overrides are accountable", "Our team can override a computed score, but only with a recorded reason that stays on file."],
     ],
   },
   corrections: {
@@ -208,7 +208,7 @@ const variantDetail: Record<Variant, { heading: string; intro: string; items: Ar
     intro: "Nothing public changes automatically from a submission. Every correction is reviewed like a source.",
     items: [
       ["You flag it", "Tell us what looks wrong and share any supporting link — a listing, a RERA page, an official notice."],
-      ["We review it", "An admin checks the claim against the society's record and the source before touching anything public."],
+      ["We review it", "Our team checks the claim against the society's record and the source before touching anything public."],
       ["We update or explain", "If it's confirmed, the profile is corrected and re-published. If not, it stays as-is — we don't change verified data on an unverifiable claim."],
     ],
   },
@@ -273,7 +273,7 @@ export function DecisionTrustPage({ variant }: { variant: Variant }) {
     try {
       await backendApi.submitIntelligenceCorrection({ ...form, information_key: "public_correction" });
       trackCorrectionFormSubmit({ source: "trust_corrections_page", society_name: form.society_name });
-      setMessage("Correction submitted for admin review.");
+      setMessage("Correction submitted for review.");
       setForm({
         society_name: "",
         information_challenged: "",
@@ -588,7 +588,7 @@ function CorrectionsSection({
           </div>
           <label className="flex gap-3 rounded-[18px] bg-[#FAF7F1] p-4 text-sm text-[#667085]">
             <input required type="checkbox" checked={form.consent} onChange={(e) => setForm({ ...form, consent: e.target.checked })} />
-            I consent to SocietyFlats using this submission for admin review.
+            I consent to SocietyFlats using this submission for review.
           </label>
           <Button className="h-12 rounded-[14px] bg-[#233B6E] text-white hover:bg-[#1d315b]">Submit correction</Button>
           {message ? <p className="rounded-[14px] bg-[#E9EEF9] p-3 text-sm font-semibold text-[#233B6E]">{message}</p> : null}

@@ -31,7 +31,7 @@ const content = {
     eyebrow: "Trust and privacy",
     title: "Your contact details power enquiries. They do not become public listing content.",
     description:
-      "SocietyFlats keeps account data, owner/broker information, leads, OAuth tokens, admin notes and unpublished drafts inside protected workflows. Public pages show only approved, public-safe information.",
+      "SocietyFlats keeps account data, owner/broker information, leads, login tokens, internal notes and unpublished drafts inside protected workflows. Public pages show only approved, public-safe information.",
     canonical: "/privacy",
   },
   help: {
@@ -44,15 +44,15 @@ const content = {
 } satisfies Record<InfoVariant, { eyebrow: string; title: string; description: string; canonical: string }>;
 
 const verificationStages = [
-  ["Research intake", "Imported files, admin entries, public references and user corrections arrive as private review material.", Eye],
+  ["Research intake", "Imported files, team entries, public references and user corrections arrive as private review material.", Eye],
   ["Field review", "Name, slug, builder, location, coordinates, amenities, source links and visible descriptions are checked before publishing.", ClipboardCheck],
   ["Image safety", "Images are approved only when they are direct, licensed, self-shot or clearly permitted. Place/map links remain references.", Image],
-  ["Publication control", "Published, featured and search-boosted are separate admin decisions. Drafts do not leak into public pages.", ShieldCheck],
+  ["Publication control", "Published, featured and search-boosted are separate editorial decisions. Drafts do not leak into public pages.", ShieldCheck],
   ["Correction loop", "Users can flag stale or incorrect information. Corrections are reviewed before public data changes.", RefreshCw],
 ];
 
 const trustComparisons = [
-  ["Verified society profile", "A public society page that passed admin review for core fields, location and public-safe decision content."],
+  ["Verified society profile", "A public society page that passed our review for core fields, location and public-safe decision content."],
   ["Verified home", "A property listing reviewed separately for source, price, media, publishing status and lead routing."],
   ["Source reviewed", "A listing or profile has enough source context to show publicly, but users should still inspect before payment."],
   ["Photos under verification", "A placeholder means SocietyFlats is not pretending to have real listing photos yet."],
@@ -60,9 +60,9 @@ const trustComparisons = [
 
 const privacyBlocks = [
   ["What can be public", "Society name, sector/locality, approved amenities, reviewed descriptions, public source links, safe images, published listing fields and public CTAs."],
-  ["What stays private", "Lead messages, phone numbers, emails, owner/broker assignments, admin notes, account IDs, OAuth tokens, AI drafts and unpublished corrections."],
+  ["What stays private", "Lead messages, phone numbers, emails, owner/broker assignments, internal notes, account IDs, login tokens, AI drafts and unpublished corrections."],
   ["How enquiries route", "When a user asks about a home or requests availability, the CTA routes through SocietyFlats lead capture rather than exposing private owner or broker contact details."],
-  ["How AI uses data", "AI features use public-safe and admin-approved context. Draft SEO/social content remains review-only until approved."],
+  ["How AI uses data", "AI features use public-safe and approved context. Draft SEO/social content remains review-only until approved."],
   ["How corrections work", "Correction submissions are reviewed internally and may be used to update public information, but submitter contact details are not shown publicly."],
   ["How deletion requests work", "Users can request account, lead or correction data review through SocietyFlats support. We keep necessary operational records only where required for legitimate business or compliance reasons."],
 ];
@@ -228,8 +228,8 @@ function PrivacyContent() {
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {[
             ["Property enquiry", "A visitor can ask about a home, but public pages do not reveal owner or broker numbers."],
-            ["Admin social accounts", "OAuth tokens for Meta, Google or LinkedIn are encrypted and never returned to the frontend."],
-            ["AI drafting", "AI-generated SEO or social content remains a draft until an admin reviews and approves it."],
+            ["Connected social accounts", "Access tokens for Meta, Google or LinkedIn are encrypted and never sent to your browser."],
+            ["AI drafting", "AI-generated SEO or social content remains a draft until our team reviews and approves it."],
           ].map(([title, body]) => (
             <div key={title} className="rounded-[18px] bg-[#FAF7F1] p-5">
               <p className="font-black">{title}</p>

@@ -243,8 +243,8 @@ export function CustomerDashboardPage() {
     () =>
       listingLeads.map((lead) => ({
         title: `Lead tracking for ${lead.title}`,
-        meta: "Admin will verify, publish and share privacy-safe enquiry updates here.",
-        status: "Admin controlled",
+        meta: "We'll verify, publish and share privacy-safe enquiry updates here.",
+        status: "SocietyFlats-managed",
       })),
     [listingLeads],
   );
@@ -421,7 +421,7 @@ export function CustomerDashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-950">Privacy-safe lead tracking</h2>
-                  <p className="mt-1 text-sm text-slate-500">Admin remains the control layer.</p>
+                  <p className="mt-1 text-sm text-slate-500">SocietyFlats reviews everything before it goes live.</p>
                 </div>
               </div>
               <div className="mt-5 rounded-3xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">

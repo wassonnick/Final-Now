@@ -1329,7 +1329,7 @@ export function SearchPage() {
                       <p className="font-semibold text-navy-800">
                         {selectedSociety?.latitude && selectedSociety?.longitude
                           ? "Available"
-                          : "Admin review pending"}
+                          : "Review pending"}
                       </p>
                     </div>
                   </div>

@@ -82,7 +82,7 @@ export function JourneySpine() {
               ))}
             </div>
             <div className="mt-5 flex items-center justify-between gap-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
-              <span>Admin reviewed</span>
+              <span>Reviewed</span>
               <span>Private details stay private</span>
             </div>
           </div>
