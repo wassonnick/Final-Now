@@ -287,8 +287,8 @@ export function setPublicSeo(title: string, description: string, input: SeoInput
   upsertMetaByName("twitter:title", cleanTitle);
   upsertMetaByName("twitter:description", cleanDescription);
   upsertMetaByProperty("og:image", imageUrl);
-  upsertMetaByProperty("og:image:width", "1024");
-  upsertMetaByProperty("og:image:height", "576");
+  upsertMetaByProperty("og:image:width", "1200");
+  upsertMetaByProperty("og:image:height", "630");
   upsertMetaByProperty("og:image:alt", "SocietyFlats Delhi NCR society-first home search");
   upsertMetaByName("twitter:image", imageUrl);
 

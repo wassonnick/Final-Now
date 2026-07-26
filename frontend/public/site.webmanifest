@@ -1,12 +1,12 @@
 {
   "name": "SocietyFlats",
   "short_name": "SocietyFlats",
-  "description": "Find the right society before choosing the home. Explore Gurgaon societies and request verified rental or resale options.",
+  "description": "Find the right society before choosing the home. Explore Delhi NCR societies and request verified rental or resale options.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#F8F3EA",
-  "theme_color": "#123C32",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
   "icons": [
     {
       "src": "/icon-192.png",
