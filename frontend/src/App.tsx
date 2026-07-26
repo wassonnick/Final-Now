@@ -81,6 +81,7 @@ const AdminComparePagesPage = lazy(() => import('@/pages/admin/AdminComparePages
 const AdminBrandStudioPage = lazy(() => import('@/pages/admin/AdminBrandStudioPage').then((module) => ({ default: module.AdminBrandStudioPage })));
 const AdminAiSpendPage = lazy(() => import('@/pages/admin/AdminAiSpendPage').then((module) => ({ default: module.AdminAiSpendPage })));
 const AdminAiChatsPage = lazy(() => import('@/pages/admin/AdminAiChatsPage').then((module) => ({ default: module.AdminAiChatsPage })));
+const AdminEmailDeliveriesPage = lazy(() => import('@/pages/admin/AdminEmailDeliveriesPage').then((module) => ({ default: module.AdminEmailDeliveriesPage })));
 const CampaignLandingPage = lazy(() => import('@/pages/CampaignLandingPage').then((module) => ({ default: module.CampaignLandingPage })));
 const AdminCampaignsPage = lazy(() => import('@/pages/admin/AdminCampaignsPage').then((module) => ({ default: module.AdminCampaignsPage })));
 const AdminComparePagePreviewPage = lazy(() => import('@/pages/admin/AdminComparePagesPage').then((module) => ({ default: module.AdminComparePagePreviewPage })));
@@ -249,6 +250,7 @@ function AppShell() {
             <Route path="/admin/leads/:id" element={<ProtectedAdminRoute><AdminLeadDetailPage /></ProtectedAdminRoute>} />
             <Route path="/admin/referrals" element={<ProtectedAdminRoute><AdminReferralsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/nri-cases" element={<ProtectedAdminRoute><AdminNriCasesPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/email-deliveries" element={<ProtectedAdminRoute><AdminEmailDeliveriesPage /></ProtectedAdminRoute>} />
             <Route path="/admin/seo-autopilot" element={<ProtectedAdminRoute><AdminSeoAutopilotPage /></ProtectedAdminRoute>} />
             <Route path="/admin/owner-listings" element={<ProtectedAdminRoute><AdminOwnerListingsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/social" element={<ProtectedAdminRoute><AdminSocialDraftsPage /></ProtectedAdminRoute>} />

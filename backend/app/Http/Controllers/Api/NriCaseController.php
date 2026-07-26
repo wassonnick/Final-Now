@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\NriCase;
+use App\Services\SubmissionNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -34,6 +35,7 @@ class NriCaseController extends Controller
 
         unset($data['consent']);
         $case = NriCase::create($data + ['consent_at' => now()]);
+        app(SubmissionNotificationService::class)->nriCase($case);
 
         return response()->json([
             'message' => 'Your NRI consultation request was received. An admin will review it before contacting you.',

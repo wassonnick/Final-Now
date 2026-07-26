@@ -109,6 +109,7 @@ return [
     'societyflats_email' => [
         'admin_email' => env('SOCIETYFLATS_ADMIN_EMAIL'),
         'lead_alert_email' => env('SOCIETYFLATS_LEAD_ALERT_EMAIL', env('SOCIETYFLATS_ADMIN_EMAIL')),
+        'reply_to' => env('SOCIETYFLATS_REPLY_TO_EMAIL', env('SOCIETYFLATS_ADMIN_EMAIL')),
         'admin_base_url' => env('ADMIN_FRONTEND_URL', env('FRONTEND_URL', 'https://www.societyflats.com')),
     ],
 

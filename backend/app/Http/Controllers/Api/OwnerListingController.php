@@ -7,8 +7,7 @@ use App\Models\Account;
 use App\Models\Lead;
 use App\Models\OwnerListing;
 use App\Models\Society;
-use App\Services\Email\SocietyFlatsEmailService;
-use App\Services\LeadNotificationService;
+use App\Services\SubmissionNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -148,8 +147,7 @@ class OwnerListingController extends Controller
             'status' => 'new',
         ]);
 
-        app(LeadNotificationService::class)->notifyNewLead($lead);
-        app(SocietyFlatsEmailService::class)->sendOwnerListingAlert($lead);
+        app(SubmissionNotificationService::class)->ownerListing($lead);
 
         return response()->json([
             'status' => 'ok',

@@ -25,6 +25,7 @@ import {
   FileSearch,
   Megaphone,
   Palette,
+  MailCheck,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,7 @@ const groups: Array<{ heading: string | null; links: Array<{ label: string; href
       { label: "AI Spend", href: "/admin/ai-spend", icon: Bot },
       { label: "User AI Chats", href: "/admin/ai-chats", icon: MessageSquareText },
       { label: "Campaigns", href: "/admin/campaigns", icon: Megaphone },
+      { label: "Email Delivery", href: "/admin/email-deliveries", icon: MailCheck },
       { label: "Rent Intelligence", href: "/admin/rent-history", icon: LineChart },
       { label: "AI Features", href: "/admin/ai", icon: Bot },
     ],

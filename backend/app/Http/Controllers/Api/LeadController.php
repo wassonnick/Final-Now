@@ -4,12 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lead;
-use App\Services\Email\SocietyFlatsEmailService;
-use App\Services\LeadNotificationService;
+use App\Services\SubmissionNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Throwable;
 
 class LeadController extends Controller
 {
@@ -139,21 +136,7 @@ class LeadController extends Controller
 
         $lead = Lead::create($validated);
 
-        $this->runPostCaptureSideEffect(
-            $lead,
-            'lead_notification',
-            fn () => app(LeadNotificationService::class)->notifyNewLead($lead)
-        );
-        $this->runPostCaptureSideEffect(
-            $lead,
-            'admin_email',
-            fn () => app(SocietyFlatsEmailService::class)->sendAdminLeadNotification($lead)
-        );
-        $this->runPostCaptureSideEffect(
-            $lead,
-            'user_email',
-            fn () => app(SocietyFlatsEmailService::class)->sendUserLeadConfirmation($lead)
-        );
+        app(SubmissionNotificationService::class)->lead($lead);
 
         return response()->json([
             'status' => 'success',
@@ -247,26 +230,4 @@ class LeadController extends Controller
         return 'Warm';
     }
 
-    /**
-     * Notification delivery is secondary to safely recording the enquiry.
-     * A provider or logging failure must never turn a persisted lead into a
-     * frontend error that encourages the customer to submit it again.
-     */
-    private function runPostCaptureSideEffect(Lead $lead, string $channel, callable $callback): void
-    {
-        try {
-            $callback();
-        } catch (Throwable $exception) {
-            try {
-                Log::warning('Lead post-capture side effect failed', [
-                    'lead_id' => $lead->id,
-                    'channel' => $channel,
-                    'exception' => $exception::class,
-                ]);
-            } catch (Throwable) {
-                // The lead is already persisted; even a logging outage must not
-                // replace the successful API response with an HTTP 500.
-            }
-        }
-    }
 }

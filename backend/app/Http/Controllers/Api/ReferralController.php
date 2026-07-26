@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Referral;
+use App\Services\SubmissionNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -70,6 +71,8 @@ class ReferralController extends Controller
         if (! $referral->wasRecentlyCreated) {
             return response()->json(['message' => 'This person has already been referred from your account.'], 422);
         }
+
+        app(SubmissionNotificationService::class)->referral($referral, $account);
 
         return response()->json([
             'message' => 'Referral submitted for admin review. No reward is guaranteed until a genuine conversion is verified.',

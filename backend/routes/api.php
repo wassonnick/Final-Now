@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\Admin\AdminAccountController;
 use App\Http\Controllers\Api\Admin\AdminAiSpendController;
 use App\Http\Controllers\Api\Admin\AdminBuilderPortalController;
+use App\Http\Controllers\Api\Admin\AdminEmailDeliveryController;
 use App\Http\Controllers\Api\Admin\AdminLocationController;
 use App\Http\Controllers\Api\Admin\AdminRentHistoryController;
 use App\Http\Controllers\Api\Admin\AdminReviewController;
@@ -287,6 +288,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::apiResource('reviews', AdminReviewController::class)->only(['index', 'update', 'destroy']);
     Route::apiResource('referrals', AdminReferralController::class)->only(['index', 'update']);
     Route::apiResource('nri-cases', AdminNriCaseController::class)->only(['index', 'update']);
+    Route::get('/email-deliveries', [AdminEmailDeliveryController::class, 'index']);
     Route::apiResource('rent-history', AdminRentHistoryController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('/builder-claims', [AdminBuilderPortalController::class, 'claims']);
     Route::patch('/builder-claims/{claim}', [AdminBuilderPortalController::class, 'updateClaim']);
