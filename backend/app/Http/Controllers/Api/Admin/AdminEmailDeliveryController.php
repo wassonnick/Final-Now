@@ -29,6 +29,11 @@ class AdminEmailDeliveryController extends Controller
         return response()->json([
             'summary' => [
                 'sent' => (int) ($summary['sent'] ?? 0),
+                'delivered' => (int) ($summary['delivered'] ?? 0),
+                'delayed' => (int) ($summary['delayed'] ?? 0),
+                'bounced' => (int) ($summary['bounced'] ?? 0),
+                'complained' => (int) ($summary['complained'] ?? 0),
+                'suppressed' => (int) ($summary['suppressed'] ?? 0),
                 'failed' => (int) ($summary['failed'] ?? 0),
                 'skipped' => (int) ($summary['skipped'] ?? 0),
             ],

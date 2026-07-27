@@ -21,6 +21,7 @@ return [
     'resend' => [
         'key' => env('RESEND_API_KEY'),
         'endpoint' => env('RESEND_API_URL', 'https://api.resend.com/emails'),
+        'webhook_secret' => env('RESEND_WEBHOOK_SECRET'),
     ],
 
     'ses' => [

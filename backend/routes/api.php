@@ -40,12 +40,16 @@ use App\Http\Controllers\Api\SiteVisitController;
 use App\Http\Controllers\Api\SocietyComparePageController;
 use App\Http\Controllers\Api\SocietyController;
 use App\Http\Controllers\Api\SocietyIntelligenceController;
+use App\Http\Controllers\Api\Webhooks\ResendWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', fn () => response()->json([
     'status' => 'ok',
     'service' => 'societyflats-api',
 ]));
+
+Route::post('/webhooks/resend', ResendWebhookController::class)
+    ->middleware('throttle:120,1');
 
 // External scheduler tick. A free external cron (e.g. cron-job.org) POSTs here every ~10 min
 // with the OPS_SCHEDULER_TOKEN secret; this both wakes a sleeping free-tier container and runs

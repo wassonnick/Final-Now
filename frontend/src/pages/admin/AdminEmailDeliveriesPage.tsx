@@ -12,17 +12,44 @@ type Delivery = {
   related_id?: number | null;
   provider: string;
   provider_message_id?: string | null;
-  status: "sent" | "failed" | "skipped";
+  status: "sent" | "delivered" | "delayed" | "bounced" | "complained" | "suppressed" | "failed" | "skipped";
   http_status?: number | null;
   failure_reason?: string | null;
   created_at: string;
 };
 
-type Summary = { sent: number; failed: number; skipped: number };
+type Summary = {
+  sent: number;
+  delivered: number;
+  delayed: number;
+  bounced: number;
+  complained: number;
+  suppressed: number;
+  failed: number;
+  skipped: number;
+};
+
+const emptySummary: Summary = {
+  sent: 0,
+  delivered: 0,
+  delayed: 0,
+  bounced: 0,
+  complained: 0,
+  suppressed: 0,
+  failed: 0,
+  skipped: 0,
+};
+
+function statusTone(status: Delivery["status"]) {
+  if (status === "delivered") return "bg-emerald-50 text-emerald-700";
+  if (["bounced", "complained", "suppressed", "failed"].includes(status)) return "bg-rose-50 text-rose-700";
+  if (status === "sent") return "bg-blue-50 text-blue-700";
+  return "bg-amber-50 text-amber-700";
+}
 
 export function AdminEmailDeliveriesPage() {
   const [items, setItems] = useState<Delivery[]>([]);
-  const [summary, setSummary] = useState<Summary>({ sent: 0, failed: 0, skipped: 0 });
+  const [summary, setSummary] = useState<Summary>(emptySummary);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -35,7 +62,7 @@ export function AdminEmailDeliveriesPage() {
       const json = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(json?.message || "Could not load email delivery history.");
       setItems(json?.data?.data || []);
-      setSummary(json?.summary || { sent: 0, failed: 0, skipped: 0 });
+      setSummary({ ...emptySummary, ...(json?.summary || {}) });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load email delivery history.");
     } finally {
@@ -47,7 +74,8 @@ export function AdminEmailDeliveriesPage() {
     void load();
   }, [status]);
 
-  const total = useMemo(() => summary.sent + summary.failed + summary.skipped, [summary]);
+  const total = useMemo(() => Object.values(summary).reduce((sum, value) => sum + value, 0), [summary]);
+  const attention = summary.bounced + summary.complained + summary.suppressed + summary.failed;
 
   return (
     <div className="space-y-6 p-6 lg:p-8">
@@ -64,12 +92,13 @@ export function AdminEmailDeliveriesPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {[
           ["Tracked", total, "text-slate-950"],
-          ["Sent", summary.sent, "text-emerald-700"],
-          ["Failed", summary.failed, "text-rose-700"],
-          ["Skipped", summary.skipped, "text-amber-700"],
+          ["Accepted", summary.sent, "text-blue-700"],
+          ["Delivered", summary.delivered, "text-emerald-700"],
+          ["Needs attention", attention, "text-rose-700"],
+          ["Delayed / skipped", summary.delayed + summary.skipped, "text-amber-700"],
         ].map(([label, value, tone]) => (
           <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
@@ -83,7 +112,12 @@ export function AdminEmailDeliveriesPage() {
           <div className="flex items-center gap-2 font-bold text-slate-900"><MailCheck className="h-5 w-5 text-blue-600" /> Recent delivery attempts</div>
           <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
             <option value="">All statuses</option>
-            <option value="sent">Sent</option>
+            <option value="sent">Accepted</option>
+            <option value="delivered">Delivered</option>
+            <option value="delayed">Delayed</option>
+            <option value="bounced">Bounced</option>
+            <option value="complained">Complained</option>
+            <option value="suppressed">Suppressed</option>
             <option value="failed">Failed</option>
             <option value="skipped">Skipped</option>
           </select>
@@ -102,7 +136,7 @@ export function AdminEmailDeliveriesPage() {
                   <td className="p-4 font-semibold text-slate-900">{item.message_type.replace(/_/g, " ")}</td>
                   <td className="p-4 font-mono text-xs text-slate-600">{item.recipient_masked || "—"}</td>
                   <td className="p-4 text-slate-600">{item.related_type ? `${item.related_type} #${item.related_id || "—"}` : "—"}</td>
-                  <td className="p-4"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${item.status === "sent" ? "bg-emerald-50 text-emerald-700" : item.status === "failed" ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-700"}`}>{item.status}</span></td>
+                  <td className="p-4"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${statusTone(item.status)}`}>{item.status === "sent" ? "accepted" : item.status}</span></td>
                   <td className="max-w-xs p-4 text-xs text-slate-600">{item.provider_message_id || item.failure_reason || (item.http_status ? `HTTP ${item.http_status}` : "—")}</td>
                 </tr>
               ))}
