@@ -341,6 +341,11 @@ export function SellPage() {
         source: purpose === "rent" ? "owner_listing_rent" : "owner_listing_sale",
         society_name: societyName,
       });
+      trackEvent("list_property_submit", {
+        listing_type: purpose,
+        society_slug: matchedSociety?.slug || ownerTrackingPayload.entity_slug,
+        source: "sell_page",
+      });
 
       const createdSession = createCustomerAccountSession({
         name: form.name.trim(),

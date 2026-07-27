@@ -7,7 +7,7 @@ import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import { InteractiveComparePage } from "@/pages/InteractiveComparePage";
 import { backendApi } from "@/services/backendApi";
 import { setPublicSeo } from "@/lib/seo";
-import { trackCompareVerdictView } from "@/lib/analytics";
+import { trackCompareVerdictView, trackEvent } from "@/lib/analytics";
 
 type ComparePageRecord = {
   id: number;
@@ -192,6 +192,10 @@ function CompareDetail({ slug }: { slug: string }) {
           compare_slug: record.slug,
           page_title: record.title,
           societies: (record.society_summaries_json || []).map((item) => item.slug).join(","),
+        });
+        trackEvent("compare_societies_view", {
+          compare_slug: record.slug,
+          societies_count: (record.society_summaries_json || []).length,
         });
       })
       .catch((err) => setError(err?.message || "Comparison page not found."))

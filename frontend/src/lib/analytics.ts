@@ -1,16 +1,158 @@
-type AnalyticsParams = Record<string, string | number | boolean | null | undefined>;
+type AnalyticsParams = Record<string, unknown>;
+
+type Gtag = (...args: unknown[]) => void;
 
 declare global {
   interface Window {
     dataLayer?: unknown[];
-    gtag?: (...args: unknown[]) => void;
+    gtag?: Gtag;
   }
+}
+
+const GA_SCRIPT_ID = "societyflats-ga4";
+const GA_MEASUREMENT_ID = String(import.meta.env.VITE_GA_MEASUREMENT_ID || "").trim();
+const ANALYTICS_DEBUG = String(import.meta.env.VITE_ANALYTICS_DEBUG || "").toLowerCase() === "true";
+const VALID_MEASUREMENT_ID = /^G-[A-Z0-9]+$/i.test(GA_MEASUREMENT_ID) && GA_MEASUREMENT_ID !== "G-XXXXXXXXXX";
+const SAFE_QUERY_KEYS = new Set(["city", "sector", "listing_type", "type", "page", "sort", "tab", "mode", "view"]);
+const PRIVATE_PARAM_KEY =
+  /(^|_)(name|phone|mobile|email|message|notes?|token|password|contact|owner|admin_note|lead_name|search_query|ai_query|requirement)(_|$)/i;
+const PRIVATE_VALUE = /(?:\+?\d[\d\s()-]{7,}\d|[\w.+-]+@[\w.-]+\.[a-z]{2,})/i;
+
+let gaInitialized = false;
+let lastPageViewPath = "";
+
+function debugLog(...args: unknown[]) {
+  if (ANALYTICS_DEBUG) console.log("[SocietyFlats GA4]", ...args);
 }
 
 function cleanParams(params: AnalyticsParams = {}) {
   return Object.fromEntries(
     Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== ""),
   );
+}
+
+function safePagePath(value: unknown) {
+  if (typeof window === "undefined") return "/";
+
+  try {
+    const parsed = new URL(String(value || "/"), window.location.origin);
+    const safeSearch = new URLSearchParams();
+
+    parsed.searchParams.forEach((parameterValue, key) => {
+      if (SAFE_QUERY_KEYS.has(key) && !PRIVATE_VALUE.test(parameterValue)) {
+        safeSearch.set(key, parameterValue.slice(0, 80));
+      }
+    });
+
+    const query = safeSearch.toString();
+    return `${parsed.pathname || "/"}${query ? `?${query}` : ""}`;
+  } catch {
+    return window.location.pathname || "/";
+  }
+}
+
+function safeAnalyticsParams(params: AnalyticsParams = {}) {
+  const safeEntries: Array<[string, string | number | boolean]> = [];
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (PRIVATE_PARAM_KEY.test(key) || value === undefined || value === null || value === "") return;
+
+    if (["page_url", "page_location", "page_path", "source_page", "path"].includes(key)) {
+      const path = safePagePath(value);
+      safeEntries.push([
+        key === "page_url" || key === "page_location" ? "page_location" : key === "source_page" || key === "path" ? "page_path" : key,
+        key === "page_url" || key === "page_location" ? `${window.location.origin}${path}` : path,
+      ]);
+      return;
+    }
+
+    if (typeof value === "string") {
+      const cleanValue = value.trim().slice(0, 120);
+      if (!cleanValue || PRIVATE_VALUE.test(cleanValue)) return;
+      safeEntries.push([key, cleanValue]);
+      return;
+    }
+
+    if (typeof value === "number" && Number.isFinite(value)) {
+      safeEntries.push([key, value]);
+      return;
+    }
+
+    if (typeof value === "boolean") safeEntries.push([key, value]);
+  });
+
+  return Object.fromEntries(safeEntries);
+}
+
+export function initGA() {
+  if (typeof window === "undefined" || !VALID_MEASUREMENT_ID) return false;
+  if (!import.meta.env.PROD && !ANALYTICS_DEBUG) return false;
+
+  try {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag =
+      window.gtag ||
+      ((...args: unknown[]) => {
+        window.dataLayer?.push(args);
+      });
+
+    if (!gaInitialized) {
+      window.gtag("js", new Date());
+      window.gtag("config", GA_MEASUREMENT_ID, { send_page_view: false });
+      gaInitialized = true;
+      debugLog("initialized", GA_MEASUREMENT_ID);
+    }
+
+    if (!document.getElementById(GA_SCRIPT_ID)) {
+      const script = document.createElement("script");
+      script.id = GA_SCRIPT_ID;
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_MEASUREMENT_ID)}`;
+      script.onerror = () => debugLog("gtag.js failed to load");
+      document.head.appendChild(script);
+    }
+
+    return true;
+  } catch (error) {
+    debugLog("initialization failed", error);
+    return false;
+  }
+}
+
+export function trackPageView(path: string, title?: string) {
+  if (typeof window === "undefined" || !VALID_MEASUREMENT_ID) return;
+
+  try {
+    const pagePath = safePagePath(path);
+    if (pagePath === lastPageViewPath) return;
+    lastPageViewPath = pagePath;
+
+    const payload = safeAnalyticsParams({
+      page_path: pagePath,
+      page_location: `${window.location.origin}${pagePath}`,
+      page_title: title,
+    });
+
+    window.gtag?.("event", "page_view", payload);
+    debugLog("page_view", payload);
+  } catch (error) {
+    debugLog("page_view failed", error);
+  }
+}
+
+export function trackEvent(eventName: string, params: Record<string, unknown> = {}) {
+  if (typeof window === "undefined" || !VALID_MEASUREMENT_ID) return;
+
+  try {
+    const cleanName = String(eventName || "").trim().replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 40);
+    if (!cleanName) return;
+
+    const payload = safeAnalyticsParams(params);
+    window.gtag?.("event", cleanName, payload);
+    debugLog(cleanName, payload);
+  } catch (error) {
+    debugLog("event failed", error);
+  }
 }
 
 export function getUtmParams() {
@@ -53,18 +195,6 @@ export function getTrackingContext(extra: AnalyticsParams = {}) {
     ...utm,
     ...extra,
   });
-}
-
-export function trackEvent(name: string, params: AnalyticsParams = {}) {
-  const payload = cleanParams(params);
-
-  if (typeof window !== "undefined" && typeof window.gtag === "function") {
-    window.gtag("event", name, payload);
-  }
-
-  if (import.meta.env.DEV) {
-    console.info("[SocietyFlats analytics]", name, payload);
-  }
 }
 
 export function trackLeadIntent(params: AnalyticsParams = {}) {

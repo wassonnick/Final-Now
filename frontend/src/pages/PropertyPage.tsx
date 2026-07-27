@@ -404,6 +404,15 @@ export function PropertyPage() {
   const customerSession = getCustomerAccountSession();
   const propertyHref = property ? safePropertyPath(property) : `/property/${slug || ""}`;
 
+  useEffect(() => {
+    if (!property) return;
+    trackEvent("property_view", {
+      property_slug: String(property.slug || slug || ""),
+      listing_type: listingType,
+      society_slug: societySlug || undefined,
+    });
+  }, [property, slug, listingType, societySlug]);
+
   // C45 property view tracking
   useEffect(() => {
     if (!property || !customerSession?.phone) return;

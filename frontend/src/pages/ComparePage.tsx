@@ -22,6 +22,7 @@ import { useAppStore } from "@/store";
 import { setPublicSeo } from "@/lib/seo";
 import { fetchPublicSocieties, societyImage } from "@/lib/publicData";
 import { societyPlaceholderImage } from "@/lib/societyImages";
+import { trackEvent } from "@/lib/analytics";
 
 const comparisonRows = [
   { key: "overall_score", label: "Overall score", group: "Decision" },
@@ -330,6 +331,10 @@ export function ComparePage() {
     [compareList, publicSocietyIds],
   );
   const previewSocieties = publicSocieties.slice(0, 3);
+  const compareSlug = useMemo(
+    () => items.map((item: any) => String(item?.slug || "")).filter(Boolean).join("-vs-"),
+    [items],
+  );
 
   const clearAndOpenSearch = () => {
     clearCompare();
@@ -389,6 +394,14 @@ export function ComparePage() {
   useEffect(() => {
     if (!items.length) setCompareSearchOpen(true);
   }, [items.length]);
+
+  useEffect(() => {
+    if (publicSocietiesLoading) return;
+    trackEvent("compare_societies_view", {
+      compare_slug: compareSlug || undefined,
+      societies_count: items.length,
+    });
+  }, [compareSlug, items.length, publicSocietiesLoading]);
 
   const winner = useMemo(() => {
     if (!items.length) return null;

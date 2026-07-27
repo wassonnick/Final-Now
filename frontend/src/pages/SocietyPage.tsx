@@ -589,6 +589,15 @@ export function SocietyPage() {
   const customerSession = getCustomerAccountSession();
   const societyHref = `/society/${field(society, "slug", "slug", slug || "") || slug || ""}`;
 
+  useEffect(() => {
+    if (!society) return;
+    trackEvent("society_view", {
+      society_slug: field(society, "slug", "slug", slug || ""),
+      sector: field(society, "sector", "sector", ""),
+      city: field(society, "city", "city", "Gurugram"),
+    });
+  }, [society, slug]);
+
   // C45 society view tracking
   useEffect(() => {
     if (!society || !customerSession?.phone) return;

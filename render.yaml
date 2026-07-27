@@ -8,6 +8,8 @@ services:
     envVars:
       - key: VITE_API_BASE_URL
         value: https://final-now.onrender.com/api
+      - key: VITE_GA_MEASUREMENT_ID
+        value: G-FC4045CRJS
     routes:
       # Live registry sitemap, proxied onto the site's own domain. GSC only accepts
       # sitemap URLs inside the verified property (sc-domain:societyflats.com), so the

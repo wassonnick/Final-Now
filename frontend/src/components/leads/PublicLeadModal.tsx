@@ -1,4 +1,4 @@
-import { trackLeadIntent, trackLeadSubmitted } from "@/lib/analytics";
+import { trackEvent, trackLeadIntent, trackLeadSubmitted } from "@/lib/analytics";
 import { cleanLeadTrackingPayload, type LeadTrackingContext } from "@/lib/leadTracking";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
@@ -20,6 +20,7 @@ type PublicLeadModalProps = {
   societyName?: string;
   propertyTitle?: string;
   propertySlug?: string;
+  listingType?: string;
   budget?: string;
   submitLabel?: string;
   successMessage?: string;
@@ -74,6 +75,7 @@ export function PublicLeadModal({
   societyName,
   propertyTitle,
   propertySlug,
+  listingType,
   budget = "",
   submitLabel = "Request callback",
   successMessage,
@@ -220,6 +222,16 @@ export function PublicLeadModal({
         source,
         society_name: societyName,
         property_slug: propertySlug,
+      });
+      trackEvent("generate_lead", {
+        lead_context: source,
+        page_path: window.location.pathname,
+        society_slug:
+          leadTrackingPayload.entity_type === "society"
+            ? leadTrackingPayload.entity_slug
+            : undefined,
+        property_slug: propertySlug,
+        listing_type: listingType,
       });
       setSuccess(true);
       onSuccess?.();

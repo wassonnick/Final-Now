@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { Bot, MoreHorizontal, Send, Sparkles } from 'lucide-react';
 import { API_BASE_URL } from '@/config/api';
+import { trackEvent } from '@/lib/analytics';
 
 type ChatRole = 'assistant' | 'user';
 
@@ -90,6 +91,13 @@ export function AIAdvisorChatBox() {
     event?.preventDefault();
     const message = (chip || input).trim();
     if (!message || loading) return;
+
+    const sectorMatch = message.match(/\bsector\s+([a-z0-9-]+)/i);
+    trackEvent("ai_advisor_search", {
+      query_type: chip ? chip.toLowerCase().replace(/[^a-z0-9]+/g, "_") : "free_text",
+      city: "Gurugram",
+      sector: sectorMatch?.[1] ? `Sector ${sectorMatch[1]}` : undefined,
+    });
 
     setInput('');
     setLoading(true);

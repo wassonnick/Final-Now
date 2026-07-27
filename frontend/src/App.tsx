@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { AnalyticsRouteTracker } from '@/components/AnalyticsRouteTracker';
 import { ProtectedAccountRoute } from "@/components/auth/ProtectedAccountRoute";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -308,6 +309,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <AnalyticsRouteTracker />
         <ScrollToTop />
         <AppShell />
       </BrowserRouter>
