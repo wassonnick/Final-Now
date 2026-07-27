@@ -17,6 +17,12 @@ Add this build-time environment variable to the Render frontend/static-site serv
 VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
+The live SocietyFlats measurement ID is also retained as a production-only
+fail-safe in the analytics helper. The Render variable remains authoritative,
+but tracking will not silently disappear if an existing Render service misses
+a `render.yaml` environment update. Measurement IDs are public identifiers;
+no Analytics credentials or private data are embedded in the frontend.
+
 Replace the example with the real Measurement ID, then redeploy the frontend. Vite embeds `VITE_` variables at build time, so saving the environment variable without a new deployment is not enough.
 
 Optional local diagnostics:

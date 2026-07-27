@@ -10,7 +10,13 @@ declare global {
 }
 
 const GA_SCRIPT_ID = "societyflats-ga4";
-const GA_MEASUREMENT_ID = String(import.meta.env.VITE_GA_MEASUREMENT_ID || "").trim();
+// GA measurement IDs are public identifiers, not secrets. Keep the Render env
+// override authoritative, but retain the production ID as a fail-safe because
+// existing Render services do not automatically import new render.yaml env vars.
+const DEFAULT_PRODUCTION_GA_MEASUREMENT_ID = "G-FC4045CRJS";
+const CONFIGURED_GA_MEASUREMENT_ID = String(import.meta.env.VITE_GA_MEASUREMENT_ID || "").trim();
+const GA_MEASUREMENT_ID =
+  CONFIGURED_GA_MEASUREMENT_ID || (import.meta.env.PROD ? DEFAULT_PRODUCTION_GA_MEASUREMENT_ID : "");
 const ANALYTICS_DEBUG = String(import.meta.env.VITE_ANALYTICS_DEBUG || "").toLowerCase() === "true";
 const VALID_MEASUREMENT_ID = /^G-[A-Z0-9]+$/i.test(GA_MEASUREMENT_ID) && GA_MEASUREMENT_ID !== "G-XXXXXXXXXX";
 const SAFE_QUERY_KEYS = new Set(["city", "sector", "listing_type", "type", "page", "sort", "tab", "mode", "view"]);
