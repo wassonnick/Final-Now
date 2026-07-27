@@ -293,6 +293,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::apiResource('referrals', AdminReferralController::class)->only(['index', 'update']);
     Route::apiResource('nri-cases', AdminNriCaseController::class)->only(['index', 'update']);
     Route::get('/email-deliveries', [AdminEmailDeliveryController::class, 'index']);
+    Route::post('/email-deliveries/test', [AdminEmailDeliveryController::class, 'sendTest']);
     Route::apiResource('rent-history', AdminRentHistoryController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('/builder-claims', [AdminBuilderPortalController::class, 'claims']);
     Route::patch('/builder-claims/{claim}', [AdminBuilderPortalController::class, 'updateClaim']);

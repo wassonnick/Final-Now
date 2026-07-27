@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { MailCheck, RefreshCw } from "lucide-react";
+import { MailCheck, RefreshCw, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { adminFetch } from "@/lib/adminApi";
@@ -52,7 +52,9 @@ export function AdminEmailDeliveriesPage() {
   const [summary, setSummary] = useState<Summary>(emptySummary);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
+  const [sendingTest, setSendingTest] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   async function load() {
     try {
@@ -74,6 +76,23 @@ export function AdminEmailDeliveriesPage() {
     void load();
   }, [status]);
 
+  async function sendTestEmail() {
+    try {
+      setSendingTest(true);
+      setError("");
+      setNotice("");
+      const response = await adminFetch("/admin/email-deliveries/test", { method: "POST" });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json?.message || "Could not send the test email.");
+      setNotice("Test email accepted. Delivery status will update automatically when Resend reports it.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send the test email.");
+    } finally {
+      setSendingTest(false);
+    }
+  }
+
   const total = useMemo(() => Object.values(summary).reduce((sum, value) => sum + value, 0), [summary]);
   const attention = summary.bounced + summary.complained + summary.suppressed + summary.failed;
 
@@ -87,10 +106,18 @@ export function AdminEmailDeliveriesPage() {
             Safe Resend status for enquiry confirmations and admin alerts. Message bodies, tokens and full recipient addresses are never stored here.
           </p>
         </div>
-        <Button variant="outline" onClick={() => void load()} disabled={loading}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => void sendTestEmail()} disabled={sendingTest}>
+            <Send className="mr-2 h-4 w-4" /> {sendingTest ? "Sending…" : "Send test email"}
+          </Button>
+          <Button variant="outline" onClick={() => void load()} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </Button>
+        </div>
       </div>
+
+      {notice ? <div className="rounded-xl bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">{notice}</div> : null}
+      {error ? <div className="rounded-xl bg-rose-50 p-4 text-sm font-semibold text-rose-700">{error}</div> : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {[
@@ -122,7 +149,6 @@ export function AdminEmailDeliveriesPage() {
             <option value="skipped">Skipped</option>
           </select>
         </div>
-        {error ? <div className="m-4 rounded-xl bg-rose-50 p-4 text-sm font-semibold text-rose-700">{error}</div> : null}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">

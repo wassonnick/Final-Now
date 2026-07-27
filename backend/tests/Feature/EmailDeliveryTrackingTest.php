@@ -121,4 +121,41 @@ class EmailDeliveryTrackingTest extends TestCase
         $this->assertStringNotContainsString('api_key', $payload);
         $this->assertStringNotContainsString('message_body', $payload);
     }
+
+    public function test_admin_can_send_delivery_test_to_configured_recipient_without_exposing_address(): void
+    {
+        Http::fake([
+            'api.resend.com/*' => Http::response(['id' => 'email_test_789'], 200),
+        ]);
+
+        $this->postJson('/api/admin/email-deliveries/test')->assertUnauthorized();
+
+        $response = $this->withToken('admin-test-token')
+            ->postJson('/api/admin/email-deliveries/test')
+            ->assertStatus(202)
+            ->assertJsonPath('message', 'Email accepted by Resend.');
+
+        $this->assertStringNotContainsString('admin@societyflats.test', $response->getContent());
+        $this->assertDatabaseHas('email_deliveries', [
+            'message_type' => 'test_email',
+            'recipient_masked' => 'ad***@societyflats.test',
+            'provider_message_id' => 'email_test_789',
+            'status' => 'sent',
+        ]);
+    }
+
+    public function test_admin_delivery_test_fails_safely_when_recipient_is_not_configured(): void
+    {
+        config([
+            'services.societyflats_email.admin_email' => '',
+            'services.societyflats_email.lead_alert_email' => '',
+        ]);
+
+        $this->withToken('admin-test-token')
+            ->postJson('/api/admin/email-deliveries/test')
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Configure the SocietyFlats admin email before sending a test.');
+
+        Http::assertNothingSent();
+    }
 }
