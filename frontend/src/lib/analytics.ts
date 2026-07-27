@@ -98,15 +98,25 @@ export function initGA() {
     window.dataLayer = window.dataLayer || [];
     window.gtag =
       window.gtag ||
-      ((...args: unknown[]) => {
-        window.dataLayer?.push(args);
-      });
+      function gtag(..._args: unknown[]) {
+        // Match Google's loader exactly: gtag commands are pushed as the
+        // function's Arguments object, then consumed when gtag.js is ready.
+        window.dataLayer?.push(arguments);
+      };
 
     if (!gaInitialized) {
+      const initialPagePath = safePagePath(`${window.location.pathname}${window.location.search}`);
+      // Google sends the first page_view from the config command. Seed the
+      // de-duplication guard so the route tracker does not send it twice.
+      lastPageViewPath = initialPagePath;
       window.gtag("js", new Date());
-      window.gtag("config", GA_MEASUREMENT_ID, { send_page_view: false });
+      window.gtag("config", GA_MEASUREMENT_ID, {
+        page_path: initialPagePath,
+        page_location: `${window.location.origin}${initialPagePath}`,
+        page_title: document.title,
+      });
       gaInitialized = true;
-      debugLog("initialized", GA_MEASUREMENT_ID);
+      debugLog("initialized with first page_view", GA_MEASUREMENT_ID, initialPagePath);
     }
 
     if (!document.getElementById(GA_SCRIPT_ID)) {
