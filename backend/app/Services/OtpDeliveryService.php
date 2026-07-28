@@ -2,11 +2,17 @@
 
 namespace App\Services;
 
+use App\Services\Email\SocietyFlatsEmailService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class OtpDeliveryService
 {
+    public function __construct(
+        private readonly SocietyFlatsEmailService $emailService
+    ) {
+    }
+
     /**
      * @return array{
      *   attempted: bool,
@@ -15,18 +21,16 @@ class OtpDeliveryService
      *   channel: string,
      *   message: string,
      *   error?: string|null,
-     *   provider_response?: mixed
      * }
      */
-    public function send(string $phone, string $code, string $channel = 'sms'): array
+    public function send(string $phone, string $code, string $channel = 'sms', ?string $email = null): array
     {
         $provider = trim((string) config('services.otp.provider', 'log'));
         $enabled = (bool) config('services.otp.enabled', false);
-        $channel = in_array($channel, ['sms', 'whatsapp'], true) ? $channel : 'sms';
+        $channel = in_array($channel, ['sms', 'whatsapp', 'email'], true) ? $channel : 'sms';
 
         if (!$enabled || $provider === '' || $provider === 'log') {
             Log::info('OTP generated but external provider is not enabled', [
-                'phone' => $phone,
                 'channel' => $channel,
                 'provider' => $provider ?: 'log',
             ]);
@@ -43,6 +47,7 @@ class OtpDeliveryService
         return match ($provider) {
             'msg91' => $this->sendViaMsg91($phone, $code, $channel),
             'webhook' => $this->sendViaWebhook($phone, $code, $channel),
+            'resend' => $this->sendViaResend($email, $code, $channel),
             default => [
                 'attempted' => false,
                 'delivered' => false,
@@ -51,6 +56,32 @@ class OtpDeliveryService
                 'message' => 'OTP provider is configured but not implemented yet.',
             ],
         };
+    }
+
+    private function sendViaResend(?string $email, string $code, string $channel): array
+    {
+        if ($channel !== 'email') {
+            return [
+                'attempted' => false,
+                'delivered' => false,
+                'provider' => 'resend',
+                'channel' => $channel,
+                'message' => 'Resend OTP provider supports email delivery only.',
+            ];
+        }
+
+        $result = $this->emailService->sendOtpEmail((string) $email, $code);
+
+        return [
+            'attempted' => true,
+            'delivered' => (bool) ($result['sent'] ?? false),
+            'provider' => 'resend',
+            'channel' => 'email',
+            'message' => ($result['sent'] ?? false)
+                ? 'OTP sent to your email address.'
+                : 'Email OTP could not be delivered. Please check the address and try again.',
+            'error' => ($result['sent'] ?? false) ? null : 'email_delivery_failed',
+        ];
     }
 
     private function sendViaMsg91(string $phone, string $code, string $channel): array
@@ -106,15 +137,11 @@ class OtpDeliveryService
                     'provider' => 'msg91',
                     'channel' => 'sms',
                     'message' => 'OTP sent successfully.',
-                    'provider_response' => $body,
                 ];
             }
 
             Log::warning('MSG91 OTP delivery returned non-success response', [
-                'phone' => $phone,
-                'mobile' => $mobile,
                 'status' => $response->status(),
-                'body' => $body ?: $response->body(),
             ]);
 
             return [
@@ -123,14 +150,11 @@ class OtpDeliveryService
                 'provider' => 'msg91',
                 'channel' => 'sms',
                 'message' => 'MSG91 OTP delivery failed. Please use fallback for now.',
-                'error' => $bodyText,
-                'provider_response' => $body,
+                'error' => 'msg91_delivery_failed',
             ];
         } catch (\Throwable $exception) {
             Log::warning('MSG91 OTP delivery exception', [
-                'phone' => $phone,
-                'mobile' => $mobile,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
             ]);
 
             return [
@@ -139,7 +163,7 @@ class OtpDeliveryService
                 'provider' => 'msg91',
                 'channel' => 'sms',
                 'message' => 'MSG91 OTP delivery failed. Please use fallback for now.',
-                'error' => $exception->getMessage(),
+                'error' => 'msg91_delivery_failed',
             ];
         }
     }
@@ -191,9 +215,8 @@ class OtpDeliveryService
             ];
         } catch (\Throwable $exception) {
             Log::warning('OTP webhook delivery failed', [
-                'phone' => $phone,
                 'channel' => $channel,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
             ]);
 
             return [
@@ -202,7 +225,7 @@ class OtpDeliveryService
                 'provider' => 'webhook',
                 'channel' => $channel,
                 'message' => 'OTP delivery failed. Please use fallback for now.',
-                'error' => $exception->getMessage(),
+                'error' => 'webhook_delivery_failed',
             ];
         }
     }

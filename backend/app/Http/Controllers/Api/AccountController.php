@@ -32,6 +32,7 @@ class AccountController extends Controller
             'status' => $account->status,
             'last_login_at' => optional($account->last_login_at)->toISOString(),
             'phone_verified_at' => optional($account->phone_verified_at)->toISOString(),
+            'email_verified_at' => optional($account->email_verified_at)->toISOString(),
             'meta' => $account->meta,
             'created_at' => optional($account->created_at)->toISOString(),
             'updated_at' => optional($account->updated_at)->toISOString(),
@@ -314,11 +315,15 @@ class AccountController extends Controller
             'role' => ['required', Rule::in(['customer', 'broker', 'rwa'])],
             'phone' => ['required', 'string', 'max:30'],
             'name' => ['nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'channel' => ['nullable', Rule::in(['sms', 'whatsapp'])],
+            'email' => ['required_if:channel,email', 'nullable', 'email', 'max:255'],
+            'channel' => ['nullable', Rule::in(['sms', 'whatsapp', 'email'])],
         ]);
 
         $phone = $this->normalizePhone($validated['phone']);
+        $channel = $validated['channel'] ?? 'sms';
+        $incomingEmail = isset($validated['email'])
+            ? strtolower(trim((string) $validated['email']))
+            : null;
 
         if (! preg_match('/^[6-9]\d{9}$/', $phone)) {
             return response()->json([
@@ -329,6 +334,21 @@ class AccountController extends Controller
         $account = Account::where('phone_normalized', $phone)->first();
 
         if ($account) {
+            $linkedEmail = $account->email
+                ? strtolower(trim((string) $account->email))
+                : null;
+
+            if (
+                $channel === 'email'
+                && $linkedEmail
+                && $incomingEmail
+                && ! hash_equals($linkedEmail, $incomingEmail)
+            ) {
+                return response()->json([
+                    'message' => 'The email does not match the address linked to this account.',
+                ], 422);
+            }
+
             $payload = [
                 'phone' => $account->phone ?: $phone,
                 'last_login_at' => now(),
@@ -338,8 +358,8 @@ class AccountController extends Controller
                 $payload['name'] = $validated['name'];
             }
 
-            if (! $account->email && ! empty($validated['email'])) {
-                $payload['email'] = $validated['email'];
+            if (! $linkedEmail && $incomingEmail) {
+                $payload['email'] = $incomingEmail;
             }
 
             $account->update($payload);
@@ -349,15 +369,13 @@ class AccountController extends Controller
                 'phone' => $phone,
                 'phone_normalized' => $phone,
                 'name' => $validated['name'] ?? null,
-                'email' => $validated['email'] ?? null,
+                'email' => $incomingEmail,
                 'status' => 'otp_pending',
                 'last_login_at' => now(),
             ]);
         }
 
         $code = (string) random_int(100000, 999999);
-
-        $channel = $validated['channel'] ?? 'sms';
 
         AccountOtp::create([
             'account_id' => $account->id,
@@ -368,11 +386,15 @@ class AccountController extends Controller
             'expires_at' => now()->addMinutes(10),
         ]);
 
-        $delivery = app(OtpDeliveryService::class)->send($phone, $code, $channel);
+        $delivery = app(OtpDeliveryService::class)->send(
+            $phone,
+            $code,
+            $channel,
+            $account->email
+        );
 
         return response()->json([
             'message' => $delivery['message'] ?? 'OTP generated.',
-            'account' => $this->accountPayload($account),
             'delivery' => [
                 'attempted' => (bool) ($delivery['attempted'] ?? false),
                 'delivered' => (bool) ($delivery['delivered'] ?? false),
@@ -415,11 +437,15 @@ class AccountController extends Controller
         $account = Account::where('phone_normalized', $phone)->first();
 
         if ($account) {
+            $verification = $otp->channel === 'email'
+                ? ['email_verified_at' => now()]
+                : ['phone_verified_at' => now()];
+
             $account->update([
                 'phone' => $account->phone ?: $phone,
                 'status' => 'active',
-                'phone_verified_at' => now(),
                 'last_login_at' => now(),
+                ...$verification,
             ]);
         } else {
             $account = Account::create([
@@ -427,7 +453,7 @@ class AccountController extends Controller
                 'phone' => $phone,
                 'phone_normalized' => $phone,
                 'status' => 'active',
-                'phone_verified_at' => now(),
+                ($otp->channel === 'email' ? 'email_verified_at' : 'phone_verified_at') => now(),
                 'last_login_at' => now(),
             ]);
         }

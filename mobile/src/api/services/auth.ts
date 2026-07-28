@@ -1,8 +1,13 @@
 import { apiClient } from '../client';
 
 export const authService = {
-  async requestOtp(phone: string) {
-    const response = await apiClient.post('/accounts/request-otp', { phone, role: 'customer' });
+  async requestOtp(phone: string, email: string) {
+    const response = await apiClient.post('/accounts/request-otp', {
+      phone,
+      email,
+      channel: 'email',
+      role: 'customer',
+    });
     return response.data;
   },
   async verifyOtp(phone: string, otp: string) {

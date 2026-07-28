@@ -98,6 +98,30 @@ class SocietyFlatsEmailService
         return $this->sendEmail('test_email', $to, $subject, $html, $text);
     }
 
+    /**
+     * @return array{sent: bool, message: string}
+     */
+    public function sendOtpEmail(string $to, string $code): array
+    {
+        if (! $this->isValidEmail($to)) {
+            return ['sent' => false, 'message' => 'Enter a valid email address for OTP delivery.'];
+        }
+
+        $subject = 'Your SocietyFlats verification code';
+        $html = $this->wrapHtml($subject, [
+            'Use this one-time code to continue securely:',
+            $code,
+            'This code expires in 10 minutes. If you did not request it, you can ignore this email.',
+        ]);
+        $text = implode("\n\n", [
+            'Your SocietyFlats verification code',
+            $code,
+            'This code expires in 10 minutes. If you did not request it, you can ignore this email.',
+        ]);
+
+        return $this->sendEmail('account_otp', $to, $subject, $html, $text);
+    }
+
     private function sendAdminAlert(string $type, Lead $lead, string $subject, string $intro): void
     {
         $to = $this->adminRecipient();
@@ -187,11 +211,11 @@ class SocietyFlatsEmailService
         } catch (Throwable $exception) {
             Log::warning('SocietyFlats Resend email exception', [
                 'type' => $type,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
                 ...$context,
             ]);
 
-            return ['sent' => false, 'message' => 'Email failed safely: '.$exception->getMessage()];
+            return ['sent' => false, 'message' => 'Email delivery failed safely. Please try again.'];
         }
     }
 
