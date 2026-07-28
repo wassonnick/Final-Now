@@ -310,7 +310,18 @@ export function trackLeadIntent(params: AnalyticsParams = {}) {
 }
 
 export function trackLeadSubmitted(params: AnalyticsParams = {}) {
-  trackEvent("lead_submitted", getTrackingContext(params));
+  const payload = getTrackingContext({
+    ...params,
+    page_path:
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : undefined,
+  });
+
+  // Retain the existing funnel event while also emitting GA4's recommended
+  // lead conversion event for Realtime, attribution and key-event reporting.
+  trackEvent("lead_submitted", payload);
+  trackEvent("generate_lead", payload);
 }
 
 export function trackSearchPerformed(params: AnalyticsParams = {}) {
