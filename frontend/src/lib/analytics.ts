@@ -9,7 +9,16 @@ declare global {
   }
 }
 
+export type AnalyticsConsent = "granted" | "denied";
+
+export type ConsentPreferences = {
+  analytics: AnalyticsConsent;
+  advertising: AnalyticsConsent;
+  updatedAt: string;
+};
+
 const GA_SCRIPT_ID = "societyflats-ga4";
+const CONSENT_STORAGE_KEY = "societyflats_analytics_consent_v1";
 // GA measurement IDs are public identifiers, not secrets. Keep the Render env
 // override authoritative, but retain the production ID as a fail-safe because
 // existing Render services do not automatically import new render.yaml env vars.
@@ -28,7 +37,7 @@ let gaInitialized = false;
 let lastPageViewPath = "";
 
 function debugLog(...args: unknown[]) {
-  if (ANALYTICS_DEBUG) console.log("[SocietyFlats GA4]", ...args);
+  if (ANALYTICS_DEBUG && import.meta.env.DEV) console.log("[SocietyFlats GA4]", ...args);
 }
 
 function cleanParams(params: AnalyticsParams = {}) {
@@ -90,22 +99,103 @@ function safeAnalyticsParams(params: AnalyticsParams = {}) {
   return Object.fromEntries(safeEntries);
 }
 
+function ensureGtag() {
+  if (typeof window === "undefined") return false;
+
+  window.dataLayer = window.dataLayer || [];
+  window.gtag =
+    window.gtag ||
+    function gtag(..._args: unknown[]) {
+      // Match Google's loader exactly: gtag commands are pushed as the
+      // function's Arguments object, then consumed when gtag.js is ready.
+      window.dataLayer?.push(arguments);
+    };
+
+  return true;
+}
+
+function isConsentPreferences(value: unknown): value is ConsentPreferences {
+  if (!value || typeof value !== "object") return false;
+
+  const candidate = value as Partial<ConsentPreferences>;
+  return (
+    (candidate.analytics === "granted" || candidate.analytics === "denied")
+    && (candidate.advertising === "granted" || candidate.advertising === "denied")
+    && typeof candidate.updatedAt === "string"
+  );
+}
+
+export function getConsentPreferences(): ConsentPreferences | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const stored = window.localStorage.getItem(CONSENT_STORAGE_KEY);
+    if (!stored) return null;
+
+    const parsed: unknown = JSON.parse(stored);
+    return isConsentPreferences(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function consentCommand(preferences: ConsentPreferences | null) {
+  const analytics = preferences?.analytics || "denied";
+  const advertising = preferences?.advertising || "denied";
+
+  return {
+    analytics_storage: analytics,
+    ad_storage: advertising,
+    ad_user_data: advertising,
+    ad_personalization: advertising,
+  };
+}
+
+export function updateConsentPreferences(
+  analytics: AnalyticsConsent,
+  advertising: AnalyticsConsent = "denied",
+) {
+  if (typeof window === "undefined") return;
+
+  const preferences: ConsentPreferences = {
+    analytics,
+    advertising,
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    window.localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(preferences));
+  } catch {
+    // Consent still applies to the current page when storage is unavailable.
+  }
+
+  if (ensureGtag()) {
+    window.gtag?.("consent", "update", consentCommand(preferences));
+  }
+
+  window.dispatchEvent(new CustomEvent("societyflats:consent-updated", { detail: preferences }));
+  debugLog("consent updated", {
+    analytics: preferences.analytics,
+    advertising: preferences.advertising,
+  });
+}
+
 export function initGA() {
   if (typeof window === "undefined" || !VALID_MEASUREMENT_ID) return false;
   if (!import.meta.env.PROD && !ANALYTICS_DEBUG) return false;
 
   try {
-    window.dataLayer = window.dataLayer || [];
-    window.gtag =
-      window.gtag ||
-      function gtag(..._args: unknown[]) {
-        // Match Google's loader exactly: gtag commands are pushed as the
-        // function's Arguments object, then consumed when gtag.js is ready.
-        window.dataLayer?.push(arguments);
-      };
+    if (!ensureGtag()) return false;
 
     if (!gaInitialized) {
+      const storedConsent = getConsentPreferences();
       const initialPagePath = safePagePath(`${window.location.pathname}${window.location.search}`);
+      window.gtag?.("consent", "default", {
+        ...consentCommand(storedConsent),
+        wait_for_update: storedConsent ? 0 : 500,
+      });
+      window.gtag?.("set", "ads_data_redaction", true);
+      window.gtag?.("set", "url_passthrough", false);
       // Google sends the first page_view from the config command. Seed the
       // de-duplication guard so the route tracker does not send it twice.
       lastPageViewPath = initialPagePath;
@@ -114,9 +204,11 @@ export function initGA() {
         page_path: initialPagePath,
         page_location: `${window.location.origin}${initialPagePath}`,
         page_title: document.title,
+        allow_google_signals: false,
+        allow_ad_personalization_signals: false,
       });
       gaInitialized = true;
-      debugLog("initialized with first page_view", GA_MEASUREMENT_ID, initialPagePath);
+      debugLog("initialized with first page_view", GA_MEASUREMENT_ID, initialPagePath, consentCommand(storedConsent));
     }
 
     if (!document.getElementById(GA_SCRIPT_ID)) {

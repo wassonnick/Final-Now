@@ -8,6 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { FloatingHelpline } from '@/components/layout/FloatingHelpline';
+import { AnalyticsConsentBanner } from '@/components/privacy/AnalyticsConsentBanner';
 
 import { HomePage } from '@/pages/HomePage';
 
@@ -312,6 +313,7 @@ function App() {
         <AnalyticsRouteTracker />
         <ScrollToTop />
         <AppShell />
+        <AnalyticsConsentBanner />
       </BrowserRouter>
 
       <Toaster />
