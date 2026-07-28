@@ -8,6 +8,8 @@ import { Navbar } from '@/components/layout/Navbar';
 import { PremiumNavbar } from '@/components/layout/PremiumNavbar';
 import { Footer } from '@/components/layout/Footer';
 import { FloatingHelpline } from '@/components/layout/FloatingHelpline';
+import { AnalyticsRouteTracker } from '@/components/AnalyticsRouteTracker';
+import { AnalyticsConsentBanner } from '@/components/privacy/AnalyticsConsentBanner';
 
 import { HomePage } from '@/pages/HomePage';
 import HomePremium from '@/pages/HomePremium';
@@ -309,7 +311,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ScrollToTop />
+        <AnalyticsRouteTracker />
         <AppShell />
+        <AnalyticsConsentBanner />
       </BrowserRouter>
 
       <Toaster />
