@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   BriefcaseBusiness,
   Building2,
-  CheckCircle2,
   KeyRound,
   Loader2,
   LockKeyhole,
@@ -17,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { createCustomerAccountSession } from "@/lib/customerAccount";
 import {
   requestAccountOtp,
-  syncAccountToBackend,
   verifyAccountOtp,
   type AccountResponse,
 } from "@/lib/accountApi";
@@ -37,6 +35,16 @@ function isValidPhone(value: string) {
   return /^[6-9]\d{9}$/.test(cleanPhone(value));
 }
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function maskEmail(value: string) {
+  const [local = "", domain = ""] = value.trim().split("@");
+  if (!domain) return value;
+  return `${local.slice(0, 2)}${local.length > 2 ? "***" : ""}@${domain}`;
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -49,20 +57,19 @@ export function LoginPage() {
   const [role, setRole] = useState<AccountRole>(requestedRole);
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<LoginStep>("details");
   const [message, setMessage] = useState("");
   const [devOtp, setDevOtp] = useState<string | null>(null);
-  const [otpRequested, setOtpRequested] = useState(false);
   const [providerPending, setProviderPending] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [fallbackLoading, setFallbackLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     setPublicSeo(
       "Secure Login | SocietyFlats",
-      "Continue securely with mobile OTP to access your SocietyFlats account.",
+      "Continue securely with email OTP to access your SocietyFlats account.",
       { canonical: "/login", noindex: true },
     );
   }, []);
@@ -105,6 +112,11 @@ export function LoginPage() {
       return;
     }
 
+    if (!isValidEmail(email)) {
+      setError("Enter a valid email address to receive your OTP.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -112,22 +124,22 @@ export function LoginPage() {
         role,
         phone: cleanMobile,
         name: accountName,
+        email: email.trim().toLowerCase(),
         source: "login_page_otp",
         meta: {
           otpLoginAttempt: true,
         },
-        channel: "sms",
+        channel: "email",
       });
 
-      setOtpRequested(true);
       setProviderPending(!response.delivery?.delivered && !response.dev_otp);
       setDevOtp(response.dev_otp || null);
       setMessage(
         response.delivery?.delivered
-          ? "OTP sent successfully. Enter the code below."
+          ? "OTP sent to your email. Enter the code below."
           : response.dev_otp
             ? "OTP generated. Enter the code below."
-            : "OTP created securely. If the message is delayed, use the secure continuation option below.",
+            : "Email OTP could not be delivered. Check the address and request a new code.",
       );
       setStep("otp");
     } catch (err) {
@@ -164,38 +176,6 @@ export function LoginPage() {
     }
   }
 
-  async function handleFallbackLogin() {
-    setError("");
-    setMessage("");
-    setFallbackLoading(true);
-
-    if (!isValidPhone(phone)) {
-      setError("Enter a valid 10-digit Indian mobile number.");
-      setFallbackLoading(false);
-      return;
-    }
-
-    try {
-      const response = await syncAccountToBackend({
-        role,
-        phone: cleanMobile,
-        name: accountName,
-        source: "login_page_otp_fallback",
-        meta: {
-          temporaryLocalSession: true,
-          otpProviderPending: true,
-          otpRequested,
-        },
-      });
-
-      completeLocalLogin(response);
-    } catch {
-      completeLocalLogin(null);
-    } finally {
-      setFallbackLoading(false);
-    }
-  }
-
   function resetOtp() {
     setStep("details");
     setOtp("");
@@ -222,7 +202,7 @@ export function LoginPage() {
                 Secure account access
               </Badge>
               <h1 className="max-w-2xl text-4xl font-black tracking-[-0.045em] leading-[0.98] text-slate-950 md:text-6xl">
-                Login securely with mobile OTP.
+                Login securely with email OTP.
               </h1>
               <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 md:text-lg">
                 Continue securely to your saved societies, enquiries, property listings and broker activity.
@@ -256,8 +236,8 @@ export function LoginPage() {
                   </h2>
                   <p className="text-sm text-slate-500">
                     {step === "otp"
-                      ? `Verification for ${cleanMobile}`
-                      : "Choose your account type and mobile number."}
+                      ? `Code sent to ${maskEmail(email)}`
+                      : "Choose your account type and enter your contact details."}
                   </p>
                 </div>
               </div>
@@ -318,6 +298,16 @@ export function LoginPage() {
                     inputMode="numeric"
                   />
 
+                  <Input
+                    required
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="h-12 rounded-2xl"
+                    placeholder="Email address for OTP"
+                    inputMode="email"
+                    autoComplete="email"
+                  />
+
                   <Button
                     type="submit"
                     disabled={loading}
@@ -332,17 +322,6 @@ export function LoginPage() {
                   >
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
                     Request OTP
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={fallbackLoading}
-                    onClick={handleFallbackLogin}
-                    className="h-12 w-full rounded-2xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                  >
-                    {fallbackLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                    Continue securely while OTP delivery is pending
                   </Button>
                 </form>
               ) : (
@@ -364,7 +343,7 @@ export function LoginPage() {
 
                   {providerPending ? (
                     <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs font-semibold leading-5 text-amber-700">
-                      OTP delivery may be delayed. You can use the secure continuation option below.
+                      Email delivery failed or is delayed. Change your details and request a new code.
                     </div>
                   ) : null}
 
@@ -384,30 +363,19 @@ export function LoginPage() {
                     Verify OTP
                   </Button>
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={fallbackLoading}
-                    onClick={handleFallbackLogin}
-                    className="h-12 w-full rounded-2xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                  >
-                    {fallbackLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                    Continue securely while OTP delivery is pending
-                  </Button>
-
                   <button
                     type="button"
                     onClick={resetOtp}
                     className="inline-flex w-full items-center justify-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-950"
                   >
                     <RotateCcw className="h-4 w-4" />
-                    Change mobile number
+                    Change contact details
                   </button>
                 </form>
               )}
 
               <p className="mt-4 text-xs leading-5 text-slate-500">
-                Your number is used only for secure account access, verification and the enquiries you choose to make.
+                Your phone and email are used only for secure account access, verification and the enquiries you choose to make.
               </p>
             </div>
           </div>

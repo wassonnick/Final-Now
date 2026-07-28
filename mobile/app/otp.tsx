@@ -5,7 +5,7 @@ import { AppHeader, AppScreen, AppTextInput, PrimaryButton } from '../src/compon
 import { useAuthStore } from '../src/state/authStore';
 
 export default function OtpScreen() {
-  const { phone = '' } = useLocalSearchParams<{ phone?: string }>();
+  const { phone = '', email = '' } = useLocalSearchParams<{ phone?: string; email?: string }>();
   const [otp, setOtp] = useState('');
   const setToken = useAuthStore((state) => state.setToken);
 
@@ -20,7 +20,7 @@ export default function OtpScreen() {
 
   return (
     <AppScreen keyboard>
-      <AppHeader title="Verify OTP" subtitle={`Code sent to ${phone || 'your phone'}.`} />
+      <AppHeader title="Verify OTP" subtitle={`Code sent to ${email || 'your email address'}.`} />
       <AppTextInput value={otp} onChangeText={setOtp} placeholder="One-time password" keyboardType="number-pad" />
       <PrimaryButton onPress={verify}>Verify</PrimaryButton>
     </AppScreen>

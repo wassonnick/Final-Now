@@ -20,6 +20,7 @@ export type BackendAccount = {
   status?: string | null;
   last_login_at?: string | null;
   phone_verified_at?: string | null;
+  email_verified_at?: string | null;
   meta?: Record<string, unknown> | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -30,7 +31,7 @@ export type AccountDelivery = {
   attempted?: boolean;
   delivered?: boolean;
   provider?: string;
-  channel?: "sms" | "whatsapp" | string;
+  channel?: "sms" | "whatsapp" | "email" | string;
 };
 
 export type AccountResponse = {
@@ -76,7 +77,7 @@ export async function syncAccountToBackend(payload: AccountSyncPayload) {
   }
 }
 
-export async function requestAccountOtp(payload: AccountSyncPayload & { channel?: "sms" | "whatsapp" }) {
+export async function requestAccountOtp(payload: AccountSyncPayload & { channel?: "sms" | "whatsapp" | "email" }) {
   const phone = cleanAccountPhone(payload.phone);
 
   return postJson<AccountResponse>("/accounts/request-otp", {

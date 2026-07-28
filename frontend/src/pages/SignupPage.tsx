@@ -23,7 +23,7 @@ const ROLES: RoleCard[] = [
   {
     icon: KeyRound,
     title: "Buyer or renter",
-    tag: "Instant · phone OTP",
+    tag: "Instant · email OTP",
     blurb: "Find and shortlist verified Gurgaon societies, then move only when it feels right.",
     gets: ["Shortlist & saved searches with alerts", "Compare societies side by side", "Society Reports & site-visit requests", "Track your enquiries in one place"],
     href: "/login?role=customer&next=%2Fcustomer%2Fdashboard",
@@ -32,7 +32,7 @@ const ROLES: RoleCard[] = [
   {
     icon: Home,
     title: "Owner or seller",
-    tag: "Instant · phone OTP",
+    tag: "Instant · email OTP",
     blurb: "List your flat for rent or resale on your society's verified page and meet genuine, checked enquiries.",
     gets: ["List & manage your flats free", "See verified enquiries and status", "Confirm availability on your terms", "Keep your number private"],
     href: "/login?role=customer&next=%2Fowner%2Fdashboard",
@@ -85,7 +85,7 @@ export function SignupPage() {
             <span className="font-display text-2xl font-medium text-[#111827]">Society<span className="text-[#233B6E]">Flats</span></span>
           </div>
           <h1 className="mt-8 max-w-3xl font-display text-[38px] font-medium leading-[1.05] tracking-[-0.02em] text-[#111827] md:text-[56px]">Join SocietyFlats — choose how you'll use it.</h1>
-          <p className="mt-4 max-w-2xl text-[16px] leading-8 text-[#667085]">Buyers and owners get in instantly with a phone OTP. Builders and RWAs are verified by our team first, so every official voice on a society page is genuine.</p>
+          <p className="mt-4 max-w-2xl text-[16px] leading-8 text-[#667085]">Buyers and owners get in securely with an email OTP. Builders and RWAs are verified by our team first, so every official voice on a society page is genuine.</p>
         </div>
       </section>
 
