@@ -7,6 +7,11 @@ php artisan migrate --force
 # symlink every Storage::url() link (AI social images, uploads) 404s in production.
 php artisan storage:link --force
 
+# Artisan runs as root during container startup. Restore runtime ownership before
+# php-fpm, the scheduler and queue worker begin writing logs, cache or sessions.
+chown -R www-data:www-data /app/storage /app/bootstrap/cache
+chmod -R u+rwX,g+rwX /app/storage /app/bootstrap/cache
+
 # nginx config files don't support $PORT substitution natively; sed in the only
 # variable we need so nginx's own $uri/$query_string/etc are left untouched.
 sed "s/\${PORT}/${PORT:-10000}/g" /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf

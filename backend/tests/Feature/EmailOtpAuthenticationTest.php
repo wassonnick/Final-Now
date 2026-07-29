@@ -6,6 +6,8 @@ use App\Models\Account;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
 use Tests\TestCase;
 
 class EmailOtpAuthenticationTest extends TestCase
@@ -119,5 +121,24 @@ class EmailOtpAuthenticationTest extends TestCase
             ->assertJsonValidationErrors('email');
 
         Http::assertNothingSent();
+    }
+
+    public function test_successful_email_otp_is_not_failed_by_a_logging_fault(): void
+    {
+        Http::fake([
+            'https://api.resend.test/emails' => Http::response(['id' => 'email_test_log_fault'], 200),
+        ]);
+        Log::shouldReceive('log')->andThrow(new RuntimeException('Log target is not writable.'));
+
+        $this->postJson('/api/accounts/request-otp', [
+            'role' => 'customer',
+            'phone' => '9911886333',
+            'name' => 'Logging Fault Test',
+            'email' => 'logging-fault@example.com',
+            'channel' => 'email',
+        ])
+            ->assertOk()
+            ->assertJsonPath('delivery.delivered', true)
+            ->assertJsonPath('delivery.provider', 'resend');
     }
 }

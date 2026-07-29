@@ -326,7 +326,7 @@ class SocietyFlatsEmailService
 
             if ($response->failed()) {
                 $reason = 'provider_http_'.$response->status();
-                Log::warning('SocietyFlats Resend email failed', [
+                $this->safeLog('warning', 'SocietyFlats Resend email failed', [
                     'type' => $type,
                     'status' => $response->status(),
                     ...$context,
@@ -337,7 +337,7 @@ class SocietyFlatsEmailService
             }
 
             $providerMessageId = $this->safeLine((string) ($response->json('id') ?? '')) ?: null;
-            Log::info('SocietyFlats Resend email sent', [
+            $this->safeLog('info', 'SocietyFlats Resend email sent', [
                 'type' => $type,
                 'to' => $this->maskEmail($to),
                 ...$context,
@@ -347,7 +347,7 @@ class SocietyFlatsEmailService
             return ['sent' => true, 'message' => 'Email accepted by Resend.'];
         } catch (Throwable $exception) {
             $reason = $this->safeFailureReason($exception->getMessage());
-            Log::warning('SocietyFlats Resend email exception', [
+            $this->safeLog('warning', 'SocietyFlats Resend email exception', [
                 'type' => $type,
                 'exception' => $exception::class,
                 ...$context,
@@ -455,11 +455,20 @@ class SocietyFlatsEmailService
 
     private function logSkipped(string $type, string $reason, array $context = []): void
     {
-        Log::warning('SocietyFlats email skipped', [
+        $this->safeLog('warning', 'SocietyFlats email skipped', [
             'type' => $type,
             'reason' => $reason,
             ...$context,
         ]);
+    }
+
+    private function safeLog(string $level, string $message, array $context = []): void
+    {
+        try {
+            Log::log($level, $message, $context);
+        } catch (Throwable) {
+            // Observability must never change the email delivery outcome.
+        }
     }
 
     private function adminUrl(string $path): string

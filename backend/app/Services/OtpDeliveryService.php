@@ -30,7 +30,7 @@ class OtpDeliveryService
         $channel = in_array($channel, ['sms', 'whatsapp', 'email'], true) ? $channel : 'sms';
 
         if (!$enabled || $provider === '' || $provider === 'log') {
-            Log::info('OTP generated but external provider is not enabled', [
+            $this->safeLog('info', 'OTP generated but external provider is not enabled', [
                 'channel' => $channel,
                 'provider' => $provider ?: 'log',
             ]);
@@ -140,7 +140,7 @@ class OtpDeliveryService
                 ];
             }
 
-            Log::warning('MSG91 OTP delivery returned non-success response', [
+            $this->safeLog('warning', 'MSG91 OTP delivery returned non-success response', [
                 'status' => $response->status(),
             ]);
 
@@ -153,7 +153,7 @@ class OtpDeliveryService
                 'error' => 'msg91_delivery_failed',
             ];
         } catch (\Throwable $exception) {
-            Log::warning('MSG91 OTP delivery exception', [
+            $this->safeLog('warning', 'MSG91 OTP delivery exception', [
                 'exception' => $exception::class,
             ]);
 
@@ -214,7 +214,7 @@ class OtpDeliveryService
                 'message' => 'OTP sent successfully.',
             ];
         } catch (\Throwable $exception) {
-            Log::warning('OTP webhook delivery failed', [
+            $this->safeLog('warning', 'OTP webhook delivery failed', [
                 'channel' => $channel,
                 'exception' => $exception::class,
             ]);
@@ -256,5 +256,14 @@ class OtpDeliveryService
         }
 
         return false;
+    }
+
+    private function safeLog(string $level, string $message, array $context = []): void
+    {
+        try {
+            Log::log($level, $message, $context);
+        } catch (\Throwable) {
+            // A logging fault must not break authentication or delivery fallback.
+        }
     }
 }
