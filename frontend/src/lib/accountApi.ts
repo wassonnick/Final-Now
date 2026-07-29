@@ -44,14 +44,22 @@ export type AccountResponse = {
 };
 
 async function postJson<T>(path: string, payload: Record<string, unknown>): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    throw new Error(
+      "The secure login service is temporarily unreachable. Please wait a moment and request a new OTP.",
+    );
+  }
 
   const json = await response.json().catch(() => ({}));
 

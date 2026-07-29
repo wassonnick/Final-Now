@@ -7,10 +7,17 @@ services:
     staticPublishPath: ./frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://final-now.onrender.com/api
+        value: /api
       - key: VITE_GA_MEASUREMENT_ID
         value: G-FC4045CRJS
     routes:
+      # Keep browser API traffic on the SocietyFlats origin. This avoids login,
+      # lead and account flows depending on a separate cross-origin connection
+      # to Render while preserving the Laravel API as the source of truth.
+      - type: rewrite
+        source: /api/*
+        destination: https://final-now.onrender.com/api/*
+
       # Live registry sitemap, proxied onto the site's own domain. GSC only accepts
       # sitemap URLs inside the verified property (sc-domain:societyflats.com), so the
       # backend URL can't be submitted directly — this rewrite serves it same-host.
