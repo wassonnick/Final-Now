@@ -907,6 +907,13 @@ function rwaRoutes(societies) {
     ),
     schemaType: "WebPage",
     skipGenericFaq: true,
+    // The RWA module is still moderation-led and most pages are unclaimed, which is
+    // exactly why they're kept out of the sitemap. Shipping them as indexable
+    // contradicted that and put ~300 near-identical thin pages in front of crawlers.
+    // noindex, but keep them followable so they still pass link equity to the
+    // society profile they point at.
+    noindex: true,
+    followWhenNoindex: true,
     rootSnapshot: [
       '<div id="sf-prerender" style="max-width:920px;margin:0 auto;padding:28px 20px;font-family:system-ui,-apple-system,sans-serif;color:#25302B;">',
       `<h1 style="font-size:26px;">${escapeHtml(society.name)} RWA — Announcements &amp; Resident Updates</h1>`,
@@ -1096,7 +1103,7 @@ function seoTags(meta) {
   const description = escapeHtml(meta.description);
   const schema = escapeJson(schemaFor(meta));
   const robots = meta.noindex
-    ? "noindex, nofollow"
+    ? (meta.followWhenNoindex ? "noindex, follow" : "noindex, nofollow")
     : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
 
   return [
@@ -1249,7 +1256,19 @@ async function main() {
   // so shipping the app shell there means client-routed pages (admin, dynamic
   // society/property URLs, anything new) still boot on a direct hit or refresh —
   // without depending on a rewrite rule being configured in the host's dashboard.
-  await fs.writeFile(path.join(DIST_DIR, "404.html"), baseHtml, "utf8");
+  //
+  // It ships noindex: the host answers unknown URLs with 200, so without this every
+  // typo and dead link is an indexable copy of the app shell. Every real public page
+  // has its own prerendered file above, and the SPA re-asserts "index, follow" at
+  // runtime for legitimate routes — so only genuine dead ends stay noindex.
+  await fs.writeFile(
+    path.join(DIST_DIR, "404.html"),
+    baseHtml.replace(
+      /<meta\s+name=["']robots["'][^>]*>/i,
+      '<meta name="robots" content="noindex, follow" />',
+    ),
+    "utf8",
+  );
 
   console.log(
     `Static SEO shells generated for ${written.length} routes ` +
