@@ -96,6 +96,14 @@ export function PremiumNavbar() {
         <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-2">
           <a href="tel:+919911886222" className="hidden items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-2 text-[13px] font-semibold text-[#1D1D1F] hover:bg-[#F5F5F7] xl:flex"><Phone className="h-4 w-4" style={{ color: ACCENT }} />+91 99118 86222</a>
           <Link to="/sell" className="hidden whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-semibold text-white sm:inline-flex" style={{ background: ACCENT }}>List your flat</Link>
+          <a
+            href="tel:+919911886222"
+            aria-label="Call SocietyFlats on +91 99118 86222"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white xl:hidden"
+            style={{ background: ACCENT }}
+          >
+            <Phone className="h-4 w-4" />
+          </a>
           <Link to="/login" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F5F5F7] text-[#43434A] hover:bg-[#ECECEF]"><User className="h-4 w-4" /></Link>
           <button type="button" onClick={() => setMobile(true)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#43434A] lg:hidden"><Menu className="h-5 w-5" /></button>
         </div>

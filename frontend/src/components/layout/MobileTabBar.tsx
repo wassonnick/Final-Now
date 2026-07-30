@@ -3,17 +3,18 @@
 // the header menu. Hidden from lg upward, where the header nav takes over.
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Building2, Home, LayoutGrid, MessageCircle, Phone, Search, User, X } from "lucide-react";
+import { Heart, Home, LayoutGrid, MessageCircle, Phone, Search, User, X } from "lucide-react";
 
 import { MODULES, MODULE_INTENTS, type ModuleIntent } from "@/lib/modules";
 import { BRAND_PHONE_DISPLAY, BRAND_PHONE_HREF, BRAND_WHATSAPP_URL } from "@/config/contact";
+import { useAppStore } from "@/store";
 
 const ACCENT = "#0F7B63";
 
 const TABS = [
   { label: "Home", href: "/", icon: Home },
   { label: "Search", href: "/search?tab=societies", icon: Search },
-  { label: "Societies", href: "/societies", icon: Building2 },
+  { label: "Saved", href: "/compare", icon: Heart },
 ] as const;
 
 const intents: ModuleIntent[] = ["decide", "discover", "services"];
@@ -22,6 +23,7 @@ export function MobileTabBar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [toolsOpen, setToolsOpen] = useState(false);
+  const savedCount = useAppStore((st) => st.compareList.length);
 
   const path = location.pathname;
   // Society and property pages swap the global tabs for their own enquiry bar —
@@ -149,7 +151,17 @@ export function MobileTabBar() {
                 className="flex flex-col items-center gap-1 py-2.5 text-[10.5px] font-semibold transition active:scale-95"
                 style={{ color: active ? ACCENT : "#86868B" }}
               >
-                <Icon className="h-[21px] w-[21px]" strokeWidth={active ? 2.4 : 1.9} />
+                <span className="relative">
+                  <Icon className="h-[21px] w-[21px]" strokeWidth={active ? 2.4 : 1.9} />
+                  {tab.label === "Saved" && savedCount > 0 ? (
+                    <span
+                      className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
+                      style={{ background: ACCENT }}
+                    >
+                      {savedCount}
+                    </span>
+                  ) : null}
+                </span>
                 {tab.label}
               </Link>
             );
