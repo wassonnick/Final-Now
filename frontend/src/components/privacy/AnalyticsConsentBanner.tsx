@@ -29,7 +29,7 @@ export function AnalyticsConsentBanner() {
   return (
     <section
       aria-label="Analytics privacy choices"
-      className="fixed inset-x-3 bottom-3 z-[100] mx-auto max-w-4xl rounded-[1.5rem] border border-blue-100 bg-white/95 p-4 shadow-[0_24px_70px_rgba(15,35,75,0.22)] backdrop-blur md:bottom-5 md:flex md:items-center md:gap-5 md:p-5"
+      className="ncr-skin fixed inset-x-3 bottom-3 z-[100] mx-auto max-w-4xl rounded-[1.5rem] border border-blue-100 bg-white/95 p-4 shadow-[0_24px_70px_rgba(15,35,75,0.22)] backdrop-blur md:bottom-5 md:flex md:items-center md:gap-5 md:p-5"
     >
       <div className="flex min-w-0 flex-1 gap-3">
         <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700">
