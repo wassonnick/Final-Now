@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, MapPin, Menu, Phone, Search, User, X } from "lucide-react";
 import { MODULES, MODULE_INTENTS, type ModuleIntent } from "@/lib/modules";
 import { NCR_CITIES, LIVE_NCR_CITY, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
@@ -21,6 +21,7 @@ const intents: ModuleIntent[] = ["decide", "discover", "services"];
 
 export function PremiumNavbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [city, setCity] = useState<NcrCity>(LIVE_NCR_CITY);
   const [open, setOpen] = useState<"" | "city" | "explore" | "partner">("");
   const [mobile, setMobile] = useState(false);
@@ -34,6 +35,17 @@ export function PremiumNavbar() {
   }, []);
 
   const go = (href: string) => { setOpen(""); setMobile(false); navigate(href); };
+
+  // Picking a city must always take you somewhere. A "launching"/"planned" city goes to
+  // its landing page; a live one returns you to the live experience — otherwise choosing
+  // Gurgaon while sitting on /ncr/delhi silently did nothing.
+  const selectCity = (c: NcrCity) => {
+    setCity(c);
+    setOpen("");
+    setMobile(false);
+    if (c.status !== "live") { navigate(`/ncr/${c.slug}`); return; }
+    if (location.pathname.startsWith("/ncr/")) navigate("/");
+  };
   const submitSearch = (e: React.FormEvent) => { e.preventDefault(); if (q.trim()) go(`/search?tab=societies&q=${encodeURIComponent(q.trim())}`); };
 
   return (
@@ -56,7 +68,7 @@ export function PremiumNavbar() {
             <div className="absolute left-0 top-[calc(100%+8px)] w-64 rounded-2xl border border-[#E4E4E9] bg-white p-1.5 shadow-[0_24px_50px_-28px_rgba(0,0,0,.3)]">
               <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">Delhi NCR</p>
               {NCR_CITIES.map((c) => (
-                <button key={c.slug} type="button" onClick={() => { setCity(c); setOpen(""); if (c.status !== "live") navigate(`/ncr/${c.slug}`); }} className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left hover:bg-[#F5F5F7]">
+                <button key={c.slug} type="button" onClick={() => { selectCity(c); }} className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left hover:bg-[#F5F5F7]">
                   <span className="text-sm font-semibold text-[#1D1D1F]">{c.name}</span>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${c.status === "live" ? "text-[#0F7B63]" : c.status === "launching" ? "text-amber-600" : "text-[#98A2B3]"}`} style={c.status === "live" ? { background: "#ECF6F2" } : {}}>{ncrCityStatusLabel(c.status)}</span>
                 </button>

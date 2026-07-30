@@ -2,7 +2,7 @@
 // The preview canvas and the downloaded file run through the same painter, so what
 // you see is exactly what posts.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, Check, Copy, Download, RefreshCw, Shuffle } from "lucide-react";
+import { CalendarDays, Check, Copy, Download, Package, RefreshCw, Shuffle } from "lucide-react";
 
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { AdminSocialNav } from "@/pages/admin/AdminSocialNav";
@@ -11,12 +11,14 @@ import { Input } from "@/components/ui/input";
 import { BRAND_PHONE_DISPLAY } from "@/config/contact";
 import {
   FORMATS,
+  LAYOUTS,
   SCENES,
   drawPost,
   isDarkScene,
   renderPostBlob,
   type FormatKey,
   type PostSpec,
+  type LayoutKey,
   type SceneKey,
 } from "@/lib/socialPostArt";
 import {
@@ -42,6 +44,9 @@ export function AdminSocialStudioPage() {
   const [line1, setLine1] = useState(todays.line1);
   const [line2, setLine2] = useState(todays.line2);
   const [cta, setCta] = useState(todays.cta);
+  const [layout, setLayout] = useState<LayoutKey>("standard");
+  const [stat, setStat] = useState("246");
+  const [statNote, setStatNote] = useState("verified societies");
   const [themeFilter, setThemeFilter] = useState<PostTheme | "all">("all");
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -49,8 +54,8 @@ export function AdminSocialStudioPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const spec: PostSpec = useMemo(
-    () => ({ format, scene, kicker, line1, line2, cta, site: SITE, phone: BRAND_PHONE_DISPLAY }),
-    [format, scene, kicker, line1, line2, cta],
+    () => ({ format, layout, stat, statNote, scene, kicker, line1, line2, cta, site: SITE, phone: BRAND_PHONE_DISPLAY }),
+    [format, layout, stat, statNote, scene, kicker, line1, line2, cta],
   );
 
   // Repaint the preview whenever anything changes (and once fonts have loaded,
@@ -106,6 +111,38 @@ export function AdminSocialStudioPage() {
     }
   };
 
+  // Render one asset per format/scene and save them in sequence. Browsers throttle
+  // rapid downloads, so this paces itself rather than firing them all at once.
+  const downloadKit = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const jobs: { name: string; spec: PostSpec }[] = [];
+      for (const f of Object.keys(FORMATS) as FormatKey[]) {
+        jobs.push({ name: `${f}-${slug(line1) || idea.id}`, spec: { ...spec, format: f } });
+      }
+      for (const sc of SCENES) {
+        jobs.push({ name: `post-${sc.key}`, spec: { ...spec, format: "post", scene: sc.key } });
+      }
+      for (const job of jobs) {
+        const blob = await renderPostBlob(job.spec);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `societyflats-${job.name}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        await new Promise((r) => window.setTimeout(r, 350));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not build the pack.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const copyCaption = async () => {
     try {
       await navigator.clipboard.writeText(idea.caption);
@@ -148,7 +185,23 @@ export function AdminSocialStudioPage() {
               <p className="text-xs font-semibold text-slate-500">{FORMATS[format].note}</p>
             </div>
 
-            <div className="mt-5 flex justify-center rounded-2xl bg-slate-100 p-5">
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {LAYOUTS.map((l) => (
+                <button
+                  key={l.key}
+                  type="button"
+                  onClick={() => setLayout(l.key)}
+                  title={l.hint}
+                  className={`rounded-full px-3.5 py-2 text-xs font-bold transition ${
+                    layout === l.key ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 flex justify-center rounded-2xl bg-slate-100 p-5">
               <canvas
                 ref={canvasRef}
                 aria-label="Post preview"
@@ -169,6 +222,9 @@ export function AdminSocialStudioPage() {
               <Button onClick={copyCaption} variant="outline" className="rounded-full font-bold">
                 {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
                 {copied ? "Caption copied" : "Copy caption"}
+              </Button>
+              <Button onClick={downloadKit} disabled={busy} variant="outline" className="rounded-full font-bold">
+                <Package className="mr-2 h-4 w-4" /> Download pack
               </Button>
               <Button
                 onClick={() => applyIdea(POST_IDEAS[Math.floor(Math.random() * POST_IDEAS.length)])}
@@ -204,6 +260,18 @@ export function AdminSocialStudioPage() {
                   Button
                   <Input value={cta} onChange={(e) => setCta(e.target.value)} className="mt-1.5" maxLength={26} />
                 </label>
+                {layout === "bigStat" ? (
+                  <div className="grid grid-cols-[110px_1fr] gap-2">
+                    <label className="block text-xs font-bold text-slate-600">
+                      Number
+                      <Input value={stat} onChange={(e) => setStat(e.target.value)} className="mt-1.5" maxLength={7} />
+                    </label>
+                    <label className="block text-xs font-bold text-slate-600">
+                      Under it
+                      <Input value={statNote} onChange={(e) => setStatNote(e.target.value)} className="mt-1.5" maxLength={30} />
+                    </label>
+                  </div>
+                ) : null}
                 <p className="text-[11px] leading-5 text-slate-500">
                   Keep each headline line short — long lines run past the edge. Specific beats clever:
                   a checkable fact outperforms a slogan.

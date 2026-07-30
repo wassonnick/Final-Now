@@ -22,7 +22,9 @@ export const ART = {
   skyDusk: "#243244",
 };
 
-export type SceneKey = "interior" | "interiorDusk" | "facade" | "scores" | "checklist";
+export type SceneKey =
+  | "interior" | "interiorDusk" | "facade" | "scores" | "checklist"
+  | "keys" | "floorplan" | "mapPin" | "compare" | "balcony";
 export type FormatKey = "post" | "story" | "cover";
 
 export const FORMATS: Record<FormatKey, { w: number; h: number; label: string; note: string }> = {
@@ -37,10 +39,26 @@ export const SCENES: { key: SceneKey; label: string; dark: boolean }[] = [
   { key: "facade", label: "Society facade", dark: true },
   { key: "scores", label: "Score bars", dark: false },
   { key: "checklist", label: "Verified checklist", dark: false },
+  { key: "keys", label: "Keys / handover", dark: false },
+  { key: "floorplan", label: "Floor plan", dark: false },
+  { key: "mapPin", label: "Location pin", dark: true },
+  { key: "compare", label: "Side-by-side compare", dark: false },
+  { key: "balcony", label: "Balcony view (dusk)", dark: true },
+];
+
+export type LayoutKey = "standard" | "bigStat" | "quote";
+
+export const LAYOUTS: { key: LayoutKey; label: string; hint: string }[] = [
+  { key: "standard", label: "Headline + art", hint: "The everyday post." },
+  { key: "bigStat", label: "Big number", hint: "One figure, stated plainly." },
+  { key: "quote", label: "Quote / claim", hint: "A single sentence, no artwork." },
 ];
 
 export type PostSpec = {
   format: FormatKey;
+  layout?: LayoutKey;
+  stat?: string;
+  statNote?: string;
   scene: SceneKey;
   kicker: string;
   line1: string;
@@ -205,6 +223,112 @@ function sceneChecklist(ctx: CanvasRenderingContext2D) {
   });
 }
 
+function sceneKeys(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = ART.warm; ctx.fillRect(0, 0, 800, 600);
+  // an open door with a key handed through it
+  fillRR(ctx, 210, 120, 300, 400, 18, "#FFFFFF");
+  ctx.strokeStyle = ART.ink; ctx.lineWidth = 12;
+  rr(ctx, 210, 120, 300, 400, 18); ctx.stroke();
+  ctx.beginPath(); ctx.arc(468, 330, 13, 0, Math.PI * 2); ctx.fillStyle = ART.ink; ctx.fill();
+  // key
+  ctx.save(); ctx.translate(560, 300); ctx.rotate(-0.35);
+  ctx.beginPath(); ctx.arc(0, 0, 44, 0, Math.PI * 2);
+  ctx.strokeStyle = ART.green; ctx.lineWidth = 20; ctx.stroke();
+  fillRR(ctx, 40, -10, 170, 20, 10, ART.green);
+  fillRR(ctx, 170, 8, 18, 34, 8, ART.green);
+  fillRR(ctx, 134, 8, 18, 28, 8, ART.green);
+  ctx.restore();
+}
+
+function sceneFloorplan(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = ART.surface; ctx.fillRect(0, 0, 800, 600);
+  ctx.strokeStyle = ART.ink; ctx.lineWidth = 10; ctx.lineJoin = "round";
+  rr(ctx, 120, 90, 560, 420, 12); ctx.stroke();
+  ctx.lineWidth = 7;
+  ctx.beginPath(); ctx.moveTo(400, 90); ctx.lineTo(400, 330); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(120, 330); ctx.lineTo(680, 330); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(560, 330); ctx.lineTo(560, 510); ctx.stroke();
+  // the "chosen" room
+  fillRR(ctx, 410, 100, 260, 220, 8, "#ECF6F2");
+  ctx.strokeStyle = ART.green; ctx.lineWidth = 7;
+  rr(ctx, 410, 100, 260, 220, 8); ctx.stroke();
+  setFont(ctx, 26, 700); ctx.fillStyle = ART.green; ctx.textAlign = "center";
+  ctx.fillText("3 BHK", 540, 220);
+  ctx.textAlign = "left";
+  // door swings
+  ctx.strokeStyle = ART.faint; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.arc(400, 330, 46, Math.PI, Math.PI * 1.5); ctx.stroke();
+  ctx.beginPath(); ctx.arc(120, 240, 46, -Math.PI / 2, 0); ctx.stroke();
+}
+
+function sceneMapPin(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = "#232328"; ctx.fillRect(0, 0, 800, 600);
+  // road grid
+  ctx.strokeStyle = "#33333A"; ctx.lineWidth = 14;
+  for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(0, i * 150); ctx.lineTo(800, i * 150); ctx.stroke(); }
+  for (let i = 1; i < 5; i++) { ctx.beginPath(); ctx.moveTo(i * 160, 0); ctx.lineTo(i * 160, 600); ctx.stroke(); }
+  // blocks
+  const blocks: [number, number][] = [[60, 60], [420, 60], [60, 380], [580, 380]];
+  for (const [x, y] of blocks) fillRR(ctx, x, y, 130, 90, 12, "#2B2B31");
+  // pin
+  ctx.save(); ctx.translate(400, 250);
+  ctx.beginPath();
+  ctx.moveTo(0, 130);
+  ctx.bezierCurveTo(-96, 26, -74, -70, 0, -70);
+  ctx.bezierCurveTo(74, -70, 96, 26, 0, 130);
+  ctx.closePath(); ctx.fillStyle = ART.green; ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -6, 30, 0, Math.PI * 2); ctx.fillStyle = "#FFFFFF"; ctx.fill();
+  ctx.restore();
+  ctx.beginPath(); ctx.ellipse(400, 400, 86, 18, 0, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(15,123,99,.25)"; ctx.fill();
+}
+
+function sceneCompare(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = ART.surface; ctx.fillRect(0, 0, 800, 600);
+  const card = (x: number, pct: number, winner: boolean) => {
+    fillRR(ctx, x, 90, 300, 420, 22, "#FFFFFF");
+    if (winner) { ctx.strokeStyle = ART.green; ctx.lineWidth = 7; rr(ctx, x, 90, 300, 420, 22); ctx.stroke(); }
+    fillRR(ctx, x + 30, 130, 240, 96, 14, winner ? "#ECF6F2" : "#EFEFF2");
+    for (let i = 0; i < 3; i++) {
+      const y = 268 + i * 62;
+      fillRR(ctx, x + 30, y, 240, 18, 9, "#E6E6EB");
+      fillRR(ctx, x + 30, y, Math.round(240 * (pct - i * 0.08)), 18, 9, winner ? ART.green : "#B9B9C0");
+    }
+    fillRR(ctx, x + 30, 452, 130, 24, 12, winner ? ART.green : "#D8D8DE");
+  };
+  card(70, 0.9, true);
+  card(430, 0.62, false);
+  // vs
+  ctx.beginPath(); ctx.arc(400, 300, 40, 0, Math.PI * 2);
+  ctx.fillStyle = ART.ink; ctx.fill();
+  setFont(ctx, 26, 800); ctx.fillStyle = "#FFFFFF"; ctx.textAlign = "center";
+  ctx.fillText("vs", 400, 310); ctx.textAlign = "left";
+}
+
+function sceneBalcony(ctx: CanvasRenderingContext2D) {
+  // dusk sky
+  const g = ctx.createLinearGradient(0, 0, 0, 600);
+  g.addColorStop(0, "#1B2436"); g.addColorStop(1, "#3A4152");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 800, 600);
+  // skyline
+  const towers: [number, number, number][] = [[60, 300, 90], [170, 360, 70], [260, 250, 110], [390, 330, 80], [500, 280, 96], [620, 350, 74], [710, 300, 84]];
+  towers.forEach(([x, y, w], i) => {
+    fillRR(ctx, x, y, w, 600 - y, 8, "#252B39");
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 2; c++) {
+      const wx = x + 14 + c * (w / 2), wy = y + 24 + r * 42;
+      if (wy > 560) continue;
+      const lit = (i + r + c) % 5 === 0;
+      fillRR(ctx, wx, wy, 16, 20, 4, lit ? "#FFFFFF" : "#1D2331");
+    }
+  });
+  fillRR(ctx, 356, 296, 18, 22, 4, ART.greenDark);
+  // railing
+  ctx.strokeStyle = ART.ink; ctx.lineWidth = 12;
+  ctx.beginPath(); ctx.moveTo(0, 470); ctx.lineTo(800, 470); ctx.stroke();
+  for (let x = 40; x < 800; x += 62) { ctx.beginPath(); ctx.moveTo(x, 470); ctx.lineTo(x, 600); ctx.lineWidth = 9; ctx.stroke(); }
+  ctx.fillStyle = "#1A1A1D"; ctx.fillRect(0, 566, 800, 34);
+}
+
 function paintScene(ctx: CanvasRenderingContext2D, scene: SceneKey, x: number, y: number, w: number, h: number, r: number) {
   ctx.save();
   rr(ctx, x, y, w, h, r);
@@ -217,12 +341,17 @@ function paintScene(ctx: CanvasRenderingContext2D, scene: SceneKey, x: number, y
   else if (scene === "interiorDusk") sceneInterior(ctx, true);
   else if (scene === "facade") sceneFacade(ctx);
   else if (scene === "scores") sceneScores(ctx);
+  else if (scene === "keys") sceneKeys(ctx);
+  else if (scene === "floorplan") sceneFloorplan(ctx);
+  else if (scene === "mapPin") sceneMapPin(ctx);
+  else if (scene === "compare") sceneCompare(ctx);
+  else if (scene === "balcony") sceneBalcony(ctx);
   else sceneChecklist(ctx);
   ctx.restore();
 }
 
 export function isDarkScene(scene: SceneKey) {
-  return scene === "interiorDusk" || scene === "facade";
+  return scene === "interiorDusk" || scene === "facade" || scene === "mapPin" || scene === "balcony";
 }
 
 // ————— compose a finished post —————
@@ -281,17 +410,55 @@ export function drawPost(ctx: CanvasRenderingContext2D, spec: PostSpec) {
     return;
   }
 
-  // square post
-  fillRR(ctx, 72, 150, 936, 590, 30, dark ? ART.panelDark : ART.surface);
-  paintScene(ctx, spec.scene, 72, 150, 936, 590, 30);
+  // square post — three layouts share the same footer furniture
+  const layout = spec.layout || "standard";
 
-  setFont(ctx, 26, 800, 5); ctx.textAlign = "left";
-  ctx.fillStyle = accent; ctx.fillText(spec.kicker.toUpperCase(), 72, 118);
+  if (layout === "quote") {
+    // Type only. A single claim, given the whole canvas.
+    setFont(ctx, 26, 800, 5); ctx.textAlign = "left";
+    ctx.fillStyle = accent; ctx.fillText(spec.kicker.toUpperCase(), 72, 150);
+    setFont(ctx, 96, 700, -3);
+    ctx.fillStyle = ink;
+    ctx.fillText(spec.line1, 72, 470);
+    ctx.fillText(spec.line2, 72, 586);
+    fillRR(ctx, 72, 660, 120, 8, 4, accent);
+  } else if (layout === "bigStat") {
+    fillRR(ctx, 72, 150, 936, 590, 30, dark ? ART.panelDark : ART.surface);
+    setFont(ctx, 250, 700, -10); ctx.textAlign = "center";
+    ctx.fillStyle = accent;
+    ctx.fillText(spec.stat || "246", 540, 470);
+    setFont(ctx, 34, 600, 0);
+    ctx.fillStyle = dark ? ART.onDark : ART.muted;
+    ctx.fillText(spec.statNote || "verified societies", 540, 546);
+    ctx.textAlign = "left";
+    setFont(ctx, 26, 800, 5);
+    ctx.fillStyle = accent; ctx.fillText(spec.kicker.toUpperCase(), 72, 118);
+    setFont(ctx, 62, 700, -1.6);
+    ctx.fillStyle = ink;
+    ctx.fillText(spec.line1, 72, 806);
+    ctx.fillText(spec.line2, 72, 882);
+    fillRR(ctx, 72, 930, 392, 76, 38, accent);
+    setFont(ctx, 27, 800, 0); ctx.textAlign = "center";
+    ctx.fillStyle = dark ? ART.ink : "#FFFFFF";
+    ctx.fillText(spec.cta, 268, 979);
+    ctx.textAlign = "left";
+    drawMark(ctx, 936, 934, 72, dark ? ART.panelDark : ART.ink);
+    setFont(ctx, 23, 600, 0);
+    ctx.fillStyle = sub; ctx.fillText(`${spec.site} · ${spec.phone}`, 72, 1044);
+    return;
+  } else {
+    fillRR(ctx, 72, 150, 936, 590, 30, dark ? ART.panelDark : ART.surface);
+    paintScene(ctx, spec.scene, 72, 150, 936, 590, 30);
+  }
 
-  setFont(ctx, 62, 700, -1.6);
-  ctx.fillStyle = ink;
-  ctx.fillText(spec.line1, 72, 806);
-  ctx.fillText(spec.line2, 72, 882);
+  if (layout !== "quote") {
+    setFont(ctx, 26, 800, 5); ctx.textAlign = "left";
+    ctx.fillStyle = accent; ctx.fillText(spec.kicker.toUpperCase(), 72, 118);
+    setFont(ctx, 62, 700, -1.6);
+    ctx.fillStyle = ink;
+    ctx.fillText(spec.line1, 72, 806);
+    ctx.fillText(spec.line2, 72, 882);
+  }
 
   fillRR(ctx, 72, 930, 392, 76, 38, accent);
   setFont(ctx, 27, 800, 0); ctx.textAlign = "center";
