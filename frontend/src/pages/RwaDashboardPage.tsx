@@ -130,7 +130,7 @@ export function RwaDashboardPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-5xl px-4 py-20 text-center">
+      <main className="ncr-skin mx-auto max-w-5xl px-4 py-20 text-center">
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-700" />
         <p className="mt-4 font-semibold text-slate-600">Loading RWA dashboard...</p>
       </main>
@@ -138,7 +138,7 @@ export function RwaDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F8F3EA] px-4 py-10">
+    <main className="ncr-skin min-h-screen bg-[#F8F3EA] px-4 py-10">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>

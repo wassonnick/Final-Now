@@ -296,7 +296,7 @@ export function BrokerDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#fffaf4] pb-16">
+    <div className="ncr-skin min-h-screen w-full max-w-full overflow-x-hidden bg-[#fffaf4] pb-16">
       {showSignupWelcome ? (
         <div className="fixed inset-x-4 top-24 z-50 mx-auto max-w-xl rounded-[28px] border border-emerald-100 bg-white p-5 shadow-2xl">
           {/* C46B broker signup welcome popup */}

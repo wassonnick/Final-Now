@@ -262,7 +262,7 @@ export function CustomerDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#F8F3EA] pb-16">
+    <div className="ncr-skin min-h-screen w-full max-w-full overflow-x-hidden bg-[#F8F3EA] pb-16">
       <section className="border-b border-blue-100 bg-gradient-to-br from-white via-blue-50/80 to-slate-50">
         <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">

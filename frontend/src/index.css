@@ -460,3 +460,18 @@ body,
 .ncr-skin .bg-\[\#1d315b\] { background-color: #1D1D1F !important; }
 .ncr-skin .bg-\[\#F2F4F7\], .ncr-skin .bg-\[\#F4E3D8\], .ncr-skin .bg-\[\#FBF3EE\] { background-color: #F5F5F7 !important; }
 .ncr-skin .bg-\[\#F4E3D8\] { background-color: #F5F5F7 !important; }
+.ncr-skin .bg-\[\#fffaf4\] { background-color: #FFFFFF !important; }
+
+/* Partner surfaces used a terracotta accent — route it to the verified green. */
+.ncr-skin .bg-orange-600, .ncr-skin .bg-orange-700, .ncr-skin .bg-orange-800 { background-color: #0F7B63 !important; }
+.ncr-skin .hover\:bg-orange-700:hover, .ncr-skin .hover\:bg-orange-800:hover { background-color: #0C6853 !important; }
+.ncr-skin .text-orange-600, .ncr-skin .text-orange-700, .ncr-skin .text-orange-800 { color: #0F7B63 !important; }
+.ncr-skin .bg-orange-50, .ncr-skin .bg-orange-100 { background-color: #ECF6F2 !important; }
+.ncr-skin .border-orange-100, .ncr-skin .border-orange-200 { border-color: #D7EDE4 !important; }
+.ncr-skin .hover\:bg-orange-50:hover { background-color: #ECF6F2 !important; }
+/* Tab/segmented active states set via Tailwind data-attribute variants
+   (e.g. `data-[state=active]:bg-blue-700`). Match the element state directly so
+   it works regardless of which colour utility the component used. */
+.ncr-skin [data-state="active"][class*="data-[state=active]:bg-blue"],
+.ncr-skin [data-state="active"][class*="data-[state=active]:bg-navy"],
+.ncr-skin [data-state="active"][class*="data-[state=active]:bg-orange"] { background-color: #0F7B63 !important; color: #FFFFFF !important; }
