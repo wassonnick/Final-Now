@@ -24,6 +24,9 @@ export function MobileTabBar() {
   const [toolsOpen, setToolsOpen] = useState(false);
 
   const path = location.pathname;
+  // Society and property pages swap the global tabs for their own enquiry bar —
+  // two stacked bars would eat a sixth of the screen.
+  const hidden = path.startsWith("/society/") || path.startsWith("/property/");
   const isActive = (href: string) => {
     const base = href.split("?")[0];
     if (base === "/") return path === "/";
@@ -34,6 +37,8 @@ export function MobileTabBar() {
     setToolsOpen(false);
     navigate(href);
   };
+
+  if (hidden) return null;
 
   return (
     <>
