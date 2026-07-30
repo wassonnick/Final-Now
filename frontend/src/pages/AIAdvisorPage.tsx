@@ -33,21 +33,21 @@ export function AIAdvisorPage() {
   return (
     <div className="ncr-skin min-h-screen bg-white text-[#1D1D1F]">
       {/* HERO */}
-      <section className="mx-auto max-w-[820px] px-5 pt-10 text-center md:pt-16">
+      <section className="mx-auto max-w-[820px] px-5 pt-6 text-center md:pt-16">
         <span className="inline-flex items-center gap-2 rounded-full border border-[#E4E4E9] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[#1D1D1F] shadow-sm">
           <Sparkles className="h-3.5 w-3.5" style={{ color: ACCENT }} /> AI Advisor
         </span>
-        <h1 className="!font-sans mx-auto mt-5 max-w-[680px] text-[32px] font-semibold leading-[1.08] tracking-[-0.02em] md:text-[46px]">
+        <h1 className="!font-sans mx-auto mt-4 max-w-[680px] text-[26px] font-semibold leading-[1.1] tracking-[-0.02em] sm:text-[32px] md:text-[46px]">
           Tell us what matters. We'll shortlist the societies that fit.
         </h1>
-        <p className="mx-auto mt-4 max-w-[560px] text-[16px] leading-8 text-[#6E6E73]">
+        <p className="mx-auto mt-3 max-w-[560px] text-[14px] leading-6 text-[#6E6E73] sm:mt-4 sm:text-[16px] sm:leading-8">
           Describe your budget, commute, family and the feel you're after — in plain words.
           The advisor reasons over verified societies and shows you exactly why each one belongs on your list.
         </p>
       </section>
 
       {/* ASSISTANT — the centrepiece */}
-      <section className="mx-auto mt-8 max-w-[860px] px-5">
+      <section className="mx-auto mt-5 max-w-[860px] px-5 sm:mt-8">
         <SocietyAssistant initialQuery={initialQuery} />
       </section>
 

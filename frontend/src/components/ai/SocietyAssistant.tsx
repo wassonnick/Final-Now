@@ -115,7 +115,20 @@ export function SocietyAssistant({ initialQuery }: { initialQuery?: string } = {
   }, [initialQuery]);
   // Scroll only the message container, never the whole window (the assistant is embedded on
   // tall pages, so scrollIntoView would yank the viewport past it).
-  useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [messages, thinking]);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // While thinking, keep the indicator in view. Once the reply lands, align its first
+    // line to the top so the answer is read from the beginning and the cards and actions
+    // sit naturally below it.
+    if (thinking) { el.scrollTop = el.scrollHeight; return; }
+    const last = messages[messages.length - 1];
+    if (last?.role === 'assistant') {
+      const node = el.querySelector<HTMLElement>('[data-msg-last="1"]');
+      if (node) { el.scrollTop = Math.max(0, node.offsetTop - el.offsetTop - 8); return; }
+    }
+    el.scrollTop = el.scrollHeight;
+  }, [messages, thinking]);
   useEffect(() => { if (!thinking) return; const id = setInterval(() => setThinkIdx((i) => (i + 1) % THINKING.length), 1100); return () => clearInterval(id); }, [thinking]);
 
   const send = async (text: string) => {
@@ -229,7 +242,7 @@ export function SocietyAssistant({ initialQuery }: { initialQuery?: string } = {
         {started ? <button onClick={reset} className="inline-flex items-center gap-1.5 rounded-full border border-[#E7DCCB] px-3 py-1.5 text-xs font-bold text-[#6E756E] hover:bg-[#F8F3EA]"><RotateCcw className="h-3.5 w-3.5" />New chat</button> : null}
       </div>
 
-      <div ref={scrollRef} className="h-[44vh] max-h-[440px] min-h-[280px] space-y-4 overflow-y-auto px-4 py-5">
+      <div ref={scrollRef} className="h-[58vh] max-h-[560px] min-h-[420px] space-y-4 overflow-y-auto px-4 py-5 sm:h-[46vh] sm:min-h-[320px]">
         {!started ? (
           <div className="mx-auto max-w-md pt-6 text-center">
             <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F1EEE6] text-[#10251F]"><Sparkles className="h-6 w-6" /></span>
@@ -239,12 +252,12 @@ export function SocietyAssistant({ initialQuery }: { initialQuery?: string } = {
         ) : null}
 
         {messages.map((m, i) => (
-          <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
+          <div key={i} data-msg-last={i === messages.length - 1 ? '1' : undefined} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
             {m.role === 'assistant' ? (
               <div className="max-w-[92%]">
                 <div className="rounded-2xl rounded-tl-sm border border-[#EDE6D8] bg-[#FBF9F4] px-4 py-3 text-sm text-[#3A4038]">{renderRich(m.content)}</div>
                 {m.matches?.length ? <SocietyCards matches={m.matches} onOpen={handleSocietyOpen} /> : null}
-                {i === latestAssistantIndex && !thinking && actions.length ? (
+                {i === latestAssistantIndex && !thinking && !error && actions.length ? (
                   <div className="mt-3 rounded-2xl border border-[#DDE4F1] bg-[#F6F8FC] p-3">
                     <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#64708A]">What would help next?</p>
                     <div className="flex flex-wrap gap-2">
@@ -289,7 +302,35 @@ export function SocietyAssistant({ initialQuery }: { initialQuery?: string } = {
         ) : null}
       </div>
 
-      {error ? <p className="px-4 pb-1 text-sm font-semibold text-rose-600">{error}</p> : null}
+      {error ? (
+        <div className="mx-4 mb-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left">
+          <p className="text-sm font-semibold text-amber-900">{error}</p>
+          <p className="mt-1 text-sm text-amber-800">
+            You can still browse verified societies, or ask our team to carry on the shortlist with you.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              to="/search?tab=societies"
+              onClick={() => trackEvent('ai_cta_clicked', { assistant: 'society_assistant', action_label: 'Browse verified societies', action_type: 'error_recovery_search' })}
+              className="inline-flex items-center gap-2 rounded-full border border-[#E4E4E9] bg-white px-4 py-2 text-sm font-bold text-[#1D1D1F] transition hover:bg-[#F5F5F7]"
+            >
+              Browse verified societies
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                trackEvent('ai_cta_clicked', { assistant: 'society_assistant', action_label: 'Ask SocietyFlats', action_type: 'error_recovery_lead' });
+                setLeadAction('callback');
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-[#0F7B63] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0C6853]"
+            >
+              <PhoneCall className="h-4 w-4" />
+              Ask SocietyFlats
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="border-t border-[#F0E9DC] px-4 pb-4 pt-3">
         {!started ? <div className="mb-2.5 flex flex-wrap gap-2">
