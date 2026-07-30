@@ -8,6 +8,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { PremiumNavbar } from '@/components/layout/PremiumNavbar';
 import { Footer } from '@/components/layout/Footer';
 import { FloatingHelpline } from '@/components/layout/FloatingHelpline';
+import { MobileTabBar } from '@/components/layout/MobileTabBar';
 import { AnalyticsRouteTracker } from '@/components/AnalyticsRouteTracker';
 import { AnalyticsConsentBanner } from '@/components/privacy/AnalyticsConsentBanner';
 
@@ -292,6 +293,7 @@ function AppShell() {
       </main>
 
       {!isAdmin && <FloatingHelpline />}
+      {!isAdmin && <MobileTabBar />}
       {!isAdmin && <Footer />}
     </div>
   );

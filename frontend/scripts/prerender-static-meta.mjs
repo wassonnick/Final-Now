@@ -550,6 +550,31 @@ const routeMeta = [
     schemaType: "WebPage",
     noindex: true,
   },
+  ...[
+    ["noida", "Noida"],
+    ["greater-noida", "Greater Noida"],
+    ["delhi", "Delhi"],
+    ["faridabad", "Faridabad"],
+    ["ghaziabad", "Ghaziabad"],
+  ].map(([slug, name]) => ({
+    path: `/ncr/${slug}`,
+    title: `${name} Societies — Coming to SocietyFlats | Delhi NCR`,
+    description: `SocietyFlats is verifying ${name} societies to the same standard as Gurgaon. Tell us what you're looking for and we'll reach out the moment ${name} is live.`,
+    priority: "0.4",
+    changefreq: "monthly",
+    schemaType: "WebPage",
+    // Pre-launch markets: reachable and shareable, but nothing to index yet.
+    noindex: true,
+  })),
+  {
+    path: "/ncr/gurgaon",
+    title: "Gurgaon Societies — Live on SocietyFlats | Delhi NCR",
+    description:
+      "Gurgaon is live on SocietyFlats: verified society profiles, real availability and honest rent and resale ranges.",
+    priority: "0.6",
+    changefreq: "weekly",
+    schemaType: "WebPage",
+  },
   {
     path: "/404",
     title: "Page Not Found | SocietyFlats",

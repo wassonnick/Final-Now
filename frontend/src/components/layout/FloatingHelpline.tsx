@@ -22,7 +22,7 @@ export function FloatingHelpline() {
   if (hideForPageCta) return null;
 
   return (
-    <div className="fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 lg:bottom-6 lg:right-6">
+    <div className="fixed right-6 bottom-6 z-40 hidden lg:block">
       {/* Expanding actions */}
       <div
         className={`mb-3 flex flex-col items-end gap-2 transition-all duration-200 ${

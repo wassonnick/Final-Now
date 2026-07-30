@@ -475,3 +475,9 @@ body,
 .ncr-skin [data-state="active"][class*="data-[state=active]:bg-blue"],
 .ncr-skin [data-state="active"][class*="data-[state=active]:bg-navy"],
 .ncr-skin [data-state="active"][class*="data-[state=active]:bg-orange"] { background-color: #0F7B63 !important; color: #FFFFFF !important; }
+
+/* App-shell spacing: the mobile tab bar is fixed, so the page needs a floor of
+   clearance or the last element sits under it. Desktop keeps its own spacing. */
+@media (max-width: 1023px) {
+  .public-site { padding-bottom: calc(4.25rem + env(safe-area-inset-bottom)); }
+}

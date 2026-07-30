@@ -251,11 +251,12 @@ export function InteractiveComparePage() {
           </div>
 
           {/* Three slots make the head-to-head model obvious */}
-          <div className="mx-auto mt-8 grid max-w-[760px] gap-3 sm:grid-cols-3">
+          {/* Always three across — stacked, they stop reading as a head-to-head. */}
+          <div className="mx-auto mt-8 grid max-w-[760px] grid-cols-3 gap-2.5 sm:gap-3">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="flex h-24 flex-col items-center justify-center rounded-[20px] border border-dashed border-[#D8D8DE] bg-[#F5F5F7] text-center">
+              <div key={i} className="flex h-24 flex-col items-center justify-center rounded-[18px] border border-dashed border-[#D8D8DE] bg-[#F5F5F7] px-1 text-center sm:rounded-[20px]">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#0F7B63] shadow-sm"><Plus className="h-4 w-4" /></span>
-                <span className="mt-2 text-[12.5px] font-semibold text-[#86868B]">Society {i + 1}</span>
+                <span className="mt-2 text-[11.5px] font-semibold text-[#86868B] sm:text-[12.5px]">Society {i + 1}</span>
               </div>
             ))}
           </div>
