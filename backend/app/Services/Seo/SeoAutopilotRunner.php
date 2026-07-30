@@ -36,42 +36,99 @@ class SeoAutopilotRunner
         ]);
     }
 
+    /**
+     * Close out runs whose container died mid-cycle.
+     *
+     * The web service is also the scheduler, and a cycle that is making AI calls at 2am
+     * on a spun-down free tier is a prime candidate to be killed. Without this, those
+     * rows sit at "running" forever — which is exactly what a stalled autopilot looks
+     * like from the admin screen, whether or not anything is actually wrong now.
+     */
+    public function recoverStuckRuns(int $staleMinutes = 45): int
+    {
+        return SeoAutomationRun::where('status', 'running')
+            ->where(function ($q) use ($staleMinutes) {
+                $q->where('heartbeat_at', '<', now()->subMinutes($staleMinutes))
+                    ->orWhere(fn ($q2) => $q2->whereNull('heartbeat_at')->where('started_at', '<', now()->subMinutes($staleMinutes)));
+            })
+            ->update([
+                'status' => SeoAutomationRun::STATUS_INTERRUPTED,
+                'finished_at' => now(),
+                'error' => 'Cycle stopped without finishing — the container was most likely restarted mid-run. Recovered automatically.',
+            ]);
+    }
+
+    /**
+     * Run one phase in isolation.
+     *
+     * Previously any throw aborted the whole cycle, so a single failing step silently
+     * cancelled every step after it — drafts, auto-publish and the report would just
+     * never happen, with no record of why. A phase that fails now costs only itself.
+     */
+    private function phase(SeoAutomationRun $run, array &$summary, string $name, callable $work): void
+    {
+        $run->update(['current_phase' => $name, 'heartbeat_at' => now()]);
+
+        try {
+            $work();
+        } catch (\Throwable $e) {
+            report($e);
+            $summary['warnings'][] = $name.': '.\Illuminate\Support\Str::limit($e->getMessage(), 140);
+            $summary['failed_phases'][] = $name;
+        }
+
+        // Persist as we go. The summary used to be written only at the very end, so an
+        // interrupted cycle threw away every result it had already earned.
+        $run->update(['summary' => $summary, 'heartbeat_at' => now()]);
+    }
+
     public function run(string $trigger = 'scheduled'): SeoAutomationRun
     {
         $settings=$this->settings();
         if(!$settings->enabled)throw new \InvalidArgumentException('SEO Autopilot is paused. Enable it before running a cycle.');
 
+        $this->recoverStuckRuns();
+
         $lock=Cache::lock('seo-autopilot-cycle', 1800);
         if(!$lock->get())throw new \RuntimeException('An SEO Autopilot cycle is already running.');
 
-        $run=SeoAutomationRun::create(['trigger'=>$trigger,'status'=>'running','started_at'=>now()]);
+        $run=SeoAutomationRun::create(['trigger'=>$trigger,'status'=>'running','started_at'=>now(),'heartbeat_at'=>now()]);
         $openTasksBefore=SeoTask::where('status','open')->count();
-        $summary=['pages_registered'=>0,'society_seo_published'=>0,'pages_audited'=>0,'average_score'=>0,'technical_failures'=>0,'keywords_refreshed'=>0,'search_console_rows'=>0,'drafts_generated'=>0,'drafts_auto_published'=>0,'report_id'=>null,'warnings'=>[]];
+        $summary=['pages_registered'=>0,'society_seo_published'=>0,'pages_audited'=>0,'average_score'=>0,'technical_failures'=>0,'keywords_refreshed'=>0,'search_console_rows'=>0,'drafts_generated'=>0,'drafts_auto_published'=>0,'report_id'=>null,'warnings'=>[],'failed_phases'=>[]];
 
         try {
             // Fill SEO content for published societies that lack it FIRST, so the sync + audit
             // that follow see the new content and auto-resolve those societies' tasks this cycle.
             // Floor of 12/run: pre-existing settings rows still carry the old drafts_per_run=5
             // default, which drained a 130+ society backlog far too slowly.
-            $summary['society_seo_published']=$this->autoCompleteSocietySeo(max(12,(int)$settings->drafts_per_run));
+            $this->phase($run,$summary,'society_seo',function()use(&$summary,$settings){
+                $summary['society_seo_published']=$this->autoCompleteSocietySeo(max(12,(int)$settings->drafts_per_run));
+            });
 
             // Compare pages are deterministic (no AI spend): repair stale ones in place,
             // fill coverage gaps, and auto-publish above the higher quality bar — BEFORE the
             // registry sync so new pages enter the sitemap and audits this same cycle.
-            $summary['compare_pages']=$this->refreshComparePages($settings->auto_publish_enabled);
+            $this->phase($run,$summary,'compare_pages',function()use(&$summary,$settings){
+                $summary['compare_pages']=$this->refreshComparePages($settings->auto_publish_enabled);
+            });
 
-            $summary['pages_registered']=$this->registry->sync();
+            $this->phase($run,$summary,'registry_sync',function()use(&$summary){
+                $summary['pages_registered']=$this->registry->sync();
+            });
 
             if($settings->audit_enabled){
-                $audit=$this->audits->run();
-                $summary['pages_audited']=$audit['checked'];
-                $summary['average_score']=$audit['average_score'];
+                $this->phase($run,$summary,'audits',function()use(&$summary){
+                    $audit=$this->audits->run();
+                    $summary['pages_audited']=$audit['checked'];
+                    $summary['average_score']=$audit['average_score'];
+                });
             }
 
             // Registry cleanup can delete stale pages (nulling their tasks' page id via FK);
             // page-scoped tasks without a page can never be re-checked, so close them instead
             // of letting them sit open forever. Site-level technical_* tasks legitimately have
             // no page id and keep their own pass/fail resolution.
+            $this->phase($run,$summary,'task_cleanup',function()use(&$summary){
             $summary['orphan_tasks_cleared']=SeoTask::whereNull('seo_page_id')->where('status','open')
                 ->where('task_type','not like','technical%')->update(['status'=>'resolved','resolved_at'=>now()]);
             // Tasks on pages that are deliberately noindex/non-public (RWA pages, draft
@@ -80,20 +137,41 @@ class SeoAutopilotRunner
             $summary['noise_tasks_cleared']=SeoTask::where('status','open')->whereNotNull('seo_page_id')
                 ->whereIn('seo_page_id',SeoPage::query()->where(fn($q)=>$q->where('is_public',false)->orWhere('is_indexable',false))->select('id'))
                 ->update(['status'=>'resolved','resolved_at'=>now()]);
+            });
+
             if($settings->technical_checks_enabled){
-                // Serve a fresh sitemap so the audit (and crawlers) see pages published this run.
-                app(LiveSitemapService::class)->flushCache();
-                $technical=$this->technical->run();
-                $summary['technical_failures']=$technical['failed'];
+                $this->phase($run,$summary,'technical_checks',function()use(&$summary){
+                    // Serve a fresh sitemap so the audit (and crawlers) see pages published this run.
+                    app(LiveSitemapService::class)->flushCache();
+                    $technical=$this->technical->run();
+                    $summary['technical_failures']=$technical['failed'];
+                });
             }
-            if($settings->keyword_refresh_enabled)$summary['keywords_refreshed']=$this->keywords->seed();
+            if($settings->keyword_refresh_enabled){
+                $this->phase($run,$summary,'keywords',function()use(&$summary){
+                    $summary['keywords_refreshed']=$this->keywords->seed();
+                });
+            }
             if($settings->search_console_enabled&&$this->searchConsole->configured()){
-                try{$summary['search_console_rows']=$this->searchConsole->fetch();}
-                catch(\Throwable $e){report($e);$summary['warnings'][]='Search Console import failed; existing metrics were preserved.';}
+                $this->phase($run,$summary,'search_console',function()use(&$summary){
+                    $summary['search_console_rows']=$this->searchConsole->fetch();
+                });
             }
-            if($settings->draft_generation_enabled)$summary['drafts_generated']=$this->generateOpportunityDrafts($settings->drafts_per_run);
-            if($settings->auto_publish_enabled)$summary['drafts_auto_published']=$this->autoPublishSafeDrafts((int)$settings->auto_publish_min_confidence);
-            if($settings->reports_enabled)$summary['report_id']=$this->reports->generate('daily')->id;
+            if($settings->draft_generation_enabled){
+                $this->phase($run,$summary,'drafts',function()use(&$summary,$settings){
+                    $summary['drafts_generated']=$this->generateOpportunityDrafts($settings->drafts_per_run);
+                });
+            }
+            if($settings->auto_publish_enabled){
+                $this->phase($run,$summary,'auto_publish',function()use(&$summary,$settings){
+                    $summary['drafts_auto_published']=$this->autoPublishSafeDrafts((int)$settings->auto_publish_min_confidence);
+                });
+            }
+            if($settings->reports_enabled){
+                $this->phase($run,$summary,'report',function()use(&$summary){
+                    $summary['report_id']=$this->reports->generate('daily')->id;
+                });
+            }
             // Money transparency: every run reports how much of the day's AI budget is spent.
             $summary['ai_units_used_today']=$this->budget->used();
             $summary['ai_units_cap']=$this->budget->cap();
@@ -107,7 +185,7 @@ class SeoAutopilotRunner
             $summary['pages_published_total']=$summary['society_seo_published']+$summary['drafts_auto_published']+(($summary['compare_pages']['published']??0));
 
             $status=$summary['warnings']||$summary['technical_failures']?'completed_with_warnings':'completed';
-            $run->update(['status'=>$status,'finished_at'=>now(),'summary'=>$summary]);
+            $run->update(['status'=>$status,'finished_at'=>now(),'summary'=>$summary,'current_phase'=>null,'heartbeat_at'=>now()]);
         } catch (\Throwable $e) {
             report($e);
             $run->update(['status'=>'failed','finished_at'=>now(),'summary'=>$summary,'error'=>$e->getMessage()]);

@@ -73,9 +73,20 @@ Artisan::command('seo:autopilot-report {period=weekly}', function (string $perio
 
 Artisan::command('seo:autopilot-run {--trigger=scheduled}', function () {
     $run=app(SeoAutopilotRunner::class)->run((string)$this->option('trigger'));
+    // Claim the daily catch-up marker so the every-30-minutes catch-up doesn't fire a
+    // second full cycle (and second lot of AI spend) after the timed 02:00 run already
+    // succeeded. Whichever path runs first wins; the other skips for the day.
+    \Illuminate\Support\Facades\Cache::put('ops:daily-ran:seo-autopilot', now()->toDateString(), now()->addDays(2));
     $summary=$run->summary?:[];
+    $failed=$summary['failed_phases']??[];
     $this->info("SEO Autopilot run #{$run->id} {$run->status}: ".($summary['pages_audited']??0).' pages audited, '.($summary['drafts_generated']??0).' drafts generated, '.($summary['search_console_rows']??0).' Search Console rows imported.');
+    if($failed)$this->warn('Phases that failed but did not stop the cycle: '.implode(', ',$failed));
 })->purpose('Run the complete closed-loop SEO automation cycle');
+
+Artisan::command('seo:autopilot-recover {--stale-minutes=45}', function () {
+    $recovered=app(SeoAutopilotRunner::class)->recoverStuckRuns((int)$this->option('stale-minutes'));
+    $this->info($recovered.' stalled SEO Autopilot run(s) closed out as interrupted.');
+})->purpose('Close out SEO Autopilot runs whose container died mid-cycle');
 
 Artisan::command('intelligence:backfill {--society=} {--limit=30} {--dry-run} {--force}', function (SocietyIntelligenceScoringService $scoring) {
     $query = Society::query()->where('is_published', true)->whereIn('status', ['Verified', 'Premium']);
@@ -436,6 +447,7 @@ Schedule::command('ops:validate-photo-references')->weeklyOn(2, '05:00')->withou
 Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=1')->everyMinute()->withoutOverlapping()->runInBackground();
 Schedule::call(fn () => AiConversation::query()->where('expires_at', '<', now())->delete())->dailyAt('03:15')->name('prune-expired-ai-conversations')->withoutOverlapping();
 Schedule::command('seo:autopilot-run')->dailyAt('02:00')->withoutOverlapping();
+Schedule::command('seo:autopilot-recover')->hourly()->withoutOverlapping();
 // Social autopilot: plan + generate + auto-approve low-risk each morning, then a tick that
 // publishes scheduled low-risk posts to connected accounts through the day.
 Schedule::command('social:autopilot')->dailyAt('08:30')->withoutOverlapping();

@@ -49,28 +49,51 @@ async function fetchJsonWithRetry(url, attempts = 4, delayMs = 15000) {
   return null;
 }
 
-async function fetchLiveSocieties() {
-  const payload = await fetchJsonWithRetry(`${API_BASE}/societies?per_page=200`);
-  if (!payload) return [];
+/**
+ * Every page of an endpoint, not just the first.
+ *
+ * `?per_page=200` returns page one and nothing else. Past 200 rows the tail was
+ * silently skipped, so those societies got no static shell — no per-page title,
+ * description, canonical or JSON-LD in the served HTML, only whatever the SPA
+ * managed to set after hydration. Same defect as the sitemap generator had.
+ */
+async function fetchAllPages(endpoint, pageSize = 200, maxPages = 25) {
+  const rows = [];
+  let lastPage = 1;
 
-  return extractRows(payload).filter(
+  for (let page = 1; page <= maxPages; page += 1) {
+    const payload = await fetchJsonWithRetry(`${API_BASE}${endpoint}?per_page=${pageSize}&page=${page}`);
+    if (!payload) {
+      if (page === 1) return [];
+      console.warn(`Prerender: ${endpoint} page ${page} unreachable — continuing with ${rows.length} rows.`);
+      break;
+    }
+
+    const batch = extractRows(payload);
+    rows.push(...batch);
+
+    const box = payload?.data && !Array.isArray(payload.data) ? payload.data : payload;
+    const parsed = Number(box?.last_page);
+    if (page === 1 && Number.isFinite(parsed) && parsed > 0) lastPage = parsed;
+    if (batch.length === 0 || page >= lastPage) break;
+  }
+
+  return rows;
+}
+
+async function fetchLiveSocieties() {
+  return (await fetchAllPages("/societies")).filter(
     (society) =>
       ["Verified", "Premium"].includes(String(society?.status || "")) && society?.slug,
   );
 }
 
 async function fetchLiveProperties() {
-  const payload = await fetchJsonWithRetry(`${API_BASE}/properties?per_page=200`);
-  if (!payload) return [];
-
-  return extractRows(payload).filter((property) => property?.slug);
+  return (await fetchAllPages("/properties")).filter((property) => property?.slug);
 }
 
 async function fetchLiveComparePages() {
-  const payload = await fetchJsonWithRetry(`${API_BASE}/compare-pages?per_page=200`);
-  if (!payload) return [];
-
-  return extractRows(payload).filter((page) => page?.slug && page?.status === "published");
+  return (await fetchAllPages("/compare-pages")).filter((page) => page?.slug && page?.status === "published");
 }
 
 function localityCountsFrom(societies) {

@@ -4,6 +4,7 @@ import path from "node:path";
 const SITE_URL = "https://www.societyflats.com";
 const DIST_DIR = path.resolve(process.cwd(), "dist");
 const PUBLIC_DIR = path.resolve(process.cwd(), "public");
+const MIN_SITEMAP_COVERAGE = Number.parseFloat(process.env.SITEMAP_MIN_COVERAGE || "0.95");
 const MIN_PUBLIC_SOCIETIES = Number.parseInt(process.env.SITEMAP_MIN_PUBLIC_SOCIETIES || "20", 10);
 const NCR_CITY_INDEXING_ENABLED = ["1", "true", "yes", "on"].includes(String(process.env.NCR_CITY_INDEXING_ENABLED || process.env.VITE_NCR_CITY_INDEXING_ENABLED || "").trim().toLowerCase());
 
@@ -110,6 +111,47 @@ async function validateInternalLinks() {
   }
 }
 
+/**
+ * The floor above (20) is a smoke test, not a guard: the sitemap generator once
+ * silently returned only its first page of results and shipped 200 of 296 societies —
+ * comfortably over any fixed floor, while a third of the catalogue was invisible to
+ * search. Compare against what the API itself reports instead.
+ *
+ * Unreachable API is a warning, never a failure: the generator preserves the last
+ * healthy sitemap in that case, and a deploy must not be blocked by a cold backend.
+ */
+async function validateSitemapCoverage(societyUrlCount) {
+  const API_BASE = process.env.VITE_API_BASE_URL || process.env.API_BASE_URL || "https://final-now.onrender.com/api";
+  let total = null;
+
+  try {
+    const response = await fetch(`${API_BASE}/societies?per_page=1`, { headers: { Accept: "application/json" } });
+    if (response.ok) {
+      const payload = await response.json();
+      const box = payload?.data && !Array.isArray(payload.data) ? payload.data : payload;
+      const parsed = Number(box?.total);
+      if (Number.isFinite(parsed) && parsed > 0) total = parsed;
+    }
+  } catch {
+    // fall through to the warning below
+  }
+
+  if (total === null) {
+    console.warn("SEO validation: could not read the API society total — skipping the sitemap coverage check.");
+    return;
+  }
+
+  const coverage = societyUrlCount / total;
+  if (coverage < MIN_SITEMAP_COVERAGE) {
+    throw new Error(
+      `sitemap.xml covers ${societyUrlCount} of ${total} published societies (${Math.round(coverage * 100)}%). `
+      + `Expected at least ${Math.round(MIN_SITEMAP_COVERAGE * 100)}% — the generator is probably dropping pages.`,
+    );
+  }
+
+  console.log(`Sitemap coverage: ${societyUrlCount}/${total} published societies (${Math.round(coverage * 100)}%).`);
+}
+
 async function validateC37ConversionCopy() {
   const societyPage = await fs.readFile(path.resolve(process.cwd(), "src/pages/SocietyPage.tsx"), "utf8");
   const searchPage = await fs.readFile(path.resolve(process.cwd(), "src/pages/SearchPage.tsx"), "utf8");
@@ -138,10 +180,11 @@ async function validateC37ConversionCopy() {
     [homePage, "A quick market view before users shortlist societies", "Homepage market insights not compacted"],
     [societyPage, "society_page_no_inventory_similar_options", "Society page missing no-inventory similar-options CTA"],
     [societyPage, "Request similar options", "Society page missing similar-options CTA copy"],
-    [searchPage, "matching Gurgaon societies and homes", "Search empty-state success copy missing C37 wording"],
+    [searchPage, "Request received. We will call with matching societies and homes.", "Search empty-state success copy missing recovery wording"],
+    [searchPage, "Get matching options on call", "Search empty state missing the offline-inventory CTA"],
     [leadModal, "matching homes, similar societies and visit-ready next steps", "Lead modal success copy missing C37 wording"],
-    [aiAdvisor, "Continue your Gurgaon society shortlist.", "AI Advisor page does not feel like continuation flow"],
-    [aiAdvisor, "Open full search", "AI Advisor page missing return-to-search flow"],
+    [aiAdvisor, "SocietyAssistant", "AI Advisor page must embed the real assistant, not a teaser"],
+    [aiAdvisor, 'href: "/search?tab=societies"', "AI Advisor page missing return-to-search flow"],
     [searchPage, "moreFromBuilderResults", "Search page missing builder grouping"],
     [propertiesPage, "No verified homes are currently published", "Properties page missing honest zero-inventory copy"],
     [propertiesPage, "Request current availability", "Properties page missing zero-inventory lead CTA"],
@@ -197,6 +240,8 @@ async function validatePublicFiles() {
   if (societyUrlCount < MIN_PUBLIC_SOCIETIES) {
     throw new Error(`sitemap.xml has only ${societyUrlCount} society URLs; expected at least ${MIN_PUBLIC_SOCIETIES}`);
   }
+
+  await validateSitemapCoverage(societyUrlCount);
 
   const manifest = await fs.readFile(path.join(PUBLIC_DIR, "site.webmanifest"), "utf8");
   if (!manifest.includes("SocietyFlats") || !manifest.includes("/icon-192.png") || !manifest.includes("/icon-512.png")) {

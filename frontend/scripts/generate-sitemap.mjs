@@ -5,6 +5,13 @@ const SITE_URL = "https://www.societyflats.com";
 const API_BASE = process.env.VITE_API_BASE_URL || process.env.API_BASE_URL || "https://final-now.onrender.com/api";
 const PUBLIC_DIR = path.resolve(process.cwd(), "public");
 const SITEMAP_PATH = path.join(PUBLIC_DIR, "sitemap.xml");
+const PAGE_SIZE = Number.parseInt(process.env.SITEMAP_PAGE_SIZE || "200", 10);
+// Safety stop so a misbehaving API can never spin this build step forever. At 200 a
+// page this covers 5,000 rows per endpoint — well past current inventory.
+const MAX_PAGES = 25;
+// Sector/locality landing pages are only emitted when real societies match them,
+// so this is a sanity ceiling rather than a quality gate.
+const MAX_LOCALITY_ROUTES = 200;
 const MIN_PUBLIC_SOCIETIES = Number.parseInt(process.env.SITEMAP_MIN_PUBLIC_SOCIETIES || "20", 10);
 const NCR_CITY_INDEXING_ENABLED = ["1", "true", "yes", "on"].includes(String(process.env.NCR_CITY_INDEXING_ENABLED || process.env.VITE_NCR_CITY_INDEXING_ENABLED || "").trim().toLowerCase());
 const NCR_INDEXABLE_CITY_SLUGS = String(process.env.NCR_INDEXABLE_CITY_SLUGS || process.env.VITE_NCR_INDEXABLE_CITY_SLUGS || "")
@@ -129,31 +136,83 @@ function extractRows(payload) {
   return [];
 }
 
-async function fetchRows(endpoint) {
+/** Laravel paginator metadata, wherever the envelope happens to sit. */
+function extractPaging(payload) {
+  const box = payload?.data && !Array.isArray(payload.data) ? payload.data : payload;
+  const lastPage = Number(box?.last_page);
+  const total = Number(box?.total);
+
+  return {
+    lastPage: Number.isFinite(lastPage) && lastPage > 0 ? lastPage : null,
+    total: Number.isFinite(total) && total >= 0 ? total : null,
+  };
+}
+
+async function fetchPage(endpoint, page) {
+  // The API paginates; a bare request or ?limit= returns only the first short page.
+  // per_page is the shape that actually honours a large page size.
   const urls = [
-    `${API_BASE}${endpoint}?per_page=200`,
-    `${API_BASE}${endpoint}?limit=200`,
-    `${API_BASE}${endpoint}`,
+    `${API_BASE}${endpoint}?per_page=${PAGE_SIZE}&page=${page}`,
+    `${API_BASE}${endpoint}?limit=${PAGE_SIZE}&page=${page}`,
+    ...(page === 1 ? [`${API_BASE}${endpoint}`] : []),
   ];
 
   for (const url of urls) {
     try {
-      const response = await fetch(url, {
-        headers: { Accept: "application/json" },
-      });
-
+      const response = await fetch(url, { headers: { Accept: "application/json" } });
       if (!response.ok) continue;
 
       const payload = await response.json();
-      const rows = extractRows(payload);
-
-      return { rows, reachedApi: true };
+      return { rows: extractRows(payload), paging: extractPaging(payload), reachedApi: true };
     } catch {
       // Try the next compatible query shape before preserving the last healthy sitemap.
     }
   }
 
-  return { rows: [], reachedApi: false };
+  return { rows: [], paging: { lastPage: null, total: null }, reachedApi: false };
+}
+
+/**
+ * Walk every page, not just the first.
+ *
+ * This used to request `?per_page=200` and return whatever came back. Once the
+ * catalogue passed 200 societies the tail was silently dropped — 296 published
+ * societies, 200 in the sitemap, ~96 invisible to search with no error anywhere.
+ * A cap that fails quietly as you grow is the worst kind, so walk to last_page and
+ * report the count against the API's own total.
+ */
+async function fetchRows(endpoint) {
+  const first = await fetchPage(endpoint, 1);
+  if (!first.reachedApi) return { rows: [], reachedApi: false, total: null };
+
+  const rows = [...first.rows];
+  const lastPage = first.paging.lastPage ?? 1;
+
+  for (let page = 2; page <= Math.min(lastPage, MAX_PAGES); page += 1) {
+    const next = await fetchPage(endpoint, page);
+    // A page that fails mid-walk would silently truncate again — say so loudly and
+    // let the caller preserve the previous healthy sitemap rather than publish a
+    // partial one.
+    if (!next.reachedApi) {
+      console.warn(`Sitemap: ${endpoint} page ${page}/${lastPage} failed — refusing a partial crawl.`);
+      return { rows: [], reachedApi: false, total: first.paging.total };
+    }
+    if (next.rows.length === 0) break;
+    rows.push(...next.rows);
+  }
+
+  if (lastPage > MAX_PAGES) {
+    console.warn(`Sitemap: ${endpoint} has ${lastPage} pages, capped at ${MAX_PAGES}. Raise MAX_PAGES.`);
+  }
+
+  const total = first.paging.total;
+  if (total !== null && rows.length < total) {
+    console.warn(`Sitemap: ${endpoint} returned ${rows.length} of ${total} rows the API reports.`);
+  } else if (total !== null) {
+    console.log(`Sitemap: ${endpoint} — ${rows.length}/${total} rows across ${lastPage} page(s).`);
+  }
+
+  return { rows, reachedApi: true, total };
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -174,7 +233,7 @@ async function fetchRowsWithRetry(endpoint, attempts = 4, delayMs = 20000) {
     }
   }
 
-  return { rows: [], reachedApi: false };
+  return { rows: [], reachedApi: false, total: null };
 }
 
 function countDetailUrls(xml, segment) {
@@ -262,7 +321,7 @@ function addDerivedLandingRoutes(routes, societies) {
     }
   }
 
-  for (const loc of [...localitySlugs].slice(0, 40)) {
+  for (const loc of [...localitySlugs].slice(0, MAX_LOCALITY_ROUTES)) {
     routes.push({ loc, priority: "0.72", changefreq: "weekly" });
   }
 
