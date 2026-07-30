@@ -145,6 +145,7 @@ class AdminSocietyComparePageController extends Controller
         $comparePage->update([
             'status' => SocietyComparePage::STATUS_PUBLISHED,
             'published_at' => now(),
+            'first_published_at' => $comparePage->first_published_at ?: now(),
             'stale_reason' => null,
         ]);
 

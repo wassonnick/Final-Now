@@ -265,10 +265,20 @@ class SeoAutopilotRunner
                 ->where('generated_by','system')
                 ->where('content_quality_score','>=',\App\Services\SocietyComparePageGenerator::AUTO_PUBLISH_THRESHOLD)
                 ->orderBy('id')->limit(40)->get();
+            $result['blocked_low_value']=0;
             foreach($pending as $page){
                 $societies=collect([$page->societyA,$page->societyB,$page->societyC]);
                 if($societies->contains(fn($s)=>!$s||!$s->is_published||!in_array($s->status,['Verified','Premium'],true)))continue;
-                $page->update(['status'=>\App\Models\SocietyComparePage::STATUS_PUBLISHED,'published_at'=>now(),'reviewed_by'=>'autopilot','reviewed_at'=>now(),'stale_reason'=>null]);
+                // Quality score only proves the fields are filled in. This is the check
+                // that the comparison is actually worth reading, and that we aren't
+                // publishing a near-duplicate of a page we already rank for.
+                $blockers=$generator->publishBlockers($societies->filter()->values(),$page);
+                if($blockers!==[]){
+                    $page->update(['stale_reason'=>'Held back: '.implode(' ',$blockers)]);
+                    $result['blocked_low_value']++;
+                    continue;
+                }
+                $page->update(['status'=>\App\Models\SocietyComparePage::STATUS_PUBLISHED,'published_at'=>now(),'first_published_at'=>$page->first_published_at?:now(),'reviewed_by'=>'autopilot','reviewed_at'=>now(),'stale_reason'=>null]);
                 $result['published']++;
             }
         }
