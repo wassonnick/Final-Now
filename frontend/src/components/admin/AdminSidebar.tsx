@@ -1,31 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import {
-  BarChart3,
-  Bot,
-  BriefcaseBusiness,
-  Building2,
-  Home,
-  LineChart,
-  LogOut,
-  MapPinned,
-  MessageSquareText,
-  Search,
-  Settings,
-  Star,
-  Target,
-  Users,
-  CalendarCheck,
-  ShieldCheck,
-  Gift,
-  Globe2,
-  Gauge,
-  Sparkles,
-  Import,
-  ClipboardList,
-  FileSearch,
-  Megaphone,
-  Palette,
-} from "lucide-react";
+import { BarChart3, Bot, BriefcaseBusiness, Building2, CalendarCheck, ClipboardList, FileSearch, Gauge, Gift, Globe2, Home, Import, LineChart, LogOut, MapPinned, Megaphone, MessageSquareText, Palette, Search, Settings, ShieldCheck, Sparkles, Star, Target, Users, Wand2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -67,6 +41,7 @@ const groups: Array<{ heading: string | null; links: Array<{ label: string; href
       { label: "SEO Autopilot", href: "/admin/seo-autopilot", icon: Gauge },
       { label: "Compare SEO", href: "/admin/seo/compare-pages", icon: FileSearch },
       { label: "AI Social Media", href: "/admin/social", icon: Sparkles },
+      { label: "Social Studio", href: "/admin/social/studio", icon: Wand2 },
       { label: "Brand Studio", href: "/admin/brand-studio", icon: Palette },
       { label: "AI Spend", href: "/admin/ai-spend", icon: Bot },
       { label: "User AI Chats", href: "/admin/ai-chats", icon: MessageSquareText },
