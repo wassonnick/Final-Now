@@ -56,6 +56,7 @@ import {
   slugify,
   societyImage,
 } from "@/lib/publicData";
+import { SectionTabs } from "@/components/society/SectionTabs";
 import { setPublicSeo } from "@/lib/seo";
 import { API_BASE_URL } from "@/config/api";
 import { backendApi } from "@/services/backendApi";
@@ -1059,6 +1060,17 @@ export function SocietyPage() {
           <p className="mt-2.5 text-[12px] text-[#8A8F89]">Photos via Google Places, reviewed and approved before publishing — not stock images.</p>
         ) : null}
 
+        <SectionTabs
+          tabs={[
+            { id: "sec-scores", label: "Scores" },
+            { id: "sec-amenities", label: "Amenities" },
+            { id: "sec-about", label: "About" },
+            { id: "sec-location", label: "Location" },
+            { id: "sec-homes", label: "Homes" },
+            { id: "sec-faq", label: "FAQ" },
+          ]}
+        />
+
         <div className="mt-6 grid items-stretch gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section>
             <h1 className="font-display text-[34px] font-medium leading-[1.02] tracking-[-0.015em] text-[#111827] md:text-[42px]">{seoContent?.seo_h1 || society.name}</h1>
@@ -1287,7 +1299,7 @@ export function SocietyPage() {
 
             {subScores.length ? (
               <div className="mt-6">
-                <h2 className="text-[19px] font-bold text-[#25302B]">How {society.name} scores</h2>
+                <h2 id="sec-scores" className="scroll-mt-[7.5rem] text-[19px] font-bold text-[#25302B]">How {society.name} scores</h2>
                 <p className="mt-1 text-[13px] text-[#6E756E]">Each number reflects amenities, builder reputation, locality tier and resident-fit signals reviewed for this society — not a single average.</p>
                 <div className="mt-3.5 space-y-2.5 rounded-[14px] border border-[#E7E3DA] bg-white p-4">
                   {subScores.map(([label, value]) => {
@@ -1306,7 +1318,7 @@ export function SocietyPage() {
               </div>
             ) : null}
 
-            <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Amenities</h2>
+            <h2 id="sec-amenities" className="scroll-mt-[7.5rem] mt-8 text-[19px] font-bold text-[#25302B]">Amenities</h2>
             <div className="mt-3.5 flex flex-wrap gap-2.5">
               {(amenities.length ? amenities : ["Amenities being reviewed"]).slice(0, showAllAmenities ? undefined : 8).map((amenity) => (
                 <span key={amenity} className="rounded-full border border-[#E7E3DA] bg-white px-4 py-2 text-[13.5px] text-[#35413B]">✓ {amenity}</span>
@@ -1322,14 +1334,14 @@ export function SocietyPage() {
               ) : null}
             </div>
 
-            <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">About this society</h2>
+            <h2 id="sec-about" className="scroll-mt-[7.5rem] mt-8 text-[19px] font-bold text-[#25302B]">About this society</h2>
             <p className="mt-2.5 max-w-[760px] whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">
               {seoContent?.about_content || descriptionText || `${society.name} is a published Gurgaon society profile. SocietyFlats is reviewing its project facts, pricing context, nearby intelligence and current availability.`}
             </p>
 
             {seoContent?.location_content ? <><h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Location & connectivity</h2><p className="mt-2.5 whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{seoContent.location_content}</p></> : null}
 
-            <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Location intelligence</h2>
+            <h2 id="sec-location" className="scroll-mt-[7.5rem] mt-8 text-[19px] font-bold text-[#25302B]">Location intelligence</h2>
             <div className="mt-3.5 overflow-hidden rounded-[18px] border border-[#D8DFEC] bg-[#E8EDF7]">
               <SocietyNearbyGoogleMap
                 title={society.name}
@@ -1400,7 +1412,7 @@ export function SocietyPage() {
           </aside>
         </div>
 
-        <h2 className="mb-4 mt-11 text-[22px] font-bold text-[#25302B]">Available homes</h2>
+        <h2 id="sec-homes" className="scroll-mt-[7.5rem] mb-4 mt-11 text-[22px] font-bold text-[#25302B]">Available homes</h2>
         {properties.length ? (
           <div className="grid gap-[18px] md:grid-cols-3">
             {properties.slice(0, 3).map((property) => (
@@ -1418,7 +1430,7 @@ export function SocietyPage() {
 
         {comparePages.length ? <section className="mt-11"><h2 className="text-[22px] font-bold text-[#25302B]">Compare {society?.name || "this society"} with nearby societies</h2><div className="mt-4 flex flex-wrap gap-3">{comparePages.map((page: any) => <Link key={page.slug} to={`/compare/${page.slug}`} className="rounded-full border border-[#D8DFEC] bg-white px-4 py-2 text-sm font-semibold text-[#3156A3]">{page.title}</Link>)}</div></section> : null}
 
-        {seoFaqs.length ? <section className="mt-11"><h2 className="text-[22px] font-bold text-[#25302B]">Frequently asked questions</h2><div className="mt-4 space-y-3">{seoFaqs.map((faq: any) => <details key={faq.question} className="rounded-[16px] border border-[#E7E3DA] bg-white p-4"><summary className="cursor-pointer font-bold text-[#25302B]">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#4A534E]">{faq.answer}</p></details>)}</div></section> : null}
+        {seoFaqs.length ? <section className="mt-11"><h2 id="sec-faq" className="scroll-mt-[7.5rem] text-[22px] font-bold text-[#25302B]">Frequently asked questions</h2><div className="mt-4 space-y-3">{seoFaqs.map((faq: any) => <details key={faq.question} className="rounded-[16px] border border-[#E7E3DA] bg-white p-4"><summary className="cursor-pointer font-bold text-[#25302B]">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#4A534E]">{faq.answer}</p></details>)}</div></section> : null}
       </main>
 
       <div className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 lg:hidden">
