@@ -80,23 +80,23 @@ export default function HomePremium() {
       {/* ---------- HERO ---------- */}
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(120%_90%_at_50%_-10%,#F1F7F5_0%,#FFFFFF_60%)]" />
-        <div className="relative mx-auto max-w-[1120px] px-5 pb-14 pt-14 text-center lg:pb-20 lg:pt-24">
+        <div className="relative mx-auto max-w-[1120px] px-5 pb-10 pt-7 text-center sm:pb-14 sm:pt-14 lg:pb-20 lg:pt-24">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#E4E4E9] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[#6E6E73] shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full" style={{ background: ACCENT }} />
             Now across {NCR_REGION}
           </span>
 
-          <h1 className="!font-sans mx-auto mt-6 max-w-[880px] text-[40px] font-semibold leading-[1.04] tracking-[-0.03em] sm:text-[56px] lg:text-[68px]">
+          <h1 className="!font-sans mx-auto mt-4 max-w-[880px] text-[31px] font-semibold leading-[1.06] tracking-[-0.03em] sm:mt-6 sm:text-[56px] lg:text-[68px]">
             Choose the society.
             <br />
             <span className="text-[#6E6E73]">Then choose the home.</span>
           </h1>
-          <p className="mx-auto mt-5 max-w-[600px] text-[17px] leading-8 text-[#6E6E73] lg:text-[19px]">
+          <p className="mx-auto mt-3 max-w-[600px] text-[14.5px] leading-6 text-[#6E6E73] sm:mt-5 sm:text-[17px] sm:leading-8 lg:text-[19px]">
             Verified society profiles, real homes and honest guidance — the calm way to decide where you'll live in Delhi NCR.
           </p>
 
           {/* City selector */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+          <div className="scrollbar-hide -mx-5 mt-5 flex snap-x gap-2 overflow-x-auto px-5 sm:mx-0 sm:mt-8 sm:flex-wrap sm:items-center sm:justify-center sm:overflow-visible sm:px-0">
             {NCR_CITIES.map((item) => {
               const active = item.slug === city.slug;
               return (
@@ -104,7 +104,7 @@ export default function HomePremium() {
                   key={item.slug}
                   type="button"
                   onClick={() => { setCity(item); setQuery(""); }}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold transition ${
+                  className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold transition ${
                     active ? "bg-[#1D1D1F] text-white" : "bg-[#F5F5F7] text-[#6E6E73] hover:bg-[#ECECEF]"
                   }`}
                 >
@@ -123,7 +123,7 @@ export default function HomePremium() {
           {city.status === "live" ? (
             <form
               onSubmit={(e) => { e.preventDefault(); submit(); }}
-              className="relative mx-auto mt-6 flex max-w-[640px] items-center gap-2 rounded-full border border-[#E4E4E9] bg-white p-2 shadow-[0_20px_50px_-28px_rgba(0,0,0,.28)]"
+              className="relative mx-auto mt-4 flex max-w-[640px] items-center gap-2 rounded-full border border-[#E4E4E9] bg-white p-1.5 shadow-[0_20px_50px_-28px_rgba(0,0,0,.28)] sm:mt-6 sm:p-2"
             >
               <span className="pl-3 text-[#86868B]"><Search className="h-5 w-5" /></span>
               <input
@@ -131,11 +131,11 @@ export default function HomePremium() {
                 onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); }}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
-                placeholder={`Search a ${city.name} society — or try “compare”, “map”, “rent yield”`}
+                placeholder={`Search a ${city.name} society`}
                 className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#86868B]"
                 aria-label={`Search ${city.name}`}
               />
-              <button type="submit" className="shrink-0 rounded-full px-6 py-3 text-[14px] font-semibold text-white transition hover:opacity-90" style={{ background: ACCENT }}>
+              <button type="submit" aria-label="Search" className="shrink-0 rounded-full px-5 py-2.5 text-[14px] font-semibold text-white transition hover:opacity-90 sm:px-6 sm:py-3" style={{ background: ACCENT }}>
                 Search
               </button>
               {showSuggestions && query.trim() && (moduleMatches.length > 0 || suggestions.length > 0) ? (
@@ -223,7 +223,7 @@ export default function HomePremium() {
             <p className="mt-2 max-w-[520px] text-[15px] leading-7 text-[#6E6E73]">We start where we can verify. Gurgaon is live today; the rest of Delhi NCR is being checked to the same standard.</p>
           </div>
         </div>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {NCR_CITIES.map((item) => (
             <button
               key={item.slug}
@@ -254,9 +254,9 @@ export default function HomePremium() {
           </div>
           <Link to="/societies" className="inline-flex shrink-0 items-center gap-1 text-[14px] font-semibold" style={{ color: ACCENT }}>View all <ArrowRight className="h-4 w-4" /></Link>
         </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="scrollbar-hide -mx-5 mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
           {featured.slice(0, 8).map((s) => (
-            <Link key={s.id} to={`/society/${s.slug}`} className="group overflow-hidden rounded-[20px] border border-[#E4E4E9] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.3)]">
+            <Link key={s.id} to={`/society/${s.slug}`} className="group w-[74vw] shrink-0 snap-start overflow-hidden rounded-[20px] border border-[#E4E4E9] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.3)] sm:w-auto sm:shrink">
               <div className="relative h-32 overflow-hidden bg-[#F5F5F7]">
                 <img src={societyDisplayImage(s)} alt={s.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]" />
                 {scoreOf(s) ? (
@@ -307,11 +307,11 @@ export default function HomePremium() {
           </div>
 
           {/* Area society cards */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="scrollbar-hide -mx-5 mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
             {currentArea.societies.slice(0, 8).map((s) => {
               const homes = Number(s?.propertiesCount ?? s?.properties_count ?? 0);
               return (
-                <Link key={s.id} to={`/society/${s.slug}`} className="group overflow-hidden rounded-[20px] border border-[#E4E4E9] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.3)]">
+                <Link key={s.id} to={`/society/${s.slug}`} className="group w-[74vw] shrink-0 snap-start overflow-hidden rounded-[20px] border border-[#E4E4E9] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-36px_rgba(0,0,0,.3)] sm:w-auto sm:shrink">
                   <div className="relative h-32 overflow-hidden bg-[#F5F5F7]">
                     <img src={societyDisplayImage(s)} alt={s.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]" />
                     {scoreOf(s) ? (
@@ -369,7 +369,7 @@ export default function HomePremium() {
           <h2 className="!font-sans text-[28px] font-semibold tracking-[-0.02em] lg:text-[36px]">Everything you need to decide</h2>
           <p className="mt-2 text-[15px] leading-7 text-[#6E6E73]">Not just listings — a full toolkit that does the hard thinking with you. Search any of these from the box above, too.</p>
         </div>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {MODULES.map((m) => {
             const Icon = m.icon;
             return (
