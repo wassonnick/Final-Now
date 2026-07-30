@@ -478,6 +478,7 @@ export function SearchPage() {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [query, setQuery] = useState(initialQuery);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showMap, setShowMap] = useState(false);
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
@@ -1079,10 +1080,112 @@ export function SearchPage() {
 
 
       <section className="container mx-auto px-3 pb-36 pt-2 md:px-4 md:pb-10 md:pt-3">
+          {/* Mobile filter bar — the sidebar is desktop-only, so without this a phone
+              user can see results but has no way to narrow them. Sticky so it stays
+              reachable however far they have scrolled. */}
+          <div className="sticky top-[3.9rem] z-30 -mx-3 mb-2 md:-mx-4 flex items-center gap-2 border-b border-navy-100 bg-white/95 px-3 py-2.5 backdrop-blur md:px-4 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              className="inline-flex items-center gap-2 rounded-full bg-[#0F7B63] px-4 py-2 text-[13px] font-black text-white"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowMap((v) => !v)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-navy-100 bg-white px-3.5 py-2 text-[13px] font-bold text-navy-700"
+            >
+              <MapPinned className="h-4 w-4" />
+              {showMap ? "Hide map" : "Map"}
+            </button>
+            <span className="ml-auto whitespace-nowrap text-[12px] font-bold text-navy-500">
+              {filteredSocieties.length + filteredProperties.length} results
+            </span>
+          </div>
+
         <div className={cn(
           "grid gap-3 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-4",
           showMap && "xl:grid-cols-[240px_minmax(0,1fr)_minmax(330px,38vw)]",
         )}>
+          {/* Filter sheet */}
+          {filtersOpen ? (
+            <div className="fixed inset-0 z-[70] lg:hidden" role="dialog" aria-label="Filters">
+              <button type="button" aria-label="Close filters" className="absolute inset-0 bg-black/40" onClick={() => setFiltersOpen(false)} />
+              <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-[28px] bg-white pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+                <div className="sticky top-0 rounded-t-[28px] bg-white px-5 pb-3 pt-2">
+                  <div className="mx-auto h-1.5 w-10 rounded-full bg-[#E4E4E9]" />
+                  <div className="mt-3 flex items-center justify-between">
+                    <p className="text-[17px] font-black text-navy-900">Filters</p>
+                    <button type="button" onClick={() => setFiltersOpen(false)} aria-label="Close" className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F7] text-navy-600">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-5 px-5 pb-4">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-navy-400">Looking for</p>
+                    <div className="mt-2 grid gap-2">
+                      {tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        const on = activeTab === tab.key;
+                        return (
+                          <button
+                            key={tab.key}
+                            onClick={() => { updateTab(tab.key); setFiltersOpen(false); }}
+                            className={cn(
+                              "flex items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-bold transition",
+                              on ? "bg-[#ECF6F2] text-[#0F7B63]" : "bg-ivory-200 text-navy-600",
+                            )}
+                          >
+                            <span className="flex items-center gap-2.5"><Icon className="h-4 w-4" /> {tab.label}</span>
+                            {on ? <CheckCircle2 className="h-4 w-4" /> : <ArrowRight className="h-3.5 w-3.5 opacity-40" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-navy-400">Popular locality</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {quickLocalities.map((item) => (
+                        <button
+                          key={item}
+                          onClick={() => { applyQuickSearch(item); setFiltersOpen(false); }}
+                          className="rounded-full border border-navy-100 bg-white px-3.5 py-2 text-[13px] font-bold text-navy-600"
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-[#ECF6F2] p-4">
+                    <p className="text-sm font-black text-[#0F7B63]">Not sure where to start?</p>
+                    <p className="mt-1 text-xs leading-5 text-navy-600">Tell us budget, commute and lifestyle — we&apos;ll shortlist for you.</p>
+                    <div className="mt-3 grid gap-2">
+                      <Link to={`/ai-advisor?q=${encodeURIComponent(query)}`} onClick={() => setFiltersOpen(false)} className="rounded-full bg-[#0F7B63] py-3 text-center text-[13px] font-black text-white">
+                        Ask AI Advisor
+                      </Link>
+                      <button type="button" onClick={() => { setFiltersOpen(false); openMapSearchCallback(); }} className="rounded-full border border-[#0F7B63] bg-white py-3 text-[13px] font-black text-[#0F7B63]">
+                        Book a free visit
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="sticky bottom-0 border-t border-navy-100 bg-white px-5 py-3">
+                  <button type="button" onClick={() => setFiltersOpen(false)} className="w-full rounded-full bg-navy-900 py-3.5 text-sm font-black text-white">
+                    Show {filteredSocieties.length + filteredProperties.length} results
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <aside className="hidden space-y-3 lg:sticky lg:top-[5.75rem] lg:block lg:self-start">
             <div className="rounded-[1.25rem] border border-navy-100 bg-white p-3.5 shadow-sm">
               <div className="flex items-center justify-between">
@@ -1249,7 +1352,7 @@ export function SearchPage() {
               </div>
 
               {activeTab === "societies" ? (
-                <div className="mt-2 flex flex-col gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 text-xs font-bold text-blue-700 md:flex-row md:items-center md:justify-between">
+                <div className="mt-2 hidden flex-col gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 text-xs font-bold text-blue-700 md:flex md:flex-row md:items-center md:justify-between">
                   <span>
                     Compare flow: tap Compare on up to 3 society cards, then open the Compare page.
                   </span>
