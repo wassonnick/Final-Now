@@ -485,3 +485,159 @@ export async function renderPostBlob(spec: PostSpec): Promise<Blob> {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Could not render the image."))), "image/png");
   });
 }
+
+// ————— Brand assets —————
+// The identity files people actually need on hand: the mark at icon sizes, the
+// lockups, the avatar and the platform covers. Painted with the same primitives
+// as the posts, so the mark and typeface can never drift between the two.
+
+export type BrandAssetKey =
+  | "markTile" | "markMono" | "avatar"
+  | "lockupLight" | "lockupDark" | "wordmarkLight" | "wordmarkDark"
+  | "coverFacebook" | "coverX" | "coverLinkedIn" | "coverYouTube";
+
+export const BRAND_ASSETS: { key: BrandAssetKey; label: string; w: number; h: number; group: "Logo" | "Avatar" | "Cover" }[] = [
+  { key: "markTile", label: "Mark (tile)", w: 1024, h: 1024, group: "Logo" },
+  { key: "markMono", label: "Mark (mono)", w: 1024, h: 1024, group: "Logo" },
+  { key: "lockupLight", label: "Lockup — light", w: 2560, h: 640, group: "Logo" },
+  { key: "lockupDark", label: "Lockup — dark", w: 2560, h: 640, group: "Logo" },
+  { key: "wordmarkLight", label: "Wordmark — light", w: 1800, h: 440, group: "Logo" },
+  { key: "wordmarkDark", label: "Wordmark — dark", w: 1800, h: 440, group: "Logo" },
+  { key: "avatar", label: "Profile picture", w: 1000, h: 1000, group: "Avatar" },
+  { key: "coverFacebook", label: "Facebook cover", w: 1640, h: 624, group: "Cover" },
+  { key: "coverX", label: "X / Twitter header", w: 1500, h: 500, group: "Cover" },
+  { key: "coverLinkedIn", label: "LinkedIn banner", w: 1584, h: 396, group: "Cover" },
+  { key: "coverYouTube", label: "YouTube banner", w: 2560, h: 1440, group: "Cover" },
+];
+
+// "SocietyFlats" with the accent on "Flats", drawn as one baseline.
+function drawWordmark(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, dark: boolean) {
+  setFont(ctx, size, 700, -size * 0.025);
+  ctx.textAlign = "left";
+  ctx.fillStyle = dark ? "#FFFFFF" : ART.ink;
+  ctx.fillText("Society", x, y);
+  const w = ctx.measureText("Society").width;
+  ctx.fillStyle = dark ? ART.greenDark : ART.green;
+  ctx.fillText("Flats", x + w, y);
+}
+
+// A quiet grid motif for the wide covers — the mark, echoed.
+function coverMotif(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+  const cell = size * 0.19, gap = size * 0.075;
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) {
+      const accent = r === 1 && c === 2;
+      const tall = r === 2 && c === 1;
+      fillRR(ctx, x + c * (cell + gap), y + r * (cell + gap), cell, tall ? cell * 1.45 : cell, cell * 0.26,
+        accent ? ART.greenDark : "#2E2E33");
+    }
+  }
+}
+
+export function drawBrandAsset(ctx: CanvasRenderingContext2D, key: BrandAssetKey) {
+  const meta = BRAND_ASSETS.find((a) => a.key === key)!;
+  const { w, h } = meta;
+  ctx.clearRect(0, 0, w, h);
+
+  if (key === "markTile" || key === "avatar") { drawMark(ctx, 0, 0, w); return; }
+
+  if (key === "markMono") {
+    // Every cell in one ink — for stamps and single-colour printing.
+    ctx.fillStyle = ART.ink; ctx.fillRect(0, 0, w, h);
+    const s = w / 512;
+    ctx.save(); ctx.scale(s, s);
+    const cells: [number, number, number, number][] = [
+      [110, 110, 76, 76], [218, 110, 76, 76], [326, 110, 76, 76],
+      [110, 218, 76, 76], [218, 218, 76, 76], [326, 218, 76, 76],
+      [110, 326, 76, 76], [218, 326, 76, 110], [326, 326, 76, 76],
+    ];
+    for (const [cx, cy, cw, ch] of cells) fillRR(ctx, cx, cy, cw, ch, 20, "#FFFFFF");
+    ctx.restore();
+    return;
+  }
+
+  if (key === "lockupLight" || key === "lockupDark" || key === "wordmarkLight" || key === "wordmarkDark") {
+    const dark = key.endsWith("Dark");
+    ctx.fillStyle = dark ? ART.ink : "#FFFFFF";
+    ctx.fillRect(0, 0, w, h);
+    if (key.startsWith("wordmark")) {
+      drawWordmark(ctx, w * 0.04, h * 0.66, h * 0.42, dark);
+    } else {
+      const markSize = h * 0.62;
+      drawMark(ctx, w * 0.035, (h - markSize) / 2, markSize, dark ? ART.panelDark : ART.ink);
+      drawWordmark(ctx, w * 0.035 + markSize + h * 0.16, h * 0.63, h * 0.4, dark);
+    }
+    return;
+  }
+
+  // Covers — charcoal ground, lockup and message left, grid motif right.
+  ctx.fillStyle = ART.ink;
+  ctx.fillRect(0, 0, w, h);
+
+  if (key === "coverYouTube") {
+    // YouTube crops hard on every device; only the centre 1546×423 is safe on all
+    // of them, so this one centres inside that band instead of hugging the left.
+    const cx = w / 2;
+    const top = (h - 423) / 2;
+    const mark = 132;
+    drawMark(ctx, cx - mark / 2, top + 6, mark, ART.panelDark);
+    ctx.textAlign = "center";
+    setFont(ctx, 92, 700, -2.4);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText("Choose the society.", cx, top + 232);
+    ctx.fillStyle = ART.greenDark;
+    ctx.fillText("Then choose the home.", cx, top + 336);
+    setFont(ctx, 34, 600, 0);
+    ctx.fillStyle = ART.onDark;
+    ctx.fillText("Verified societies · Real availability · No fake listings", cx, top + 400);
+    ctx.textAlign = "left";
+    return;
+  }
+
+  const pad = Math.round(h * 0.14);
+  const markSize = Math.round(h * 0.19);
+  drawMark(ctx, pad, pad, markSize, ART.panelDark);
+  drawWordmark(ctx, pad + markSize + h * 0.05, pad + markSize * 0.72, markSize * 0.62, true);
+
+  setFont(ctx, Math.round(h * 0.115), 700, -h * 0.004);
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillText("Choose the society.", pad, h * 0.62);
+  ctx.fillStyle = ART.greenDark;
+  ctx.fillText("Then choose the home.", pad, h * 0.62 + h * 0.135);
+
+  setFont(ctx, Math.round(h * 0.045), 600, 0);
+  ctx.fillStyle = ART.onDark;
+  ctx.fillText("Verified societies · Real availability · No fake listings", pad, h * 0.62 + h * 0.245);
+
+  coverMotif(ctx, w - Math.round(h * 0.86), Math.round(h * 0.26), Math.round(h * 0.6));
+}
+
+export async function renderBrandAssetBlob(key: BrandAssetKey): Promise<Blob> {
+  const meta = BRAND_ASSETS.find((a) => a.key === key)!;
+  const canvas = document.createElement("canvas");
+  canvas.width = meta.w;
+  canvas.height = meta.h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas is unavailable in this browser.");
+  if (document.fonts?.ready) await document.fonts.ready;
+  drawBrandAsset(ctx, key);
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not render the asset."))), "image/png");
+  });
+}
+
+// Favicon / app-icon sizes, cut from the tile mark.
+export const ICON_SIZES = [16, 32, 48, 64, 128, 180, 192, 256, 512, 1024];
+
+export async function renderIconBlob(size: number): Promise<Blob> {
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas is unavailable in this browser.");
+  drawMark(ctx, 0, 0, size);
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not render the icon."))), "image/png");
+  });
+}

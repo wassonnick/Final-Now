@@ -2,7 +2,7 @@
 // The preview canvas and the downloaded file run through the same painter, so what
 // you see is exactly what posts.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, Check, Copy, Download, Package, RefreshCw, Shuffle } from "lucide-react";
+import { CalendarDays, Check, Copy, Download, Image as ImageIcon, Package, RefreshCw, Shuffle, Wand2 } from "lucide-react";
 
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { AdminSocialNav } from "@/pages/admin/AdminSocialNav";
@@ -10,12 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BRAND_PHONE_DISPLAY } from "@/config/contact";
 import {
+  BRAND_ASSETS,
   FORMATS,
+  ICON_SIZES,
   LAYOUTS,
   SCENES,
+  drawBrandAsset,
   drawPost,
   isDarkScene,
+  renderBrandAssetBlob,
+  renderIconBlob,
   renderPostBlob,
+  type BrandAssetKey,
   type FormatKey,
   type PostSpec,
   type LayoutKey,
@@ -47,6 +53,7 @@ export function AdminSocialStudioPage() {
   const [layout, setLayout] = useState<LayoutKey>("standard");
   const [stat, setStat] = useState("246");
   const [statNote, setStatNote] = useState("verified societies");
+  const [tab, setTab] = useState<"posts" | "brand">("posts");
   const [themeFilter, setThemeFilter] = useState<PostTheme | "all">("all");
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -143,6 +150,59 @@ export function AdminSocialStudioPage() {
     }
   };
 
+  const saveBlob = (blob: Blob, name: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadBrandAsset = async (key: BrandAssetKey) => {
+    setBusy(true);
+    setError("");
+    try {
+      saveBlob(await renderBrandAssetBlob(key), `societyflats-${key}.png`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not render that asset.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const downloadIcons = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      for (const size of ICON_SIZES) {
+        saveBlob(await renderIconBlob(size), `societyflats-icon-${size}.png`);
+        await new Promise((r) => window.setTimeout(r, 300));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not render the icons.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const downloadAllBrand = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      for (const a of BRAND_ASSETS) {
+        saveBlob(await renderBrandAssetBlob(a.key), `societyflats-${a.key}.png`);
+        await new Promise((r) => window.setTimeout(r, 320));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not build the brand pack.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const copyCaption = async () => {
     try {
       await navigator.clipboard.writeText(idea.caption);
@@ -163,6 +223,57 @@ export function AdminSocialStudioPage() {
     >
       <AdminSocialNav />
 
+      <div className="mt-6 inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+        {([["posts", "Posts", Wand2], ["brand", "Brand assets", ImageIcon]] as const).map(([key, label, Icon]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-black transition ${
+              tab === key ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "brand" ? (
+        <section className="mt-6 space-y-5">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-black text-slate-900">Brand assets</h2>
+                <p className="mt-1 max-w-xl text-sm text-slate-500">
+                  Logos, avatar and platform covers, rendered from the same mark and typeface as the posts —
+                  so nothing drifts out of sync. Every file is a PNG at its native upload size.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={downloadAllBrand} disabled={busy} className="rounded-full bg-emerald-700 font-bold hover:bg-emerald-800">
+                  <Package className="mr-2 h-4 w-4" /> {busy ? "Rendering…" : "Download all"}
+                </Button>
+                <Button onClick={downloadIcons} disabled={busy} variant="outline" className="rounded-full font-bold">
+                  <Download className="mr-2 h-4 w-4" /> Icon set (16–1024)
+                </Button>
+              </div>
+            </div>
+            {error ? <p className="mt-4 rounded-xl bg-rose-50 p-3 text-sm font-semibold text-rose-700">{error}</p> : null}
+          </div>
+
+          {(["Logo", "Avatar", "Cover"] as const).map((group) => (
+            <div key={group} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="text-sm font-black uppercase tracking-[0.14em] text-slate-500">{group}</h3>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {BRAND_ASSETS.filter((a) => a.group === group).map((a) => (
+                  <BrandAssetCard key={a.key} asset={a} busy={busy} onDownload={() => downloadBrandAsset(a.key)} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      ) : (
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
         {/* ————— preview + controls ————— */}
         <section className="space-y-5">
@@ -388,6 +499,51 @@ export function AdminSocialStudioPage() {
           </div>
         </aside>
       </div>
+      )}
     </AdminLayout>
+  );
+}
+
+// A live-painted thumbnail so you can see each asset before saving it.
+function BrandAssetCard({
+  asset,
+  busy,
+  onDownload,
+}: {
+  asset: (typeof BRAND_ASSETS)[number];
+  busy: boolean;
+  onDownload: () => void;
+}) {
+  const ref = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const paint = () => {
+      const canvas = ref.current;
+      if (!canvas) return;
+      canvas.width = asset.w;
+      canvas.height = asset.h;
+      const ctx = canvas.getContext("2d");
+      if (ctx) drawBrandAsset(ctx, asset.key);
+    };
+    paint();
+    void document.fonts?.ready.then(paint);
+  }, [asset]);
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <div className="flex min-h-[104px] items-center justify-center overflow-hidden rounded-xl bg-[repeating-conic-gradient(#f1f1f4_0%_25%,#ffffff_0%_50%)] bg-[length:16px_16px] p-2">
+        <canvas ref={ref} className="max-h-[92px] w-auto max-w-full rounded" />
+      </div>
+      <p className="mt-3 text-sm font-bold text-slate-900">{asset.label}</p>
+      <p className="text-[11px] font-semibold text-slate-500">{asset.w} × {asset.h}</p>
+      <Button
+        onClick={onDownload}
+        disabled={busy}
+        variant="outline"
+        className="mt-3 h-9 w-full rounded-full text-xs font-black"
+      >
+        <Download className="mr-2 h-3.5 w-3.5" /> Download PNG
+      </Button>
+    </div>
   );
 }
