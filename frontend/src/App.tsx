@@ -76,6 +76,7 @@ const AdminReferralsPage = lazy(() => import('@/pages/admin/AdminReferralsPage')
 const AdminNriCasesPage = lazy(() => import('@/pages/admin/AdminNriCasesPage').then((module) => ({ default: module.AdminNriCasesPage })));
 const AdminSeoAutopilotPage = lazy(() => import('@/pages/admin/AdminSeoAutopilotPage').then((module) => ({ default: module.AdminSeoAutopilotPage })));
 const AdminSocialDraftsPage = lazy(() => import('@/pages/admin/AdminSocialDraftsPage').then((module) => ({ default: module.AdminSocialDraftsPage })));
+const AdminSocialStudioPage = lazy(() => import('@/pages/admin/AdminSocialStudioPage').then((module) => ({ default: module.AdminSocialStudioPage })));
 const AdminOwnerListingsPage = lazy(() => import('@/pages/admin/AdminOwnerListingsPage').then((module) => ({ default: module.AdminOwnerListingsPage })));
 const AdminSocialGeneratePage = lazy(() => import('@/pages/admin/AdminSocialGeneratePage').then((module) => ({ default: module.AdminSocialGeneratePage })));
 const AdminSocialAssetsPage = lazy(() => import('@/pages/admin/AdminSocialAssetsPage').then((module) => ({ default: module.AdminSocialAssetsPage })));
@@ -256,6 +257,7 @@ function AppShell() {
             <Route path="/admin/seo-autopilot" element={<ProtectedAdminRoute><AdminSeoAutopilotPage /></ProtectedAdminRoute>} />
             <Route path="/admin/owner-listings" element={<ProtectedAdminRoute><AdminOwnerListingsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/social" element={<ProtectedAdminRoute><AdminSocialDraftsPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/social/studio" element={<ProtectedAdminRoute><AdminSocialStudioPage /></ProtectedAdminRoute>} />
             <Route path="/admin/social/generate" element={<ProtectedAdminRoute><AdminSocialGeneratePage /></ProtectedAdminRoute>} />
             <Route path="/admin/social/assets" element={<ProtectedAdminRoute><AdminSocialAssetsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/social/accounts" element={<ProtectedAdminRoute><AdminSocialAccountsPage /></ProtectedAdminRoute>} />

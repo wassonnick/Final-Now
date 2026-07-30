@@ -1,9 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { CalendarDays, Image, PenLine, PlugZap, Sparkles } from "lucide-react";
+import { CalendarDays, Image, PenLine, PlugZap, Sparkles, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/admin/social", label: "AI Drafts", icon: PenLine },
+  { href: "/admin/social/studio", label: "Studio", icon: Wand2 },
   { href: "/admin/social/generate", label: "Generate Social Posts", icon: Sparkles },
   { href: "/admin/social/assets", label: "Creative Assets", icon: Image },
   { href: "/admin/social/accounts", label: "Social Accounts", icon: PlugZap },
