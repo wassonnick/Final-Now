@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" fill="none">
-  <rect width="1280" height="320" fill="#233B6E"/>
+  <rect width="1280" height="320" fill="#1D1D1F"/>
   <g transform="translate(40 56) scale(0.40625)">
-  <rect width="512" height="512" rx="118" fill="#18254A"/>
-  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
-  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
-  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect width="512" height="512" rx="118" fill="#1D1D1F"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#0F7B63"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
   </g>
-  <text x="292" y="202" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="128" font-weight="600" fill="#F8F3EA">Society<tspan fill="#DCE6F7">Flats</tspan></text>
+  <text x="292" y="184" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="78" font-weight="600" fill="#FFFFFF">Society<tspan fill="#3BAE93">Flats</tspan></text>
 </svg>

@@ -1,38 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1125" height="675" viewBox="0 0 1125 675" fill="none">
-  <rect width="1125" height="675" fill="#F8F3EA"/>
+  <rect width="1125" height="675" fill="#FFFFFF"/>
   <g transform="translate(85 85) scale(0.29296875)">
-  <rect width="512" height="512" rx="118" fill="#233B6E"/>
-  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
-  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
-  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect width="512" height="512" rx="118" fill="#1D1D1F"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#0F7B63"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
   </g>
-  <text x="272" y="188" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="84" font-weight="600" fill="#1C2434">Society<tspan fill="#233B6E">Flats</tspan></text>
-  <text x="88" y="320" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="800" fill="#1C2434" letter-spacing="4">NITIN WASSON</text>
-  <text x="88" y="368" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="600" fill="#6A7080">Founder</text>
-  <text x="88" y="480" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="700" fill="#1C2434">+91 99118 86222</text>
-  <text x="88" y="530" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#6A7080">hello@societyflats.com</text>
-  <text x="88" y="580" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#8C6E2F">societyflats.com</text>
+  <text x="272" y="188" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="84" font-weight="600" fill="#1D1D1F">Society<tspan fill="#0F7B63">Flats</tspan></text>
+  <text x="88" y="320" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="800" fill="#1D1D1F" letter-spacing="4">NITIN WASSON</text>
+  <text x="88" y="368" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="600" fill="#6E6E73">Founder</text>
+  <text x="88" y="480" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="700" fill="#1D1D1F">+91 99118 86222</text>
+  <text x="88" y="530" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#6E6E73">hello@societyflats.com</text>
+  <text x="88" y="580" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#0F7B63">societyflats.com</text>
   <g transform="translate(830 400) scale(1)" opacity="0.92">
-    <rect x="0" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="62" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="124" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="186" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="248" y="0" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="0" y="62" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="62" y="62" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="124" y="62" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="186" y="62" width="42" height="42" rx="12" fill="#B08A3E"/>
-    <rect x="248" y="62" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="0" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="62" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="124" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="186" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
-    <rect x="248" y="124" width="42" height="42" rx="12" fill="#E3DFD3"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#3BAE93"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#E4E4E9"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#E4E4E9"/>
   </g>
 </svg>

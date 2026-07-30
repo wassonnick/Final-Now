@@ -1,52 +1,52 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="2560" height="1440" viewBox="0 0 2560 1440" fill="none">
-  <rect width="2560" height="1440" fill="#233B6E"/>
+  <rect width="2560" height="1440" fill="#1D1D1F"/>
   <g transform="translate(180 900) scale(2.4)" opacity="0.92">
-    <rect x="0" y="0" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="62" y="0" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="124" y="0" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="186" y="0" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="248" y="0" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="0" y="62" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="62" y="62" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="124" y="62" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="186" y="62" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="248" y="62" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="0" y="124" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="62" y="124" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="124" y="124" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="186" y="124" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="248" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#252528"/>
   </g>
   <g transform="translate(1900 880) scale(2.4)" opacity="0.92">
-    <rect x="0" y="0" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="62" y="0" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="124" y="0" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="186" y="0" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="248" y="0" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="0" y="62" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="62" y="62" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="124" y="62" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="186" y="62" width="42" height="42" rx="12" fill="#B08A3E"/>
-    <rect x="248" y="62" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="0" y="124" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="62" y="124" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="124" y="124" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="186" y="124" width="42" height="42" rx="12" fill="#18254A"/>
-    <rect x="248" y="124" width="42" height="42" rx="12" fill="#18254A"/>
+    <rect x="0" y="0" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="62" y="0" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="124" y="0" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="186" y="0" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="248" y="0" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="0" y="62" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="62" y="62" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="124" y="62" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="186" y="62" width="42" height="42" rx="12" fill="#3BAE93"/>
+    <rect x="248" y="62" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="0" y="124" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="62" y="124" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="124" y="124" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="186" y="124" width="42" height="42" rx="12" fill="#252528"/>
+    <rect x="248" y="124" width="42" height="42" rx="12" fill="#252528"/>
   </g>
   <g transform="translate(1120 430) scale(0.3125)">
-  <rect width="512" height="512" rx="118" fill="#18254A"/>
-  <rect x="110" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="218" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="326" y="110" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="110" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="218" y="218" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="326" y="218" width="76" height="76" rx="20" fill="#B08A3E"/>
-  <rect x="110" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
-  <rect x="218" y="326" width="76" height="110" rx="20" fill="#F8F3EA"/>
-  <rect x="326" y="326" width="76" height="76" rx="20" fill="#F8F3EA"/>
+  <rect width="512" height="512" rx="118" fill="#1D1D1F"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#0F7B63"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
   </g>
-  <text x="1280" y="700" font-family="Newsreader, Georgia, 'Times New Roman', serif" font-size="96" font-weight="600" text-anchor="middle" fill="#F8F3EA">Society<tspan fill="#DCE6F7">Flats</tspan></text>
-  <text x="1280" y="780" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#DCE6F7" letter-spacing="6" text-anchor="middle">VERIFIED SOCIETY HOMES IN GURGAON</text>
-  <text x="1280" y="850" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#F8F3EA" text-anchor="middle">societyflats.com</text>
+  <text x="1280" y="700" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="96" font-weight="600" text-anchor="middle" fill="#FFFFFF">Society<tspan fill="#3BAE93">Flats</tspan></text>
+  <text x="1280" y="780" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#C7C7CD" letter-spacing="6" text-anchor="middle">VERIFIED SOCIETY HOMES ACROSS DELHI NCR</text>
+  <text x="1280" y="850" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" fill="#FFFFFF" text-anchor="middle">societyflats.com</text>
 </svg>
