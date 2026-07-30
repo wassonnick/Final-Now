@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" fill="none">
+  <rect width="1080" height="1080" fill="#1D1D1F"/>
+  <defs><clipPath id="card2"><rect x="72" y="150" width="936" height="590" rx="30"/></clipPath></defs>
+  <rect x="72" y="150" width="936" height="590" rx="30" fill="#252528"/>
+  <g clip-path="url(#card2)"><g transform="translate(72 45) scale(1.3257790368271956)">
+    <rect x="0" y="0" width="706" height="604" rx="26" fill="#232328"/>
+    <rect x="26" y="26" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="20" y="96" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="194" y="26" width="150" height="96" rx="14" fill="#FFFFFF"/>
+    <rect x="188" y="96" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="362" y="26" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="356" y="96" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="530" y="26" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="524" y="96" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="26" y="140" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="20" y="210" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="194" y="140" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="188" y="210" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="362" y="140" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="356" y="210" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="530" y="140" width="150" height="96" rx="14" fill="#FFFFFF"/>
+    <rect x="524" y="210" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="26" y="254" width="150" height="96" rx="14" fill="#FFFFFF"/>
+    <rect x="20" y="324" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="194" y="254" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="188" y="324" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="362" y="254" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="356" y="324" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="530" y="254" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="524" y="324" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="26" y="368" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="20" y="438" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="194" y="368" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="188" y="438" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="362" y="368" width="150" height="96" rx="14" fill="#0F7B63"/>
+    <rect x="356" y="438" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="530" y="368" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="524" y="438" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="26" y="482" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="20" y="552" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="194" y="482" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="188" y="552" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="362" y="482" width="150" height="96" rx="14" fill="#FFFFFF"/>
+    <rect x="356" y="552" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="530" y="482" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="524" y="552" width="162" height="12" rx="6" fill="#33333A"/>
+  </g></g>
+  <text x="72" y="118" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="800" fill="#3BAE93" letter-spacing="5">NO FAKE LISTINGS</text>
+  <text x="72" y="806" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="62" font-weight="700" fill="#FFFFFF" letter-spacing="-1.6">Every home here</text>
+  <text x="72" y="882" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="62" font-weight="700" fill="#FFFFFF" letter-spacing="-1.6">is a real one.</text>
+  <rect x="72" y="930" width="392" height="76" rx="38" fill="#3BAE93"/>
+  <text x="268" y="979" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="27" font-weight="800" fill="#1D1D1F" text-anchor="middle">Check availability →</text>
+  <g transform="translate(936 934) scale(0.140625)">
+  <rect width="512" height="512" rx="118" fill="#1D1D1F"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#0F7B63"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  </g>
+  <text x="72" y="1044" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="23" font-weight="600" fill="#C7C7CD">societyflats.com · +91 99118 86222</text>
+</svg>

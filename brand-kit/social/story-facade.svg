@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" fill="none">
+  <rect width="1080" height="1920" fill="#1D1D1F"/>
+  <g transform="translate(72 84) scale(0.171875)">
+  <rect width="512" height="512" rx="118" fill="#252528"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#0F7B63"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  </g>
+  <text x="188" y="150" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="52" font-weight="700" fill="#FFFFFF" letter-spacing="-1.2">Society<tspan fill="#3BAE93">Flats</tspan></text>
+  <g transform="translate(180 430) scale(1.019830028328612)">
+    <rect x="0" y="0" width="706" height="604" rx="26" fill="#232328"/>
+    <rect x="26" y="26" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="20" y="96" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="194" y="26" width="150" height="96" rx="14" fill="#FFFFFF"/>
+    <rect x="188" y="96" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="362" y="26" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="356" y="96" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="530" y="26" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="524" y="96" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="26" y="140" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="20" y="210" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="194" y="140" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="188" y="210" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="362" y="140" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="356" y="210" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="530" y="140" width="150" height="96" rx="14" fill="#FFFFFF"/>
+    <rect x="524" y="210" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="26" y="254" width="150" height="96" rx="14" fill="#FFFFFF"/>
+    <rect x="20" y="324" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="194" y="254" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="188" y="324" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="362" y="254" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="356" y="324" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="530" y="254" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="524" y="324" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="26" y="368" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="20" y="438" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="194" y="368" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="188" y="438" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="362" y="368" width="150" height="96" rx="14" fill="#0F7B63"/>
+    <rect x="356" y="438" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="530" y="368" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="524" y="438" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="26" y="482" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="20" y="552" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="194" y="482" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="188" y="552" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="362" y="482" width="150" height="96" rx="14" fill="#FFFFFF"/>
+    <rect x="356" y="552" width="162" height="12" rx="6" fill="#33333A"/>
+    <rect x="530" y="482" width="150" height="96" rx="14" fill="#3A3A42"/>
+    <rect x="524" y="552" width="162" height="12" rx="6" fill="#33333A"/>
+  </g>
+  <text x="96" y="1244" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="800" fill="#3BAE93" letter-spacing="5">DELHI NCR</text>
+  <text x="96" y="1352" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="76" font-weight="700" fill="#FFFFFF" letter-spacing="-2">One of these</text>
+  <text x="96" y="1444" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="76" font-weight="700" fill="#FFFFFF" letter-spacing="-2">is yours.</text>
+  <rect x="96" y="1520" width="470" height="96" rx="48" fill="#3BAE93"/>
+  <text x="331" y="1581" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="33" font-weight="800" fill="#1D1D1F" text-anchor="middle">WhatsApp us →</text>
+  <text x="96" y="1800" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="29" font-weight="600" fill="#C7C7CD">societyflats.com · +91 99118 86222</text>
+</svg>

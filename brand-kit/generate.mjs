@@ -431,6 +431,178 @@ ${section("Print", "Built at 300dpi equivalents. Business card includes 0.125in 
 </ul></section>
 </main></body></html>`;
 
+// ————— 5. Illustrated scenes + ready-to-post social —————
+// We never publish stock photography of flats we don't own the rights to, and we
+// don't want a photo standing in for a listing we haven't verified. So the social
+// set ships as illustration: clearly drawn, unmistakably ours, honest by default.
+// Sub-palette derived from the brand (charcoal / white / surface / green) plus two
+// warm neutrals so interiors read as rooms rather than diagrams.
+const I = { warm: "#EDEAE6", warmDeep: "#D8D5D0", sky: "#E7EEF0", skyDusk: "#243244" };
+
+// A living room seen head-on: arch window with a skyline beyond, sofa, lamp, plant.
+function sceneInterior(x, y, w, { dusk = false } = {}) {
+  const h = w * 0.75, k = w / 800; // design grid is 800 wide
+  const wall = dusk ? C.forest : I.warm;
+  const floor = dusk ? "#1A1A1D" : I.warmDeep;
+  const glass = dusk ? I.skyDusk : I.sky;
+  const ink = dusk ? C.cream : C.charcoal;
+  const px = (v) => v * k;
+  const P = [
+    `<rect x="0" y="0" width="800" height="600" fill="${wall}"/>`,
+    `<rect x="0" y="470" width="800" height="130" fill="${floor}"/>`,
+    // arch window + distant skyline
+    `<path d="M250 470 L250 250 A150 150 0 0 1 550 250 L550 470 Z" fill="${glass}"/>`,
+    `<rect x="300" y="360" width="46" height="110" rx="6" fill="${dusk ? "#33333A" : "#CBD8DC"}"/>`,
+    `<rect x="360" y="320" width="58" height="150" rx="6" fill="${dusk ? "#2C2C33" : "#BFCED4"}"/>`,
+    `<rect x="432" y="386" width="42" height="84" rx="6" fill="${dusk ? "#33333A" : "#CBD8DC"}"/>`,
+    dusk ? `<rect x="374" y="344" width="14" height="14" rx="4" fill="${C.jade}"/>` : "",
+    `<path d="M250 470 L250 250 A150 150 0 0 1 550 250 L550 470 Z" fill="none" stroke="${ink}" stroke-width="12"/>`,
+    `<line x1="400" y1="106" x2="400" y2="470" stroke="${ink}" stroke-width="8"/>`,
+    `<line x1="252" y1="300" x2="548" y2="300" stroke="${ink}" stroke-width="8"/>`,
+    // sofa
+    `<rect x="150" y="392" width="330" height="86" rx="26" fill="${C.jadeDeep}"/>`,
+    `<rect x="168" y="356" width="140" height="58" rx="20" fill="${dusk ? "#12604D" : "#12735E"}"/>`,
+    `<rect x="322" y="356" width="140" height="58" rx="20" fill="${dusk ? "#12604D" : "#12735E"}"/>`,
+    `<rect x="176" y="470" width="18" height="26" rx="6" fill="${ink}"/>`,
+    `<rect x="436" y="470" width="18" height="26" rx="6" fill="${ink}"/>`,
+    // floor lamp
+    `<rect x="600" y="300" width="10" height="182" rx="5" fill="${ink}"/>`,
+    `<path d="M566 300 L644 300 L624 244 L586 244 Z" fill="${dusk ? C.jade : C.charcoal}"/>`,
+    `<rect x="576" y="478" width="58" height="12" rx="6" fill="${ink}"/>`,
+    // plant
+    `<path d="M704 470 v-84" stroke="${C.jadeDeep}" stroke-width="7" fill="none"/>`,
+    `<path d="M704 402 C666 396 648 372 650 344 C686 348 704 370 704 402 Z" fill="${C.jadeDeep}"/>`,
+    `<path d="M704 402 C742 396 760 372 758 344 C722 348 704 370 704 402 Z" fill="${dusk ? "#147A62" : "#15866C"}"/>`,
+    `<path d="M704 372 C684 350 684 322 700 300 C720 320 722 350 704 372 Z" fill="${dusk ? "#169176" : "#12735E"}"/>`,
+    `<path d="M684 470 h44 l-8 44 h-28 Z" fill="${dusk ? "#33333A" : "#C6C2BB"}"/>`,
+    // rug
+    `<ellipse cx="330" cy="516" rx="210" ry="26" fill="${dusk ? "#232326" : "#E3DFD8"}"/>`,
+  ].filter(Boolean).join("\n    ");
+  return `<g transform="translate(${x} ${y}) scale(${w / 800})">\n    ${P}\n  </g>`;
+}
+
+// A society facade: balconies in rows, a few homes lit, exactly one in green.
+function sceneFacade(x, y, w, { dusk = true, litGreen = "3-2" } = {}) {
+  const body = dusk ? "#232328" : I.warm;
+  const bal = dusk ? "#33333A" : I.warmDeep;
+  const litCell = dusk ? "#FFFFFF" : "#FFFFFF";
+  const rows = 5, cols = 4, cw = 150, ch = 96, gap = 18, pad = 26;
+  const P = [`<rect x="0" y="0" width="${pad * 2 + cols * cw + (cols - 1) * gap}" height="${pad * 2 + rows * ch + (rows - 1) * gap}" rx="26" fill="${body}"/>`];
+  const lit = new Set(["0-1", "1-3", "2-0", "4-2"]);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const key = `${r}-${c}`;
+      const X = pad + c * (cw + gap), Y = pad + r * (ch + gap);
+      const fill = key === litGreen ? C.jadeDeep : lit.has(key) ? litCell : dusk ? "#3A3A42" : "#FFFFFF";
+      P.push(`<rect x="${X}" y="${Y}" width="${cw}" height="${ch}" rx="14" fill="${fill}"/>`);
+      // balcony rail
+      P.push(`<rect x="${X - 6}" y="${Y + ch - 26}" width="${cw + 12}" height="12" rx="6" fill="${bal}"/>`);
+    }
+  }
+  const totalW = pad * 2 + cols * cw + (cols - 1) * gap;
+  return `<g transform="translate(${x} ${y}) scale(${w / totalW})">\n    ${P.join("\n    ")}\n  </g>`;
+}
+
+// Ready-to-post Instagram square: illustration + one honest line + CTA. No editing needed.
+let clipSeq = 0;
+// The artwork always sits in the same rounded card, clear of the headline —
+// so a whole feed of these lines up perfectly.
+function igPost({ scene, kicker, line1, line2, dark = false }) {
+  const bg = dark ? C.charcoal : C.cream;
+  const ink = dark ? C.cream : C.ink;
+  const sub = dark ? C.leaf : C.grey;
+  const id = `card${++clipSeq}`;
+  return svg(1080, 1080, [
+    `<rect width="1080" height="1080" fill="${bg}"/>`,
+    `<defs><clipPath id="${id}"><rect x="72" y="150" width="936" height="590" rx="30"/></clipPath></defs>`,
+    `<rect x="72" y="150" width="936" height="590" rx="30" fill="${dark ? C.forest : C.surface}"/>`,
+    `<g clip-path="url(#${id})">${scene}</g>`,
+    text(72, 118, kicker.toUpperCase(), { size: 26, fill: dark ? C.jade : C.jadeDeep, spacing: 5, weight: 800 }),
+    `<text x="72" y="806" font-family="${DISPLAY}" font-size="62" font-weight="700" fill="${ink}" letter-spacing="-1.6">${esc(line1)}</text>`,
+    `<text x="72" y="882" font-family="${DISPLAY}" font-size="62" font-weight="700" fill="${ink}" letter-spacing="-1.6">${esc(line2)}</text>`,
+    `<rect x="72" y="930" width="392" height="76" rx="38" fill="${dark ? C.jade : C.jadeDeep}"/>`,
+    text(268, 979, "Check availability →", { size: 27, fill: dark ? C.charcoal : C.white, anchor: "middle", weight: 800 }),
+    markAt(936, 934, 72, { tile: true }),
+    text(72, 1044, `${SITE} · ${PHONE}`, { size: 23, fill: sub, weight: 600 }),
+  ].join("\n  "));
+}
+
+files["social/post-interior.svg"] = igPost({
+  scene: sceneInterior(72, 94, 936),
+  kicker: "Society-first search",
+  line1: "See the society",
+  line2: "before the sofa.",
+});
+files["social/post-facade-dusk.svg"] = igPost({
+  scene: sceneFacade(72, 45, 936),
+  kicker: "No fake listings",
+  line1: "Every home here",
+  line2: "is a real one.",
+  dark: true,
+});
+files["social/post-interior-dusk.svg"] = igPost({
+  scene: sceneInterior(72, 94, 936, { dusk: true }),
+  kicker: "Real availability",
+  line1: "The flat you saw",
+  line2: "is still available.",
+  dark: true,
+});
+files["social/post-scores.svg"] = igPost({
+  scene: [
+    ...["Safety", "Commute", "Lifestyle", "Upkeep"].map((label, i) => {
+      const y = 250 + i * 122, pct = [0.92, 0.78, 0.86, 0.7][i];
+      return [
+        text(150, y + 18, label, { size: 30, fill: C.ink, weight: 700 }),
+        `<rect x="420" y="${y - 8}" width="500" height="26" rx="13" fill="#E1E1E6"/>`,
+        `<rect x="420" y="${y - 8}" width="${Math.round(500 * pct)}" height="26" rx="13" fill="${C.jadeDeep}"/>`,
+      ].join("\n  ");
+    }),
+  ].join("\n  "),
+  kicker: "Real, checkable scores",
+  line1: "We score what",
+  line2: "actually matters.",
+});
+
+// Ready-to-post story (1080×1920) with the illustration baked in.
+function igStoryScene({ scene, kicker, line1, line2 }) {
+  return svg(1080, 1920, [
+    `<rect width="1080" height="1920" fill="${C.charcoal}"/>`,
+    markAt(72, 84, 88, { tile: true, tileFill: C.forest }),
+    `<text x="188" y="150" font-family="${DISPLAY}" font-size="52" font-weight="700" fill="${C.cream}" letter-spacing="-1.2">Society<tspan fill="${C.jade}">Flats</tspan></text>`,
+    scene,
+    text(96, 1244, kicker.toUpperCase(), { size: 28, fill: C.jade, spacing: 5, weight: 800 }),
+    `<text x="96" y="1352" font-family="${DISPLAY}" font-size="76" font-weight="700" fill="${C.cream}" letter-spacing="-2">${esc(line1)}</text>`,
+    `<text x="96" y="1444" font-family="${DISPLAY}" font-size="76" font-weight="700" fill="${C.cream}" letter-spacing="-2">${esc(line2)}</text>`,
+    `<rect x="96" y="1520" width="470" height="96" rx="48" fill="${C.jade}"/>`,
+    text(331, 1581, "WhatsApp us →", { size: 33, fill: C.charcoal, anchor: "middle", weight: 800 }),
+    text(96, 1800, `${SITE} · ${PHONE}`, { size: 29, fill: C.leaf, weight: 600 }),
+  ].join("\n  "));
+}
+files["social/story-interior.svg"] = igStoryScene({
+  scene: sceneInterior(96, 430, 888, { dusk: true }),
+  kicker: "Verified societies",
+  line1: "Your next home,",
+  line2: "checked by people.",
+});
+files["social/story-facade.svg"] = igStoryScene({
+  scene: sceneFacade(180, 430, 720),
+  kicker: "Delhi NCR",
+  line1: "One of these",
+  line2: "is yours.",
+});
+
+// A wide illustrated banner (also works as a website hero strip).
+files["social/facebook-cover-illustrated.svg"] = svg(1640, 624, [
+  `<rect width="1640" height="624" fill="${C.charcoal}"/>`,
+  sceneFacade(1080, 40, 520),
+  markAt(120, 60, 84, { tile: true, tileFill: C.forest }),
+  `<text x="230" y="126" font-family="${DISPLAY}" font-size="54" font-weight="700" fill="${C.cream}" letter-spacing="-1.3">Society<tspan fill="${C.jade}">Flats</tspan></text>`,
+  `<text x="120" y="300" font-family="${DISPLAY}" font-size="76" font-weight="700" fill="${C.cream}" letter-spacing="-2">Choose the society.</text>`,
+  `<text x="120" y="388" font-family="${DISPLAY}" font-size="76" font-weight="700" fill="${C.jade}" letter-spacing="-2">Then choose the home.</text>`,
+  text(122, 452, "Verified societies · Real availability · No fake listings", { size: 27, fill: C.leaf, weight: 600 }),
+  text(122, 500, `${SITE}  ·  ${PHONE}`, { size: 27, fill: C.cream, weight: 700 }),
+].join("\n  "));
+
 // ————— write everything —————
 for (const [rel, content] of Object.entries(files)) {
   const out = path.join(ROOT, rel);
