@@ -2,409 +2,511 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.societyflats.com</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/gurgaon</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/search</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/societies</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/properties</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://www.societyflats.com/compare</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon-flats/affordable</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.78</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon-flats/under-2-cr</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.78</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon-flats/under-3-cr</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.78</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon-flats/luxury</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.78</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon-flats/elite</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.78</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon-flats/ultra-luxury</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.78</priority>
+  </url>
+  <url>
     <loc>https://www.societyflats.com/gurgaon/societies</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/gurgaon/properties</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/sell</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/ai-advisor</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/broker-crm</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/recommendations</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/nri-services</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/insights</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/chat</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/investment-calculator</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.65</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/builder-floors</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/builder-portal</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/trust</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/privacy</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/help</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-99a</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-67</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-105</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-35-36</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-109</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-89a</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-43</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-104</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-102</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-70a</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-66</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-2</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/gurgaon/sector-57</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-37d</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-43</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-73</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-24</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-53</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-1a-m-1a-imt-manesar</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-80</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/gurgaon/sector-93</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-86</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-33</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-54</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-99a</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-77</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-105</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-76</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-35-36</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-90</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-109</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-27</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-89a</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-26</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-42</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-63</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-82a</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-61</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-62</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-65</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-83</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-86g</loc>
-    <lastmod>2026-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-112</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-104</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/gurgaon/sector-79</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-86r</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-81</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-92</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-63a</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-71g</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-102</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-70a</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-66</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-37d</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-42</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-48</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-32</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/32-33</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/gurgaon/sector-49</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-106</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-73</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-43g</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-24</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-103</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-53</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-89</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/gurgaon/sector-1a-m-1a-imt-manesar</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-86</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-54</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-77</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-76</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-90</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-27</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-26</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-63</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-82a</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/builder/dlf</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/builder/m3m</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/builder/emaar</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/builder/ats</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/builder/godrej</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/builder/tulip</loc>
-    <lastmod>2026-07-16</lastmod>
+    <loc>https://www.societyflats.com/society/ansal-api-amara-villas-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ansal-api-lemon-grove-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ansal-celebrity-homes-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ansal-executive-floors-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ansal-sushant-apartments-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ashiana-aaroham-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ashiana-amarah-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ashiana-anmol-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ashiana-mulberry-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ashiana-mulberry-blossom-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ashiana-mulberry-moments-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/society/ats-grandstand-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/society/ats-grandstand-phase-2-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -434,13 +536,13 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/society/ats-kocoon-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/society/ats-marigold-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -452,25 +554,85 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/society/ats-tourmaline-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/society/ats-tourmaline-villa-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/society/ats-triumph-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/society/ats-triumph-villas-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/bestech-altura-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/bestech-park-view-ananda-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/bestech-park-view-grand-spa-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/bestech-park-view-sanskruti-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/bestech-park-view-spa-next-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/birla-navya-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/birla-navya-amsa-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/birla-navya-avanya-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/birla-navya-drisha-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/birla-trimaya-gurgaon-sector-71-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -518,7 +680,7 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/society/bptp-downtown-66-gurugram</loc>
-    <lastmod>2026-07-13</lastmod>
+    <lastmod>2026-07-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -559,6 +721,12 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://www.societyflats.com/society/bptp-park-prime-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://www.societyflats.com/society/bptp-park-serene-gurugram</loc>
     <lastmod>2026-07-13</lastmod>
     <changefreq>weekly</changefreq>
@@ -573,6 +741,12 @@
   <url>
     <loc>https://www.societyflats.com/society/bptp-spacio-gurugram</loc>
     <lastmod>2026-07-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/bptp-spacio-park-serene-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -601,6 +775,138 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://www.societyflats.com/society/central-park-1-golf-course-road-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-belanova-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-belaperla-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-belgravia-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-bellavista-towers-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-bellevue-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-delphine-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-flower-valley-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-flower-valley-aqua-front-towers-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-flower-valley-bignonia-towers-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-flower-valley-cerise-suites-cerise-floors-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-flower-valley-clover-floors-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-flower-valley-flamingo-floors-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-flower-valley-fleur-villas-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-flower-valley-lake-front-towers-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-flower-valley-mikasa-plots-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-flower-valley-selene-tower-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-flower-valley-the-orchard-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-resorts-sector-48-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-sky-villas-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/central-park-the-room-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/classic-personal-floor-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://www.societyflats.com/society/dlf-alameda</loc>
     <lastmod>2026-07-05</lastmod>
     <changefreq>weekly</changefreq>
@@ -620,7 +926,7 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/society/dlf-carlton-estate</loc>
-    <lastmod>2026-07-05</lastmod>
+    <lastmod>2026-07-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -800,31 +1106,31 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/society/emaar-amaris-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/society/emaar-digi-homes-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/society/emaar-emerald-classic-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/society/emaar-emerald-estate-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/society/emaar-emerald-floors-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -835,14 +1141,26 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://www.societyflats.com/society/emaar-emerald-hills-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://www.societyflats.com/society/emaar-gurgaon-greens-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/emaar-imperial-gardens-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.societyflats.com/society/emaar-marbella-villas-gurugram</loc>
-    <lastmod>2026-07-13</lastmod>
+    <lastmod>2026-07-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -854,7 +1172,19 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/society/emaar-palm-heights-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/emaar-palm-hills-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/emaar-palm-terraces-select-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -883,6 +1213,12 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://www.societyflats.com/society/emaar-the-palm-drive-palm-studios-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://www.societyflats.com/society/emaar-the-palm-drive-the-premier-terraces-gurugram</loc>
     <lastmod>2026-07-12</lastmod>
     <changefreq>weekly</changefreq>
@@ -890,7 +1226,7 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/society/emaar-the-palm-drive-the-sky-terraces-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <lastmod>2026-07-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -915,6 +1251,66 @@
   <url>
     <loc>https://www.societyflats.com/society/emaar-urban-oasis-gurugram</loc>
     <lastmod>2026-07-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/experion-one42-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/experion-the-heartsong-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/experion-the-trillion-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/experion-the-westerlies-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/experion-windchants-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/experion-windchants-nova-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ganga-anantam-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ganga-kashi-residences-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ganga-tathastu-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/ganga-tathastu-35-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -981,6 +1377,30 @@
   <url>
     <loc>https://www.societyflats.com/society/ireo-victory-valley</loc>
     <lastmod>2026-07-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/iris-broadway-residential-suites-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/iris-farms-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/krisumi-waterfall-residences-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/krisumi-waterfall-suites-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1117,110 +1537,98 @@
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://www.societyflats.com/society/max-estate-360-gurugram</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/max-estate-361-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://www.societyflats.com/society/oberoi-360-north</loc>
     <lastmod>2026-07-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://www.societyflats.com/society/paras-floret-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/paras-irene-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/paras-quartier-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/paras-square-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/paras-the-manor-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/pioneer-advait-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/pioneer-araya-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/pioneer-park-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/pioneer-park-presidia-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://www.societyflats.com/society/satya-levante-residences</loc>
-    <lastmod>2026-07-06</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/society/tata-la-vida-gurugram</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.societyflats.com/society/signature-global-andour-heights-gurugram</loc>
+    <lastmod>2026-07-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/society/tata-primanti-phase-2-gurugram</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.societyflats.com/society/signature-global-city-37d-gurugram</loc>
+    <lastmod>2026-07-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/society/tata-raisina-residency-gurugram</loc>
-    <lastmod>2026-07-13</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/the-grove-at-sanctuary-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/tulip-ace-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/tulip-aqua-studio-apartments-gurugram</loc>
-    <lastmod>2026-07-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/tulip-crimson-gurugram</loc>
-    <lastmod>2026-07-13</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/tulip-ivory-villas-apartments-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/tulip-leaf-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/tulip-lemon-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/tulip-monsella-gurugram</loc>
-    <lastmod>2026-07-05</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/tulip-orange-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/tulip-purple-gurugram</loc>
-    <lastmod>2026-07-13</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/tulip-violet-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/tulip-violet-extension-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/tulip-yellow-gurugram</loc>
-    <lastmod>2026-07-12</lastmod>
+    <loc>https://www.societyflats.com/society/signature-global-city-37d-2-gurugram</loc>
+    <lastmod>2026-07-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1229,5 +1637,1181 @@
     <lastmod>2026-07-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.78</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/birla-trimaya-gurgaon-sector-71-gurugram-vs-signature-global-titanium-spr-gurugram-vs-signature-global-andour-heights-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/silverglades-the-ivy-gurugram-vs-silverglades-laburnum-gurugram-vs-silverglades-hightown-residences-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/paras-floret-gurugram-vs-paras-square-gurugram-vs-intellion-park-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/silverglades-laburnum-gurugram-vs-silverglades-the-ivy-gurugram-vs-central-park-flower-valley-aqua-front-towers-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/iris-broadway-residential-suites-gurugram-vs-ganga-anantam-gurugram-vs-godrej-air</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/silverglades-hightown-residences-gurugram-vs-central-park-flower-valley-gurugram-vs-central-park-flower-valley-aqua-front-towers-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ansal-sushant-apartments-gurugram-vs-dlf-the-pinnacle-vs-ats-rainbow-park-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/paras-irene-gurugram-vs-bptp-astaire-gardens-gurugram-vs-bptp-pedestal-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/experion-one42-gurugram-vs-signature-global-daxin-vistas-gurugram-vs-pioneer-advait-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/paras-square-gurugram-vs-tata-raisina-residency-gurugram-vs-paras-floret-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/birla-navya-drisha-gurugram-vs-birla-navya-avanya-gurugram-vs-birla-navya-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/experion-windchants-gurugram-vs-experion-windchants-nova-gurugram-vs-tata-gurgaon-gateway-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/experion-the-trillion-gurugram-vs-central-park-resorts-sector-48-gurugram-vs-central-park-belanova-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/pioneer-park-presidia-gurugram-vs-emaar-digi-homes-gurugram-vs-emaar-urban-oasis-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/pioneer-park-gurugram-vs-smartworld-orchard-gurugram-vs-emaar-amaris-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/pioneer-araya-gurugram-vs-emaar-urban-oasis-gurugram-vs-emaar-digi-homes-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/paras-quartier-gurugram-vs-ashiana-mulberry-gurugram-vs-ashiana-mulberry-moments-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/birla-navya-amsa-gurugram-vs-birla-navya-gurugram-vs-birla-navya-drisha-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-exclusive-floors-independent-floors-gurugram-vs-dlf-carlton-estate-vs-dlf-princeton-estate</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/sobha-smriti-apartments-gurugram-vs-dlf-the-grove-gurugram-vs-dlf-carlton-estate</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tulip-monsella-gurugram-vs-dlf-princeton-estate-vs-dlf-carlton-estate</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/godrej-aristocrat-gurugram-vs-dlf-the-crest-vs-dlf-carlton-estate</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-the-palm-springs-gurugram-vs-dlf-carlton-estate-vs-dlf-trinity-towers</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-wellington-estate-gurugram-vs-dlf-trinity-towers-vs-dlf-carlton-estate</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-princeton-estate-vs-dlf-carlton-estate-vs-dlf-trinity-towers</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/smartworld-gic-manesar-gurugram-vs-signature-global-city-of-colours-gurugram-vs-smartworld-natures-court-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tulip-melrose-gurugram-vs-tulip-crimson-gurugram-vs-tulip-ivory-villas-apartments-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/silver-crest-villas-gurugram-vs-central-park-belgravia-gurugram-vs-central-park-resorts-sector-48-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tulip-white-gurugram-vs-tulip-leaf-gurugram-vs-tulip-aqua-studio-apartments-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tulip-petals-gurugram-vs-signature-global-proxima-1-gurugram-vs-signature-global-proxima-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ashiana-anmol-gurugram-vs-central-park-flower-valley-aqua-front-towers-gurugram-vs-bptp-spacio-park-serene-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-park-gurugram-vs-signature-global-park-2-3-gurugram-vs-signature-global-park-5-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/smartworld-the-edition-gurugram-vs-smartworld-select-gurugram-vs-bptp-mansions-park-prime-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ashiana-mulberry-gurugram-vs-ashiana-mulberry-moments-gurugram-vs-ashiana-mulberry-blossom-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-park-4-gurugram-vs-signature-global-park-5-gurugram-vs-signature-global-city-37d-gurugram</loc>
+    <lastmod>2026-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-flower-valley-selene-tower-gurugram-vs-central-park-flower-valley-clover-floors-gurugram-vs-central-park-flower-valley-fleur-villas-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/sobha-city-gurugram-vs-sobha-altus-gurugram-vs-sobha-strada-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ashiana-aaroham-gurugram-vs-sobha-aranya-gurugram-vs-dlf-privana-south</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tata-arabella-gurugram-vs-signature-global-city-of-colours-gurugram-vs-smartworld-natures-court-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/max-estate-361-gurugram-vs-max-estate-360-gurugram-vs-the-terraces-at-max-estate-361-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ashiana-amarah-gurugram-vs-signature-global-orchard-avenue-3-gurugram-vs-signature-global-city-93-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/smartworld-gems-gurugram-vs-smartworld-city-of-dreams-gurugram-vs-tulip-ace-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-flower-valley-lake-front-towers-gurugram-vs-central-park-flower-valley-aqua-front-towers-gurugram-vs-bptp-spacio-park-serene-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-flower-valley-cerise-suites-cerise-floors-gurugram-vs-central-park-flower-valley-bignonia-towers-gurugram-vs-central-park-flower-valley-clover-floors-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/smartworld-city-of-dreams-gurugram-vs-smartworld-gems-gurugram-vs-signature-global-proxima-1-gurugram</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-flower-valley-clover-floors-gurugram-vs-central-park-flower-valley-mikasa-plots-gurugram-vs-central-park-flower-valley-bignonia-towers-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-daxin-vistas-gurugram-vs-dlf-trinity-towers-vs-tulip-monsella-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-orchard-avenue-2-gurugram-vs-signature-global-city-93-gurugram-vs-signature-global-orchard-avenue-3-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-flower-valley-aqua-front-towers-gurugram-vs-central-park-flower-valley-clover-floors-gurugram-vs-central-park-flower-valley-mikasa-plots-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-the-millennia-iii-gurugram-vs-signature-global-city-37d-gurugram-vs-signature-global-city-37d-2-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-spacio-park-serene-gurugram-vs-bptp-terra-gurugram-vs-bptp-park-generation-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-the-roselia-gurugram-vs-dlf-gardencity-enclave-gurugram-vs-signature-global-the-roselia-2-gurugram</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/sobha-altus-gurugram-vs-sobha-strada-gurugram-vs-godrej-meridien</loc>
+    <lastmod>2026-07-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-andour-heights-gurugram-vs-signature-global-cloverdale-spr-gurugram-vs-signature-global-titanium-spr-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/smartworld-natures-court-gurugram-vs-signature-global-city-of-colours-gurugram-vs-m3m-woodshire-sector-107-gurgaon</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/smartworld-select-gurugram-vs-emaar-the-palm-drive-gurugram-vs-emaar-the-palm-drive-the-sky-terraces-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-palm-hills-gurugram-vs-emaar-palm-heights-gurugram-vs-emaar-the-palm-premier-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-the-arbour-vs-emaar-marbella-villas-gurugram-vs-m3m-golfestate-sector-65-gurgaon</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-mansions-park-prime-gurugram-vs-bptp-downtown-66-gurugram-vs-emaar-the-palm-drive-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-the-palm-drive-palm-studios-gurugram-vs-emaar-the-palm-drive-gurugram-vs-emaar-the-palm-drive-the-sky-terraces-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-park-prime-gurugram-vs-bptp-mansions-park-prime-gurugram-vs-bptp-downtown-66-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-marbella-villas-gurugram-vs-emaar-the-palm-drive-the-sky-terraces-gurugram-vs-emaar-the-palm-drive-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-the-palm-drive-gurugram-vs-emaar-the-palm-drive-the-sky-terraces-gurugram-vs-emaar-the-palm-drive-the-premier-terraces-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-tonino-lamborghini-residences-gurugram-vs-emaar-marbella-villas-gurugram-vs-bptp-visionnaire-luxe-villas-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-the-palm-premier-gurugram-vs-emaar-palm-heights-gurugram-vs-dlf-privana-west</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-the-palm-drive-the-sky-terraces-gurugram-vs-emaar-the-palm-drive-gurugram-vs-emaar-the-enclave-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-flower-valley-flamingo-floors-gurugram-vs-godrej-aristocrat-gurugram-vs-emaar-the-palm-springs-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-flower-valley-gurugram-vs-central-park-flower-valley-the-orchard-gurugram-vs-central-park-flower-valley-fleur-villas-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/smartworld-orchard-gurugram-vs-emaar-amaris-gurugram-vs-emaar-palm-terraces-select-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-imperial-gardens-gurugram-vs-emaar-gurgaon-greens-gurugram-vs-bptp-chateau-villa-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-sky-villas-gurugram-vs-central-park-belgravia-gurugram-vs-central-park-resorts-sector-48-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/whiteland-blissville-gurugram-vs-whiteland-the-aspen-gurugram-vs-whiteland-the-aspen-iconic-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tata-primanti-gurugram-vs-tata-primanti-phase-2-gurugram-vs-intellion-edge-gurugram</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-synera-gurugram-vs-signature-global-city-81-gurugram-vs-dlf-skycourt-gurugram</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-resorts-sector-48-gurugram-vs-central-park-belgravia-gurugram-vs-central-park-bellevue-gurugram</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-prime-gurugram-vs-signature-global-solera-gurugram-vs-emaar-emerald-classic-gurugram</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-delphine-gurugram-vs-godrej-summit-gurugram-vs-ats-triumph-gurugram</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-1-golf-course-road-gurugram-vs-dlf-the-camellias-vs-dlf-the-aralias</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tata-gurgaon-gateway-gurugram-vs-tata-la-vida-gurugram-vs-smartworld-one-dxp-phase-2-gurugram</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-emerald-hills-gurugram-vs-m3m-golfestate-sector-65-gurgaon-vs-emaar-emerald-floors-select-gurugram</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/classic-personal-floor-gurugram-vs-dlf-the-camellias-vs-central-park-1-golf-course-road-gurugram</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-palm-terraces-select-gurugram-vs-emaar-the-palm-drive-gurugram-vs-bptp-mansions-park-prime-gurugram</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/sobha-strada-gurugram-vs-godrej-meridien-vs-bptp-chateau-villa-gurugram</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-orchard-avenue-gurugram-vs-signature-global-city-93-gurugram-vs-dlf-garden-city-gurugram</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/smartworld-sky-arc-gurugram-vs-tulip-yellow-gurugram-vs-tulip-violet-gurugram</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/sobha-international-city-gurugram-vs-sobha-international-city-limited-edition-gurugram-vs-ats-tourmaline-gurugram</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/smartworld-one-dxp-phase-2-gurugram-vs-tata-la-vida-gurugram-vs-smartworld-one-dxp-gurugram</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-the-room-gurugram-vs-central-park-belgravia-gurugram-vs-central-park-bellevue-gurugram</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-cloverdale-spr-gurugram-vs-signature-global-tonino-lamborghini-residences-gurugram-vs-tulip-crimson-gurugram</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-city-92-2-gurugram-vs-signature-global-city-92-gurugram-vs-signature-global-proxima-gurugram</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/whiteland-the-aspen-iconic-gurugram-vs-whiteland-the-aspen-gurugram-vs-whiteland-aspen-one-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/whiteland-westin-residences-gurugram-vs-whiteland-urban-resort-gurugram-vs-godrej-vrikshya-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/sobha-crescent-gurugram-vs-tata-raisina-residency-gurugram-vs-intellion-park-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-bellevue-gurugram-vs-central-park-belgravia-gurugram-vs-central-park-belanova-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/sobha-aranya-gurugram-vs-dlf-privana-north-vs-godrej-101</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-belgravia-gurugram-vs-central-park-bellevue-gurugram-vs-central-park-bellavista-towers-gurugram</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-golf-greens-gurugram-vs-godrej-101-vs-signature-global-city-79b-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/central-park-belaperla-gurugram-vs-central-park-belgravia-gurugram-vs-central-park-bellevue-gurugram</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-grand-iva-gurugram-vs-godrej-vrikshya-gurugram-vs-emaar-gurgaon-greens-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-imperial-gurugram-vs-godrej-air-vs-signature-global-city-92-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-the-millennia-gurugram-vs-signature-global-city-37d-gurugram-vs-bptp-park-generation-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-the-millennia-iv-gurugram-vs-signature-global-city-37d-gurugram-vs-signature-global-city-37d-2-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-city-93-gurugram-vs-dlf-garden-city-gurugram-vs-dlf-regal-gardens-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-city-of-colours-gurugram-vs-signature-global-city-37d-gurugram-vs-signature-global-city-92-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-proxima-1-gurugram-vs-signature-global-proxima-gurugram-vs-tulip-ace-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-solera-2-gurugram-vs-m3m-woodshire-sector-107-gurgaon-vs-signature-global-solera-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-de-luxe-dxp-gurugram-vs-bptp-terra-gurugram-vs-bptp-spacio-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-city-92-gurugram-vs-signature-global-proxima-gurugram-vs-dlf-regal-gardens-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-the-roselia-2-gurugram-vs-dlf-garden-city-gurugram-vs-dlf-gardencity-enclave-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-city-81-gurugram-vs-dlf-skycourt-gurugram-vs-godrej-101</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-sarvam-gurugram-vs-signature-global-city-37d-gurugram-vs-signature-global-city-37d-2-gurugram</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-city-63a-gurugram-vs-emaar-emerald-classic-gurugram-vs-emaar-emerald-floors-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-city-37d-gurugram-vs-signature-global-city-37d-2-gurugram-vs-signature-global-the-millennia-ii-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-city-79b-gurugram-vs-godrej-101-vs-signature-global-twin-tower-dxp-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/signature-global-twin-tower-dxp-gurugram-vs-signature-global-city-79b-gurugram-vs-signature-global-proxima-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-emerald-floors-gurugram-vs-emaar-emerald-estate-gurugram-vs-emaar-emerald-floors-select-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/godrej-vrikshya-gurugram-vs-emaar-gurgaon-greens-gurugram-vs-bptp-chateau-villa-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-gurgaon-greens-gurugram-vs-bptp-chateau-villa-gurugram-vs-bptp-amstoria-verti-greens-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-emerald-classic-gurugram-vs-emaar-emerald-floors-gurugram-vs-emaar-emerald-floors-select-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-digi-homes-gurugram-vs-emaar-urban-oasis-gurugram-vs-emaar-emerald-floors-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ats-grandstand-phase-2-gurugram-vs-ats-grandstand-gurugram-vs-emaar-gurgaon-greens-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/godrej-meridien-vs-emaar-gurgaon-greens-gurugram-vs-bptp-chateau-villa-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tulip-purple-gurugram-vs-tulip-leaf-gurugram-vs-tulip-violet-gurugram</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tulip-leaf-gurugram-vs-tulip-aqua-studio-apartments-gurugram-vs-tulip-yellow-gurugram</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-woodshire-sector-107-gurgaon-vs-m3m-crown-sector-111-gurgaon-vs-m3m-elie-saab-sector-111-gurgaon</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ats-tourmaline-gurugram-vs-ats-tourmaline-villa-gurugram-vs-ats-kocoon-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-park-serene-gurugram-vs-bptp-park-generation-gurugram-vs-bptp-terra-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ats-homekraft-grands-gurugram-vs-ats-homekraft-sanctuary-gurugram-vs-the-grove-at-sanctuary-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tulip-ivory-villas-apartments-gurugram-vs-tulip-crimson-gurugram-vs-tulip-orange-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tulip-lemon-gurugram-vs-tulip-leaf-gurugram-vs-tulip-purple-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tulip-violet-gurugram-vs-tulip-violet-extension-gurugram-vs-tulip-leaf-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ats-homekraft-bonheur-avenue-gurugram-vs-bptp-park-generation-gurugram-vs-bptp-spacio-gurugram</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ats-homekraft-1000-trees-plots-gurugram-vs-ats-homekraft-grands-gurugram-vs-ats-homekraft-sanctuary-gurugram</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ireo-victory-valley-vs-m3m-panorama-suites-sector-65-gurgaon-vs-m3m-golfestate-sector-65-gurgaon</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-altitude-sector-65-gurgaon-vs-m3m-panorama-suites-sector-65-gurgaon-vs-m3m-latitude-sector-65-gurgaon</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-trump-towers-sector-65-gurgaon-vs-m3m-panorama-suites-sector-65-gurgaon-vs-m3m-latitude-sector-65-gurgaon</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-express-greens-gurugram-vs-dlf-princeton-estate-vs-dlf-silver-oaks-gurugram</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-102-eden-estate-gurugram-vs-bptp-chateau-villa-gurugram-vs-bptp-amstoria-gurugram</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/oberoi-360-north-vs-dlf-the-grove-gurugram-vs-emaar-the-palm-springs-gurugram</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-green-oaks-gurugram-vs-bptp-astaire-gardens-gurugram-vs-bptp-astaire-gardens-august-villas-gurugram</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-urban-ascent-gurugram-vs-emaar-the-88-gurugram-vs-m3m-crown-sector-111-gurgaon</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-visionnaire-luxe-villas-gurugram-vs-bptp-visionnaire-villas-gurugram-vs-bptp-fortuna-gurugram</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-urban-oasis-gurugram-vs-emaar-digi-homes-gurugram-vs-emaar-the-palm-drive-gurugram</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-astaire-garden-monet-floors-gurugram-vs-bptp-astaire-gardens-august-villas-gurugram-vs-bptp-astaire-gardens-gurugram</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/intellion-edge-gurugram-vs-tata-primanti-phase-2-gurugram-vs-tulip-crimson-gurugram</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-latitude-sector-65-gurgaon-vs-m3m-panorama-suites-sector-65-gurgaon-vs-m3m-polo-suites-sector-65-gurgaon</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-astaire-gardens-gurugram-vs-bptp-astaire-gardens-august-villas-gurugram-vs-bptp-pedestal-gurugram</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-spacio-gurugram-vs-bptp-park-generation-gurugram-vs-bptp-terra-gurugram</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-antalya-hills-sector-79-gurgaon-vs-m3m-golf-hills-sector-79-gurgaon-vs-m3m-escala-sector-70a-gurgaon</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/godrej-air-vs-dlf-skycourt-gurugram-vs-dlf-regal-gardens-gurugram</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/intellion-park-gurugram-vs-tata-raisina-residency-gurugram-vs-dlf-the-crest</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tata-la-vida-gurugram-vs-m3m-mansion-sector-113-gurgaon-vs-m3m-capital-sector-113-gurgaon</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-heights-sector-65-gurgaon-vs-m3m-panorama-suites-sector-65-gurgaon-vs-m3m-skycity-sector-65-gurgaon</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ats-triumph-villas-gurugram-vs-ats-triumph-gurugram-vs-ats-grandstand-gurugram</loc>
+    <lastmod>2026-07-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-alameda-vs-dlf-privana-south-vs-dlf-privana-west</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/tata-primanti-phase-2-gurugram-vs-intellion-edge-gurugram-vs-ireo-victory-valley</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-skysuites-sector-65-gurgaon-vs-m3m-panorama-suites-sector-65-gurgaon-vs-m3m-polo-suites-sector-65-gurgaon</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-sierra-68-sector-68-gurgaon-vs-m3m-marina-sector-68-gurgaon-vs-m3m-latitude-sector-65-gurgaon</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-mansion-sector-113-gurgaon-vs-m3m-capital-sector-113-gurgaon-vs-m3m-elie-saab-sector-111-gurgaon</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-terra-gurugram-vs-bptp-park-generation-gurugram-vs-bptp-the-amaario-gurugram</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-chateau-villa-gurugram-vs-bptp-amstoria-gurugram-vs-bptp-gaia-residences-gurugram</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/godrej-zenith-gurugram-vs-tulip-ace-gurugram-vs-m3m-soulitude-sector-89-gurgaon</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-merlin-sector-67-gurgaon-vs-m3m-golfestate-sector-65-gurgaon-vs-m3m-opus-at-merlin-sector-67-gurgaon</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-marina-sector-68-gurgaon-vs-m3m-sierra-68-sector-68-gurgaon-vs-m3m-heights-sector-65-gurgaon</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/ats-marigold-gurugram-vs-dlf-skycourt-gurugram-vs-dlf-regal-gardens-gurugram</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-soulitude-sector-89-gurgaon-vs-m3m-elie-saab-sector-111-gurgaon-vs-m3m-polo-suites-sector-65-gurgaon</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-amstoria-verti-greens-gurugram-vs-bptp-amstoria-gurugram-vs-bptp-gaia-residences-gurugram</loc>
+    <lastmod>2026-07-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-fortuna-gurugram-vs-bptp-visionnaire-villas-gurugram-vs-bptp-astaire-gardens-gurugram</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-escala-sector-70a-gurgaon-vs-m3m-latitude-sector-65-gurgaon-vs-m3m-polo-suites-sector-65-gurgaon</loc>
+    <lastmod>2026-07-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-belvedere-towers-gurugram-vs-dlf-belvedere-park-gurugram-vs-dlf-silver-oaks-gurugram</loc>
+    <lastmod>2026-07-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-elie-saab-sector-111-gurgaon-vs-m3m-crown-sector-111-gurgaon-vs-m3m-capital-sector-113-gurgaon</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/bptp-freedom-park-life-gurugram-vs-dlf-princeton-estate-vs-dlf-the-crest</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-windsor-court-gurugram-vs-dlf-ridgewood-estate-gurugram-vs-dlf-belvedere-park-gurugram</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-the-belaire-vs-dlf-the-crest-vs-dlf-the-grove-gurugram</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-belvedere-park-gurugram-vs-dlf-belvedere-towers-gurugram-vs-dlf-windsor-court-gurugram</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/godrej-summit-gurugram-vs-ats-triumph-gurugram-vs-satya-levante-residences</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-capital-sector-113-gurgaon-vs-m3m-mansion-sector-113-gurgaon-vs-m3m-crown-sector-111-gurgaon</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-regal-gardens-gurugram-vs-dlf-garden-city-gurugram-vs-dlf-gardencity-enclave-gurugram</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-privana-north-vs-dlf-privana-west-vs-dlf-privana-south</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/godrej-101-vs-m3m-antalya-hills-sector-79-gurgaon-vs-m3m-golf-hills-sector-79-gurgaon</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-panorama-suites-sector-65-gurgaon-vs-m3m-latitude-sector-65-gurgaon-vs-m3m-heights-sector-65-gurgaon</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-skycourt-gurugram-vs-dlf-new-town-heights-gurugram-vs-emaar-serenity-hills-gurugram</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/godrej-miraya-gurugram-vs-dlf-the-pinnacle-vs-dlf-the-icon</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-silver-oaks-gurugram-vs-dlf-ridgewood-estate-gurugram-vs-dlf-belvedere-park-gurugram</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-the-pinnacle-vs-dlf-the-icon-vs-ats-rainbow-park-gurugram</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-the-primus-gurugram-vs-dlf-privana-west-vs-dlf-skycourt-gurugram</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-the-grove-gurugram-vs-dlf-the-crest-vs-dlf-the-dahlias</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-palm-gardens-gurugram-vs-m3m-golf-hills-sector-79-gurgaon-vs-dlf-skycourt-gurugram</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-opus-at-merlin-sector-67-gurgaon-vs-m3m-escala-sector-70a-gurgaon-vs-m3m-panorama-suites-sector-65-gurgaon</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/emaar-amaris-gurugram-vs-emaar-urban-oasis-gurugram-vs-emaar-digi-homes-gurugram</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-the-summit-vs-dlf-the-crest-vs-dlf-the-grove-gurugram</loc>
+    <lastmod>2026-07-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-ridgewood-estate-gurugram-vs-dlf-windsor-court-gurugram-vs-dlf-silver-oaks-gurugram</loc>
+    <lastmod>2026-07-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-park-place-vs-dlf-the-belaire-vs-dlf-the-crest</loc>
+    <lastmod>2026-07-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/m3m-golfestate-sector-65-gurgaon-vs-m3m-merlin-sector-67-gurgaon-vs-m3m-heights-sector-65-gurgaon</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-the-aralias-vs-dlf-the-magnolias-vs-dlf-the-camellias</loc>
+    <lastmod>2026-07-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/compare/dlf-the-crest-vs-dlf-the-summit-vs-dlf-the-dahlias</loc>
+    <lastmod>2026-07-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
   </url>
 </urlset>
