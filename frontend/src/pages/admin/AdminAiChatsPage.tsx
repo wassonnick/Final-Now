@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   fetchAiChats,
   fetchAiChatTranscript,
+  type AiChatBreakdown,
   type AiChatConversation,
   type AiChatListResponse,
   type AiChatTranscript,
@@ -17,6 +18,67 @@ function timeAgo(value?: string | null) {
   if (!value) return "—";
   const date = new Date(value);
   return date.toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+/** Machine keys → words an operator can read at a glance. */
+const ENTRY_SOURCES: Record<string, string> = {
+  advisor_page: "AI Advisor page",
+  feature_page: "Feature/experience page",
+  assistant: "Embedded assistant",
+  unknown: "Unknown (pre-tracking)",
+};
+const ENTRY_LABELS: Record<string, string> = {
+  typed: "Typed their own question",
+  starter_chip: "Tapped a starter chip",
+  handoff_query: "Arrived with a query link",
+  quick_reply: "Tapped a suggested answer",
+  unknown: "Unknown (pre-tracking)",
+};
+const OUTCOMES: Record<string, string> = {
+  society_opened: "Opened a society",
+  lead_started: "Started a callback/visit",
+  refined: "Refined the shortlist",
+  reset: "Started a new chat",
+  errored: "Hit an error",
+  abandoned: "Left the page",
+  unknown: "No exit recorded",
+};
+// Green = the chat went somewhere useful; amber = still in the funnel; slate = it ended flat.
+const OUTCOME_TONE: Record<string, string> = {
+  society_opened: "bg-emerald-50 text-emerald-700",
+  lead_started: "bg-emerald-100 text-emerald-800",
+  refined: "bg-amber-50 text-amber-700",
+  reset: "bg-slate-100 text-slate-600",
+  errored: "bg-rose-50 text-rose-700",
+  abandoned: "bg-slate-100 text-slate-500",
+  unknown: "bg-slate-100 text-slate-400",
+};
+
+function Breakdown({ title, rows, labels, helper }: { title: string; rows?: AiChatBreakdown[]; labels: Record<string, string>; helper: string }) {
+  const items = rows?.filter((r) => r.count > 0) || [];
+  return (
+    <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">{title}</p>
+      <p className="mt-1 text-xs font-semibold text-slate-400">{helper}</p>
+      {items.length ? (
+        <div className="mt-4 space-y-2.5">
+          {items.map((row) => (
+            <div key={row.key}>
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="truncate text-sm font-bold text-slate-800">{labels[row.key] || row.key}</span>
+                <span className="shrink-0 text-sm font-black tabular-nums text-slate-900">{number.format(row.count)} <span className="text-xs font-bold text-slate-400">{row.share}%</span></span>
+              </div>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-blue-600" style={{ width: `${Math.max(2, row.share)}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-4 text-sm text-slate-400">Nothing recorded in this window yet.</p>
+      )}
+    </div>
+  );
 }
 
 function StatCard({ label, value, helper }: { label: string; value: string; helper: string }) {
@@ -91,11 +153,19 @@ export function AdminAiChatsPage() {
       </div>
 
       {summary ? (
-        <div className="mb-6 grid gap-3 sm:grid-cols-3">
-          <StatCard label="Conversations" value={number.format(summary.conversations)} helper={`in the last ${summary.window_days} days`} />
-          <StatCard label="User questions" value={number.format(summary.user_questions)} helper="messages sent by users" />
-          <StatCard label="Total messages" value={number.format(summary.messages)} helper="including AI replies" />
-        </div>
+        <>
+          <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard label="Conversations" value={number.format(summary.conversations)} helper={`in the last ${summary.window_days} days`} />
+            <StatCard label="Got a 2nd question" value={`${summary.continued_rate}%`} helper={`${number.format(summary.continued)} of ${number.format(summary.conversations)} went past one exchange`} />
+            <StatCard label="Reached something" value={`${summary.converted_rate}%`} helper={`${number.format(summary.converted)} opened a society or started a callback`} />
+            <StatCard label="Avg. questions asked" value={summary.avg_user_turns.toFixed(2)} helper={`${number.format(summary.one_shot)} chats ended after one`} />
+          </div>
+          <div className="mb-6 grid gap-3 lg:grid-cols-3">
+            <Breakdown title="How they arrived" rows={data?.entry_sources} labels={ENTRY_SOURCES} helper="Which page the conversation started on" />
+            <Breakdown title="What started it" rows={data?.entry_labels} labels={ENTRY_LABELS} helper="The affordance they used to ask" />
+            <Breakdown title="How it ended" rows={data?.outcomes} labels={OUTCOMES} helper="Last recorded exit for each chat" />
+          </div>
+        </>
       ) : null}
 
       {error ? <p className="mb-5 rounded-2xl bg-rose-50 p-4 text-sm font-bold text-rose-700">{error}</p> : null}
@@ -114,10 +184,24 @@ export function AdminAiChatsPage() {
                   className={`block w-full rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:border-blue-300 ${selected?.id === conversation.id ? "border-blue-500 ring-1 ring-blue-200" : "border-slate-200"}`}
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400">#{conversation.id} · {conversation.message_count} msgs</span>
+                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400">#{conversation.id} · {conversation.user_turns ?? 0} question{(conversation.user_turns ?? 0) === 1 ? "" : "s"}</span>
                     <span className="text-xs text-slate-400">{timeAgo(conversation.last_message_at)}</span>
                   </div>
                   <p className="mt-2 line-clamp-2 text-sm font-semibold text-slate-800">{conversation.preview || "(no user message)"}</p>
+                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600">
+                      {ENTRY_SOURCES[conversation.entry_source || "unknown"] || conversation.entry_source}
+                    </span>
+                    {conversation.entry_label ? (
+                      <span className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+                        {ENTRY_LABELS[conversation.entry_label] || conversation.entry_label}
+                      </span>
+                    ) : null}
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${OUTCOME_TONE[conversation.outcome || "unknown"]}`}>
+                      → {OUTCOMES[conversation.outcome || "unknown"] || conversation.outcome}
+                      {conversation.outcome_detail ? `: ${conversation.outcome_detail}` : ""}
+                    </span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -134,7 +218,17 @@ export function AdminAiChatsPage() {
             <p className="rounded-2xl bg-white p-5 text-sm font-bold text-slate-500">Loading transcript…</p>
           ) : transcript ? (
             <div className="space-y-3 rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Conversation #{transcript.conversation.id} · {transcript.conversation.model || "assistant"}</p>
+              <div className="border-b border-slate-100 pb-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Conversation #{transcript.conversation.id} · {transcript.conversation.model || "assistant"}</p>
+                <p className="mt-1.5 text-sm font-semibold text-slate-600">
+                  {ENTRY_SOURCES[transcript.conversation.entry_source || "unknown"] || transcript.conversation.entry_source}
+                  {transcript.conversation.entry_label ? ` · ${ENTRY_LABELS[transcript.conversation.entry_label] || transcript.conversation.entry_label}` : ""}
+                  {" → "}
+                  <span className="font-black text-slate-900">{OUTCOMES[transcript.conversation.outcome || "unknown"] || transcript.conversation.outcome}</span>
+                  {transcript.conversation.outcome_detail ? ` (${transcript.conversation.outcome_detail})` : ""}
+                </p>
+                {transcript.conversation.entry_path ? <p className="mt-0.5 truncate text-xs text-slate-400">{transcript.conversation.entry_path}</p> : null}
+              </div>
               {transcript.messages.map((message) => {
                 const isUser = message.role === "user";
                 return (
@@ -146,6 +240,9 @@ export function AdminAiChatsPage() {
                       <p className="whitespace-pre-wrap leading-6">{message.content}</p>
                       {Array.isArray(message.context_entities) && message.context_entities.length ? (
                         <p className="mt-2 text-xs font-semibold text-slate-500">Matched {message.context_entities.length} societ{message.context_entities.length === 1 ? "y" : "ies"}/home(s)</p>
+                      ) : null}
+                      {Array.isArray(message.suggested_replies) && message.suggested_replies.length ? (
+                        <p className="mt-1.5 text-xs font-semibold text-slate-400">Offered: {message.suggested_replies.join(" · ")}</p>
                       ) : null}
                     </div>
                   </div>

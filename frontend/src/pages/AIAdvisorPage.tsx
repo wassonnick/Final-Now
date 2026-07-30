@@ -48,7 +48,7 @@ export function AIAdvisorPage() {
 
       {/* ASSISTANT — the centrepiece */}
       <section className="mx-auto mt-5 max-w-[860px] px-5 sm:mt-8">
-        <SocietyAssistant initialQuery={initialQuery} />
+        <SocietyAssistant initialQuery={initialQuery} entrySource="advisor_page" />
       </section>
 
       {/* TRUST — why you can rely on it */}

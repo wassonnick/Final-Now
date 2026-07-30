@@ -96,6 +96,7 @@ Route::post('/nri-cases', [NriCaseController::class, 'store'])->middleware('thro
 Route::post('/ai/advisor', [AIController::class, 'advisor']);
 Route::post('/ai/chat', [AiChatController::class, 'store'])->middleware('throttle:10,1');
 Route::get('/ai/chat/{token}', [AiChatController::class, 'show'])->middleware('throttle:30,1');
+Route::post('/ai/chat/{token}/outcome', [AiChatController::class, 'outcome'])->middleware('throttle:60,1');
 Route::post('/ai/recommendations', [AIController::class, 'recommendations']);
 Route::get('/ai/rent-estimate', [AIController::class, 'rentEstimate']);
 Route::get('/societies/{idOrSlug}/reviews', [ReviewController::class, 'bySociety']);

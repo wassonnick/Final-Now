@@ -34,7 +34,7 @@ class SocietyAssistantService
     /**
      * Produce an assistant reply for a new user message within a conversation.
      *
-     * @return array{reply:string,matches:array<int,array<string,mixed>>,provider:string}
+     * @return array{reply:string,matches:array<int,array<string,mixed>>,provider:string,suggested_replies:array<int,string>}
      */
     public function reply(AiConversation $conversation, string $message): array
     {
@@ -80,11 +80,44 @@ class SocietyAssistantService
             return $this->fallback('I hit a snag composing that answer. The verified matches below are still safe to browse — nothing here is invented.');
         }
 
-        if (trim($result['reply']) === '') {
-            $result['reply'] = 'Here are the closest verified matches I could find. Open any one to see full details, or tell me a bit more and I\'ll refine.';
+        [$reply, $suggested] = $this->extractOptions($result['reply']);
+
+        if (trim($reply) === '') {
+            $reply = 'Here are the closest verified matches I could find. Open any one to see full details, or tell me a bit more and I\'ll refine.';
         }
 
-        return ['reply' => $result['reply'], 'matches' => array_values($result['matches']), 'provider' => 'claude'];
+        return ['reply' => $reply, 'matches' => array_values($result['matches']), 'provider' => 'claude', 'suggested_replies' => $suggested];
+    }
+
+    /**
+     * Split the trailing `[[options: a | b | c]]` line off the reply.
+     *
+     * The model answers the user AND proposes tappable answers to its own closing
+     * question in one call — a second round-trip just to generate three chips would
+     * double the cost of every turn. If the line is missing or malformed we simply
+     * return no chips; the answer itself is never held hostage to the format.
+     *
+     * @return array{0:string,1:array<int,string>}
+     */
+    private function extractOptions(string $reply): array
+    {
+        if (! preg_match('/\[\[\s*options\s*:\s*(.+?)\s*\]\]/is', $reply, $m)) {
+            return [trim($reply), []];
+        }
+
+        $options = collect(explode('|', $m[1]))
+            ->map(fn ($o) => trim(preg_replace('/\s+/', ' ', strip_tags($o)) ?? ''))
+            ->map(fn ($o) => trim($o, "\"'*- "))
+            ->filter(fn ($o) => $o !== '' && mb_strlen($o) <= 32)
+            ->unique()
+            ->take(4)
+            ->values()
+            ->all();
+
+        // Strip the marker wherever it landed, then tidy the blank line it leaves behind.
+        $clean = trim(preg_replace('/\[\[\s*options\s*:.+?\]\]/is', '', $reply) ?? '');
+
+        return [trim(preg_replace('/\n{3,}/', "\n\n", $clean) ?? ''), count($options) >= 2 ? $options : []];
     }
 
     /**
@@ -212,6 +245,13 @@ HOW YOU TALK
 - End with exactly ONE natural, targeted question that makes the next reply easy. Prefer questions about budget, commute, move timing, family needs or the trade-off they care about.
 - A SocietyFlats score is a context signal, not proof that a society is the best, most trusted, most verified or universally superior. Never turn a score into a ranking or superlative claim.
 
+ANSWER OPTIONS (required)
+- After your closing question, on a new final line, offer 2–4 plausible answers to THAT question so the user can tap instead of type. Use exactly this format and nothing else on the line:
+  [[options: first | second | third]]
+- Each option must be a direct answer to the question you just asked, written in the user's voice, at most 4 words. Budget question → "₹40–60k" / "₹60–80k" / "Flexible". Timing question → "Within a month" / "2–3 months" / "Just exploring".
+- Never use options for actions the interface already offers (opening a profile, callbacks, site visits, comparing). Answers only.
+- If your reply genuinely ends without a question, omit the line entirely.
+
 NEXT STEPS
 - The interface renders verified society cards and contextual action buttons under your answer. Do not paste profile URLs, markdown links, callback offers, phone numbers or "just say the word" sales copy into the reply.
 - Do not end with multiple questions or multiple calls to action. The interface will handle profile opens, availability callbacks and site-visit requests.
@@ -219,9 +259,9 @@ NEXT STEPS
 PROMPT;
     }
 
-    /** @return array{reply:string,matches:array<int,array<string,mixed>>,provider:string} */
+    /** @return array{reply:string,matches:array<int,array<string,mixed>>,provider:string,suggested_replies:array<int,string>} */
     private function fallback(string $reply): array
     {
-        return ['reply' => $reply, 'matches' => [], 'provider' => 'safe_fallback'];
+        return ['reply' => $reply, 'matches' => [], 'provider' => 'safe_fallback', 'suggested_replies' => []];
     }
 }

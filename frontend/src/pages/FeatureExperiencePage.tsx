@@ -636,7 +636,7 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
             rather than invent something to fill the gap.
           </p>
           <div className="mt-4">
-            <SocietyAssistant />
+            <SocietyAssistant entrySource="feature_page" />
           </div>
         </main>
       </div>
