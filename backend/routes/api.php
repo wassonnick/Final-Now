@@ -240,6 +240,9 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/image-reharvest/runs', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'bulk']);
     Route::get('/image-reharvest/runs', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'runs']);
     Route::get('/image-reharvest/runs/{run}', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'run']);
+
+    // Reports what Google actually answers for search, details and photo.
+    Route::get('/diagnostics/google-places', \App\Http\Controllers\Api\Admin\AdminPlacesDiagnosticController::class);
     Route::post('/import/societies/{society}/re-enrich', [SocietyImportController::class, 'reEnrich']);
     Route::post('/import/societies/{society}/market-refresh', [SocietyImportController::class, 'marketRefresh']);
     Route::post('/import/societies/{society}/market-override', [SocietyImportController::class, 'marketOverride']);

@@ -1,0 +1,104 @@
+<?php
+
+namespace App\Http\Controllers\Api\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Services\Society\Import\PlaceResolverService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+
+/**
+ * Runs the three Google Places calls the importer depends on and reports exactly what
+ * came back from each.
+ *
+ * Every photo in the review queue fails with Google's generic HTML "Error 400", on
+ * references resolved seconds earlier — so the usual explanation (references expire)
+ * cannot be it. Search and Details succeed against the same key, which rules out the
+ * key being dead outright. Somewhere between those two facts is the answer, and reading
+ * the code has stopped being able to find it: we need to see the request we actually
+ * send and the reply Google actually gives.
+ *
+ * The API key is redacted from everything this returns.
+ */
+class AdminPlacesDiagnosticController extends Controller
+{
+    public function __invoke(Request $request, PlaceResolverService $places): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['sometimes', 'string', 'max:200'],
+            'location' => ['sometimes', 'string', 'max:200'],
+        ]);
+
+        $key = trim((string) config('services.google_places_api_key', ''));
+        $name = trim((string) ($data['name'] ?? 'DLF Privana North'));
+        $location = trim((string) ($data['location'] ?? 'Sector 77 Gurugram'));
+
+        $out = [
+            'key_configured' => $key !== '',
+            'key_length' => strlen($key),
+            'key_tail' => $key === '' ? null : '...'.substr($key, -4),
+            'query' => ['name' => $name, 'location' => $location],
+        ];
+
+        if ($key === '') {
+            $out['verdict'] = 'GOOGLE_PLACES_API_KEY is not configured on this service.';
+
+            return response()->json($out);
+        }
+
+        // 1 + 2. Search and details, through the same resolver the importer uses.
+        $place = $places->resolve($name, $location);
+        $references = (array) ($place['photo_references'] ?? []);
+
+        $out['resolve'] = [
+            'matched' => (bool) ($place['matched'] ?? false),
+            'reason' => $place['reason'] ?? null,
+            'place_id' => $place['place_id'] ?? null,
+            'photo_reference_count' => count($references),
+            'first_reference_length' => isset($references[0]) ? strlen((string) $references[0]) : 0,
+            'first_reference_head' => isset($references[0]) ? substr((string) $references[0], 0, 40).'…' : null,
+        ];
+
+        if ($references === []) {
+            $out['verdict'] = ($place['matched'] ?? false)
+                ? 'Place matched but Google returned no photos, so the photo endpoint cannot be tested with this society. Try one you know has photos on Google Maps.'
+                : 'Place did not match, so there is nothing to fetch. Check the name and location.';
+
+            return response()->json($out);
+        }
+
+        // 3. The call that is failing. Report the URL we build, minus the key.
+        $reference = (string) $references[0];
+        $query = ['maxwidth' => 640, 'photo_reference' => $reference, 'key' => $key];
+
+        try {
+            $response = Http::timeout(20)->get('https://maps.googleapis.com/maps/api/place/photo', $query);
+            $body = (string) $response->body();
+            $type = (string) $response->header('Content-Type');
+
+            $out['photo'] = [
+                'request_url' => 'https://maps.googleapis.com/maps/api/place/photo?'.http_build_query(array_merge($query, ['key' => 'REDACTED'])),
+                'status' => $response->status(),
+                'content_type' => $type,
+                'bytes' => strlen($body),
+                'is_image' => str_starts_with(strtolower($type), 'image/'),
+                // Google states the real reason in the body for quota/permission errors;
+                // the HTML page is what a request rejected at the edge looks like.
+                'body_head' => str_starts_with(strtolower($type), 'image/') ? null : substr(strip_tags($body), 0, 400),
+            ];
+
+            $out['verdict'] = match (true) {
+                $out['photo']['is_image'] => 'Photo endpoint is WORKING. If the review queue still shows failures, the stored references are stale — re-harvest the society.',
+                $response->status() === 403 => 'Google refused the photo call (403). The key is valid for Search/Details but not for Place Photos — check API restrictions and that billing is active on this project.',
+                $response->status() === 400 => 'Google rejected the request (400). Compare request_url above with a reference that works; if the reference looks intact, the legacy Place Photos endpoint is no longer served for this project and we must move to the Places API (New) media endpoint.',
+                default => 'Photo endpoint returned HTTP '.$response->status().'. See body_head.',
+            };
+        } catch (\Throwable $e) {
+            $out['photo'] = ['error' => $e->getMessage()];
+            $out['verdict'] = 'The photo request threw before Google answered: '.$e->getMessage();
+        }
+
+        return response()->json($out);
+    }
+}
