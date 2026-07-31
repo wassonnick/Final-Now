@@ -219,6 +219,70 @@ class SocietyImageReharvestTest extends TestCase
         $this->assertStringContainsString('buy-dlf-magnolias-gurgaon.in', $result['note']);
     }
 
+    /**
+     * A developer site with several pages at 8 images each used to fill MAX_CANDIDATES
+     * before a single Google photo was appended — which is why DLF Privana North came
+     * back with twelve dlf.in marketing renders and not one photo of the building.
+     */
+    public function test_official_site_images_cannot_starve_google_places(): void
+    {
+        $harvest = app(\App\Services\Society\Import\SocietyImageHarvestService::class);
+
+        // One official page carrying far more images than the whole candidate budget.
+        $tags = collect(range(1, 20))
+            ->map(fn ($i) => '<img src="https://dlf.com/img/tower-'.$i.'.jpg">')
+            ->implode('');
+
+        Http::fake([
+            // Most specific first: the image HEADs must not be answered with the page stub.
+            'dlf.com/img/*' => Http::response('', 200, ['Content-Type' => 'image/jpeg']),
+            'dlf.com/*' => Http::response('<html><body>'.$tags.'</body></html>', 200, ['Content-Type' => 'text/html']),
+        ]);
+
+        $candidates = $harvest->harvest([
+            'name' => 'DLF Privana North',
+            'builder' => 'DLF',
+            'urls' => ['https://dlf.com/privana-north'],
+            'photo_references' => ['ref-a', 'ref-b', 'ref-c'],
+            'photo_meta' => [
+                'ref-a' => ['width' => 1600, 'height' => 1000],
+                'ref-b' => ['width' => 1600, 'height' => 1000],
+                'ref-c' => ['width' => 1600, 'height' => 1000],
+            ],
+            'place_id' => 'place-privana',
+        ]);
+
+        $sources = array_count_values(array_column($candidates, 'source'));
+        $this->assertSame(3, $sources['google_places'] ?? 0, 'Every Places photo should have kept a slot.');
+        $this->assertGreaterThan(0, $sources['official_url'] ?? 0);
+    }
+
+    /** Scraped markup is not a promise: dead og:image URLs must not reach the queue. */
+    public function test_candidates_that_do_not_serve_an_image_are_dropped(): void
+    {
+        $harvest = app(\App\Services\Society\Import\SocietyImageHarvestService::class);
+
+        Http::fake([
+            'signatureglobal.in/pages/*' => Http::response(
+                '<html><body><img src="https://signatureglobal.in/img/live.jpg"><img src="https://signatureglobal.in/img/gone.jpg"></body></html>',
+                200,
+                ['Content-Type' => 'text/html'],
+            ),
+            'signatureglobal.in/img/gone.jpg' => Http::response('not found', 404),
+            'signatureglobal.in/img/live.jpg' => Http::response('', 200, ['Content-Type' => 'image/jpeg']),
+        ]);
+
+        $candidates = $harvest->harvest([
+            'name' => 'Signature Global Orchard Avenue',
+            'builder' => 'Signature Global',
+            'urls' => ['https://signatureglobal.in/pages/orchard-avenue'],
+        ]);
+
+        $urls = array_column($candidates, 'url');
+        $this->assertContains('https://signatureglobal.in/img/live.jpg', $urls);
+        $this->assertNotContains('https://signatureglobal.in/img/gone.jpg', $urls);
+    }
+
     private function fakePlaces(): void
     {
         Http::fake([

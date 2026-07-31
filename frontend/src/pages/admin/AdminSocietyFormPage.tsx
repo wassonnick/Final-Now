@@ -26,7 +26,7 @@ import { VerifiedImportImageCard, type VerifiedImportImage } from "@/components/
 import { NcrLocationSelector } from "@/components/admin/NcrLocationSelector";
 import { SocietySeoStudio } from "@/components/admin/SocietySeoStudio";
 import { adminFetch, uploadAdminImage } from "@/lib/adminApi";
-import { googlePlacesSocietyPhotoUrl, societyPlaceholderImage } from "@/lib/societyImages";
+import { googlePlacesSocietyPhotoUrl, isRenderableSocietyImage, societyPlaceholderImage } from "@/lib/societyImages";
 import { reharvestSociety, screenReasonLabel } from "@/lib/imageReharvestApi";
 import {
   createEmptyAdminSociety,
@@ -558,6 +558,17 @@ export function AdminSocietyFormPage() {
     // imageApprovedByAdmin=true produced a society that said "Approved for public
     // display" in admin and showed a placeholder to every visitor.
     // So ask for the confirmation instead of asserting it.
+    // The public site renders only direct image URLs. Picking a cover the renderer will
+    // silently ignore is the difference between "approved" in admin and a placeholder on
+    // the live page, so say so here rather than after a save that appears to work.
+    if (!isPlacesPhoto && !isRenderableSocietyImage(candidate.url)) {
+      setError(
+        "This candidate is not a direct image URL, so the public page cannot display it. " +
+          "Use it as an admin reference, or upload the image with Upload Cover instead.",
+      );
+      return;
+    }
+
     let rightsConfirmed = false;
     if (!isPlacesPhoto) {
       rightsConfirmed = window.confirm(
@@ -1966,6 +1977,10 @@ export function AdminSocietyFormPage() {
                             </p>
                           ) : candidate.screen?.verdict === "ok" ? (
                             <p className="mt-1 text-[10px] font-bold text-emerald-700">Passed the image screen</p>
+                          ) : candidate.screen ? (
+                            <p className="mt-1 text-[10px] font-bold leading-4 text-amber-700">
+                              Not screened{candidate.screen.note ? `: ${candidate.screen.note}` : ""}
+                            </p>
                           ) : null}
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             <button type="button" className="rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-black text-white hover:bg-emerald-700" onClick={() => useCandidateAsCover(candidate)}>Use as cover</button>

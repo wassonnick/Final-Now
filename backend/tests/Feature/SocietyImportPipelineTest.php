@@ -72,6 +72,9 @@ class SocietyImportPipelineTest extends TestCase
                     'source_confidence_score' => 82,
                 ])]]]]],
             ]),
+            // Most specific first: image HEAD checks must not get the page stub.
+            'dlf.com/hero.jpg' => Http::response('', 200, ['Content-Type' => 'image/jpeg']),
+            'dlf.com/img/*' => Http::response('', 200, ['Content-Type' => 'image/jpeg']),
             'dlf.com/*' => Http::response(
                 '<html><head><meta property="og:image" content="https://dlf.com/hero.jpg"></head><body><img src="/img/tower.jpg"><img src="logo.png"></body></html>',
                 200,

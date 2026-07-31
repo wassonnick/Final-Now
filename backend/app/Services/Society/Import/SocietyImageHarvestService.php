@@ -25,6 +25,9 @@ class SocietyImageHarvestService
     private const MAX_CANDIDATES = 12;
     private const PER_URL_LIMIT = 8;
 
+    /** Slots held for Google Places so an official site cannot take the whole budget. */
+    private const PLACES_RESERVE = 5;
+
     /** Anything narrower is a thumbnail or a cropped sign, never a usable cover. */
     private const MIN_USABLE_WIDTH = 640;
 
@@ -35,6 +38,8 @@ class SocietyImageHarvestService
     public function harvest(array $ctx, ?array &$report = null): array
     {
         $candidates = [];
+        $official = [];
+        $places = [];
         // Why a harvest came back thin is the question an admin actually needs answered,
         // and "nothing usable found" answers none of it. Record each source's fate.
         $report = [
@@ -45,6 +50,7 @@ class SocietyImageHarvestService
             'place_photos_offered' => count((array) ($ctx['photo_references'] ?? [])),
             'place_photos_too_small' => 0,
             'place_photos_kept' => 0,
+            'images_unreachable' => 0,
         ];
         $builder = $ctx['builder'] ?? null;
         $societyName = $ctx['name'] ?? null;
@@ -66,7 +72,7 @@ class SocietyImageHarvestService
 
             foreach ($this->fromUrl((string) $url) as $candidate) {
                 // Source name is unchanged for existing consumers; the verified flag is the new signal.
-                $candidates[] = array_merge($candidate, ['official_domain' => true]);
+                $official[] = array_merge($candidate, ['official_domain' => true]);
                 $report['official_images']++;
             }
         }
@@ -76,10 +82,13 @@ class SocietyImageHarvestService
         $report['place_photos_kept'] = count($ranked);
 
         foreach ($ranked as $ref) {
-            $candidates[] = $this->placeCandidate((string) $ref, (string) ($ctx['place_id'] ?? ''), (array) (($ctx['photo_meta'] ?? [])[$ref] ?? []));
+            $places[] = $this->placeCandidate((string) $ref, (string) ($ctx['place_id'] ?? ''), (array) (($ctx['photo_meta'] ?? [])[$ref] ?? []));
         }
 
-        return $this->finalize($candidates);
+        $selected = $this->finalize($this->allocate($official, $places));
+        $selected = $this->dropUnreachable($selected, $report);
+
+        return $selected;
     }
 
     /** @return array<int,array<string,mixed>> */
@@ -197,6 +206,105 @@ class SocietyImageHarvestService
             'height' => (int) ($meta['height'] ?? 0) ?: null,
             'license_note' => 'Google Places photo. Review Google attribution/display terms before approving.',
         ];
+    }
+
+    /**
+     * Drop scraped URLs that do not actually serve an image.
+     *
+     * A page's markup is not a promise: og:image tags go stale, galleries hotlink-protect,
+     * and paths 404 after a site rebuild. Storing those unchecked produced a review queue
+     * of broken-image icons an admin could neither preview nor publish, with nothing to
+     * say why. Only a definite refusal from the server removes a candidate — a timeout or
+     * DNS blip proves nothing and leaves it in place.
+     *
+     * @param  array<int,array<string,mixed>>  $candidates
+     * @return array<int,array<string,mixed>>
+     */
+    private function dropUnreachable(array $candidates, ?array &$report = null): array
+    {
+        $urls = [];
+        foreach ($candidates as $i => $candidate) {
+            if (filled($candidate['url'] ?? null)) {
+                $urls[$i] = (string) $candidate['url'];
+            }
+        }
+
+        if ($urls === []) {
+            return $candidates;
+        }
+
+        try {
+            $responses = Http::pool(fn ($pool) => array_map(
+                fn ($url) => $pool->timeout(8)
+                    ->withHeaders(['User-Agent' => 'SocietyFlats Importer/2.0', 'Accept' => 'image/*,*/*'])
+                    ->head($url),
+                $urls,
+            ));
+        } catch (\Throwable) {
+            return $candidates;
+        }
+
+        $broken = 0;
+        foreach (array_keys($urls) as $position => $index) {
+            $response = $responses[$position] ?? null;
+
+            // Only a served refusal is evidence. Anything else (exception, no response)
+            // is inconclusive, and guessing would throw away good images.
+            if (! $response instanceof \Illuminate\Http\Client\Response) {
+                continue;
+            }
+
+            $status = $response->status();
+            $type = strtolower(trim(explode(';', (string) $response->header('Content-Type'))[0]));
+
+            // Definitive: the resource is gone, or the server answered 200 with something
+            // that is plainly not an image (a soft-404 HTML page).
+            // Inconclusive, so keep: 405/501 (many CDNs simply refuse HEAD), 403
+            // (hotlink protection can still allow a real browser), 5xx, and any reply
+            // with no Content-Type at all.
+            $gone = in_array($status, [404, 410], true);
+            $notAnImage = $status === 200 && $type !== '' && ! str_starts_with($type, 'image/');
+
+            if ($gone || $notAnImage) {
+                unset($candidates[$index]);
+                $broken++;
+            }
+        }
+
+        if ($report !== null) {
+            $report['images_unreachable'] = $broken;
+        }
+
+        return array_values($candidates);
+    }
+
+    /**
+     * Share the candidate budget between the two sources instead of letting whichever
+     * ran first take all of it.
+     *
+     * A developer site with several pages at 8 images each fills MAX_CANDIDATES before a
+     * single Google photo is appended, so societies came back with twelve marketing
+     * renders and not one picture of the building as it stands. The two sources answer
+     * different questions and the queue needs both.
+     *
+     * @param  array<int,array<string,mixed>>  $official
+     * @param  array<int,array<string,mixed>>  $places
+     * @return array<int,array<string,mixed>>
+     */
+    private function allocate(array $official, array $places): array
+    {
+        $placeSlots = min(count($places), self::PLACES_RESERVE);
+        $officialSlots = self::MAX_CANDIDATES - $placeSlots;
+
+        // Whatever one source cannot fill goes back to the other.
+        if (count($official) < $officialSlots) {
+            $placeSlots = min(count($places), self::MAX_CANDIDATES - count($official));
+        }
+
+        return array_merge(
+            array_slice($official, 0, max($officialSlots, 0)),
+            array_slice($places, 0, max($placeSlots, 0)),
+        );
     }
 
     /** @return array<int,array<string,mixed>> */
