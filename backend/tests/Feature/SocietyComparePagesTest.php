@@ -195,9 +195,12 @@ class SocietyComparePagesTest extends TestCase
         app(\App\Services\Ops\AiBudgetGuard::class)->tripProviderLimit();
         \App\Models\SeoAutomationSetting::create(['enabled' => true, 'audit_enabled' => false, 'technical_checks_enabled' => false, 'search_console_enabled' => false, 'keyword_refresh_enabled' => false, 'draft_generation_enabled' => false, 'reports_enabled' => false, 'auto_publish_enabled' => true, 'drafts_per_run' => 5, 'timezone' => 'Asia/Kolkata', 'auto_publish_min_confidence' => 80]);
 
-        $anchor = $this->society('Alpha Heights', 'alpha-heights', 'Sector 65');
-        $this->society('Beta Heights', 'beta-heights', 'Sector 66');
-        $this->society('Gamma Heights', 'gamma-heights', 'Sector 67');
+        // Genuinely different societies, the way real inventory differs: separate builders,
+        // a real price spread and distinct scores. A trio that varies only by sector number
+        // is held back by the publish gate — see the degenerate-trio test below.
+        $anchor = $this->society('Alpha Heights', 'alpha-heights', 'Sector 65', ['builder' => 'Alpha Estates', 'score' => 9.1, 'rent_range' => '₹85,000 - ₹1.4L']);
+        $this->society('Beta Heights', 'beta-heights', 'Sector 66', ['builder' => 'Beta Group', 'score' => 8.2, 'rent_range' => '₹55,000 - ₹90,000']);
+        $this->society('Gamma Heights', 'gamma-heights', 'Sector 67', ['builder' => 'Gamma Realty', 'score' => 7.4, 'rent_range' => '₹40,000 - ₹62,000']);
 
         // First run: generates coverage for uncovered societies AND publishes it (quality 90).
         $run = app(\App\Services\Seo\SeoAutopilotRunner::class)->run('manual');
@@ -212,6 +215,46 @@ class SocietyComparePagesTest extends TestCase
 
         app(\App\Services\Seo\SeoAutopilotRunner::class)->run('manual');
         $this->assertSame(SocietyComparePage::STATUS_PUBLISHED, $page->fresh()->status);
+    }
+
+    public function test_autopilot_holds_back_a_comparison_with_nothing_to_compare(): void
+    {
+        app(\App\Services\Ops\AiBudgetGuard::class)->tripProviderLimit();
+        \App\Models\SeoAutomationSetting::create(['enabled' => true, 'audit_enabled' => false, 'technical_checks_enabled' => false, 'search_console_enabled' => false, 'keyword_refresh_enabled' => false, 'draft_generation_enabled' => false, 'reports_enabled' => false, 'auto_publish_enabled' => true, 'drafts_per_run' => 5, 'timezone' => 'Asia/Kolkata', 'auto_publish_min_confidence' => 80]);
+
+        // Same builder, same score, same rent — only the sector number differs. The metadata
+        // is complete enough to score highly, but a reader gets nothing to choose between.
+        $this->society('Clone One', 'clone-one', 'Sector 65');
+        $this->society('Clone Two', 'clone-two', 'Sector 66');
+        $this->society('Clone Three', 'clone-three', 'Sector 67');
+
+        $run = app(\App\Services\Seo\SeoAutopilotRunner::class)->run('manual');
+        $page = SocietyComparePage::firstOrFail();
+
+        $this->assertSame(SocietyComparePage::STATUS_NEEDS_REVIEW, $page->status);
+        $this->assertGreaterThanOrEqual(1, $run->summary['compare_pages']['blocked_low_value']);
+        $this->assertStringContainsString('Too alike', (string) $page->stale_reason);
+        $this->assertNull($page->first_published_at);
+    }
+
+    public function test_a_comparison_that_already_holds_a_url_is_never_held_back(): void
+    {
+        $societies = collect([
+            $this->society('Clone One', 'clone-one', 'Sector 65'),
+            $this->society('Clone Two', 'clone-two', 'Sector 66'),
+            $this->society('Clone Three', 'clone-three', 'Sector 67'),
+        ]);
+
+        $generator = app(SocietyComparePageGenerator::class);
+
+        // The same weak trio: blocked while it is new...
+        $this->assertNotEmpty($generator->publishBlockers($societies));
+
+        // ...and exempt once it has ever been live, so a rule added later can never
+        // unpublish a page that is already ranking.
+        $live = new SocietyComparePage(['status' => SocietyComparePage::STATUS_NEEDS_REVIEW]);
+        $live->first_published_at = now()->subMonth();
+        $this->assertSame([], $generator->publishBlockers($societies, $live));
     }
 
     public function test_ai_copy_merges_into_page_and_stale_rebuild_resets_it(): void
