@@ -225,7 +225,11 @@ function AppShell() {
             <Route path="/admin/societies/import" element={<Navigate to="/admin/verified-society-importer" replace />} />
             <Route path="/admin/society-importer" element={<Navigate to="/admin/verified-society-importer" replace />} />
             <Route path="/admin/verified-society-importer" element={<ProtectedAdminRoute><AdminVerifiedSocietyImporterPage /></ProtectedAdminRoute>} />
-            <Route path="/admin/locations" element={<ProtectedAdminRoute>{isNcrMulticityEnabled() ? <AdminLocationsPage /> : <Navigate to="/admin/dashboard" replace />}</ProtectedAdminRoute>} />
+            {/* Reachable whether or not multi-city is switched on: this is the tool that prepares
+                the data the flag depends on, so gating it behind that flag made the setup
+                order impossible — you needed the page to link cities before the filters
+                that read city_id could return anything. */}
+            <Route path="/admin/locations" element={<ProtectedAdminRoute><AdminLocationsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/societies/new" element={<ProtectedAdminRoute><AdminSocietyFormPage /></ProtectedAdminRoute>} />
             <Route path="/admin/societies/:id/edit" element={<ProtectedAdminRoute><AdminSocietyFormPage /></ProtectedAdminRoute>} />
             <Route path="/admin/societies/:id/intelligence" element={<ProtectedAdminRoute><AdminSocietyIntelligencePage /></ProtectedAdminRoute>} />

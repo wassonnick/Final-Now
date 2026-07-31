@@ -108,7 +108,8 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   const location = useLocation();
   const links = groups.map((group) => ({
     ...group,
-    links: group.heading === "Inventory" && isNcrMulticityEnabled()
+    // Always listed: it is the NCR setup screen, needed before the flag is turned on.
+    links: group.heading === "Inventory"
       ? [
           ...group.links.slice(0, 2),
           { label: "NCR Locations", href: "/admin/locations", icon: MapPinned },
