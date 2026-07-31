@@ -62,13 +62,43 @@ class SeoSearchConsoleService
         SeoTask::where('status','open')->where('task_type','gsc_striking_distance')->whereNotIn('seo_page_id',$stillStriking)->update(['status'=>'resolved','resolved_at'=>now()]);
     }
 
+    /** Google's hard ceiling per request; more rows require paging with startRow. */
+    private const ROW_LIMIT=25000;
+
+    /** Stop-loss so a runaway response can never spin the nightly cycle forever. */
+    private const MAX_ROWS=200000;
+
+    /**
+     * Read every row, not just the first page.
+     *
+     * The API returns at most 25,000 rows per call and says nothing when there are
+     * more — you simply get a truncated window. The date+page+query pass over 28 days
+     * is the one that grows fastest, and losing its tail means losing exactly the
+     * long-tail low-CTR and striking-distance opportunities this import exists to find.
+     */
     private function queryApi(int $days,array $dimensions): array
     {
         $site=rawurlencode((string)config('services.search_console.site_url'));
-        $response=Http::withToken($this->accessToken())->timeout(30)->post("https://searchconsole.googleapis.com/webmasters/v3/sites/{$site}/searchAnalytics/query",['startDate'=>now()->subDays($days)->toDateString(),'endDate'=>now()->subDay()->toDateString(),'dimensions'=>$dimensions,'rowLimit'=>25000]);
-        if(!$response->successful())throw new \RuntimeException('Search Console import failed with HTTP '.$response->status().'.');
         $hasQueryDimension=count($dimensions)>2;
-        return collect($response->json('rows',[]))->map(fn($r)=>['date'=>$r['keys'][0]??now()->toDateString(),'page_url'=>$r['keys'][1]??'','query'=>$hasQueryDimension?($r['keys'][2]??null):null,'clicks'=>$r['clicks']??0,'impressions'=>$r['impressions']??0,'ctr'=>$r['ctr']??0,'position'=>$r['position']??null])->all();
+        $rows=[];
+
+        for($startRow=0;$startRow<self::MAX_ROWS;$startRow+=self::ROW_LIMIT){
+            $response=Http::withToken($this->accessToken())->timeout(30)->post(
+                "https://searchconsole.googleapis.com/webmasters/v3/sites/{$site}/searchAnalytics/query",
+                ['startDate'=>now()->subDays($days)->toDateString(),'endDate'=>now()->subDay()->toDateString(),'dimensions'=>$dimensions,'rowLimit'=>self::ROW_LIMIT,'startRow'=>$startRow],
+            );
+            if(!$response->successful())throw new \RuntimeException('Search Console import failed with HTTP '.$response->status().'.');
+
+            $batch=$response->json('rows',[]);
+            foreach($batch as $r){
+                $rows[]=['date'=>$r['keys'][0]??now()->toDateString(),'page_url'=>$r['keys'][1]??'','query'=>$hasQueryDimension?($r['keys'][2]??null):null,'clicks'=>$r['clicks']??0,'impressions'=>$r['impressions']??0,'ctr'=>$r['ctr']??0,'position'=>$r['position']??null];
+            }
+
+            // A short page is the only signal that there is nothing left.
+            if(count($batch)<self::ROW_LIMIT)break;
+        }
+
+        return $rows;
     }
     private function opportunities(SeoSearchConsoleMetric $m): void
     {
