@@ -79,6 +79,7 @@ class MarketSuggestionService
         ]);
         $updates['field_sources'] = $fieldSources;
 
+        $this->logRefresh($society, $updates, 'auto', $result['market_sources'] ?? [], $result['confidence'] ?? null, $result['notes'] ?? null);
         $society->update($updates);
 
         return $updates;
@@ -157,6 +158,54 @@ class MarketSuggestionService
     }
 
     /** Apply a pending market suggestion — same semantics as the manual market-refresh action. */
+
+    /**
+     * Record both sides of a refresh. Only the fields that actually moved are listed as
+     * changed, so a run that cost real money and altered nothing is visible as exactly
+     * that rather than looking like a success.
+     *
+     * @param  array<string,mixed>  $updates  the values being written
+     */
+    private function logRefresh(Society $society, array $updates, string $trigger, ?array $sources, $confidence, ?string $notes): void
+    {
+        try {
+            $before = [];
+            $after = [];
+            $changed = [];
+
+            foreach (self::MARKET_FIELDS as $field) {
+                if (! array_key_exists($field, $updates)) {
+                    continue;
+                }
+                $old = (string) ($society->getOriginal($field) ?? '');
+                $new = (string) ($updates[$field] ?? '');
+                $before[$field] = $old;
+                $after[$field] = $new;
+                if (trim($old) !== trim($new)) {
+                    $changed[] = $field;
+                }
+            }
+
+            if ($before === []) {
+                return;
+            }
+
+            \App\Models\MarketRefreshLog::create([
+                'society_id' => $society->id,
+                'trigger' => $trigger,
+                'before' => $before,
+                'after' => $after,
+                'changed_fields' => $changed,
+                'sources' => $sources ?: [],
+                'confidence' => is_numeric($confidence) ? (int) $confidence : null,
+                'notes' => $notes,
+            ]);
+        } catch (\Throwable $e) {
+            // Never let an audit write break the refresh it is describing.
+            report($e);
+        }
+    }
+
     public function apply(OpsSuggestion $suggestion): Society
     {
         if ($suggestion->kind !== 'market_refresh' || $suggestion->status !== 'pending') {
@@ -188,6 +237,7 @@ class MarketSuggestionService
             ->all();
         $updates['fields_to_verify'] = array_merge($fieldsToVerify, ['rent_range', 'buy_range', 'price_per_sqft', 'rental_yield']);
 
+        $this->logRefresh($society, $updates, 'suggestion', $payload['sources'] ?? [], $payload['confidence'] ?? null, $payload['notes'] ?? null);
         $society->update($updates);
         $suggestion->update(['status' => 'applied', 'resolved_at' => now()]);
 

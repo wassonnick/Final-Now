@@ -132,6 +132,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/locations/localities', [AdminLocationController::class, 'storeLocality']);
     Route::patch('/locations/localities/{locality}', [AdminLocationController::class, 'updateLocality']);
     Route::get('/ai-spend', AdminAiSpendController::class);
+    Route::get('/market-refreshes', \App\Http\Controllers\Api\Admin\AdminMarketRefreshController::class);
     Route::get('/ai-chats', [\App\Http\Controllers\Api\Admin\AdminAiChatController::class, 'index']);
     Route::get('/ai-chats/{conversation}', [\App\Http\Controllers\Api\Admin\AdminAiChatController::class, 'show']);
     Route::get('/ops/action-inbox', [AdminOpsController::class, 'actionInbox']);
