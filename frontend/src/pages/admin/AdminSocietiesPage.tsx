@@ -249,14 +249,13 @@ export function AdminSocietiesPage() {
       const matchesNcrZone = !ncrEnabled || !ncrFilter.zoneId || Number(society.zoneId) === Number(ncrFilter.zoneId);
       const matchesNcrLocality = !ncrEnabled || !ncrFilter.localityId || society.localityId === ncrFilter.localityId;
 
+      // Match the dashboard exactly: it counts published societies whose cover has not
+      // been admin-approved (AdminOpsInboxService), not those lacking an image URL. A
+      // harvested image awaiting approval still counts as missing, and a filter that
+      // disagrees with the number you clicked is worse than no filter.
       const isPublic = society.isPublished || society.status === "Verified" || society.status === "Premium";
-      const hasCover = Boolean(
-        String(society.coverImage || "").trim()
-        || String(society.imageUrl || "").trim()
-        || String(society.imagePhotoReference || "").trim(),
-      );
       const matchesNeed = need === ""
-        || (need === "cover" && isPublic && ! hasCover)
+        || (need === "cover" && isPublic && ! society.imageApprovedByAdmin)
         || (need === "confidence" && Number(society.sourceConfidenceScore || 0) < 60);
 
       return matchesQuery && matchesFilter && matchesNcrCity && matchesNcrZone && matchesNcrLocality && matchesNeed;
