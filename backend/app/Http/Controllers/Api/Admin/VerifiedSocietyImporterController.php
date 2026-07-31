@@ -282,17 +282,22 @@ class VerifiedSocietyImporterController extends Controller
         return $row;
     }
 
-    public function completeDraft(Society $society, \App\Services\Ops\AiBudgetGuard $budget): JsonResponse
+    public function completeDraft(Request $request, Society $society, \App\Services\Ops\AiBudgetGuard $budget): JsonResponse
     {
         $this->assertImporterImageDraft($society);
+        // publish=false runs the same pipeline but holds the result as a draft, so a new
+        // city can be trialled end to end without the society reaching the public site.
+        $publish = $request->boolean('publish', true);
         // Admin explicitly asked to finish this draft: bypass the daily cap ($gated=false),
         // but the provider circuit-breaker (real billing failure) is still respected.
-        $result=$this->completion->complete($society->fresh(), true, false);
+        $result=$this->completion->complete($society->fresh(), true, false, $publish);
         $message=$result['published']
             ? 'Draft completed and published.'
-            : ($result['blocked_by']===[]
+            : (! $publish && in_array('ready_to_publish_held_as_draft', $result['actions'], true)
+                ? 'Completed every step and held it as a draft — nothing was published. Review it, then publish when you are ready.'
+                : ($result['blocked_by']===[]
                 ? 'Completed what was possible. Remaining gaps need a verified source (see the badge).'
-                : ($this->blockedMessage($result['blocked_by'], $budget)));
+                : ($this->blockedMessage($result['blocked_by'], $budget))));
         return response()->json(['message'=>$message,'data'=>['result'=>$result,'completion'=>$this->completionStatus($society->fresh())]]);
     }
 

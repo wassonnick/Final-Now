@@ -21,7 +21,9 @@ export const setVerifiedImportCoverImage = (id: number, replace = false) => admi
 export const retryVerifiedImportFailedRows = (id: number) => adminFetch(`/admin/verified-importer/jobs/${id}/retry-failed`, { method: "POST" }).then(json);
 export const applyVerifiedHighConfidenceFields = (societyId: number) => adminFetch(`/admin/verified-importer/societies/${societyId}/apply-high-confidence`, { method: "POST" }).then(json);
 export const enrichExistingVerifiedSocietyDraft = (societyId: number) => adminFetch(`/admin/verified-importer/societies/${societyId}/enrich-google`, { method: "POST" }).then(json);
-export const completeVerifiedSocietyDraft = (societyId: number) => adminFetch(`/admin/verified-importer/societies/${societyId}/complete`, { method: "POST" }).then(json);
+// publish=false runs the same completion pipeline but holds the society as a draft —
+// how a new city is trialled without the result reaching the public site.
+export const completeVerifiedSocietyDraft = (societyId: number, publish = true) => adminFetch(`/admin/verified-importer/societies/${societyId}/complete`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ publish }) }).then(json);
 export const completeAllVerifiedSocietyDrafts = () => adminFetch(`/admin/verified-importer/complete-all-drafts`, { method: "POST" }).then(json);
 export const importVerifiedSocietySourceLayer = (societyId: number, layer: string, payload: Record<string, unknown>) => adminFetch(`/admin/verified-importer/societies/${societyId}/source-layers/${layer}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(json);
 export const importVerifiedSocietyGoogleNearby = (societyId: number) => adminFetch(`/admin/verified-importer/societies/${societyId}/nearby-google`, { method: "POST" }).then(json);
