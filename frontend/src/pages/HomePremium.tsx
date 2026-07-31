@@ -202,7 +202,10 @@ export default function HomePremium() {
       <section className="border-y border-[#EEEEF1] bg-[#F5F5F7]">
         <div className="mx-auto grid max-w-[1120px] grid-cols-2 gap-6 px-5 py-12 sm:grid-cols-4">
           {[
-            [liveCount ? `${liveCount}` : "240+", "Verified societies"],
+            // No invented placeholder while the list loads: "240+" was both wrong and
+            // visibly swapped to the real figure a moment later, which is a poor look on
+            // the one number that carries the whole verification promise.
+            [liveCount ? `${liveCount}` : "—", "Verified societies"],
             ["6", "NCR cities on the map"],
             ["0", "Fabricated listings"],
             ["1", "Simple, honest journey"],

@@ -10,17 +10,68 @@ function extractItems(payload: any) {
   return [];
 }
 
+const PAGE_SIZE = 200;
+const MAX_PAGES = 25;
+
+/**
+ * Fetch every page, not just the first.
+ *
+ * `?per_page=300` returned page one and nothing else, so once the catalogue passed
+ * 300 the tail simply vanished — the homepage counter read 300 against 316 published,
+ * and the missing societies were also absent from search suggestions, the area tabs,
+ * compare and maps. Silent, and it gets worse as inventory grows.
+ */
+async function fetchAllPages(endpoint: string): Promise<any[]> {
+  const rows: any[] = [];
+  let lastPage = 1;
+
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const response = await fetch(`${API_BASE_URL}${endpoint}?per_page=${PAGE_SIZE}&page=${page}`);
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (page === 1) throw new Error(json?.message || `Unable to fetch ${endpoint}`);
+      break; // keep what we have rather than losing the whole list
+    }
+
+    const batch = extractItems(json);
+    rows.push(...batch);
+
+    const box = json?.data && !Array.isArray(json.data) ? json.data : json;
+    const parsed = Number(box?.last_page);
+    if (page === 1 && Number.isFinite(parsed) && parsed > 0) lastPage = parsed;
+    if (batch.length === 0 || page >= lastPage) break;
+  }
+
+  return rows;
+}
+
 export function getPublicSocieties() {
   return [];
 }
 
+/**
+ * Several components on a single page each ask for the full society list, and now that
+ * the list is paginated every duplicate costs two round trips instead of one. Share the
+ * in-flight request, and hold the result briefly so a navigation doesn't refetch it.
+ */
+const listCache = new Map<string, { at: number; promise: Promise<any[]> }>();
+const LIST_TTL_MS = 60_000;
+
+function cachedPages(endpoint: string): Promise<any[]> {
+  const hit = listCache.get(endpoint);
+  if (hit && Date.now() - hit.at < LIST_TTL_MS) return hit.promise;
+
+  const promise = fetchAllPages(endpoint).catch((error) => {
+    listCache.delete(endpoint); // never cache a failure
+    throw error;
+  });
+  listCache.set(endpoint, { at: Date.now(), promise });
+
+  return promise;
+}
+
 export async function fetchPublicSocieties() {
-  const response = await fetch(`${API_BASE_URL}/societies?per_page=300`);
-  const json = await response.json().catch(() => ({}));
-
-  if (!response.ok) throw new Error(json?.message || 'Unable to fetch societies');
-
-  const societies = extractItems(json).map(mapApiSociety);
+  const societies = (await cachedPages('/societies')).map(mapApiSociety);
 
   return societies
     .filter((society) => society.status === 'Verified' || society.status === 'Premium')
@@ -63,12 +114,7 @@ function mapApiProperty(data: any): AdminProperty {
 }
 
 export async function fetchPublicProperties() {
-  const response = await fetch(`${API_BASE_URL}/properties?per_page=300`);
-  const json = await response.json().catch(() => ({}));
-
-  if (!response.ok) throw new Error(json?.message || 'Unable to fetch properties');
-
-  return extractItems(json)
+  return (await cachedPages('/properties'))
     .map(mapApiProperty)
     .filter((property) => property.status === 'Live')
     .sort((a, b) => Number(b.featured || b.verified) - Number(a.featured || a.verified));
