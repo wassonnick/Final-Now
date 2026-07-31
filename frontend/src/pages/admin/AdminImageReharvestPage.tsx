@@ -5,6 +5,8 @@ import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import {
   fetchReharvestRun,
+  runPlacesDiagnostic,
+  type PlacesDiagnostic,
   fetchReharvestRuns,
   startReharvestRun,
   type ReharvestRun,
@@ -59,6 +61,8 @@ export function AdminImageReharvestPage() {
   const [history, setHistory] = useState<ReharvestRun[]>([]);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
+  const [diagnostic, setDiagnostic] = useState<PlacesDiagnostic | null>(null);
+  const [diagnosing, setDiagnosing] = useState(false);
   const poll = useRef<number | null>(null);
 
   const loadHistory = async () => {
@@ -111,6 +115,18 @@ export function AdminImageReharvestPage() {
     }
   };
 
+  const checkPlaces = async () => {
+    setDiagnosing(true);
+    setError("");
+    try {
+      setDiagnostic(await runPlacesDiagnostic());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Diagnostic could not be run.");
+    } finally {
+      setDiagnosing(false);
+    }
+  };
+
   const active = run && !run.finished_at && run.completed < run.queued;
   const percent = run && run.queued > 0 ? Math.round((run.completed / run.queued) * 100) : 0;
 
@@ -122,6 +138,46 @@ export function AdminImageReharvestPage() {
       {error ? (
         <div className="mb-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-700">{error}</div>
       ) : null}
+
+      {/* Whether Google can serve photos at all decides if a run is worth its cost,
+          and the answer lives in Google's reply rather than anywhere in our code. */}
+      <section className="mb-5 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-serif text-2xl font-black text-slate-950">Google Places health</h2>
+            <p className="mt-1 max-w-2xl text-sm text-slate-500">
+              Runs a real search, lookup and photo fetch and reports what Google answers. Check this before a bulk run —
+              if photos are failing, a run will spend its budget and still leave societies without covers. Your API key
+              is never shown.
+            </p>
+          </div>
+          <Button type="button" variant="outline" className="rounded-full" onClick={() => void checkPlaces()} disabled={diagnosing}>
+            {diagnosing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+            Check Google Places
+          </Button>
+        </div>
+
+        {diagnostic ? (
+          <div className={`mt-4 rounded-2xl border p-4 ${diagnostic.photo?.is_image ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
+            <p className={`text-sm font-bold ${diagnostic.photo?.is_image ? "text-emerald-900" : "text-amber-900"}`}>{diagnostic.verdict}</p>
+            <dl className="mt-3 grid gap-x-6 gap-y-1 text-xs text-slate-700 sm:grid-cols-2">
+              <div><dt className="inline font-bold">Matched: </dt><dd className="inline">{String(diagnostic.resolve?.matched ?? false)}</dd></div>
+              <div><dt className="inline font-bold">Photos offered: </dt><dd className="inline">{diagnostic.resolve?.photo_reference_count ?? 0}</dd></div>
+              <div><dt className="inline font-bold">Photo HTTP: </dt><dd className="inline">{diagnostic.photo?.status ?? "—"}</dd></div>
+              <div><dt className="inline font-bold">Content type: </dt><dd className="inline">{diagnostic.photo?.content_type || "—"}</dd></div>
+              <div className="sm:col-span-2">
+                <dt className="inline font-bold">Reference: </dt>
+                <dd className="inline break-all font-mono">{diagnostic.resolve?.first_reference_head || "—"}</dd>
+              </div>
+            </dl>
+            {diagnostic.photo?.body_head ? (
+              <p className="mt-3 max-h-32 overflow-y-auto rounded-xl bg-white/70 p-3 font-mono text-[11px] leading-4 text-slate-600">
+                {diagnostic.photo.body_head}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
 
       <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="font-serif text-2xl font-black text-slate-950">Start a run</h2>

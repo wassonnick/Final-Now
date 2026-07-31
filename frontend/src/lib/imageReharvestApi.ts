@@ -98,3 +98,36 @@ const REASON_LABELS: Record<string, string> = {
 export function screenReasonLabel(reason: string) {
   return REASON_LABELS[reason] || reason.replace(/_/g, " ");
 }
+
+export type PlacesDiagnostic = {
+  key_configured: boolean;
+  key_length: number;
+  key_tail?: string | null;
+  query: { name: string; location: string };
+  resolve?: {
+    matched: boolean;
+    reason?: string | null;
+    place_id?: string | null;
+    photo_reference_count: number;
+    first_reference_length: number;
+    first_reference_head?: string | null;
+  };
+  photo?: {
+    request_url?: string;
+    status?: number;
+    content_type?: string;
+    bytes?: number;
+    is_image?: boolean;
+    body_head?: string | null;
+    error?: string;
+  };
+  verdict: string;
+};
+
+export async function runPlacesDiagnostic(name?: string, location?: string): Promise<PlacesDiagnostic> {
+  const params = new URLSearchParams();
+  if (name) params.set("name", name);
+  if (location) params.set("location", location);
+  const response = await adminFetch(`/admin/diagnostics/google-places?${params.toString()}`);
+  return (await json(response, "Diagnostic could not be run.")) as PlacesDiagnostic;
+}
