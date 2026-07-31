@@ -103,6 +103,16 @@ function RecentTable({ rows }: { rows: AiSpendLog[] }) {
                   <span className={`rounded-full px-3 py-1 text-xs font-black ${row.status === "failed" ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
                     {row.status}
                   </span>
+                  {/* The reason was always recorded and never shown, so a failure here
+                      meant opening a shell to find out anything. */}
+                  {row.status === "failed" && (row.error_message || row.error_class) ? (
+                    <p className="mt-1.5 max-w-[320px] text-xs leading-5 text-red-700">
+                      {row.error_class ? (
+                        <span className="font-bold">{String(row.error_class).split("\\").pop()}: </span>
+                      ) : null}
+                      {row.error_message || "no message recorded"}
+                    </p>
+                  ) : null}
                 </td>
               </tr>
             ))}
@@ -118,6 +128,7 @@ function RecentTable({ rows }: { rows: AiSpendLog[] }) {
 
 export function AdminAiSpendPage() {
   const [days, setDays] = useState(30);
+  const [failuresOnly, setFailuresOnly] = useState(false);
   const [data, setData] = useState<AiSpendResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -126,7 +137,7 @@ export function AdminAiSpendPage() {
     setLoading(true);
     setError("");
     try {
-      setData(await fetchAiSpend(days));
+      setData(await fetchAiSpend(days, failuresOnly ? "failed" : ""));
     } catch (err) {
       setError(err instanceof Error ? err.message : "AI spend data could not be loaded.");
     } finally {
@@ -137,7 +148,7 @@ export function AdminAiSpendPage() {
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days]);
+  }, [days, failuresOnly]);
 
   const summary = data?.summary;
   const rupeeEstimate = useMemo(() => {
@@ -154,6 +165,14 @@ export function AdminAiSpendPage() {
               {option} days
             </Button>
           ))}
+          <Button
+            type="button"
+            variant={failuresOnly ? "default" : "outline"}
+            className="rounded-full"
+            onClick={() => setFailuresOnly((v) => !v)}
+          >
+            {failuresOnly ? "Showing failures" : "Failures only"}
+          </Button>
         </div>
         <Button type="button" variant="outline" className="rounded-full" onClick={() => void load()} disabled={loading}>
           <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />

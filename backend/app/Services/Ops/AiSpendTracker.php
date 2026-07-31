@@ -110,9 +110,12 @@ class AiSpendTracker
         ];
     }
 
-    public function recent(int $limit = 50): Collection
+    public function recent(int $limit = 50, ?string $status = null): Collection
     {
         return AiUsageLog::query()
+            // Failures are rare and get buried under hundreds of successful calls, which
+            // is exactly when you need to find them.
+            ->when($status !== null && $status !== '', fn ($q) => $q->where('status', $status))
             ->latest('created_at')
             ->limit(max(1, min(100, $limit)))
             ->get();

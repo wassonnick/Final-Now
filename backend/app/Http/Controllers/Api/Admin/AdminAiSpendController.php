@@ -17,7 +17,7 @@ class AdminAiSpendController extends Controller
             'status' => 'ok',
             'data' => [
                 'summary' => $tracker->summary($days),
-                'recent' => $tracker->recent($limit)->map(fn ($log) => [
+                'recent' => $tracker->recent($limit, (string) $request->string('status'))->map(fn ($log) => [
                     'id' => $log->id,
                     'provider' => $log->provider,
                     'feature' => $log->feature,

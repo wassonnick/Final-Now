@@ -51,8 +51,9 @@ export type AiSpendResponse = {
   recent: AiSpendLog[];
 };
 
-export async function fetchAiSpend(days = 30): Promise<AiSpendResponse> {
-  const response = await adminFetch(`/admin/ai-spend?days=${days}&limit=75`);
+export async function fetchAiSpend(days = 30, status = ""): Promise<AiSpendResponse> {
+  const query = `days=${days}&limit=75${status ? `&status=${encodeURIComponent(status)}` : ""}`;
+  const response = await adminFetch(`/admin/ai-spend?${query}`);
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(body?.message || "AI spend data could not be loaded.");
