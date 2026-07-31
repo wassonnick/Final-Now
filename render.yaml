@@ -130,7 +130,32 @@ services:
         source: /404
         destination: /404/index.html
 
-      # SPA fallback for admin, dynamic society/property pages, search and other React routes.
+      # Prerendered detail pages. These MUST come before the catch-all below: without
+      # them every society, property, compare and RWA URL fell through to /index.html
+      # and served the homepage's title, description and canonical. The build generates
+      # ~990 shells; only the routes listed explicitly above were ever reaching a
+      # visitor, so the money pages were telling search engines they were duplicates of
+      # the homepage.
+      - type: rewrite
+        source: /society/*
+        destination: /society/*/index.html
+      - type: rewrite
+        source: /property/*
+        destination: /property/*/index.html
+      - type: rewrite
+        source: /compare/*
+        destination: /compare/*/index.html
+      - type: rewrite
+        source: /compare
+        destination: /compare/index.html
+      - type: rewrite
+        source: /rwa/*
+        destination: /rwa/*/index.html
+      - type: rewrite
+        source: /ncr/*
+        destination: /ncr/*/index.html
+
+      # SPA fallback for admin, search, account and other client-only React routes.
       - type: rewrite
         source: /*
         destination: /index.html
