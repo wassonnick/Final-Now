@@ -32,14 +32,17 @@ class AdminImageReharvestController extends Controller
             (bool) ($data['republish'] ?? true),
         );
 
+        // reharvest() saved through this same instance, so it already holds the new
+        // values. (fresh() takes RELATIONS to eager-load, not columns — passing ['id']
+        // made Laravel look for a relationship named "id" and throw.)
         return response()->json([
             'result' => $result,
-            'society' => $society->fresh(['id']) ? [
+            'society' => [
                 'id' => $society->id,
                 'image_status' => $society->image_status,
                 'image_approved_by_admin' => (bool) $society->image_approved_by_admin,
                 'image_candidates' => $society->image_candidates,
-            ] : null,
+            ],
         ]);
     }
 

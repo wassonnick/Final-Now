@@ -672,6 +672,9 @@ export function AdminSocietyFormPage() {
       setSaved(false);
     } catch (err) {
       console.error(err);
+      // Clear the progress line too, or the page reads "Re-harvesting images..."
+      // and "Server Error" at the same time and neither looks final.
+      setMessage(null);
       setError(friendlyFetchError(err, "Unable to re-harvest images for this society."));
     } finally {
       setReharvesting(false);

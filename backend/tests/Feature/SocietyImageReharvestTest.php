@@ -107,6 +107,29 @@ class SocietyImageReharvestTest extends TestCase
         );
     }
 
+    /**
+     * The single-society endpoint over HTTP, not just the service behind it. The first
+     * cut of this controller called fresh(['id']) — fresh() eager-loads RELATIONS, so
+     * Laravel went looking for a relationship named "id" and every call 500'd. The
+     * service test passed throughout, because the bug was in the response assembly.
+     */
+    public function test_single_endpoint_returns_the_refreshed_candidates(): void
+    {
+        $society = $this->society(['place_id' => 'place-magnolias']);
+
+        $this->fakePlaces();
+        $this->fakeScreen(SocietyImageScreenService::VERDICT_OK);
+
+        $response = $this->withToken('admin-test-token')
+            ->postJson("/api/admin/societies/{$society->id}/reharvest-images", ['screen' => true, 'republish' => true])
+            ->assertOk();
+
+        $this->assertSame('refreshed', $response->json('result.status'));
+        $this->assertSame($society->id, $response->json('society.id'));
+        $this->assertTrue($response->json('society.image_approved_by_admin'));
+        $this->assertNotEmpty($response->json('society.image_candidates'));
+    }
+
     public function test_bulk_queues_one_job_per_society_and_tracks_the_run(): void
     {
         Queue::fake();
