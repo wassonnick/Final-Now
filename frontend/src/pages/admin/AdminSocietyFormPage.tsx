@@ -550,17 +550,43 @@ export function AdminSocietyFormPage() {
   // Approving a harvested candidate only fills the form — nothing is public until Save,
   // and a Google reference is stored as an attributed reference, never as an owned upload.
   const useCandidateAsCover = (candidate: Candidate) => {
+    const isPlacesPhoto = Boolean(candidate.photo_reference);
+
+    // "official_reference_found" is a REFERENCE status: the public site deliberately
+    // refuses to render it, because an image scraped from a developer's site is their
+    // copyright until someone confirms we may use it. Setting it alongside
+    // imageApprovedByAdmin=true produced a society that said "Approved for public
+    // display" in admin and showed a placeholder to every visitor.
+    // So ask for the confirmation instead of asserting it.
+    let rightsConfirmed = false;
+    if (!isPlacesPhoto) {
+      rightsConfirmed = window.confirm(
+        `Publish this image from ${candidate.credit || "the developer's site"}?\n\n` +
+          "OK — we have the developer's permission (or a licence) to publish it. It will go live on the society page after you save.\n\n" +
+          "Cancel — keep it as an admin reference only. It stays in this list and the public page keeps its placeholder.",
+      );
+    }
+
     setSociety((current) => ({
       ...current,
       coverImage: candidate.url || "",
       imageUrl: candidate.url || current.imageUrl,
       imagePhotoReference: candidate.photo_reference || "",
       imageCredit: candidate.credit || current.imageCredit,
-      imageApprovedByAdmin: true,
+      imageApprovedByAdmin: isPlacesPhoto || rightsConfirmed,
       // Record where it came from, not a generic "approved" — provenance is the point.
-      imageStatus: candidate.photo_reference ? "google_places_reference_found" : "official_reference_found",
+      imageStatus: isPlacesPhoto
+        ? "google_places_reference_found"
+        : rightsConfirmed
+          ? "developer_permission_received"
+          : "official_reference_found",
     }));
     setSaved(false);
+    setMessage(
+      isPlacesPhoto || rightsConfirmed
+        ? "Cover set. Save to publish it."
+        : "Kept as an admin reference. The public page will keep its placeholder until rights are confirmed.",
+    );
   };
 
   const addCandidateToGallery = (candidate: Candidate) => {

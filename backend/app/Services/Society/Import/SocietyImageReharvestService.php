@@ -33,6 +33,22 @@ class SocietyImageReharvestService
      *   before:int, after:int, rejected:int, screened:int, republished:bool
      * }
      */
+    /**
+     * Statuses that mean "this image is cleared and live". Re-harvesting refreshes the
+     * CANDIDATE list; it must never quietly demote a cover an admin already cleared,
+     * or the society loses its picture on the public site as a side effect.
+     */
+    /** Mirrors SocietyImageHarvestService::MIN_USABLE_WIDTH, for the message only. */
+    private const MIN_WIDTH_LABEL = '640px';
+
+    private const PUBLISHABLE_STATUSES = [
+        'licensed_uploaded',
+        'self_shot_uploaded',
+        'developer_permission_received',
+        'approved_for_live',
+        'google_places_reference_found',
+    ];
+
     public function reharvest(Society $society, bool $screenImages = true, bool $republishCover = true): array
     {
         $before = count((array) ($society->image_candidates ?? []));
@@ -46,6 +62,7 @@ class SocietyImageReharvestService
             'rejected' => 0,
             'screened' => 0,
             'republished' => false,
+            'diagnostics' => null,
         ], $extra);
 
         try {
@@ -62,6 +79,7 @@ class SocietyImageReharvestService
 
         $matched = (bool) ($place['matched'] ?? false);
 
+        $report = null;
         $candidates = $this->harvest->harvest([
             'name' => (string) $society->name,
             'builder' => $society->builder,
@@ -75,15 +93,12 @@ class SocietyImageReharvestService
             'photo_references' => $matched ? (array) ($place['photo_references'] ?? []) : [],
             'photo_meta' => $matched ? (array) ($place['photo_meta'] ?? []) : [],
             'place_id' => $matched ? (string) ($place['place_id'] ?? '') : (string) ($society->place_id ?? ''),
-        ]);
+        ], $report);
+
+        $report['place_matched'] = $matched;
 
         if ($candidates === []) {
-            return $result(
-                'no_candidates',
-                $matched
-                    ? 'Nothing usable found. Google returned no photo of a usable size, and no verified official URL is on file.'
-                    : 'Google Places did not match this society, and no verified official URL is on file.',
-            );
+            return $result('no_candidates', $this->explain($report), ['diagnostics' => $report]);
         }
 
         $screened = 0;
@@ -103,7 +118,7 @@ class SocietyImageReharvestService
 
         if ($usable === []) {
             $society->image_candidates = $candidates;
-            $society->image_status = 'screened_all_rejected';
+            $society->image_status = $this->nextStatus($society, 'screened_all_rejected');
             $society->save();
 
             return $result('all_rejected', 'Every candidate was rejected by the image screen; nothing was published.', [
@@ -137,7 +152,9 @@ class SocietyImageReharvestService
         }
 
         $society->image_candidates = $candidates;
-        $society->image_status = $republished ? 'google_places_reference_found' : 'candidates_pending_review';
+        $society->image_status = $republished
+            ? 'google_places_reference_found'
+            : $this->nextStatus($society, 'candidates_pending_review');
         $society->save();
 
         return $result(
@@ -150,7 +167,47 @@ class SocietyImageReharvestService
                 'rejected' => $rejected,
                 'screened' => $screened,
                 'republished' => $republished,
+                'diagnostics' => $report,
             ],
         );
+    }
+
+    /**
+     * Turn the harvest report into a sentence that names a cause an admin can act on.
+     * "Nothing usable found" was true and useless: it read the same whether Google had
+     * no match, the photos were too small, or the only URL on file was a broker site.
+     *
+     * @param  array<string,mixed>  $report
+     */
+    private function explain(array $report): string
+    {
+        $parts = [];
+
+        if (! ($report['place_matched'] ?? false)) {
+            $parts[] = 'Google Places did not match this society — check the name, sector and city, or set the place ID by hand.';
+        } elseif (($report['place_photos_offered'] ?? 0) === 0) {
+            $parts[] = 'Google matched the society but returned no photos at all (common for under-construction projects).';
+        } elseif (($report['place_photos_kept'] ?? 0) === 0) {
+            $parts[] = 'All '.$report['place_photos_offered'].' Google photo(s) were below the '.self::MIN_WIDTH_LABEL.' minimum width.';
+        }
+
+        $rejected = (array) ($report['urls_rejected'] ?? []);
+        if ($rejected !== []) {
+            $parts[] = count($rejected).' URL(s) were skipped because the domain is not the builder\'s own: '.implode(', ', array_slice($rejected, 0, 3)).'.';
+        } elseif (($report['urls_seen'] ?? 0) === 0) {
+            $parts[] = 'No official project or developer URL is on file for this society, so there was no site to read.';
+        } elseif (($report['official_images'] ?? 0) === 0) {
+            $parts[] = 'The official site was read but no usable image was found on the page.';
+        }
+
+        return $parts === [] ? 'Nothing usable found.' : implode(' ', $parts);
+    }
+
+    /** Keep a cleared status; otherwise record where the re-harvest left things. */
+    private function nextStatus(Society $society, string $proposed): string
+    {
+        return in_array((string) $society->image_status, self::PUBLISHABLE_STATUSES, true)
+            ? (string) $society->image_status
+            : $proposed;
     }
 }

@@ -159,6 +159,66 @@ class SocietyImageReharvestTest extends TestCase
         $this->assertNotNull($b->id);
     }
 
+    /**
+     * A re-harvest refreshes CANDIDATES. If it also reset image_status, a society whose
+     * cover an admin had already cleared for publication would silently lose its picture
+     * on the public site — approvedSocietyImage() only renders a publishable status.
+     */
+    public function test_reharvest_never_demotes_an_already_published_cover(): void
+    {
+        $society = $this->society([
+            'place_id' => 'place-magnolias',
+            'image_status' => 'developer_permission_received',
+            'image_approved_by_admin' => true,
+        ]);
+
+        $this->fakePlaces();
+        $this->fakeScreen(SocietyImageScreenService::VERDICT_REJECTED, ['people']);
+
+        app(\App\Services\Society\Import\SocietyImageReharvestService::class)->reharvest($society, true, false);
+
+        $this->assertSame('developer_permission_received', $society->fresh()->image_status);
+        $this->assertTrue((bool) $society->fresh()->image_approved_by_admin);
+    }
+
+    /**
+     * "Nothing usable found" named no cause: it read identically whether Google had no
+     * match, the photos were too small, or the only URL on file was a broker microsite.
+     * Each failure mode must now be distinguishable from the message alone.
+     */
+    public function test_unmatched_place_is_named_as_the_cause(): void
+    {
+        Http::fake([
+            'maps.googleapis.com/maps/api/place/findplacefromtext/*' => Http::response(['status' => 'ZERO_RESULTS', 'candidates' => []]),
+        ]);
+
+        $result = app(\App\Services\Society\Import\SocietyImageReharvestService::class)
+            ->reharvest($this->society(['name' => 'Nowhere Heights']));
+
+        $this->assertSame('no_candidates', $result['status']);
+        $this->assertStringContainsString('did not match', $result['note']);
+    }
+
+    public function test_a_broker_microsite_is_named_as_the_reason_it_was_skipped(): void
+    {
+        Http::fake([
+            'maps.googleapis.com/maps/api/place/findplacefromtext/*' => Http::response(['status' => 'OK', 'candidates' => [['place_id' => 'p2']]]),
+            'maps.googleapis.com/maps/api/place/details/*' => Http::response(['status' => 'OK', 'result' => [
+                'place_id' => 'p2',
+                'name' => 'DLF Magnolias',
+                'geometry' => ['location' => ['lat' => 28.4, 'lng' => 77.0]],
+                'photos' => [],
+            ]]),
+        ]);
+
+        $result = app(\App\Services\Society\Import\SocietyImageReharvestService::class)
+            ->reharvest($this->society(['official_project_url' => 'https://buy-dlf-magnolias-gurgaon.in/']));
+
+        $this->assertStringContainsString('no photos at all', $result['note']);
+        $this->assertStringContainsString("not the builder", $result['note']);
+        $this->assertStringContainsString('buy-dlf-magnolias-gurgaon.in', $result['note']);
+    }
+
     private function fakePlaces(): void
     {
         Http::fake([

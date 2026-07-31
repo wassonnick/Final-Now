@@ -32,9 +32,20 @@ class SocietyImageHarvestService
      * @param  array{name?:string, builder?:?string, urls?:array<int,?string>, photo_references?:array<int,string>, photo_meta?:array<string,array{width?:int,height?:int,attribution?:?string}>, place_id?:string}  $ctx
      * @return array<int,array<string,mixed>>
      */
-    public function harvest(array $ctx): array
+    public function harvest(array $ctx, ?array &$report = null): array
     {
         $candidates = [];
+        // Why a harvest came back thin is the question an admin actually needs answered,
+        // and "nothing usable found" answers none of it. Record each source's fate.
+        $report = [
+            'urls_seen' => 0,
+            'urls_official' => [],
+            'urls_rejected' => [],
+            'official_images' => 0,
+            'place_photos_offered' => count((array) ($ctx['photo_references'] ?? [])),
+            'place_photos_too_small' => 0,
+            'place_photos_kept' => 0,
+        ];
         $builder = $ctx['builder'] ?? null;
         $societyName = $ctx['name'] ?? null;
 
@@ -43,17 +54,28 @@ class SocietyImageHarvestService
         // belongs to the developer — an aggregator microsite carrying the project name
         // is a worse source than Google Places, because it looks authoritative.
         foreach (array_unique(array_filter((array) ($ctx['urls'] ?? []))) as $url) {
+            $report['urls_seen']++;
+
             if (! $this->official->isOfficial((string) $url, $builder, $societyName)) {
+                $report['urls_rejected'][] = (string) $url;
+
                 continue;
             }
+
+            $report['urls_official'][] = (string) $url;
 
             foreach ($this->fromUrl((string) $url) as $candidate) {
                 // Source name is unchanged for existing consumers; the verified flag is the new signal.
                 $candidates[] = array_merge($candidate, ['official_domain' => true]);
+                $report['official_images']++;
             }
         }
 
-        foreach ($this->rankPlacePhotos((array) ($ctx['photo_references'] ?? []), (array) ($ctx['photo_meta'] ?? [])) as $ref) {
+        $ranked = $this->rankPlacePhotos((array) ($ctx['photo_references'] ?? []), (array) ($ctx['photo_meta'] ?? []), $dropped);
+        $report['place_photos_too_small'] = $dropped;
+        $report['place_photos_kept'] = count($ranked);
+
+        foreach ($ranked as $ref) {
             $candidates[] = $this->placeCandidate((string) $ref, (string) ($ctx['place_id'] ?? ''), (array) (($ctx['photo_meta'] ?? [])[$ref] ?? []));
         }
 
@@ -124,8 +146,9 @@ class SocietyImageHarvestService
      * @param  array<string,array<string,mixed>>  $meta
      * @return array<int,string>
      */
-    private function rankPlacePhotos(array $references, array $meta): array
+    private function rankPlacePhotos(array $references, array $meta, ?int &$dropped = null): array
     {
+        $dropped = 0;
         $refs = array_values(array_filter($references, fn ($ref) => is_string($ref) && $ref !== ''));
 
         // No metadata (older callers, or Google omitted it) — behave exactly as before.
@@ -140,6 +163,8 @@ class SocietyImageHarvestService
 
             // Below this a photo is a thumbnail or a cropped sign, never a usable cover.
             if ($width > 0 && $width < self::MIN_USABLE_WIDTH) {
+                $dropped++;
+
                 continue;
             }
 
