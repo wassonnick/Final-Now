@@ -235,7 +235,7 @@ function extractGoogleMapsCoordinates(url: string) {
  */
 function CandidatePreview({ url, photoReference, alt }: { url?: string; photoReference?: string; alt: string }) {
   const [blobUrl, setBlobUrl] = useState("");
-  const [failed, setFailed] = useState(false);
+  const [failure, setFailure] = useState("");
 
   useEffect(() => {
     if (url || !photoReference) return;
@@ -244,11 +244,15 @@ function CandidatePreview({ url, photoReference, alt }: { url?: string; photoRef
     void (async () => {
       try {
         const response = await adminFetch(`/admin/import/place-photo?reference=${encodeURIComponent(photoReference)}&w=480`);
-        if (!response.ok) throw new Error("preview unavailable");
+        if (!response.ok) {
+          // The endpoint now returns Google's own words; showing them beats a shrug.
+          const body = await response.json().catch(() => ({}));
+          throw new Error(String(body?.message || `Preview failed (HTTP ${response.status})`));
+        }
         objectUrl = URL.createObjectURL(await response.blob());
         if (!cancelled) setBlobUrl(objectUrl);
-      } catch {
-        if (!cancelled) setFailed(true);
+      } catch (error) {
+        if (!cancelled) setFailure(error instanceof Error ? error.message : "Preview unavailable");
       }
     })();
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
@@ -257,8 +261,9 @@ function CandidatePreview({ url, photoReference, alt }: { url?: string; photoRef
   const preview = url || blobUrl;
   if (preview) return <img src={preview} alt={alt} className="h-28 w-full object-cover" loading="lazy" />;
   return (
-    <div className="flex h-28 items-center justify-center bg-slate-100 px-3 text-center text-[11px] text-slate-500">
-      {failed ? "Preview unavailable — the reference is still usable" : "Loading preview…"}
+    <div className="flex h-28 flex-col items-center justify-center gap-1 bg-slate-100 px-3 py-2 text-center">
+      <p className="text-[11px] font-bold text-slate-600">{failure ? "Preview failed" : "Loading preview…"}</p>
+      {failure ? <p className="line-clamp-3 text-[10px] leading-4 text-rose-700">{failure}</p> : null}
     </div>
   );
 }

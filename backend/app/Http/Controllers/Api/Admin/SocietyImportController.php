@@ -71,7 +71,11 @@ class SocietyImportController extends Controller
         try {
             $photo = $places->fetchPhotoByReference($reference, (int) $request->integer('w', 720));
         } catch (\Throwable $e) {
-            return response()->json(['message' => 'Google Places photo could not be loaded.'], 404);
+            // Admin-only endpoint: give the operator the actual reason instead of a
+            // generic 404 they can do nothing with.
+            report($e);
+
+            return response()->json(['message' => $e->getMessage()], 404);
         }
 
         return response($photo['body'], 200)

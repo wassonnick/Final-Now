@@ -85,14 +85,31 @@ class GooglePlacesSocietyImageService
             'key' => $apiKey,
         ]);
 
+        // Say what Google actually said. "request failed" told an admin nothing, so a
+        // review queue full of unviewable candidates gave no clue whether the key was
+        // wrong, the API disabled, the quota spent or the reference stale.
         if (!$response->ok()) {
-            throw new \RuntimeException('Google Places photo request failed.');
+            $detail = trim(mb_substr((string) $response->body(), 0, 300));
+            \Illuminate\Support\Facades\Log::warning('Google Places photo request failed', [
+                'status' => $response->status(),
+                'body' => $detail,
+            ]);
+
+            throw new \RuntimeException('Google Places photo request failed (HTTP '.$response->status().')'.($detail !== '' ? ': '.$detail : '.'));
         }
 
         $contentType = (string) ($response->header('Content-Type') ?: 'image/jpeg');
 
         if (!str_starts_with(strtolower($contentType), 'image/')) {
-            throw new \RuntimeException('Google Places did not return an image.');
+            // The legacy endpoint answers a bad key or a disabled API with JSON or HTML
+            // rather than an error status, so this branch is the usual one in practice.
+            $detail = trim(mb_substr((string) $response->body(), 0, 300));
+            \Illuminate\Support\Facades\Log::warning('Google Places returned a non-image', [
+                'content_type' => $contentType,
+                'body' => $detail,
+            ]);
+
+            throw new \RuntimeException('Google Places returned '.$contentType.' instead of an image'.($detail !== '' ? ': '.$detail : '.'));
         }
 
         return [
