@@ -20,6 +20,20 @@ class AiBudgetGuard
     public const UNIT_IMAGE = 3;     // one generated image (gpt-image)
     public const UNIT_SEARCH = 5;    // web-search grounded call (market refresh)
 
+    /**
+     * Who is spending.
+     *
+     * Unattended jobs and a person waiting for a chat reply were sharing one daily pool,
+     * and the jobs run first — the SEO autopilot at 02:00, market refresh at 05:30, social
+     * at 08:30. By the time anyone opens the advisor the pool could already be empty, and
+     * the assistant would answer "resting for a moment to stay within today's limits" for
+     * the rest of the day. Background work now stops short of the cap so there is always
+     * something left for a human.
+     */
+    public const LANE_INTERACTIVE = 'interactive';
+
+    public const LANE_BACKGROUND = 'background';
+
     private function key(): string
     {
         return 'ops:ai-budget:'.now()->toDateString();
@@ -67,9 +81,30 @@ class AiBudgetGuard
         Cache::put($this->limitKey(), now()->toIso8601String(), now()->addMinutes(max(1, $minutes)));
     }
 
-    public function providerLimited(): bool
+    /**
+     * A 12-hour breaker is right for a nightly batch and far too blunt for a person
+     * typing a question: one 429 on an automated job at 2am would otherwise leave the
+     * advisor dead until lunchtime. Background work stays backed off for the full
+     * window; the interactive lane only honours a recent trip, so it self-heals.
+     */
+    public function providerLimited(string $lane = self::LANE_BACKGROUND): bool
     {
-        return Cache::has($this->limitKey());
+        $trippedAt = Cache::get($this->limitKey());
+        if (! $trippedAt) {
+            return false;
+        }
+
+        if ($lane !== self::LANE_INTERACTIVE) {
+            return true;
+        }
+
+        $minutes = max(1, (int) config('services.ops.ai_interactive_limit_minutes', 15));
+
+        try {
+            return \Illuminate\Support\Carbon::parse((string) $trippedAt)->gt(now()->subMinutes($minutes));
+        } catch (\Throwable) {
+            return true;
+        }
     }
 
     public function clearProviderLimit(): void
@@ -87,14 +122,22 @@ class AiBudgetGuard
         return (int) Cache::get($this->key(), 0);
     }
 
-    public function remaining(): int
+    /** Units held back from automation so a person always has some left. */
+    public function reserve(): int
     {
-        return max(0, $this->cap() - $this->used());
+        return max(0, min((int) config('services.ops.ai_interactive_reserve', 40), $this->cap()));
     }
 
-    public function allow(): bool
+    public function remaining(string $lane = self::LANE_BACKGROUND): int
     {
-        return $this->remaining() > 0;
+        $ceiling = $lane === self::LANE_INTERACTIVE ? $this->cap() : $this->cap() - $this->reserve();
+
+        return max(0, $ceiling - $this->used());
+    }
+
+    public function allow(string $lane = self::LANE_BACKGROUND): bool
+    {
+        return $this->remaining($lane) > 0;
     }
 
     public function record(int $calls = 1): void

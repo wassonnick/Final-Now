@@ -41,7 +41,8 @@ class SocietyAssistantService
         if (! $this->isAvailable()) {
             return $this->fallback('The assistant is briefly offline. You can still browse verified societies in search, or request a callback and our team will help.');
         }
-        if ($this->budget->providerLimited() || ! $this->budget->allow()) {
+        // The one lane with a person waiting on the other end.
+        if ($this->budget->providerLimited(AiBudgetGuard::LANE_INTERACTIVE) || ! $this->budget->allow(AiBudgetGuard::LANE_INTERACTIVE)) {
             return $this->fallback('The assistant is resting for a moment to stay within today\'s limits. Please try again shortly, or browse verified societies in search.');
         }
 
@@ -132,7 +133,7 @@ class SocietyAssistantService
         $reply = '';
 
         for ($turn = 0; $turn < self::MAX_TOOL_TURNS; $turn++) {
-            if (! $this->budget->allow()) {
+            if (! $this->budget->allow(AiBudgetGuard::LANE_INTERACTIVE)) {
                 break;
             }
             $this->budget->record();
