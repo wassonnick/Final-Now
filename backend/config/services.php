@@ -38,6 +38,11 @@ return [
     ],
 
     'admin_api_token' => env('ADMIN_API_TOKEN'),
+    // 'auto' tries Places API (New) and falls back to legacy; 'legacy' forces the old
+    // endpoints; 'new' uses v1 only. The legacy Place Photos endpoint began answering
+    // freshly-issued references with an HTML 400 while Search and Details kept working.
+    'google_places_api' => env('GOOGLE_PLACES_API', 'auto'),
+
     'google_places_api_key' => env('GOOGLE_PLACES_API_KEY'),
 
     'openai' => [

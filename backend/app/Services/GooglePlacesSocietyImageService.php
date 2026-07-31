@@ -79,11 +79,26 @@ class GooglePlacesSocietyImageService
             throw new \RuntimeException('A Google Places photo reference is required.');
         }
 
-        $response = Http::timeout(18)->get('https://maps.googleapis.com/maps/api/place/photo', [
-            'maxwidth' => max(400, min($maxWidth, 1600)),
-            'photo_reference' => $photoReference,
-            'key' => $apiKey,
-        ]);
+        $width = max(400, min($maxWidth, 1600));
+
+        // Two identifier shapes are now in circulation: legacy opaque references, and
+        // Places API (New) resource names ("places/X/photos/Y"). They are not
+        // interchangeable — handing a v1 name to the legacy endpoint is exactly the
+        // malformed request Google answers with a generic HTML 400 — so serve each
+        // reference with the API that issued it.
+        $isNewApiName = str_starts_with($photoReference, 'places/');
+
+        $response = $isNewApiName
+            ? Http::timeout(18)->get('https://places.googleapis.com/v1/'.$photoReference.'/media', [
+                'maxWidthPx' => $width,
+                'skipHttpRedirect' => 'false',
+                'key' => $apiKey,
+            ])
+            : Http::timeout(18)->get('https://maps.googleapis.com/maps/api/place/photo', [
+                'maxwidth' => $width,
+                'photo_reference' => $photoReference,
+                'key' => $apiKey,
+            ]);
 
         // Say what Google actually said. "request failed" told an admin nothing, so a
         // review queue full of unviewable candidates gave no clue whether the key was

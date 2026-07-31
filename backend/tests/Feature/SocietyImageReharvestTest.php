@@ -283,6 +283,66 @@ class SocietyImageReharvestTest extends TestCase
         $this->assertNotContains('https://signatureglobal.in/img/gone.jpg', $urls);
     }
 
+    /**
+     * Places API (New) issues its own photo identifiers, and the two generations are not
+     * interchangeable: handing a v1 resource name to the legacy photo endpoint is the
+     * malformed request Google answers with a generic HTML 400. Each reference must be
+     * served by the API that issued it.
+     */
+    public function test_new_api_photo_names_are_served_by_the_v1_media_endpoint(): void
+    {
+        config(['services.google_places_api' => 'new']);
+
+        Http::fake([
+            'places.googleapis.com/v1/places:searchText' => Http::response(['places' => [[
+                'id' => 'place-new',
+                'displayName' => ['text' => 'DLF Privana North'],
+                'formattedAddress' => 'Sector 77, Gurugram, Haryana',
+                'location' => ['latitude' => 28.38, 'longitude' => 76.99],
+                'photos' => [
+                    ['name' => 'places/place-new/photos/AXQ-wide', 'widthPx' => 1600, 'heightPx' => 1000],
+                ],
+            ]]]),
+            'places.googleapis.com/v1/places/*/media*' => Http::response('jpeg-bytes', 200, ['Content-Type' => 'image/jpeg']),
+        ]);
+
+        $resolved = app(\App\Services\Society\Import\PlaceResolverService::class)->resolve('DLF Privana North', 'Sector 77 Gurugram');
+
+        $this->assertTrue($resolved['matched']);
+        $this->assertSame(['places/place-new/photos/AXQ-wide'], $resolved['photo_references']);
+        $this->assertSame(1600, $resolved['photo_meta']['places/place-new/photos/AXQ-wide']['width']);
+
+        $photo = app(\App\Services\GooglePlacesSocietyImageService::class)
+            ->fetchPhotoByReference('places/place-new/photos/AXQ-wide', 640);
+        $this->assertSame('jpeg-bytes', $photo['body']);
+
+        // The legacy endpoint must not have been asked for a v1 name.
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'maps/api/place/photo'));
+    }
+
+    /** An org still on the legacy API keeps working when v1 is not available to it. */
+    public function test_resolution_falls_back_to_legacy_when_the_new_api_refuses(): void
+    {
+        config(['services.google_places_api' => 'auto']);
+
+        Http::fake([
+            'places.googleapis.com/*' => Http::response(['error' => ['message' => 'API not enabled']], 403),
+            'maps.googleapis.com/maps/api/place/findplacefromtext/*' => Http::response(['status' => 'OK', 'candidates' => [['place_id' => 'legacy-id']]]),
+            'maps.googleapis.com/maps/api/place/details/*' => Http::response(['status' => 'OK', 'result' => [
+                'place_id' => 'legacy-id',
+                'name' => 'DLF Magnolias',
+                'geometry' => ['location' => ['lat' => 28.45, 'lng' => 77.09]],
+                'photos' => [['photo_reference' => 'legacy-ref', 'width' => 1600, 'height' => 1000]],
+            ]]),
+        ]);
+
+        $resolved = app(\App\Services\Society\Import\PlaceResolverService::class)->resolve('DLF Magnolias', 'Sector 42 Gurugram');
+
+        $this->assertTrue($resolved['matched']);
+        $this->assertSame('legacy-id', $resolved['place_id']);
+        $this->assertSame(['legacy-ref'], $resolved['photo_references']);
+    }
+
     private function fakePlaces(): void
     {
         Http::fake([

@@ -3,6 +3,7 @@
 namespace App\Services\Society\Import;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Stage 0–1 of the importer: resolve a society to a real Google Place and pull
@@ -33,6 +34,19 @@ class PlaceResolverService
         }
 
         try {
+            // The legacy Place Photos endpoint answers freshly-issued references with a
+            // generic HTML 400 while Search and Details keep working on the same key —
+            // the signature of an endpoint no longer served rather than a bad reference.
+            // The replacement issues its own photo identifiers ("places/X/photos/Y"), so
+            // photos can only come from the new API if the lookup does too.
+            if ($this->preferNewApi()) {
+                $viaNew = $this->resolveViaNewApi($name, $location, $existingPlaceId, $apiKey);
+                if ($viaNew !== null) {
+                    return $viaNew;
+                }
+                // Fall through: an org still on the legacy API must keep working.
+            }
+
             $placeId = $existingPlaceId ?: $this->findPlaceId($name, $location, $apiKey);
             if ($placeId === null) {
                 return ['matched' => false, 'reason' => 'no Google Places match'];
@@ -47,6 +61,109 @@ class PlaceResolverService
         } catch (\Throwable $e) {
             return ['matched' => false, 'reason' => 'place lookup error: '.$e->getMessage()];
         }
+    }
+
+    private function preferNewApi(): bool
+    {
+        return in_array((string) config('services.google_places_api', 'auto'), ['auto', 'new'], true);
+    }
+
+    /**
+     * Places API (New). Returns the same shape as the legacy path, except that photo
+     * references are resource names the v1 media endpoint understands.
+     *
+     * Returns null (rather than throwing) when the new API is unavailable to this
+     * project, so the caller can fall back to legacy.
+     *
+     * @return array<string,mixed>|null
+     */
+    private function resolveViaNewApi(string $name, ?string $location, ?string $existingPlaceId, string $apiKey): ?array
+    {
+        $fields = 'id,displayName,formattedAddress,location,googleMapsUri,websiteUri,rating,userRatingCount,types,addressComponents,photos';
+
+        try {
+            if ($existingPlaceId) {
+                $response = Http::timeout(12)
+                    ->withHeaders(['X-Goog-Api-Key' => $apiKey, 'X-Goog-FieldMask' => $fields])
+                    ->get('https://places.googleapis.com/v1/places/'.urlencode($existingPlaceId));
+                $place = $response->ok() ? (array) $response->json() : null;
+            } else {
+                $response = Http::timeout(12)
+                    ->withHeaders([
+                        'X-Goog-Api-Key' => $apiKey,
+                        'X-Goog-FieldMask' => implode(',', array_map(fn ($f) => 'places.'.$f, explode(',', $fields))),
+                    ])
+                    ->post('https://places.googleapis.com/v1/places:searchText', [
+                        'textQuery' => trim($name.' '.(string) $location),
+                        'maxResultCount' => 1,
+                    ]);
+                $place = $response->ok() ? (((array) $response->json())['places'][0] ?? null) : null;
+            }
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (! $response->ok()) {
+            Log::info('Places API (New) unavailable; falling back to legacy', [
+                'status' => $response->status(),
+                'body' => substr((string) $response->body(), 0, 200),
+            ]);
+
+            return null;
+        }
+
+        return is_array($place) ? $this->shapeNew($place, $name) : ['matched' => false, 'reason' => 'no Google Places match'];
+    }
+
+    /**
+     * @param  array<string,mixed>  $place
+     * @return array<string,mixed>
+     */
+    private function shapeNew(array $place, string $fallbackName): array
+    {
+        $components = collect((array) ($place['addressComponents'] ?? []))
+            ->map(fn ($c) => ['types' => (array) ($c['types'] ?? []), 'long_name' => (string) ($c['longText'] ?? '')])
+            ->all();
+
+        $photos = collect((array) ($place['photos'] ?? []))
+            ->filter(fn ($photo) => is_array($photo) && filled($photo['name'] ?? null))
+            ->take(10)
+            ->values();
+
+        $photoMeta = $photos->mapWithKeys(fn ($photo) => [
+            (string) $photo['name'] => [
+                'width' => (int) ($photo['widthPx'] ?? 0),
+                'height' => (int) ($photo['heightPx'] ?? 0),
+                'attribution' => trim(strip_tags(implode(', ', array_map(
+                    fn ($a) => (string) ($a['displayName'] ?? ''),
+                    (array) ($photo['authorAttributions'] ?? []),
+                )))) ?: null,
+            ],
+        ])->all();
+
+        $formatted = (string) ($place['formattedAddress'] ?? '');
+        $name = (string) ($place['displayName']['text'] ?? $fallbackName);
+
+        return [
+            'matched' => true,
+            'place_id' => (string) ($place['id'] ?? ''),
+            'name' => $name,
+            'formatted_address' => $formatted ?: null,
+            'latitude' => isset($place['location']['latitude']) ? round((float) $place['location']['latitude'], 7) : null,
+            'longitude' => isset($place['location']['longitude']) ? round((float) $place['location']['longitude'], 7) : null,
+            'sector' => $this->parseSector($name, $formatted),
+            'locality' => $this->component($components, ['sublocality_level_1', 'sublocality', 'neighborhood'])
+                ?? $this->component($components, ['administrative_area_level_3']),
+            'city' => $this->component($components, ['locality', 'administrative_area_level_2']),
+            'state' => $this->component($components, ['administrative_area_level_1']),
+            'google_maps_url' => $place['googleMapsUri'] ?? null,
+            'website' => $this->cleanWebsite($place['websiteUri'] ?? null),
+            'rating' => isset($place['rating']) ? (float) $place['rating'] : null,
+            'rating_count' => isset($place['userRatingCount']) ? (int) $place['userRatingCount'] : null,
+            'types' => array_values(array_filter((array) ($place['types'] ?? []))),
+            'photo_references' => $photos->pluck('name')->all(),
+            'photo_meta' => $photoMeta,
+        ];
     }
 
     private function findPlaceId(string $name, ?string $location, string $apiKey): ?string
