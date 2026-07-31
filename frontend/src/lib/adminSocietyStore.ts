@@ -159,6 +159,8 @@ export interface AdminSociety {
   propertiesCount?: number;
   pendingImportImagesCount?: number;
   importedImages?: VerifiedImportImage[];
+  /** Harvested candidates on the society row itself (Google Places refs, builder URLs). */
+  imageCandidates: Array<{ source?: string; url?: string; photo_reference?: string; credit?: string }>;
   fieldSources: Record<string, any>;
   officialSourceLastCheckedAt: string;
 }
@@ -294,6 +296,7 @@ export function createEmptyAdminSociety(): AdminSociety {
     coverImage: '',
     galleryImages: [],
     approvedGalleryImageUrls: [],
+    imageCandidates: [],
     imageReferenceUrl: '',
     imageUrl: '',
     imageStatus: 'placeholder',
@@ -422,6 +425,7 @@ export function mapApiSociety(data: any): AdminSociety {
     propertiesCount: Number(data?.properties_count || data?.properties?.length || 0),
     pendingImportImagesCount: Number(data?.pending_import_images_count || 0),
     importedImages: Array.isArray(data?.verified_import_images) ? data.verified_import_images : [],
+    imageCandidates: Array.isArray(data?.image_candidates) ? data.image_candidates : [],
     fieldSources: data?.field_sources && typeof data.field_sources === 'object' ? data.field_sources : {},
     officialSourceLastCheckedAt: data?.official_source_last_checked_at || '',
   };

@@ -228,6 +228,41 @@ function extractGoogleMapsCoordinates(url: string) {
 }
 
 
+
+/**
+ * The Google Places proxy needs the admin token, so a plain <img src> gets a 401.
+ * Fetch it through adminFetch and hand the blob to the tag instead.
+ */
+function CandidatePreview({ url, photoReference, alt }: { url?: string; photoReference?: string; alt: string }) {
+  const [blobUrl, setBlobUrl] = useState("");
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (url || !photoReference) return;
+    let cancelled = false;
+    let objectUrl = "";
+    void (async () => {
+      try {
+        const response = await adminFetch(`/admin/import/place-photo?reference=${encodeURIComponent(photoReference)}&w=480`);
+        if (!response.ok) throw new Error("preview unavailable");
+        objectUrl = URL.createObjectURL(await response.blob());
+        if (!cancelled) setBlobUrl(objectUrl);
+      } catch {
+        if (!cancelled) setFailed(true);
+      }
+    })();
+    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [url, photoReference]);
+
+  const preview = url || blobUrl;
+  if (preview) return <img src={preview} alt={alt} className="h-28 w-full object-cover" loading="lazy" />;
+  return (
+    <div className="flex h-28 items-center justify-center bg-slate-100 px-3 text-center text-[11px] text-slate-500">
+      {failed ? "Preview unavailable — the reference is still usable" : "Loading preview…"}
+    </div>
+  );
+}
+
 export function AdminSocietyFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -499,6 +534,42 @@ export function AdminSocietyFormPage() {
     setSociety((current) => ({
       ...current,
       galleryImages: current.galleryImages.filter((item) => item !== image),
+    }));
+    setSaved(false);
+  };
+
+  type Candidate = { source?: string; url?: string; photo_reference?: string; credit?: string };
+
+  // Approving a harvested candidate only fills the form — nothing is public until Save,
+  // and a Google reference is stored as an attributed reference, never as an owned upload.
+  const useCandidateAsCover = (candidate: Candidate) => {
+    setSociety((current) => ({
+      ...current,
+      coverImage: candidate.url || "",
+      imageUrl: candidate.url || current.imageUrl,
+      imagePhotoReference: candidate.photo_reference || "",
+      imageCredit: candidate.credit || current.imageCredit,
+      imageApprovedByAdmin: true,
+      // Record where it came from, not a generic "approved" — provenance is the point.
+      imageStatus: candidate.photo_reference ? "google_places_reference_found" : "official_reference_found",
+    }));
+    setSaved(false);
+  };
+
+  const addCandidateToGallery = (candidate: Candidate) => {
+    if (!candidate.url) return;
+    setSociety((current) => (
+      current.galleryImages.includes(candidate.url as string)
+        ? current
+        : { ...current, galleryImages: [...current.galleryImages, candidate.url as string].slice(0, 10) }
+    ));
+    setSaved(false);
+  };
+
+  const removeCandidate = (index: number) => {
+    setSociety((current) => ({
+      ...current,
+      imageCandidates: current.imageCandidates.filter((_, position) => position !== index),
     }));
     setSaved(false);
   };
@@ -1773,6 +1844,43 @@ export function AdminSocietyFormPage() {
                 ) : null}
               </div>
             </section>
+
+            {/* Harvested candidates live on the society row itself (image_candidates) and were
+                never shown here — so a society imported outside the verified importer looked
+                as though it had no images at all, with no way to pick one. */}
+            {society.imageCandidates?.length ? (
+              <section className="rounded-[20px] border border-emerald-100 bg-emerald-50 p-4 shadow-sm md:p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-bold tracking-tight text-slate-950">Harvested image candidates</h2>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">Found during import. Pick one as the cover or add it to the gallery — nothing here is public until you save.</p>
+                  </div>
+                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-emerald-700">{society.imageCandidates.length} found</span>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  {society.imageCandidates.map((candidate, index) => {
+                    const isGoogle = (candidate.source || "") === "google_places";
+                    return (
+                      <div key={`${candidate.url || candidate.photo_reference || index}`} className="overflow-hidden rounded-xl border border-emerald-200 bg-white">
+                        <CandidatePreview url={candidate.url} photoReference={candidate.photo_reference} alt={candidate.credit || "Harvested candidate"} />
+                        <div className="p-2.5">
+                          <p className="truncate text-[11px] font-bold text-slate-700">{isGoogle ? "Google Places" : (candidate.source || "source").replace(/_/g, " ")}</p>
+                          <p className="mt-0.5 truncate text-[10px] text-slate-500">{candidate.credit || (candidate.url ? new URL(candidate.url, "https://x.test").hostname : "photo reference")}</p>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            <button type="button" className="rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-black text-white hover:bg-emerald-700" onClick={() => useCandidateAsCover(candidate)}>Use as cover</button>
+                            {candidate.url ? (
+                              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-black text-emerald-700 hover:border-emerald-500" onClick={() => addCandidateToGallery(candidate)}>Add to gallery</button>
+                            ) : null}
+                            <button type="button" className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 hover:border-slate-500" onClick={() => removeCandidate(index)}>Remove</button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-[11px] font-semibold text-emerald-800">Google Places images stay attributed reference/display only — approval never claims ownership.</p>
+              </section>
+            ) : null}
 
             {society.importedImages?.length ? <section className="rounded-[20px] border border-blue-100 bg-blue-50 p-4 shadow-sm md:p-5">
               <div className="flex items-start justify-between gap-3"><div><h2 className="text-base font-bold tracking-tight text-slate-950">Imported Image Candidates</h2><p className="mt-1 text-xs leading-5 text-slate-600">Review Google photo references and builder image URLs. Nothing is approved automatically.</p></div><span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-blue-700">{society.importedImages.length} candidates</span></div>

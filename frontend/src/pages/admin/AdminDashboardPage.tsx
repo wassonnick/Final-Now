@@ -557,11 +557,23 @@ export function AdminDashboardPage() {
     }
   };
 
+  const [suggestionError, setSuggestionError] = useState("");
+
   const resolveSuggestion = async (id: number, action: "apply" | "dismiss") => {
     setSuggestionBusyId(id);
+    setSuggestionError("");
     try {
-      await adminFetch(`/admin/ops/suggestions/${id}/${action}`, { method: "POST" });
+      // The response was never read, so a rejection (422) was indistinguishable from
+      // success — the button simply appeared to do nothing.
+      const response = await adminFetch(`/admin/ops/suggestions/${id}/${action}`, { method: "POST" });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setSuggestionError(String(body?.message || `Could not ${action} that suggestion.`));
+        return;
+      }
       await loadInbox();
+    } catch (error) {
+      setSuggestionError(error instanceof Error ? error.message : "Something went wrong.");
     } finally {
       setSuggestionBusyId(null);
     }
@@ -828,9 +840,9 @@ export function AdminDashboardPage() {
     ? [
         { value: inbox.live.leads.breaches.count, label: "Lead SLA breaches", sub: `${inbox.live.leads.escalations_over_72h.count} over 72h`, href: "/admin/leads?view=overdue", bad: inbox.live.leads.breaches.count > 0 },
         { value: leadSummary.overdue, label: "Overdue follow-ups", sub: "past due", href: "/admin/leads?view=overdue", bad: leadSummary.overdue > 0 },
-        { value: inbox.live.societies.missing_cover.count, label: "Missing cover photo", sub: "published societies", href: "/admin/societies", bad: inbox.live.societies.missing_cover.count > 0 },
+        { value: inbox.live.societies.missing_cover.count, label: "Missing cover photo", sub: "published societies", href: "/admin/societies?need=cover", bad: inbox.live.societies.missing_cover.count > 0 },
         { value: inbox.live.societies.missing_published_seo.count, label: "No published SEO", sub: "content backlog", href: "/admin/seo-autopilot", bad: inbox.live.societies.missing_published_seo.count > 0 },
-        { value: inbox.live.societies.low_confidence.count, label: "Low confidence", sub: "below 60% verified", href: "/admin/societies", bad: inbox.live.societies.low_confidence.count > 0 },
+        { value: inbox.live.societies.low_confidence.count, label: "Low confidence", sub: "below 60% verified", href: "/admin/societies?need=confidence", bad: inbox.live.societies.low_confidence.count > 0 },
         { value: inbox.live.site_visits.reminders_due, label: "Visit reminders due", sub: `${inbox.live.site_visits.upcoming_48h} in 48h`, href: "/admin/site-visits", bad: inbox.live.site_visits.reminders_due > 0 },
       ]
     : [];
@@ -932,6 +944,7 @@ export function AdminDashboardPage() {
             {suggestions.length > 0 ? (
               <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-3">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Automation suggestions awaiting your decision</p>
+                {suggestionError ? <p className="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700">{suggestionError}</p> : null}
                 <div className="mt-2 space-y-2">
                   {suggestions.slice(0, 4).map((suggestion) => (
                     <div key={suggestion.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-sm">
@@ -939,7 +952,13 @@ export function AdminDashboardPage() {
                         {suggestion.society_name ? `${suggestion.society_name} · ` : ""}{suggestion.kind === "market_refresh" ? "Market data refresh" : suggestion.kind}
                       </span>
                       <span className="flex gap-2">
-                        <Button size="sm" className="h-8 rounded-full bg-blue-600 text-xs hover:bg-blue-700" disabled={suggestionBusyId === suggestion.id} onClick={() => void resolveSuggestion(suggestion.id, "apply")}>Apply</Button>
+                        {suggestion.kind === "market_refresh" ? (
+                          <Button size="sm" className="h-8 rounded-full bg-blue-600 text-xs hover:bg-blue-700" disabled={suggestionBusyId === suggestion.id} onClick={() => void resolveSuggestion(suggestion.id, "apply")}>Apply</Button>
+                        ) : (
+                          // Cover photos are approved in the image workflow, not here, so
+                          // offer the trip there instead of a button that always fails.
+                          <Link to={suggestion.society_id ? `/admin/societies/${suggestion.society_id}/edit` : "/admin/societies?need=cover"} className="inline-flex h-8 items-center rounded-full bg-blue-600 px-3 text-xs font-bold text-white hover:bg-blue-700">Review image</Link>
+                        )}
                         <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" disabled={suggestionBusyId === suggestion.id} onClick={() => void resolveSuggestion(suggestion.id, "dismiss")}>Dismiss</Button>
                       </span>
                     </div>

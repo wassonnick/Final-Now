@@ -1,6 +1,6 @@
 // C82 admin societies list polish: compact metrics, filters and society cards without logic changes.
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Building2,
   Edit3,
@@ -138,6 +138,10 @@ export function AdminSocietiesPage() {
   const ncrEnabled = isNcrMulticityEnabled();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All");
+  // The dashboard's "needs attention" tiles link here with ?need=..., so clicking a count
+  // lands on exactly those societies instead of the full list of 326.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const need = searchParams.get("need") || "";
   const [sortBy, setSortBy] = useState("score");
   const [ncrFilter, setNcrFilter] = useState<NcrAdminLocationFilterValue>({ cityId: "", zoneId: "", localityId: "" });
   const [societies, setSocieties] = useState<AdminSociety[]>([]);
@@ -245,7 +249,17 @@ export function AdminSocietiesPage() {
       const matchesNcrZone = !ncrEnabled || !ncrFilter.zoneId || Number(society.zoneId) === Number(ncrFilter.zoneId);
       const matchesNcrLocality = !ncrEnabled || !ncrFilter.localityId || society.localityId === ncrFilter.localityId;
 
-      return matchesQuery && matchesFilter && matchesNcrCity && matchesNcrZone && matchesNcrLocality;
+      const isPublic = society.isPublished || society.status === "Verified" || society.status === "Premium";
+      const hasCover = Boolean(
+        String(society.coverImage || "").trim()
+        || String(society.imageUrl || "").trim()
+        || String(society.imagePhotoReference || "").trim(),
+      );
+      const matchesNeed = need === ""
+        || (need === "cover" && isPublic && ! hasCover)
+        || (need === "confidence" && Number(society.sourceConfidenceScore || 0) < 60);
+
+      return matchesQuery && matchesFilter && matchesNcrCity && matchesNcrZone && matchesNcrLocality && matchesNeed;
     });
 
     const sorted = [...rows];
@@ -254,7 +268,7 @@ export function AdminSocietiesPage() {
     else if (sortBy === "newest") sorted.sort((a, b) => Number(b.id) - Number(a.id));
     else sorted.sort((a, b) => Number(b.score || 0) - Number(a.score || 0)); // default: score high→low
     return sorted;
-  }, [societies, query, filter, sortBy, ncrEnabled, ncrFilter]);
+  }, [societies, query, filter, sortBy, ncrEnabled, ncrFilter, need]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { All: societies.length };
@@ -523,6 +537,24 @@ export function AdminSocietiesPage() {
               </Button>
             </div>
           </div>
+
+          {/* Arrived from a dashboard tile: say which subset this is and offer a way out,
+              otherwise a filtered list is indistinguishable from a broken one. */}
+          {need ? (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-sm font-bold text-amber-900">
+                Showing {filteredSocieties.length} societ{filteredSocieties.length === 1 ? "y" : "ies"}{" "}
+                {need === "cover" ? "published without an approved cover photo" : "with source confidence below 60%"}.
+              </p>
+              <button
+                type="button"
+                className="rounded-full border border-amber-300 bg-white px-3 py-1.5 text-xs font-black text-amber-800 hover:border-amber-500"
+                onClick={() => { searchParams.delete("need"); setSearchParams(searchParams, { replace: true }); }}
+              >
+                Show all societies
+              </button>
+            </div>
+          ) : null}
 
           {/* Status tabs with live counts */}
           <div className="mt-4 flex flex-wrap gap-2">
