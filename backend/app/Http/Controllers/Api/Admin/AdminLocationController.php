@@ -385,8 +385,8 @@ class AdminLocationController extends Controller
     {
         return City::query()
             ->where('is_active', true)
-            ->whereIn('slug', ['gurgaon', 'delhi', 'noida', 'greater-noida', 'faridabad'])
-            ->orderByRaw("CASE slug WHEN 'gurgaon' THEN 1 WHEN 'delhi' THEN 2 WHEN 'noida' THEN 3 WHEN 'greater-noida' THEN 4 WHEN 'faridabad' THEN 5 ELSE 99 END")
+            ->whereIn('slug', ['gurgaon', 'delhi', 'noida', 'greater-noida', 'faridabad', 'ghaziabad'])
+            ->orderByRaw("CASE slug WHEN 'gurgaon' THEN 1 WHEN 'delhi' THEN 2 WHEN 'noida' THEN 3 WHEN 'greater-noida' THEN 4 WHEN 'faridabad' THEN 5 WHEN 'ghaziabad' THEN 6 ELSE 99 END")
             ->get();
     }
 
