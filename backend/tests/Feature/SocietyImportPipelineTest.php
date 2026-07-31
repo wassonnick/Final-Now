@@ -37,7 +37,7 @@ class SocietyImportPipelineTest extends TestCase
                     'formatted_address' => 'Sector 42, Golf Course Road, Gurugram, Haryana 122002, India',
                     'geometry' => ['location' => ['lat' => 28.4421, 'lng' => 77.1025]],
                     'url' => 'https://maps.google.com/?cid=99',
-                    'website' => 'https://builder.example.com',
+                    'website' => 'https://dlf.com',
                     'rating' => 4.5,
                     'user_ratings_total' => 820,
                     'photos' => [['photo_reference' => 'ref-1'], ['photo_reference' => 'ref-2']],
@@ -66,14 +66,14 @@ class SocietyImportPipelineTest extends TestCase
                     'rent_range' => '₹2,50,000 - ₹4,00,000',
                     'buy_range' => '₹12 Cr - ₹20 Cr',
                     'rental_yield' => '3.2%',
-                    'official_project_url' => 'https://builder.example.com/magnolias',
+                    'official_project_url' => 'https://dlf.com/magnolias',
                     'meta_title' => 'DLF Magnolias Gurgaon',
                     'meta_description' => 'Grounded project profile for review.',
                     'source_confidence_score' => 82,
                 ])]]]]],
             ]),
-            'builder.example.com/*' => Http::response(
-                '<html><head><meta property="og:image" content="https://builder.example.com/hero.jpg"></head><body><img src="/img/tower.jpg"><img src="logo.png"></body></html>',
+            'dlf.com/*' => Http::response(
+                '<html><head><meta property="og:image" content="https://dlf.com/hero.jpg"></head><body><img src="/img/tower.jpg"><img src="logo.png"></body></html>',
                 200,
                 ['Content-Type' => 'text/html']
             ),

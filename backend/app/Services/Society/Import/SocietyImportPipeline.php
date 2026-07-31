@@ -132,6 +132,7 @@ class SocietyImportPipeline
         if ($includeImages) {
             $candidates = $this->images->harvest([
                 'name' => $name,
+                'builder' => $attr['builder'] ?? null,
                 'urls' => [$attr['official_project_url'] ?? null, $attr['official_developer_url'] ?? null, $place['website'] ?? null, $url ?: null],
                 'photo_references' => $place['photo_references'] ?? [],
                 'photo_meta' => $place['photo_meta'] ?? [],

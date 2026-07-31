@@ -240,6 +240,9 @@ class SocietyImportController extends Controller
 
                 $candidates = $harvest->harvest([
                     'name' => $name,
+                    'builder' => $payload['builder'] ?? null,
+                    // Without these the official-site branch never runs on this path.
+                    'urls' => [$place['website'] ?? null, $row['official_project_url'] ?? null, $row['website'] ?? null],
                     'photo_references' => $place['photo_references'] ?? [],
                     'photo_meta' => $place['photo_meta'] ?? [],
                     'place_id' => $place['place_id'] ?? '',

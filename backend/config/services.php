@@ -186,6 +186,11 @@ return [
         // and config-spanning price ranges more reliably than Haiku. Low volume (<=66/day)
         // keeps the cost negligible.
         'market_model' => env('ANTHROPIC_MARKET_MODEL', 'claude-sonnet-4-6'),
+        // Vision screen for harvested images: rejects broker posters with phone numbers,
+        // photos of people, floor plans and screenshots. Haiku on a 640px image, cached
+        // per candidate, so a full re-harvest of the catalogue stays inexpensive.
+        'image_screen_enabled' => (bool) env('IMAGE_SCREEN_ENABLED', true),
+        'image_screen_model' => env('IMAGE_SCREEN_MODEL', 'claude-haiku-4-5'),
         // Conversational assistant model. Haiku is fast and cheap for chat and handles the
         // society-search tool well; bump to a stronger model via env if you want deeper reasoning.
         'assistant_model' => env('ANTHROPIC_ASSISTANT_MODEL', 'claude-haiku-4-5'),

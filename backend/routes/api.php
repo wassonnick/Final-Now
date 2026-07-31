@@ -233,6 +233,13 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/import/societies/bulk-re-enrich', [SocietyImportController::class, 'bulkReEnrich']);
     Route::patch('/import/societies/{society}/image', [SocietyImportController::class, 'imageDecision']);
     Route::post('/import/societies/{society}/image-candidates', [SocietyImportController::class, 'imageCandidateDecision']);
+
+    // Re-harvest images for societies that were imported before the current ranking,
+    // official-domain and vision-screen rules existed.
+    Route::post('/societies/{society}/reharvest-images', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'single']);
+    Route::post('/image-reharvest/runs', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'bulk']);
+    Route::get('/image-reharvest/runs', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'runs']);
+    Route::get('/image-reharvest/runs/{run}', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'run']);
     Route::post('/import/societies/{society}/re-enrich', [SocietyImportController::class, 'reEnrich']);
     Route::post('/import/societies/{society}/market-refresh', [SocietyImportController::class, 'marketRefresh']);
     Route::post('/import/societies/{society}/market-override', [SocietyImportController::class, 'marketOverride']);

@@ -160,7 +160,7 @@ export interface AdminSociety {
   pendingImportImagesCount?: number;
   importedImages?: VerifiedImportImage[];
   /** Harvested candidates on the society row itself (Google Places refs, builder URLs). */
-  imageCandidates: Array<{ source?: string; url?: string; photo_reference?: string; credit?: string }>;
+  imageCandidates: Array<{ source?: string; url?: string; photo_reference?: string; credit?: string; screen?: { verdict?: string; reasons?: string[]; note?: string | null } }>;
   fieldSources: Record<string, any>;
   officialSourceLastCheckedAt: string;
 }

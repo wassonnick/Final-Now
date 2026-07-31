@@ -27,6 +27,7 @@ import { NcrLocationSelector } from "@/components/admin/NcrLocationSelector";
 import { SocietySeoStudio } from "@/components/admin/SocietySeoStudio";
 import { adminFetch, uploadAdminImage } from "@/lib/adminApi";
 import { googlePlacesSocietyPhotoUrl, societyPlaceholderImage } from "@/lib/societyImages";
+import { reharvestSociety, screenReasonLabel } from "@/lib/imageReharvestApi";
 import {
   createEmptyAdminSociety,
   describeBrochureUpdate,
@@ -276,6 +277,7 @@ export function AdminSocietyFormPage() {
   const [society, setSociety] = useState<AdminSociety>(() => createEmptyAdminSociety());
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
+  const [reharvesting, setReharvesting] = useState(false);
   const [saveMode, setSaveMode] = useState<"draft" | "publish" | null>(null);
   const [enriching, setEnriching] = useState(false);
   const [reEnriching, setReEnriching] = useState(false);
@@ -638,6 +640,41 @@ export function AdminSocietyFormPage() {
     } catch (err) {
       console.error(err);
       setError(friendlyFetchError(err, "Unable to fetch Google Places image reference."));
+    }
+  };
+
+  /**
+   * Re-runs the whole discovery chain for this one society: a fresh place lookup
+   * (Google photo references expire, which is why a society can read "3 found" and
+   * show nothing), the official-domain check, resolution ranking, then the screen.
+   */
+  const reharvestImages = async () => {
+    const societyId = Number(society.id || 0);
+
+    if (!societyId) {
+      setError("Save the society first before re-harvesting images.");
+      return;
+    }
+
+    setError(null);
+    setReharvesting(true);
+    setMessage("Re-harvesting images...");
+
+    try {
+      const result = await reharvestSociety(societyId, { screen: true, republish: true });
+      const fresh = await fetchAdminSociety(societyId);
+
+      setSociety((current) => ({ ...current, imageCandidates: fresh?.imageCandidates ?? current.imageCandidates }));
+      setMessage(
+        `${result.note} ${result.after} candidate(s) on file` +
+          (result.rejected > 0 ? `, ${result.rejected} rejected by the screen.` : "."),
+      );
+      setSaved(false);
+    } catch (err) {
+      console.error(err);
+      setError(friendlyFetchError(err, "Unable to re-harvest images for this society."));
+    } finally {
+      setReharvesting(false);
     }
   };
 
@@ -1850,6 +1887,29 @@ export function AdminSocietyFormPage() {
               </div>
             </section>
 
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-bold tracking-tight text-slate-950">Re-harvest images</h2>
+                  <p className="mt-1 max-w-xl text-xs leading-5 text-slate-600">
+                    Looks the society up on Google again, re-reads the official developer site, ranks what it finds by
+                    resolution, and screens out broker posters, phone numbers, photos of people, floor plans and
+                    screenshots. Use this when the gallery is empty or the pictures are wrong — Google photo references
+                    expire, which is why a society can say &ldquo;candidates found&rdquo; and still show nothing.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => void reharvestImages()}
+                  disabled={reharvesting || !society.id}
+                >
+                  {reharvesting ? "Re-harvesting..." : "Re-harvest images"}
+                </Button>
+              </div>
+            </section>
+
             {/* Harvested candidates live on the society row itself (image_candidates) and were
                 never shown here — so a society imported outside the verified importer looked
                 as though it had no images at all, with no way to pick one. */}
@@ -1871,6 +1931,13 @@ export function AdminSocietyFormPage() {
                         <div className="p-2.5">
                           <p className="truncate text-[11px] font-bold text-slate-700">{isGoogle ? "Google Places" : (candidate.source || "source").replace(/_/g, " ")}</p>
                           <p className="mt-0.5 truncate text-[10px] text-slate-500">{candidate.credit || (candidate.url ? new URL(candidate.url, "https://x.test").hostname : "photo reference")}</p>
+                          {candidate.screen?.verdict === "rejected" ? (
+                            <p className="mt-1 text-[10px] font-bold leading-4 text-red-700">
+                              Screened out: {(candidate.screen.reasons || []).map(screenReasonLabel).join(", ") || "unsuitable"}
+                            </p>
+                          ) : candidate.screen?.verdict === "ok" ? (
+                            <p className="mt-1 text-[10px] font-bold text-emerald-700">Passed the image screen</p>
+                          ) : null}
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             <button type="button" className="rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-black text-white hover:bg-emerald-700" onClick={() => useCandidateAsCover(candidate)}>Use as cover</button>
                             {candidate.url ? (

@@ -18,6 +18,10 @@ use Illuminate\Support\Facades\Http;
  */
 class SocietyImageHarvestService
 {
+    public function __construct(private readonly OfficialSourceValidator $official)
+    {
+    }
+
     private const MAX_CANDIDATES = 12;
     private const PER_URL_LIMIT = 8;
 
@@ -25,16 +29,27 @@ class SocietyImageHarvestService
     private const MIN_USABLE_WIDTH = 640;
 
     /**
-     * @param  array{name?:string, urls?:array<int,?string>, photo_references?:array<int,string>, photo_meta?:array<string,array{width?:int,height?:int,attribution?:?string}>, place_id?:string}  $ctx
+     * @param  array{name?:string, builder?:?string, urls?:array<int,?string>, photo_references?:array<int,string>, photo_meta?:array<string,array{width?:int,height?:int,attribution?:?string}>, place_id?:string}  $ctx
      * @return array<int,array<string,mixed>>
      */
     public function harvest(array $ctx): array
     {
         $candidates = [];
+        $builder = $ctx['builder'] ?? null;
+        $societyName = $ctx['name'] ?? null;
 
+        // The developer's own site beats a crowd-sourced map every time: those are
+        // marketing photographs of the right building. But only when the domain really
+        // belongs to the developer — an aggregator microsite carrying the project name
+        // is a worse source than Google Places, because it looks authoritative.
         foreach (array_unique(array_filter((array) ($ctx['urls'] ?? []))) as $url) {
+            if (! $this->official->isOfficial((string) $url, $builder, $societyName)) {
+                continue;
+            }
+
             foreach ($this->fromUrl((string) $url) as $candidate) {
-                $candidates[] = $candidate;
+                // Source name is unchanged for existing consumers; the verified flag is the new signal.
+                $candidates[] = array_merge($candidate, ['official_domain' => true]);
             }
         }
 
