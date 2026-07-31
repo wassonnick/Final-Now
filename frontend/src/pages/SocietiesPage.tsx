@@ -75,13 +75,31 @@ export function SocietiesPage() {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/societies`);
-        if (!response.ok) throw new Error('Unable to fetch societies');
+        // Walk every page. A bare /societies call returns the API's default page —
+        // 24 rows — so this listing claimed "24 societies live" against 316 published,
+        // on the page whose entire job is showing the catalogue.
+        const collected: Society[] = [];
+        let lastPage = 1;
 
-        const json: ApiResponse = await response.json();
+        for (let page = 1; page <= 25; page += 1) {
+          const response = await fetch(`${API_BASE_URL}/societies?per_page=200&page=${page}`);
+          if (!response.ok) {
+            if (page === 1) throw new Error('Unable to fetch societies');
+            break; // keep what we already have rather than losing the whole list
+          }
+
+          const json: ApiResponse = await response.json();
+          const batch = extractSocieties(json);
+          collected.push(...batch);
+
+          const box: any = json?.data && !Array.isArray(json.data) ? json.data : json;
+          const parsed = Number(box?.last_page);
+          if (page === 1 && Number.isFinite(parsed) && parsed > 0) lastPage = parsed;
+          if (batch.length === 0 || page >= lastPage) break;
+        }
 
         if (mounted) {
-          setSocieties(extractSocieties(json));
+          setSocieties(collected);
           setError(null);
         }
       } catch {
