@@ -390,11 +390,20 @@ class AdminLocationController extends Controller
             ->get();
     }
 
+    /**
+     * The spellings each city actually arrives as. Google Places, RERA and spreadsheets
+     * disagree, and a city text with no alias here never links — the row then drops out
+     * of every city filter while still looking correct in the admin list.
+     */
     private function cityTextAliases(City $city): array
     {
-        return $city->slug === 'gurgaon'
-            ? ['Gurgaon', 'Gurugram']
-            : [$city->name];
+        $aliases = [
+            'gurgaon' => ['Gurgaon', 'Gurugram'],
+            'delhi' => ['Delhi', 'New Delhi'],
+            'greater-noida' => ['Greater Noida', 'Greater Noida West', 'Noida Extension'],
+        ];
+
+        return $aliases[$city->slug] ?? [$city->name];
     }
 
     private function verifiedImporterAudit(): array
