@@ -98,7 +98,10 @@ class SocietySeoRevoiceService
         try {
             $result = $this->ai->generate($society, 'rewrite in the warmer SocietyFlats brand voice, same facts', $existing);
         } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
-            if (in_array((int) ($e->status ?? 0), [402, 429], true)) {
+            if (AiBudgetGuard::isProviderLimit([
+                '_ai_error_status' => (int) ($e->status ?? 0),
+                '_ai_error' => $e->getMessage(),
+            ])) {
                 throw new AiProviderLimitException('SEO re-voice hit provider limit: '.$e->getMessage(), 0, $e);
             }
             throw $e;

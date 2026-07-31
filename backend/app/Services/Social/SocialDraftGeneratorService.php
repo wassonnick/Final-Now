@@ -2,6 +2,8 @@
 
 namespace App\Services\Social;
 
+use App\Services\Ops\AiBudgetGuard;
+
 use App\Models\SocialPost;
 use App\Services\Ops\AiSpendTracker;
 use Illuminate\Support\Facades\Http;
@@ -91,7 +93,10 @@ class SocialDraftGeneratorService
                 }
             } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
                 $this->spendTracker->recordFailure('anthropic', 'social_drafts', 'generate_posts', (string) config('services.claude.social_model'), $e);
-                if (in_array((int) ($e->status ?? 0), [402, 429], true)) {
+                if (AiBudgetGuard::isProviderLimit([
+                    '_ai_error_status' => (int) ($e->status ?? 0),
+                    '_ai_error' => $e->getMessage(),
+                ])) {
                     $this->budget->tripProviderLimit();
                 }
                 report($e);

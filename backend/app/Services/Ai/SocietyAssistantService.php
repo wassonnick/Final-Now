@@ -157,7 +157,14 @@ class SocietyAssistantService
                     'subject_id' => $conversationId,
                     'metadata' => ['turn' => $turn + 1],
                 ]);
-                if (in_array((int) ($e->status ?? 0), [402, 429], true)) {
+                // Anthropic answers a spent credit balance with HTTP 400, not 402/429,
+                // so a status-only test never recognised the one outage that matters
+                // most: the breaker stayed open and every later chat fired another
+                // doomed call, each one still charged against the daily unit counter.
+                if (AiBudgetGuard::isProviderLimit([
+                    '_ai_error_status' => (int) ($e->status ?? 0),
+                    '_ai_error' => $e->getMessage(),
+                ])) {
                     throw new AiProviderLimitException('Assistant hit provider limit: '.$e->getMessage(), 0, $e);
                 }
                 throw $e;
