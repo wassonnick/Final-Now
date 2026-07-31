@@ -26,7 +26,7 @@ class CompleteImportedSocietyDraft implements ShouldQueue
 
     // $bypassBudget: admin-initiated sweeps ("Complete all drafts now") pass true so the daily
     // cap doesn't stop an explicit request; the provider circuit-breaker is always respected.
-    public function __construct(public readonly int $societyId, public readonly bool $bypassBudget = false)
+    public function __construct(public readonly int $societyId, public readonly bool $bypassBudget = false, public readonly bool $publish = true)
     {
     }
 
@@ -41,6 +41,6 @@ class CompleteImportedSocietyDraft implements ShouldQueue
             return;
         }
 
-        $completion->complete($society, true, ! $this->bypassBudget);
+        $completion->complete($society, true, ! $this->bypassBudget, $this->publish);
     }
 }

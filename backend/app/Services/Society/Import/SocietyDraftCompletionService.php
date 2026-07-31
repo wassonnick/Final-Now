@@ -33,7 +33,13 @@ class SocietyDraftCompletionService
      *                        circuit-breaker (a real billing/quota failure) is always respected.
      * @return array{society_id:int,name:string,published:bool,actions:array<int,string>,missing:array<int,string>,blocked_by:array<int,string>}
      */
-    public function complete(Society $society, bool $allowReEnrich = true, bool $gated = true): array
+    /**
+     * $publish=false runs the whole pipeline — enrichment, cover approval, SEO — but leaves
+     * the society as a draft. That is the only way to exercise an import end to end without
+     * the result appearing on the live site, which matters for a new city before its
+     * inventory has been checked.
+     */
+    public function complete(Society $society, bool $allowReEnrich = true, bool $gated = true, bool $publish = true): array
     {
         // Serialize completion per society. The auto-dispatched import job and a manual
         // 'Complete draft now' / sweep can otherwise run at the same instant, both see empty
@@ -44,14 +50,14 @@ class SocietyDraftCompletionService
         }
 
         try {
-            return $this->runCompletion($society, $allowReEnrich, $gated);
+            return $this->runCompletion($society, $allowReEnrich, $gated, $publish);
         } finally {
             $lock->release();
         }
     }
 
     /** @return array{society_id:int,name:string,published:bool,actions:array<int,string>,missing:array<int,string>,blocked_by:array<int,string>} */
-    private function runCompletion(Society $society, bool $allowReEnrich, bool $gated): array
+    private function runCompletion(Society $society, bool $allowReEnrich, bool $gated, bool $publish = true): array
     {
         $actions = [];
         $blocked = [];
@@ -117,7 +123,10 @@ class SocietyDraftCompletionService
 
         // 4. Publish only when every completeness gate passes.
         $missing = $this->missing($society->fresh());
-        if ($missing === []) {
+        if ($missing === [] && ! $publish) {
+            $actions[] = 'ready_to_publish_held_as_draft';
+        }
+        if ($missing === [] && $publish) {
             $society->update([
                 'status' => 'Verified',
                 'verification_status' => 'Verified',
@@ -130,7 +139,7 @@ class SocietyDraftCompletionService
         return [
             'society_id' => $society->id,
             'name' => $society->name,
-            'published' => $missing === [],
+            'published' => $missing === [] && $publish,
             'actions' => $actions,
             'missing' => $missing,
             'blocked_by' => $missing === [] ? [] : array_values(array_unique($blocked)),

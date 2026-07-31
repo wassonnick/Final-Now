@@ -69,6 +69,7 @@ class SocietyImportService
             'location' => $payload['location'] ?? null,
             'url' => $payload['url'] ?? null,
             'include_images' => $payload['include_images'] ?? true,
+            'publish' => $payload['publish'] ?? true,
             'seed' => [],
             'source' => $job->source ?: 'Single Import',
             // Single imports are one-off and admin-watched, so pay the latency cost for a real
@@ -181,7 +182,10 @@ class SocietyImportService
         // True one-click import: a queued follow-up finishes the draft (fills remaining
         // gaps, approves a rights-safe cover, generates + publishes SEO) and publishes the
         // society automatically once every completeness gate passes.
-        \App\Jobs\CompleteImportedSocietyDraft::dispatch($society->id);
+        // A draft-only import still runs the full completion pass; it just stops before
+        // flipping is_published, so a new-city trial never lands on the public site.
+        $publish = (bool) ($input['publish'] ?? true);
+        \App\Jobs\CompleteImportedSocietyDraft::dispatch($society->id, false, $publish);
 
         $this->log($job, "Draft created: {$society->name} (ID {$society->id}). ".($pending ? 'AI gap-fill was unavailable — the queued completion pass will retry the soft fields.' : 'Completion queued — SEO + publish follow automatically once every check passes.'));
 

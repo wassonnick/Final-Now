@@ -52,6 +52,48 @@ class SocietyDraftCompletionTest extends TestCase
         $this->assertContains('published', $result['actions']);
     }
 
+    public function test_draft_only_completion_enriches_everything_but_never_publishes(): void
+    {
+        // Trialling a new city: the import must be exercised end to end without the
+        // society ever appearing on the live site.
+        $society = $this->draft([
+            'image_candidates' => [
+                ['source' => 'google_places', 'photo_reference' => 'ref-123', 'credit' => 'Google Places'],
+            ],
+        ]);
+
+        $this->mockSeoAi();
+
+        $result = app(SocietyDraftCompletionService::class)->complete($society, true, true, false);
+
+        // Not live, and it says so rather than looking like a failure.
+        $this->assertFalse($result['published']);
+        $this->assertFalse((bool) $society->fresh()->is_published);
+        $this->assertNotContains('published', $result['actions']);
+        $this->assertContains('ready_to_publish_held_as_draft', $result['actions']);
+        $this->assertSame([], $result['missing'], 'Every gate should still have been satisfied.');
+
+        // The rest of the pipeline really did run — that is the point of the trial.
+        $fresh = $society->fresh();
+        $this->assertTrue((bool) $fresh->image_approved_by_admin);
+        $this->assertSame('published', $fresh->seoContent->status);
+        $this->assertContains('cover_approved', $result['actions']);
+        $this->assertContains('seo_published', $result['actions']);
+    }
+
+    public function test_completion_job_honours_the_draft_only_flag(): void
+    {
+        $society = $this->draft();
+        $this->mockSeoAi();
+
+        (new CompleteImportedSocietyDraft($society->id, true, false))->handle(
+            app(SocietyDraftCompletionService::class),
+            app(\App\Services\Ops\AiBudgetGuard::class),
+        );
+
+        $this->assertFalse((bool) $society->fresh()->is_published);
+    }
+
     public function test_incomplete_draft_stays_in_review_and_lists_missing_gates(): void
     {
         $society = $this->draft(['score' => 0, 'image_candidates' => []]); // no score; placeholder image is allowed

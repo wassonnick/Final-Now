@@ -88,6 +88,9 @@ class SocietyImportController extends Controller
             'location' => ['nullable', 'string', 'max:200'],
             'url' => ['nullable', 'url', 'max:2000'],
             'include_images' => ['nullable', 'boolean'],
+            // Import and enrich, but hold the result as a draft — used to trial a new
+            // city without the society appearing on the live site.
+            'publish' => ['nullable', 'boolean'],
         ]);
 
         $payload = [
@@ -95,6 +98,7 @@ class SocietyImportController extends Controller
             'location' => isset($data['location']) ? trim($data['location']) : null,
             'url' => $data['url'] ?? null,
             'include_images' => $request->boolean('include_images', true),
+            'publish' => $request->boolean('publish', true),
         ];
 
         $job = SocietyImportJob::create([
