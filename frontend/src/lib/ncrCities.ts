@@ -15,11 +15,13 @@ export type NcrCity = {
 
 export const NCR_REGION = "Delhi NCR";
 
+// Ordered the way the market map should read: the live city first, then the two
+// markets actually being verified, then everything still on the roadmap.
 export const NCR_CITIES: NcrCity[] = [
   { slug: "gurgaon", name: "Gurgaon", state: "Haryana", status: "live", blurb: "Verified societies, live now" },
+  { slug: "delhi", name: "Delhi", state: "Delhi", status: "launching", blurb: "Verification underway" },
   { slug: "noida", name: "Noida", state: "Uttar Pradesh", status: "launching", blurb: "Verification underway" },
-  { slug: "greater-noida", name: "Greater Noida", state: "Uttar Pradesh", status: "launching", blurb: "Verification underway" },
-  { slug: "delhi", name: "Delhi", state: "Delhi", status: "planned", blurb: "Coming soon" },
+  { slug: "greater-noida", name: "Greater Noida", state: "Uttar Pradesh", status: "planned", blurb: "Coming soon" },
   { slug: "faridabad", name: "Faridabad", state: "Haryana", status: "planned", blurb: "Coming soon" },
   { slug: "ghaziabad", name: "Ghaziabad", state: "Uttar Pradesh", status: "planned", blurb: "Coming soon" },
 ];
