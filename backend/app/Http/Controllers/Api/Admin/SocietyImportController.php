@@ -241,6 +241,7 @@ class SocietyImportController extends Controller
                 $candidates = $harvest->harvest([
                     'name' => $name,
                     'photo_references' => $place['photo_references'] ?? [],
+                    'photo_meta' => $place['photo_meta'] ?? [],
                     'place_id' => $place['place_id'] ?? '',
                 ]);
 

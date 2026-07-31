@@ -21,8 +21,11 @@ class SocietyImageHarvestService
     private const MAX_CANDIDATES = 12;
     private const PER_URL_LIMIT = 8;
 
+    /** Anything narrower is a thumbnail or a cropped sign, never a usable cover. */
+    private const MIN_USABLE_WIDTH = 640;
+
     /**
-     * @param  array{name?:string, urls?:array<int,?string>, photo_references?:array<int,string>, place_id?:string}  $ctx
+     * @param  array{name?:string, urls?:array<int,?string>, photo_references?:array<int,string>, photo_meta?:array<string,array{width?:int,height?:int,attribution?:?string}>, place_id?:string}  $ctx
      * @return array<int,array<string,mixed>>
      */
     public function harvest(array $ctx): array
@@ -35,8 +38,8 @@ class SocietyImageHarvestService
             }
         }
 
-        foreach (array_slice(array_filter((array) ($ctx['photo_references'] ?? [])), 0, self::PER_URL_LIMIT) as $ref) {
-            $candidates[] = $this->placeCandidate((string) $ref, (string) ($ctx['place_id'] ?? ''));
+        foreach ($this->rankPlacePhotos((array) ($ctx['photo_references'] ?? []), (array) ($ctx['photo_meta'] ?? [])) as $ref) {
+            $candidates[] = $this->placeCandidate((string) $ref, (string) ($ctx['place_id'] ?? ''), (array) (($ctx['photo_meta'] ?? [])[$ref] ?? []));
         }
 
         return $this->finalize($candidates);
@@ -91,14 +94,67 @@ class SocietyImageHarvestService
         return $candidates;
     }
 
-    private function placeCandidate(string $reference, string $placeId): array
+    /**
+     * Order Google's photos by how likely they are to show the building, and drop the
+     * ones that cannot be.
+     *
+     * Places returns whatever visitors uploaded near the pin, in no useful order — a
+     * storefront, a press clipping, a car park. Resolution is the one signal available
+     * without paying for vision: marketing and exterior shots are large and usually
+     * landscape, while signage crops and screenshots are small. This does not make the
+     * queue correct, it makes the best candidates surface first and removes the ones
+     * that are certainly unusable.
+     *
+     * @param  array<int,string>  $references
+     * @param  array<string,array<string,mixed>>  $meta
+     * @return array<int,string>
+     */
+    private function rankPlacePhotos(array $references, array $meta): array
     {
+        $refs = array_values(array_filter($references, fn ($ref) => is_string($ref) && $ref !== ''));
+
+        // No metadata (older callers, or Google omitted it) — behave exactly as before.
+        if ($meta === []) {
+            return array_slice($refs, 0, self::PER_URL_LIMIT);
+        }
+
+        $scored = [];
+        foreach ($refs as $ref) {
+            $width = (int) ($meta[$ref]['width'] ?? 0);
+            $height = (int) ($meta[$ref]['height'] ?? 0);
+
+            // Below this a photo is a thumbnail or a cropped sign, never a usable cover.
+            if ($width > 0 && $width < self::MIN_USABLE_WIDTH) {
+                continue;
+            }
+
+            $area = $width * $height;
+            // A mild nudge for landscape: building exteriors are wider than they are tall.
+            $scored[] = ['ref' => $ref, 'score' => $area * ($width >= $height ? 1.15 : 1.0)];
+        }
+
+        if ($scored === []) {
+            return array_slice($refs, 0, self::PER_URL_LIMIT);
+        }
+
+        usort($scored, fn ($a, $b) => $b['score'] <=> $a['score']);
+
+        return array_slice(array_column($scored, 'ref'), 0, self::PER_URL_LIMIT);
+    }
+
+    /** @param  array<string,mixed>  $meta */
+    private function placeCandidate(string $reference, string $placeId, array $meta = []): array
+    {
+        $attribution = trim((string) ($meta['attribution'] ?? ''));
+
         return [
             'url' => null, // served via the publish-gated google-place-photo proxy after approval
             'photo_reference' => $reference,
             'place_id' => $placeId ?: null,
             'source' => 'google_places',
-            'credit' => 'Google Places',
+            'credit' => $attribution !== '' ? 'Google Places · '.$attribution : 'Google Places',
+            'width' => (int) ($meta['width'] ?? 0) ?: null,
+            'height' => (int) ($meta['height'] ?? 0) ?: null,
             'license_note' => 'Google Places photo. Review Google attribution/display terms before approving.',
         ];
     }

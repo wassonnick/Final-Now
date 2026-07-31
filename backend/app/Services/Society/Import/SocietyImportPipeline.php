@@ -134,6 +134,7 @@ class SocietyImportPipeline
                 'name' => $name,
                 'urls' => [$attr['official_project_url'] ?? null, $attr['official_developer_url'] ?? null, $place['website'] ?? null, $url ?: null],
                 'photo_references' => $place['photo_references'] ?? [],
+                'photo_meta' => $place['photo_meta'] ?? [],
                 'place_id' => $place['place_id'] ?? null,
             ]);
             $this->applyCoverFromCandidates($attr, $candidates);

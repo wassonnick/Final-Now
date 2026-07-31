@@ -101,12 +101,24 @@ class PlaceResolverService
         $lat = $place['geometry']['location']['lat'] ?? null;
         $lng = $place['geometry']['location']['lng'] ?? null;
 
-        $photoRefs = collect($place['photos'] ?? [])
-            ->pluck('photo_reference')
-            ->filter(fn ($ref) => is_string($ref) && $ref !== '')
+        // Google returns width, height and attribution with every photo. Only the bare
+        // reference was kept, so the harvester had nothing to rank on and took whatever
+        // order Google happened to return — which is why signage, press clippings and
+        // thumbnails sit alongside real building shots in the review queue.
+        $photos = collect($place['photos'] ?? [])
+            ->filter(fn ($photo) => is_array($photo) && filled($photo['photo_reference'] ?? null))
             ->take(10)
-            ->values()
-            ->all();
+            ->values();
+
+        $photoRefs = $photos->pluck('photo_reference')->all();
+
+        $photoMeta = $photos->mapWithKeys(fn ($photo) => [
+            (string) $photo['photo_reference'] => [
+                'width' => (int) ($photo['width'] ?? 0),
+                'height' => (int) ($photo['height'] ?? 0),
+                'attribution' => trim(strip_tags(implode(', ', (array) ($photo['html_attributions'] ?? [])))) ?: null,
+            ],
+        ])->all();
 
         return [
             'matched' => true,
@@ -126,6 +138,7 @@ class PlaceResolverService
             'rating_count' => isset($place['user_ratings_total']) ? (int) $place['user_ratings_total'] : null,
             'types' => array_values(array_filter((array) ($place['types'] ?? []))),
             'photo_references' => $photoRefs,
+            'photo_meta' => $photoMeta,
         ];
     }
 
