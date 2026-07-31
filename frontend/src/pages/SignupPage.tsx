@@ -41,7 +41,7 @@ const ROLES: RoleCard[] = [
   {
     icon: Building2,
     title: "Builder / developer",
-    tag: "Admin-verified account",
+    tag: "Verified account",
     verified: true,
     blurb: "Claim your projects, publish official updates and respond to reviews — after we verify you represent the developer.",
     gets: ["Claim your society profiles", "Post verified announcements", "Respond to resident reviews", "Listing & interest analytics"],
@@ -51,7 +51,7 @@ const ROLES: RoleCard[] = [
   {
     icon: Landmark,
     title: "RWA / society committee",
-    tag: "Admin-verified account",
+    tag: "Verified account",
     verified: true,
     blurb: "Claim your society's RWA page, share announcements and answer residents — after we verify your committee role.",
     gets: ["Claim your society's RWA page", "Post resident announcements", "Moderate the resident Q&A", "Keep updates official & trusted"],

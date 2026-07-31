@@ -464,7 +464,7 @@ function FeaturedSocietyCard({
         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-700">Best match</p>
         <h3 className="mt-2 text-2xl font-black text-navy-950">No exact society card yet</h3>
         <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">
-          Search is ready. Admin can add featured societies for this page.
+          Search is ready. Featured societies for this page are coming soon.
         </p>
         <Button asChild className="mt-4 h-11 w-full rounded-full bg-blue-700 font-black text-white hover:bg-blue-800">
           <Link to={searchHref}>Open search <ArrowRight className="ml-2 h-4 w-4" /></Link>
@@ -716,7 +716,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
   const pageLabel = landingLabel(variant, locality, builderSlug);
 
   return (
-    <div className="min-h-screen bg-[#F8F3EA]">
+    <div className="ncr-skin min-h-screen bg-[#F8F3EA]">
       <section className="relative overflow-hidden border-b border-[#E7DCCB] bg-[radial-gradient(circle_at_82%_14%,rgba(194,114,78,0.10),transparent_30%),linear-gradient(180deg,#FFFBF3_0%,#F8F3EA_100%)]">
         <div className="container mx-auto px-4 py-6 md:py-8">
           <nav className="mb-5 flex items-center gap-2 text-xs font-black text-blue-300">
@@ -885,7 +885,7 @@ export function SeoLandingPage({ variant }: { variant: LandingVariant }) {
                           : "No exact society cards attached yet."}
                     </p>
                     <p className="mt-2 text-sm font-semibold leading-6 text-navy-500">
-                      Tell us what you're looking for and we'll prioritize it — or use search or AI Advisor for nearby Gurgaon matches while this page gets more admin-approved data.
+                      Tell us what you're looking for and we'll prioritize it — or use search or AI Advisor for nearby Gurgaon matches while this page gets more approved data.
                     </p>
                   </div>
                 )}

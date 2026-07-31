@@ -47,7 +47,7 @@ export function ReferralPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+    <main className="ncr-skin mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <section className="rounded-[32px] border border-blue-100 bg-white p-6 shadow-sm md:p-8">
         <div className="flex items-start gap-4">
           <div className="rounded-2xl bg-blue-50 p-3 text-blue-700"><Gift className="h-6 w-6" /></div>

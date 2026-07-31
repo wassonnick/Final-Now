@@ -139,7 +139,7 @@ export function RwaSocietyPage() {
   }
 
   return (
-    <main className="bg-[#F8F3EA]">
+    <main className="ncr-skin bg-[#F8F3EA]">
       <section className="border-b border-[#E7DCCB] bg-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 lg:grid-cols-[1fr_360px] lg:items-end">
           <div>
@@ -173,7 +173,7 @@ export function RwaSocietyPage() {
             <ShieldCheck className="h-8 w-8 text-emerald-300" />
             <h2 className="mt-4 text-2xl font-black">Represent this RWA?</h2>
             <p className="mt-2 text-sm leading-6 text-slate-300">
-              Claim the page with OTP, proof notes and admin review. Official posts remain moderated before public visibility.
+              Claim the page with OTP, proof and our review. Official posts remain moderated before public visibility.
             </p>
             <Button asChild className="mt-5 w-full rounded-full bg-white text-slate-950 hover:bg-slate-100">
               <Link to={`/login?role=rwa&next=${encodeURIComponent("/rwa/dashboard")}`}>Claim / manage RWA</Link>

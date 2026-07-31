@@ -17,6 +17,15 @@ class SocietyComparePageGenerator
      */
     public const AUTO_PUBLISH_THRESHOLD = 60;
 
+    /** A comparison must differ on at least this many axes to be worth publishing. */
+    public const MIN_DIFFERENTIATION_SIGNALS = 2;
+
+    /** How many societies a new page may share with an already-published one. */
+    public const MAX_SHARED_SOCIETIES = 1;
+
+    /** Ceiling on how many published comparisons any one society may appear in. */
+    public const MAX_PUBLISHED_APPEARANCES = 6;
+
     public function generateForAll(int $limit = 100): array
     {
         $summary = [
@@ -116,10 +125,16 @@ class SocietyComparePageGenerator
         $payload = $this->buildPayload($societies, $quality);
         unset($payload['slug']);
 
-        $publish = $autoPublish && $quality >= self::AUTO_PUBLISH_THRESHOLD;
+        // A page that has held a URL keeps it: publishBlockers only applies the
+        // overlap and appearance caps to pages that were never published.
+        $publish = $autoPublish
+            && $quality >= self::AUTO_PUBLISH_THRESHOLD
+            && $this->publishBlockers($societies, $page) === [];
+
         $page->update(array_merge($payload, [
             'status' => $publish ? SocietyComparePage::STATUS_PUBLISHED : SocietyComparePage::STATUS_NEEDS_REVIEW,
             'published_at' => $publish ? now() : null,
+            'first_published_at' => $publish ? ($page->first_published_at ?: now()) : $page->first_published_at,
             'stale_reason' => null,
         ]));
 
@@ -251,7 +266,7 @@ class SocietyComparePageGenerator
         $b = $ordered[1];
         $c = $ordered[2];
         $slug = Str::slug($a->slug . '-vs-' . $b->slug . '-vs-' . $c->slug);
-        $title = "{$a->name} vs {$b->name} vs {$c->name}";
+        $title = $this->displayName($a).' vs '.$this->displayName($b).' vs '.$this->displayName($c);
         $city = $a->city ?: 'Gurgaon';
         $sectorCluster = collect([$a->sector, $b->sector, $c->sector])->filter()->unique()->join(' / ');
         $facts = $this->facts($ordered);
@@ -283,6 +298,7 @@ class SocietyComparePageGenerator
             ])->values()->all(),
             'score' => round($societies->avg(fn (Society $society) => (float) $society->score), 1),
             'content_quality_score' => round($quality, 1),
+            'differentiation_signals' => $this->differentiationSignals($societies),
             'status' => SocietyComparePage::STATUS_NEEDS_REVIEW,
             'generated_by' => 'system',
             'ai_model' => null,
@@ -507,6 +523,113 @@ class SocietyComparePageGenerator
     private function formatRent(int $value): string
     {
         return '₹'.number_format($value, 0, '.', ',');
+    }
+
+    /**
+     * What this comparison actually lets a reader decide between.
+     *
+     * qualityScore() only measures whether fields are *filled in* — three societies in
+     * the same sector, by the same builder, at the same price, with the same score can
+     * score 90/100 while giving a reader nothing to choose from. That is the shape
+     * Google's scaled-content-abuse policy targets, and it is worth blocking on our
+     * side rather than discovering via a manual action.
+     *
+     * @return array<int,string> the axes on which these societies genuinely differ
+     */
+    public function differentiationSignals(Collection $societies): array
+    {
+        $signals = [];
+
+        $distinct = fn (string $field) => $societies->pluck($field)
+            ->filter()->map(fn ($v) => Str::lower(trim((string) $v)))->unique()->count();
+
+        if ($distinct('sector') >= 2) $signals[] = 'sector';
+        if ($distinct('builder') >= 2) $signals[] = 'builder';
+        if ($distinct('project_status') >= 2) $signals[] = 'project_status';
+
+        $matcher = new \App\Services\Ai\SocietyMatchService();
+        $rents = $societies
+            ->map(fn (Society $s) => $matcher->priceFromText($s->rent_range ?: $s->average_rent))
+            ->filter(fn ($v) => $v && $v >= 5000)
+            ->values();
+        // A 15% spread is the point where "cheaper" is a real reason to pick one.
+        if ($rents->count() >= 2 && $rents->max() >= $rents->min() * 1.15) $signals[] = 'price';
+
+        $scores = $societies->pluck('score')->map(fn ($v) => (float) $v)->filter(fn ($v) => $v > 0)->values();
+        if ($scores->count() >= 2 && ($scores->max() - $scores->min()) >= 0.5) $signals[] = 'score';
+
+        return $signals;
+    }
+
+    /**
+     * Reasons this comparison should not become a *new* published page.
+     *
+     * Deliberately not applied to pages that have already been published (or gone
+     * stale after being published): those own live URLs, and unpublishing them to
+     * satisfy a rule introduced later would throw away real search equity. New pages
+     * have to earn their place; existing ones keep it.
+     *
+     * @return array<int,string>
+     */
+    public function publishBlockers(Collection $societies, ?SocietyComparePage $page = null): array
+    {
+        // A page that has ever been live keeps its URL, full stop. Applying a rule
+        // introduced today to a page already earning traffic would quietly delete
+        // ranking pages — the differentiation_signals column records the weakness so
+        // it can be reviewed deliberately instead.
+        if ($page && $page->first_published_at !== null) {
+            return [];
+        }
+
+        $blockers = [];
+        $signals = $this->differentiationSignals($societies);
+
+        if (count($signals) < self::MIN_DIFFERENTIATION_SIGNALS) {
+            $blockers[] = 'Too alike to be a useful comparison (differs only on: '
+                .(count($signals) ? implode(', ', $signals) : 'nothing').').';
+        }
+
+        $ids = $societies->pluck('id')->filter()->values();
+        $published = SocietyComparePage::query()
+            ->where('status', SocietyComparePage::STATUS_PUBLISHED)
+            ->when($page?->id, fn ($q) => $q->where('id', '!=', $page->id))
+            ->get(['id', 'society_a_id', 'society_b_id', 'society_c_id']);
+
+        // Two pages sharing two of three societies are near-duplicates of each other
+        // and split their own ranking.
+        $overlapping = $published->first(function (SocietyComparePage $existing) use ($ids) {
+            return collect([$existing->society_a_id, $existing->society_b_id, $existing->society_c_id])
+                ->intersect($ids)->count() > self::MAX_SHARED_SOCIETIES;
+        });
+        if ($overlapping) {
+            $blockers[] = "Shares more than ".self::MAX_SHARED_SOCIETIES." society with published page #{$overlapping->id}.";
+        }
+
+        // Stops one popular society spawning a cluster of interchangeable pages.
+        foreach ($ids as $id) {
+            $appearances = $published->filter(
+                fn (SocietyComparePage $p) => in_array($id, [$p->society_a_id, $p->society_b_id, $p->society_c_id], true)
+            )->count();
+
+            if ($appearances >= self::MAX_PUBLISHED_APPEARANCES) {
+                $blockers[] = "A society here is already in {$appearances} published comparisons.";
+                break;
+            }
+        }
+
+        return $blockers;
+    }
+
+    /**
+     * Society names arrive from imports in mixed casing ("godrej miraya"), which reads
+     * as low quality in a SERP title. Only fix names that are entirely lowercase —
+     * title-casing everything would turn "DLF" into "Dlf" and "M3M" into "M3m".
+     */
+    private function displayName(Society $society): string
+    {
+        $name = trim((string) $society->name);
+
+        return $name !== '' && $name === Str::lower($name) ? Str::title($name) : $name;
     }
 
     private function qualityScore(Collection $societies): int

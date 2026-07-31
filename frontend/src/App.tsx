@@ -6,11 +6,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/layout/Navbar';
+import { PremiumNavbar } from '@/components/layout/PremiumNavbar';
 import { Footer } from '@/components/layout/Footer';
 import { FloatingHelpline } from '@/components/layout/FloatingHelpline';
+import { MobileTabBar } from '@/components/layout/MobileTabBar';
 import { AnalyticsConsentBanner } from '@/components/privacy/AnalyticsConsentBanner';
 
 import { HomePage } from '@/pages/HomePage';
+import HomePremium from '@/pages/HomePremium';
 
 import { getAdminSession } from '@/hooks/useAdminAuth';
 import { isNcrMulticityEnabled } from "@/config/features";
@@ -74,6 +77,7 @@ const AdminReferralsPage = lazy(() => import('@/pages/admin/AdminReferralsPage')
 const AdminNriCasesPage = lazy(() => import('@/pages/admin/AdminNriCasesPage').then((module) => ({ default: module.AdminNriCasesPage })));
 const AdminSeoAutopilotPage = lazy(() => import('@/pages/admin/AdminSeoAutopilotPage').then((module) => ({ default: module.AdminSeoAutopilotPage })));
 const AdminSocialDraftsPage = lazy(() => import('@/pages/admin/AdminSocialDraftsPage').then((module) => ({ default: module.AdminSocialDraftsPage })));
+const AdminSocialStudioPage = lazy(() => import('@/pages/admin/AdminSocialStudioPage').then((module) => ({ default: module.AdminSocialStudioPage })));
 const AdminOwnerListingsPage = lazy(() => import('@/pages/admin/AdminOwnerListingsPage').then((module) => ({ default: module.AdminOwnerListingsPage })));
 const AdminSocialGeneratePage = lazy(() => import('@/pages/admin/AdminSocialGeneratePage').then((module) => ({ default: module.AdminSocialGeneratePage })));
 const AdminSocialAssetsPage = lazy(() => import('@/pages/admin/AdminSocialAssetsPage').then((module) => ({ default: module.AdminSocialAssetsPage })));
@@ -134,14 +138,14 @@ function AppShell() {
 
   return (
     <div className={`${isAdmin ? "admin-site" : "public-site"} min-h-screen bg-ivory-100 flex flex-col`}>
-      {!isAdmin && <Navbar />}
+      {!isAdmin && <PremiumNavbar />}
 
       <main className="flex-1">
         <Suspense fallback={<RouteLoader />}>
           <Routes>
 
             {/* Public */}
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<HomePremium />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/search/" element={<SearchPage />} />
 
@@ -256,6 +260,7 @@ function AppShell() {
             <Route path="/admin/seo-autopilot" element={<ProtectedAdminRoute><AdminSeoAutopilotPage /></ProtectedAdminRoute>} />
             <Route path="/admin/owner-listings" element={<ProtectedAdminRoute><AdminOwnerListingsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/social" element={<ProtectedAdminRoute><AdminSocialDraftsPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/social/studio" element={<ProtectedAdminRoute><AdminSocialStudioPage /></ProtectedAdminRoute>} />
             <Route path="/admin/social/generate" element={<ProtectedAdminRoute><AdminSocialGeneratePage /></ProtectedAdminRoute>} />
             <Route path="/admin/social/assets" element={<ProtectedAdminRoute><AdminSocialAssetsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/social/accounts" element={<ProtectedAdminRoute><AdminSocialAccountsPage /></ProtectedAdminRoute>} />
@@ -290,6 +295,7 @@ function AppShell() {
       </main>
 
       {!isAdmin && <FloatingHelpline />}
+      {!isAdmin && <MobileTabBar />}
       {!isAdmin && <Footer />}
     </div>
   );

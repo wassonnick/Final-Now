@@ -49,28 +49,51 @@ async function fetchJsonWithRetry(url, attempts = 4, delayMs = 15000) {
   return null;
 }
 
-async function fetchLiveSocieties() {
-  const payload = await fetchJsonWithRetry(`${API_BASE}/societies?per_page=200`);
-  if (!payload) return [];
+/**
+ * Every page of an endpoint, not just the first.
+ *
+ * `?per_page=200` returns page one and nothing else. Past 200 rows the tail was
+ * silently skipped, so those societies got no static shell — no per-page title,
+ * description, canonical or JSON-LD in the served HTML, only whatever the SPA
+ * managed to set after hydration. Same defect as the sitemap generator had.
+ */
+async function fetchAllPages(endpoint, pageSize = 200, maxPages = 25) {
+  const rows = [];
+  let lastPage = 1;
 
-  return extractRows(payload).filter(
+  for (let page = 1; page <= maxPages; page += 1) {
+    const payload = await fetchJsonWithRetry(`${API_BASE}${endpoint}?per_page=${pageSize}&page=${page}`);
+    if (!payload) {
+      if (page === 1) return [];
+      console.warn(`Prerender: ${endpoint} page ${page} unreachable — continuing with ${rows.length} rows.`);
+      break;
+    }
+
+    const batch = extractRows(payload);
+    rows.push(...batch);
+
+    const box = payload?.data && !Array.isArray(payload.data) ? payload.data : payload;
+    const parsed = Number(box?.last_page);
+    if (page === 1 && Number.isFinite(parsed) && parsed > 0) lastPage = parsed;
+    if (batch.length === 0 || page >= lastPage) break;
+  }
+
+  return rows;
+}
+
+async function fetchLiveSocieties() {
+  return (await fetchAllPages("/societies")).filter(
     (society) =>
       ["Verified", "Premium"].includes(String(society?.status || "")) && society?.slug,
   );
 }
 
 async function fetchLiveProperties() {
-  const payload = await fetchJsonWithRetry(`${API_BASE}/properties?per_page=200`);
-  if (!payload) return [];
-
-  return extractRows(payload).filter((property) => property?.slug);
+  return (await fetchAllPages("/properties")).filter((property) => property?.slug);
 }
 
 async function fetchLiveComparePages() {
-  const payload = await fetchJsonWithRetry(`${API_BASE}/compare-pages?per_page=200`);
-  if (!payload) return [];
-
-  return extractRows(payload).filter((page) => page?.slug && page?.status === "published");
+  return (await fetchAllPages("/compare-pages")).filter((page) => page?.slug && page?.status === "published");
 }
 
 function localityCountsFrom(societies) {
@@ -444,6 +467,138 @@ const routeMeta = [
     noindex: true,
   },
   {
+    path: "/search",
+    title: "Search Verified Delhi NCR Societies & Homes | SocietyFlats",
+    description:
+      "Search live verified Delhi NCR society homes, published society profiles and AI-assisted recommendations on SocietyFlats.",
+    priority: "0.8",
+    changefreq: "daily",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/ai-advisor",
+    title: "SocietyFlats AI Advisor — Your Delhi NCR Home Search, Made Simple",
+    description:
+      "Tell the AI advisor what matters — commute, budget, schools, the feel you're after — and it shortlists the Delhi NCR societies that genuinely fit.",
+    priority: "0.7",
+    changefreq: "weekly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/insights",
+    title: "Delhi NCR Real Estate Market Insights — Prices & Rental Trends | SocietyFlats",
+    description:
+      "Honest rent and resale bands by micro-market, with the source and confidence shown on every row.",
+    priority: "0.7",
+    changefreq: "weekly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/sell",
+    title: "List Your Delhi NCR Flat — Reach Verified Buyers & Tenants | SocietyFlats",
+    description:
+      "List your Delhi NCR home once and meet buyers and tenants already searching your exact society. No broker spam, no listing fee.",
+    priority: "0.7",
+    changefreq: "weekly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/maps",
+    title: "Delhi NCR Society Map — Explore Verified Societies Live | SocietyFlats",
+    description:
+      "Explore verified Delhi NCR societies on a live map — real coordinates, with a link straight to every profile and the homes nearby.",
+    priority: "0.6",
+    changefreq: "weekly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/methodology",
+    title: "Decision Methodology | SocietyFlats",
+    description:
+      "How SocietyFlats turns Delhi NCR society data into practical home-search intelligence — signals, weights and confidence.",
+    priority: "0.5",
+    changefreq: "monthly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/data-sources",
+    title: "Data Sources | SocietyFlats",
+    description:
+      "Where SocietyFlats information comes from, and what stays out of public pages.",
+    priority: "0.5",
+    changefreq: "monthly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/score-explained",
+    title: "How the Society Score Works | SocietyFlats",
+    description:
+      "What each society score measures, how it is calculated, and where confidence is lower.",
+    priority: "0.5",
+    changefreq: "monthly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/corrections",
+    title: "Report a Correction | SocietyFlats",
+    description:
+      "Spotted something stale or wrong on a society profile? Tell us and our team reviews it before anything public changes.",
+    priority: "0.4",
+    changefreq: "monthly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/editorial-independence",
+    title: "Editorial Independence | SocietyFlats",
+    description:
+      "How SocietyFlats keeps guidance separate from sales pressure — no paid ranking, no bought placement.",
+    priority: "0.4",
+    changefreq: "monthly",
+    schemaType: "WebPage",
+  },
+  {
+    path: "/referrals",
+    title: "Referral Partner Program | SocietyFlats",
+    description:
+      "Refer buyers, tenants and owners to SocietyFlats and track your referrals.",
+    priority: "0.4",
+    changefreq: "monthly",
+    schemaType: "WebPage",
+    noindex: true,
+  },
+  {
+    path: "/login",
+    title: "Secure Login | SocietyFlats",
+    description: "Sign in to your SocietyFlats account with a one-time password.",
+    schemaType: "WebPage",
+    noindex: true,
+  },
+  ...[
+    ["noida", "Noida"],
+    ["greater-noida", "Greater Noida"],
+    ["delhi", "Delhi"],
+    ["faridabad", "Faridabad"],
+    ["ghaziabad", "Ghaziabad"],
+  ].map(([slug, name]) => ({
+    path: `/ncr/${slug}`,
+    title: `${name} Societies — Coming to SocietyFlats | Delhi NCR`,
+    description: `SocietyFlats is verifying ${name} societies to the same standard as Gurgaon. Tell us what you're looking for and we'll reach out the moment ${name} is live.`,
+    priority: "0.4",
+    changefreq: "monthly",
+    schemaType: "WebPage",
+    // Pre-launch markets: reachable and shareable, but nothing to index yet.
+    noindex: true,
+  })),
+  {
+    path: "/ncr/gurgaon",
+    title: "Gurgaon Societies — Live on SocietyFlats | Delhi NCR",
+    description:
+      "Gurgaon is live on SocietyFlats: verified society profiles, real availability and honest rent and resale ranges.",
+    priority: "0.6",
+    changefreq: "weekly",
+    schemaType: "WebPage",
+  },
+  {
     path: "/404",
     title: "Page Not Found | SocietyFlats",
     description:
@@ -752,6 +907,13 @@ function rwaRoutes(societies) {
     ),
     schemaType: "WebPage",
     skipGenericFaq: true,
+    // The RWA module is still moderation-led and most pages are unclaimed, which is
+    // exactly why they're kept out of the sitemap. Shipping them as indexable
+    // contradicted that and put ~300 near-identical thin pages in front of crawlers.
+    // noindex, but keep them followable so they still pass link equity to the
+    // society profile they point at.
+    noindex: true,
+    followWhenNoindex: true,
     rootSnapshot: [
       '<div id="sf-prerender" style="max-width:920px;margin:0 auto;padding:28px 20px;font-family:system-ui,-apple-system,sans-serif;color:#25302B;">',
       `<h1 style="font-size:26px;">${escapeHtml(society.name)} RWA — Announcements &amp; Resident Updates</h1>`,
@@ -941,7 +1103,7 @@ function seoTags(meta) {
   const description = escapeHtml(meta.description);
   const schema = escapeJson(schemaFor(meta));
   const robots = meta.noindex
-    ? "noindex, nofollow"
+    ? (meta.followWhenNoindex ? "noindex, follow" : "noindex, nofollow")
     : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
 
   return [
@@ -1090,9 +1252,28 @@ async function main() {
     written.push(await writeRouteHtml(baseHtml, meta));
   }
 
+  // SPA fallback. Static hosts serve /404.html for any path with no matching file,
+  // so shipping the app shell there means client-routed pages (admin, dynamic
+  // society/property URLs, anything new) still boot on a direct hit or refresh —
+  // without depending on a rewrite rule being configured in the host's dashboard.
+  //
+  // It ships noindex: the host answers unknown URLs with 200, so without this every
+  // typo and dead link is an indexable copy of the app shell. Every real public page
+  // has its own prerendered file above, and the SPA re-asserts "index, follow" at
+  // runtime for legitimate routes — so only genuine dead ends stay noindex.
+  await fs.writeFile(
+    path.join(DIST_DIR, "404.html"),
+    baseHtml.replace(
+      /<meta\s+name=["']robots["'][^>]*>/i,
+      '<meta name="robots" content="noindex, follow" />',
+    ),
+    "utf8",
+  );
+
   console.log(
     `Static SEO shells generated for ${written.length} routes ` +
-      `(${societies.length} societies, ${societies.length} RWA pages, ${properties.length} properties, ${comparePages.length} compare pages).`,
+      `(${societies.length} societies, ${societies.length} RWA pages, ${properties.length} properties, ${comparePages.length} compare pages). ` +
+      `SPA fallback written to 404.html.`,
   );
 }
 

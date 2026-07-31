@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, CalendarCheck, Check, FileSearch, Globe2, KeyRound, MapPin, RefreshCw, ShieldCheck } from "lucide-react";
-import SocietyFlatsHero from "@/components/home/SocietyFlatsHero";
-import { DecisionGuideStrip, PropertyToolsStrip, SpecialistServicesStrip } from "@/components/home/ContextualJourneys";
+import { Check, MapPin, RefreshCw } from "lucide-react";
+import NcrHomeHero from "@/components/home/NcrHomeHero";
+import { JourneySpine } from "@/components/home/JourneySpine";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import {
   fetchPublicProperties,
@@ -49,7 +49,7 @@ const areas = [
 ];
 
 const faqs = [
-  ["How does SocietyFlats verify a society?", "Imported society data and images remain private until an admin reviews and publishes them."],
+  ["How does SocietyFlats verify a society?", "Imported society data and images remain private until our team reviews and publishes them."],
   ["Why do some societies show no available homes?", "Society profiles and property availability are reviewed separately. We never fabricate inventory."],
   ["Is there any brokerage or fee for tenants?", "Any applicable commercial terms are clarified before a visit or transaction."],
   ["How is the AI Advisor recommendation calculated?", "It matches your stated needs — budget, commute, configuration — against the scored, currently published SocietyFlats dataset. No paid placements, no sponsored ranking."],
@@ -197,71 +197,48 @@ export function HomePage() {
   const verifiedHomes = useMemo(() => properties.slice(0, 6), [properties]);
 
   return (
-    <div className="min-h-screen bg-[#F7F4EF] text-[#1D2939]">
-      <SocietyFlatsHero />
+    <div className="min-h-screen bg-[#F8F7F4] text-[#1D2939]">
+      <NcrHomeHero />
 
-      {allSocietiesCount > 0 ? (
-        <div className="mx-auto max-w-[1360px] px-5 pt-4 lg:px-10">
-          <div className="border-y border-[#DDD7CC] bg-white/70 px-5 py-4">
-            <p className="text-[15px] leading-6 text-[#1D2939]">
-              <span className="font-bold">{allSocietiesCount} societies live. 0 fabricated.</span>{" "}
-              <span className="text-[#667085]">Every public profile has a reviewed location, an approved cover photo and a visible confidence label. If something cannot be confirmed, we say so.</span>
+      <section className="mx-auto max-w-[1360px] px-5 pb-3 pt-9 lg:px-10 lg:pb-4 lg:pt-14">
+        <div className="mb-4 flex items-end justify-between lg:mb-5">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#B58B3B]">The Gurgaon edit</p>
+            <h2 className="mt-1 font-display text-[29px] font-medium text-[#101828] lg:text-[40px]">Featured verified societies</h2>
+            <p className="mt-1 hidden text-sm text-[#667085] sm:block">
+              {allSocietiesCount || societies.length || 40} live profiles, published only after review.
             </p>
           </div>
+          <Link to="/search?tab=societies" className="shrink-0 text-[12.5px] font-bold text-[#3156A3] lg:text-sm">View all →</Link>
         </div>
-      ) : null}
-
-      <section className="mx-auto max-w-[1360px] px-5 pt-8 lg:px-10 lg:pt-12">
-        <div className="overflow-hidden rounded-[28px] border border-[#27364E] bg-[#111827] shadow-[0_28px_80px_-56px_rgba(17,24,39,.65)]">
-          <div className="grid gap-6 p-6 md:p-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:p-10">
-            <div>
-              <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#E3B36B]">
-                <Globe2 className="h-4 w-4" />
-                NRI property command center
-              </p>
-              <h2 className="mt-4 font-display text-[32px] font-medium leading-[1.04] tracking-[-0.015em] text-white md:text-[48px]">
-                Overseas owner? We manage the Gurgaon property journey locally.
-              </h2>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-[#D0D5DD] md:text-base">
-                Buy, sell, rent out or coordinate follow-ups from abroad with SocietyFlats’ NRI desk — verified society intelligence, private lead routing, local viewing coordination and admin-tracked case updates.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link to="/nri-services" className="inline-flex items-center rounded-[14px] bg-[#C2724E] px-5 py-3 text-sm font-black text-white">
-                  Open NRI desk <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-                <Link to="/search?tab=societies" className="rounded-[14px] border border-white/20 bg-white/10 px-5 py-3 text-sm font-black text-white">
-                  Start with society profile
-                </Link>
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {[
-                [FileSearch, "Resale brief", "Position the society, tower and unit with reviewed context."],
-                [KeyRound, "Rent-out pipeline", "Capture demand while keeping owner contact details private."],
-                [CalendarCheck, "Visit coordination", "Move family, buyer or tenant follow-ups through clear next steps."],
-                [ShieldCheck, "Scope-safe support", "No fake inventory, no public phone exposure, no legal/tax promises."],
-              ].map(([Icon, title, body]) => {
-                const ItemIcon = Icon as typeof FileSearch;
-                return (
-                  <Link key={String(title)} to="/nri-services" className="rounded-[20px] border border-white/10 bg-white/[0.07] p-5 transition hover:bg-white/[0.12]">
-                    <ItemIcon className="h-6 w-6 text-[#E3B36B]" />
-                    <p className="mt-4 font-black text-white">{String(title)}</p>
-                    <p className="mt-2 text-sm leading-6 text-[#D0D5DD]">{String(body)}</p>
-                  </Link>
-                );
-              })}
-            </div>
+        {status === "loading" ? (
+          <div className="-mx-5 flex gap-[14px] overflow-hidden px-5 lg:mx-0 lg:grid lg:grid-cols-4 lg:px-0">
+            {[0, 1, 2, 3].map((item) => <div key={item} className="h-[230px] w-[240px] shrink-0 animate-pulse rounded-[18px] bg-white lg:h-[300px] lg:w-auto" />)}
           </div>
-        </div>
+        ) : featured.length ? (
+          <>
+            <div className="-mx-5 flex gap-[14px] overflow-x-auto px-5 pb-1 scrollbar-hide lg:hidden">
+              {featured.map((society) => <SocietyCard key={society.slug} society={society} mobile />)}
+            </div>
+            <div className="hidden grid-cols-4 gap-[22px] lg:grid">
+              {featured.map((society) => <SocietyCard key={society.slug} society={society} />)}
+            </div>
+          </>
+        ) : (
+          <div className="rounded-[18px] border border-[#DDD7CC] bg-white p-5 lg:p-7">
+            <p className="font-display text-xl font-medium text-[#111827]">Fresh verified societies are being prepared.</p>
+            <p className="mt-1 text-sm leading-6 text-[#667085]">Profiles appear here after society data and images pass our review.</p>
+          </div>
+        )}
       </section>
 
       {intelligencePreviews.length ? (
         <section className="mx-auto max-w-[1360px] px-5 pt-8 lg:px-10 lg:pt-12">
-          <div className="rounded-[26px] border border-[#D7E7D8] bg-white p-5 shadow-[0_18px_44px_-34px_rgba(0,0,0,.35)] lg:p-7">
+          <div className="rounded-[26px] border border-[#D8DFEC] bg-white p-5 shadow-[0_18px_44px_-34px_rgba(0,0,0,.35)] lg:p-7">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#2A6147]">Society decision intelligence</p>
-                <h2 className="mt-1 font-display text-[28px] font-medium text-[#123C32] lg:text-[40px]">More than property listings.</h2>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#3156A3]">Society decision intelligence</p>
+                <h2 className="mt-1 font-display text-[28px] font-medium text-[#233B6E] lg:text-[40px]">More than property listings.</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#667085]">Start with the society profile: liveability, pricing context, important checks, data confidence and current verified homes.</p>
               </div>
               <Link to="/methodology" className="text-sm font-bold text-[#9A552E]">How SocietyFlats scores →</Link>
@@ -283,14 +260,14 @@ export function HomePage() {
                         <p className="text-xs font-bold uppercase tracking-wide text-[#8A8F89]">{formatPublicLocation(society)}</p>
                         <h3 className="mt-1 font-display text-2xl font-medium text-[#111827]">{society.name}</h3>
                       </div>
-                      <span className="rounded-[14px] bg-[#123C32] px-3 py-2 text-lg font-black text-white">{intelligence.overall_score || "—"}</span>
+                      <span className="rounded-[14px] bg-[#233B6E] px-3 py-2 text-lg font-black text-white">{intelligence.overall_score || "—"}</span>
                     </div>
                     <div className="mt-4 grid gap-2 text-sm text-[#59635E]">
-                      <p><span className="font-bold text-[#123C32]">Best for:</span> {bestFor?.label || bestFor?.name || "Source-reviewed shortlist"}</p>
+                      <p><span className="font-bold text-[#233B6E]">Best for:</span> {bestFor?.label || bestFor?.name || "Source-reviewed shortlist"}</p>
                       <p><span className="font-bold text-[#9A552E]">Verify:</span> {risk?.label || risk?.title || "Unit-level pricing and availability"}</p>
                       <p><span className="font-bold text-[#3156A3]">Confidence:</span> {intelligence.data_confidence_score || 0}% · {intelligence.freshness_label || "reviewed"}</p>
                     </div>
-                    <span className="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-bold text-[#123C32]">Open intelligence profile →</span>
+                    <span className="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-bold text-[#233B6E]">Open intelligence profile →</span>
                   </Link>
                 );
               })}
@@ -299,37 +276,9 @@ export function HomePage() {
         </section>
       ) : null}
 
-      <section className="mx-auto max-w-[1360px] px-5 pb-3 pt-8 lg:px-10 lg:pb-4 lg:pt-12">
-        <div className="mb-4 flex items-end justify-between lg:mb-5">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8B6B32]">Start with trusted profiles</p>
-            <h2 className="mt-1 font-display text-[27px] font-medium text-[#111827] lg:text-[36px]">Featured verified societies</h2>
-            <p className="mt-1 hidden text-sm text-[#667085] sm:block">Published and admin-reviewed, with images checked before display.</p>
-          </div>
-          <Link to="/search?tab=societies" className="shrink-0 text-[12.5px] font-bold text-[#3156A3] lg:text-sm">View all →</Link>
-        </div>
-        {status === "loading" ? (
-          <div className="-mx-5 flex gap-[14px] overflow-hidden px-5 lg:mx-0 lg:grid lg:grid-cols-4 lg:px-0">
-            {[0, 1, 2, 3].map((item) => <div key={item} className="h-[230px] w-[240px] shrink-0 animate-pulse rounded-[18px] bg-white lg:h-[300px] lg:w-auto" />)}
-          </div>
-        ) : featured.length ? (
-          <>
-            <div className="-mx-5 flex gap-[14px] overflow-x-auto px-5 pb-1 scrollbar-hide lg:hidden">
-              {featured.map((society) => <SocietyCard key={society.slug} society={society} mobile />)}
-            </div>
-            <div className="hidden grid-cols-4 gap-[22px] lg:grid">
-              {featured.map((society) => <SocietyCard key={society.slug} society={society} />)}
-            </div>
-          </>
-        ) : (
-          <div className="rounded-[18px] border border-[#DDD7CC] bg-white p-5 lg:p-7">
-            <p className="font-display text-xl font-medium text-[#111827]">Fresh verified societies are being prepared.</p>
-            <p className="mt-1 text-sm leading-6 text-[#667085]">Profiles appear here after society data and images pass admin review.</p>
-          </div>
-        )}
-      </section>
+      <JourneySpine />
 
-      {/* MOBILE PROTOTYPE */}
+      {/* MOBILE */}
       <main className="px-5 pb-8 lg:hidden">
         <div className="mb-3 mt-[26px] flex items-baseline justify-between">
           <h2 className="font-sans text-base font-bold tracking-normal text-[#25302B]">Explore by sector</h2>
@@ -342,8 +291,6 @@ export function HomePage() {
             </Link>
           ))}
         </div>
-
-        <DecisionGuideStrip mobile />
 
         <div className="mb-3 mt-[26px] flex items-baseline justify-between">
           <h2 className="font-sans text-base font-bold tracking-normal text-[#25302B]">Verified homes</h2>
@@ -408,8 +355,6 @@ export function HomePage() {
           </div>
         )}
 
-        <PropertyToolsStrip mobile />
-
         <div className="mt-[26px] rounded-[20px] border border-[#D8DFEC] bg-[#F7F9FD] px-5 py-[22px]">
           <h2 className="font-display text-[23px] font-medium leading-tight text-[#111827]">Every society, checked with care.</h2>
           <p className="mb-4 mt-1 text-[13.5px] leading-[1.5] text-[#667085]">
@@ -439,18 +384,13 @@ export function HomePage() {
             </Link>
           ))}
         </div>
-        <SpecialistServicesStrip mobile />
         <Link to="/search?tab=societies" className="mt-[22px] block rounded-[16px] bg-[#233B6E] p-4 text-center text-[15px] font-semibold text-white">
           Browse all verified societies
         </Link>
       </main>
 
-      {/* DESKTOP PROTOTYPE */}
+      {/* DESKTOP */}
       <main className="hidden lg:block">
-        <section className="mx-auto mt-10 max-w-[1360px] px-10">
-          <DecisionGuideStrip />
-        </section>
-
         <section className="mx-auto mt-10 max-w-[1360px] px-10">
           <div className="mb-[22px] flex items-end justify-between">
             <div>
@@ -534,10 +474,6 @@ export function HomePage() {
           )}
         </section>
 
-        <section className="mx-auto max-w-[1360px] px-10">
-          <PropertyToolsStrip />
-        </section>
-
         <section className="mx-auto mt-10 max-w-[1360px] px-10">
           <div className="mb-[22px] flex items-end justify-between"><h2 className="font-display text-[32px] font-medium text-[#25302B]">Popular Gurgaon areas</h2><Link to="/maps" className="text-sm font-bold text-[#3156A3]">Explore all on map →</Link></div>
           <div className="grid grid-cols-4 gap-4">
@@ -549,25 +485,6 @@ export function HomePage() {
               </Link>
             ))}
           </div>
-        </section>
-
-        <section className="mx-auto mt-10 grid max-w-[1360px] grid-cols-2 gap-[22px] px-10">
-          <div className="rounded-[20px] border border-[#E8D0BF] bg-[#FFF4E9] p-8">
-            <p className="mb-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[#A45B3A]">For owners</p>
-            <h3 className="font-display text-[25px] font-medium text-[#25302B]">List once. Meet the people already looking in your society.</h3>
-            <p className="mb-5 mt-2.5 text-sm leading-[1.55] text-[#59635E]">Own a home in Gurgaon? We'll put it in front of tenants and buyers already searching your exact society. No spam, ever — your number is only used to verify you and pass on genuine enquiries.</p>
-            <Link to="/sell" className="inline-flex rounded-[11px] bg-[#C2724E] px-6 py-3 text-sm font-bold text-white">List your flat</Link>
-          </div>
-          <div className="rounded-[20px] bg-[#233B6E] p-8 text-white">
-            <p className="mb-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[#D7C18C]">For brokers</p>
-            <h3 className="font-display text-[25px] font-medium text-white">Partner with SocietyFlats.</h3>
-            <p className="mb-5 mt-2.5 text-sm leading-[1.55] text-[#D8DFEC]">Have verified Gurgaon inventory? We'll connect you with buyers looking in the exact societies you cover — real enquiries, none of the duplicate-listing noise.</p>
-            <Link to="/broker-crm" className="inline-flex rounded-[11px] bg-white px-6 py-3 text-sm font-bold text-[#233B6E]">Become a partner</Link>
-          </div>
-        </section>
-
-        <section className="mx-auto mt-10 max-w-[1360px] px-10">
-          <SpecialistServicesStrip />
         </section>
 
         <section className="mx-auto mt-12 max-w-[900px] px-10">

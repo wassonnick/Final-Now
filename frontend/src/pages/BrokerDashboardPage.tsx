@@ -269,8 +269,8 @@ export function BrokerDashboardPage() {
     () =>
       listingSubmissions.map((item) => ({
         title: `Lead update tracker for ${item.title}`,
-        meta: "Admin will verify inventory, publish only approved listings and share privacy-safe enquiry updates here. Buyer/tenant phone and deal details remain locked.",
-        status: "Admin controlled",
+        meta: "We'll verify inventory, publish only approved listings and share privacy-safe enquiry updates here. Buyer/tenant phone and deal details remain locked.",
+        status: "SocietyFlats-managed",
       })),
     [listingSubmissions],
   );
@@ -296,7 +296,7 @@ export function BrokerDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#fffaf4] pb-16">
+    <div className="ncr-skin min-h-screen w-full max-w-full overflow-x-hidden bg-[#fffaf4] pb-16">
       {showSignupWelcome ? (
         <div className="fixed inset-x-4 top-24 z-50 mx-auto max-w-xl rounded-[28px] border border-emerald-100 bg-white p-5 shadow-2xl">
           {/* C46B broker signup welcome popup */}
@@ -436,7 +436,7 @@ export function BrokerDashboardPage() {
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-950">Admin-controlled visibility</h2>
+                  <h2 className="text-xl font-black text-slate-950">SocietyFlats-managed visibility</h2>
                   <p className="mt-1 text-sm text-slate-500">Keeps customer and owner contact details private.</p>
                 </div>
               </div>
@@ -446,7 +446,7 @@ export function BrokerDashboardPage() {
               <div className="mt-5 grid gap-3">
                 {[
                   "Submit inventory or buyer requirements",
-                  "Admin verifies broker profile and area coverage",
+                  "We verify broker profile and area coverage",
                   "SocietyFlats controls customer contact visibility",
                   "Contact details are shared only after the enquiry is reviewed",
                 ].map((item) => (
@@ -465,7 +465,7 @@ export function BrokerDashboardPage() {
             ) : (
               <BrokerEmptyState
                 title="No inventory submissions yet"
-                text="Use Broker CRM to submit owner inventory, areas and property details for admin verification."
+                text="Use Broker CRM to submit owner inventory, areas and property details for verification by our team."
                 actionLabel="Submit inventory"
                 href="/broker-crm"
               />
@@ -477,7 +477,7 @@ export function BrokerDashboardPage() {
               brokerLeadUpdateItems.map((item) => <BrokerItemCard key={`${item.title}-${item.meta}`} {...item} />)
             ) : (
               <BrokerEmptyState
-                title="Listing leads are admin-controlled"
+                title="Listing leads are SocietyFlats-managed"
                 text="Once your inventory is verified and SocietyFlats routes matching enquiries, privacy-safe lead updates will appear here. Buyer/tenant contact details remain protected."
                 actionLabel="Submit more inventory"
                 href="/broker-crm"
@@ -500,8 +500,8 @@ export function BrokerDashboardPage() {
 
           <TabsContent value="commissions" className="mt-6">
             <BrokerEmptyState
-              title="Commission tracker comes after admin verification"
-              text="Commission stages will remain admin-controlled until a verified deal moves into site visit, negotiation or closure stage. This dashboard will not expose buyer/tenant contact details."
+              title="Commission tracker comes after verification"
+              text="Commission stages stay SocietyFlats-managed until a verified deal moves into site visit, negotiation or closure stage. This dashboard will not expose buyer/tenant contact details."
               actionLabel="Open partner intake"
               href="/broker-crm"
             />

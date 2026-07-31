@@ -175,7 +175,7 @@ export function SocietyReportPage() {
           ) : null}
           <div className="mt-8 rounded-[14px] border border-[#E7E3DA] bg-[#F8F3EA] p-5 text-[12px] leading-6 text-[#667085]">
             <p className="font-bold text-[#35413B]">How to read this report</p>
-            <p className="mt-1">This is a decision aid built from admin-reviewed society data, public records and market context. It does not invent prices, guarantees, rankings, possession status or investment returns. Verify unit-level price, exact tower, availability, legal title and RERA status independently before any payment. Prepared by SocietyFlats — societyflats.com · +91 99118 86222.</p>
+            <p className="mt-1">This is a decision aid built from reviewed society data, public records and market context. It does not invent prices, guarantees, rankings, possession status or investment returns. Verify unit-level price, exact tower, availability, legal title and RERA status independently before any payment. Prepared by SocietyFlats — societyflats.com · +91 99118 86222.</p>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ const SITE_NAME = "SocietyFlats";
 const SITE_URL = "https://www.societyflats.com";
 const DEFAULT_SOCIAL_IMAGE = "/brand/societyflats-og-image.png";
 const DEFAULT_DESCRIPTION =
-  "Stop sorting through scattered, unverified listings. Discover Gurgaon’s premier residential societies using data-driven ratings for security, commute, and market trends.";
+  "Stop sorting through scattered, unverified listings. Discover Delhi NCR’s premier residential societies using data-driven ratings for security, commute, and market trends.";
 
 type SeoInput =
   | boolean
@@ -185,9 +185,9 @@ function defaultJsonLd(title: string, description: string, canonical: string): u
           "@type": "RealEstateAgent",
           name: SITE_NAME,
           url: SITE_URL,
-          areaServed: "Gurugram, Haryana, India",
+          areaServed: "Delhi NCR, India",
           description:
-            "Gurgaon's society-first real estate platform built around verified availability, structural intelligence, and assisted home search.",
+            "Delhi NCR's society-first real estate platform built around verified availability, structural intelligence, and assisted home search.",
           logo: absoluteUrl("/brand/societyflats-icon-512.png"),
           image: absoluteUrl(DEFAULT_SOCIAL_IMAGE),
           telephone: "+91-99118-86222",
@@ -265,7 +265,7 @@ export function setPublicSeo(title: string, description: string, input: SeoInput
   if (typeof document === "undefined") return;
 
   const options = typeof input === "boolean" ? { noindex: input } : input;
-  const cleanTitle = title?.trim() || "SocietyFlats | Gurgaon’s Society-First Home Search";
+  const cleanTitle = title?.trim() || "SocietyFlats | Delhi NCR’s Society-First Home Search";
   const cleanDescription = normalizeDescription(description);
   const canonical = absoluteUrl(options.canonical || canonicalFromLocation());
   const noindex = Boolean(options.noindex);
@@ -287,9 +287,9 @@ export function setPublicSeo(title: string, description: string, input: SeoInput
   upsertMetaByName("twitter:title", cleanTitle);
   upsertMetaByName("twitter:description", cleanDescription);
   upsertMetaByProperty("og:image", imageUrl);
-  upsertMetaByProperty("og:image:width", "1024");
-  upsertMetaByProperty("og:image:height", "576");
-  upsertMetaByProperty("og:image:alt", "SocietyFlats Gurgaon society-first home search");
+  upsertMetaByProperty("og:image:width", "1200");
+  upsertMetaByProperty("og:image:height", "630");
+  upsertMetaByProperty("og:image:alt", "SocietyFlats Delhi NCR society-first home search");
   upsertMetaByName("twitter:image", imageUrl);
 
   upsertRobots(noindex);

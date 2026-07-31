@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AiMessage extends Model
 {
-    protected $fillable = ['ai_conversation_id', 'role', 'content', 'context_entities'];
+    protected $fillable = ['ai_conversation_id', 'role', 'content', 'context_entities', 'suggested_replies'];
 
-    protected $casts = ['context_entities' => 'array'];
+    protected $casts = ['context_entities' => 'array', 'suggested_replies' => 'array'];
 
     public function conversation(): BelongsTo
     {

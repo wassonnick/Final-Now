@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" fill="none">
+  <rect width="1080" height="1920" fill="#1D1D1F"/>
+  <g transform="translate(72 84) scale(0.171875)">
+  <rect width="512" height="512" rx="118" fill="#252528"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#0F7B63"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  </g>
+  <text x="188" y="150" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="52" font-weight="700" fill="#FFFFFF" letter-spacing="-1.2">Society<tspan fill="#3BAE93">Flats</tspan></text>
+  <g transform="translate(96 430) scale(1.11)">
+    <rect x="0" y="0" width="800" height="600" fill="#252528"/>
+    <rect x="0" y="470" width="800" height="130" fill="#1A1A1D"/>
+    <path d="M250 470 L250 250 A150 150 0 0 1 550 250 L550 470 Z" fill="#243244"/>
+    <rect x="300" y="360" width="46" height="110" rx="6" fill="#33333A"/>
+    <rect x="360" y="320" width="58" height="150" rx="6" fill="#2C2C33"/>
+    <rect x="432" y="386" width="42" height="84" rx="6" fill="#33333A"/>
+    <rect x="374" y="344" width="14" height="14" rx="4" fill="#3BAE93"/>
+    <path d="M250 470 L250 250 A150 150 0 0 1 550 250 L550 470 Z" fill="none" stroke="#FFFFFF" stroke-width="12"/>
+    <line x1="400" y1="106" x2="400" y2="470" stroke="#FFFFFF" stroke-width="8"/>
+    <line x1="252" y1="300" x2="548" y2="300" stroke="#FFFFFF" stroke-width="8"/>
+    <rect x="150" y="392" width="330" height="86" rx="26" fill="#0F7B63"/>
+    <rect x="168" y="356" width="140" height="58" rx="20" fill="#12604D"/>
+    <rect x="322" y="356" width="140" height="58" rx="20" fill="#12604D"/>
+    <rect x="176" y="470" width="18" height="26" rx="6" fill="#FFFFFF"/>
+    <rect x="436" y="470" width="18" height="26" rx="6" fill="#FFFFFF"/>
+    <rect x="600" y="300" width="10" height="182" rx="5" fill="#FFFFFF"/>
+    <path d="M566 300 L644 300 L624 244 L586 244 Z" fill="#3BAE93"/>
+    <rect x="576" y="478" width="58" height="12" rx="6" fill="#FFFFFF"/>
+    <path d="M704 470 v-84" stroke="#0F7B63" stroke-width="7" fill="none"/>
+    <path d="M704 402 C666 396 648 372 650 344 C686 348 704 370 704 402 Z" fill="#0F7B63"/>
+    <path d="M704 402 C742 396 760 372 758 344 C722 348 704 370 704 402 Z" fill="#147A62"/>
+    <path d="M704 372 C684 350 684 322 700 300 C720 320 722 350 704 372 Z" fill="#169176"/>
+    <path d="M684 470 h44 l-8 44 h-28 Z" fill="#33333A"/>
+    <ellipse cx="330" cy="516" rx="210" ry="26" fill="#232326"/>
+  </g>
+  <text x="96" y="1244" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="800" fill="#3BAE93" letter-spacing="5">VERIFIED SOCIETIES</text>
+  <text x="96" y="1352" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="76" font-weight="700" fill="#FFFFFF" letter-spacing="-2">Your next home,</text>
+  <text x="96" y="1444" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="76" font-weight="700" fill="#FFFFFF" letter-spacing="-2">checked by people.</text>
+  <rect x="96" y="1520" width="470" height="96" rx="48" fill="#3BAE93"/>
+  <text x="331" y="1581" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="33" font-weight="800" fill="#1D1D1F" text-anchor="middle">WhatsApp us →</text>
+  <text x="96" y="1800" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="29" font-weight="600" fill="#C7C7CD">societyflats.com · +91 99118 86222</text>
+</svg>

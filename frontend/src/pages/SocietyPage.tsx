@@ -56,6 +56,7 @@ import {
   slugify,
   societyImage,
 } from "@/lib/publicData";
+import { SectionTabs } from "@/components/society/SectionTabs";
 import { setPublicSeo } from "@/lib/seo";
 import { API_BASE_URL } from "@/config/api";
 import { backendApi } from "@/services/backendApi";
@@ -233,7 +234,7 @@ function deliveryStatusTone(status: string) {
     badge: "border-slate-200 bg-slate-50 text-slate-700",
     card: "border-slate-200 bg-slate-50",
     label: "Needs review",
-    helper: "Delivery status is pending admin/source verification.",
+    helper: "Delivery status is pending verification.",
   };
 }
 
@@ -776,7 +777,7 @@ export function SocietyPage() {
             Society not found
           </h1>
           <p className="mt-3 text-navy-500">
-            Create or verify this society in the admin panel.
+            This society profile isn.t published yet.
           </p>
           <Button
             asChild
@@ -840,7 +841,7 @@ export function SocietyPage() {
     },
     {
       title: "Hospitals",
-      text: "Nearby hospital and emergency-access context is pending admin review.",
+      text: "Nearby hospital and emergency-access context is pending review.",
       icon: Shield,
     },
     {
@@ -915,7 +916,7 @@ export function SocietyPage() {
     sourceConfidenceScore > 0 ? `${sourceConfidenceScore}% verified` : "Review pending";
   const updatedText =
     readableStructuredValue(field(society, "updatedAt", "updated_at", "")) ||
-    "Admin-reviewed profile";
+    "Reviewed profile";
   const projectStatusText =
     readableStructuredValue(field(society, "projectStatus", "project_status", "")) ||
     "Needs Review";
@@ -948,7 +949,7 @@ export function SocietyPage() {
       icon: Building2,
     },
     {
-      label: "Admin review",
+      label: "Review",
       value: field(
         society,
         "verificationStatus",
@@ -1000,7 +1001,7 @@ export function SocietyPage() {
         ...correctionForm,
       });
       trackCorrectionFormSubmit({ society_slug: slug || "", society_name: society.name });
-      setCorrectionMessage("Correction submitted for admin review.");
+      setCorrectionMessage("Correction submitted for review.");
       setCorrectionForm({ information_challenged: "", suggested_correction: "", supporting_url: "", name: "", email: "", phone: "", consent: false });
     } catch (error: any) {
       setCorrectionMessage(error?.message || "Unable to submit correction.");
@@ -1008,7 +1009,7 @@ export function SocietyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F4EF] pb-40 text-[#1D2939] md:pb-0">
+    <div className="ncr-skin min-h-screen bg-white pb-40 text-[#1D2939] md:pb-0">
       <main className="mx-auto max-w-[1360px] px-4 py-5 md:px-10 md:pb-14 md:pt-7">
         <div className="mb-4 flex items-center gap-1.5 text-[13px] text-[#6E756E]">
           <Link to="/search?tab=societies">Societies</Link>
@@ -1068,6 +1069,17 @@ export function SocietyPage() {
           <p className="mt-2.5 text-[12px] text-[#8A8F89]">Photos via Google Places, reviewed and approved before publishing — not stock images.</p>
         ) : null}
 
+        <SectionTabs
+          tabs={[
+            { id: "sec-scores", label: "Scores" },
+            { id: "sec-amenities", label: "Amenities" },
+            { id: "sec-about", label: "About" },
+            { id: "sec-location", label: "Location" },
+            { id: "sec-homes", label: "Homes" },
+            { id: "sec-faq", label: "FAQ" },
+          ]}
+        />
+
         <div className="mt-6 grid items-stretch gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section>
             <h1 className="font-display text-[34px] font-medium leading-[1.02] tracking-[-0.015em] text-[#111827] md:text-[42px]">{seoContent?.seo_h1 || society.name}</h1>
@@ -1104,16 +1116,16 @@ export function SocietyPage() {
             </div>
 
             {intelligence ? (
-              <section className="mt-6 rounded-[24px] border border-[#D7E7D8] bg-white p-5 shadow-[0_18px_44px_-34px_rgba(0,0,0,.35)]">
+              <section className="mt-6 rounded-[24px] border border-[#D8DFEC] bg-white p-5 shadow-[0_18px_44px_-34px_rgba(0,0,0,.35)]">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#2A6147]">Decision intelligence dashboard</p>
-                    <h2 className="mt-2 font-display text-[27px] font-medium text-[#123C32]">Know the society before choosing the home.</h2>
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#3156A3]">Decision intelligence dashboard</p>
+                    <h2 className="mt-2 font-display text-[27px] font-medium text-[#233B6E]">Know the society before choosing the home.</h2>
                     <p className="mt-2 max-w-3xl text-[14.5px] leading-7 text-[#59635E]">
                       {intelligence.editorial_summary || `${society.name} has a published SocietyFlats decision profile. Use it as a shortlist aid, then verify unit-level details before deciding.`}
                     </p>
                   </div>
-                  <div className="rounded-[18px] bg-[#123C32] p-4 text-white md:w-[210px]">
+                  <div className="rounded-[18px] bg-[#233B6E] p-4 text-white md:w-[210px]">
                     <p className="text-xs text-[#CFE6D6]">Society intelligence score</p>
                     <p className="mt-1 text-4xl font-black">{intelligence.overall_score || "—"}</p>
                     <p className="mt-1 text-xs text-[#CFE6D6]">{intelligence.overall_score_label || "Coverage-based score"}</p>
@@ -1137,9 +1149,9 @@ export function SocietyPage() {
                 </div>
 
                 {Array.isArray(intelligence.signal_breakdown) && intelligence.signal_breakdown.length ? (
-                  <div className="mt-5 rounded-[18px] border border-[#D7E7D8] bg-[#F8FBF8] p-4">
+                  <div className="mt-5 rounded-[18px] border border-[#D8DFEC] bg-[#F7F9FD] p-4">
                     <div className="flex items-center justify-between gap-3">
-                      <h3 className="text-sm font-black text-[#123C32]">Why this score — every signal we weighed</h3>
+                      <h3 className="text-sm font-black text-[#233B6E]">Why this score — every signal we weighed</h3>
                       <span className="text-[11px] font-bold uppercase tracking-wide text-[#8A8F89]">10 weighted signals</span>
                     </div>
                     <div className="mt-3 grid gap-x-6 gap-y-3 md:grid-cols-2">
@@ -1150,13 +1162,13 @@ export function SocietyPage() {
                           <div key={sig.key}>
                             <div className="flex items-baseline justify-between gap-2">
                               <span className="text-[13px] font-bold text-[#25302B]">{sig.label}</span>
-                              <span className="shrink-0 text-[12px] font-black text-[#123C32]">{missing ? "—" : Number(sig.score).toFixed(1)}<span className="ml-1 text-[10px] font-bold text-[#8A8F89]">/10 · {sig.weight}%</span></span>
+                              <span className="shrink-0 text-[12px] font-black text-[#233B6E]">{missing ? "—" : Number(sig.score).toFixed(1)}<span className="ml-1 text-[10px] font-bold text-[#8A8F89]">/10 · {sig.weight}%</span></span>
                             </div>
                             <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#E7E3DA]">
-                              <div className="h-full rounded-full" style={{ width: missing ? "0%" : `${Math.min(100, Number(sig.score) * 10)}%`, background: verified ? "#2A6147" : "#C8A24B" }} />
+                              <div className="h-full rounded-full" style={{ width: missing ? "0%" : `${Math.min(100, Number(sig.score) * 10)}%`, background: verified ? "#3156A3" : "#C8A24B" }} />
                             </div>
                             <p className="mt-1 text-[11px] text-[#8A8F89]">
-                              <span className={`font-bold ${verified ? "text-[#2A6147]" : missing ? "text-[#9A552E]" : "text-[#C8792F]"}`}>{missing ? "Not yet verified" : verified ? "Verified" : "Estimated"}</span>
+                              <span className={`font-bold ${verified ? "text-[#3156A3]" : missing ? "text-[#9A552E]" : "text-[#C8792F]"}`}>{missing ? "Not yet verified" : verified ? "Verified" : "Estimated"}</span>
                               {sig.source ? ` · ${sig.source}` : ""}
                             </p>
                           </div>
@@ -1171,10 +1183,10 @@ export function SocietyPage() {
 
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   <div className="rounded-[18px] bg-[#EAF5ED] p-4">
-                    <h3 className="text-sm font-black text-[#123C32]">Best fit for</h3>
+                    <h3 className="text-sm font-black text-[#233B6E]">Best fit for</h3>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {(intelligenceBestFor.length ? intelligenceBestFor : [{ label: "Users who want source-reviewed society context" }]).map((item) => (
-                        <span key={item.label} className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[#123C32]">{item.label}</span>
+                        <span key={item.label} className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[#233B6E]">{item.label}</span>
                       ))}
                     </div>
                   </div>
@@ -1188,10 +1200,10 @@ export function SocietyPage() {
 
                 {intelligenceStrengths.length ? (
                   <div className="mt-5">
-                    <h3 className="text-sm font-black text-[#123C32]">Top strengths</h3>
+                    <h3 className="text-sm font-black text-[#233B6E]">Top strengths</h3>
                     <div className="mt-3 grid gap-3 md:grid-cols-3">
                       {intelligenceStrengths.slice(0, 3).map((item) => (
-                        <div key={item.label} className="rounded-[16px] border border-[#D7E7D8] bg-white p-4">
+                        <div key={item.label} className="rounded-[16px] border border-[#D8DFEC] bg-white p-4">
                           <p className="font-bold text-[#25302B]">{item.label}</p>
                           {item.detail ? <p className="mt-1 text-sm leading-6 text-[#6E756E]">{item.detail}</p> : null}
                         </div>
@@ -1218,8 +1230,8 @@ export function SocietyPage() {
                 ) : null}
 
                 <div className="mt-5 flex flex-wrap gap-3 border-t border-[#E7E3DA] pt-5">
-                  <button type="button" onClick={() => openSocietyCallback("society_intelligence_available_homes")} className="rounded-full bg-[#123C32] px-5 py-3 text-sm font-bold text-white">Request available homes</button>
-                  <Link to={`/compare?seed=${encodeURIComponent(String(society.slug || slug || ""))}`} className="rounded-full border border-[#123C32] bg-white px-5 py-3 text-sm font-bold text-[#123C32]">Compare society</Link>
+                  <button type="button" onClick={() => openSocietyCallback("society_intelligence_available_homes")} className="rounded-full bg-[#233B6E] px-5 py-3 text-sm font-bold text-white">Request available homes</button>
+                  <Link to={`/compare?seed=${encodeURIComponent(String(society.slug || slug || ""))}`} className="rounded-full border border-[#233B6E] bg-white px-5 py-3 text-sm font-bold text-[#233B6E]">Compare society</Link>
                   <Link to={`/ai-advisor?q=${encodeURIComponent(`Is ${society.name} right for my family?`)}`} className="rounded-full border border-[#E7DCCB] bg-[#F8F3EA] px-5 py-3 text-sm font-bold text-[#9A552E]">Ask AI Advisor</Link>
                   <button type="button" onClick={() => { setSourceDrawerOpen(true); trackSourceDrawerOpen({ society_slug: slug || "" }); }} className="rounded-full border border-[#E7DCCB] bg-white px-5 py-3 text-sm font-bold text-[#3156A3]">View sources</button>
                   <button type="button" onClick={() => { setCorrectionOpen(true); trackCorrectionFormOpen({ society_slug: slug || "" }); }} className="rounded-full border border-[#EBCFAE] bg-white px-5 py-3 text-sm font-bold text-[#9A552E]">Report outdated info</button>
@@ -1266,9 +1278,9 @@ export function SocietyPage() {
                       <p className="mt-1 text-sm font-black text-[#25302B]">{deliveryTone.label}</p>
                       <p className="mt-1 text-[12.5px] text-[#59635E]">{possessionDateText && possessionDateText !== "—" ? possessionDateText : deliveryTone.helper}</p>
                     </div>
-                    <div className="rounded-[16px] border border-[#D7E7D8] bg-[#F8FBF8] p-4">
+                    <div className="rounded-[16px] border border-[#D8DFEC] bg-[#F7F9FD] p-4">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-[#8A8F89]">Legal & RERA confidence</p>
-                      <p className="mt-1 text-sm font-black text-[#123C32]">{legalSignal && legalSignal.score != null ? `${Number(legalSignal.score).toFixed(1)}/10` : "Being verified"}</p>
+                      <p className="mt-1 text-sm font-black text-[#233B6E]">{legalSignal && legalSignal.score != null ? `${Number(legalSignal.score).toFixed(1)}/10` : "Being verified"}</p>
                       <p className="mt-1 text-[12.5px] text-[#59635E]">{legalSignal ? (legalSignal.status === "verified" ? "Verified signal" : "Estimated — confirm independently") : "Not yet scored"}</p>
                     </div>
                   </div>
@@ -1296,7 +1308,7 @@ export function SocietyPage() {
 
             {subScores.length ? (
               <div className="mt-6">
-                <h2 className="text-[19px] font-bold text-[#25302B]">How {society.name} scores</h2>
+                <h2 id="sec-scores" className="scroll-mt-[7.5rem] text-[19px] font-bold text-[#25302B]">How {society.name} scores</h2>
                 <p className="mt-1 text-[13px] text-[#6E756E]">Each number reflects amenities, builder reputation, locality tier and resident-fit signals reviewed for this society — not a single average.</p>
                 <div className="mt-3.5 space-y-2.5 rounded-[14px] border border-[#E7E3DA] bg-white p-4">
                   {subScores.map(([label, value]) => {
@@ -1315,7 +1327,7 @@ export function SocietyPage() {
               </div>
             ) : null}
 
-            <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Amenities</h2>
+            <h2 id="sec-amenities" className="scroll-mt-[7.5rem] mt-8 text-[19px] font-bold text-[#25302B]">Amenities</h2>
             <div className="mt-3.5 flex flex-wrap gap-2.5">
               {(amenities.length ? amenities : ["Amenities being reviewed"]).slice(0, showAllAmenities ? undefined : 8).map((amenity) => (
                 <span key={amenity} className="rounded-full border border-[#E7E3DA] bg-white px-4 py-2 text-[13.5px] text-[#35413B]">✓ {amenity}</span>
@@ -1331,14 +1343,14 @@ export function SocietyPage() {
               ) : null}
             </div>
 
-            <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">About this society</h2>
+            <h2 id="sec-about" className="scroll-mt-[7.5rem] mt-8 text-[19px] font-bold text-[#25302B]">About this society</h2>
             <p className="mt-2.5 max-w-[760px] whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">
               {seoContent?.about_content || descriptionText || `${society.name} is a published Gurgaon society profile. SocietyFlats is reviewing its project facts, pricing context, nearby intelligence and current availability.`}
             </p>
 
             {seoContent?.location_content ? <><h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Location & connectivity</h2><p className="mt-2.5 whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{seoContent.location_content}</p></> : null}
 
-            <h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Location intelligence</h2>
+            <h2 id="sec-location" className="scroll-mt-[7.5rem] mt-8 text-[19px] font-bold text-[#25302B]">Location intelligence</h2>
             <div className="mt-3.5 overflow-hidden rounded-[18px] border border-[#D8DFEC] bg-[#E8EDF7]">
               <SocietyNearbyGoogleMap
                 title={society.name}
@@ -1409,7 +1421,7 @@ export function SocietyPage() {
           </aside>
         </div>
 
-        <h2 className="mb-4 mt-11 text-[22px] font-bold text-[#25302B]">Available homes</h2>
+        <h2 id="sec-homes" className="scroll-mt-[7.5rem] mb-4 mt-11 text-[22px] font-bold text-[#25302B]">Available homes</h2>
         {properties.length ? (
           <div className="grid gap-[18px] md:grid-cols-3">
             {properties.slice(0, 3).map((property) => (
@@ -1427,7 +1439,7 @@ export function SocietyPage() {
 
         {comparePages.length ? <section className="mt-11"><h2 className="text-[22px] font-bold text-[#25302B]">Compare {society?.name || "this society"} with nearby societies</h2><div className="mt-4 flex flex-wrap gap-3">{comparePages.map((page: any) => <Link key={page.slug} to={`/compare/${page.slug}`} className="rounded-full border border-[#D8DFEC] bg-white px-4 py-2 text-sm font-semibold text-[#3156A3]">{page.title}</Link>)}</div></section> : null}
 
-        {seoFaqs.length ? <section className="mt-11"><h2 className="text-[22px] font-bold text-[#25302B]">Frequently asked questions</h2><div className="mt-4 space-y-3">{seoFaqs.map((faq: any) => <details key={faq.question} className="rounded-[16px] border border-[#E7E3DA] bg-white p-4"><summary className="cursor-pointer font-bold text-[#25302B]">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#4A534E]">{faq.answer}</p></details>)}</div></section> : null}
+        {seoFaqs.length ? <section className="mt-11"><h2 id="sec-faq" className="scroll-mt-[7.5rem] text-[22px] font-bold text-[#25302B]">Frequently asked questions</h2><div className="mt-4 space-y-3">{seoFaqs.map((faq: any) => <details key={faq.question} className="rounded-[16px] border border-[#E7E3DA] bg-white p-4"><summary className="cursor-pointer font-bold text-[#25302B]">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#4A534E]">{faq.answer}</p></details>)}</div></section> : null}
       </main>
 
       <div className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 lg:hidden">
@@ -1453,8 +1465,8 @@ export function SocietyPage() {
           <div className="ml-auto h-full max-w-xl overflow-y-auto rounded-[24px] bg-white p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#2A6147]">Sources reviewed</p>
-                <h2 className="mt-2 font-display text-3xl text-[#123C32]">{society.name}</h2>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#3156A3]">Sources reviewed</p>
+                <h2 className="mt-2 font-display text-3xl text-[#233B6E]">{society.name}</h2>
               </div>
               <button type="button" onClick={() => setSourceDrawerOpen(false)} className="rounded-full border p-2"><X className="h-5 w-5" /></button>
             </div>
@@ -1478,7 +1490,7 @@ export function SocietyPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-[#9A552E]">Correction request</p>
-                <h2 className="mt-2 font-display text-3xl text-[#123C32]">Report outdated information</h2>
+                <h2 className="mt-2 font-display text-3xl text-[#233B6E]">Report outdated information</h2>
               </div>
               <button type="button" onClick={() => setCorrectionOpen(false)} className="rounded-full border p-2"><X className="h-5 w-5" /></button>
             </div>
@@ -1493,10 +1505,10 @@ export function SocietyPage() {
               </div>
               <label className="flex gap-3 rounded-2xl bg-[#F8F3EA] p-3 text-sm text-[#6E756E]">
                 <input required type="checkbox" checked={correctionForm.consent} onChange={(e) => setCorrectionForm({ ...correctionForm, consent: e.target.checked })} />
-                I consent to SocietyFlats using this submission for admin review.
+                I consent to SocietyFlats using this submission for review.
               </label>
-              {correctionMessage ? <p className="text-sm font-bold text-[#123C32]">{correctionMessage}</p> : null}
-              <button className="rounded-full bg-[#123C32] px-5 py-3 text-sm font-bold text-white">Submit for review</button>
+              {correctionMessage ? <p className="text-sm font-bold text-[#233B6E]">{correctionMessage}</p> : null}
+              <button className="rounded-full bg-[#233B6E] px-5 py-3 text-sm font-bold text-white">Submit for review</button>
             </div>
           </form>
         </div>

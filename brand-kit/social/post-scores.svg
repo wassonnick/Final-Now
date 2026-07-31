@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" fill="none">
+  <rect width="1080" height="1080" fill="#FFFFFF"/>
+  <defs><clipPath id="card4"><rect x="72" y="150" width="936" height="590" rx="30"/></clipPath></defs>
+  <rect x="72" y="150" width="936" height="590" rx="30" fill="#F5F5F7"/>
+  <g clip-path="url(#card4)"><text x="150" y="268" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#1D1D1F">Safety</text>
+  <rect x="420" y="242" width="500" height="26" rx="13" fill="#E1E1E6"/>
+  <rect x="420" y="242" width="460" height="26" rx="13" fill="#0F7B63"/>
+  <text x="150" y="390" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#1D1D1F">Commute</text>
+  <rect x="420" y="364" width="500" height="26" rx="13" fill="#E1E1E6"/>
+  <rect x="420" y="364" width="390" height="26" rx="13" fill="#0F7B63"/>
+  <text x="150" y="512" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#1D1D1F">Lifestyle</text>
+  <rect x="420" y="486" width="500" height="26" rx="13" fill="#E1E1E6"/>
+  <rect x="420" y="486" width="430" height="26" rx="13" fill="#0F7B63"/>
+  <text x="150" y="634" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="700" fill="#1D1D1F">Upkeep</text>
+  <rect x="420" y="608" width="500" height="26" rx="13" fill="#E1E1E6"/>
+  <rect x="420" y="608" width="350" height="26" rx="13" fill="#0F7B63"/></g>
+  <text x="72" y="118" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="800" fill="#0F7B63" letter-spacing="5">REAL, CHECKABLE SCORES</text>
+  <text x="72" y="806" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="62" font-weight="700" fill="#1D1D1F" letter-spacing="-1.6">We score what</text>
+  <text x="72" y="882" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="62" font-weight="700" fill="#1D1D1F" letter-spacing="-1.6">actually matters.</text>
+  <rect x="72" y="930" width="392" height="76" rx="38" fill="#0F7B63"/>
+  <text x="268" y="979" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="27" font-weight="800" fill="#FFFFFF" text-anchor="middle">Check availability →</text>
+  <g transform="translate(936 934) scale(0.140625)">
+  <rect width="512" height="512" rx="118" fill="#1D1D1F"/>
+  <rect x="110" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="110" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="110" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="218" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="218" width="76" height="76" rx="20" fill="#0F7B63"/>
+  <rect x="110" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  <rect x="218" y="326" width="76" height="110" rx="20" fill="#FFFFFF"/>
+  <rect x="326" y="326" width="76" height="76" rx="20" fill="#FFFFFF"/>
+  </g>
+  <text x="72" y="1044" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="23" font-weight="600" fill="#6E6E73">societyflats.com · +91 99118 86222</text>
+</svg>

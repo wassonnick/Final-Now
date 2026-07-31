@@ -8,6 +8,9 @@ export const BRAND = {
   cream: "#F8F3EA",
   clay: "#B08A3E",
   clayDeep: "#8C6E2F",
+  charcoal: "#242426",
+  jade: "#3BAE93",
+  jadeDeep: "#0F7B63",
   sage: "#E3DFD3",
   leaf: "#DCE6F7",
   forest: "#18254A",
@@ -69,18 +72,14 @@ function duskBuilding(
 }
 
 function markTile(x: number, y: number, size: number, tileFill = C.estate) {
-  const cellSize = 76, gap = 32, start = (512 - (3 * 76 + 2 * 32)) / 2;
-  const cells: string[] = [`<rect width="512" height="512" rx="118" fill="${tileFill}"/>`];
-  for (let row = 0; row < 3; row++) {
-    for (let col = 0; col < 3; col++) {
-      const lit = row === 1 && col === 2;
-      const door = row === 2 && col === 1;
-      cells.push(
-        `<rect x="${start + col * (cellSize + gap)}" y="${start + row * (cellSize + gap)}" width="${cellSize}" height="${door ? cellSize + 34 : cellSize}" rx="20" fill="${lit ? C.clay : C.cream}"/>`,
-      );
-    }
-  }
-  return `<g transform="translate(${x} ${y}) scale(${size / 512})">${cells.join("")}</g>`;
+  const resolvedTile = tileFill === C.estate ? C.charcoal : tileFill;
+  return `<g transform="translate(${x} ${y}) scale(${size / 512})">
+    <rect width="512" height="512" rx="118" fill="${resolvedTile}"/>
+    <path d="M118 392V238C118 157 179 98 256 98s138 59 138 140v154h-58V238c0-50-35-82-80-82s-80 32-80 82v154h-58Z" fill="${C.cream}"/>
+    <rect x="92" y="378" width="328" height="42" rx="21" fill="${C.cream}"/>
+    <path d="M220 392v-94c0-27 15-44 36-44s36 17 36 44v94h-72Z" fill="${C.jade}"/>
+    <circle cx="326" cy="236" r="17" fill="${C.clay}"/>
+  </g>`;
 }
 
 export type BrandAsset = { name: string; width: number; height: number; svg: string };
@@ -93,7 +92,7 @@ export function igStory(sector: string): BrandAsset {
   ${duskBuilding(880, 1260, 3, { h: 1920, lit: ["2-1", "8-0"], gold: "5-2" })}
   ${duskBuilding(40, 1660, 5, { h: 1920, lit: ["1-3"] })}
   ${markTile(72, 76, 92, C.forest)}
-  <text x="190" y="144" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>
+  <text x="190" y="144" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.jade}">Flats</tspan></text>
   <path d="M140 1150 L140 660 A360 360 0 0 1 860 660 L860 1150 Z" fill="${C.forest}"/>
   <text x="500" y="900" font-family="${SANS}" font-size="26" font-weight="600" fill="${C.leaf}" text-anchor="middle">PHOTO / VIDEO ZONE — mask to this window</text>
   <path d="M140 1150 L140 660 A360 360 0 0 1 860 660 L860 1150 Z" fill="none" stroke="#F3EBDA" stroke-width="12"/>
@@ -120,7 +119,7 @@ export function fbCover(headlinePlain: string, headlineGold: string): BrandAsset
   ${duskBuilding(1500, 400, 3, { lit: ["2-1"] })}
   ${duskBuilding(120, 512, 6, { lit: ["0-4"] })}
   ${markTile(140, 56, 88, C.forest)}
-  <text x="252" y="122" font-family="${SERIF}" font-size="56" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>
+  <text x="252" y="122" font-family="${SERIF}" font-size="56" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.jade}">Flats</tspan></text>
   <text x="140" y="298" font-family="${SERIF}" font-size="74" font-weight="600" fill="${C.cream}">${esc(headlinePlain)}</text>
   <text x="140" y="388" font-family="${SERIF}" font-size="74" font-weight="600" fill="${C.cream}"><tspan font-style="italic" fill="${C.clay}">${esc(headlineGold)}</tspan></text>
   <text x="142" y="452" font-family="${SANS}" font-size="27" font-weight="600" fill="${C.leaf}">Admin-verified societies · Real availability · No fake listings</text>
@@ -155,7 +154,7 @@ export function scoreStory(
   <rect width="1080" height="1920" fill="url(#sky)"/>
   ${duskBuilding(900, 1500, 2, { h: 1920, lit: ["1-0"], gold: "3-1" })}
   ${markTile(72, 76, 92, C.forest)}
-  <text x="190" y="144" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>
+  <text x="190" y="144" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.jade}">Flats</tspan></text>
   <text x="540" y="340" font-family="${SANS}" font-size="30" font-weight="700" fill="${C.leaf}" text-anchor="middle" letter-spacing="5">SOCIETY REPORT CARD</text>
   <circle cx="540" cy="600" r="160" fill="none" stroke="${C.clay}" stroke-width="14"/>
   <circle cx="540" cy="600" r="132" fill="${C.forest}"/>
@@ -177,7 +176,7 @@ export function rentStory(amount: string, area: string): BrandAsset {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
   <rect width="1080" height="1920" fill="${C.cream}"/>
   ${markTile(72, 76, 92)}
-  <text x="190" y="144" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.ink}">Society<tspan fill="${C.estate}">Flats</tspan></text>
+  <text x="190" y="144" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.ink}">Society<tspan fill="${C.jadeDeep}">Flats</tspan></text>
   <text x="90" y="560" font-family="${SERIF}" font-size="88" font-weight="600" fill="${C.ink}">What does</text>
   <text x="90" y="780" font-family="${SERIF}" font-size="${fitSize(amount, 150, 11)}" font-weight="600" font-style="italic" fill="${C.clayDeep}">${esc(amount)}</text>
   <text x="90" y="940" font-family="${SERIF}" font-size="88" font-weight="600" fill="${C.ink}">get you in ${esc(area)}?</text>
@@ -259,7 +258,7 @@ export function launchStory(): BrandAsset {
   ${duskBuilding(760, 1360, 4, { h: 1920, lit: ["3-3"] })}
   ${markTile(414, 300, 252, C.forest)}
   <text x="540" y="700" font-family="${SERIF}" font-size="88" font-weight="600" fill="${C.cream}" text-anchor="middle">Gurgaon, meet</text>
-  <text x="540" y="810" font-family="${SERIF}" font-size="96" font-weight="600" fill="${C.cream}" text-anchor="middle">Society<tspan fill="${C.leaf}">Flats</tspan>.</text>
+  <text x="540" y="810" font-family="${SERIF}" font-size="96" font-weight="600" fill="${C.cream}" text-anchor="middle">Society<tspan fill="${C.jade}">Flats</tspan>.</text>
   <text x="540" y="930" font-family="${SERIF}" font-size="52" font-weight="500" font-style="italic" fill="${C.clay}" text-anchor="middle">Every society verified. Every home real.</text>
   <text x="540" y="1030" font-family="${SANS}" font-size="32" font-weight="600" fill="${C.leaf}" text-anchor="middle">Scores, live prices and a friendly AI advisor —</text>
   <text x="540" y="1078" font-family="${SANS}" font-size="32" font-weight="600" fill="${C.leaf}" text-anchor="middle">now live for Gurgaon.</text>
@@ -278,7 +277,7 @@ export function launchPost(): BrandAsset {
   ${duskBuilding(60, 700, 4, { h: 1080, lit: ["2-1"] })}
   ${duskBuilding(820, 640, 4, { h: 1080, lit: ["1-3", "5-0"], gold: "3-2" })}
   ${markTile(444, 120, 192, C.forest)}
-  <text x="540" y="470" font-family="${SERIF}" font-size="76" font-weight="600" fill="${C.cream}" text-anchor="middle">Gurgaon, meet Society<tspan fill="${C.leaf}">Flats</tspan>.</text>
+  <text x="540" y="470" font-family="${SERIF}" font-size="76" font-weight="600" fill="${C.cream}" text-anchor="middle">Gurgaon, meet Society<tspan fill="${C.jade}">Flats</tspan>.</text>
   <text x="540" y="560" font-family="${SERIF}" font-size="44" font-weight="500" font-style="italic" fill="${C.clay}" text-anchor="middle">Every society verified. Every home real.</text>
   <text x="540" y="650" font-family="${SANS}" font-size="30" font-weight="600" fill="${C.leaf}" text-anchor="middle">Society scores · live verified prices · AI advisor · zero fake listings</text>
   <rect x="330" y="880" width="420" height="88" rx="44" fill="${C.clay}"/>
@@ -297,7 +296,7 @@ export function launchFb(): BrandAsset {
   ${duskBuilding(880, 300, 4, { h: 630, lit: ["1-1", "4-3"], gold: "2-2" })}
   ${duskBuilding(1040, 380, 3, { h: 630, lit: ["2-0"] })}
   ${markTile(84, 70, 108, C.forest)}
-  <text x="216" y="146" font-family="${SERIF}" font-size="64" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>
+  <text x="216" y="146" font-family="${SERIF}" font-size="64" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.jade}">Flats</tspan></text>
   <text x="86" y="300" font-family="${SERIF}" font-size="68" font-weight="600" fill="${C.cream}">Gurgaon, meet your</text>
   <text x="86" y="384" font-family="${SERIF}" font-size="68" font-weight="600" font-style="italic" fill="${C.clay}">society-first home search.</text>
   <text x="88" y="460" font-family="${SANS}" font-size="27" font-weight="600" fill="${C.leaf}">Every society verified · live prices · AI advisor · zero fake listings</text>
@@ -317,7 +316,7 @@ export function ownerStory(society: string): BrandAsset {
   ${duskBuilding(840, 1200, 4, { h: 1920, lit: ["1-1", "5-3"], gold: "3-2" })}
   ${duskBuilding(40, 1560, 5, { h: 1920, lit: ["0-2"] })}
   ${markTile(72, 76, 92, C.forest)}
-  <text x="190" y="144" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>
+  <text x="190" y="144" font-family="${SERIF}" font-size="52" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.jade}">Flats</tspan></text>
   <text x="90" y="500" font-family="${SERIF}" font-size="${fitSize(`Own a flat in ${society}?`, 76, 26)}" font-weight="600" fill="${C.cream}">Own a flat in ${esc(society)}?</text>
   <text x="90" y="620" font-family="${SERIF}" font-size="66" font-weight="500" font-style="italic" fill="${C.clay}">People are searching it right now.</text>
   <text x="92" y="760" font-family="${SANS}" font-size="34" font-weight="600" fill="${C.leaf}">List free on your society's verified page and meet</text>
@@ -340,7 +339,7 @@ export function ownerPost(): BrandAsset {
   <rect width="1080" height="1080" fill="${C.cream}"/>
   <rect x="28" y="28" width="1024" height="1024" rx="28" fill="none" stroke="${C.sage}" stroke-width="2"/>
   ${markTile(84, 84, 84)}
-  <text x="190" y="142" font-family="${SERIF}" font-size="46" font-weight="600" fill="${C.ink}">Society<tspan fill="${C.estate}">Flats</tspan></text>
+  <text x="190" y="142" font-family="${SERIF}" font-size="46" font-weight="600" fill="${C.ink}">Society<tspan fill="${C.jadeDeep}">Flats</tspan></text>
   <text x="88" y="330" font-family="${SERIF}" font-size="72" font-weight="600" fill="${C.ink}">Your flat. Your society's page.</text>
   <text x="88" y="430" font-family="${SERIF}" font-size="72" font-weight="600" font-style="italic" fill="${C.clayDeep}">Their next home.</text>
   <text x="90" y="530" font-family="${SANS}" font-size="30" font-weight="600" fill="${C.grey}">Gurgaon seekers on SocietyFlats pick the society first — then the flat.</text>
@@ -364,7 +363,7 @@ export function ownerFb(): BrandAsset {
   ${duskBuilding(920, 260, 4, { h: 630, lit: ["1-0", "3-3"], gold: "2-1" })}
   ${duskBuilding(1090, 350, 2, { h: 630, lit: ["2-0"] })}
   ${markTile(84, 64, 96, C.forest)}
-  <text x="200" y="132" font-family="${SERIF}" font-size="56" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.leaf}">Flats</tspan></text>
+  <text x="200" y="132" font-family="${SERIF}" font-size="56" font-weight="600" fill="${C.cream}">Society<tspan fill="${C.jade}">Flats</tspan></text>
   <text x="86" y="280" font-family="${SERIF}" font-size="62" font-weight="600" fill="${C.cream}">Own a flat in a Gurgaon society?</text>
   <text x="86" y="360" font-family="${SERIF}" font-size="62" font-weight="600" font-style="italic" fill="${C.clay}">List it where they're searching.</text>
   <text x="88" y="436" font-family="${SANS}" font-size="27" font-weight="600" fill="${C.leaf}">Free listing · verified enquiries only · your number stays private</text>

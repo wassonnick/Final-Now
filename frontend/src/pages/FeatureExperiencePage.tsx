@@ -196,7 +196,7 @@ function MapsTool({ societies }: { societies: PublicSociety[] }) {
               </div>
               <div className="rounded-2xl bg-white/10 p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-navy-300">Coordinates</p>
-                <p className="mt-2 text-sm">{selected?.latitude && selected?.longitude ? `${selected.latitude}, ${selected.longitude}` : 'Admin review pending'}</p>
+                <p className="mt-2 text-sm">{selected?.latitude && selected?.longitude ? `${selected.latitude}, ${selected.longitude}` : 'Review pending'}</p>
               </div>
               <div className="rounded-2xl bg-white/10 p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-navy-300">Source</p>
@@ -518,7 +518,7 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
             {[
               'Access society-first Gurgaon buyer and renter leads instead of random portal noise.',
               'Submit your active areas and inventory once, then track partner follow-up from the Broker Dashboard.',
-              'Admin verifies broker profile, inventory quality, working societies and lead stages before deeper customer routing.',
+              'We verify broker profile, inventory quality, working societies and lead stages before deeper customer routing.',
               'Get access to owner listing, buyer and tenant opportunities as SocietyFlats grows.',
               'Commission pipeline will be tracked transparently after verified deal stages.',
             ].map((item) => (
@@ -590,7 +590,7 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
         <div className="mt-5 space-y-4">
           {[
             'Your request is saved as a lead.',
-            'Admin reviews source and society context.',
+            'Our team reviews source and society context.',
             'The team follows up by phone or WhatsApp.',
             'Qualified leads can be assigned internally.',
           ].map((item) => (
@@ -626,17 +626,17 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
   // stat cards (the assistant carries its own identity header) so it lands above the fold.
   if (feature === 'chat') {
     return (
-      <div className="min-h-screen bg-ivory-100">
+      <div className="ncr-skin min-h-screen bg-ivory-100">
         <main className="mx-auto max-w-[900px] px-4 pb-14 pt-6 md:px-6">
           <h1 className="font-display text-[26px] font-medium leading-tight text-navy-950 md:text-[32px]">
-            Ask anything about Gurgaon societies
+            Ask anything about Delhi NCR societies
           </h1>
           <p className="mt-1.5 max-w-2xl text-sm leading-6 text-navy-500">
             Grounded, honest answers from published SocietyFlats profiles — it'll say "I don't have that yet"
             rather than invent something to fill the gap.
           </p>
           <div className="mt-4">
-            <SocietyAssistant />
+            <SocietyAssistant entrySource="feature_page" />
           </div>
         </main>
       </div>
@@ -644,7 +644,7 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
   }
 
   return (
-    <div className="min-h-screen bg-ivory-100">
+    <div className="ncr-skin min-h-screen bg-ivory-100">
       <FeatureHero feature={feature} />
 
       <section className="container mx-auto px-4 py-8">
@@ -659,7 +659,7 @@ export function FeatureExperiencePage({ feature }: { feature: FeatureExperienceK
               <p className="mt-2 text-lg font-bold text-navy-900">Gurgaon societies first</p>
             </div>
             <div className="rounded-[1.5rem] border border-orange-100 bg-white p-5 shadow-sm">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">Admin verified</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">Verified</p>
               <p className="mt-2 text-lg font-bold text-navy-900">Leads + commission tracking</p>
             </div>
           </div>

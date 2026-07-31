@@ -165,7 +165,7 @@ function contextualValue(society: any, key: string) {
       const value = Number(fieldValue(society, "source_confidence_score", 0));
       return value > 0 ? `${value}% verified` : "Review pending";
     })(),
-    updated: fieldValue(society, "updated_at", "Admin-reviewed profile"),
+    updated: fieldValue(society, "updated_at", "Reviewed profile"),
   };
   const raw = values[key];
   if (Array.isArray(raw)) return raw.slice(0, 2).join(" · ") || "Needs verification";

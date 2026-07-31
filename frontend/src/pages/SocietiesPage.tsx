@@ -62,8 +62,8 @@ export function SocietiesPage() {
   useEffect(() => {
     let mounted = true;
     setPublicSeo(
-      'Gurgaon Societies, Scored & Verified — Rent & Resale Ranges | SocietyFlats',
-      'Get to know every Gurgaon society we have checked — real-life scores for safety, connectivity and lifestyle, honest rent and resale ranges, and the homes available inside each one.',
+      'Delhi NCR Societies, Scored & Verified — Rent & Resale Ranges | SocietyFlats',
+      'Get to know every Delhi NCR society we have checked — real-life scores for safety, connectivity and lifestyle, honest rent and resale ranges, and the homes available inside each one.',
       { canonical: '/societies' },
     );
 
@@ -120,15 +120,15 @@ export function SocietiesPage() {
   }, [query, societies]);
 
   return (
-    <div className="min-h-screen bg-ivory-100">
+    <div className="ncr-skin min-h-screen bg-ivory-100">
       <section className="border-b border-navy-100 bg-white">
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-3xl">
             <Badge className="rounded-full border-blue-100 bg-blue-50 px-4 py-1 text-blue-700">
-              Gurgaon societies, scored for real life
+              Delhi NCR societies, scored for real life
             </Badge>
             <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-navy-900 md:text-6xl">
-              Get to know Gurgaon, society by society.
+              Get to know Delhi NCR, society by society.
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-navy-500">
               {societies.length || 'Several'} societies, each scored on how safe it feels, how it commutes, how it lives and how it's kept — so you can weigh what actually matters to you, not just skim a list of names.
@@ -215,7 +215,7 @@ export function SocietiesPage() {
                   </div>
 
                   <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-navy-500">
-                    {society.description || 'Admin-reviewed Gurgaon society profile with published location and market context.'}
+                    {society.description || 'Reviewed society profile with published location and market context.'}
                   </p>
 
                   <div className="mt-5 grid grid-cols-2 gap-3">

@@ -36,12 +36,14 @@ class SocietyComparePage extends Model
         'internal_links_json',
         'score',
         'content_quality_score',
+        'differentiation_signals',
         'status',
         'generated_by',
         'ai_model',
         'reviewed_by',
         'reviewed_at',
         'published_at',
+        'first_published_at',
         'stale_reason',
     ];
 
@@ -53,8 +55,10 @@ class SocietyComparePage extends Model
         'internal_links_json' => 'array',
         'score' => 'decimal:1',
         'content_quality_score' => 'decimal:1',
+        'differentiation_signals' => 'array',
         'reviewed_at' => 'datetime',
         'published_at' => 'datetime',
+        'first_published_at' => 'datetime',
     ];
 
     public function societyA(): BelongsTo

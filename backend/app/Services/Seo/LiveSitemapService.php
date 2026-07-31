@@ -16,13 +16,35 @@ class LiveSitemapService
 {
     public const CACHE_KEY = 'seo:live-sitemap:v2';
 
+    /**
+     * The host every <loc> is built on.
+     *
+     * This must be the site's canonical host, not merely whatever is configured. In
+     * production the Search Console property was set to the apex (societyflats.com)
+     * while the site itself canonicalises to www and 301s the apex — so every URL in
+     * this sitemap was a cross-host redirect, and search engines discard those rather
+     * than index them. Normalising here fixes it without depending on an env var
+     * staying correct.
+     */
     public function base(): string
     {
         $configuredBase = (string) config('services.search_console.site_url', 'https://www.societyflats.com');
 
-        return str_starts_with($configuredBase, 'http')
+        $base = str_starts_with($configuredBase, 'http')
             ? rtrim($configuredBase, '/')
             : rtrim((string) config('services.lead_notifications.frontend_url', 'https://www.societyflats.com'), '/');
+
+        return $this->canonicalHost($base);
+    }
+
+    /**
+     * Upgrade our own apex to www. Deliberately narrow: preview and local hosts are
+     * left exactly as configured, so this only ever corrects the one host we know
+     * redirects.
+     */
+    private function canonicalHost(string $base): string
+    {
+        return preg_replace('#^https?://societyflats\.com#i', 'https://www.societyflats.com', $base) ?: $base;
     }
 
     /** @return \Illuminate\Support\Collection<int,\App\Models\SeoPage> */

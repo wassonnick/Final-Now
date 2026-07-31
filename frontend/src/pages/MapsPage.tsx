@@ -103,8 +103,8 @@ export function MapsPage() {
 
   useEffect(() => {
     setPublicSeo(
-      "Gurgaon Society Map — Explore Verified Societies Live | SocietyFlats",
-      "Explore Gurgaon's verified societies on a live map — real coordinates, society-first, with a link straight to every profile and the homes nearby.",
+      "Delhi NCR Society Map — Explore Verified Societies Live | SocietyFlats",
+      "Explore Delhi NCR's verified societies on a live map — real coordinates, society-first, with a link straight to every profile and the homes nearby.",
       { canonical: "/maps" },
     );
   }, []);
@@ -176,7 +176,7 @@ export function MapsPage() {
   const matchCount = filteredSocieties.length;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-blue-50/35 to-white">
+    <main className="ncr-skin min-h-screen bg-gradient-to-b from-white via-blue-50/35 to-white">
       <section className="border-b border-blue-100 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -186,7 +186,7 @@ export function MapsPage() {
                 Map Intelligence
               </div>
               <h1 className="mt-4 font-serif text-4xl font-black tracking-[-0.05em] text-navy-950 md:text-6xl">
-                Explore Gurgaon societies on a live map.
+                Explore Delhi NCR societies on a live map.
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-navy-500 md:text-lg">
                 Search a society, sector, builder or locality, compare verified pins, and jump straight to profiles or the homes around them.

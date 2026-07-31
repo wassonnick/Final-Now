@@ -243,8 +243,8 @@ export function CustomerDashboardPage() {
     () =>
       listingLeads.map((lead) => ({
         title: `Lead tracking for ${lead.title}`,
-        meta: "Admin will verify, publish and share privacy-safe enquiry updates here.",
-        status: "Admin controlled",
+        meta: "We'll verify, publish and share privacy-safe enquiry updates here.",
+        status: "SocietyFlats-managed",
       })),
     [listingLeads],
   );
@@ -262,7 +262,7 @@ export function CustomerDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#F8F3EA] pb-16">
+    <div className="ncr-skin min-h-screen w-full max-w-full overflow-x-hidden bg-[#F8F3EA] pb-16">
       <section className="border-b border-blue-100 bg-gradient-to-br from-white via-blue-50/80 to-slate-50">
         <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -421,7 +421,7 @@ export function CustomerDashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-950">Privacy-safe lead tracking</h2>
-                  <p className="mt-1 text-sm text-slate-500">Admin remains the control layer.</p>
+                  <p className="mt-1 text-sm text-slate-500">SocietyFlats reviews everything before it goes live.</p>
                 </div>
               </div>
               <div className="mt-5 rounded-3xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">

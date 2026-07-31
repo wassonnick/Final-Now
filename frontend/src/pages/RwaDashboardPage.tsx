@@ -74,7 +74,7 @@ export function RwaDashboardPage() {
         ...claimForm,
         society_id: Number(claimForm.society_id),
       });
-      setMessage(response.message || "RWA claim submitted for admin review.");
+      setMessage(response.message || "RWA claim submitted for review.");
       setClaimForm({ ...claimForm, society_id: "", organisation_name: "", proof_notes: "" });
       await load();
     } catch (error) {
@@ -130,7 +130,7 @@ export function RwaDashboardPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-5xl px-4 py-20 text-center">
+      <main className="ncr-skin mx-auto max-w-5xl px-4 py-20 text-center">
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-700" />
         <p className="mt-4 font-semibold text-slate-600">Loading RWA dashboard...</p>
       </main>
@@ -138,7 +138,7 @@ export function RwaDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F8F3EA] px-4 py-10">
+    <main className="ncr-skin min-h-screen bg-[#F8F3EA] px-4 py-10">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -174,7 +174,7 @@ export function RwaDashboardPage() {
         <section className="mt-8 grid gap-7 xl:grid-cols-[0.9fr_1.1fr]">
           <form onSubmit={handleClaim} className="rounded-[1.75rem] border bg-white p-6 shadow-sm">
             <h2 className="text-2xl font-black text-slate-950">Claim a society RWA page</h2>
-            <p className="mt-1 text-sm text-slate-500">Admin approval is required before official publishing tools unlock.</p>
+            <p className="mt-1 text-sm text-slate-500">Approval is required before official publishing tools unlock.</p>
             <div className="mt-5 space-y-3">
               <select
                 required

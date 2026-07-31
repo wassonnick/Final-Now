@@ -99,7 +99,7 @@ export function LocationIntelligencePreview({
                 {cleanText(location) || "Gurgaon society location"}
               </p>
               <p className="mt-2 text-[11px] font-bold text-blue-700">
-                {hasCoordinates ? `Pinned at ${lat?.toFixed(4)}, ${lng?.toFixed(4)}` : "Map pin pending admin verification"}
+                {hasCoordinates ? `Pinned at ${lat?.toFixed(4)}, ${lng?.toFixed(4)}` : "Map pin pending verification"}
               </p>
             </div>
           </div>

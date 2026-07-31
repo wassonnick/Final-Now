@@ -186,7 +186,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#F8F3EA]">
+    <div className="ncr-skin min-h-screen overflow-x-hidden bg-[#F8F3EA]">
       <section className="border-b border-[#E7DCCB] bg-gradient-to-br from-[#FFFBF3] via-[#F8F3EA] to-[#EEF5F1]">
         <div className="container mx-auto max-w-6xl px-4 py-8 md:py-12">
           <Button asChild variant="ghost" className="mb-6 rounded-full text-slate-600">

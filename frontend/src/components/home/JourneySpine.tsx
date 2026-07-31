@@ -1,127 +1,91 @@
 import { Link } from "react-router-dom";
-import {
-  ArrowUpRight,
-  BadgeIndianRupee,
-  BarChart3,
-  Briefcase,
-  Calculator,
-  CalendarCheck,
-  Gift,
-  Globe2,
-  Landmark,
-  Layers,
-  MapPin,
-  MessageCircle,
-  Scale,
-  Search,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, Building2, Check, Globe2, Home, UsersRound } from "lucide-react";
 
-type Step = {
-  n: string;
-  title: string;
-  line: string;
-  modules: Array<{ label: string; href: string; icon: typeof Search }>;
-};
-
-const steps: Step[] = [
-  {
-    n: "01",
-    title: "Discover",
-    line: "Search by society, sector, builder or simply describe the home you need.",
-    modules: [
-      { label: "Search societies", href: "/search?tab=societies", icon: Search },
-      { label: "Ask AI Advisor", href: "/ai-advisor", icon: Sparkles },
-      { label: "Explore the map", href: "/maps", icon: MapPin },
-      { label: "Builder floors", href: "/builder-floors", icon: Layers },
-    ],
-  },
-  {
-    n: "02",
-    title: "Verify",
-    line: "Read the evidence behind each profile before a property enters the picture.",
-    modules: [
-      { label: "How verification works", href: "/trust", icon: ShieldCheck },
-      { label: "Market insights", href: "/insights", icon: BarChart3 },
-    ],
-  },
-  {
-    n: "03",
-    title: "Decide",
-    line: "Compare the strongest options and understand the numbers without the sales noise.",
-    modules: [
-      { label: "Compare societies", href: "/compare", icon: Scale },
-      { label: "Investment calculator", href: "/investment-calculator", icon: Calculator },
-    ],
-  },
-  {
-    n: "04",
-    title: "Act",
-    line: "Request current availability, plan a visit or speak with the right specialist.",
-    modules: [
-      { label: "Plan a site visit", href: "/search?tab=societies", icon: CalendarCheck },
-      { label: "Live chat", href: "/chat", icon: MessageCircle },
-      { label: "Builder & RWA", href: "/builder-portal", icon: Landmark },
-    ],
-  },
+const ownershipServices = [
+  "Rental and resale coordination",
+  "Local property checks",
+  "Society and tenant context",
+  "Human follow-up in Gurgaon",
 ];
 
-const audiences = [
-  { label: "NRI management & sales", hint: "Buy, sell or rent out from abroad", href: "/nri-services", icon: Globe2 },
-  { label: "List your flat", hint: "Reach verified demand", href: "/sell", icon: BadgeIndianRupee },
-  { label: "Broker partnership", hint: "Society-specific enquiries", href: "/broker-crm", icon: Briefcase },
-  { label: "Referral partner", hint: "Track qualified introductions", href: "/referrals", icon: Gift },
+const partnerRoutes = [
+  {
+    label: "Owners",
+    detail: "List a rental or resale home for review",
+    href: "/sell",
+    icon: Home,
+  },
+  {
+    label: "RWA teams",
+    detail: "Claim the society page and publish updates",
+    href: "/rwa",
+    icon: UsersRound,
+  },
+  {
+    label: "Builders",
+    detail: "Present verified projects and floors",
+    href: "/builder-portal",
+    icon: Building2,
+  },
+  {
+    label: "Brokers & referrals",
+    detail: "Route verified supply and introductions",
+    href: "/broker-crm",
+    icon: Globe2,
+  },
 ];
 
 export function JourneySpine() {
   return (
-    <section className="mx-auto max-w-[1360px] px-5 py-9 lg:px-10 lg:py-12">
-      <div className="grid gap-5 border-b border-[#DDD7CC] pb-7 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#8B6B32]">A clearer property journey</p>
-          <h2 className="mt-3 max-w-[560px] font-display text-[34px] font-medium leading-[1.03] text-[#111827] lg:text-[48px]">
-            Everything you need, in the order you need it.
-          </h2>
-        </div>
-        <p className="max-w-[650px] text-[15px] leading-7 text-[#667085] lg:justify-self-end lg:text-[17px]">
-          SocietyFlats is organised around the decision—not around a list of products. Start with discovery, verify the facts, compare confidently and then speak to a human.
-        </p>
-      </div>
-
-      <ol className="divide-y divide-[#DDD7CC] lg:grid lg:grid-cols-4 lg:divide-x lg:divide-y-0">
-        {steps.map((step, index) => (
-          <li key={step.n} className={`py-6 lg:min-h-[270px] lg:px-7 lg:py-7 ${index === 0 ? "lg:pl-0" : ""} ${index === steps.length - 1 ? "lg:pr-0" : ""}`}>
-            <div className="flex items-baseline gap-3">
-              <span className="font-display text-[18px] text-[#B4975A]">{step.n}</span>
-              <h3 className="font-display text-[27px] font-medium text-[#111827]">{step.title}</h3>
+    <section className="mx-auto max-w-[1360px] px-5 py-10 lg:px-10 lg:py-14">
+      <div className="overflow-hidden rounded-[28px] border border-[#D8DFEC] bg-[#F3F6FC]">
+        <div className="grid lg:grid-cols-[1.08fr_.92fr]">
+          <div className="p-6 lg:p-10">
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#3156A3]">For owners living abroad</p>
+            <h2 className="mt-3 max-w-[650px] font-display text-[35px] font-medium leading-[1.02] tracking-[-0.025em] text-[#101828] lg:text-[52px]">
+              Gurgaon ownership, managed with someone on the ground.
+            </h2>
+            <p className="mt-4 max-w-[650px] text-[14px] leading-7 text-[#667085] lg:text-[16px]">
+              The NRI desk connects society intelligence with practical rent-out, resale and local coordination—so overseas owners have a clear route from question to action.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-x-6 gap-y-3">
+              {ownershipServices.map((item) => (
+                <span key={item} className="inline-flex items-center gap-2 text-[12.5px] font-bold text-[#344054]">
+                  <Check className="h-4 w-4 rounded-full bg-white p-0.5 text-[#3156A3]" />
+                  {item}
+                </span>
+              ))}
             </div>
-            <p className="mt-3 min-h-[60px] text-[13.5px] leading-6 text-[#667085]">{step.line}</p>
-            <div className="mt-5 space-y-1">
-              {step.modules.map((mod) => (
-                <Link key={mod.href + mod.label} to={mod.href} className="group flex items-center gap-2.5 py-2 text-[13px] font-semibold text-[#344054] transition hover:text-[#3156A3]">
-                  <mod.icon className="h-4 w-4 text-[#8B6B32]" />
-                  <span>{mod.label}</span>
-                  <ArrowUpRight className="ml-auto h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100" />
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link to="/nri-services" className="inline-flex items-center gap-2 rounded-full bg-[#233B6E] px-5 py-3 text-[13px] font-black text-white">
+                Explore NRI services <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link to="/nri" className="inline-flex items-center gap-2 rounded-full border border-[#C7D0E1] bg-white px-5 py-3 text-[13px] font-black text-[#233B6E]">
+                Start an NRI enquiry
+              </Link>
+            </div>
+          </div>
+
+          <div className="border-t border-[#D8DFEC] bg-white/70 p-6 lg:border-l lg:border-t-0 lg:p-10">
+            <p className="font-display text-[23px] font-medium text-[#101828]">Property pathways</p>
+            <p className="mt-1 text-[12.5px] leading-5 text-[#667085]">Useful routes for the people who maintain Gurgaon’s property ecosystem.</p>
+            <div className="mt-5 divide-y divide-[#D8DFEC] border-y border-[#D8DFEC]">
+              {partnerRoutes.map((route) => (
+                <Link key={route.label} to={route.href} className="group flex items-center gap-4 py-4">
+                  <route.icon className="h-5 w-5 shrink-0 text-[#3156A3]" />
+                  <span className="min-w-0">
+                    <span className="block text-[13.5px] font-black text-[#1D2939]">{route.label}</span>
+                    <span className="mt-0.5 block text-[11.5px] text-[#667085]">{route.detail}</span>
+                  </span>
+                  <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-[#98A2B3] transition group-hover:translate-x-1 group-hover:text-[#3156A3]" />
                 </Link>
               ))}
             </div>
-          </li>
-        ))}
-      </ol>
-
-      <div className="mt-2 border-y border-[#DDD7CC] bg-white/65 px-0 py-4 lg:flex lg:items-center lg:gap-8 lg:px-5">
-        <p className="mb-2 whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.18em] text-[#8B6B32] lg:mb-0">Specialist paths</p>
-        <div className="grid flex-1 gap-1 sm:grid-cols-2 lg:grid-cols-4">
-          {audiences.map((aud) => (
-            <Link key={aud.href} to={aud.href} className="group flex items-center gap-3 px-0 py-2.5 lg:px-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EEF2FA] text-[#3156A3]"><aud.icon className="h-4 w-4" /></span>
-              <span className="min-w-0">
-                <span className="block text-[13.5px] font-bold text-[#1D2939]">{aud.label}</span>
-                <span className="block text-[11.5px] text-[#7A8290]">{aud.hint}</span>
-              </span>
-            </Link>
-          ))}
+            <div className="mt-5 flex items-center justify-between gap-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
+              <span>Reviewed</span>
+              <span>Private details stay private</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>

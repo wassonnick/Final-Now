@@ -43,7 +43,7 @@ const steps = [
   {
     icon: Home,
     title: "We verify and create draft",
-    text: "Our team verifies ownership context, asks for photos and prepares a CRM-ready property draft.",
+    text: "Our team verifies ownership context, asks for photos and prepares your listing for matching.",
   },
   {
     icon: Camera,
@@ -164,8 +164,8 @@ export function SellPage() {
 
   useEffect(() => {
     setPublicSeo(
-      "List Your Gurgaon Flat — Reach Verified Buyers & Tenants Directly | SocietyFlats",
-      "List your Gurgaon home once and meet buyers and tenants already searching your exact society — genuine, ready people. No endless broker calls, no listing spam.",
+      "List Your Delhi NCR Flat — Reach Verified Buyers & Tenants Directly | SocietyFlats",
+      "List your Delhi NCR home once and meet buyers and tenants already searching your exact society — genuine, ready people. No endless broker calls, no listing spam.",
       { canonical: "/sell" },
     );
     window.scrollTo(0, 0);
@@ -381,7 +381,7 @@ export function SellPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F3EA]">
+    <div className="ncr-skin min-h-screen bg-[#F8F3EA]">
       <section className="relative overflow-hidden border-b border-[#E7DCCB] bg-gradient-to-br from-[#FFFBF3] via-[#F8F3EA] to-[#EEF5F1]">
         <div className="absolute left-[-12rem] top-[-10rem] h-96 w-96 rounded-full bg-blue-200/30 blur-3xl" />
         <div className="absolute right-[-10rem] top-24 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl" />
@@ -392,7 +392,7 @@ export function SellPage() {
                 Owner listing
               </Badge>
               <h1 className="max-w-2xl text-3xl font-black tracking-[-0.045em] leading-[0.98] text-slate-950 md:text-5xl">
-                Own a home in Gurgaon? List it once, and meet the right people.
+                Own a home in Delhi NCR? List it once, and meet the right people.
               </h1>
               <p className="mt-4 max-w-xl text-sm leading-6 text-slate-600 md:text-base md:leading-7">
                 We introduce your home to buyers and tenants already searching your exact society — genuine, ready people. No endless broker calls, no listing spam.
@@ -435,7 +435,7 @@ export function SellPage() {
               </div>
               {success ? (
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-sm font-semibold leading-6 text-emerald-700">
-                  <p>Your property has been submitted for admin review. SocietyFlats will verify details before publishing.</p>
+                  <p>Your property has been submitted for review. SocietyFlats will verify details before publishing.</p>
                   {accountCreated ? (
                     <div className="mt-4 rounded-2xl bg-white/80 p-4 text-emerald-800">
                       <p className="font-black">Customer account created automatically.</p>

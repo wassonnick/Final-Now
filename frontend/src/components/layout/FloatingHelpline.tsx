@@ -1,67 +1,64 @@
-import { MessageCircle, Phone } from "lucide-react";
+import { useState } from "react";
+import { MessageCircle, Phone, X } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { BRAND_PHONE_DISPLAY, BRAND_PHONE_TEL, BRAND_WHATSAPP_URL } from "@/config/contact";
 
 const PHONE_DISPLAY = BRAND_PHONE_DISPLAY;
 const PHONE_TEL = BRAND_PHONE_TEL;
 const WHATSAPP_URL = BRAND_WHATSAPP_URL;
+const ACCENT = "#0F7B63";
 
 export function FloatingHelpline() {
   const location = useLocation();
-  const hideMobileForPageCta =
+  const [open, setOpen] = useState(false);
+
+  // Pages with their own prominent contact CTAs don't need the floating helper.
+  const hideForPageCta =
     location.pathname.startsWith("/society/") ||
     location.pathname.startsWith("/property/") ||
     location.pathname === "/ai-advisor" ||
     location.pathname === "/compare";
-  const hideDesktopForPageCta = hideMobileForPageCta;
+
+  if (hideForPageCta) return null;
 
   return (
-    <>
-      {!hideDesktopForPageCta ? <div className="fixed right-3 top-1/2 z-40 hidden -translate-y-1/2 lg:block">
-        <div className="flex flex-col gap-2">
-          <a
-            href={`tel:${PHONE_TEL}`}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[#D8DFEC] bg-white/95 px-4 text-xs font-black text-[#233B6E] shadow-editorial backdrop-blur transition hover:-translate-y-0.5 hover:bg-[#F7F9FD]"
-            aria-label={`Call SocietyFlats on ${PHONE_DISPLAY}`}
-          >
-            <Phone className="h-3.5 w-3.5" />
-            {PHONE_DISPLAY}
-          </a>
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[#233B6E] bg-[#233B6E] px-4 text-xs font-black text-white shadow-editorial transition hover:-translate-y-0.5 hover:bg-[#1B2E57]"
-            aria-label="WhatsApp SocietyFlats"
-          >
-            <MessageCircle className="h-3.5 w-3.5" />
-            WhatsApp
-          </a>
-        </div>
-      </div> : null}
-
-      <div className={`${hideMobileForPageCta ? "hidden" : "fixed"} right-3 bottom-[calc(5.35rem+env(safe-area-inset-bottom))] z-40 lg:hidden`}>
-        <div className="flex flex-col items-center gap-2">
-          <a
-            href={`tel:${PHONE_TEL}`}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#D8DFEC] bg-white/95 text-[#233B6E] shadow-editorial backdrop-blur transition active:scale-95"
-            aria-label={`Call SocietyFlats on ${PHONE_DISPLAY}`}
-          >
-            <Phone className="h-4 w-4" />
-            <span className="sr-only">Call SocietyFlats</span>
-          </a>
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#233B6E] bg-[#233B6E] text-white shadow-editorial transition active:scale-95"
-            aria-label="WhatsApp SocietyFlats"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span className="sr-only">WhatsApp SocietyFlats</span>
-          </a>
-        </div>
+    <div className="fixed right-6 bottom-6 z-40 hidden lg:block">
+      {/* Expanding actions */}
+      <div
+        className={`mb-3 flex flex-col items-end gap-2 transition-all duration-200 ${
+          open ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
+        }`}
+      >
+        <a
+          href={`tel:${PHONE_TEL}`}
+          className="inline-flex items-center gap-2 rounded-full border border-[#E4E4E9] bg-white px-4 py-2.5 text-[13px] font-semibold text-[#1D1D1F] shadow-[0_12px_30px_-12px_rgba(0,0,0,.35)] transition hover:bg-[#F5F5F7]"
+        >
+          <Phone className="h-4 w-4" style={{ color: ACCENT }} />
+          {PHONE_DISPLAY}
+        </a>
+        <a
+          href={WHATSAPP_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_12px_30px_-12px_rgba(0,0,0,.4)] transition hover:brightness-105"
+          style={{ background: ACCENT }}
+        >
+          <MessageCircle className="h-4 w-4" />
+          Chat on WhatsApp
+        </a>
       </div>
-    </>
+
+      {/* Toggle FAB */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={open ? "Close contact options" : "Contact SocietyFlats"}
+        aria-expanded={open}
+        className="ml-auto flex h-14 w-14 items-center justify-center rounded-full text-white shadow-[0_16px_36px_-12px_rgba(15,123,99,.7)] transition active:scale-95"
+        style={{ background: ACCENT }}
+      >
+        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+      </button>
+    </div>
   );
 }

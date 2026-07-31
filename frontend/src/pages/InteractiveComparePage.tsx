@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowRight, Check, MessageCircle, Plus, Search, X } from "lucide-react";
+import { ArrowRight, Check, MessageCircle, Plus, Scale, Search, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "@/config/api";
@@ -107,7 +107,7 @@ function PrefilledComparisons() {
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {pages.slice(0, 4).map((p) => (
           <Link key={p.slug} to={`/compare/${p.slug}`} className="group rounded-[18px] border border-[#E7DCCB] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-lg">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-[#C8793F]">{p.sector_cluster || p.city || "Gurgaon"}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[#C8793F]">{p.sector_cluster || p.city || "Delhi NCR"}</p>
             <p className="mt-1.5 font-display text-lg leading-snug text-[#19231c]">{p.title}</p>
             <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#233B6E]">Open comparison <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" /></span>
           </Link>
@@ -167,7 +167,7 @@ export function InteractiveComparePage() {
   };
 
   useEffect(() => {
-    setPublicSeo("Compare Gurgaon Societies Side by Side | SocietyFlats", "Compare your shortlisted Gurgaon societies on verified scores, market ranges and Buyer's Truth.", { canonical: "/compare", noindex: true });
+    setPublicSeo("Compare Delhi NCR Societies Side by Side | SocietyFlats", "Compare your shortlisted Delhi NCR societies on verified scores, market ranges and Buyer's Truth.", { canonical: "/compare", noindex: true });
   }, []);
 
   const reqId = useRef(0);
@@ -235,19 +235,49 @@ export function InteractiveComparePage() {
     };
   }, [rows]);
 
-  if (loading) return <div className="min-h-[50vh] bg-[#F7F4EF] p-16 text-center text-[#667085]">Loading your comparison…</div>;
+  if (loading) return <div className="ncr-skin min-h-[50vh] bg-[#F7F4EF] p-16 text-center text-[#667085]">Loading your comparison…</div>;
 
   if (!rows.length) {
     return (
-      <div className="min-h-[70vh] bg-[#F7F4EF] px-5 py-14 md:py-20">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#8C6E2F]">Society face-off</p>
-          <h1 className="mt-1.5 font-display text-[34px] font-medium leading-tight text-[#111827] md:text-[44px]">Build your own comparison.</h1>
-          <p className="mt-3 text-[15px] leading-7 text-[#667085]">Search and add up to three Gurgaon societies — any combination you like. We line them up on verified scores, Buyer's Truth and market ranges.</p>
-          <div className="mt-6 flex justify-center"><SocietyPicker selectedSlugs={slugs} onAdd={handleAdd} /></div>
+      <div className="ncr-skin min-h-[70vh] bg-white px-5 py-12 md:py-16">
+        <div className="mx-auto max-w-[1040px]">
+          {/* Hero */}
+          <div className="mx-auto max-w-[720px] text-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#E4E4E9] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[#1D1D1F] shadow-sm">
+              <Scale className="h-3.5 w-3.5" style={{ color: "#0F7B63" }} /> Compare
+            </span>
+            <h1 className="!font-sans mt-5 text-[32px] font-semibold leading-[1.08] tracking-[-0.02em] text-[#1D1D1F] md:text-[46px]">Put societies head to head.</h1>
+            <p className="mx-auto mt-4 max-w-[560px] text-[16px] leading-8 text-[#6E6E73]">Add up to three verified societies and see them lined up on score, budget, Buyer's Truth and location — no spin, no paid ranking.</p>
+          </div>
+
+          {/* Three slots make the head-to-head model obvious */}
+          {/* Always three across — stacked, they stop reading as a head-to-head. */}
+          <div className="mx-auto mt-8 grid max-w-[760px] grid-cols-3 gap-2.5 sm:gap-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex h-24 flex-col items-center justify-center rounded-[18px] border border-dashed border-[#D8D8DE] bg-[#F5F5F7] px-1 text-center sm:rounded-[20px]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#0F7B63] shadow-sm"><Plus className="h-4 w-4" /></span>
+                <span className="mt-2 text-[11.5px] font-semibold text-[#86868B] sm:text-[12.5px]">Society {i + 1}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex justify-center"><SocietyPicker selectedSlugs={slugs} onAdd={handleAdd} /></div>
+
+          {/* What we line them up on — the value */}
+          <div className="mx-auto mt-12 max-w-[860px] rounded-[24px] border border-[#E4E4E9] bg-white p-6 md:p-7">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">What we line them up on</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {["Verified score", "Rent & resale ranges", "Buyer's Truth checklist", "Location & connectivity", "Amenities & security"].map((c) => (
+                <span key={c} className="inline-flex items-center gap-1.5 rounded-full bg-[#ECF6F2] px-3.5 py-2 text-[13px] font-semibold text-[#0F7B63]">
+                  <Check className="h-3.5 w-3.5" /> {c}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Ready-made shortcuts */}
           <PrefilledComparisons />
-          <div className="mt-8">
-            <Link to="/compare/browse" className="text-sm font-bold text-[#8C6E2F] underline">See all comparison pages →</Link>
+          <div className="mt-8 text-center">
+            <Link to="/compare/browse" className="inline-flex items-center gap-1 text-sm font-semibold text-[#0F7B63] hover:underline">See all comparison pages <ArrowRight className="h-4 w-4" /></Link>
           </div>
         </div>
       </div>
@@ -259,7 +289,7 @@ export function InteractiveComparePage() {
   const gridCols = { gridTemplateColumns: `minmax(88px,0.8fr) repeat(${cols}, minmax(0,1fr))` };
 
   return (
-    <div className="bg-[#F7F4EF] text-[#1C2434]">
+    <div className="ncr-skin bg-[#F7F4EF] text-[#1C2434]">
       <section className="mx-auto max-w-[1180px] px-4 py-8 md:px-6 md:py-12">
         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#8C6E2F]">Society face-off</p>
         <h1 className="mt-1.5 font-display text-[34px] font-medium leading-tight text-[#111827] md:text-[46px]">Compare, honestly — side by side.</h1>
@@ -299,7 +329,7 @@ export function InteractiveComparePage() {
                     </div>
                     <p className="inline-flex items-center gap-1 rounded-full bg-[#EEF2FA] px-2 py-0.5 text-[10px] font-bold text-[#3156A3]"><Check className="h-3 w-3 stroke-[3]" /> Verified</p>
                     <p className="mt-1.5 truncate font-bold text-[#25302B]">{s.name}</p>
-                    <p className="truncate text-[12.5px] text-[#6E756E]">{[f(s, "sector", "sector"), f(s, "builder", "builder")].filter(Boolean).join(" · ") || "Gurgaon"}</p>
+                    <p className="truncate text-[12.5px] text-[#6E756E]">{[f(s, "sector", "sector"), f(s, "builder", "builder")].filter(Boolean).join(" · ") || "Delhi NCR"}</p>
                     <Link to={`/society/${s.slug}`} className="mt-2 inline-flex items-center gap-1 text-[12.5px] font-bold text-[#233B6E]">View society <ArrowRight className="h-3 w-3" /></Link>
                   </div>
                 );
@@ -342,7 +372,7 @@ export function InteractiveComparePage() {
               {rows.map((r) => <div key={r.society.slug} className="border-l border-[#EEE6DA] p-3 text-center text-[12.5px] font-semibold text-[#35413B]">{f(r.society, "builder", "builder", "—")}</div>)}
             </CompareRow>
             <CompareRow label="Location" cols={gridCols}>
-              {rows.map((r) => <div key={r.society.slug} className="border-l border-[#EEE6DA] p-3 text-center text-[12.5px] text-[#35413B]">{[f(r.society, "sector", "sector"), f(r.society, "locality", "locality")].filter(Boolean).join(", ") || "Gurgaon"}</div>)}
+              {rows.map((r) => <div key={r.society.slug} className="border-l border-[#EEE6DA] p-3 text-center text-[12.5px] text-[#35413B]">{[f(r.society, "sector", "sector"), f(r.society, "locality", "locality")].filter(Boolean).join(", ") || "Delhi NCR"}</div>)}
             </CompareRow>
             <CompareRow label="Amenities" cols={gridCols} leaderIdx={leaderIndex(rows.map((r) => amenityCount(r.society) || null))}>
               {rows.map((r) => { const n = amenityCount(r.society); return <div key={r.society.slug} className="border-l border-[#EEE6DA] p-3 text-center text-[12.5px] font-bold text-[#233B6E]">{n ? `${n} listed` : "—"}</div>; })}
@@ -378,7 +408,7 @@ export function InteractiveComparePage() {
           </div>
         </div>
 
-        <p className="mt-6 text-[12px] leading-6 text-[#8A8F89]">Scores are from admin-reviewed society data; amber signals are estimated and should be confirmed. Verify unit price, exact tower, availability, legal title and RERA status independently before any payment.</p>
+        <p className="mt-6 text-[12px] leading-6 text-[#8A8F89]">Scores are from reviewed society data; amber signals are estimated and should be confirmed. Verify unit price, exact tower, availability, legal title and RERA status independently before any payment.</p>
       </section>
     </div>
   );
