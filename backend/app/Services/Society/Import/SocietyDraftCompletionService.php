@@ -25,6 +25,7 @@ class SocietyDraftCompletionService
         private readonly AiBudgetGuard $budget,
         private readonly \App\Services\GooglePlacesSocietyImageService $places,
         private readonly \App\Services\Ops\MarketSuggestionService $market,
+        private readonly \App\Services\Ncr\NcrCityLaunchPolicy $launch,
     ) {}
 
     /**
@@ -190,6 +191,17 @@ class SocietyDraftCompletionService
             (float) $society->score <= 0 ? 'score' : null,
             blank($society->sector) && blank($society->locality) ? 'sector_or_locality' : null,
             ($society->seoContent?->status) !== 'published' ? 'published_seo' : null,
+
+            // A society in an NCR city we have not launched must not go public. Without
+            // this, unattended completion published a Delhi society onto a site whose own
+            // Delhi page still said the city was launching.
+            $this->launch->cityMayPublish($society->cityRecord) ? null : 'city_not_launched',
+
+            // Publishing a society that shows a placeholder is the quality problem we have
+            // been chasing, not a milder form of a finished one.
+            config('features.auto_publish_requires_image', true) && ! $society->image_approved_by_admin
+                ? 'approved_image'
+                : null,
         ]));
     }
 

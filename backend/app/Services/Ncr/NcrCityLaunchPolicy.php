@@ -32,6 +32,35 @@ class NcrCityLaunchPolicy
             ->all();
     }
 
+    /**
+     * May a society in this city be published to the public site?
+     *
+     * Distinct from cityIsApproved(), which answers a narrower question about indexing
+     * and sitemaps. The home city is live by definition; an NCR expansion city is not
+     * live until it has been approved, and publishing into one produces the state that
+     * exposed this: a society reachable on the public site while its own city page still
+     * says the city is launching.
+     */
+    public function cityMayPublish(City|string|null $city): bool
+    {
+        if ($city === null) {
+            // Legacy rows with no city link are Gurgaon; never block them.
+            return true;
+        }
+
+        $slug = Str::slug((string) ($city instanceof City ? $city->slug : $city));
+
+        if ($slug === '') {
+            return true;
+        }
+
+        $home = collect((array) config('features.home_city_slugs', []))
+            ->map(fn ($value) => Str::slug((string) $value))
+            ->all();
+
+        return in_array($slug, $home, true) || $this->cityIsApproved($slug);
+    }
+
     public function cityIsApproved(City|string $city): bool
     {
         $slug = $city instanceof City ? $city->slug : $city;
