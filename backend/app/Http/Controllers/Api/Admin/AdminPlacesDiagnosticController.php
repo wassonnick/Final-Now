@@ -68,17 +68,29 @@ class AdminPlacesDiagnosticController extends Controller
             return response()->json($out);
         }
 
-        // 3. The call that is failing. Report the URL we build, minus the key.
+        // 3. The call that is failing — routed exactly as production routes it. The two
+        //    API generations issue incompatible identifiers, so a diagnostic that always
+        //    hit the legacy endpoint would be testing a path we no longer take and
+        //    reporting its errors as though they were ours.
         $reference = (string) $references[0];
-        $query = ['maxwidth' => 640, 'photo_reference' => $reference, 'key' => $key];
+        $isNewApiName = str_starts_with($reference, 'places/');
+
+        $url = $isNewApiName
+            ? 'https://places.googleapis.com/v1/'.$reference.'/media'
+            : 'https://maps.googleapis.com/maps/api/place/photo';
+        $query = $isNewApiName
+            ? ['maxWidthPx' => 640, 'skipHttpRedirect' => 'false', 'key' => $key]
+            : ['maxwidth' => 640, 'photo_reference' => $reference, 'key' => $key];
+
+        $out['api_generation'] = $isNewApiName ? 'places_api_new (v1)' : 'places_api_legacy';
 
         try {
-            $response = Http::timeout(20)->get('https://maps.googleapis.com/maps/api/place/photo', $query);
+            $response = Http::timeout(20)->get($url, $query);
             $body = (string) $response->body();
             $type = (string) $response->header('Content-Type');
 
             $out['photo'] = [
-                'request_url' => 'https://maps.googleapis.com/maps/api/place/photo?'.http_build_query(array_merge($query, ['key' => 'REDACTED'])),
+                'request_url' => $url.'?'.http_build_query(array_merge($query, ['key' => 'REDACTED'])),
                 'status' => $response->status(),
                 'content_type' => $type,
                 'bytes' => strlen($body),
@@ -88,9 +100,15 @@ class AdminPlacesDiagnosticController extends Controller
                 'body_head' => str_starts_with(strtolower($type), 'image/') ? null : substr(strip_tags($body), 0, 400),
             ];
 
+            // A 403 that happens to carry an image/png body is still a 403. Checking the
+            // content type before the status reported "WORKING" over a failing endpoint,
+            // which is worse than no diagnostic at all.
+            $served = $response->successful() && $out['photo']['is_image'];
+            $out['photo']['is_image'] = $served;
+
             $out['verdict'] = match (true) {
-                $out['photo']['is_image'] => 'Photo endpoint is WORKING. If the review queue still shows failures, the stored references are stale — re-harvest the society.',
-                $response->status() === 403 => 'Google refused the photo call (403). The key is valid for Search/Details but not for Place Photos — check API restrictions and that billing is active on this project.',
+                $served => 'Photo endpoint is WORKING. If the review queue still shows failures, the stored references are stale — re-harvest the society.',
+                $response->status() === 403 => 'Google refused the photo call (403). Search and Details work on this key, so the key itself is live — the usual cause is the key\'s API restrictions not listing "Places API (New)", or billing not being active on that API. Google Cloud → Credentials → your key → API restrictions.',
                 $response->status() === 400 => 'Google rejected the request (400). Compare request_url above with a reference that works; if the reference looks intact, the legacy Place Photos endpoint is no longer served for this project and we must move to the Places API (New) media endpoint.',
                 default => 'Photo endpoint returned HTTP '.$response->status().'. See body_head.',
             };

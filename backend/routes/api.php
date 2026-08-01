@@ -249,6 +249,8 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
 
     // Reports what Google actually answers for search, details and photo.
     Route::get('/diagnostics/google-places', \App\Http\Controllers\Api\Admin\AdminPlacesDiagnosticController::class);
+    // Whether uploaded images survive a deploy at all.
+    Route::get('/diagnostics/storage', \App\Http\Controllers\Api\Admin\AdminStorageDiagnosticController::class);
     Route::post('/import/societies/{society}/re-enrich', [SocietyImportController::class, 'reEnrich']);
     Route::post('/import/societies/{society}/market-refresh', [SocietyImportController::class, 'marketRefresh']);
     Route::post('/import/societies/{society}/market-override', [SocietyImportController::class, 'marketOverride']);
