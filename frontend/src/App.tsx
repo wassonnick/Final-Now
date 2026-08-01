@@ -85,6 +85,7 @@ const AdminSocialAccountsPage = lazy(() => import('@/pages/admin/AdminSocialAcco
 const AdminSocialCalendarPage = lazy(() => import('@/pages/admin/AdminSocialCalendarPage').then((module) => ({ default: module.AdminSocialCalendarPage })));
 const AdminComparePagesPage = lazy(() => import('@/pages/admin/AdminComparePagesPage').then((module) => ({ default: module.AdminComparePagesPage })));
 const AdminBrandStudioPage = lazy(() => import('@/pages/admin/AdminBrandStudioPage').then((module) => ({ default: module.AdminBrandStudioPage })));
+const AdminImageContributionsPage = lazy(() => import('@/pages/admin/AdminImageContributionsPage').then((m) => ({ default: m.AdminImageContributionsPage })));
 const AdminImageReharvestPage = lazy(() => import('@/pages/admin/AdminImageReharvestPage').then((module) => ({ default: module.AdminImageReharvestPage })));
 const AdminMarketRefreshPage = lazy(() => import('@/pages/admin/AdminMarketRefreshPage').then((module) => ({ default: module.AdminMarketRefreshPage })));
 const AdminAiSpendPage = lazy(() => import('@/pages/admin/AdminAiSpendPage').then((module) => ({ default: module.AdminAiSpendPage })));
@@ -291,6 +292,7 @@ function AppShell() {
             <Route path="/admin/ai-spend" element={<ProtectedAdminRoute><AdminAiSpendPage /></ProtectedAdminRoute>} />
             <Route path="/admin/market-refresh" element={<ProtectedAdminRoute><AdminMarketRefreshPage /></ProtectedAdminRoute>} />
             <Route path="/admin/image-reharvest" element={<ProtectedAdminRoute><AdminImageReharvestPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/image-contributions" element={<ProtectedAdminRoute><AdminImageContributionsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/ai-chats" element={<ProtectedAdminRoute><AdminAiChatsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/campaigns" element={<ProtectedAdminRoute><AdminCampaignsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/seo/compare-pages/:id/preview" element={<ProtectedAdminRoute><AdminComparePagePreviewPage /></ProtectedAdminRoute>} />

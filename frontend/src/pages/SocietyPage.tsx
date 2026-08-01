@@ -9,6 +9,7 @@
 // C76B society lower density polish: compact homes, amenities, nearby intelligence and sidebar.
 // C76 society page UX polish: compact hero/gallery, higher facts, tighter inventory, sidebar and sticky CTA.
 // C71 society detail copy: verified society intelligence, similar homes and expert callback language.
+import { ContributeSocietyImage } from "@/components/society/ContributeSocietyImage";
 import {
   trackCorrectionFormOpen,
   trackCorrectionFormSubmit,
@@ -1238,6 +1239,16 @@ export function SocietyPage() {
                 </div>
               </section>
             ) : null}
+
+            {/* Placed on the society's own page because that is where someone who lives
+                there actually is. A society showing a placeholder is the strongest possible
+                prompt for the one person who can fix it. */}
+            <section className="mt-6">
+              <ContributeSocietyImage
+                societySlug={String(society.slug || slug || "")}
+                societyName={String(society.name || "this society")}
+              />
+            </section>
 
             {(() => {
               // Buyer's Truth — the pre-purchase verification layer. Surfaces RERA

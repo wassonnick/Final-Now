@@ -241,6 +241,12 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::get('/image-reharvest/runs', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'runs']);
     Route::get('/image-reharvest/runs/{run}', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'run']);
 
+    // Contributed images: the one path where the rights question is already answered.
+    Route::get('/image-contributions', [\App\Http\Controllers\Api\Admin\AdminImageContributionController::class, 'index']);
+    Route::post('/image-contributions/{contribution}/approve', [\App\Http\Controllers\Api\Admin\AdminImageContributionController::class, 'approve']);
+    Route::post('/image-contributions/{contribution}/reject', [\App\Http\Controllers\Api\Admin\AdminImageContributionController::class, 'reject']);
+    Route::post('/image-contributions/{contribution}/screen', [\App\Http\Controllers\Api\Admin\AdminImageContributionController::class, 'screen']);
+
     // Reports what Google actually answers for search, details and photo.
     Route::get('/diagnostics/google-places', \App\Http\Controllers\Api\Admin\AdminPlacesDiagnosticController::class);
     Route::post('/import/societies/{society}/re-enrich', [SocietyImportController::class, 'reEnrich']);
@@ -326,6 +332,11 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
 // Public listing intake (flats + builder floors) — the core inventory catcher.
 Route::post('/listings', [\App\Http\Controllers\Api\OwnerListingController::class, 'store'])->middleware('throttle:6,1');
 Route::post('/listings/images', [\App\Http\Controllers\Api\OwnerListingController::class, 'uploadImage'])->middleware('throttle:20,1');
+
+// Residents, owners, RWAs and builders contributing a photo of their own society.
+Route::get('/society-image-contributions/roles', [\App\Http\Controllers\Api\SocietyImageContributionController::class, 'roles']);
+Route::get('/account/society-image-contributions', [\App\Http\Controllers\Api\SocietyImageContributionController::class, 'mine']);
+Route::post('/societies/{idOrSlug}/image-contributions', [\App\Http\Controllers\Api\SocietyImageContributionController::class, 'store'])->middleware('throttle:10,1');
 
 Route::prefix('accounts')->group(function () {
     Route::get('/listings', [\App\Http\Controllers\Api\OwnerListingController::class, 'mine']);
