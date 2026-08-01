@@ -164,8 +164,14 @@ class SocietyImageReharvestService
         return $result(
             'refreshed',
             $republished
-                ? 'Cover re-published from a screened Google Places photo.'
-                : 'Candidates refreshed; a cover still needs admin approval.',
+                ? 'Cover re-published from a Google Places photo.'
+                : ($republishCover
+                    // "a cover still needs admin approval" described the outcome without
+                    // naming a cause, which is useless on a restore run whose entire
+                    // purpose is republishing covers. Only a Places photo may auto-publish,
+                    // so say why there wasn't one.
+                    ? $this->whyNoCover($report, count($candidates))
+                    : 'Candidates refreshed; cover republishing was turned off for this run.'),
             [
                 'after' => count($candidates),
                 'rejected' => $rejected,
@@ -174,6 +180,34 @@ class SocietyImageReharvestService
                 'diagnostics' => $report,
             ],
         );
+    }
+
+    /**
+     * Why a restore run refreshed a society but published no cover.
+     *
+     * Only a Google Places photo auto-publishes — an official-site image is the
+     * developer's copyright and waits for a rights check — so "no cover" almost always
+     * means "no usable Places photo", and the useful question is which step lost it.
+     *
+     * @param  array<string,mixed>  $report
+     */
+    private function whyNoCover(array $report, int $candidateCount): string
+    {
+        $tail = ' '.$candidateCount.' candidate(s) are on file for manual review.';
+
+        if (! ($report['place_matched'] ?? false)) {
+            return 'No cover published: Google Places did not match this society, and only a Places photo can auto-publish.'.$tail;
+        }
+
+        if ((int) ($report['place_photos_offered'] ?? 0) === 0) {
+            return 'No cover published: Google matched this society but has no photos of it.'.$tail;
+        }
+
+        if ((int) ($report['place_photos_kept'] ?? 0) === 0) {
+            return 'No cover published: all '.$report['place_photos_offered'].' Google photo(s) were below the 640px minimum width.'.$tail;
+        }
+
+        return 'No cover published: every Google photo was screened out, so only official-site images remain — those need a rights check before publishing.'.$tail;
     }
 
     /**

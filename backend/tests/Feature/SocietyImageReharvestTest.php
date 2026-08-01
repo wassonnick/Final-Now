@@ -394,6 +394,36 @@ class SocietyImageReharvestTest extends TestCase
         Queue::assertPushed(ReharvestSocietyImages::class);
     }
 
+    /**
+     * A restore run that refreshes a society and publishes no cover must say which step
+     * lost the photo. "A cover still needs admin approval" restated the outcome without
+     * naming a cause, which is useless on a run whose whole purpose is republishing.
+     */
+    public function test_a_run_that_publishes_no_cover_names_the_reason(): void
+    {
+        // Google matches, has no photos; the only images come from the developer's site.
+        Http::fake([
+            'maps.googleapis.com/maps/api/place/findplacefromtext/*' => Http::response(['status' => 'OK', 'candidates' => [['place_id' => 'p9']]]),
+            'maps.googleapis.com/maps/api/place/details/*' => Http::response(['status' => 'OK', 'result' => [
+                'place_id' => 'p9',
+                'name' => 'DLF Magnolias',
+                'geometry' => ['location' => ['lat' => 28.4, 'lng' => 77.0]],
+                'photos' => [],
+            ]]),
+            'dlf.com/img/*' => Http::response('', 200, ['Content-Type' => 'image/jpeg']),
+            'dlf.com/*' => Http::response('<html><body><img src="https://dlf.com/img/tower.jpg"></body></html>', 200, ['Content-Type' => 'text/html']),
+        ]);
+
+        $society = $this->society(['official_project_url' => 'https://dlf.com/magnolias']);
+
+        $result = app(\App\Services\Society\Import\SocietyImageReharvestService::class)->reharvest($society, false, true);
+
+        $this->assertSame('refreshed', $result['status']);
+        $this->assertFalse($result['republished']);
+        $this->assertStringContainsString('No cover published', $result['note']);
+        $this->assertStringContainsString('has no photos of it', $result['note']);
+    }
+
     /** Search and details succeed; only the photo fetch is refused — the live symptom. */
     private function fakeRefusedPhotos(): void
     {
