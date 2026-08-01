@@ -12,9 +12,21 @@ export function adminHeaders(headers: HeadersInit = {}): HeadersInit {
 }
 
 export async function adminFetch(path: string, options: RequestInit = {}) {
+  // A JSON string body needs its Content-Type declared. Without it the browser sends
+  // text/plain, Laravel never parses the body, and every field arrives missing — which
+  // surfaces as "The scope field is required" on a request that plainly included it.
+  // Endpoints whose fields are all optional appeared to work while silently discarding
+  // everything sent to them.
+  //
+  // FormData must be left alone: the browser sets its own multipart boundary.
+  const isJsonBody = typeof options.body === 'string';
+
   return fetch(`${API_BASE_URL}${path}`, {
     ...options,
-    headers: adminHeaders(options.headers || {}),
+    headers: adminHeaders({
+      ...(isJsonBody ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.headers || {}),
+    }),
   });
 }
 
