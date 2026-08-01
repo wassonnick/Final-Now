@@ -101,6 +101,39 @@ class NcrPublishGateTest extends TestCase
         $this->assertNotContains('city_not_launched', app(SocietyDraftCompletionService::class)->missing($this->society($delhi)));
     }
 
+    /**
+     * Opening a city and indexing a city are separate decisions. Indexing needs five
+     * published societies, and a city cannot reach five while publishing is what it is
+     * waiting on — so opening must not require the indexing bar, or the first society in
+     * any new city is unpublishable forever.
+     */
+    public function test_opening_a_city_for_publishing_does_not_require_the_indexing_bar(): void
+    {
+        config(['features.ncr_city_indexing' => false, 'features.ncr_indexable_city_slugs' => []]);
+
+        $delhi = $this->city('Delhi', 'delhi');
+        $society = $this->society($delhi);
+
+        $this->assertContains('city_not_launched', app(SocietyDraftCompletionService::class)->missing($society));
+
+        $this->artisan('ncr:open-city', ['slug' => 'delhi'])->assertSuccessful();
+
+        $this->assertTrue(app(NcrCityLaunchPolicy::class)->cityMayPublish($delhi));
+        $this->assertNotContains('city_not_launched', app(SocietyDraftCompletionService::class)->missing($society->fresh()));
+
+        // Open for business is not the same as open to Google.
+        $this->assertFalse(app(NcrCityLaunchPolicy::class)->cityIsApproved($delhi));
+    }
+
+    public function test_closing_a_city_stops_publishing_into_it_again(): void
+    {
+        $delhi = $this->city('Delhi', 'delhi');
+        $this->artisan('ncr:open-city', ['slug' => 'delhi'])->assertSuccessful();
+        $this->artisan('ncr:open-city', ['slug' => 'delhi', '--close' => true])->assertSuccessful();
+
+        $this->assertFalse(app(NcrCityLaunchPolicy::class)->cityMayPublish($delhi));
+    }
+
     /** A published society showing a placeholder is the quality problem, not a lesser good. */
     public function test_auto_publish_requires_an_approved_cover(): void
     {

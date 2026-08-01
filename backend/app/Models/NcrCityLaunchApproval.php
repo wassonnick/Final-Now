@@ -19,6 +19,7 @@ class NcrCityLaunchApproval extends Model
         'revoked_by',
         'approval_notes',
         'readiness_snapshot',
+        'approved_for_publishing', 'publishing_approved_at',
     ];
 
     protected $casts = [
@@ -27,6 +28,8 @@ class NcrCityLaunchApproval extends Model
         'approved_at' => 'datetime',
         'revoked_at' => 'datetime',
         'readiness_snapshot' => 'array',
+        'approved_for_publishing' => 'boolean',
+        'publishing_approved_at' => 'datetime',
     ];
 
     public function city(): BelongsTo

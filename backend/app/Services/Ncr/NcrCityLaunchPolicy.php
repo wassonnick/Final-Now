@@ -58,7 +58,35 @@ class NcrCityLaunchPolicy
             ->map(fn ($value) => Str::slug((string) $value))
             ->all();
 
-        return in_array($slug, $home, true) || $this->cityIsApproved($slug);
+        if (in_array($slug, $home, true)) {
+            return true;
+        }
+
+        // Publishing approval is the lower, separate bar: a city can be open and working
+        // while still held back from indexing until it has the content depth for it.
+        return $this->cityIsOpenForPublishing($slug) || $this->cityIsApproved($slug);
+    }
+
+    /**
+     * Has this city been explicitly opened for publishing?
+     *
+     * Deliberately independent of the NCR indexing flag: opening a city is an editorial
+     * decision about whether it is ready for visitors, and holding it hostage to a global
+     * SEO switch is what made the first society in a new city unpublishable.
+     */
+    public function cityIsOpenForPublishing(City|string $city): bool
+    {
+        if (! Schema::hasTable('ncr_city_launch_approvals')) {
+            return false;
+        }
+
+        $slug = Str::slug((string) ($city instanceof City ? $city->slug : $city));
+
+        return NcrCityLaunchApproval::query()
+            ->where('city_slug', $slug)
+            ->where('approved_for_publishing', true)
+            ->whereNull('revoked_at')
+            ->exists();
     }
 
     public function cityIsApproved(City|string $city): bool
