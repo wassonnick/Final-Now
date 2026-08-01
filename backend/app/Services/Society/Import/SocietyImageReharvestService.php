@@ -131,11 +131,15 @@ class SocietyImageReharvestService
         $republished = false;
 
         if ($republishCover) {
-            // Only a candidate that passed the screen can become the cover, and only a
-            // Google Places photo may auto-approve — an official-site image still needs
-            // the rights confirmation an admin gives by hand.
-            $cover = collect($usable)->first(fn ($c) => ($c['source'] ?? '') === 'google_places'
-                && ($c['screen']['verdict'] ?? '') === SocietyImageScreenService::VERDICT_OK);
+            // Only a Google Places photo may auto-approve — an official-site image still
+            // needs the rights confirmation an admin gives by hand.
+            //
+            // $usable already excludes anything the screen rejected. Requiring a positive
+            // OK on top of that made an unavailable screen behave exactly like a screen
+            // that condemned every photo: with the AI budget spent, every verdict is
+            // "unknown" and no society would get a cover at all. Unknown must not reject,
+            // here as everywhere else.
+            $cover = collect($usable)->first(fn ($c) => ($c['source'] ?? '') === 'google_places');
 
             if ($cover !== null) {
                 foreach ($candidates as $i => $candidate) {

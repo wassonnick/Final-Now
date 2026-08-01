@@ -57,7 +57,18 @@ class AdminImageReharvestController extends Controller
             'limit' => ['sometimes', 'integer', 'min:1', 'max:'.self::MAX_BULK],
             'screen' => ['sometimes', 'boolean'],
             'republish' => ['sometimes', 'boolean'],
+            'force' => ['sometimes', 'boolean'],
         ]);
+
+        // A restore is worth nothing if Google will not serve the photos. Checking one
+        // real fetch first costs a second and saves a few hundred pointless jobs.
+        if (empty($data['force']) && ! $this->placesCanServePhotos($reason)) {
+            return response()->json([
+                'message' => 'Google Places cannot serve photos right now, so this run would refresh candidates and publish no covers. '
+                    .$reason.' Fix it and retry, or send force=true to run anyway.',
+                'run' => null,
+            ], 422);
+        }
 
         $ids = $this->targetIds($data);
 
@@ -89,6 +100,38 @@ class AdminImageReharvestController extends Controller
         return response()->json([
             'runs' => ImageReharvestRun::latest()->limit(20)->get(),
         ]);
+    }
+
+    /** One real photo fetch, to find out whether a restore can actually restore anything. */
+    private function placesCanServePhotos(?string &$reason = null): bool
+    {
+        $key = trim((string) config('services.google_places_api_key', ''));
+
+        if ($key === '') {
+            $reason = 'No Google Places API key is configured.';
+
+            return false;
+        }
+
+        try {
+            $place = app(\App\Services\Society\Import\PlaceResolverService::class)
+                ->resolve('DLF Privana North', 'Sector 77 Gurugram');
+            $reference = (array) ($place['photo_references'] ?? []);
+
+            if ($reference === []) {
+                // Inconclusive rather than failing: the probe society may simply have no
+                // photos, which says nothing about the endpoint.
+                return true;
+            }
+
+            app(\App\Services\GooglePlacesSocietyImageService::class)->fetchPhotoByReference((string) $reference[0], 400);
+
+            return true;
+        } catch (\Throwable $e) {
+            $reason = 'Google said: '.mb_substr($e->getMessage(), 0, 160);
+
+            return false;
+        }
     }
 
     /**

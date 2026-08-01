@@ -343,6 +343,65 @@ class SocietyImageReharvestTest extends TestCase
         $this->assertSame(['legacy-ref'], $resolved['photo_references']);
     }
 
+    /**
+     * Restoring covers in bulk has to work when the vision screen cannot run — which is
+     * precisely when it is needed, since a spent AI budget is a common state. Requiring a
+     * positive OK made an unavailable screen indistinguishable from one that condemned
+     * every photo, and a whole-catalogue restore would have set zero covers.
+     */
+    public function test_a_cover_is_still_published_when_the_screen_could_not_run(): void
+    {
+        $society = $this->society(['place_id' => 'place-magnolias']);
+        config(['services.claude.image_screen_enabled' => false]);
+
+        $this->fakePlaces();
+
+        $result = app(\App\Services\Society\Import\SocietyImageReharvestService::class)->reharvest($society);
+
+        $this->assertTrue($result['republished'], 'An unscreened Places photo must still be publishable.');
+        $this->assertSame('fresh-ref-wide', $society->fresh()->image_photo_reference);
+        $this->assertTrue((bool) $society->fresh()->image_approved_by_admin);
+    }
+
+    /** A restore against a refusing photo endpoint would publish nothing; say so first. */
+    public function test_a_bulk_run_is_refused_when_google_cannot_serve_photos(): void
+    {
+        Queue::fake();
+        $this->society(['image_approved_by_admin' => false]);
+
+        $this->fakeRefusedPhotos();
+
+        $this->withToken('admin-test-token')
+            ->postJson('/api/admin/image-reharvest/runs', ['scope' => 'missing_images'])
+            ->assertStatus(422)
+            ->assertJsonPath('run', null);
+
+        Queue::assertNothingPushed();
+    }
+
+    /** ...but the operator can override, because a probe is evidence and not a verdict. */
+    public function test_force_runs_anyway(): void
+    {
+        Queue::fake();
+        $this->society(['image_approved_by_admin' => false]);
+
+        $this->fakeRefusedPhotos();
+
+        $this->withToken('admin-test-token')
+            ->postJson('/api/admin/image-reharvest/runs', ['scope' => 'missing_images', 'force' => true])
+            ->assertStatus(202);
+
+        Queue::assertPushed(ReharvestSocietyImages::class);
+    }
+
+    /** Search and details succeed; only the photo fetch is refused — the live symptom. */
+    private function fakeRefusedPhotos(): void
+    {
+        // Registered before the generic stubs: Http::fake appends and first match wins.
+        Http::fake(['maps.googleapis.com/maps/api/place/photo*' => Http::response('denied', 403)]);
+        $this->fakePlaces();
+    }
+
     private function fakePlaces(): void
     {
         Http::fake([
