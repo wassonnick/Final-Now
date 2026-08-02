@@ -69,11 +69,15 @@ export function hasGooglePlacesDisplayPhoto(society: any) {
   const referenceUrl = firstText(field<string>(society, 'imageReferenceUrl', 'image_reference_url', ''));
   const credit = firstText(field<string>(society, 'imageCredit', 'image_credit', ''));
 
+  // Street View covers are located by coordinates rather than a place_id, so requiring
+  // one would hide exactly the societies Google Places has no photograph of.
+  const isStreetView = imageStatus === 'google_street_view_reference_found';
+
   return (
     approvedByAdmin &&
-    imageStatus === 'google_places_reference_found' &&
-    Boolean(placeId) &&
-    (/google/i.test(credit) || /google\.com|maps\.app\.goo\.gl/i.test(referenceUrl))
+    (imageStatus === 'google_places_reference_found' || isStreetView) &&
+    (isStreetView || Boolean(placeId)) &&
+    (isStreetView || /google/i.test(credit) || /google\.com|maps\.app\.goo\.gl/i.test(referenceUrl))
   );
 }
 

@@ -79,6 +79,13 @@ class GooglePlacesSocietyImageService
             throw new \RuntimeException('A Google Places photo reference is required.');
         }
 
+        // Street View references are synthetic ("streetview:lat,lng") so that every
+        // existing consumer — the public proxy, the admin preview, the vision screen —
+        // serves them through the path it already uses for a Places photo.
+        if (str_starts_with($photoReference, \App\Services\GoogleStreetViewService::REFERENCE_PREFIX)) {
+            return app(\App\Services\GoogleStreetViewService::class)->fetch($photoReference, $maxWidth);
+        }
+
         $width = max(400, min($maxWidth, 1600));
 
         // Two identifier shapes are now in circulation: legacy opaque references, and

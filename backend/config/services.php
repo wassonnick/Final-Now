@@ -41,6 +41,10 @@ return [
     // 'auto' tries Places API (New) and falls back to legacy; 'legacy' forces the old
     // endpoints; 'new' uses v1 only. The legacy Place Photos endpoint began answering
     // freshly-issued references with an HTML 400 while Search and Details kept working.
+    // Street View fills gaps for societies Google Places has no photograph of. Off-switch
+    // kept because a road-facing frame is a compromise, not always an improvement.
+    'street_view_fallback_enabled' => (bool) env('STREET_VIEW_FALLBACK_ENABLED', true),
+
     'google_places_api' => env('GOOGLE_PLACES_API', 'auto'),
 
     'google_places_api_key' => env('GOOGLE_PLACES_API_KEY'),

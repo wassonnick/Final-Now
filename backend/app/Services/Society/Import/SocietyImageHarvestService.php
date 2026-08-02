@@ -18,8 +18,10 @@ use Illuminate\Support\Facades\Http;
  */
 class SocietyImageHarvestService
 {
-    public function __construct(private readonly OfficialSourceValidator $official)
-    {
+    public function __construct(
+        private readonly OfficialSourceValidator $official,
+        private readonly \App\Services\GoogleStreetViewService $streetView,
+    ) {
     }
 
     private const MAX_CANDIDATES = 12;
@@ -87,6 +89,17 @@ class SocietyImageHarvestService
 
         $selected = $this->finalize($this->allocate($official, $places));
         $selected = $this->dropUnreachable($selected, $report);
+
+        // Last resort, and only when nothing photographic was found. Street View shows the
+        // road-facing view — often a gate or a boundary wall rather than the towers — so it
+        // is worth having when the alternative is a placeholder, and never worth preferring
+        // over a real photograph of the place.
+        if ($this->needsStreetViewFallback($selected, $ctx)) {
+            $candidate = $this->streetViewCandidate($ctx, $report);
+            if ($candidate !== null) {
+                $selected[] = $candidate;
+            }
+        }
 
         return $selected;
     }
@@ -205,6 +218,67 @@ class SocietyImageHarvestService
             'width' => (int) ($meta['width'] ?? 0) ?: null,
             'height' => (int) ($meta['height'] ?? 0) ?: null,
             'license_note' => 'Google Places photo. Review Google attribution/display terms before approving.',
+        ];
+    }
+
+    /**
+     * @param  array<int,array<string,mixed>>  $selected
+     * @param  array<string,mixed>  $ctx
+     */
+    private function needsStreetViewFallback(array $selected, array $ctx): bool
+    {
+        if (! config('services.street_view_fallback_enabled', true)) {
+            return false;
+        }
+
+        if (blank($ctx['latitude'] ?? null) || blank($ctx['longitude'] ?? null)) {
+            return false;
+        }
+
+        // A project still being built has no building to photograph from the road; Street
+        // View would show an empty plot, which is worse than a placeholder.
+        if (($ctx['project_status'] ?? null) !== null
+            && ! str_contains(strtolower((string) $ctx['project_status']), 'ready')) {
+            return false;
+        }
+
+        // Only when no photograph of the place itself was found. Official-site marketing
+        // images do not count as one: they are renders as often as photographs, and a
+        // society with only those is exactly the gap this fills.
+        return collect($selected)->every(fn ($c) => ($c['source'] ?? '') !== 'google_places');
+    }
+
+    /**
+     * @param  array<string,mixed>  $ctx
+     * @return array<string,mixed>|null
+     */
+    private function streetViewCandidate(array $ctx, ?array &$report = null): ?array
+    {
+        $latitude = (float) $ctx['latitude'];
+        $longitude = (float) $ctx['longitude'];
+
+        if (! $this->streetView->hasImagery($latitude, $longitude)) {
+            if ($report !== null) {
+                $report['street_view'] = 'no imagery at this location';
+            }
+
+            return null;
+        }
+
+        if ($report !== null) {
+            $report['street_view'] = 'added as a fallback';
+        }
+
+        return [
+            'url' => null,
+            'photo_reference' => $this->streetView->reference($latitude, $longitude),
+            'source' => 'google_street_view',
+            'credit' => 'Google Street View',
+            'license_note' => 'Google Street View imagery, displayed with the attribution Google embeds in the image.',
+            'rights_confirmed' => false,
+            'approved' => false,
+            'is_cover' => false,
+            'sort' => 99,
         ];
     }
 

@@ -47,6 +47,7 @@ class SocietyImageReharvestService
         'developer_permission_received',
         'approved_for_live',
         'google_places_reference_found',
+        'google_street_view_reference_found',
     ];
 
     public function reharvest(Society $society, bool $screenImages = true, bool $republishCover = true): array
@@ -93,6 +94,10 @@ class SocietyImageReharvestService
             'photo_references' => $matched ? (array) ($place['photo_references'] ?? []) : [],
             'photo_meta' => $matched ? (array) ($place['photo_meta'] ?? []) : [],
             'place_id' => $matched ? (string) ($place['place_id'] ?? '') : (string) ($society->place_id ?? ''),
+            // Street View needs a point and a reason to believe there is a building at it.
+            'latitude' => $matched ? ($place['latitude'] ?? $society->latitude) : $society->latitude,
+            'longitude' => $matched ? ($place['longitude'] ?? $society->longitude) : $society->longitude,
+            'project_status' => $society->project_status,
         ], $report);
 
         $report['place_matched'] = $matched;
@@ -139,7 +144,7 @@ class SocietyImageReharvestService
             // that condemned every photo: with the AI budget spent, every verdict is
             // "unknown" and no society would get a cover at all. Unknown must not reject,
             // here as everywhere else.
-            $cover = collect($usable)->first(fn ($c) => ($c['source'] ?? '') === 'google_places');
+            $cover = collect($usable)->first(fn ($c) => in_array($c['source'] ?? '', ['google_places', 'google_street_view'], true));
 
             if ($cover !== null) {
                 foreach ($candidates as $i => $candidate) {
@@ -150,6 +155,7 @@ class SocietyImageReharvestService
 
                 $society->image_photo_reference = $cover['photo_reference'] ?? null;
                 $society->image_credit = $cover['credit'] ?? 'Google Places';
+                $isStreetView = ($cover['source'] ?? '') === 'google_street_view';
                 $society->image_approved_by_admin = true;
                 $republished = true;
             }
@@ -157,14 +163,16 @@ class SocietyImageReharvestService
 
         $society->image_candidates = $candidates;
         $society->image_status = $republished
-            ? 'google_places_reference_found'
+            ? (($isStreetView ?? false) ? 'google_street_view_reference_found' : 'google_places_reference_found')
             : $this->nextStatus($society, 'candidates_pending_review');
         $society->save();
 
         return $result(
             'refreshed',
             $republished
-                ? 'Cover re-published from a Google Places photo.'
+                ? (($isStreetView ?? false)
+                    ? 'Cover re-published from Google Street View — no photograph of this society exists on Places.'
+                    : 'Cover re-published from a Google Places photo.')
                 : ($republishCover
                     // "a cover still needs admin approval" described the outcome without
                     // naming a cause, which is useless on a restore run whose entire
@@ -205,6 +213,10 @@ class SocietyImageReharvestService
 
         if ((int) ($report['place_photos_kept'] ?? 0) === 0) {
             return 'No cover published: all '.$report['place_photos_offered'].' Google photo(s) were below the 640px minimum width.'.$tail;
+        }
+
+        if (($report['street_view'] ?? null) === 'no imagery at this location') {
+            return 'No cover published: Google has no photo of this society and no Street View coverage at its location.'.$tail;
         }
 
         return 'No cover published: every Google photo was screened out, so only official-site images remain — those need a rights check before publishing.'.$tail;

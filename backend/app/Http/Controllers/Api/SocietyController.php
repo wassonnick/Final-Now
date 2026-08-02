@@ -62,7 +62,11 @@ class SocietyController extends Controller {
       return response()->json(['status' => 'error', 'message' => 'Society not found'], 404);
     }
 
-    if (empty($society->place_id) || !$society->image_approved_by_admin) {
+    // A Street View cover is located by coordinates, not by a place_id, so requiring one
+    // would 404 exactly the societies this fallback exists to serve.
+    $isStreetView = $society->image_status === 'google_street_view_reference_found';
+
+    if ((empty($society->place_id) && !$isStreetView) || !$society->image_approved_by_admin) {
       return response()->json(['status' => 'error', 'message' => 'Google Places photo is not available for this society.'], 404);
     }
 
@@ -72,7 +76,8 @@ class SocietyController extends Controller {
     try {
       if ($galleryReference !== '') {
         $approvedReferences = collect(is_array($society->image_candidates) ? $society->image_candidates : [])
-          ->filter(fn ($candidate) => ($candidate['approved'] ?? false) && ($candidate['source'] ?? '') === 'google_places')
+          ->filter(fn ($candidate) => ($candidate['approved'] ?? false)
+            && in_array($candidate['source'] ?? '', ['google_places', 'google_street_view'], true))
           ->pluck('photo_reference')
           ->filter()
           ->all();
@@ -83,8 +88,13 @@ class SocietyController extends Controller {
 
         $photo = $places->fetchPhotoByReference($galleryReference, $width) + ['credit' => 'Google Places'];
       } else {
-        if ($society->image_status !== 'google_places_reference_found') return response()->json(['status' => 'error', 'message' => 'No Google Places cover is approved for this society.'], 404);
-        $photo = $places->fetchDisplayPhoto($society, $width);
+        if (!in_array($society->image_status, ['google_places_reference_found', 'google_street_view_reference_found'], true)) {
+          return response()->json(['status' => 'error', 'message' => 'No Google cover is approved for this society.'], 404);
+        }
+
+        $photo = $isStreetView
+          ? $places->fetchPhotoByReference((string) $society->image_photo_reference, $width) + ['credit' => 'Google Street View']
+          : $places->fetchDisplayPhoto($society, $width);
       }
     } catch (\Throwable $exception) {
       return response()->json([
