@@ -68,9 +68,28 @@ class StreetViewFallbackTest extends TestCase
     {
         Http::fake(['maps.googleapis.com/maps/api/streetview/metadata*' => Http::response(['status' => 'OK'])]);
 
-        $this->assertSame([], app(SocietyImageHarvestService::class)->harvest(
-            $this->ctx(['project_status' => 'Under Construction']),
-        ));
+        foreach (['Under Construction', 'New Launch', 'Pre-Launch', 'Upcoming'] as $status) {
+            $this->assertSame([], app(SocietyImageHarvestService::class)->harvest(
+                $this->ctx(['project_status' => $status]),
+            ), $status.' should be skipped.');
+        }
+    }
+
+    /**
+     * project_status is free text. Accepting only the word "ready" silently skipped every
+     * society marked Delivered or Needs Review — most of the ones this fallback exists
+     * for. A built society must qualify however its status happens to be worded.
+     */
+    public function test_built_societies_qualify_whatever_the_status_wording(): void
+    {
+        Http::fake(['maps.googleapis.com/maps/api/streetview/metadata*' => Http::response(['status' => 'OK'])]);
+
+        foreach (['Delivered', 'Completed', 'Ready to Move', 'Needs Review', ''] as $status) {
+            $candidates = app(SocietyImageHarvestService::class)->harvest($this->ctx(['project_status' => $status]));
+
+            $this->assertCount(1, $candidates, 'Status "'.$status.'" should still get Street View.');
+            $this->assertSame('google_street_view', $candidates[0]['source']);
+        }
     }
 
     /** No coverage at the point means no candidate, and the free check says so first. */

@@ -99,6 +99,10 @@ class SocietyImageHarvestService
             if ($candidate !== null) {
                 $selected[] = $candidate;
             }
+        } elseif ($this->looksUnbuilt((string) ($ctx['project_status'] ?? ''))) {
+            $report['street_view'] = 'skipped: the project is not built yet, so there is nothing to photograph from the road';
+        } elseif (blank($ctx['latitude'] ?? null) || blank($ctx['longitude'] ?? null)) {
+            $report['street_view'] = 'skipped: this society has no coordinates';
         }
 
         return $selected;
@@ -237,8 +241,14 @@ class SocietyImageHarvestService
 
         // A project still being built has no building to photograph from the road; Street
         // View would show an empty plot, which is worse than a placeholder.
-        if (($ctx['project_status'] ?? null) !== null
-            && ! str_contains(strtolower((string) $ctx['project_status']), 'ready')) {
+        //
+        // Stated as "skip what is clearly unbuilt" rather than "allow what says ready",
+        // because project_status is free text: the first version accepted only the word
+        // "ready" and so silently skipped every society marked Delivered, Completed or
+        // Needs Review — most of the ones this fallback exists for. An unexpected value
+        // now gets Street View and the vision screen judges the frame, which is the right
+        // way round: a wrong guess costs one screened image, not a missing cover.
+        if ($this->looksUnbuilt((string) ($ctx['project_status'] ?? ''))) {
             return false;
         }
 
@@ -246,6 +256,23 @@ class SocietyImageHarvestService
         // images do not count as one: they are renders as often as photographs, and a
         // society with only those is exactly the gap this fills.
         return collect($selected)->every(fn ($c) => ($c['source'] ?? '') !== 'google_places');
+    }
+
+    private function looksUnbuilt(string $projectStatus): bool
+    {
+        $status = strtolower(trim($projectStatus));
+
+        if ($status === '') {
+            return false;
+        }
+
+        foreach (['under construction', 'under-construction', 'new launch', 'pre launch', 'pre-launch', 'launching', 'upcoming', 'not started'] as $marker) {
+            if (str_contains($status, $marker)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
