@@ -296,6 +296,21 @@ class SocietyImageHarvestService
             return null;
         }
 
+        // Metadata saying OK is not the same as the image endpoint serving one: Conscient
+        // Heritage Max passed the free check, published a Street View cover, and then
+        // 404'd on the public page. Fetch it once here — we pay for that fetch either way
+        // the moment a visitor loads the page — so a published cover is one we have
+        // actually seen come back as an image.
+        try {
+            $this->streetView->fetch($this->streetView->reference($latitude, $longitude), 400);
+        } catch (\Throwable $e) {
+            if ($report !== null) {
+                $report['street_view'] = 'imagery is listed at this location but the image endpoint would not serve it';
+            }
+
+            return null;
+        }
+
         if ($report !== null) {
             $report['street_view'] = 'added as a fallback';
         }

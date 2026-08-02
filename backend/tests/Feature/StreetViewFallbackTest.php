@@ -23,6 +23,30 @@ class StreetViewFallbackTest extends TestCase
         ]);
     }
 
+    /** Metadata lists imagery and the image endpoint serves it — the healthy case. */
+    private function fakeStreetView(): void
+    {
+        Http::fake([
+            'maps.googleapis.com/maps/api/streetview/metadata*' => Http::response(['status' => 'OK']),
+            'maps.googleapis.com/maps/api/streetview*' => Http::response('jpeg-bytes', 200, ['Content-Type' => 'image/jpeg']),
+        ]);
+    }
+
+    /**
+     * Metadata says imagery exists and the image endpoint refuses to serve it. Conscient
+     * Heritage Max was exactly this: it passed the free check, published a Street View
+     * cover, and then 404'd on the live page. Verifying metadata is not verifying an image.
+     */
+    public function test_a_location_whose_image_will_not_serve_is_not_published(): void
+    {
+        Http::fake([
+            'maps.googleapis.com/maps/api/streetview/metadata*' => Http::response(['status' => 'OK']),
+            'maps.googleapis.com/maps/api/streetview*' => Http::response('no imagery here', 404),
+        ]);
+
+        $this->assertSame([], app(SocietyImageHarvestService::class)->harvest($this->ctx()));
+    }
+
     private function ctx(array $overrides = []): array
     {
         return array_merge([
@@ -37,9 +61,7 @@ class StreetViewFallbackTest extends TestCase
     /** The gap this exists for: Google matched the society but holds no photograph. */
     public function test_street_view_fills_in_when_places_has_no_photo(): void
     {
-        Http::fake([
-            'maps.googleapis.com/maps/api/streetview/metadata*' => Http::response(['status' => 'OK']),
-        ]);
+        $this->fakeStreetView();
 
         $candidates = app(SocietyImageHarvestService::class)->harvest($this->ctx());
 
@@ -52,7 +74,7 @@ class StreetViewFallbackTest extends TestCase
     /** It must never displace an actual photograph of the place. */
     public function test_street_view_is_not_added_when_places_has_photos(): void
     {
-        Http::fake(['maps.googleapis.com/maps/api/streetview/metadata*' => Http::response(['status' => 'OK'])]);
+        $this->fakeStreetView();
 
         $candidates = app(SocietyImageHarvestService::class)->harvest($this->ctx([
             'photo_references' => ['real-photo'],
@@ -66,7 +88,7 @@ class StreetViewFallbackTest extends TestCase
     /** A project still being built has no building to photograph from the road. */
     public function test_under_construction_projects_are_skipped(): void
     {
-        Http::fake(['maps.googleapis.com/maps/api/streetview/metadata*' => Http::response(['status' => 'OK'])]);
+        $this->fakeStreetView();
 
         foreach (['Under Construction', 'New Launch', 'Pre-Launch', 'Upcoming'] as $status) {
             $this->assertSame([], app(SocietyImageHarvestService::class)->harvest(
@@ -82,7 +104,7 @@ class StreetViewFallbackTest extends TestCase
      */
     public function test_built_societies_qualify_whatever_the_status_wording(): void
     {
-        Http::fake(['maps.googleapis.com/maps/api/streetview/metadata*' => Http::response(['status' => 'OK'])]);
+        $this->fakeStreetView();
 
         foreach (['Delivered', 'Completed', 'Ready to Move', 'Needs Review', ''] as $status) {
             $candidates = app(SocietyImageHarvestService::class)->harvest($this->ctx(['project_status' => $status]));
@@ -118,7 +140,9 @@ class StreetViewFallbackTest extends TestCase
         ]);
 
         Http::fake([
+            // Most specific first: metadata must not be answered by the image stub.
             'maps.googleapis.com/maps/api/streetview/metadata*' => Http::response(['status' => 'OK']),
+            'maps.googleapis.com/maps/api/streetview*' => Http::response('jpeg', 200, ['Content-Type' => 'image/jpeg']),
             'maps.googleapis.com/maps/api/place/findplacefromtext/*' => Http::response(['status' => 'OK', 'candidates' => [['place_id' => 'p2']]]),
             'maps.googleapis.com/maps/api/place/details/*' => Http::response(['status' => 'OK', 'result' => [
                 'place_id' => 'p2',

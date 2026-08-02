@@ -138,7 +138,7 @@ class SocietyImageScreenService
                             'media_type' => $image['media_type'],
                             'data' => base64_encode($image['body']),
                         ]],
-                        ['type' => 'text', 'text' => $this->prompt($societyName)],
+                        ['type' => 'text', 'text' => $this->prompt($societyName, ($candidate['source'] ?? '') === 'google_street_view')],
                     ],
                 ]],
                 model: $model,
@@ -173,9 +173,36 @@ class SocietyImageScreenService
         return $result;
     }
 
-    private function prompt(string $societyName): string
+    private function prompt(string $societyName, bool $isStreetView = false): string
     {
         $subject = $societyName !== '' ? '"'.$societyName.'", a residential apartment society in India' : 'an Indian residential apartment society';
+
+        // A Places photo was taken by someone who meant to photograph the place. A Street
+        // View frame is whatever faced the car, so the generous reading that lets
+        // "grounds and landscaping" through passes a boundary wall behind trees and an
+        // empty field with pylons — both of which went live as covers.
+        if ($isStreetView) {
+            return <<<TXT
+            You are screening a Google Street View frame for use as the main image on a property listing page for {$subject}.
+
+            This is a road-facing camera view, not a photograph someone composed, so judge it strictly.
+
+            ACCEPT only if a residential building or its formal entrance is clearly visible and recognisably the subject: towers or blocks in the frame, or a named gate, gatehouse or boundary entrance.
+
+            REJECT everything else, including:
+            - A plain boundary wall, fence or hedge with no building visible.
+            - Empty land, scrub, undergrowth, fields or a construction site.
+            - Mostly road, traffic, parked vehicles, pylons or power lines.
+            - Trees or foliage obscuring whatever is behind them.
+            - A building too distant or too obscured to tell what it is.
+
+            "Some greenery is visible" is not a reason to accept. If a prospective tenant could not tell which building this is, reject it.
+
+            Reply with exactly two lines and nothing else:
+            VERDICT: OK or REJECT
+            REASONS: a comma-separated list from [no_building_visible, empty_land, obscured, mostly_road, low_quality, off_topic], or none
+            TXT;
+        }
 
         return <<<TXT
         You are screening a photograph for use as the main image on a property listing page for {$subject}.

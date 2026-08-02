@@ -225,6 +225,10 @@ class SocietyImageReharvestService
             return 'No cover published: Google has no photo of this society, and Street View was '.$streetView.'.'.$tail;
         }
 
+        if (str_starts_with($streetView, 'imagery is listed')) {
+            return 'No cover published: Google has no photo of this society, and Street View lists imagery at its location but will not serve it.'.$tail;
+        }
+
         if ($streetView === 'no imagery at this location') {
             return 'No cover published: Google has no photo of this society and no Street View coverage at its location.'.$tail;
         }

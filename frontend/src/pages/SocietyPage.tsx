@@ -1066,8 +1066,15 @@ export function SocietyPage() {
             ))}
           </div>
         </section>
+        {/* Street View covers are a different source with a different meaning — a
+            road-facing view rather than someone's photograph of the place — and the
+            caption is where we tell a visitor which they are looking at. */}
         {hasGooglePlacesDisplayPhoto(society) ? (
-          <p className="mt-2.5 text-[12px] text-[#8A8F89]">Photos via Google Places, reviewed and approved before publishing — not stock images.</p>
+          <p className="mt-2.5 text-[12px] text-[#8A8F89]">
+            {(society?.image_status ?? society?.imageStatus) === "google_street_view_reference_found"
+              ? "Street-level view via Google Street View, shown while a photograph of this society is sourced — not a stock image."
+              : "Photos via Google Places, reviewed and approved before publishing — not stock images."}
+          </p>
         ) : null}
 
         <SectionTabs
