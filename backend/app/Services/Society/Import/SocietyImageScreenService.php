@@ -39,6 +39,15 @@ class SocietyImageScreenService
 
     private const CACHE_DAYS = 60;
 
+    /**
+     * Bump whenever a prompt changes. The cache key was the image identity alone, so a
+     * verdict reached under an older prompt outlived the prompt that produced it: the
+     * strict Street View rules shipped, and Ansal Celebrity Homes kept its boundary-wall
+     * cover because a lenient OK from an hour earlier was still cached for sixty days.
+     * A prompt change that silently changes nothing is worse than no change at all.
+     */
+    private const PROMPT_VERSION = 2;
+
     public function __construct(
         private readonly AiBudgetGuard $budget,
         private readonly AiSpendTracker $spend,
@@ -329,6 +338,14 @@ class SocietyImageScreenService
     {
         $identity = trim((string) ($candidate['photo_reference'] ?? '')) ?: trim((string) ($candidate['url'] ?? ''));
 
-        return $identity === '' ? null : 'society_image_screen:'.sha1($identity);
+        if ($identity === '') {
+            return null;
+        }
+
+        // Street View and Places frames are judged by different prompts, so a verdict for
+        // one must never be served for the other.
+        $lane = ($candidate['source'] ?? '') === 'google_street_view' ? 'sv' : 'std';
+
+        return 'society_image_screen:v'.self::PROMPT_VERSION.':'.$lane.':'.sha1($identity);
     }
 }
