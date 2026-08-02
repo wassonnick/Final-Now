@@ -117,6 +117,40 @@ class AdminPlacesDiagnosticController extends Controller
             $out['verdict'] = 'The photo request threw before Google answered: '.$e->getMessage();
         }
 
+        $out['street_view'] = $this->streetViewCheck($place);
+
         return response()->json($out);
+    }
+
+    /**
+     * Street View is a separate API with its own enablement, so it can be dead while
+     * Places is healthy — and a refusal looks exactly like "nowhere has coverage" unless
+     * Google's own status is reported.
+     *
+     * @param  array<string,mixed>  $place
+     * @return array<string,mixed>
+     */
+    private function streetViewCheck(array $place): array
+    {
+        $latitude = $place['latitude'] ?? null;
+        $longitude = $place['longitude'] ?? null;
+
+        if ($latitude === null || $longitude === null) {
+            return ['checked' => false, 'note' => 'The probe society has no coordinates, so Street View could not be tested.'];
+        }
+
+        $service = app(\App\Services\GoogleStreetViewService::class);
+        $status = $service->coverageStatus((float) $latitude, (float) $longitude);
+
+        return [
+            'checked' => true,
+            'status' => $status,
+            'usable' => $status === 'OK',
+            'note' => match (true) {
+                $status === 'OK' => 'Street View has imagery at this location and the API is callable.',
+                $service->statusIsConfigurationProblem($status) => 'Street View refused the call ('.$status.'). Enable "Street View Static API" in Google Cloud and add it to the key\'s API restrictions — it is a separate API from Places.',
+                default => 'Street View is callable but has no imagery at this particular location. That is a fact about the place, not a configuration problem.',
+            },
+        ];
     }
 }

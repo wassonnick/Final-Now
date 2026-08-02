@@ -30,10 +30,25 @@ class GoogleStreetViewService
      */
     public function hasImagery(float $latitude, float $longitude): bool
     {
+        return $this->coverageStatus($latitude, $longitude) === 'OK';
+    }
+
+    /**
+     * Google's own word for what is at this point.
+     *
+     * Returned rather than reduced to a boolean because the two failure modes need
+     * opposite responses and look identical from outside: ZERO_RESULTS means Street View
+     * genuinely has nothing there, while REQUEST_DENIED means the Street View Static API
+     * is not enabled on the project or the key is not permitted to call it. Collapsing
+     * both to false would have reported a configuration mistake as "no coverage" for every
+     * society in the catalogue, which is the kind of misdirection that costs hours.
+     */
+    public function coverageStatus(float $latitude, float $longitude): string
+    {
         $key = trim((string) config('services.google_places_api_key', ''));
 
         if ($key === '') {
-            return false;
+            return 'NO_API_KEY';
         }
 
         try {
@@ -44,12 +59,22 @@ class GoogleStreetViewService
                 'key' => $key,
             ]);
 
-            return $response->ok() && (string) ($response->json('status') ?? '') === 'OK';
+            if (! $response->ok()) {
+                return 'HTTP_'.$response->status();
+            }
+
+            return (string) ($response->json('status') ?? 'UNKNOWN');
         } catch (\Throwable $e) {
             Log::info('Street View metadata check failed', ['error' => $e->getMessage()]);
 
-            return false;
+            return 'REQUEST_FAILED';
         }
+    }
+
+    /** Does this status mean "we cannot call the API", as opposed to "nothing is there"? */
+    public function statusIsConfigurationProblem(string $status): bool
+    {
+        return ! in_array($status, ['OK', 'ZERO_RESULTS', 'NOT_FOUND'], true);
     }
 
     public function reference(float $latitude, float $longitude): string

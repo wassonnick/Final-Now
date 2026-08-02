@@ -257,9 +257,13 @@ class SocietyImageHarvestService
         $latitude = (float) $ctx['latitude'];
         $longitude = (float) $ctx['longitude'];
 
-        if (! $this->streetView->hasImagery($latitude, $longitude)) {
+        $status = $this->streetView->coverageStatus($latitude, $longitude);
+
+        if ($status !== 'OK') {
             if ($report !== null) {
-                $report['street_view'] = 'no imagery at this location';
+                $report['street_view'] = $this->streetView->statusIsConfigurationProblem($status)
+                    ? 'Street View could not be called (Google said '.$status.') — the Street View Static API is probably not enabled for this key'
+                    : 'no imagery at this location';
             }
 
             return null;

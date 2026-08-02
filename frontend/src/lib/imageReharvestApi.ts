@@ -121,6 +121,7 @@ export type PlacesDiagnostic = {
     body_head?: string | null;
     error?: string;
   };
+  street_view?: { checked: boolean; status?: string; usable?: boolean; note: string };
   verdict: string;
 };
 

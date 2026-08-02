@@ -170,6 +170,14 @@ export function AdminImageReharvestPage() {
                 <dd className="inline break-all font-mono">{diagnostic.resolve?.first_reference_head || "—"}</dd>
               </div>
             </dl>
+            {diagnostic.street_view ? (
+              <p className={`mt-3 rounded-xl p-3 text-xs font-semibold leading-5 ${
+                diagnostic.street_view.usable ? "bg-white/70 text-slate-700" : "bg-amber-100/70 text-amber-900"
+              }`}>
+                <span className="font-black">Street View: </span>
+                {diagnostic.street_view.note}
+              </p>
+            ) : null}
             {diagnostic.photo?.body_head ? (
               <p className="mt-3 max-h-32 overflow-y-auto rounded-xl bg-white/70 p-3 font-mono text-[11px] leading-4 text-slate-600">
                 {diagnostic.photo.body_head}

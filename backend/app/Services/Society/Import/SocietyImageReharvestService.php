@@ -215,7 +215,13 @@ class SocietyImageReharvestService
             return 'No cover published: all '.$report['place_photos_offered'].' Google photo(s) were below the 640px minimum width.'.$tail;
         }
 
-        if (($report['street_view'] ?? null) === 'no imagery at this location') {
+        $streetView = (string) ($report['street_view'] ?? '');
+
+        if (str_starts_with($streetView, 'Street View could not be called')) {
+            return 'No cover published: Google has no photo of this society, and '.lcfirst($streetView).'.'.$tail;
+        }
+
+        if ($streetView === 'no imagery at this location') {
             return 'No cover published: Google has no photo of this society and no Street View coverage at its location.'.$tail;
         }
 
