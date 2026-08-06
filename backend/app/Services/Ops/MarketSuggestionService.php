@@ -199,8 +199,15 @@ class MarketSuggestionService
                 }
             }
 
+            // A search that proposed no changes still cost a grounded web call. Recording
+            // the current values on both sides makes that visible as "changed nothing"
+            // rather than as no run at all — which is precisely the case worth reviewing.
             if ($before === []) {
-                return;
+                foreach (self::MARKET_FIELDS as $field) {
+                    $value = (string) ($society->getOriginal($field) ?? '');
+                    $before[$field] = $value;
+                    $after[$field] = $value;
+                }
             }
 
             \App\Models\MarketRefreshLog::create([
@@ -293,6 +300,11 @@ class MarketSuggestionService
         }
 
         if ($updates === []) {
+            // The search was paid for and produced nothing usable. Previously this
+            // returned silently, so the runs least worth repeating were the ones the log
+            // could never show.
+            $this->logRefresh($society, [], 'auto_nightly', $result['market_sources'] ?? [], $result['confidence'] ?? null, 'Search returned no usable market figure.');
+
             return null;
         }
 
@@ -306,6 +318,9 @@ class MarketSuggestionService
             'locked' => $locked, // preserve any admin locks across the refresh
         ];
         $updates['field_sources'] = $fieldSources;
+
+        // Log before the write, so `before` is genuinely the previous value.
+        $this->logRefresh($society, $updates, 'auto_nightly', $result['market_sources'] ?? [], $result['confidence'] ?? null, $result['notes'] ?? null);
 
         $society->update($updates);
 

@@ -497,6 +497,11 @@ export function toApiSocietyPayload(society: AdminSociety) {
     image_reference_url: society.imageReferenceUrl,
     image_url: society.imageUrl,
     image_status: society.imageStatus,
+    // Every Google-served cover — Places photo, Street View, location map — is identified
+    // by this reference and nothing else. It was read from the API and never written back,
+    // so choosing any of them updated the form, saved cleanly, and left the old cover in
+    // place. That is why no cover could be changed no matter which option was picked.
+    image_photo_reference: society.imagePhotoReference,
     image_approved_by_admin: society.imageApprovedByAdmin,
     image_alt_text: society.imageAltText,
     image_credit: society.imageCredit,
