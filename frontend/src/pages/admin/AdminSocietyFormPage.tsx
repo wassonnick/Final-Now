@@ -547,78 +547,14 @@ export function AdminSocietyFormPage() {
     setSaved(false);
   };
 
-  type Candidate = { source?: string; url?: string; photo_reference?: string; credit?: string };
 
   // Approving a harvested candidate only fills the form — nothing is public until Save,
   // and a Google reference is stored as an attributed reference, never as an owned upload.
-  const useCandidateAsCover = (candidate: Candidate) => {
-    const isPlacesPhoto = Boolean(candidate.photo_reference);
-
-    // "official_reference_found" is a REFERENCE status: the public site deliberately
-    // refuses to render it, because an image scraped from a developer's site is their
-    // copyright until someone confirms we may use it. Setting it alongside
-    // imageApprovedByAdmin=true produced a society that said "Approved for public
-    // display" in admin and showed a placeholder to every visitor.
-    // So ask for the confirmation instead of asserting it.
-    // The public site renders only direct image URLs. Picking a cover the renderer will
-    // silently ignore is the difference between "approved" in admin and a placeholder on
-    // the live page, so say so here rather than after a save that appears to work.
-    if (!isPlacesPhoto && !isRenderableSocietyImage(candidate.url)) {
-      setError(
-        "This candidate is not a direct image URL, so the public page cannot display it. " +
-          "Use it as an admin reference, or upload the image with Upload Cover instead.",
-      );
-      return;
-    }
-
-    let rightsConfirmed = false;
-    if (!isPlacesPhoto) {
-      rightsConfirmed = window.confirm(
-        `Publish this image from ${candidate.credit || "the developer's site"}?\n\n` +
-          "OK — we have the developer's permission (or a licence) to publish it. It will go live on the society page after you save.\n\n" +
-          "Cancel — keep it as an admin reference only. It stays in this list and the public page keeps its placeholder.",
-      );
-    }
-
-    setSociety((current) => ({
-      ...current,
-      coverImage: candidate.url || "",
-      imageUrl: candidate.url || current.imageUrl,
-      imagePhotoReference: candidate.photo_reference || "",
-      imageCredit: candidate.credit || current.imageCredit,
-      imageApprovedByAdmin: isPlacesPhoto || rightsConfirmed,
-      // Record where it came from, not a generic "approved" — provenance is the point.
-      imageStatus: isPlacesPhoto
-        ? "google_places_reference_found"
-        : rightsConfirmed
-          ? "developer_permission_received"
-          : "official_reference_found",
-    }));
-    setSaved(false);
-    setMessage(
-      isPlacesPhoto || rightsConfirmed
-        ? "Cover set. Save to publish it."
-        : "Kept as an admin reference. The public page will keep its placeholder until rights are confirmed.",
-    );
-  };
-
-  const addCandidateToGallery = (candidate: Candidate) => {
-    if (!candidate.url) return;
-    setSociety((current) => (
-      current.galleryImages.includes(candidate.url as string)
-        ? current
-        : { ...current, galleryImages: [...current.galleryImages, candidate.url as string].slice(0, 10) }
-    ));
-    setSaved(false);
-  };
-
-  const removeCandidate = (index: number) => {
-    setSociety((current) => ({
-      ...current,
-      imageCandidates: current.imageCandidates.filter((_, position) => position !== index),
-    }));
-    setSaved(false);
-  };
+  // useCandidateAsCover / addCandidateToGallery / removeCandidate lived here. They were
+  // the second writer of the cover fields, and writing a different subset than the picker
+  // is how a society ended up serving a map while its status still claimed a Places photo.
+  // The picker is now the only surface that sets a cover, adds to a gallery or discards a
+  // candidate, so there is nothing left to disagree with.
 
   const extractBrochure = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -720,6 +656,8 @@ export function AdminSocietyFormPage() {
     }
   };
 
+  // The picker is the only surface that sets a cover now, so it loads itself rather
+  // than hiding behind a button the operator has to know to press.
   const loadCoverOptions = async () => {
     const societyId = Number(society.id || 0);
     if (!societyId) {
@@ -802,6 +740,29 @@ export function AdminSocietyFormPage() {
 
     setSaved(false);
     setMessage(adding ? `Added to the gallery. Save to publish it.` : "Removed from the gallery. Save to apply.");
+  };
+
+  /** Drop a harvested candidate entirely. Computed options (map, Street View) are not
+   *  stored, so there is nothing to discard for those. */
+  useEffect(() => {
+    if (society.id && coverOptions.length === 0 && !loadingCovers) {
+      void loadCoverOptions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [society.id]);
+
+  const discardOption = (option: CoverOption) => {
+    setSociety((current) => ({
+      ...current,
+      imageCandidates: (current.imageCandidates || []).filter(
+        (candidate) =>
+          !(candidate.photo_reference && candidate.photo_reference === option.photo_reference) &&
+          !(candidate.url && candidate.url === option.url),
+      ),
+    }));
+    setCoverOptions((options) => options.filter((o) => o.key !== option.key));
+    setSaved(false);
+    setMessage("Discarded. Save to apply.");
   };
 
   const chooseCover = (option: CoverOption) => {
@@ -2107,6 +2068,16 @@ export function AdminSocietyFormPage() {
                         >
                           {inGallery(option) ? "In gallery — remove" : "Add to gallery"}
                         </button>
+
+                        {option.source !== "location_map" && option.source !== "google_street_view" ? (
+                          <button
+                            type="button"
+                            className="mt-1.5 w-full rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:border-red-300 hover:text-red-600"
+                            onClick={() => discardOption(option)}
+                          >
+                            Discard
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   ))}
@@ -2136,54 +2107,6 @@ export function AdminSocietyFormPage() {
                 </Button>
               </div>
             </section>
-
-            {/* Harvested candidates live on the society row itself (image_candidates) and were
-                never shown here — so a society imported outside the verified importer looked
-                as though it had no images at all, with no way to pick one. */}
-            {society.imageCandidates?.length ? (
-              <section className="rounded-[20px] border border-emerald-100 bg-emerald-50 p-4 shadow-sm md:p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-base font-bold tracking-tight text-slate-950">Harvested image candidates</h2>
-                    <p className="mt-1 text-xs leading-5 text-slate-600">Found during import. Pick one as the cover or add it to the gallery — nothing here is public until you save.</p>
-                  </div>
-                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-emerald-700">{society.imageCandidates.length} found</span>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  {society.imageCandidates.map((candidate, index) => {
-                    const isGoogle = (candidate.source || "") === "google_places";
-                    return (
-                      <div key={`${candidate.url || candidate.photo_reference || index}`} className="overflow-hidden rounded-xl border border-emerald-200 bg-white">
-                        <CandidatePreview url={candidate.url} photoReference={candidate.photo_reference} alt={candidate.credit || "Harvested candidate"} />
-                        <div className="p-2.5">
-                          <p className="truncate text-[11px] font-bold text-slate-700">{isGoogle ? "Google Places" : (candidate.source || "source").replace(/_/g, " ")}</p>
-                          <p className="mt-0.5 truncate text-[10px] text-slate-500">{candidate.credit || (candidate.url ? new URL(candidate.url, "https://x.test").hostname : "photo reference")}</p>
-                          {candidate.screen?.verdict === "rejected" ? (
-                            <p className="mt-1 text-[10px] font-bold leading-4 text-red-700">
-                              Screened out: {(candidate.screen.reasons || []).map(screenReasonLabel).join(", ") || "unsuitable"}
-                            </p>
-                          ) : candidate.screen?.verdict === "ok" ? (
-                            <p className="mt-1 text-[10px] font-bold text-emerald-700">Passed the image screen</p>
-                          ) : candidate.screen ? (
-                            <p className="mt-1 text-[10px] font-bold leading-4 text-amber-700">
-                              Not screened{candidate.screen.note ? `: ${candidate.screen.note}` : ""}
-                            </p>
-                          ) : null}
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            <button type="button" className="rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-black text-white hover:bg-emerald-700" onClick={() => useCandidateAsCover(candidate)}>Use as cover</button>
-                            {candidate.url ? (
-                              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-black text-emerald-700 hover:border-emerald-500" onClick={() => addCandidateToGallery(candidate)}>Add to gallery</button>
-                            ) : null}
-                            <button type="button" className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 hover:border-slate-500" onClick={() => removeCandidate(index)}>Remove</button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="mt-3 text-[11px] font-semibold text-emerald-800">Google Places images stay attributed reference/display only — approval never claims ownership.</p>
-              </section>
-            ) : null}
 
             {society.importedImages?.length ? <section className="rounded-[20px] border border-blue-100 bg-blue-50 p-4 shadow-sm md:p-5">
               <div className="flex items-start justify-between gap-3"><div><h2 className="text-base font-bold tracking-tight text-slate-950">Imported Image Candidates</h2><p className="mt-1 text-xs leading-5 text-slate-600">Review Google photo references and builder image URLs. Nothing is approved automatically.</p></div><span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-blue-700">{society.importedImages.length} candidates</span></div>
