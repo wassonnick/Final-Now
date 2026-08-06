@@ -120,7 +120,11 @@ class GoogleStreetViewService
         ]);
 
         if (! $response->ok()) {
-            throw new \RuntimeException('Static map request failed (HTTP '.$response->status().').');
+            // A 403 here is nearly always the same setup step, and saying so beats making
+            // someone match a status code to a console page they have not opened yet.
+            throw new \RuntimeException($response->status() === 403
+                ? 'Google refused the static map (403). Enable "Maps Static API" in Google Cloud and add it to the key\'s API restrictions — it is a separate API from Places and Street View.'
+                : 'Static map request failed (HTTP '.$response->status().').');
         }
 
         $contentType = (string) ($response->header('Content-Type') ?: 'image/png');
@@ -199,7 +203,9 @@ class GoogleStreetViewService
         ]);
 
         if (! $response->ok()) {
-            throw new \RuntimeException('Street View request failed (HTTP '.$response->status().').');
+            throw new \RuntimeException($response->status() === 403
+                ? 'Google refused the Street View image (403). Enable "Street View Static API" in Google Cloud and add it to the key\'s API restrictions.'
+                : 'Street View request failed (HTTP '.$response->status().').');
         }
 
         $contentType = (string) ($response->header('Content-Type') ?: 'image/jpeg');
