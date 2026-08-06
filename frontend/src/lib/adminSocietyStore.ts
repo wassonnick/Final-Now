@@ -60,7 +60,7 @@ const normalizeAdminStringArray = (value: unknown): string[] => {
 export type SocietyStatus = 'Draft' | 'Verified' | 'Premium' | 'Archived';
 export type SocietyImageStatus =
   | 'placeholder'
-  | 'official_reference_found' | 'google_places_reference_found' | 'google_street_view_reference_found'
+  | 'official_reference_found' | 'google_places_reference_found' | 'google_street_view_reference_found' | 'location_map_reference_found'
   | 'licensed_uploaded'
   | 'self_shot_uploaded'
   | 'developer_permission_received'
@@ -220,6 +220,7 @@ function normalizeImageStatus(value: unknown): SocietyImageStatus {
     value === 'official_reference_found' ||
     value === 'google_places_reference_found' ||
     value === 'google_street_view_reference_found' ||
+    value === 'location_map_reference_found' ||
     value === 'licensed_uploaded' ||
     value === 'self_shot_uploaded' ||
     value === 'developer_permission_received' ||

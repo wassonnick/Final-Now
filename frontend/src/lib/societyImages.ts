@@ -71,7 +71,10 @@ export function hasGooglePlacesDisplayPhoto(society: any) {
 
   // Street View covers are located by coordinates rather than a place_id, so requiring
   // one would hide exactly the societies Google Places has no photograph of.
-  const isStreetView = imageStatus === 'google_street_view_reference_found';
+  // Street View and location-map covers are both located by coordinates rather than a
+  // place_id, so requiring one would hide exactly the societies these exist to serve.
+  const isStreetView = imageStatus === 'google_street_view_reference_found'
+    || imageStatus === 'location_map_reference_found';
 
   return (
     approvedByAdmin &&

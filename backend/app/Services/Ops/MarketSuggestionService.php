@@ -141,6 +141,19 @@ class MarketSuggestionService
             ->mapWithKeys(fn ($field) => [$field => $society->{$field}])
             ->all();
 
+        // The grounded search has already been paid for at this point, whether or not
+        // anyone ever approves the suggestion. Record it now so spend and outcome can be
+        // compared; applying it later logs the application separately.
+        $this->logRefresh(
+            $society,
+            $updates,
+            'auto_fetch',
+            $result['market_sources'] ?? [],
+            $result['confidence'] ?? null,
+            $result['notes'] ?? null,
+            applied: false,
+        );
+
         return OpsSuggestion::updateOrCreate(
             ['society_id' => $society->id, 'kind' => 'market_refresh', 'status' => 'pending'],
             [
@@ -166,7 +179,7 @@ class MarketSuggestionService
      *
      * @param  array<string,mixed>  $updates  the values being written
      */
-    private function logRefresh(Society $society, array $updates, string $trigger, ?array $sources, $confidence, ?string $notes): void
+    private function logRefresh(Society $society, array $updates, string $trigger, ?array $sources, $confidence, ?string $notes, bool $applied = true): void
     {
         try {
             $before = [];
@@ -191,6 +204,7 @@ class MarketSuggestionService
             }
 
             \App\Models\MarketRefreshLog::create([
+                'applied' => $applied,
                 'society_id' => $society->id,
                 'trigger' => $trigger,
                 'before' => $before,

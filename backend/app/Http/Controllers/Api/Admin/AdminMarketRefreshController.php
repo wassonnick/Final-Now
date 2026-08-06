@@ -49,6 +49,9 @@ class AdminMarketRefreshController extends Controller
                     'societies_touched' => $societies,
                     'refreshes_with_changes' => $withChanges,
                     'refreshes_unchanged' => max(0, $total - $withChanges),
+                    // A refresh that is still waiting on approval cost the same grounded
+                    // search as one that was applied, and was previously invisible here.
+                    'awaiting_approval' => (clone $window)->where('applied', false)->count(),
                     'change_rate' => $total > 0 ? round($withChanges / $total * 100, 1) : 0.0,
                     // The whole point of the page: what the unchanged runs cost.
                     'estimated_units_spent' => $total * 5,

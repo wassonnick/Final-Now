@@ -1071,9 +1071,16 @@ export function SocietyPage() {
             caption is where we tell a visitor which they are looking at. */}
         {hasGooglePlacesDisplayPhoto(society) ? (
           <p className="mt-2.5 text-[12px] text-[#8A8F89]">
-            {(society?.image_status ?? society?.imageStatus) === "google_street_view_reference_found"
-              ? "Street-level view via Google Street View, shown while a photograph of this society is sourced — not a stock image."
-              : "Photos via Google Places, reviewed and approved before publishing — not stock images."}
+            {(() => {
+              const status = society?.image_status ?? society?.imageStatus;
+              if (status === "location_map_reference_found") {
+                return "Location map — we have not yet sourced a photograph of this society that we can publish.";
+              }
+              if (status === "google_street_view_reference_found") {
+                return "Street-level view via Google Street View, shown while a photograph of this society is sourced — not a stock image.";
+              }
+              return "Photos via Google Places, reviewed and approved before publishing — not stock images.";
+            })()}
           </p>
         ) : null}
 

@@ -45,6 +45,10 @@ return [
     // kept because a road-facing frame is a compromise, not always an improvement.
     'street_view_fallback_enabled' => (bool) env('STREET_VIEW_FALLBACK_ENABLED', true),
 
+    // The final fallback: a pinned map of the location. Always available, never
+    // misrepresents the building, and honest about what it is showing.
+    'location_map_fallback_enabled' => (bool) env('LOCATION_MAP_FALLBACK_ENABLED', true),
+
     'google_places_api' => env('GOOGLE_PLACES_API', 'auto'),
 
     'google_places_api_key' => env('GOOGLE_PLACES_API_KEY'),

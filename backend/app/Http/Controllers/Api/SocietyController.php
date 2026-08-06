@@ -64,7 +64,7 @@ class SocietyController extends Controller {
 
     // A Street View cover is located by coordinates, not by a place_id, so requiring one
     // would 404 exactly the societies this fallback exists to serve.
-    $isStreetView = $society->image_status === 'google_street_view_reference_found';
+    $isStreetView = in_array($society->image_status, ['google_street_view_reference_found', 'location_map_reference_found'], true);
 
     if ((empty($society->place_id) && !$isStreetView) || !$society->image_approved_by_admin) {
       return response()->json(['status' => 'error', 'message' => 'Google Places photo is not available for this society.'], 404);
@@ -88,7 +88,7 @@ class SocietyController extends Controller {
 
         $photo = $places->fetchPhotoByReference($galleryReference, $width) + ['credit' => 'Google Places'];
       } else {
-        if (!in_array($society->image_status, ['google_places_reference_found', 'google_street_view_reference_found'], true)) {
+        if (!in_array($society->image_status, ['google_places_reference_found', 'google_street_view_reference_found', 'location_map_reference_found'], true)) {
           return response()->json(['status' => 'error', 'message' => 'No Google cover is approved for this society.'], 404);
         }
 

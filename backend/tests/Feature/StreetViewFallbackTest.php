@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Society;
 use App\Services\Society\Import\SocietyImageHarvestService;
+use App\Services\Society\Import\SocietyImageScreenService;
 use App\Services\Society\Import\SocietyImageReharvestService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -21,6 +22,68 @@ class StreetViewFallbackTest extends TestCase
             'services.google_places_api_key' => 'places-test-key',
             'services.claude.image_screen_enabled' => false,
         ]);
+    }
+
+    /**
+     * When every photo is screened out, a pinned map is better than nothing AND better
+     * than a rejected photo. It claims only to show where the society is — true for every
+     * society with coordinates — rather than claiming to show the building.
+     */
+    public function test_a_pinned_map_is_published_when_every_photo_is_rejected(): void
+    {
+        $society = Society::create([
+            'name' => 'Ireo Skyon',
+            'slug' => 'ireo-skyon-'.uniqid(),
+            'sector' => 'Sector 60',
+            'city' => 'Gurugram',
+            'latitude' => '28.41',
+            'longitude' => '77.05',
+            'project_status' => 'Ready to Move',
+            'status' => 'Verified',
+            'is_published' => true,
+            'image_approved_by_admin' => false,
+        ]);
+
+        Http::fake([
+            'maps.googleapis.com/maps/api/staticmap*' => Http::response('png-bytes', 200, ['Content-Type' => 'image/png']),
+            'maps.googleapis.com/maps/api/streetview/metadata*' => Http::response(['status' => 'OK']),
+            'maps.googleapis.com/maps/api/streetview*' => Http::response('jpeg', 200, ['Content-Type' => 'image/jpeg']),
+            'maps.googleapis.com/maps/api/place/findplacefromtext/*' => Http::response(['status' => 'OK', 'candidates' => [['place_id' => 'p3']]]),
+            'maps.googleapis.com/maps/api/place/details/*' => Http::response(['status' => 'OK', 'result' => [
+                'place_id' => 'p3',
+                'name' => 'Ireo Skyon',
+                'geometry' => ['location' => ['lat' => 28.41, 'lng' => 77.05]],
+                'photos' => [['photo_reference' => 'a-photo', 'width' => 1600, 'height' => 1000]],
+            ]]),
+        ]);
+
+        // The screen condemns everything it is shown.
+        $this->app->instance(SocietyImageScreenService::class, new class extends SocietyImageScreenService
+        {
+            public function __construct()
+            {
+            }
+
+            public function enabled(): bool
+            {
+                return true;
+            }
+
+            public function screen(array $candidate, string $societyName = ''): array
+            {
+                return ['verdict' => self::VERDICT_REJECTED, 'reasons' => ['no_building_visible'], 'note' => null, 'at' => now()->toIso8601String()];
+            }
+        });
+
+        $result = app(SocietyImageReharvestService::class)->reharvest($society);
+
+        $this->assertTrue($result['republished']);
+        $this->assertStringContainsString('pinned location map', $result['note']);
+
+        $society->refresh();
+        $this->assertSame('location_map_reference_found', $society->image_status);
+        $this->assertSame('staticmap:28.41,77.05', $society->image_photo_reference);
+        $this->assertTrue((bool) $society->image_approved_by_admin);
     }
 
     /** Metadata lists imagery and the image endpoint serves it — the healthy case. */

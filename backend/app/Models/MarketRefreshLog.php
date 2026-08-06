@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MarketRefreshLog extends Model
 {
-    protected $fillable = ['society_id', 'trigger', 'before', 'after', 'changed_fields', 'sources', 'confidence', 'notes'];
+    protected $fillable = ['society_id', 'trigger', 'applied', 'before', 'after', 'changed_fields', 'sources', 'confidence', 'notes'];
 
     protected $casts = [
+        'applied' => 'boolean',
         'before' => 'array',
         'after' => 'array',
         'changed_fields' => 'array',

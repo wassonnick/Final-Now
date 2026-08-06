@@ -48,6 +48,7 @@ class SocietyImageReharvestService
         'approved_for_live',
         'google_places_reference_found',
         'google_street_view_reference_found',
+        'location_map_reference_found',
     ];
 
     public function reharvest(Society $society, bool $screenImages = true, bool $republishCover = true): array
@@ -122,6 +123,29 @@ class SocietyImageReharvestService
         ));
 
         if ($usable === []) {
+            // Nothing survived the screen. A pinned map is honest where a rejected photo
+            // was not: it claims only to show where the society is, which is true for
+            // every society with coordinates, and it never misrepresents the property.
+            $map = $this->mapCandidate($society);
+
+            if ($map !== null && $republishCover) {
+                $candidates[] = $map;
+                $society->image_candidates = $candidates;
+                $society->image_photo_reference = $map['photo_reference'];
+                $society->image_credit = $map['credit'];
+                $society->image_status = 'location_map_reference_found';
+                $society->image_approved_by_admin = true;
+                $society->image_alt_text = 'Map showing the location of '.$society->name;
+                $society->save();
+
+                return $result('refreshed', 'Every photo was screened out; published a pinned location map instead.', [
+                    'after' => count($candidates),
+                    'rejected' => $rejected,
+                    'screened' => $screened,
+                    'republished' => true,
+                ]);
+            }
+
             $society->image_candidates = $candidates;
             $society->image_status = $this->nextStatus($society, 'screened_all_rejected');
             $society->save();
@@ -265,6 +289,44 @@ class SocietyImageReharvestService
         }
 
         return $parts === [] ? 'Nothing usable found.' : implode(' ', $parts);
+    }
+
+    /**
+     * A pinned map of the society's location — the only source that always exists.
+     *
+     * @return array<string,mixed>|null
+     */
+    private function mapCandidate(Society $society): ?array
+    {
+        if (! config('services.location_map_fallback_enabled', true)) {
+            return null;
+        }
+
+        if (blank($society->latitude) || blank($society->longitude)) {
+            return null;
+        }
+
+        $streetView = app(\App\Services\GoogleStreetViewService::class);
+        $reference = $streetView->mapReference((float) $society->latitude, (float) $society->longitude);
+
+        // Same rule as everywhere else tonight: verify it serves before publishing it.
+        try {
+            $streetView->fetchMap($reference, 400);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return [
+            'url' => null,
+            'photo_reference' => $reference,
+            'source' => 'location_map',
+            'credit' => 'Map data ©Google',
+            'license_note' => 'Google static map, displayed with the attribution Google embeds in the image.',
+            'rights_confirmed' => false,
+            'approved' => true,
+            'is_cover' => true,
+            'sort' => 99,
+        ];
     }
 
     /** Keep a cleared status; otherwise record where the re-harvest left things. */
