@@ -291,6 +291,10 @@ function listField(item: any, camel: string, snake: string): string[] {
   return [];
 }
 
+function firstTextValue(value: unknown) {
+  return String(value ?? "").trim();
+}
+
 function safeSocietyImage(society: any) {
   const imageStatus = field<string>(
     society,
@@ -319,6 +323,23 @@ function safeSocietyImage(society: any) {
     field<string | null>(society, "coverImage", "cover_image", null);
 
   if (approved && approvedImage) return approvedImage;
+
+  // A Google-served cover — Places photo, Street View frame or location map — is
+  // identified by a reference and served through the proxy, so it never appears in
+  // imageUrl or coverImage and fell past the check above. The gallery's first approved
+  // Places photo then won the hero slot, which is how a society whose cover is a map
+  // rendered a stranger's snapshot with a caption saying it was a map.
+  const photoReference = firstTextValue(
+    field<string>(society, "imagePhotoReference", "image_photo_reference", ""),
+  );
+
+  if (
+    imageApprovedByAdmin &&
+    photoReference &&
+    ["google_places_reference_found", "google_street_view_reference_found", "location_map_reference_found"].includes(imageStatus)
+  ) {
+    return googlePlacesSocietyPhotoUrl(society);
+  }
 
   try {
     return societyImage(society);

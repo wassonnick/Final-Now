@@ -349,6 +349,12 @@
     <priority>0.72</priority>
   </url>
   <url>
+    <loc>https://www.societyflats.com/gurgaon/block-gh-13</loc>
+    <lastmod>2026-08-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
     <loc>https://www.societyflats.com/gurgaon/sector-73</loc>
     <lastmod>2026-08-06</lastmod>
     <changefreq>weekly</changefreq>
@@ -1329,6 +1335,12 @@
   <url>
     <loc>https://www.societyflats.com/society/conscient-parq-gurugram</loc>
     <lastmod>2026-08-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/dda-flats-gh-13-delhi</loc>
+    <lastmod>2026-08-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
