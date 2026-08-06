@@ -748,6 +748,62 @@ export function AdminSocietyFormPage() {
    * society records HOW the image may be shown rather than a generic "approved" — the
    * distinction the public renderer and any later rights question both depend on.
    */
+  /**
+   * Gallery membership is stored in two places because the two kinds of image are
+   * fundamentally different: a scraped or uploaded image is a URL and lives in
+   * gallery_images, while a Google-served image has no URL at all and is identified by a
+   * reference, so its membership is the `approved` flag on the candidate. One toggle,
+   * two mechanisms — the operator should not have to know which.
+   */
+  const inGallery = (option: CoverOption) => {
+    if (option.url) return society.galleryImages.includes(option.url);
+    return (society.imageCandidates || []).some(
+      (candidate) => candidate.photo_reference === option.photo_reference && candidate.approved,
+    );
+  };
+
+  const toggleGallery = (option: CoverOption) => {
+    const adding = !inGallery(option);
+
+    if (option.requires_rights && adding) {
+      const confirmed = window.confirm(
+        `Add this image from ${option.credit || option.label} to the public gallery?\n\n` +
+          "OK — we have permission to publish it.\n\nCancel — leave it out.",
+      );
+      if (!confirmed) return;
+    }
+
+    setSociety((current) => {
+      if (option.url) {
+        const gallery = adding
+          ? [...current.galleryImages, option.url].slice(0, 12)
+          : current.galleryImages.filter((image) => image !== option.url);
+        return { ...current, galleryImages: Array.from(new Set(gallery)) };
+      }
+
+      // A reference-based image may not be among the stored candidates yet — Street View
+      // and the map are offered from coordinates — so add it rather than assuming.
+      const candidates = [...(current.imageCandidates || [])];
+      const index = candidates.findIndex((candidate) => candidate.photo_reference === option.photo_reference);
+
+      if (index >= 0) {
+        candidates[index] = { ...candidates[index], approved: adding };
+      } else if (adding) {
+        candidates.push({
+          source: option.source,
+          photo_reference: option.photo_reference || undefined,
+          credit: option.credit || undefined,
+          approved: true,
+        });
+      }
+
+      return { ...current, imageCandidates: candidates };
+    });
+
+    setSaved(false);
+    setMessage(adding ? `Added to the gallery. Save to publish it.` : "Removed from the gallery. Save to apply.");
+  };
+
   const chooseCover = (option: CoverOption) => {
     if (option.requires_rights) {
       const confirmed = window.confirm(
@@ -2037,7 +2093,19 @@ export function AdminSocietyFormPage() {
                           onClick={() => chooseCover(option)}
                           disabled={option.is_current}
                         >
-                          {option.is_current ? "Current cover" : "Use this"}
+                          {option.is_current ? "Current cover" : "Use as cover"}
+                        </button>
+
+                        <button
+                          type="button"
+                          className={`mt-1.5 w-full rounded-full border px-2.5 py-1 text-[11px] font-black ${
+                            inGallery(option)
+                              ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                              : "border-slate-300 bg-white text-slate-600 hover:border-slate-500"
+                          }`}
+                          onClick={() => toggleGallery(option)}
+                        >
+                          {inGallery(option) ? "In gallery — remove" : "Add to gallery"}
                         </button>
                       </div>
                     </div>

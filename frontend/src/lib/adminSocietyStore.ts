@@ -160,7 +160,7 @@ export interface AdminSociety {
   pendingImportImagesCount?: number;
   importedImages?: VerifiedImportImage[];
   /** Harvested candidates on the society row itself (Google Places refs, builder URLs). */
-  imageCandidates: Array<{ source?: string; url?: string; photo_reference?: string; credit?: string; screen?: { verdict?: string; reasons?: string[]; note?: string | null } }>;
+  imageCandidates: Array<{ source?: string; url?: string; photo_reference?: string; credit?: string; approved?: boolean; is_cover?: boolean; screen?: { verdict?: string; reasons?: string[]; note?: string | null } }>;
   fieldSources: Record<string, any>;
   officialSourceLastCheckedAt: string;
 }
@@ -502,6 +502,11 @@ export function toApiSocietyPayload(society: AdminSociety) {
     // so choosing any of them updated the form, saved cleanly, and left the old cover in
     // place. That is why no cover could be changed no matter which option was picked.
     image_photo_reference: society.imagePhotoReference,
+    // Gallery membership for Google-served images is the `approved` flag on each
+    // candidate — they have no URL to put in gallery_images — so the candidate list has
+    // to travel with the save. It was read from the API and never sent back, which also
+    // meant removing a candidate never persisted.
+    image_candidates: society.imageCandidates,
     image_approved_by_admin: society.imageApprovedByAdmin,
     image_alt_text: society.imageAltText,
     image_credit: society.imageCredit,
