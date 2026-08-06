@@ -333,10 +333,15 @@ function safeSocietyImage(society: any) {
     field<string>(society, "imagePhotoReference", "image_photo_reference", ""),
   );
 
+  // A reference that names its own source (staticmap:, streetview:) is self-describing
+  // and must not depend on image_status agreeing with it.
+  const selfDescribing = photoReference.startsWith("staticmap:") || photoReference.startsWith("streetview:");
+
   if (
     imageApprovedByAdmin &&
     photoReference &&
-    ["google_places_reference_found", "google_street_view_reference_found", "location_map_reference_found"].includes(imageStatus)
+    (selfDescribing ||
+      ["google_places_reference_found", "google_street_view_reference_found", "location_map_reference_found"].includes(imageStatus))
   ) {
     return googlePlacesSocietyPhotoUrl(society);
   }
