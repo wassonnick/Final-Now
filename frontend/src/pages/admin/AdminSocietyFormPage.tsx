@@ -27,7 +27,7 @@ import { NcrLocationSelector } from "@/components/admin/NcrLocationSelector";
 import { SocietySeoStudio } from "@/components/admin/SocietySeoStudio";
 import { adminFetch, uploadAdminImage } from "@/lib/adminApi";
 import { googlePlacesSocietyPhotoUrl, isRenderableSocietyImage, societyPlaceholderImage } from "@/lib/societyImages";
-import { reharvestSociety, screenReasonLabel } from "@/lib/imageReharvestApi";
+import { fetchCoverOptions, reharvestSociety, screenReasonLabel, type CoverOption } from "@/lib/imageReharvestApi";
 import {
   createEmptyAdminSociety,
   describeBrochureUpdate,
@@ -278,6 +278,8 @@ export function AdminSocietyFormPage() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [reharvesting, setReharvesting] = useState(false);
+  const [coverOptions, setCoverOptions] = useState<CoverOption[]>([]);
+  const [loadingCovers, setLoadingCovers] = useState(false);
   const [saveMode, setSaveMode] = useState<"draft" | "publish" | null>(null);
   const [enriching, setEnriching] = useState(false);
   const [reEnriching, setReEnriching] = useState(false);
@@ -716,6 +718,58 @@ export function AdminSocietyFormPage() {
     } finally {
       setReharvesting(false);
     }
+  };
+
+  const loadCoverOptions = async () => {
+    const societyId = Number(society.id || 0);
+    if (!societyId) {
+      setError("Save the society first before choosing a cover.");
+      return;
+    }
+
+    setLoadingCovers(true);
+    setError(null);
+    try {
+      const data = await fetchCoverOptions(societyId);
+      setCoverOptions(data.options);
+      if (data.options.length === 0) {
+        setMessage("No cover options are available yet — re-harvest, or upload an image.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError(friendlyFetchError(err, "Cover options could not be loaded."));
+    } finally {
+      setLoadingCovers(false);
+    }
+  };
+
+  /**
+   * Apply a chosen option. Each source carries its own publishable status, so the
+   * society records HOW the image may be shown rather than a generic "approved" — the
+   * distinction the public renderer and any later rights question both depend on.
+   */
+  const chooseCover = (option: CoverOption) => {
+    if (option.requires_rights) {
+      const confirmed = window.confirm(
+        `Publish this image from ${option.credit || option.label}?\n\n` +
+          "OK — we have the developer's permission (or a licence) to publish it.\n\n" +
+          "Cancel — leave the cover as it is.",
+      );
+      if (!confirmed) return;
+    }
+
+    setSociety((current) => ({
+      ...current,
+      coverImage: option.url || "",
+      imageUrl: option.url || (option.photo_reference ? "" : current.imageUrl),
+      imagePhotoReference: option.photo_reference || "",
+      imageCredit: option.credit || current.imageCredit,
+      imageApprovedByAdmin: true,
+      imageStatus: option.publishable_status as typeof current.imageStatus,
+    }));
+    setCoverOptions((options) => options.map((o) => ({ ...o, is_current: o.key === option.key })));
+    setSaved(false);
+    setMessage(`Cover set to ${option.label}. Save to publish it.`);
   };
 
   const approveReferenceImage = () => {
@@ -1925,6 +1979,71 @@ export function AdminSocietyFormPage() {
                   </div>
                 ) : null}
               </div>
+            </section>
+
+            {/* Choosing a cover is a visual decision. The sources arrived one at a time,
+                each with its own rights rule and its own corner of this page; here they
+                are side by side so the operator can simply look and pick. */}
+            <section className="rounded-[20px] border border-blue-100 bg-blue-50/40 p-4 shadow-sm md:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-bold tracking-tight text-slate-950">Choose the cover</h2>
+                  <p className="mt-1 max-w-xl text-xs leading-5 text-slate-600">
+                    Every image this society could use — Google photos, the developer&rsquo;s site, Street View, contributed
+                    photos, and a pinned location map — previewed together. A location map is always available and is the
+                    honest choice when no photograph is good enough.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => void loadCoverOptions()}
+                  disabled={loadingCovers || !society.id}
+                >
+                  {loadingCovers ? "Loading..." : coverOptions.length ? "Refresh options" : "Show cover options"}
+                </Button>
+              </div>
+
+              {coverOptions.length > 0 ? (
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  {coverOptions.map((option) => (
+                    <div
+                      key={option.key}
+                      className={`overflow-hidden rounded-xl border bg-white ${
+                        option.is_current ? "border-blue-500 ring-2 ring-blue-200" : "border-slate-200"
+                      }`}
+                    >
+                      <CandidatePreview url={option.url || undefined} photoReference={option.photo_reference || undefined} alt={option.label} />
+                      <div className="p-2.5">
+                        <p className="truncate text-[11px] font-bold text-slate-800">{option.label}</p>
+                        <p className="mt-0.5 truncate text-[10px] text-slate-500">{option.credit || "—"}</p>
+
+                        {option.screen?.verdict === "rejected" ? (
+                          <p className="mt-1 text-[10px] font-bold leading-4 text-red-700">
+                            Screened out: {(option.screen.reasons || []).map(screenReasonLabel).join(", ") || "unsuitable"}
+                          </p>
+                        ) : option.requires_rights ? (
+                          <p className="mt-1 text-[10px] font-bold text-amber-700">Needs a rights check</p>
+                        ) : null}
+
+                        <button
+                          type="button"
+                          className={`mt-2 w-full rounded-full px-2.5 py-1 text-[11px] font-black ${
+                            option.is_current
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-blue-600 text-white hover:bg-blue-700"
+                          }`}
+                          onClick={() => chooseCover(option)}
+                          disabled={option.is_current}
+                        >
+                          {option.is_current ? "Current cover" : "Use this"}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </section>
 
             <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">

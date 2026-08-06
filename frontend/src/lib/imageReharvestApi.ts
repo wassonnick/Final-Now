@@ -132,3 +132,29 @@ export async function runPlacesDiagnostic(name?: string, location?: string): Pro
   const response = await adminFetch(`/admin/diagnostics/google-places?${params.toString()}`);
   return (await json(response, "Diagnostic could not be run.")) as PlacesDiagnostic;
 }
+
+export type CoverOption = {
+  key: string;
+  source: string;
+  label: string;
+  photo_reference?: string | null;
+  url?: string | null;
+  credit?: string | null;
+  requires_rights: boolean;
+  publishable_status: string;
+  screen?: { verdict?: string; reasons?: string[]; note?: string | null } | null;
+  is_current: boolean;
+};
+
+export async function fetchCoverOptions(societyId: number): Promise<{
+  options: CoverOption[];
+  current: string | null;
+  has_coordinates: boolean;
+}> {
+  const response = await adminFetch(`/admin/societies/${societyId}/cover-options`);
+  return (await json(response, "Cover options could not be loaded.")) as {
+    options: CoverOption[];
+    current: string | null;
+    has_coordinates: boolean;
+  };
+}

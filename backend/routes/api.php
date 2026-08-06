@@ -237,6 +237,8 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     // Re-harvest images for societies that were imported before the current ranking,
     // official-domain and vision-screen rules existed.
     Route::post('/societies/{society}/reharvest-images', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'single']);
+    // Every cover this society could have, previewable side by side.
+    Route::get('/societies/{society}/cover-options', \App\Http\Controllers\Api\Admin\AdminCoverOptionsController::class);
     Route::post('/image-reharvest/runs', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'bulk']);
     Route::get('/image-reharvest/runs', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'runs']);
     Route::get('/image-reharvest/runs/{run}', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'run']);
