@@ -216,7 +216,7 @@ export function MapsPage() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search DLF Crest, Sector 65, Golf Course Road..."
-                  className="min-w-0 flex-1 bg-transparent text-sm font-bold text-navy-900 outline-none placeholder:text-blue-300"
+                  className="search-bare-input min-w-0 flex-1 bg-transparent text-sm font-bold text-navy-900 outline-none placeholder:text-blue-300"
                 />
               </div>
               <Button

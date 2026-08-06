@@ -41,7 +41,7 @@ function SocietyPicker({ selectedSlugs, onAdd }: { selectedSlugs: string[]; onAd
           onFocus={() => setOpen(true)}
           placeholder={disabled ? "Remove one to add another" : "Add a society — name, sector or builder"}
           disabled={disabled}
-          className="w-full bg-transparent text-sm outline-none placeholder:text-[#8A8F89] disabled:cursor-not-allowed"
+          className="search-bare-input w-full bg-transparent text-sm outline-none placeholder:text-[#8A8F89] disabled:cursor-not-allowed"
         />
       </div>
       {open && matches.length ? (

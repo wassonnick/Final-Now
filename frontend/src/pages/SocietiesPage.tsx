@@ -164,7 +164,7 @@ export function SocietiesPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search society, sector, builder or locality..."
-              className="w-full bg-transparent text-navy-800 outline-none placeholder:text-navy-400"
+              className="search-bare-input w-full bg-transparent text-navy-800 outline-none placeholder:text-navy-400"
             />
           </div>
         </div>

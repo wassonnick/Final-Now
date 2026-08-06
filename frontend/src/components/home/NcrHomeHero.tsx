@@ -138,7 +138,7 @@ export default function NcrHomeHero() {
                       onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
                       placeholder={`Search ${city.name} society, sector or builder`}
                       aria-label={`Search ${city.name}`}
-                      className="min-w-0 flex-1 bg-transparent text-[14px] text-[#1D2939] outline-none placeholder:text-[#98A2B3] lg:text-[15px]"
+                      className="search-bare-input min-w-0 flex-1 bg-transparent text-[14px] text-[#1D2939] outline-none placeholder:text-[#98A2B3] lg:text-[15px]"
                     />
                     {showSuggestions && query.trim() && suggestions.length > 0 ? (
                       <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-72 overflow-y-auto rounded-[16px] border border-[#D8DFEC] bg-white p-1.5 shadow-[0_24px_50px_-28px_rgba(16,24,40,.42)]">

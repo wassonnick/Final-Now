@@ -132,7 +132,7 @@ export default function HomePremium() {
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
                 placeholder={`Search a ${city.name} society`}
-                className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#86868B]"
+                className="search-bare-input min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#86868B]"
                 aria-label={`Search ${city.name}`}
               />
               <button type="submit" aria-label="Search" className="shrink-0 rounded-full px-5 py-2.5 text-[14px] font-semibold text-white transition hover:opacity-90 sm:px-6 sm:py-3" style={{ background: ACCENT }}>
