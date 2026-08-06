@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, MapPin, Menu, Phone, Search, User, X } from "lucide-react";
 import { MODULES, MODULE_INTENTS, type ModuleIntent } from "@/lib/modules";
 import { NCR_CITIES, LIVE_NCR_CITY, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
 import { BrandMark } from "@/components/BrandMark";
+import { fetchPublicSocieties, formatPublicLocation, suggestSocieties } from "@/lib/publicData";
 
 const ACCENT = "#0F7B63";
 const PRIMARY = [
@@ -26,6 +27,20 @@ export function PremiumNavbar() {
   const [open, setOpen] = useState<"" | "city" | "explore" | "partner">("");
   const [mobile, setMobile] = useState(false);
   const [q, setQ] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  // The same society list and matcher the hero search uses, so the two behave
+  // identically rather than being two different searches wearing the same icon.
+  const [societies, setSocieties] = useState<Awaited<ReturnType<typeof fetchPublicSocieties>>>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchPublicSocieties()
+      .then((rows) => { if (!cancelled) setSocieties(rows); })
+      .catch(() => { /* suggestions are an enhancement; the form still submits */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  const suggestions = useMemo(() => suggestSocieties(societies, q), [societies, q]);
   const rootRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -87,9 +102,42 @@ export function PremiumNavbar() {
         </nav>
 
         {/* Search — the one flexible element; shrinks before anything wraps */}
-        <form onSubmit={submitSearch} className="ml-auto hidden min-w-0 max-w-[320px] flex-1 items-center gap-2 rounded-full border border-[#E4E4E9] bg-[#F5F5F7] px-3 py-2 md:flex">
+        <form onSubmit={submitSearch} className="relative ml-auto hidden min-w-0 max-w-[320px] flex-1 items-center gap-2 rounded-full border border-[#E4E4E9] bg-[#F5F5F7] px-3 py-2 md:flex">
           <Search className="h-4 w-4 shrink-0 text-[#86868B]" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search or type a tool…" className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[#98A2B3]" />
+          {/* search-bare-input: the pill wrapper carries the border and radius, so the
+              global :focus ring must not paint its own rectangle inside it. The hero
+              search has always used this class; this one never did, which is why a box
+              appeared around the text on focus in every browser. */}
+          <input
+            value={q}
+            onChange={(e) => { setQ(e.target.value); setShowSuggestions(true); }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => window.setTimeout(() => setShowSuggestions(false), 150)}
+            placeholder="Search society, sector or builder"
+            aria-label="Search society, sector or builder"
+            className="search-bare-input min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[#98A2B3]"
+          />
+          {showSuggestions && q.trim() && suggestions.length > 0 ? (
+            <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 max-h-72 overflow-y-auto rounded-[16px] border border-[#D8DFEC] bg-white p-1.5 shadow-[0_24px_50px_-28px_rgba(16,24,40,.42)]">
+              {suggestions.map((society) => (
+                <li key={society.id}>
+                  <button
+                    type="button"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      setShowSuggestions(false);
+                      setQ(society.name);
+                      navigate(`/search?tab=societies&q=${encodeURIComponent(society.name)}`);
+                    }}
+                    className="flex w-full flex-col rounded-[11px] px-3 py-2.5 text-left hover:bg-[#F5F7FB]"
+                  >
+                    <span className="text-sm font-bold text-[#1D2939]">{society.name}</span>
+                    <span className="text-xs text-[#667085]">{formatPublicLocation(society)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </form>
 
         {/* Right actions — never wrap */}
