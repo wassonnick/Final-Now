@@ -55,7 +55,7 @@ class AdminOpsInboxService
     {
         $published = Society::query()
             ->where('is_published', true)
-            ->get(['id', 'name', 'slug', 'source_confidence_score', 'image_approved_by_admin', 'updated_at', 'rent_range', 'buy_range']);
+            ->get(['id', 'name', 'slug', 'source_confidence_score', 'image_approved_by_admin', 'image_status', 'updated_at', 'rent_range', 'buy_range']);
 
         $seoPublished = SocietySeoContent::query()
             ->where('status', 'published')
@@ -66,6 +66,11 @@ class AdminOpsInboxService
 
         $lowConfidence = $published->filter(fn ($s) => (int) $s->source_confidence_score < self::CONFIDENCE_FLOOR);
         $missingCover = $published->filter(fn ($s) => ! $s->image_approved_by_admin);
+
+        // Once import falls back to a location map, every society has a cover and
+        // "missing photos" goes to zero — while the societies still need photographs.
+        // This is the honest measure of the work that remains.
+        $mapOnlyCover = $published->filter(fn ($s) => $s->image_status === 'location_map_reference_found');
         $missingSeo = $published->filter(fn ($s) => ! in_array($s->id, $seoPublished, true));
         $stale = $published->filter(fn ($s) => $s->updated_at && $s->updated_at->lt(now()->subDays(self::STALE_DAYS)));
         $missingMarket = $published->filter(fn ($s) => $placeholder($s->rent_range) && $placeholder($s->buy_range));
@@ -81,6 +86,10 @@ class AdminOpsInboxService
             'missing_cover' => [
                 'count' => $missingCover->count(),
                 'items' => $missingCover->take(self::LIST_CAP)->map($item)->values()->all(),
+            ],
+            'map_only_cover' => [
+                'count' => $mapOnlyCover->count(),
+                'items' => $mapOnlyCover->take(self::LIST_CAP)->map($item)->values()->all(),
             ],
             'missing_published_seo' => [
                 'count' => $missingSeo->count(),

@@ -116,6 +116,16 @@ class SocietyDraftCompletionService
             $actions[] = 'cover_approved';
         }
 
+        // Still nothing? Publish the location map. It is honest — it claims only to show
+        // where the society is, which is true for anything with coordinates — and it is
+        // the difference between a pipeline that completes and one that stalls forever on
+        // societies Google has never photographed. A real photograph supersedes it later,
+        // automatically, because the map is only ever chosen when nothing else survives.
+        if (! $society->image_approved_by_admin && $this->approveLocationMap($society)) {
+            $society->refresh();
+            $actions[] = 'location_map_cover';
+        }
+
         // 3. SEO: generate + publish the society's SEO content when none is live.
         if (($society->seoContent?->status) !== 'published' && $aiUsable) {
             $actions[] = $this->publishSeoContent($society) ? 'seo_published' : 'seo_failed';
@@ -211,6 +221,38 @@ class SocietyDraftCompletionService
             || (float) $society->score <= 0
             || (blank($society->sector) && blank($society->locality))
             || blank($society->amenities);
+    }
+
+    private function approveLocationMap(Society $society): bool
+    {
+        if (! config('features.auto_publish_location_map', true)) {
+            return false;
+        }
+
+        if (blank($society->latitude) || blank($society->longitude)) {
+            return false;
+        }
+
+        $streetView = app(\App\Services\GoogleStreetViewService::class);
+        $reference = $streetView->mapReference((float) $society->latitude, (float) $society->longitude);
+
+        // Verified before publishing, like every other source: a cover we have not seen
+        // come back as an image is not a cover.
+        try {
+            $streetView->fetchMap($reference, 400);
+        } catch (\Throwable) {
+            return false;
+        }
+
+        $society->update([
+            'image_photo_reference' => $reference,
+            'image_status' => 'location_map_reference_found',
+            'image_credit' => 'Map data ©Google',
+            'image_alt_text' => 'Map showing the location of '.$society->name,
+            'image_approved_by_admin' => true,
+        ]);
+
+        return true;
     }
 
     private function approveGoogleCover(Society $society): bool

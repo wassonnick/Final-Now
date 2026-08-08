@@ -159,7 +159,17 @@ class SocietyImageReharvestService
 
         $republished = false;
 
-        if ($republishCover) {
+        // A cover a person chose is not automation's to replace. Before this, a bulk
+        // re-harvest would find any Places photo and overwrite an uploaded or contributed
+        // cover — silently destroying the most expensive work in the system, and doing it
+        // across the whole catalogue in one click. A map or a Google reference is fair
+        // game; a human decision is not.
+        // Tracked separately from $republishCover so the result can say WHY nothing was
+        // republished — "you turned it off" and "a person had already chosen" are
+        // different facts and the note has to tell them apart.
+        $coverIsCurated = $this->coverWasChosenByAPerson($society);
+
+        if ($republishCover && ! $coverIsCurated) {
             // Only a Google Places photo may auto-approve — an official-site image still
             // needs the rights confirmation an admin gives by hand.
             //
@@ -202,8 +212,12 @@ class SocietyImageReharvestService
                     // naming a cause, which is useless on a restore run whose entire
                     // purpose is republishing covers. Only a Places photo may auto-publish,
                     // so say why there wasn't one.
-                    ? $this->whyNoCover($report, count($candidates))
-                    : 'Candidates refreshed; cover republishing was turned off for this run.'),
+                    ? ($coverIsCurated
+                        ? 'Candidates refreshed. The existing cover was chosen by an admin, so it was left alone.'
+                        : $this->whyNoCover($report, count($candidates)))
+                    : ($coverIsCurated
+                        ? 'Candidates refreshed. The existing cover was chosen by an admin, so it was left alone.'
+                        : 'Candidates refreshed; cover republishing was turned off for this run.')),
             [
                 'after' => count($candidates),
                 'rejected' => $rejected,
@@ -327,6 +341,21 @@ class SocietyImageReharvestService
             'is_cover' => true,
             'sort' => 99,
         ];
+    }
+
+    /**
+     * Statuses that mean a person decided this cover: an upload, a licence, a developer
+     * permission. Distinct from PUBLISHABLE_STATUSES, which also covers the automatic
+     * sources — those may be replaced freely.
+     */
+    private function coverWasChosenByAPerson(Society $society): bool
+    {
+        return in_array((string) $society->image_status, [
+            'licensed_uploaded',
+            'self_shot_uploaded',
+            'developer_permission_received',
+            'approved_for_live',
+        ], true);
     }
 
     /** Keep a cleared status; otherwise record where the re-harvest left things. */

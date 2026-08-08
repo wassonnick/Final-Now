@@ -841,6 +841,9 @@ export function AdminDashboardPage() {
         { value: inbox.live.leads.breaches.count, label: "Lead SLA breaches", sub: `${inbox.live.leads.escalations_over_72h.count} over 72h`, href: "/admin/leads?view=overdue", bad: inbox.live.leads.breaches.count > 0 },
         { value: leadSummary.overdue, label: "Overdue follow-ups", sub: "past due", href: "/admin/leads?view=overdue", bad: leadSummary.overdue > 0 },
         { value: inbox.live.societies.missing_cover.count, label: "Missing cover photo", sub: "published societies", href: "/admin/societies?need=cover", bad: inbox.live.societies.missing_cover.count > 0 },
+        // Once import falls back to a map, "missing cover" reads zero while the societies
+        // still need photographs. This is where that work stays visible.
+        { value: inbox.live.societies.map_only_cover?.count ?? 0, label: "Map instead of a photo", sub: "still need a real image", href: "/admin/societies?need=photo", bad: false },
         { value: inbox.live.societies.missing_published_seo.count, label: "No published SEO", sub: "content backlog", href: "/admin/seo-autopilot", bad: inbox.live.societies.missing_published_seo.count > 0 },
         { value: inbox.live.societies.low_confidence.count, label: "Low confidence", sub: "below 60% verified", href: "/admin/societies?need=confidence", bad: inbox.live.societies.low_confidence.count > 0 },
         { value: inbox.live.site_visits.reminders_due, label: "Visit reminders due", sub: `${inbox.live.site_visits.upcoming_48h} in 48h`, href: "/admin/site-visits", bad: inbox.live.site_visits.reminders_due > 0 },

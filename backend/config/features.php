@@ -23,6 +23,10 @@ return [
 
     // Auto-publish refuses a society with no approved cover. A published society showing
     // a placeholder is the quality problem, not a lesser version of a good one.
+    // Import/completion falls back to a pinned location map so the pipeline is never
+    // blocked by a society nobody has photographed. Off means such societies stay drafts.
+    'auto_publish_location_map' => (bool) env('AUTO_PUBLISH_LOCATION_MAP', true),
+
     'auto_publish_requires_image' => (bool) env('AUTO_PUBLISH_REQUIRES_IMAGE', true),
 
     'ncr_indexable_city_slugs' => array_values(array_filter(array_map(
