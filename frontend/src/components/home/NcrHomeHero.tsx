@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Check, MapPin, Search, Sparkles } from "lucide-react";
-import { fetchPublicSocieties, formatPublicLocation, suggestSocieties } from "@/lib/publicData";
+import { fetchPublicSocieties, formatPublicLocation, suggestPlaces, suggestSocieties } from "@/lib/publicData";
 import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
 import { LIVE_NCR_CITY, NCR_CITIES, NCR_REGION, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
 
@@ -68,6 +68,7 @@ export default function NcrHomeHero() {
   }, [allSocieties, cityLive]);
 
   const suggestions = useMemo(() => (cityLive ? suggestSocieties(allSocieties, query) : []), [allSocieties, query, cityLive]);
+  const places = useMemo(() => cityLive ? suggestPlaces(allSocieties, query) : [], [allSocieties, query, cityLive]);
   const submit = (overrideQuery?: string) => navigate(searchUrl(intent, overrideQuery ?? query));
 
   return (
@@ -140,8 +141,25 @@ export default function NcrHomeHero() {
                       aria-label={`Search ${city.name}`}
                       className="search-bare-input min-w-0 flex-1 bg-transparent text-[14px] text-[#1D2939] outline-none placeholder:text-[#98A2B3] lg:text-[15px]"
                     />
-                    {showSuggestions && query.trim() && suggestions.length > 0 ? (
+                    {showSuggestions && query.trim() && (places.length > 0 || suggestions.length > 0) ? (
                       <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-72 overflow-y-auto rounded-[16px] border border-[#D8DFEC] bg-white p-1.5 shadow-[0_24px_50px_-28px_rgba(16,24,40,.42)]">
+                        {places.map((place) => (
+                          <li key={`place-${place.name}-${place.city}`}>
+                            <button
+                              type="button"
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => {
+                                setShowSuggestions(false);
+                                setQuery(place.name);
+                                submit(place.name);
+                              }}
+                              className="flex w-full flex-col rounded-[11px] px-3 py-2.5 text-left hover:bg-[#F5F7FB]"
+                            >
+                              <span className="text-sm font-bold text-[#1D2939]">{place.name}{place.city ? `, ${place.city}` : ""}</span>
+                              <span className="text-xs text-[#667085]">{place.count} {place.count === 1 ? "society" : "societies"}</span>
+                            </button>
+                          </li>
+                        ))}
                         {suggestions.map((society) => (
                           <li key={society.id}>
                             <button
