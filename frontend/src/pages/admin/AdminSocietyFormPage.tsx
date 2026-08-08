@@ -523,7 +523,14 @@ export function AdminSocietyFormPage() {
               ...current,
               coverImage: images[0],
               imageUrl: images[0],
-              imageStatus: current.imageStatus === "placeholder" ? "needs_review" : current.imageStatus,
+              // An uploaded file supersedes whatever was showing. Leaving image_status
+              // alone meant a society whose status still said google_places_reference_found
+              // kept serving the Google photo: the upload reached R2, the URL was stored,
+              // and the renderer never looked at it because the status pointed elsewhere.
+              // Clearing the reference is part of the same act — it is what the cover was.
+              imageStatus: "licensed_uploaded",
+              imagePhotoReference: "",
+              imageApprovedByAdmin: true,
             }
           : {
               ...current,
