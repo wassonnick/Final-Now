@@ -198,11 +198,57 @@ class SocietyController extends Controller {
       ->values()
       ->all();
   }
+  /**
+   * Create or attach the society's locality, published.
+   *
+   * Importing a society never created a Locality row — the name was kept as free text on
+   * the society and nothing else. So a new city could never accumulate the three
+   * published localities its own launch readiness demands: the gate was unreachable by
+   * the only process that feeds it.
+   *
+   * Published on creation because there is no decision in the step. A locality page is
+   * reachable only once its CITY is launched, so this opens nothing by itself — it
+   * removes a manual approval that was standing between the importer and a working
+   * launch. LOCALITY_AUTO_PUBLISH=false restores it.
+   *
+   * @param  array<string,mixed>  $p
+   * @return array<string,mixed>
+   */
+  private function linkLocality(array $p): array
+  {
+      if (! empty($p['locality_id'])) {
+          return $p;
+      }
+
+      $name = trim((string) ($p['locality'] ?? $p['sector'] ?? ''));
+      if ($name === '') {
+          return $p;
+      }
+
+      $locality = \App\Models\Locality::firstOrCreate(
+          ['slug' => Str::slug($name)],
+          [
+              'name' => $name,
+              // Taken from the society rather than assumed: a hardcoded city is how
+              // Delhi localities end up filed under Gurgaon.
+              'city_id' => $p['city_id'] ?? null,
+              'city' => $p['city'] ?? 'Gurgaon',
+              'state' => $p['state'] ?? 'Haryana',
+              'published_status' => config('features.locality_auto_publish', true) ? 'published' : 'draft',
+          ],
+      );
+
+      $p['locality_id'] = $locality->id;
+
+      return $p;
+  }
+
   public function store(Request $request): JsonResponse
   {
       $p = $this->withSocietyDefaults($this->payload($request));
 
       $p['slug'] = $p['slug'] ?? Str::slug($p['name']);
+      $p = $this->linkLocality($p);
 
       $scoreFields = [
           'score',

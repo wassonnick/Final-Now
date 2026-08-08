@@ -117,9 +117,23 @@ class AdminSocietyController extends Controller
 
         if (empty($validated['locality_id']) && (!empty($validated['locality']) || !empty($validated['sector']))) {
             $name = $validated['locality'] ?: $validated['sector'];
+            // The city was hardcoded to Gurgaon, so a Delhi import created a locality
+            // labelled Gurgaon — quietly undoing the city segregation everywhere that
+            // reads locality.city. Take it from the society being imported.
             $locality = Locality::firstOrCreate(
                 ['slug' => Str::slug($name)],
-                ['name' => $name, 'city' => 'Gurgaon', 'state' => 'Haryana']
+                [
+                    'name' => $name,
+                    'city_id' => $validated['city_id'] ?? null,
+                    'city' => $validated['city'] ?? 'Gurgaon',
+                    'state' => $validated['state'] ?? 'Haryana',
+                    // Published on creation so a new city can reach the locality depth its
+                    // launch readiness requires without someone approving each one by hand.
+                    // A locality page is only reachable once its CITY is launched, so this
+                    // opens nothing on its own — it removes a step that had no decision in
+                    // it. LOCALITY_AUTO_PUBLISH=false restores manual approval.
+                    'published_status' => config('features.locality_auto_publish', true) ? 'published' : 'draft',
+                ]
             );
             $validated['locality_id'] = $locality->id;
         }

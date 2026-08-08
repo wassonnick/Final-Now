@@ -25,6 +25,10 @@ return [
     // a placeholder is the quality problem, not a lesser version of a good one.
     // Import/completion falls back to a pinned location map so the pipeline is never
     // blocked by a society nobody has photographed. Off means such societies stay drafts.
+    // Localities created by an import are published immediately, so a new city reaches
+    // the locality depth its launch readiness needs without per-row approval.
+    'locality_auto_publish' => (bool) env('LOCALITY_AUTO_PUBLISH', true),
+
     'auto_publish_location_map' => (bool) env('AUTO_PUBLISH_LOCATION_MAP', true),
 
     'auto_publish_requires_image' => (bool) env('AUTO_PUBLISH_REQUIRES_IMAGE', true),
