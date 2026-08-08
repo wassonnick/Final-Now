@@ -166,6 +166,39 @@ export function searchableText(...items: Array<string | undefined | null>) {
   return items.filter(Boolean).join(' ').toLowerCase();
 }
 
+/**
+ * Places that match the query, ahead of the societies inside them.
+ *
+ * Typing "paschim" should offer Paschim Vihar itself first — one result that means "show
+ * me everything there" — rather than making someone pick between the individual blocks
+ * that happen to sort highest. Derived from the society list rather than a separate
+ * table, so it can never drift from what is actually searchable.
+ */
+export function suggestPlaces(societies: AdminSociety[], query: string, limit = 3) {
+  const q = query.trim().toLowerCase();
+  if (q.length < 3) return [];
+
+  const places = new Map<string, { name: string; city: string; count: number }>();
+
+  for (const society of societies) {
+    const locality = (society.locality || '').trim();
+    if (!locality || !locality.toLowerCase().includes(q)) continue;
+
+    const city = (society.city || '').trim();
+    const key = `${locality.toLowerCase()}|${city.toLowerCase()}`;
+    const existing = places.get(key);
+    if (existing) existing.count += 1;
+    else places.set(key, { name: locality, city, count: 1 });
+  }
+
+  return [...places.values()]
+    // A place someone actually lives in beats one with a single stray row.
+    .sort((a, b) => (a.name.toLowerCase().startsWith(q) === b.name.toLowerCase().startsWith(q)
+      ? b.count - a.count
+      : a.name.toLowerCase().startsWith(q) ? -1 : 1))
+    .slice(0, limit);
+}
+
 export function suggestSocieties(societies: AdminSociety[], query: string, limit = 6) {
   const q = query.trim().toLowerCase();
   if (!q) return [];

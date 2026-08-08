@@ -4,7 +4,7 @@ import { ChevronDown, MapPin, Menu, Phone, Search, User, X } from "lucide-react"
 import { MODULES, MODULE_INTENTS, type ModuleIntent } from "@/lib/modules";
 import { NCR_CITIES, LIVE_NCR_CITY, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
 import { BrandMark } from "@/components/BrandMark";
-import { fetchPublicSocieties, formatPublicLocation, suggestSocieties } from "@/lib/publicData";
+import { fetchPublicSocieties, formatPublicLocation, suggestPlaces, suggestSocieties } from "@/lib/publicData";
 
 const ACCENT = "#0F7B63";
 const PRIMARY = [
@@ -41,6 +41,7 @@ export function PremiumNavbar() {
   }, []);
 
   const suggestions = useMemo(() => suggestSocieties(societies, q), [societies, q]);
+  const places = useMemo(() => suggestPlaces(societies, q), [societies, q]);
   const rootRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -117,8 +118,29 @@ export function PremiumNavbar() {
             aria-label="Search society, sector or builder"
             className="search-bare-input min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[#98A2B3]"
           />
-          {showSuggestions && q.trim() && suggestions.length > 0 ? (
+          {showSuggestions && q.trim() && (places.length > 0 || suggestions.length > 0) ? (
             <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 max-h-72 overflow-y-auto rounded-[16px] border border-[#D8DFEC] bg-white p-1.5 shadow-[0_24px_50px_-28px_rgba(16,24,40,.42)]">
+              {places.map((place) => (
+                <li key={`place-${place.name}-${place.city}`}>
+                  <button
+                    type="button"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      setShowSuggestions(false);
+                      setQ(place.name);
+                      navigate(`/search?tab=societies&q=${encodeURIComponent(place.name)}`);
+                    }}
+                    className="flex w-full flex-col rounded-[11px] px-3 py-2.5 text-left hover:bg-[#F5F7FB]"
+                  >
+                    <span className="text-sm font-bold text-[#1D2939]">
+                      {place.name}{place.city ? `, ${place.city}` : ""}
+                    </span>
+                    <span className="text-xs text-[#667085]">
+                      {place.count} {place.count === 1 ? "society" : "societies"}
+                    </span>
+                  </button>
+                </li>
+              ))}
               {suggestions.map((society) => (
                 <li key={society.id}>
                   <button

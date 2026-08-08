@@ -217,6 +217,30 @@ function sectorQueryKey(value: string) {
   return match?.[1] || "";
 }
 
+/**
+ * Societies whose locality, city or address contains the query as a whole phrase.
+ *
+ * Deliberately all-or-nothing: it returns [] unless the query really names a place in
+ * the catalogue, so an ordinary text search is unaffected and only place queries switch
+ * to filtering. Matching on the phrase rather than tokens keeps "paschim vihar" from
+ * pulling in "Palam Vihar" on the shared word.
+ */
+function societiesInNamedPlace(societies: any[], queryValue: string) {
+  const phrase = normalizeSearchValue(String(queryValue || "")).trim();
+
+  // Two characters is a prefix, not a place; three still catches "gurgaon" style names.
+  if (phrase.length < 4) return [];
+
+  return societies.filter((society) => {
+    const haystack = [society?.locality, society?.city, society?.sector, society?.address]
+      .filter(Boolean)
+      .map((value: any) => normalizeSearchValue(String(value)))
+      .join(" | ");
+
+    return haystack.includes(phrase);
+  });
+}
+
 function societyMatchesSectorQuery(society: any, queryValue: string) {
   const sectorKey = sectorQueryKey(queryValue);
   if (!sectorKey) return false;
@@ -579,6 +603,15 @@ export function SearchPage() {
   const filteredSocieties = useMemo(() => {
     if (isSectorLikeQuery(query)) {
       return societies.filter((society) => societyMatchesSectorQuery(society, query));
+    }
+
+    // A place name is a filter, not a ranking hint. "paschim vihar" matches no society
+    // NAME, so name-scoring could not separate Delhi from Gurgaon and returned the whole
+    // catalogue with the highest-scoring Gurgaon societies sitting under the two correct
+    // Delhi ones. If the query names a place we actually have, show only that place.
+    const placeMatches = societiesInNamedPlace(societies, query);
+    if (placeMatches.length > 0) {
+      return placeMatches;
     }
 
     return sortedSearchResults(societies, query, expandedSocietySearchText, (society: any) => searchableText(society?.name));
