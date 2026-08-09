@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Check, MapPin, Search, Sparkles } from "lucide-react";
 import { fetchPublicSocieties, formatPublicLocation, suggestPlaces, suggestSocieties } from "@/lib/publicData";
 import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
-import { LIVE_NCR_CITY, NCR_CITIES, NCR_REGION, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
+import { LIVE_NCR_CITY, NCR_REGION, ncrCityFrom, ncrCityStatusLabel, useNcrCities, type NcrCity } from "@/lib/ncrCities";
 
 type Intent = "society" | "buy" | "rent" | "new-launch";
 
@@ -43,7 +43,10 @@ function statusDot(status: NcrCity["status"]) {
 
 export default function NcrHomeHero() {
   const navigate = useNavigate();
-  const [city, setCity] = useState<NcrCity>(LIVE_NCR_CITY);
+  const cities = useNcrCities();
+  const [selected, setSelected] = useState<NcrCity>(LIVE_NCR_CITY);
+  const city = ncrCityFrom(cities, selected.slug);
+  const setCity = setSelected;
   const [intent, setIntent] = useState<Intent>("society");
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -81,7 +84,7 @@ export default function NcrHomeHero() {
             {NCR_REGION} · verified society intelligence
           </span>
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
-            {NCR_CITIES.map((item) => {
+            {cities.map((item) => {
               const active = item.slug === city.slug;
               return (
                 <button
@@ -246,7 +249,7 @@ export default function NcrHomeHero() {
                 <h2 className="mt-3 font-display text-[34px] font-medium leading-tight lg:text-[44px]">One region.<br />Verified city by city.</h2>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {NCR_CITIES.map((item) => (
+                {cities.map((item) => (
                   <button key={item.slug} type="button" onClick={() => setCity(item)} className={`rounded-2xl border p-3 text-left transition ${item.slug === city.slug ? "border-[#E8D6A9] bg-white/10" : "border-white/15 hover:bg-white/5"}`}>
                     <div className="flex items-center gap-2">
                       <span className={`h-2 w-2 rounded-full ${statusDot(item.status)}`} />

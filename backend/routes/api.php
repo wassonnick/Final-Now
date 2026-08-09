@@ -1,25 +1,35 @@
 <?php
 
 use App\Http\Controllers\Api\AccountController;
+use App\Http\Controllers\Api\AccountNotificationController;
 use App\Http\Controllers\Api\Admin\AdminAccountController;
+use App\Http\Controllers\Api\Admin\AdminAiChatController;
 use App\Http\Controllers\Api\Admin\AdminAiSpendController;
 use App\Http\Controllers\Api\Admin\AdminBuilderPortalController;
+use App\Http\Controllers\Api\Admin\AdminCampaignPageController;
+use App\Http\Controllers\Api\Admin\AdminCoverOptionsController;
 use App\Http\Controllers\Api\Admin\AdminEmailDeliveryController;
+use App\Http\Controllers\Api\Admin\AdminImageContributionController;
+use App\Http\Controllers\Api\Admin\AdminImageReharvestController;
 use App\Http\Controllers\Api\Admin\AdminLocationController;
+use App\Http\Controllers\Api\Admin\AdminMarketRefreshController;
+use App\Http\Controllers\Api\Admin\AdminNriCaseController;
+use App\Http\Controllers\Api\Admin\AdminOpsController;
+use App\Http\Controllers\Api\Admin\AdminOwnerListingController;
+use App\Http\Controllers\Api\Admin\AdminPlacesDiagnosticController;
+use App\Http\Controllers\Api\Admin\AdminReferralController;
 use App\Http\Controllers\Api\Admin\AdminRentHistoryController;
 use App\Http\Controllers\Api\Admin\AdminReviewController;
-use App\Http\Controllers\Api\Admin\AdminReferralController;
-use App\Http\Controllers\Api\Admin\AdminNriCaseController;
 use App\Http\Controllers\Api\Admin\AdminRwaPortalController;
-use App\Http\Controllers\Api\Admin\AdminSiteVisitController;
-use App\Http\Controllers\Api\Admin\AdminOpsController;
 use App\Http\Controllers\Api\Admin\AdminSeoAutopilotController;
+use App\Http\Controllers\Api\Admin\AdminSiteVisitController;
 use App\Http\Controllers\Api\Admin\AdminSocialController;
 use App\Http\Controllers\Api\Admin\AdminSocietyComparePageController;
 use App\Http\Controllers\Api\Admin\AdminSocietyIntelligenceController;
-use App\Http\Controllers\Api\Admin\AdminStatsController;
 use App\Http\Controllers\Api\Admin\AdminSocietySeoContentController;
 use App\Http\Controllers\Api\Admin\AdminSocietySeoReportController;
+use App\Http\Controllers\Api\Admin\AdminStatsController;
+use App\Http\Controllers\Api\Admin\AdminStorageDiagnosticController;
 use App\Http\Controllers\Api\Admin\ImageUploadController;
 use App\Http\Controllers\Api\Admin\SocietyImportController;
 use App\Http\Controllers\Api\Admin\VerifiedSocietyImporterController;
@@ -28,19 +38,27 @@ use App\Http\Controllers\Api\AIController;
 use App\Http\Controllers\Api\BuilderPortalController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\NcrCityController;
+use App\Http\Controllers\Api\NriCaseController;
+use App\Http\Controllers\Api\OwnerListingController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\PublicSeoPageController;
+use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\RentHistoryController;
 use App\Http\Controllers\Api\ReviewController;
-use App\Http\Controllers\Api\ReferralController;
-use App\Http\Controllers\Api\NriCaseController;
 use App\Http\Controllers\Api\RwaPortalController;
 use App\Http\Controllers\Api\SavedSearchController;
 use App\Http\Controllers\Api\SiteVisitController;
 use App\Http\Controllers\Api\SocietyComparePageController;
 use App\Http\Controllers\Api\SocietyController;
+use App\Http\Controllers\Api\SocietyImageContributionController;
 use App\Http\Controllers\Api\SocietyIntelligenceController;
 use App\Http\Controllers\Api\Webhooks\ResendWebhookController;
+use App\Models\CampaignPage;
+use App\Services\Ops\SchedulerHeartbeat;
+use App\Services\Seo\LiveSitemapService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', fn () => response()->json([
@@ -54,14 +72,14 @@ Route::post('/webhooks/resend', ResendWebhookController::class)
 // External scheduler tick. A free external cron (e.g. cron-job.org) POSTs here every ~10 min
 // with the OPS_SCHEDULER_TOKEN secret; this both wakes a sleeping free-tier container and runs
 // the catch-up automation + queue, so SEO/import/social automation runs without a paid worker.
-Route::post('/ops/scheduler-tick', function (\Illuminate\Http\Request $request) {
+Route::post('/ops/scheduler-tick', function (Request $request) {
     $expected = (string) config('services.ops.scheduler_token');
     $provided = (string) ($request->header('X-Scheduler-Token') ?: $request->query('token'));
     abort_if($expected === '' || ! hash_equals($expected, $provided), 403, 'Invalid scheduler token.');
 
-    \Illuminate\Support\Facades\Cache::put(\App\Services\Ops\SchedulerHeartbeat::CACHE_KEY, now()->toIso8601String(), now()->addDays(3));
-    \Illuminate\Support\Facades\Artisan::call('ops:daily-catchup');
-    \Illuminate\Support\Facades\Artisan::call('queue:work', ['--stop-when-empty' => true, '--max-time' => 45, '--tries' => 1]);
+    Cache::put(SchedulerHeartbeat::CACHE_KEY, now()->toIso8601String(), now()->addDays(3));
+    Artisan::call('ops:daily-catchup');
+    Artisan::call('queue:work', ['--stop-when-empty' => true, '--max-time' => 45, '--tries' => 1]);
 
     return response()->json(['status' => 'ok', 'ran_at' => now()->toIso8601String()]);
 })->middleware('throttle:10,1');
@@ -75,7 +93,7 @@ Route::get('/societies/{slug}', [SocietyController::class, 'show']);
 Route::post('/public/intelligence-corrections', [SocietyIntelligenceController::class, 'storeCorrection'])->middleware('throttle:5,1');
 // Admin-authored campaign landings, rendered at /go/<slug> on the frontend.
 Route::get('/campaigns/{slug}', function (string $slug) {
-    $page = \App\Models\CampaignPage::where('slug', $slug)->where('status', \App\Models\CampaignPage::STATUS_PUBLISHED)->first();
+    $page = CampaignPage::where('slug', $slug)->where('status', CampaignPage::STATUS_PUBLISHED)->first();
 
     return $page
         ? response()->json(['status' => 'ok', 'data' => ['slug' => $page->slug] + $page->payload])
@@ -86,6 +104,7 @@ Route::get('/compare-pages/{slug}', [SocietyComparePageController::class, 'show'
 Route::get('/compare/intelligence', [SocietyIntelligenceController::class, 'compare']);
 Route::get('/properties', [PropertyController::class, 'index']);
 Route::get('/properties/{idOrSlug}', [PropertyController::class, 'show']);
+Route::get('/ncr/cities', [NcrCityController::class, 'index'])->middleware('throttle:60,1');
 Route::get('/ncr/cities/{slug}/launch-policy', [NcrCityController::class, 'launchPolicy'])->middleware('throttle:60,1');
 Route::get('/seo/pages/resolve', [PublicSeoPageController::class, 'resolve'])->middleware('throttle:60,1');
 
@@ -93,7 +112,7 @@ Route::get('/seo/pages/resolve', [PublicSeoPageController::class, 'resolve'])->m
 // frontend deploys, so societies published between deploys were invisible to crawlers until
 // the next build. robots.txt references this URL too (cross-host sitemaps are valid when
 // declared in robots.txt), making new pages discoverable the day they publish.
-Route::get('/seo/sitemap.xml', function (\App\Services\Seo\LiveSitemapService $sitemap) {
+Route::get('/seo/sitemap.xml', function (LiveSitemapService $sitemap) {
     return response($sitemap->cached(), 200)->header('Content-Type', 'application/xml');
 })->middleware('throttle:30,1');
 Route::post('/leads', [LeadController::class, 'store'])->middleware('throttle:10,1');
@@ -132,19 +151,19 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/locations/localities', [AdminLocationController::class, 'storeLocality']);
     Route::patch('/locations/localities/{locality}', [AdminLocationController::class, 'updateLocality']);
     Route::get('/ai-spend', AdminAiSpendController::class);
-    Route::get('/market-refreshes', \App\Http\Controllers\Api\Admin\AdminMarketRefreshController::class);
-    Route::get('/ai-chats', [\App\Http\Controllers\Api\Admin\AdminAiChatController::class, 'index']);
-    Route::get('/ai-chats/{conversation}', [\App\Http\Controllers\Api\Admin\AdminAiChatController::class, 'show']);
+    Route::get('/market-refreshes', AdminMarketRefreshController::class);
+    Route::get('/ai-chats', [AdminAiChatController::class, 'index']);
+    Route::get('/ai-chats/{conversation}', [AdminAiChatController::class, 'show']);
     Route::get('/ops/action-inbox', [AdminOpsController::class, 'actionInbox']);
     Route::get('/ops/automation-health', [AdminOpsController::class, 'automationHealth']);
     Route::post('/ops/clear-provider-limit', [AdminOpsController::class, 'clearProviderLimit']);
     Route::get('/ops/suggestions', [AdminOpsController::class, 'suggestions']);
     Route::post('/ops/suggestions/{suggestion}/apply', [AdminOpsController::class, 'applySuggestion']);
     Route::post('/ops/suggestions/{suggestion}/dismiss', [AdminOpsController::class, 'dismissSuggestion']);
-    Route::get('/campaigns', [\App\Http\Controllers\Api\Admin\AdminCampaignPageController::class, 'index']);
-    Route::post('/campaigns', [\App\Http\Controllers\Api\Admin\AdminCampaignPageController::class, 'store']);
-    Route::patch('/campaigns/{campaignPage}', [\App\Http\Controllers\Api\Admin\AdminCampaignPageController::class, 'update']);
-    Route::delete('/campaigns/{campaignPage}', [\App\Http\Controllers\Api\Admin\AdminCampaignPageController::class, 'destroy']);
+    Route::get('/campaigns', [AdminCampaignPageController::class, 'index']);
+    Route::post('/campaigns', [AdminCampaignPageController::class, 'store']);
+    Route::patch('/campaigns/{campaignPage}', [AdminCampaignPageController::class, 'update']);
+    Route::delete('/campaigns/{campaignPage}', [AdminCampaignPageController::class, 'destroy']);
     Route::get('/seo/compare-pages', [AdminSocietyComparePageController::class, 'index']);
     Route::post('/seo/compare-pages/generate', [AdminSocietyComparePageController::class, 'generate']);
     Route::post('/seo/compare-pages/bulk-generate', [AdminSocietyComparePageController::class, 'bulkGenerate']);
@@ -236,23 +255,23 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
 
     // Re-harvest images for societies that were imported before the current ranking,
     // official-domain and vision-screen rules existed.
-    Route::post('/societies/{society}/reharvest-images', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'single']);
+    Route::post('/societies/{society}/reharvest-images', [AdminImageReharvestController::class, 'single']);
     // Every cover this society could have, previewable side by side.
-    Route::get('/societies/{society}/cover-options', \App\Http\Controllers\Api\Admin\AdminCoverOptionsController::class);
-    Route::post('/image-reharvest/runs', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'bulk']);
-    Route::get('/image-reharvest/runs', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'runs']);
-    Route::get('/image-reharvest/runs/{run}', [\App\Http\Controllers\Api\Admin\AdminImageReharvestController::class, 'run']);
+    Route::get('/societies/{society}/cover-options', AdminCoverOptionsController::class);
+    Route::post('/image-reharvest/runs', [AdminImageReharvestController::class, 'bulk']);
+    Route::get('/image-reharvest/runs', [AdminImageReharvestController::class, 'runs']);
+    Route::get('/image-reharvest/runs/{run}', [AdminImageReharvestController::class, 'run']);
 
     // Contributed images: the one path where the rights question is already answered.
-    Route::get('/image-contributions', [\App\Http\Controllers\Api\Admin\AdminImageContributionController::class, 'index']);
-    Route::post('/image-contributions/{contribution}/approve', [\App\Http\Controllers\Api\Admin\AdminImageContributionController::class, 'approve']);
-    Route::post('/image-contributions/{contribution}/reject', [\App\Http\Controllers\Api\Admin\AdminImageContributionController::class, 'reject']);
-    Route::post('/image-contributions/{contribution}/screen', [\App\Http\Controllers\Api\Admin\AdminImageContributionController::class, 'screen']);
+    Route::get('/image-contributions', [AdminImageContributionController::class, 'index']);
+    Route::post('/image-contributions/{contribution}/approve', [AdminImageContributionController::class, 'approve']);
+    Route::post('/image-contributions/{contribution}/reject', [AdminImageContributionController::class, 'reject']);
+    Route::post('/image-contributions/{contribution}/screen', [AdminImageContributionController::class, 'screen']);
 
     // Reports what Google actually answers for search, details and photo.
-    Route::get('/diagnostics/google-places', \App\Http\Controllers\Api\Admin\AdminPlacesDiagnosticController::class);
+    Route::get('/diagnostics/google-places', AdminPlacesDiagnosticController::class);
     // Whether uploaded images survive a deploy at all.
-    Route::get('/diagnostics/storage', \App\Http\Controllers\Api\Admin\AdminStorageDiagnosticController::class);
+    Route::get('/diagnostics/storage', AdminStorageDiagnosticController::class);
     Route::post('/import/societies/{society}/re-enrich', [SocietyImportController::class, 'reEnrich']);
     Route::post('/import/societies/{society}/market-refresh', [SocietyImportController::class, 'marketRefresh']);
     Route::post('/import/societies/{society}/market-override', [SocietyImportController::class, 'marketOverride']);
@@ -308,9 +327,9 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::apiResource('properties', PropertyController::class)->except(['create', 'edit']);
     Route::apiResource('leads', LeadController::class)->only(['index', 'show', 'update', 'destroy']);
     Route::apiResource('accounts', AdminAccountController::class)->only(['index', 'show', 'update']);
-    Route::get('/owner-listings', [\App\Http\Controllers\Api\Admin\AdminOwnerListingController::class, 'index']);
-    Route::patch('/owner-listings/{listing}', [\App\Http\Controllers\Api\Admin\AdminOwnerListingController::class, 'update']);
-    Route::post('/owner-listings/{listing}/convert', [\App\Http\Controllers\Api\Admin\AdminOwnerListingController::class, 'convert']);
+    Route::get('/owner-listings', [AdminOwnerListingController::class, 'index']);
+    Route::patch('/owner-listings/{listing}', [AdminOwnerListingController::class, 'update']);
+    Route::post('/owner-listings/{listing}/convert', [AdminOwnerListingController::class, 'convert']);
     Route::apiResource('reviews', AdminReviewController::class)->only(['index', 'update', 'destroy']);
     Route::apiResource('referrals', AdminReferralController::class)->only(['index', 'update']);
     Route::apiResource('nri-cases', AdminNriCaseController::class)->only(['index', 'update']);
@@ -334,28 +353,28 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
 });
 
 // Public listing intake (flats + builder floors) — the core inventory catcher.
-Route::post('/listings', [\App\Http\Controllers\Api\OwnerListingController::class, 'store'])->middleware('throttle:6,1');
-Route::post('/listings/images', [\App\Http\Controllers\Api\OwnerListingController::class, 'uploadImage'])->middleware('throttle:20,1');
+Route::post('/listings', [OwnerListingController::class, 'store'])->middleware('throttle:6,1');
+Route::post('/listings/images', [OwnerListingController::class, 'uploadImage'])->middleware('throttle:20,1');
 
 // Residents, owners, RWAs and builders contributing a photo of their own society.
-Route::get('/society-image-contributions/roles', [\App\Http\Controllers\Api\SocietyImageContributionController::class, 'roles']);
-Route::get('/account/society-image-contributions', [\App\Http\Controllers\Api\SocietyImageContributionController::class, 'mine']);
-Route::post('/societies/{idOrSlug}/image-contributions', [\App\Http\Controllers\Api\SocietyImageContributionController::class, 'store'])->middleware('throttle:10,1');
+Route::get('/society-image-contributions/roles', [SocietyImageContributionController::class, 'roles']);
+Route::get('/account/society-image-contributions', [SocietyImageContributionController::class, 'mine']);
+Route::post('/societies/{idOrSlug}/image-contributions', [SocietyImageContributionController::class, 'store'])->middleware('throttle:10,1');
 
 Route::prefix('accounts')->group(function () {
-    Route::get('/listings', [\App\Http\Controllers\Api\OwnerListingController::class, 'mine']);
+    Route::get('/listings', [OwnerListingController::class, 'mine']);
     Route::post('/upsert', [AccountController::class, 'upsert']);
     Route::post('/request-otp', [AccountController::class, 'requestOtp'])->middleware('throttle:5,1');
     Route::post('/verify-otp', [AccountController::class, 'verifyOtp'])->middleware('throttle:10,1');
     Route::get('/me', [AccountController::class, 'me']);
     Route::get('/dashboard', [AccountController::class, 'dashboard']);
-    Route::get('/notification-preferences', [\App\Http\Controllers\Api\AccountNotificationController::class, 'preferences']);
-    Route::patch('/notification-preferences', [\App\Http\Controllers\Api\AccountNotificationController::class, 'updatePreferences']);
-    Route::get('/notifications', [\App\Http\Controllers\Api\AccountNotificationController::class, 'inbox']);
-    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\Api\AccountNotificationController::class, 'markAllRead']);
-    Route::post('/notifications/{notification}/read', [\App\Http\Controllers\Api\AccountNotificationController::class, 'markRead']);
-    Route::post('/device-tokens', [\App\Http\Controllers\Api\AccountNotificationController::class, 'upsertDevice'])->middleware('throttle:20,1');
-    Route::delete('/device-tokens/{deviceId}', [\App\Http\Controllers\Api\AccountNotificationController::class, 'destroyDevice']);
+    Route::get('/notification-preferences', [AccountNotificationController::class, 'preferences']);
+    Route::patch('/notification-preferences', [AccountNotificationController::class, 'updatePreferences']);
+    Route::get('/notifications', [AccountNotificationController::class, 'inbox']);
+    Route::post('/notifications/mark-all-read', [AccountNotificationController::class, 'markAllRead']);
+    Route::post('/notifications/{notification}/read', [AccountNotificationController::class, 'markRead']);
+    Route::post('/device-tokens', [AccountNotificationController::class, 'upsertDevice'])->middleware('throttle:20,1');
+    Route::delete('/device-tokens/{deviceId}', [AccountNotificationController::class, 'destroyDevice']);
     Route::get('/referrals', [ReferralController::class, 'index']);
     Route::post('/referrals', [ReferralController::class, 'store'])->middleware('throttle:10,1');
     Route::apiResource('saved-searches', SavedSearchController::class)->only(['index', 'store', 'update', 'destroy']);

@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowRight, Check, MapPin, ShieldCheck } from "lucide-react";
 import { usePublicSeo } from "@/lib/seo";
 import { fallbackNcrCityLaunchPolicy, fetchNcrCityLaunchPolicy, type NcrCityLaunchPolicy } from "@/lib/ncrPublicApi";
-import { NCR_CITIES, NCR_REGION, LIVE_NCR_CITY, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
+import { NCR_REGION, LIVE_NCR_CITY, ncrCityStatusLabel, useNcrCities, type NcrCity } from "@/lib/ncrCities";
 import { MODULES } from "@/lib/modules";
 
 const ACCENT = "#0F7B63";
@@ -34,7 +34,8 @@ function statusPill(status: NcrCity["status"]) {
 export function NcrCityLandingPage() {
   const { citySlug = "" } = useParams();
   const navigate = useNavigate();
-  const city = NCR_CITIES.find((c) => c.slug === citySlug) || null;
+  const cities = useNcrCities();
+  const city = cities.find((c) => c.slug === citySlug) || null;
   const [launchPolicy, setLaunchPolicy] = useState<NcrCityLaunchPolicy>(() => fallbackNcrCityLaunchPolicy(citySlug));
   const isIndexable = Boolean(city && launchPolicy.is_indexable && launchPolicy.is_sitemap_approved && !launchPolicy.is_review_only);
 

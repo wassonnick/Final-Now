@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, MapPin, Menu, Phone, Search, User, X } from "lucide-react";
 import { MODULES, MODULE_INTENTS, type ModuleIntent } from "@/lib/modules";
-import { NCR_CITIES, LIVE_NCR_CITY, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
+import { LIVE_NCR_CITY, ncrCityFrom, ncrCityStatusLabel, useNcrCities, type NcrCity } from "@/lib/ncrCities";
 import { BrandMark } from "@/components/BrandMark";
 import { fetchPublicSocieties, formatPublicLocation, suggestPlaces, suggestSocieties } from "@/lib/publicData";
 
@@ -23,7 +23,12 @@ const intents: ModuleIntent[] = ["decide", "discover", "services"];
 export function PremiumNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [city, setCity] = useState<NcrCity>(LIVE_NCR_CITY);
+  const cities = useNcrCities();
+  const [selected, setSelected] = useState<NcrCity>(LIVE_NCR_CITY);
+  // Re-derived from the fetched list so the pill reflects the live status, not the
+  // status this city had at the moment it was picked.
+  const city = ncrCityFrom(cities, selected.slug);
+  const setCity = setSelected;
   const [open, setOpen] = useState<"" | "city" | "explore" | "partner">("");
   const [mobile, setMobile] = useState(false);
   const [q, setQ] = useState("");
@@ -83,7 +88,7 @@ export function PremiumNavbar() {
           {open === "city" ? (
             <div className="absolute left-0 top-[calc(100%+8px)] w-64 rounded-2xl border border-[#E4E4E9] bg-white p-1.5 shadow-[0_24px_50px_-28px_rgba(0,0,0,.3)]">
               <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">Delhi NCR</p>
-              {NCR_CITIES.map((c) => (
+              {cities.map((c) => (
                 <button key={c.slug} type="button" onClick={() => { selectCity(c); }} className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left hover:bg-[#F5F5F7]">
                   <span className="text-sm font-semibold text-[#1D1D1F]">{c.name}</span>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${c.status === "live" ? "text-[#0F7B63]" : c.status === "launching" ? "text-amber-600" : "text-[#98A2B3]"}`} style={c.status === "live" ? { background: "#ECF6F2" } : {}}>{ncrCityStatusLabel(c.status)}</span>

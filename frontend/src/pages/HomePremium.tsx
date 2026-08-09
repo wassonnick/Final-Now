@@ -4,7 +4,7 @@ import { ArrowRight, Building2, Check, CornerDownLeft, MapPin, Search, ShieldChe
 import { fetchPublicSocieties, formatPublicLocation, suggestPlaces, suggestSocieties } from "@/lib/publicData";
 import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
 import { setPublicSeo } from "@/lib/seo";
-import { NCR_CITIES, NCR_REGION, LIVE_NCR_CITY, ncrCityStatusLabel, type NcrCity } from "@/lib/ncrCities";
+import { NCR_REGION, LIVE_NCR_CITY, ncrCityFrom, ncrCityStatusLabel, useNcrCities, type NcrCity } from "@/lib/ncrCities";
 import { MODULES, MODULE_INTENTS, searchModules, type ModuleIntent } from "@/lib/modules";
 
 /*
@@ -30,7 +30,10 @@ function statusPill(status: NcrCity["status"]) {
 
 export default function HomePremium() {
   const navigate = useNavigate();
-  const [city, setCity] = useState<NcrCity>(LIVE_NCR_CITY);
+  const cities = useNcrCities();
+  const [selected, setSelected] = useState<NcrCity>(LIVE_NCR_CITY);
+  const city = ncrCityFrom(cities, selected.slug);
+  const setCity = setSelected;
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [societies, setSocieties] = useState<any[]>([]);
@@ -98,7 +101,7 @@ export default function HomePremium() {
 
           {/* City selector */}
           <div className="scrollbar-hide -mx-5 mt-5 flex snap-x gap-2 overflow-x-auto px-5 sm:mx-0 sm:mt-8 sm:flex-wrap sm:items-center sm:justify-center sm:overflow-visible sm:px-0">
-            {NCR_CITIES.map((item) => {
+            {cities.map((item) => {
               const active = item.slug === city.slug;
               return (
                 <button
@@ -249,7 +252,7 @@ export default function HomePremium() {
           </div>
         </div>
         <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-          {NCR_CITIES.map((item) => (
+          {cities.map((item) => (
             <button
               key={item.slug}
               type="button"
