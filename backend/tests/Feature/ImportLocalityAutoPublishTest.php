@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\City;
 use App\Models\Locality;
 use App\Models\Region;
+use App\Models\Society;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -63,6 +64,53 @@ class ImportLocalityAutoPublishTest extends TestCase
         $locality = Locality::where('slug', 'rohini')->firstOrFail();
         $this->assertSame('Delhi', $locality->city);
         $this->assertSame($delhi->id, $locality->city_id);
+    }
+
+    /**
+     * The first backfill turned every value the importer had ever written into a published
+     * page, ad copy included. The society keeps the text; it just must not become a page.
+     */
+    public function test_a_marketing_phrase_never_becomes_a_locality(): void
+    {
+        $this->withToken('admin-test-token')
+            ->postJson('/api/admin/societies', [
+                'name' => 'GH-17 Test', 'sector' => 'GH-17', 'locality' => 'Premium Gurgaon Corridor',
+                'city' => 'Gurugram', 'state' => 'Haryana',
+            ])
+            ->assertSuccessful();
+
+        $this->assertSame(0, Locality::where('slug', 'premium-gurgaon-corridor')->count());
+    }
+
+    /** "sec-36" must find Sector 36 rather than founding a rival page for the same place. */
+    public function test_a_spelling_variant_reuses_the_existing_locality(): void
+    {
+        $existing = Locality::create([
+            'name' => 'Sector 36', 'slug' => 'sector-36', 'city' => 'Gurugram',
+            'state' => 'Haryana', 'published_status' => 'published',
+        ]);
+
+        $response = $this->withToken('admin-test-token')
+            ->postJson('/api/admin/societies', [
+                'name' => 'GH-18 Test', 'sector' => 'GH-18', 'locality' => 'sec-36',
+                'city' => 'Gurugram', 'state' => 'Haryana',
+            ])
+            ->assertSuccessful();
+
+        $this->assertSame(1, Locality::where('slug', 'sector-36')->count());
+        $this->assertSame($existing->id, Society::findOrFail($response->json('data.id') ?? $response->json('id'))->locality_id);
+    }
+
+    /** A Delhi locality arriving without a city took the Gurgaon default and was born wrong. */
+    public function test_a_known_delhi_locality_is_not_filed_under_gurgaon(): void
+    {
+        $this->withToken('admin-test-token')
+            ->postJson('/api/admin/societies', [
+                'name' => 'GH-19 Test', 'sector' => 'GH-19', 'locality' => 'Tagore Garden Extension',
+            ])
+            ->assertSuccessful();
+
+        $this->assertSame('Delhi', Locality::where('slug', 'tagore-garden-extension')->firstOrFail()->city);
     }
 
     public function test_auto_publish_can_be_turned_off(): void

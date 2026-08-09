@@ -4,8 +4,8 @@ namespace App\Console\Commands;
 
 use App\Models\Locality;
 use App\Models\Society;
+use App\Services\Ncr\LocalityNameService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Str;
 
 /**
  * Creates the locality rows that societies imported before the importer did it themselves
@@ -25,7 +25,7 @@ class BackfillSocietyLocalities extends Command
 
     protected $description = 'Create and link locality rows for societies imported before the importer created them.';
 
-    public function handle(): int
+    public function handle(LocalityNameService $names): int
     {
         $apply = (bool) $this->option('apply');
 
@@ -40,15 +40,18 @@ class BackfillSocietyLocalities extends Command
         $skipped = 0;
 
         foreach ($societies as $society) {
-            $name = trim((string) ($society->locality ?: $society->sector));
+            $raw = trim((string) ($society->locality ?: $society->sector));
 
-            if ($name === '') {
+            // Same rules the importer now applies, so a re-run cannot recreate the ad copy
+            // and addresses that the normalise pass has just cleared out.
+            if ($raw === '' || $names->rejectionReason($raw, (string) $society->city) !== null) {
                 $skipped++;
 
                 continue;
             }
 
-            $slug = Str::slug($name);
+            $name = $names->canonicalise($raw);
+            $slug = $names->slugFor($raw);
             $planned[$slug] ??= [
                 'name' => $name,
                 'slug' => $slug,
@@ -75,7 +78,7 @@ class BackfillSocietyLocalities extends Command
         );
 
         if ($skipped > 0) {
-            $this->warn($skipped.' society(ies) have neither a locality nor a sector and were left alone.');
+            $this->warn($skipped.' society(ies) had no usable locality name — blank, an address, or a marketing phrase — and were left alone.');
         }
 
         if (! $apply) {
@@ -106,11 +109,16 @@ class BackfillSocietyLocalities extends Command
                 $created++;
             }
 
-            $linked += Society::whereNull('locality_id')
+            // Matched through the same canonicaliser rather than a LOWER() comparison,
+            // because the society still stores the raw text: "sec-36" has to find its way
+            // to Sector 36 here exactly as it would during an import.
+            $ids = Society::whereNull('locality_id')
                 ->when($this->option('city'), fn ($q, $city) => $q->where('city', $city))
-                ->where(fn ($q) => $q->whereRaw('LOWER(locality) = ?', [strtolower($row['name'])])
-                    ->orWhereRaw('LOWER(sector) = ?', [strtolower($row['name'])]))
-                ->update(['locality_id' => $locality->id]);
+                ->get(['id', 'locality', 'sector'])
+                ->filter(fn ($s) => $names->slugFor((string) ($s->locality ?: $s->sector)) === $slug)
+                ->pluck('id');
+
+            $linked += $ids->isEmpty() ? 0 : Society::whereIn('id', $ids)->update(['locality_id' => $locality->id]);
         }
 
         $this->info("Created {$created} locality(ies) and linked {$linked} society(ies).");

@@ -225,15 +225,35 @@ class SocietyController extends Controller {
           return $p;
       }
 
+      $names = app(\App\Services\Ncr\LocalityNameService::class);
+
+      // Sources write ad copy and addresses into this field — "Premium Gurgaon Corridor",
+      // "Dwarka Expressway, Village Babupur" — and the first run of the backfill turned
+      // every one of them into a published page. The society keeps the text; it just does
+      // not become a locality, because a thin page competing with the real one is worse
+      // than no page at all.
+      if ($names->rejectionReason($name, (string) ($p['city'] ?? '')) !== null) {
+          return $p;
+      }
+
+      // Canonical spelling before the lookup, so "sec-36" finds the existing Sector 36
+      // rather than founding a rival.
+      $canonical = $names->canonicalise($name);
+      $slug = $names->slugFor($name);
+
+      // A known Delhi locality arriving without a city would otherwise take the Gurgaon
+      // default and be wrong on the day it is created.
+      $correction = config('locality_corrections')[$slug] ?? null;
+
       $locality = \App\Models\Locality::firstOrCreate(
-          ['slug' => Str::slug($name)],
+          ['slug' => $slug],
           [
-              'name' => $name,
+              'name' => $canonical,
               // Taken from the society rather than assumed: a hardcoded city is how
               // Delhi localities end up filed under Gurgaon.
               'city_id' => $p['city_id'] ?? null,
-              'city' => $p['city'] ?? 'Gurgaon',
-              'state' => $p['state'] ?? 'Haryana',
+              'city' => $correction['city'] ?? $p['city'] ?? 'Gurgaon',
+              'state' => $correction['state'] ?? $p['state'] ?? 'Haryana',
               'published_status' => config('features.locality_auto_publish', true) ? 'published' : 'draft',
           ],
       );
