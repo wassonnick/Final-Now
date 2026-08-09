@@ -14,7 +14,8 @@ class SocietyController extends Controller {
     $query=Society::query();
     if (!$request->is('api/admin/*')) {
       $query->where('is_published', true)
-        ->whereIn('status', ['Verified', 'Premium']);
+        ->whereIn('status', ['Verified', 'Premium'])
+        ->inLiveCities();
     }
     if($request->filled('q')){ $q=$request->string('q'); $query->where(fn($b)=>$b->where('name','ilike',"%{$q}%")->orWhere('locality','ilike',"%{$q}%")->orWhere('sector','ilike',"%{$q}%")->orWhere('builder','ilike',"%{$q}%")); }
     if($request->is('api/admin/*') && $request->filled('status')) $query->where('status', (string) $request->query('status'));
@@ -28,7 +29,7 @@ class SocietyController extends Controller {
     $term = trim((string) $request->query('q', ''));
 
     $query = Society::query()
-      ->when(!$isAdmin, fn ($q) => $q->where('is_published', true)->whereIn('status', ['Verified', 'Premium']))
+      ->when(!$isAdmin, fn ($q) => $q->where('is_published', true)->whereIn('status', ['Verified', 'Premium'])->inLiveCities())
       ->when($term !== '', fn ($q) => $q->where(fn ($b) => $b
         ->where('name', 'ilike', "%{$term}%")
         ->orWhere('locality', 'ilike', "%{$term}%")
@@ -122,6 +123,9 @@ class SocietyController extends Controller {
     }
 
     $society = Society::with($relations)
+        // Hidden from the listing but reachable by slug would be a half-closed door: the
+        // page stays indexable and linkable while the city says it has not launched.
+        ->when(!$isAdmin, fn ($query) => $query->inLiveCities())
         ->when(is_numeric($idOrSlug), fn ($query) => $query->where('id', $idOrSlug), fn ($query) => $query->where('slug', $idOrSlug))
         ->first();
 

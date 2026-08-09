@@ -89,6 +89,35 @@ class NcrCityLaunchPolicy
             ->exists();
     }
 
+    /**
+     * Cities whose inventory must not appear on the public site yet.
+     *
+     * cityMayPublish() gates the moment of publishing and nothing gated the reading, so a
+     * Delhi society published before its city was ready stayed visible in a catalogue whose
+     * own header says "Gurgaon" — Paschim Vihar flats returned by a Gurgaon search.
+     *
+     * A city is hidden unless it is the home city or has been approved for indexing, which
+     * is the same bar the market map calls "live". Cities with no launch record at all are
+     * hidden too: absence of approval is not approval.
+     *
+     * @return array{ids: array<int,int>, names: array<int,string>}
+     */
+    public function hiddenCities(): array
+    {
+        $home = collect((array) config('features.home_city_slugs', []))
+            ->map(fn ($value) => Str::slug((string) $value))
+            ->all();
+
+        $hidden = City::query()
+            ->get(['id', 'name', 'slug'])
+            ->reject(fn (City $city) => in_array(Str::slug((string) $city->slug), $home, true) || $this->cityIsApproved($city));
+
+        return [
+            'ids' => $hidden->pluck('id')->map(fn ($id) => (int) $id)->all(),
+            'names' => $hidden->pluck('name')->filter()->map(fn ($n) => (string) $n)->all(),
+        ];
+    }
+
     public function cityIsApproved(City|string $city): bool
     {
         $slug = $city instanceof City ? $city->slug : $city;

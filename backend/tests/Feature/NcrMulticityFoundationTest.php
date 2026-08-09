@@ -231,6 +231,15 @@ class NcrMulticityFoundationTest extends TestCase
         $gurgaon = City::where('slug', 'gurgaon')->firstOrFail();
         $noida = City::where('slug', 'noida')->firstOrFail();
 
+        // Public reads now hide cities that have not launched, so Noida has to be launched
+        // for this to test what it says it tests — that the city filter is additive and
+        // excludes drafts, rather than accidentally re-testing the launch gate.
+        config(['features.ncr_city_indexing' => true]);
+        NcrCityLaunchApproval::create([
+            'city_slug' => 'noida', 'city_id' => $noida->id, 'status' => 'approved',
+            'approved_for_indexing' => true, 'approved_for_sitemap' => true, 'approved_at' => now(),
+        ]);
+
         $publishedNoida = Society::create([
             'name' => 'Noida Public Society',
             'slug' => 'noida-public-society',

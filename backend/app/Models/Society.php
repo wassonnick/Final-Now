@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Services\Ncr\NcrCityLaunchPolicy;
+use App\Services\SocietyComparePageGenerator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use App\Services\SocietyComparePageGenerator;
 
 class Society extends Model
 {
@@ -59,6 +60,32 @@ class Society extends Model
     public function region(): BelongsTo
     {
         return $this->belongsTo(Region::class);
+    }
+
+    /**
+     * Hides inventory belonging to a city that is not live yet.
+     *
+     * Publishing was gated; reading never was. A society published into Delhi before Delhi
+     * launched stayed in the public catalogue, so a search headed "Gurgaon" returned
+     * Paschim Vihar flats. Matched on the city NAME as well as the id, because legacy rows
+     * carry a city string with no city_id and would otherwise slip through.
+     */
+    public function scopeInLiveCities($query)
+    {
+        $hidden = app(NcrCityLaunchPolicy::class)->hiddenCities();
+
+        if ($hidden['ids'] === [] && $hidden['names'] === []) {
+            return $query;
+        }
+
+        return $query->where(function ($outer) use ($hidden) {
+            $outer->where(function ($q) use ($hidden) {
+                // Unmapped rows are Gurgaon by history and must never be hidden.
+                $q->whereNull('city_id')->orWhereNotIn('city_id', $hidden['ids'] ?: [0]);
+            })->when($hidden['names'] !== [], fn ($q) => $q->where(function ($inner) use ($hidden) {
+                $inner->whereNull('city')->orWhereNotIn('city', $hidden['names']);
+            }));
+        });
     }
 
     public function cityRecord(): BelongsTo
