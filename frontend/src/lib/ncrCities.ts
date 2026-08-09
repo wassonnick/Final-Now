@@ -114,6 +114,28 @@ export function ncrCityFrom(cities: NcrCity[], slug?: string | null): NcrCity {
   return cities.find((city) => city.slug === clean) ?? cities.find((city) => city.status === "live") ?? cities[0];
 }
 
+function citySlugOf(value?: string | null): string {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    // One city, two spellings, both in the catalogue.
+    .replace("gurugram", "gurgaon");
+}
+
+/**
+ * Does this row belong to the city being browsed?
+ *
+ * Matched on the city text rather than city_id because a good deal of the catalogue predates
+ * the city table and carries only the string. A row with no city at all is Gurgaon by
+ * history — the same assumption the backend's inLiveCities() makes.
+ */
+export function rowIsInCity(row: { city?: string | null } | null | undefined, city: NcrCity): boolean {
+  const rowCity = citySlugOf(row?.city);
+
+  return rowCity === "" ? city.slug === LIVE_NCR_CITY.slug : rowCity === citySlugOf(city.slug);
+}
+
 // Which city the visitor is browsing. One value for the whole app: the navbar chip, the
 // hero switcher and the search placeholder are three views of the same choice, and holding
 // it as component state in each of them meant picking Delhi in the hero left the navbar

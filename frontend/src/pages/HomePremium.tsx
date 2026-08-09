@@ -4,7 +4,7 @@ import { ArrowRight, Building2, Check, CornerDownLeft, MapPin, Search, ShieldChe
 import { fetchPublicSocieties, formatPublicLocation, suggestPlaces, suggestSocieties } from "@/lib/publicData";
 import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
 import { setPublicSeo } from "@/lib/seo";
-import { NCR_REGION, ncrCityFrom, ncrCityStatusLabel, useNcrCities, useSelectedNcrCity, type NcrCity } from "@/lib/ncrCities";
+import { NCR_REGION, ncrCityFrom, ncrCityStatusLabel, rowIsInCity, useNcrCities, useSelectedNcrCity, type NcrCity } from "@/lib/ncrCities";
 import { MODULES, MODULE_INTENTS, searchModules, type ModuleIntent } from "@/lib/modules";
 
 /*
@@ -50,34 +50,52 @@ export default function HomePremium() {
     return () => { active = false; };
   }, []);
 
+  // Everything below the hero is about the city being browsed. Deriving each section from
+  // the whole NCR catalogue meant picking Delhi changed a chip and a placeholder while the
+  // societies, the areas and the counted total all stayed Gurgaon's.
+  const citySocieties = useMemo(() => societies.filter((s) => rowIsInCity(s, city)), [societies, city]);
+
   const featured = useMemo(
-    () => [...societies].filter(hasGooglePlacesDisplayPhoto).sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0)).slice(0, 8),
-    [societies],
+    () => [...citySocieties].filter(hasGooglePlacesDisplayPhoto).sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0)).slice(0, 8),
+    [citySocieties],
   );
 
   // Area-tabbed inventory: group verified societies by their micro-market (sector/locality),
   // data-driven so every tab is genuinely populated. Available-homes signal comes from the
   // society's live property count where present, honest "on request" otherwise.
   const areaGroups = useMemo(() => {
-    const map = new Map<string, any[]>();
-    for (const s of societies) {
+    // Keyed on the lower-cased name, because the catalogue holds "paschim vihar" and
+    // "Paschim Vihar" and grouping on the raw string gave the same place two tabs.
+    const map = new Map<string, { label: string; list: any[] }>();
+    for (const s of citySocieties) {
       if (!hasGooglePlacesDisplayPhoto(s)) continue;
       const area = String(s.sector || s.locality || "").trim();
       if (!area) continue;
-      (map.get(area) ?? map.set(area, []).get(area)!).push(s);
+      const key = area.toLowerCase();
+      const group = map.get(key) ?? { label: area, list: [] };
+      // Prefer a properly capitalised spelling for the tab; title-case only if every
+      // variant arrived lower-case.
+      if (area !== key && group.label === group.label.toLowerCase()) group.label = area;
+      group.list.push(s);
+      map.set(key, group);
     }
-    return [...map.entries()]
-      .sort((a, b) => b[1].length - a[1].length)
+    return [...map.values()]
+      .sort((a, b) => b.list.length - a.list.length)
       .slice(0, 8)
-      .map(([area, list]) => ({ area, societies: list.sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0)) }));
-  }, [societies]);
+      .map(({ label, list }) => ({
+        area: label.replace(/\b[a-z]/g, (c) => c.toUpperCase()),
+        societies: list.sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0)),
+      }));
+  }, [citySocieties]);
   const [areaTab, setAreaTab] = useState("");
+  // Falls back to the first group rather than blanking when the previous city's area does
+  // not exist here.
   const currentArea = areaGroups.find((g) => g.area === areaTab) ?? areaGroups[0];
-  const suggestions = useMemo(() => suggestSocieties(societies, query), [societies, query]);
-  const places = useMemo(() => suggestPlaces(societies, query), [societies, query]);
+  const suggestions = useMemo(() => suggestSocieties(citySocieties, query), [citySocieties, query]);
+  const places = useMemo(() => suggestPlaces(citySocieties, query), [citySocieties, query]);
   const moduleMatches = useMemo(() => searchModules(query), [query]);
   const submit = (q?: string) => navigate(`/search?tab=societies${(q ?? query).trim() ? `&q=${encodeURIComponent((q ?? query).trim())}` : ""}`);
-  const liveCount = societies.length;
+  const liveCount = citySocieties.length;
 
   return (
     <div className="premium-home bg-white text-[#1D1D1F]">
@@ -230,7 +248,7 @@ export default function HomePremium() {
             // No invented placeholder while the list loads: "240+" was both wrong and
             // visibly swapped to the real figure a moment later, which is a poor look on
             // the one number that carries the whole verification promise.
-            [liveCount ? `${liveCount}` : "—", "Verified societies"],
+            [liveCount ? `${liveCount}` : "—", `Verified societies in ${city.name}`],
             ["6", "NCR cities on the map"],
             ["0", "Fabricated listings"],
             ["1", "Simple, honest journey"],
@@ -274,10 +292,11 @@ export default function HomePremium() {
       </section>
 
       {/* ---------- FEATURED SOCIETIES ---------- */}
+      {featured.length > 0 ? (
       <section className="mx-auto max-w-[1120px] px-5 py-14 lg:py-16">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="!font-sans text-[28px] font-semibold tracking-[-0.02em] lg:text-[36px]">Top verified societies</h2>
+            <h2 className="!font-sans text-[28px] font-semibold tracking-[-0.02em] lg:text-[36px]">Top verified societies in {city.name}</h2>
             <p className="mt-2 max-w-[520px] text-[15px] leading-7 text-[#6E6E73]">Start with a society you can trust — every profile is verified, with real scores and genuine homes.</p>
           </div>
           <Link to="/societies" className="inline-flex shrink-0 items-center gap-1 text-[14px] font-semibold" style={{ color: ACCENT }}>View all <ArrowRight className="h-4 w-4" /></Link>
@@ -304,6 +323,7 @@ export default function HomePremium() {
           ))}
         </div>
       </section>
+      ) : null}
 
       {/* ---------- EXPLORE BY AREA ---------- */}
       {currentArea ? (
@@ -311,7 +331,7 @@ export default function HomePremium() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 className="!font-sans text-[28px] font-semibold tracking-[-0.02em] lg:text-[36px]">Explore homes by area</h2>
-              <p className="mt-2 max-w-[520px] text-[15px] leading-7 text-[#6E6E73]">Pick a Gurgaon micro-market and see the verified societies there — with real homes available now or on request.</p>
+              <p className="mt-2 max-w-[520px] text-[15px] leading-7 text-[#6E6E73]">Pick a {city.name} micro-market and see the verified societies there — with real homes available now or on request.</p>
             </div>
             <Link to="/societies" className="inline-flex items-center gap-1 text-[14px] font-semibold" style={{ color: ACCENT }}>All areas <ArrowRight className="h-4 w-4" /></Link>
           </div>
