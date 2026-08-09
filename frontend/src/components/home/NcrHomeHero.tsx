@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Check, MapPin, Search, Sparkles } from "lucide-react";
 import { fetchPublicSocieties, formatPublicLocation, suggestPlaces, suggestSocieties } from "@/lib/publicData";
 import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
-import { LIVE_NCR_CITY, NCR_REGION, ncrCityFrom, ncrCityStatusLabel, useNcrCities, type NcrCity } from "@/lib/ncrCities";
+import { NCR_REGION, ncrCityFrom, ncrCityStatusLabel, useNcrCities, useSelectedNcrCity, type NcrCity } from "@/lib/ncrCities";
 
 type Intent = "society" | "buy" | "rent" | "new-launch";
 
@@ -44,9 +44,9 @@ function statusDot(status: NcrCity["status"]) {
 export default function NcrHomeHero() {
   const navigate = useNavigate();
   const cities = useNcrCities();
-  const [selected, setSelected] = useState<NcrCity>(LIVE_NCR_CITY);
-  const city = ncrCityFrom(cities, selected.slug);
-  const setCity = setSelected;
+  const [city, setCity] = useSelectedNcrCity();
+  // Whichever city is actually live, so the escape hatch and its label cannot disagree.
+  const liveCity = ncrCityFrom(cities, null);
   const [intent, setIntent] = useState<Intent>("society");
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -201,8 +201,8 @@ export default function NcrHomeHero() {
                     Notify me about {city.name}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
-                  <button type="button" onClick={() => setCity(LIVE_NCR_CITY)} className="inline-flex items-center gap-2 rounded-[14px] border border-[#D8DFEC] px-5 py-3 text-[14px] font-bold text-[#233B6E] transition hover:bg-[#F5F7FB]">
-                    Explore Gurgaon (live)
+                  <button type="button" onClick={() => setCity(liveCity)} className="inline-flex items-center gap-2 rounded-[14px] border border-[#D8DFEC] px-5 py-3 text-[14px] font-bold text-[#233B6E] transition hover:bg-[#F5F7FB]">
+                    Explore {liveCity.name} (live)
                   </button>
                 </div>
               </div>

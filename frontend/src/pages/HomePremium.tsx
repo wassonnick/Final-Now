@@ -4,7 +4,7 @@ import { ArrowRight, Building2, Check, CornerDownLeft, MapPin, Search, ShieldChe
 import { fetchPublicSocieties, formatPublicLocation, suggestPlaces, suggestSocieties } from "@/lib/publicData";
 import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
 import { setPublicSeo } from "@/lib/seo";
-import { NCR_REGION, LIVE_NCR_CITY, ncrCityFrom, ncrCityStatusLabel, useNcrCities, type NcrCity } from "@/lib/ncrCities";
+import { NCR_REGION, ncrCityFrom, ncrCityStatusLabel, useNcrCities, useSelectedNcrCity, type NcrCity } from "@/lib/ncrCities";
 import { MODULES, MODULE_INTENTS, searchModules, type ModuleIntent } from "@/lib/modules";
 
 /*
@@ -31,9 +31,9 @@ function statusPill(status: NcrCity["status"]) {
 export default function HomePremium() {
   const navigate = useNavigate();
   const cities = useNcrCities();
-  const [selected, setSelected] = useState<NcrCity>(LIVE_NCR_CITY);
-  const city = ncrCityFrom(cities, selected.slug);
-  const setCity = setSelected;
+  const [city, setCity] = useSelectedNcrCity();
+  // Whichever city is actually live, so the escape hatch and its label cannot disagree.
+  const liveCity = ncrCityFrom(cities, null);
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [societies, setSocieties] = useState<any[]>([]);
@@ -204,7 +204,7 @@ export default function HomePremium() {
               <p className="mt-2 text-[15px] leading-7 text-[#6E6E73]">We verify a market before we open it — {city.name} societies are being checked to the same standard as Gurgaon. Get notified the moment it's live.</p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <Link to={`/ncr/${city.slug}`} className="rounded-full px-5 py-2.5 text-[14px] font-semibold text-white" style={{ background: ACCENT }}>Notify me about {city.name}</Link>
-                <button onClick={() => setCity(LIVE_NCR_CITY)} className="rounded-full bg-[#F5F5F7] px-5 py-2.5 text-[14px] font-semibold text-[#1D1D1F] hover:bg-[#ECECEF]">Explore Gurgaon</button>
+                <button onClick={() => setCity(liveCity)} className="rounded-full bg-[#F5F5F7] px-5 py-2.5 text-[14px] font-semibold text-[#1D1D1F] hover:bg-[#ECECEF]">Explore {liveCity.name}</button>
               </div>
             </div>
           )}

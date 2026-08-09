@@ -7,7 +7,7 @@
 // could see, and correcting the site required a deploy. Status now comes from
 // /api/ncr/cities and overlays these entries — see useNcrCities().
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { API_BASE_URL } from "@/config/api";
 
@@ -112,4 +112,48 @@ export function useNcrCities(): NcrCity[] {
 export function ncrCityFrom(cities: NcrCity[], slug?: string | null): NcrCity {
   const clean = String(slug || "").trim().toLowerCase();
   return cities.find((city) => city.slug === clean) ?? cities.find((city) => city.status === "live") ?? cities[0];
+}
+
+// Which city the visitor is browsing. One value for the whole app: the navbar chip, the
+// hero switcher and the search placeholder are three views of the same choice, and holding
+// it as component state in each of them meant picking Delhi in the hero left the navbar
+// still saying Gurgaon. Kept as a module store rather than a context so any component can
+// read it without the whole tree being wrapped.
+const SELECTION_KEY = "sf.ncr.city";
+
+function readStoredSlug(): string {
+  if (typeof window === "undefined") return LIVE_NCR_CITY.slug;
+  try {
+    return window.localStorage.getItem(SELECTION_KEY) || LIVE_NCR_CITY.slug;
+  } catch {
+    // Private browsing and blocked storage both throw here; the default is fine.
+    return LIVE_NCR_CITY.slug;
+  }
+}
+
+let selectedSlug = readStoredSlug();
+const listeners = new Set<() => void>();
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+export function setSelectedNcrCitySlug(slug: string) {
+  if (slug === selectedSlug) return;
+  selectedSlug = slug;
+  try {
+    window.localStorage.setItem(SELECTION_KEY, slug);
+  } catch {
+    // Not being able to remember the choice is survivable; not honouring it is not.
+  }
+  listeners.forEach((listener) => listener());
+}
+
+/** The selected city, resolved against live status, plus a setter every consumer shares. */
+export function useSelectedNcrCity(): [NcrCity, (city: NcrCity) => void] {
+  const cities = useNcrCities();
+  const slug = useSyncExternalStore(subscribe, () => selectedSlug, () => selectedSlug);
+
+  return [ncrCityFrom(cities, slug), (city: NcrCity) => setSelectedNcrCitySlug(city.slug)];
 }

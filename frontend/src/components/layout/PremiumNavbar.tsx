@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, MapPin, Menu, Phone, Search, User, X } from "lucide-react";
 import { MODULES, MODULE_INTENTS, type ModuleIntent } from "@/lib/modules";
-import { LIVE_NCR_CITY, ncrCityFrom, ncrCityStatusLabel, useNcrCities, type NcrCity } from "@/lib/ncrCities";
+import { ncrCityStatusLabel, useNcrCities, useSelectedNcrCity, type NcrCity } from "@/lib/ncrCities";
 import { BrandMark } from "@/components/BrandMark";
 import { fetchPublicSocieties, formatPublicLocation, suggestPlaces, suggestSocieties } from "@/lib/publicData";
 
@@ -24,11 +24,7 @@ export function PremiumNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const cities = useNcrCities();
-  const [selected, setSelected] = useState<NcrCity>(LIVE_NCR_CITY);
-  // Re-derived from the fetched list so the pill reflects the live status, not the
-  // status this city had at the moment it was picked.
-  const city = ncrCityFrom(cities, selected.slug);
-  const setCity = setSelected;
+  const [city, setCity] = useSelectedNcrCity();
   const [open, setOpen] = useState<"" | "city" | "explore" | "partner">("");
   const [mobile, setMobile] = useState(false);
   const [q, setQ] = useState("");

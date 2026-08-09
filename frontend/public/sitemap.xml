@@ -229,12 +229,6 @@
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-44</loc>
-    <lastmod>2026-08-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
     <loc>https://www.societyflats.com/gurgaon/sector-99a</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
@@ -296,6 +290,12 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/gurgaon/sector-92</loc>
+    <lastmod>2026-08-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/block-bg-5</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
@@ -380,6 +380,12 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/gurgaon/gh-9-block</loc>
+    <lastmod>2026-08-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/gurgaon/gh-8</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
@@ -494,12 +500,6 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/gurgaon/sector-108</loc>
-    <lastmod>2026-08-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.72</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/gurgaon/sector-166</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
@@ -715,6 +715,12 @@
     <priority>0.72</priority>
   </url>
   <url>
+    <loc>https://www.societyflats.com/gurgaon/sector-44</loc>
+    <lastmod>2026-08-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.72</priority>
+  </url>
+  <url>
     <loc>https://www.societyflats.com/gurgaon/block-gh-10</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
@@ -925,12 +931,6 @@
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/society/assotech-celeste-towers-noida</loc>
-    <lastmod>2026-08-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
     <loc>https://www.societyflats.com/society/ats-grandstand-gurugram</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
@@ -1053,6 +1053,12 @@
   <url>
     <loc>https://www.societyflats.com/society/bg-5a-dda-flats-delhi</loc>
     <lastmod>2026-08-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/bg-5-dda-flats-delhi</loc>
+    <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1413,6 +1419,12 @@
   <url>
     <loc>https://www.societyflats.com/society/dda-flats-gh-9-delhi</loc>
     <lastmod>2026-08-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/dda-lig-flats-gh-8-delhi</loc>
+    <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -1801,12 +1813,6 @@
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/society/express-green-noida</loc>
-    <lastmod>2026-08-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
     <loc>https://www.societyflats.com/society/ganga-anantam-gurugram</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
@@ -1832,6 +1838,12 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/society/ganga-tathastu-35-gurugram</loc>
+    <lastmod>2026-08-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.societyflats.com/society/gh-14-delhi</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
@@ -1880,12 +1892,6 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/society/godrej-zenith-gurugram</loc>
-    <lastmod>2026-08-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/gulmohar-garden-noida</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
@@ -1945,13 +1951,13 @@
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/society/ireo-victory-valley</loc>
+    <loc>https://www.societyflats.com/society/ireo-victory-valley-gurugram</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/society/ireo-victory-valley-gurugram</loc>
+    <loc>https://www.societyflats.com/society/ireo-victory-valley</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
@@ -1964,12 +1970,6 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/society/iris-farms-gurugram</loc>
-    <lastmod>2026-08-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/kartik-kunj-apartments-noida</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
@@ -2143,12 +2143,6 @@
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/society/omaxe-royal-residency-noida</loc>
-    <lastmod>2026-08-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
     <loc>https://www.societyflats.com/society/paras-floret-gurugram</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
@@ -2179,12 +2173,6 @@
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://www.societyflats.com/society/pearls-gateway-towers-noida</loc>
-    <lastmod>2026-08-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
     <loc>https://www.societyflats.com/society/pioneer-advait-gurugram</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
@@ -2204,12 +2192,6 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/society/pioneer-park-presidia-gurugram</loc>
-    <lastmod>2026-08-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/saba-apartments-noida</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
@@ -2630,12 +2612,6 @@
   </url>
   <url>
     <loc>https://www.societyflats.com/society/ss-the-leaf-gurugram</loc>
-    <lastmod>2026-08-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://www.societyflats.com/society/stellar-greens-noida</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
