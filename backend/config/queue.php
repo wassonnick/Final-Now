@@ -40,7 +40,13 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+            // MUST exceed the longest job timeout, or the queue reclaims a job that is
+            // still legitimately running: at 90s a 240s completion was handed to a second
+            // worker, attempts passed tries=1, and it was marked failed — sometimes while
+            // the original was still working and about to succeed. Every draft completion
+            // that took over 90 seconds, which is most of them once a grounded market
+            // search is involved, died this way. Longest job timeout today is 300s.
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 900),
             'after_commit' => false,
         ],
 
