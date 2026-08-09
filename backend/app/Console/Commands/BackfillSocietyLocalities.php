@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Locality;
 use App\Models\Society;
 use App\Services\Ncr\LocalityNameService;
+use App\Services\Ncr\LocalityResolver;
 use Illuminate\Console\Command;
 
 /**
@@ -13,8 +14,8 @@ use Illuminate\Console\Command;
  *
  * Locality creation was missing from the import path entirely — not gated, not deferred,
  * simply absent — so every society before that fix carries a locality NAME with no row
- * behind it. City launch readiness counts published localities, which is why a city could
- * never reach the depth its own rule demanded.
+ * behind it. City launch readiness counts localities, which is why a city could never
+ * reach the depth its own rule demanded.
  *
  * Reports by default and writes only with --apply, because it creates rows in a live
  * catalogue and the preview is the whole point.
@@ -25,7 +26,7 @@ class BackfillSocietyLocalities extends Command
 
     protected $description = 'Create and link locality rows for societies imported before the importer created them.';
 
-    public function handle(LocalityNameService $names): int
+    public function handle(LocalityNameService $names, LocalityResolver $resolver): int
     {
         $apply = (bool) $this->option('apply');
 
@@ -34,8 +35,9 @@ class BackfillSocietyLocalities extends Command
             ->when($this->option('city'), fn ($q, $city) => $q->where('city', $city))
             ->get(['id', 'name', 'locality', 'sector', 'city', 'city_id', 'state']);
 
-        // Group by the locality that would be created, so the preview reads as the set of
-        // rows to be added rather than a list of societies.
+        // Grouped by CITY and slug, not slug alone. Sector 44 is a different place in
+        // Gurugram and in Noida, and keying on the slug is exactly how eight Noida
+        // societies ended up on a Gurugram sector page.
         $planned = [];
         $skipped = 0;
 
@@ -43,29 +45,32 @@ class BackfillSocietyLocalities extends Command
             $raw = trim((string) ($society->locality ?: $society->sector));
 
             // Same rules the importer now applies, so a re-run cannot recreate the ad copy
-            // and addresses that the normalise pass has just cleared out.
+            // and addresses that the normalise pass clears out.
             if ($raw === '' || $names->rejectionReason($raw, (string) $society->city) !== null) {
                 $skipped++;
 
                 continue;
             }
 
-            $name = $names->canonicalise($raw);
             $slug = $names->slugFor($raw);
-            $planned[$slug] ??= [
-                'name' => $name,
+            $city = $society->city ?: 'Gurgaon';
+            $key = strtolower($city).'|'.$slug;
+
+            $planned[$key] ??= [
+                'name' => $names->canonicalise($raw),
                 'slug' => $slug,
-                'city' => $society->city ?: 'Gurgaon',
-                'city_id' => $society->city_id,
-                'state' => $society->state ?: 'Haryana',
-                'societies' => 0,
-                'exists' => Locality::where('slug', $slug)->exists(),
+                'city' => $city,
+                'societies' => [],
+                'exists' => Locality::where('slug', $slug)
+                    ->when($society->city_id, fn ($q) => $q->where('city_id', $society->city_id))
+                    ->when(! $society->city_id, fn ($q) => $q->where('city', $city))
+                    ->exists(),
             ];
-            $planned[$slug]['societies']++;
+            $planned[$key]['societies'][] = $society;
         }
 
         if ($planned === []) {
-            $this->info('Every society with a locality name already has a locality row.');
+            $this->info('Every society with a usable locality name already has a locality row.');
 
             return self::SUCCESS;
         }
@@ -73,7 +78,8 @@ class BackfillSocietyLocalities extends Command
         $this->table(
             ['Locality', 'City', 'Societies', 'Already exists'],
             collect($planned)->map(fn ($row) => [
-                $row['name'], $row['city'], $row['societies'], $row['exists'] ? 'yes — will link only' : 'no — will create',
+                $row['name'], $row['city'], count($row['societies']),
+                $row['exists'] ? 'yes — will link only' : 'no — will create',
             ])->all(),
         );
 
@@ -91,34 +97,24 @@ class BackfillSocietyLocalities extends Command
         $created = 0;
         $linked = 0;
 
-        foreach ($planned as $slug => $row) {
-            $locality = Locality::firstOrCreate(
-                ['slug' => $slug],
-                [
-                    'name' => $row['name'],
-                    'city_id' => $row['city_id'],
-                    'city' => $row['city'],
-                    'state' => $row['state'],
-                    // Same rule the importer uses: published, because a locality page is
-                    // only reachable once its city is launched, so this opens nothing.
-                    'published_status' => config('features.locality_auto_publish', true) ? 'published' : 'draft',
-                ],
-            );
+        foreach ($planned as $row) {
+            foreach ($row['societies'] as $society) {
+                $before = Locality::count();
 
-            if ($locality->wasRecentlyCreated) {
-                $created++;
+                // Resolved per society rather than once per group, so each one is matched
+                // against its own city exactly as an import would match it.
+                $locality = $resolver->resolve(
+                    (string) ($society->locality ?: $society->sector),
+                    ['city_id' => $society->city_id, 'city' => $society->city, 'state' => $society->state],
+                );
+
+                if (! $locality) {
+                    continue;
+                }
+
+                $created += Locality::count() > $before ? 1 : 0;
+                $linked += Society::where('id', $society->id)->update(['locality_id' => $locality->id]);
             }
-
-            // Matched through the same canonicaliser rather than a LOWER() comparison,
-            // because the society still stores the raw text: "sec-36" has to find its way
-            // to Sector 36 here exactly as it would during an import.
-            $ids = Society::whereNull('locality_id')
-                ->when($this->option('city'), fn ($q, $city) => $q->where('city', $city))
-                ->get(['id', 'locality', 'sector'])
-                ->filter(fn ($s) => $names->slugFor((string) ($s->locality ?: $s->sector)) === $slug)
-                ->pluck('id');
-
-            $linked += $ids->isEmpty() ? 0 : Society::whereIn('id', $ids)->update(['locality_id' => $locality->id]);
         }
 
         $this->info("Created {$created} locality(ies) and linked {$linked} society(ies).");

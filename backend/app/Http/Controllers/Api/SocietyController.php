@@ -225,38 +225,19 @@ class SocietyController extends Controller {
           return $p;
       }
 
-      $names = app(\App\Services\Ncr\LocalityNameService::class);
+      // The resolver holds every rule that used to live here: it rejects ad copy and
+      // addresses, canonicalises spelling so "sec-36" finds Sector 36, applies the known
+      // city corrections, and — the part this was missing — scopes the lookup to the
+      // society's own city, because Sector 44 exists in Gurugram AND in Noida.
+      $locality = app(\App\Services\Ncr\LocalityResolver::class)->resolve($name, [
+          'city_id' => $p['city_id'] ?? null,
+          'city' => $p['city'] ?? null,
+          'state' => $p['state'] ?? null,
+      ]);
 
-      // Sources write ad copy and addresses into this field — "Premium Gurgaon Corridor",
-      // "Dwarka Expressway, Village Babupur" — and the first run of the backfill turned
-      // every one of them into a published page. The society keeps the text; it just does
-      // not become a locality, because a thin page competing with the real one is worse
-      // than no page at all.
-      if ($names->rejectionReason($name, (string) ($p['city'] ?? '')) !== null) {
+      if (! $locality) {
           return $p;
       }
-
-      // Canonical spelling before the lookup, so "sec-36" finds the existing Sector 36
-      // rather than founding a rival.
-      $canonical = $names->canonicalise($name);
-      $slug = $names->slugFor($name);
-
-      // A known Delhi locality arriving without a city would otherwise take the Gurgaon
-      // default and be wrong on the day it is created.
-      $correction = config('locality_corrections')[$slug] ?? null;
-
-      $locality = \App\Models\Locality::firstOrCreate(
-          ['slug' => $slug],
-          [
-              'name' => $canonical,
-              // Taken from the society rather than assumed: a hardcoded city is how
-              // Delhi localities end up filed under Gurgaon.
-              'city_id' => $p['city_id'] ?? null,
-              'city' => $correction['city'] ?? $p['city'] ?? 'Gurgaon',
-              'state' => $correction['state'] ?? $p['state'] ?? 'Haryana',
-              'published_status' => config('features.locality_auto_publish', true) ? 'published' : 'draft',
-          ],
-      );
 
       $p['locality_id'] = $locality->id;
 

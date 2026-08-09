@@ -45,9 +45,16 @@ class NormalizeLocalities extends Command
 
             $actions = [];
 
-            // Merge first: everything else applies to whichever row survives.
+            // Merge first: everything else applies to whichever row survives. Scoped to the
+            // same city, because Noida's "sec-36" must become Noida's Sector 36 and never
+            // be absorbed into Gurugram's.
             $winner = $slug !== $locality->slug
-                ? Locality::where('slug', $slug)->where('id', '!=', $locality->id)->first()
+                ? Locality::where('slug', $slug)
+                    ->where('id', '!=', $locality->id)
+                    ->where(fn ($q) => $locality->city_id
+                        ? $q->where('city_id', $locality->city_id)
+                        : $q->where('city', $locality->city))
+                    ->first()
                 : null;
 
             if ($winner) {
