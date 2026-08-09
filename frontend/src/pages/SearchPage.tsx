@@ -2,6 +2,7 @@
 import { trackEvent, trackLeadIntent, trackLeadSubmitted, trackResultClicked, trackSearchPerformed } from "@/lib/analytics";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { rowIsInCity, useSelectedNcrCity } from "@/lib/ncrCities";
 import {
   ArrowRight,
   Bot,
@@ -59,7 +60,9 @@ const saleListingTypes = [
   "Sell Listing",
   "Builder Floor",
 ];
-const quickLocalities = [
+// Used only until the catalogue has loaded; the real list is derived per city below,
+// because a Delhi search offering "Sohna Road" is worse than offering nothing.
+const fallbackLocalities = [
   "Golf Course Road",
   "Sohna Road",
   "Dwarka Expressway",
@@ -513,8 +516,37 @@ export function SearchPage() {
   );
   const [isSubmittingLead, setIsSubmittingLead] = useState(false);
 
-  const [societies, setSocieties] = useState<any[]>([]);
-  const [properties, setProperties] = useState<any[]>([]);
+  const [allSocieties, setAllSocieties] = useState<any[]>([]);
+  const [allProperties, setAllProperties] = useState<any[]>([]);
+  const [city] = useSelectedNcrCity();
+
+  // Search is scoped to the city in the header. The page fetched the whole region and
+  // filtered by nothing, so a Gurgaon search returned Paschim Vihar flats — the city chip
+  // was decorative. Applied here rather than at each consumer so every list, count, map
+  // pin and suggestion below is about one city by construction.
+  const societies = useMemo(() => allSocieties.filter((row) => rowIsInCity(row, city)), [allSocieties, city]);
+  const properties = useMemo(() => allProperties.filter((row) => rowIsInCity(row, city)), [allProperties, city]);
+
+  // The busiest micro-markets in the selected city, by how much verified inventory each
+  // actually holds — so the shortcuts always lead somewhere populated.
+  const quickLocalities = useMemo(() => {
+    const counts = new Map<string, { label: string; n: number }>();
+    for (const row of societies) {
+      const area = String(row?.locality || row?.sector || "").trim();
+      if (!area) continue;
+      const key = area.toLowerCase();
+      const seen = counts.get(key) ?? { label: area, n: 0 };
+      if (area !== key && seen.label === seen.label.toLowerCase()) seen.label = area;
+      seen.n += 1;
+      counts.set(key, seen);
+    }
+    const derived = [...counts.values()]
+      .sort((a, b) => b.n - a.n)
+      .slice(0, 5)
+      .map(({ label }) => label.replace(/\b[a-z]/g, (c) => c.toUpperCase()));
+
+    return derived.length > 0 ? derived : fallbackLocalities;
+  }, [societies]);
   const [aiMatches, setAiMatches] = useState<AdvisorMatch[]>([]);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [dataStatus, setDataStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -526,14 +558,14 @@ export function SearchPage() {
     Promise.allSettled([fetchPublicSocieties(), fetchPublicProperties()]).then(
       ([societiesResult, propertiesResult]) => {
         if (societiesResult.status === "fulfilled") {
-          setSocieties(societiesResult.value);
+          setAllSocieties(societiesResult.value);
         } else {
           societiesFailed = true;
           console.error("Societies fetch failed:", societiesResult.reason);
         }
 
         if (propertiesResult.status === "fulfilled") {
-          setProperties(filterPublicLiveProperties(propertiesResult.value));
+          setAllProperties(filterPublicLiveProperties(propertiesResult.value));
         } else {
           propertiesFailed = true;
           console.error("Properties fetch failed:", propertiesResult.reason);
@@ -1348,8 +1380,8 @@ export function SearchPage() {
                   </p>
                   <h2 className="mt-0.5 line-clamp-2 text-base font-black text-navy-950 md:mt-0 md:text-xl">
                     {query
-                      ? `Matches for “${query}”`
-                      : "Published SocietyFlats inventory"}
+                      ? `Matches for “${query}” in ${city.name}`
+                      : `Published SocietyFlats inventory in ${city.name}`}
                   </h2>
                 </div>
                 <div className="hidden flex-wrap gap-2 md:flex">
