@@ -12,7 +12,21 @@ class BackfillSocietyLocalitiesTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * A society as it existed before the model linked localities itself: locality text, no
+     * row behind it. Stripped with the query builder so no model event puts it back.
+     */
     private function society(string $name, string $locality, string $city): Society
+    {
+        $society = $this->createSociety($name, $locality, $city);
+
+        Society::where('id', $society->id)->update(['locality_id' => null]);
+        Locality::query()->delete();
+
+        return $society->fresh();
+    }
+
+    private function createSociety(string $name, string $locality, string $city): Society
     {
         return Society::create([
             'name' => $name,
