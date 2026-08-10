@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AiConversation;
 use App\Models\Society;
 use App\Services\Ai\SocietyAssistantService;
 use App\Services\Ai\SocietyMatchService;
@@ -83,5 +84,63 @@ class AiChatTest extends TestCase
             ->assertJsonPath('entities.0.url', '/society/published-heights');
 
         $this->assertDatabaseHas('ai_messages', ['role' => 'assistant']);
+    }
+
+    /**
+     * The abandonment beacon has to go out as text/plain — a JSON content type makes the
+     * cross-origin request non-simple, and the preflight cannot complete during unload.
+     * Every conversation showed "no exit recorded" because of it.
+     */
+    public function test_an_outcome_beacon_sent_as_text_plain_is_recorded(): void
+    {
+        $token = $this->openConversation();
+
+        $this->call(
+            'POST',
+            "/api/ai/chat/{$token}/outcome",
+            [], [], [],
+            ['CONTENT_TYPE' => 'text/plain;charset=UTF-8'],
+            json_encode(['outcome' => 'abandoned']),
+        )->assertSuccessful();
+
+        $this->assertSame('abandoned', AiConversation::query()->latest('id')->value('outcome'));
+    }
+
+    /** The normal JSON path must keep working exactly as before. */
+    public function test_an_outcome_sent_as_json_is_still_recorded(): void
+    {
+        $token = $this->openConversation();
+
+        $this->postJson("/api/ai/chat/{$token}/outcome", ['outcome' => 'society_opened', 'detail' => 'published-heights'])
+            ->assertSuccessful();
+
+        $conversation = AiConversation::query()->latest('id')->firstOrFail();
+        $this->assertSame('society_opened', $conversation->outcome);
+        $this->assertSame('published-heights', $conversation->outcome_detail);
+    }
+
+    /** A body that is neither JSON nor decodable must be rejected, not silently accepted. */
+    public function test_a_malformed_beacon_body_is_rejected(): void
+    {
+        $token = $this->openConversation();
+
+        $this->call(
+            'POST',
+            "/api/ai/chat/{$token}/outcome",
+            [], [], [],
+            ['CONTENT_TYPE' => 'text/plain', 'HTTP_ACCEPT' => 'application/json'],
+            'not json at all',
+        )->assertStatus(422);
+    }
+
+    private function openConversation(): string
+    {
+        $response = $this->postJson('/api/ai/chat', [
+            'message' => 'Tell me about living in Published Heights',
+            'entry_source' => 'advisor_page',
+            'entry_label' => 'handoff_query',
+        ])->assertSuccessful();
+
+        return (string) $response->json('conversation_token');
     }
 }

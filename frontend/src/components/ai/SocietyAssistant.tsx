@@ -24,6 +24,46 @@ type AssistantAction =
   | { kind: 'lead'; label: string; intent: 'callback' | 'visit'; icon: 'callback' | 'visit' };
 
 const TOKEN_KEY = 'sf_assistant_token_v1';
+const TOKEN_SEEN_KEY = 'sf_assistant_token_seen_v1';
+// A conversation is a sitting, not an account. The token used to live forever, so someone
+// returning weeks later resumed a thread they no longer remembered — and every new question
+// they clicked was appended to it or dropped entirely.
+const TOKEN_TTL_MS = 60 * 60 * 1000;
+
+function clearStoredToken() {
+  try {
+    window.localStorage.removeItem(TOKEN_KEY);
+    window.localStorage.removeItem(TOKEN_SEEN_KEY);
+  } catch {
+    // Blocked storage is survivable — the conversation just will not resume.
+  }
+}
+
+function readStoredToken(): string {
+  try {
+    const value = window.localStorage.getItem(TOKEN_KEY) || '';
+    if (!value) return '';
+    // No timestamp means a token written before conversations expired at all, so its age is
+    // unknowable and possibly months. Treat it as stale rather than resume it.
+    const seen = Number(window.localStorage.getItem(TOKEN_SEEN_KEY) || 0);
+    if (!seen || Date.now() - seen > TOKEN_TTL_MS) {
+      clearStoredToken();
+      return '';
+    }
+    return value;
+  } catch {
+    return '';
+  }
+}
+
+function writeStoredToken(value: string) {
+  try {
+    window.localStorage.setItem(TOKEN_KEY, value);
+    window.localStorage.setItem(TOKEN_SEEN_KEY, String(Date.now()));
+  } catch {
+    // As above: worth trying, not worth failing over.
+  }
+}
 const THINKING = ['Reading your needs…', 'Searching verified societies…', 'Weighing scores, budget and location…', 'Shortlisting the best fits…'];
 const STARTERS = [
   '3 BHK rental near Golf Course Road under ₹1 lakh, family with kids',
@@ -103,7 +143,7 @@ export function SocietyAssistant({ initialQuery, entrySource = 'assistant' }: { 
   const firedInitial = useRef(false);
   const entryLabel = useRef<string>('typed');
   const outcomeSent = useRef<string>('');
-  const token = () => window.localStorage.getItem(TOKEN_KEY) || '';
+  const token = () => readStoredToken();
 
   /**
    * Tell the backend how this conversation ended. Fired on the moments that matter
@@ -119,27 +159,49 @@ export function SocietyAssistant({ initialQuery, entrySource = 'assistant' }: { 
     const url = `${API_BASE_URL}/ai/chat/${t}/outcome`;
     const body = JSON.stringify({ outcome, detail });
     if (beacon && typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));
+      // text/plain, not application/json. A JSON content type makes this a non-simple
+      // cross-origin request, and the preflight it needs cannot complete while the page is
+      // unloading — which is why every conversation showed "no exit recorded". The server
+      // decodes the body by hand.
+      navigator.sendBeacon(url, new Blob([body], { type: 'text/plain;charset=UTF-8' }));
       return;
     }
     void fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true }).catch(() => undefined);
   };
 
   useEffect(() => {
-    const saved = token();
-    // Auto-fire a query handed off from a link (e.g. the homepage "Ask SocietyFlats AI" chips),
-    // but only for a fresh visitor — don't hijack an existing conversation.
-    if (!saved) {
-      const q = (initialQuery || '').trim();
-      if (q && !firedInitial.current) {
+    let cancelled = false;
+    const q = (initialQuery || '').trim();
+
+    const open = async () => {
+      const saved = token();
+
+      // Restore first, so a handed-off question threads onto the conversation already in
+      // progress instead of racing it.
+      if (saved) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/ai/chat/${saved}`);
+          const json = response.ok ? await response.json() : null;
+          if (!cancelled && json?.data?.length) {
+            setMessages(json.data.map((m: any) => ({ role: m.role, content: m.content, matches: m.role === 'assistant' ? m.context_entities || [] : undefined, suggested: m.role === 'assistant' ? m.suggested_replies || [] : undefined })));
+          }
+        } catch {
+          // A transcript we could not fetch must not swallow the question below.
+        }
+      }
+
+      // Clicking "Ask AI about this society" is a question, not a navigation. It used to
+      // fire only when no conversation existed, so every returning visitor's click landed
+      // on a stale transcript and was silently discarded — no answer, no error.
+      if (!cancelled && q && !firedInitial.current) {
         firedInitial.current = true;
         void send(q, 'handoff_query');
       }
-      return;
-    }
-    fetch(`${API_BASE_URL}/ai/chat/${saved}`).then((r) => (r.ok ? r.json() : null)).then((j) => {
-      if (j?.data?.length) setMessages(j.data.map((m: any) => ({ role: m.role, content: m.content, matches: m.role === 'assistant' ? m.context_entities || [] : undefined, suggested: m.role === 'assistant' ? m.suggested_replies || [] : undefined })));
-    }).catch(() => undefined);
+    };
+
+    void open();
+
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery]);
   // Scroll only the message container, never the whole window (the assistant is embedded on
@@ -206,7 +268,7 @@ export function SocietyAssistant({ initialQuery, entrySource = 'assistant' }: { 
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.message || 'The assistant is unavailable right now.');
-      if (json.conversation_token) window.localStorage.setItem(TOKEN_KEY, json.conversation_token);
+      if (json.conversation_token) writeStoredToken(json.conversation_token);
       setMessages((cur) => [...cur, { role: 'assistant', content: json.reply, matches: json.matches || [], suggested: json.suggested_replies || [] }]);
       trackEvent('ai_answer_shown', {
         assistant: 'society_assistant',
@@ -222,7 +284,7 @@ export function SocietyAssistant({ initialQuery, entrySource = 'assistant' }: { 
 
   const reset = () => {
     reportOutcome('reset');
-    window.localStorage.removeItem(TOKEN_KEY);
+    clearStoredToken();
     outcomeSent.current = '';
     entryLabel.current = 'typed';
     setMessages([]); setError(''); setLeadAction(null);

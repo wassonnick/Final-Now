@@ -76,6 +76,18 @@ class AiChatController extends Controller
      */
     public function outcome(Request $request, string $token): JsonResponse
     {
+        // Sent by navigator.sendBeacon as the page unloads. It has to go out as text/plain:
+        // a JSON content type makes the request non-simple, and the cross-origin preflight
+        // that then applies cannot complete while the page is going away. So the body
+        // arrives as an unparsed string and Laravel's input bag is empty.
+        if (! $request->isJson() && trim((string) $request->getContent()) !== '') {
+            $decoded = json_decode((string) $request->getContent(), true);
+
+            if (is_array($decoded)) {
+                $request->merge($decoded);
+            }
+        }
+
         $data = $request->validate([
             'outcome' => ['required', 'string', 'in:'.implode(',', AiConversation::OUTCOMES)],
             'detail' => ['nullable', 'string', 'max:160'],
