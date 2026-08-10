@@ -335,9 +335,16 @@ export function AdminLocationsPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">NCR-8 city readiness QA</p>
-                  <h3 className="mt-1 text-xl font-black text-slate-950">City launch blockers, still admin-only</h3>
+                  <h3 className="mt-1 text-xl font-black text-slate-950">City launch readiness</h3>
                 </div>
-                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-700">No sitemap change</span>
+                {/* Counted, not asserted: "No sitemap change" stayed on the page after
+                    approvals started putting cities INTO the sitemap. */}
+                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-700">
+                  {(() => {
+                    const live = audit.city_readiness.filter((row: any) => row.indexing_approved).length;
+                    return live === 0 ? "No city in the sitemap yet" : `${live} of ${audit.city_readiness.length} cities in the sitemap`;
+                  })()}
+                </span>
               </div>
               <div className="mt-4 overflow-auto">
                 <table className="min-w-[920px] w-full text-left text-sm">

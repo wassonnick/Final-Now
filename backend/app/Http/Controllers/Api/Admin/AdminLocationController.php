@@ -556,7 +556,7 @@ class AdminLocationController extends Controller
             'launch_approved_at' => $approval?->approved_at?->toISOString(),
             'launch_approval_notes' => $approval?->approval_notes,
             'recommended_status' => $status,
-            'next_actions' => $this->cityNextActions($city, $publicSocieties, $localities, $indexingApproved, $unmappedPublicSocietiesByText + $unmappedPublicPropertiesByText),
+            'next_actions' => $this->cityNextActions($city, $publicSocieties, $localities, $indexingApproved, $unmappedPublicSocietiesByText + $unmappedPublicPropertiesByText, $policy->isIndexingEnabled()),
         ];
     }
 
@@ -571,7 +571,15 @@ class AdminLocationController extends Controller
         return (string) ($request->header('X-Admin-Email') ?: 'admin');
     }
 
-    private function cityNextActions(City $city, int $publicSocieties, int $localities, bool $indexingApproved, int $unmappedPublicRows): array
+    /**
+     * What is actually left to do, in the city's own words.
+     *
+     * The fallback used to read "Ready for manual city launch review; do not index until
+     * final approval" — reachable only once the city WAS approved, so it told an operator
+     * not to index a city that was already in the sitemap. There is no manual step after
+     * approval: LiveSitemapService reads the same approval this page writes.
+     */
+    private function cityNextActions(City $city, int $publicSocieties, int $localities, bool $indexingApproved, int $unmappedPublicRows, bool $indexingFlagEnabled = true): array
     {
         $actions = [];
 
@@ -587,12 +595,18 @@ class AdminLocationController extends Controller
             $actions[] = 'Add draft/review localities for the main sectors and corridors.';
         }
 
-        if (! $indexingApproved) {
-            $actions[] = 'Keep noindex and out of sitemap until city launch is explicitly approved.';
+        // The global flag gates every city at once, so naming it beats reporting six
+        // cities as individually unapproved when one switch is the cause.
+        if (! $indexingFlagEnabled) {
+            $actions[] = 'NCR_CITY_INDEXING_ENABLED is off, so no city can be approved for indexing yet.';
+        } elseif (! $indexingApproved) {
+            $actions[] = 'Held out of the sitemap and noindexed until launch is approved.';
         }
 
         if ($actions === []) {
-            $actions[] = 'Ready for manual city launch review; do not index until final approval.';
+            // Only reachable when the city is content-ready AND approved, which is the one
+            // state with nothing left to do.
+            $actions[] = 'Launched: in the sitemap and open to indexing. Revoke to pull it back.';
         }
 
         return $actions;
