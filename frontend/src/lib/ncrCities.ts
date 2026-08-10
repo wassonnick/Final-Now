@@ -53,6 +53,49 @@ export function ncrCityStatusLabel(status: NcrCityStatus): string {
 let inFlight: Promise<NcrCity[]> | null = null;
 let resolved: NcrCity[] | null = null;
 
+// The last statuses the backend gave us, kept so the first paint does not have to guess.
+//
+// The selected city was persisted and its status was not, which is the asymmetry behind
+// the flash: a returning visitor on Delhi rendered the static array's "Launching", panel
+// and all, and then swapped to the live search box a moment later. A remembered real
+// status is a better opening claim than a hardcoded stale one.
+const CITIES_CACHE_KEY = "sf.ncr.cities.v1";
+const CITIES_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * The statuses the first render will open on, before any request completes. Exported so the
+ * opening claim can be inspected directly — a flash lasts a few hundred milliseconds, which
+ * is too short to catch by sampling the page after it has loaded.
+ */
+export function firstPaintNcrCities(): NcrCity[] {
+  return resolved ?? readCachedCities() ?? NCR_CITIES;
+}
+
+function readCachedCities(): NcrCity[] | null {
+  try {
+    const raw = window.localStorage.getItem(CITIES_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { at?: number; data?: Array<{ slug?: string; status?: string }> };
+    // Capped rather than trusted forever: if the API has been unreachable for a week, a
+    // stale claim about what is live stops being better than the fallback.
+    if (!parsed?.at || Date.now() - parsed.at > CITIES_CACHE_TTL_MS) return null;
+    return Array.isArray(parsed.data) ? overlay(parsed.data) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedCities(cities: NcrCity[]) {
+  try {
+    window.localStorage.setItem(
+      CITIES_CACHE_KEY,
+      JSON.stringify({ at: Date.now(), data: cities.map((city) => ({ slug: city.slug, status: city.status })) }),
+    );
+  } catch {
+    // Not remembering costs a flash on the next load, nothing more.
+  }
+}
+
 function overlay(remote: Array<{ slug?: string; status?: string }>): NcrCity[] {
   const bySlug = new Map(
     remote
@@ -82,6 +125,7 @@ export async function fetchNcrCities(): Promise<NcrCity[]> {
     .catch(() => NCR_CITIES)
     .then((cities) => {
       resolved = cities;
+      writeCachedCities(cities);
       return cities;
     });
 
@@ -89,12 +133,17 @@ export async function fetchNcrCities(): Promise<NcrCity[]> {
 }
 
 /**
- * The market map with live status. Renders immediately from the static list, then swaps in
- * whatever the backend says — so the first paint is never blank and a failed request just
- * leaves the fallback in place.
+ * The market map with live status.
+ *
+ * Opens on the last real statuses we were told, falling back to the static list only when
+ * there is nothing remembered, then revalidates from the backend. So the first paint is
+ * never blank, never a stale guess for a returning visitor, and a failed request leaves
+ * whatever we last knew in place.
  */
 export function useNcrCities(): NcrCity[] {
-  const [cities, setCities] = useState<NcrCity[]>(resolved ?? NCR_CITIES);
+  // Read synchronously so the very first render already has real statuses; the fetch below
+  // still runs every load, so an approval made since is picked up within the second.
+  const [cities, setCities] = useState<NcrCity[]>(firstPaintNcrCities);
 
   useEffect(() => {
     let alive = true;
