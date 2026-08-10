@@ -57,6 +57,7 @@ const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage').then((m
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })));
 const AdminSocietiesPage = lazy(() => import('@/pages/admin/AdminSocietiesPage').then((module) => ({ default: module.AdminSocietiesPage })));
 const AdminVerifiedSocietyImporterPage = lazy(() => import('@/pages/admin/AdminVerifiedSocietyImporterPage').then((module) => ({ default: module.AdminVerifiedSocietyImporterPage })));
+const AdminSocietyDiscoveryPage = lazy(() => import('@/pages/admin/AdminSocietyDiscoveryPage').then((module) => ({ default: module.AdminSocietyDiscoveryPage })));
 const AdminSocietyFormPage = lazy(() => import('@/pages/admin/AdminSocietyFormPage').then((module) => ({ default: module.AdminSocietyFormPage })));
 const AdminLocationsPage = lazy(() => import('@/pages/admin/AdminLocationsPage').then((module) => ({ default: module.AdminLocationsPage })));
 const AdminSocietyIntelligencePage = lazy(() => import('@/pages/admin/AdminSocietyIntelligencePage').then((module) => ({ default: module.AdminSocietyIntelligencePage })));
@@ -227,6 +228,7 @@ function AppShell() {
             <Route path="/admin/societies/import" element={<Navigate to="/admin/verified-society-importer" replace />} />
             <Route path="/admin/society-importer" element={<Navigate to="/admin/verified-society-importer" replace />} />
             <Route path="/admin/verified-society-importer" element={<ProtectedAdminRoute><AdminVerifiedSocietyImporterPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/discovery" element={<ProtectedAdminRoute><AdminSocietyDiscoveryPage /></ProtectedAdminRoute>} />
             {/* Reachable whether or not multi-city is switched on: this is the tool that prepares
                 the data the flag depends on, so gating it behind that flag made the setup
                 order impossible — you needed the page to link cities before the filters

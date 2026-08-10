@@ -1,35 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import {
-  BarChart3,
-  Bot,
-  BriefcaseBusiness,
-  Building2,
-  CalendarCheck,
-  Camera,
-  ClipboardList,
-  FileSearch,
-  Gauge,
-  Gift,
-  Globe2,
-  Home,
-  Image as ImageIcon,
-  Import,
-  LineChart,
-  LogOut,
-  MailCheck,
-  MapPinned,
-  Megaphone,
-  MessageSquareText,
-  Palette,
-  Search,
-  Settings,
-  ShieldCheck,
-  Sparkles,
-  Star,
-  Target,
-  Users,
-  Wand2,
-} from "lucide-react";
+import { BarChart3, Bot, BriefcaseBusiness, Building2, CalendarCheck, Camera, ClipboardList, Compass, FileSearch, Gauge, Gift, Globe2, Home, Image as ImageIcon, Import, LineChart, LogOut, MailCheck, MapPinned, Megaphone, MessageSquareText, Palette, Search, Settings, ShieldCheck, Sparkles, Star, Target, Users, Wand2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -52,6 +22,7 @@ const groups: Array<{ heading: string | null; links: Array<{ label: string; href
     links: [
       { label: "Societies", href: "/admin/societies", icon: Building2 },
       { label: "Society Importer", href: "/admin/verified-society-importer", icon: Import },
+      { label: "Discovery", href: "/admin/discovery", icon: Compass },
       { label: "Properties", href: "/admin/properties", icon: Home },
       { label: "Owner Listings", href: "/admin/owner-listings", icon: ClipboardList },
     ],

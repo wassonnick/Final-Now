@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\Admin\AdminSeoAutopilotController;
 use App\Http\Controllers\Api\Admin\AdminSiteVisitController;
 use App\Http\Controllers\Api\Admin\AdminSocialController;
 use App\Http\Controllers\Api\Admin\AdminSocietyComparePageController;
+use App\Http\Controllers\Api\Admin\AdminSocietyDiscoveryController;
 use App\Http\Controllers\Api\Admin\AdminSocietyIntelligenceController;
 use App\Http\Controllers\Api\Admin\AdminSocietySeoContentController;
 use App\Http\Controllers\Api\Admin\AdminSocietySeoReportController;
@@ -240,6 +241,12 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::post('/societies/publish-fields/backfill', [SocietyController::class, 'backfillPublishFields']);
     Route::post('/societies/google-places-image-references/bulk', [SocietyController::class, 'bulkGooglePlacesImageReferences']);
     Route::post('/societies/{society}/google-places-image-reference', [SocietyController::class, 'googlePlacesImageReference']);
+    // Discovery: what the market has that the catalogue does not.
+    Route::get('/discovery/candidates', [AdminSocietyDiscoveryController::class, 'index']);
+    Route::post('/discovery/scan', [AdminSocietyDiscoveryController::class, 'scan']);
+    Route::post('/discovery/candidates/{candidate}/dismiss', [AdminSocietyDiscoveryController::class, 'dismiss']);
+    Route::post('/discovery/candidates/{candidate}/restore', [AdminSocietyDiscoveryController::class, 'restore']);
+    Route::post('/discovery/candidates/{candidate}/import', [AdminSocietyDiscoveryController::class, 'import']);
     Route::get('/import/jobs', [SocietyImportController::class, 'jobs']);
     Route::get('/import/jobs/{job}', [SocietyImportController::class, 'show']);
     Route::delete('/import/jobs/{job}', [SocietyImportController::class, 'destroy']);
