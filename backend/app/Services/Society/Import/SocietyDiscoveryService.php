@@ -5,6 +5,7 @@ namespace App\Services\Society\Import;
 use App\Models\City;
 use App\Models\Society;
 use App\Models\SocietyImportCandidate;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -252,8 +253,8 @@ class SocietyDiscoveryService
                 'normalised_name' => SocietyImportCandidate::normalise($name),
                 'address' => (string) ($place['formattedAddress'] ?? ''),
                 'area' => $area,
-                'city' => $city?->name,
-                'city_id' => $city?->id,
+                'city' => $city?->name ?: $this->cityFromAddress((string) ($place['formattedAddress'] ?? '')),
+                'city_id' => $city?->id ?: $this->cityIdFromAddress((string) ($place['formattedAddress'] ?? '')),
                 'latitude' => data_get($place, 'location.latitude'),
                 'longitude' => data_get($place, 'location.longitude'),
                 'types' => (array) ($place['types'] ?? []),
@@ -286,4 +287,69 @@ class SocietyDiscoveryService
             'message' => $message,
         ], fn ($value) => $value !== null);
     }
+
+    /**
+     * The city named in a Google formatted address.
+     *
+     * Scanning is done by typing an area, not by picking a city from a list, so nothing else
+     * tells us where a candidate is. Without this the row is imported with no city and the
+     * pipeline falls back to its Gurugram default — which would quietly file eighteen West
+     * Delhi societies in Haryana.
+     *
+     * Longest name first, so "Greater Noida" is not read as "Noida".
+     */
+    private function cityFromAddress(string $address): ?string
+    {
+        return $this->matchCity($address)?->name;
+    }
+
+    private function cityIdFromAddress(string $address): ?int
+    {
+        $city = $this->matchCity($address);
+
+        return $city ? (int) $city->id : null;
+    }
+
+    private function matchCity(string $address): ?City
+    {
+        if (trim($address) === '') {
+            return null;
+        }
+
+        $haystack = mb_strtolower($address);
+
+        $this->cities ??= City::query()->get(['id', 'name'])
+            ->sortByDesc(fn (City $city) => mb_strlen((string) $city->name))
+            ->values();
+
+        foreach ($this->cities as $city) {
+            foreach ($this->aliases((string) $city->name) as $alias) {
+                if (str_contains($haystack, mb_strtolower($alias))) {
+                    return $city;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** @return array<int,string> */
+    private function aliases(string $name): array
+    {
+        $aliases = [$name];
+
+        // Google writes Gurugram and New Delhi; the catalogue and this table use both forms.
+        if (in_array(mb_strtolower($name), ['gurgaon', 'gurugram'], true)) {
+            $aliases = ['Gurugram', 'Gurgaon'];
+        }
+
+        if (mb_strtolower($name) === 'delhi') {
+            $aliases = ['New Delhi', 'Delhi'];
+        }
+
+        return $aliases;
+    }
+
+    /** @var Collection<int,City>|null */
+    private ?Collection $cities = null;
 }

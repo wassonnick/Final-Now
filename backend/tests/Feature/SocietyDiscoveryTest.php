@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\City;
+use App\Models\Region;
 use App\Models\Society;
 use App\Models\SocietyImportCandidate;
 use App\Models\SocietyImportJob;
@@ -229,5 +231,87 @@ class SocietyDiscoveryTest extends TestCase
             ->postJson("/api/admin/discovery/candidates/{$candidate->id}/restore")
             ->assertSuccessful();
         $this->assertSame(SocietyImportCandidate::STATUS_NEW, $candidate->fresh()->status);
+    }
+
+    private function ncrCities(): void
+    {
+        $region = Region::firstOrCreate(['slug' => 'delhi-ncr'], ['name' => 'Delhi NCR']);
+        foreach ([['Gurugram', 'gurgaon', 'Haryana'], ['Delhi', 'delhi', 'Delhi'], ['Noida', 'noida', 'Uttar Pradesh'], ['Greater Noida', 'greater-noida', 'Uttar Pradesh']] as [$name, $slug, $state]) {
+            City::firstOrCreate(['slug' => $slug], ['region_id' => $region->id, 'name' => $name, 'state' => $state, 'is_active' => true]);
+        }
+    }
+
+    /**
+     * Scanning is done by typing an area, so nothing else tells us where a candidate is.
+     * Without a city the importer falls back to its Gurugram default, which would file West
+     * Delhi societies in Haryana.
+     */
+    public function test_the_city_is_read_from_the_google_address(): void
+    {
+        $this->ncrCities();
+
+        $place = $this->place('place-a', 'Sunrise Apartments');
+        $place['formattedAddress'] = 'P4FJ+XHQ, 37, Pocket 37, Sector 13, Rohini, New Delhi, Delhi, 110085, India';
+        $this->fakePlaces([$place]);
+
+        app(SocietyDiscoveryService::class)->scan('West Delhi');
+
+        $candidate = SocietyImportCandidate::firstOrFail();
+        $this->assertSame('Delhi', $candidate->city);
+        $this->assertSame(City::where('slug', 'delhi')->value('id'), $candidate->city_id);
+    }
+
+    /** "Greater Noida" must not be read as "Noida". */
+    public function test_the_longer_city_name_wins(): void
+    {
+        $this->ncrCities();
+
+        $place = $this->place('place-a', 'ACE City');
+        $place['formattedAddress'] = 'Sector 1, Greater Noida, Uttar Pradesh 201306, India';
+        $this->fakePlaces([$place]);
+
+        app(SocietyDiscoveryService::class)->scan('Greater Noida');
+
+        $this->assertSame('Greater Noida', SocietyImportCandidate::firstOrFail()->city);
+    }
+
+    /** Google writes "Gurugram"; the catalogue uses both spellings. */
+    public function test_gurugram_in_an_address_resolves_to_the_home_city(): void
+    {
+        $this->ncrCities();
+
+        $place = $this->place('place-a', 'DLF The Crest');
+        $place['formattedAddress'] = 'Sector 54, Gurugram, Haryana 122002, India';
+        $this->fakePlaces([$place]);
+
+        app(SocietyDiscoveryService::class)->scan('Sector 54 Gurgaon');
+
+        $this->assertSame('Gurugram', SocietyImportCandidate::firstOrFail()->city);
+    }
+
+    /**
+     * The scan already paid Google for this place. Handing the id to the importer turns its
+     * text search into an exact lookup, so the society cannot land on a same-named building
+     * in another city.
+     */
+    public function test_the_import_hands_over_the_place_it_already_resolved(): void
+    {
+        config(['services.admin_api_token' => 'admin-test-token']);
+        $this->ncrCities();
+
+        $place = $this->place('place-a', 'Sunrise Apartments');
+        $place['formattedAddress'] = 'Pocket 37, Rohini, New Delhi, Delhi, 110085, India';
+        $this->fakePlaces([$place]);
+        app(SocietyDiscoveryService::class)->scan('West Delhi');
+
+        $candidate = SocietyImportCandidate::firstOrFail();
+        $this->withToken('admin-test-token')
+            ->postJson("/api/admin/discovery/candidates/{$candidate->id}/import")
+            ->assertSuccessful();
+
+        $seed = json_decode((string) SocietyImportJob::latest('id')->firstOrFail()->input, true)['seed'];
+        $this->assertSame('place-a', $seed['place_id']);
+        $this->assertSame('Delhi', $seed['city']);
+        $this->assertSame('West Delhi', $seed['locality']);
     }
 }

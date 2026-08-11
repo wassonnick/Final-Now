@@ -106,6 +106,15 @@ class AdminSocietyDiscoveryController extends Controller
             'url' => null,
             'include_images' => true,
             'publish' => (bool) ($data['publish'] ?? true),
+            // The scan already resolved this place and paid Google for it. Passing the id
+            // turns the importer's text search into an exact lookup, so a West Delhi society
+            // cannot land on a same-named building elsewhere — or fall through to the
+            // pipeline's Gurugram default, which is what happens when a search misses.
+            'seed' => array_filter([
+                'place_id' => $candidate->place_id,
+                'city' => $candidate->city,
+                'locality' => $candidate->area,
+            ]),
         ];
 
         $job = SocietyImportJob::create([

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\CompleteImportedSocietyDraft;
 use App\Models\Society;
 use App\Models\SocietyImportJob;
 use App\Services\Society\Import\SocietyImportPipeline;
@@ -70,7 +71,10 @@ class SocietyImportService
             'url' => $payload['url'] ?? null,
             'include_images' => $payload['include_images'] ?? true,
             'publish' => $payload['publish'] ?? true,
-            'seed' => [],
+            // Honoured rather than discarded: a caller that already knows the Google place,
+            // the city and the locality — discovery does, it paid for them — should not make
+            // the pipeline guess all three again from a name and an address string.
+            'seed' => (array) ($payload['seed'] ?? []),
             'source' => $job->source ?: 'Single Import',
             // Single imports are one-off and admin-watched, so pay the latency cost for a real
             // grounded Google Search call — this is what actually fills amenities/rent/buy/price
@@ -185,7 +189,7 @@ class SocietyImportService
         // A draft-only import still runs the full completion pass; it just stops before
         // flipping is_published, so a new-city trial never lands on the public site.
         $publish = (bool) ($input['publish'] ?? true);
-        \App\Jobs\CompleteImportedSocietyDraft::dispatch($society->id, false, $publish);
+        CompleteImportedSocietyDraft::dispatch($society->id, false, $publish);
 
         $this->log($job, "Draft created: {$society->name} (ID {$society->id}). ".($pending ? 'AI gap-fill was unavailable — the queued completion pass will retry the soft fields.' : 'Completion queued — SEO + publish follow automatically once every check passes.'));
 
