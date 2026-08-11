@@ -2,6 +2,8 @@
 
 namespace App\Services\Ops;
 
+use App\Exceptions\AiProviderLimitException;
+use App\Models\MarketRefreshLog;
 use App\Models\OpsSuggestion;
 use App\Models\Society;
 use App\Services\SocietyAiEnrichmentService;
@@ -16,9 +18,7 @@ class MarketSuggestionService
 {
     public const MARKET_FIELDS = ['rent_range', 'buy_range', 'price_per_sqft', 'rental_yield', 'average_rent', 'average_sale_price'];
 
-    public function __construct(private readonly SocietyAiEnrichmentService $ai)
-    {
-    }
+    public function __construct(private readonly SocietyAiEnrichmentService $ai) {}
 
     /**
      * Market fields an admin has manually set and locked. Automated refreshes (scheduler,
@@ -113,7 +113,7 @@ class MarketSuggestionService
 
         if (isset($result['_ai_error'])) {
             if (AiBudgetGuard::isProviderLimit($result)) {
-                throw new \App\Exceptions\AiProviderLimitException('Market fetch hit provider limit: '.$result['_ai_error']);
+                throw new AiProviderLimitException('Market fetch hit provider limit: '.$result['_ai_error']);
             }
             throw new \RuntimeException('Market fetch failed: '.$result['_ai_error']);
         }
@@ -210,7 +210,7 @@ class MarketSuggestionService
                 }
             }
 
-            \App\Models\MarketRefreshLog::create([
+            MarketRefreshLog::create([
                 'applied' => $applied,
                 'society_id' => $society->id,
                 'trigger' => $trigger,
@@ -278,7 +278,7 @@ class MarketSuggestionService
 
         if (isset($result['_ai_error'])) {
             if (AiBudgetGuard::isProviderLimit($result)) {
-                throw new \App\Exceptions\AiProviderLimitException('Market fetch hit provider limit: '.$result['_ai_error']);
+                throw new AiProviderLimitException('Market fetch hit provider limit: '.$result['_ai_error']);
             }
             throw new \RuntimeException('Market fetch failed: '.$result['_ai_error']);
         }
@@ -305,6 +305,16 @@ class MarketSuggestionService
             // could never show.
             $this->logRefresh($society, [], 'auto_nightly', $result['market_sources'] ?? [], $result['confidence'] ?? null, 'Search returned no usable market figure.');
 
+            // Record the ATTEMPT, not just the success. Two separate guards read
+            // field_sources.market.refreshed_at to decide whether a society still needs a
+            // paid fetch — the age gate in market:auto-refresh and the skip-if-grounded
+            // check in draft completion. Returning here without writing it left both
+            // permanently unsatisfied, so a society whose search finds nothing was bought
+            // again on every sweep, forever, and sorted first each time because it looked
+            // like the stalest row in the catalogue. The ones that never pay off were the
+            // only ones we kept paying for.
+            $this->recordEmptyAttempt($society, $locked, $result);
+
             return null;
         }
 
@@ -316,6 +326,9 @@ class MarketSuggestionService
             'refreshed_at' => now()->toIso8601String(),
             'auto_applied' => true,
             'locked' => $locked, // preserve any admin locks across the refresh
+            // A run that found figures clears the barren streak, so the backoff below
+            // only ever lengthens for societies that genuinely keep coming back empty.
+            'empty_attempts' => 0,
         ];
         $updates['field_sources'] = $fieldSources;
 
@@ -325,5 +338,36 @@ class MarketSuggestionService
         $society->update($updates);
 
         return $updates;
+    }
+
+    /**
+     * Note that a refresh ran and found nothing.
+     *
+     * Deliberately merged over the previous provenance rather than replacing it: a society
+     * that had good figures last month and an empty search today still has last month's
+     * figures on its page, and blanking the confidence and sources behind them would make
+     * the page look unsourced when nothing about it changed.
+     *
+     * @param  array<int,string>  $locked
+     * @param  array<string,mixed>  $result
+     */
+    private function recordEmptyAttempt(Society $society, array $locked, array $result): void
+    {
+        $fieldSources = (array) ($society->field_sources ?? []);
+        $previous = (array) ($fieldSources['market'] ?? []);
+
+        $market = $previous;
+        $market['refreshed_at'] = now()->toIso8601String();
+        $market['last_empty_at'] = now()->toIso8601String();
+        $market['empty_attempts'] = (int) ($previous['empty_attempts'] ?? 0) + 1;
+        $market['locked'] = $locked;
+
+        // Only claim provenance we do not already have; never downgrade a real one.
+        $market['auto_applied'] = $previous['auto_applied'] ?? false;
+        $market['sources'] = $previous['sources'] ?? ($result['market_sources'] ?? []);
+
+        $fieldSources['market'] = $market;
+
+        $society->update(['field_sources' => $fieldSources]);
     }
 }
