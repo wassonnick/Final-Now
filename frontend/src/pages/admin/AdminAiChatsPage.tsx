@@ -227,7 +227,23 @@ export function AdminAiChatsPage() {
                   <span className="font-black text-slate-900">{OUTCOMES[transcript.conversation.outcome || "unknown"] || transcript.conversation.outcome}</span>
                   {transcript.conversation.outcome_detail ? ` (${transcript.conversation.outcome_detail})` : ""}
                 </p>
-                {transcript.conversation.entry_path ? <p className="mt-0.5 truncate text-xs text-slate-400">{transcript.conversation.entry_path}</p> : null}
+                {/* Origin before destination: the page they left is the useful half, and it
+                    is the half that used to be missing entirely. */}
+                {transcript.conversation.entry_referrer ? (
+                  <p className="mt-1.5 text-xs text-slate-500">
+                    Came from{" "}
+                    {transcript.conversation.entry_referrer.startsWith("/") ? (
+                      <a href={transcript.conversation.entry_referrer} target="_blank" rel="noreferrer" className="font-bold text-blue-700 underline">
+                        {transcript.conversation.entry_referrer}
+                      </a>
+                    ) : (
+                      <span className="font-bold text-slate-700">{transcript.conversation.entry_referrer}</span>
+                    )}
+                  </p>
+                ) : (
+                  <p className="mt-1.5 text-xs text-slate-400">Came from an unrecorded page — conversations started before referrer tracking shipped.</p>
+                )}
+                {transcript.conversation.entry_path ? <p className="mt-0.5 truncate text-xs text-slate-400">Asked on {transcript.conversation.entry_path}</p> : null}
               </div>
               {transcript.messages.map((message) => {
                 const isUser = message.role === "user";

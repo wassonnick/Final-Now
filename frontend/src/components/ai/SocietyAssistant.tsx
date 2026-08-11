@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarCheck, PhoneCall, RotateCcw, Scale, Send, SlidersHorizontal, Sparkles, Star } from 'lucide-react';
+import { entryReferrer } from '@/lib/routeHistory';
 import { API_BASE_URL } from '@/config/api';
 import { PublicLeadModal } from '@/components/leads/PublicLeadModal';
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked } from '@/lib/analytics';
@@ -264,6 +265,9 @@ export function SocietyAssistant({ initialQuery, entrySource = 'assistant' }: { 
           entry_source: entrySource,
           entry_label: entryLabel.current,
           entry_path: `${window.location.pathname}${window.location.search}`.slice(0, 255),
+          // Where they came FROM. entry_path is the advisor page itself, so on its own it
+          // could never answer which page prompted the question.
+          entry_referrer: entryReferrer(),
         }),
       });
       const json = await res.json().catch(() => ({}));

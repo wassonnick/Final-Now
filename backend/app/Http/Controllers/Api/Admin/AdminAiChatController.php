@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AiConversation;
 use App\Models\AiMessage;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -30,7 +31,7 @@ class AdminAiChatController extends Controller
             ->withCount(array_merge(['messages'], $userTurns))
             ->orderByDesc('last_message_at')
             ->limit($limit)
-            ->get(['id', 'status', 'model', 'last_message_at', 'created_at', 'entry_source', 'entry_label', 'entry_path', 'outcome', 'outcome_detail', 'ended_at']);
+            ->get(['id', 'status', 'model', 'last_message_at', 'created_at', 'entry_source', 'entry_label', 'entry_path', 'entry_referrer', 'outcome', 'outcome_detail', 'ended_at']);
 
         $inWindow = fn () => AiConversation::query()->where('last_message_at', '>=', $since);
 
@@ -85,6 +86,7 @@ class AdminAiChatController extends Controller
                         'entry_source' => $conversation->entry_source,
                         'entry_label' => $conversation->entry_label,
                         'entry_path' => $conversation->entry_path,
+                        'entry_referrer' => $conversation->entry_referrer,
                         'outcome' => $conversation->outcome,
                         'outcome_detail' => $conversation->outcome_detail,
                         'ended_at' => $conversation->ended_at?->toIso8601String(),
@@ -102,7 +104,7 @@ class AdminAiChatController extends Controller
      * "unknown" — chats that started before tracking shipped, or ones the browser
      * closed before any exit beacon fired.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder<AiConversation>  $query
+     * @param  Builder<AiConversation>  $query
      * @return array<int,array{key:string,count:int,share:float}>
      */
     private function breakdown($query, string $column, int $total): array
@@ -138,6 +140,7 @@ class AdminAiChatController extends Controller
                     'entry_source' => $conversation->entry_source,
                     'entry_label' => $conversation->entry_label,
                     'entry_path' => $conversation->entry_path,
+                    'entry_referrer' => $conversation->entry_referrer,
                     'outcome' => $conversation->outcome,
                     'outcome_detail' => $conversation->outcome_detail,
                     'ended_at' => $conversation->ended_at?->toIso8601String(),

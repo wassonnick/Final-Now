@@ -25,6 +25,7 @@ export type AiChatConversation = {
   entry_source?: string | null;
   entry_label?: string | null;
   entry_path?: string | null;
+  entry_referrer?: string | null;
   outcome?: string | null;
   outcome_detail?: string | null;
   ended_at?: string | null;

@@ -21,6 +21,7 @@ class AiChatController extends Controller
             'entry_source' => ['nullable', 'string', 'max:40'],
             'entry_label' => ['nullable', 'string', 'max:60'],
             'entry_path' => ['nullable', 'string', 'max:255'],
+            'entry_referrer' => ['nullable', 'string', 'max:255'],
         ]);
         [$conversation, $plainToken] = $this->conversation($data['conversation_token'] ?? null, $data);
         if (! $conversation) {
@@ -123,6 +124,7 @@ class AiChatController extends Controller
             'entry_source' => $context['entry_source'] ?? null,
             'entry_label' => $context['entry_label'] ?? null,
             'entry_path' => $context['entry_path'] ?? null,
+            'entry_referrer' => $context['entry_referrer'] ?? null,
         ]), $plain];
     }
 }

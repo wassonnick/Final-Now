@@ -143,4 +143,55 @@ class AiChatTest extends TestCase
 
         return (string) $response->json('conversation_token');
     }
+
+    /**
+     * entry_path records the advisor page itself, so on its own it could never answer which
+     * page prompted the question — the thing you actually want to know about a CTA.
+     */
+    public function test_the_page_a_visitor_came_from_is_recorded(): void
+    {
+        $this->postJson('/api/ai/chat', [
+            'message' => 'Compare Tulip Violet with similar Gurgaon societies',
+            'entry_source' => 'advisor_page',
+            'entry_label' => 'handoff_query',
+            'entry_path' => '/ai-advisor?q=Compare+Tulip+Violet',
+            'entry_referrer' => '/society/tulip-violet',
+        ])->assertSuccessful();
+
+        $conversation = AiConversation::query()->latest('id')->firstOrFail();
+        $this->assertSame('/society/tulip-violet', $conversation->entry_referrer);
+        $this->assertSame('/ai-advisor?q=Compare+Tulip+Violet', $conversation->entry_path);
+    }
+
+    /** It is recorded once, at creation — a follow-up must not rewrite where they arrived. */
+    public function test_a_follow_up_does_not_overwrite_the_origin(): void
+    {
+        $token = $this->postJson('/api/ai/chat', [
+            'message' => 'Tell me about living here',
+            'entry_referrer' => '/society/tulip-violet',
+        ])->assertSuccessful()->json('conversation_token');
+
+        $this->postJson('/api/ai/chat', [
+            'message' => 'What about the rent',
+            'conversation_token' => $token,
+            'entry_referrer' => '/compare',
+        ])->assertSuccessful();
+
+        $this->assertSame('/society/tulip-violet', AiConversation::query()->latest('id')->firstOrFail()->entry_referrer);
+        $this->assertSame(1, AiConversation::count());
+    }
+
+    /** The admin transcript is where this gets read, so it has to reach the payload. */
+    public function test_the_origin_reaches_the_admin_transcript(): void
+    {
+        config(['services.admin_api_token' => 'admin-test-token']);
+
+        $this->postJson('/api/ai/chat', ['message' => 'Compare these two', 'entry_referrer' => '/compare'])->assertSuccessful();
+        $id = AiConversation::query()->latest('id')->value('id');
+
+        $this->withToken('admin-test-token')
+            ->getJson("/api/admin/ai-chats/{$id}")
+            ->assertSuccessful()
+            ->assertJsonPath('data.conversation.entry_referrer', '/compare');
+    }
 }

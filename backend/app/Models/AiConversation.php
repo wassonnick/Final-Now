@@ -16,7 +16,7 @@ class AiConversation extends Model
 
     protected $fillable = [
         'access_token_hash', 'status', 'model', 'last_message_at', 'expires_at',
-        'entry_source', 'entry_label', 'entry_path',
+        'entry_source', 'entry_label', 'entry_path', 'entry_referrer',
         'outcome', 'outcome_detail', 'ended_at',
     ];
 

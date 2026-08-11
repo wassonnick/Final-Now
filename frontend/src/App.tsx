@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-route
 import { AnalyticsRouteTracker } from '@/components/AnalyticsRouteTracker';
 import { ProtectedAccountRoute } from "@/components/auth/ProtectedAccountRoute";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { noteRouteChange } from '@/lib/routeHistory';
 
 import { Toaster } from '@/components/ui/toaster';
 import { Navbar } from '@/components/layout/Navbar';
@@ -319,6 +320,9 @@ function ScrollToTop() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    // Recorded here because the router is the only thing that knows a client-side
+    // navigation happened — document.referrer never moves inside a single-page app.
+    noteRouteChange(location.pathname + location.search);
   }, [location.pathname, location.search]);
 
   return null;
