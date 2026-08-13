@@ -5,6 +5,7 @@ import { fetchPublicSocieties, formatPublicLocation, suggestPlaces, suggestSocie
 import { hasGooglePlacesDisplayPhoto, societyDisplayImage } from "@/lib/societyImages";
 import { setPublicSeo } from "@/lib/seo";
 import { NCR_REGION, ncrCityFrom, ncrCityStatusLabel, rowIsInCity, useNcrCities, useSelectedNcrCity, type NcrCity } from "@/lib/ncrCities";
+import { cachedSocietyCount, rememberSocietyCount } from "@/lib/societyCountCache";
 import { MODULES, MODULE_INTENTS, searchModules, type ModuleIntent } from "@/lib/modules";
 
 /*
@@ -37,6 +38,8 @@ export default function HomePremium() {
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [societies, setSocieties] = useState<any[]>([]);
+  // Distinguishes "still loading" from "genuinely none", which an empty array cannot.
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     setPublicSeo(
@@ -45,8 +48,8 @@ export default function HomePremium() {
     );
     let active = true;
     fetchPublicSocieties()
-      .then((items) => active && setSocieties(items))
-      .catch(() => active && setSocieties([]));
+      .then((items) => { if (active) { setSocieties(items); setLoaded(true); } })
+      .catch(() => { if (active) { setSocieties([]); setLoaded(true); } });
     return () => { active = false; };
   }, []);
 
@@ -95,7 +98,13 @@ export default function HomePremium() {
   const places = useMemo(() => suggestPlaces(citySocieties, query), [citySocieties, query]);
   const moduleMatches = useMemo(() => searchModules(query), [query]);
   const submit = (q?: string) => navigate(`/search?tab=societies${(q ?? query).trim() ? `&q=${encodeURIComponent((q ?? query).trim())}` : ""}`);
-  const liveCount = citySocieties.length;
+  // Opens on the number we last showed for this city and corrects it when the catalogue
+  // lands; null only for a city we have never counted, which is the one case worth a dash.
+  const liveCount = loaded ? citySocieties.length : cachedSocietyCount(city.slug);
+
+  useEffect(() => {
+    if (loaded) rememberSocietyCount(city.slug, citySocieties.length);
+  }, [loaded, city.slug, citySocieties.length]);
 
   return (
     <div className="premium-home bg-white text-[#1D1D1F]">
@@ -248,7 +257,7 @@ export default function HomePremium() {
             // No invented placeholder while the list loads: "240+" was both wrong and
             // visibly swapped to the real figure a moment later, which is a poor look on
             // the one number that carries the whole verification promise.
-            [liveCount ? `${liveCount}` : "—", `Verified societies in ${city.name}`],
+            [liveCount === null ? "—" : `${liveCount}`, `Verified societies in ${city.name}`],
             ["6", "NCR cities on the map"],
             ["0", "Fabricated listings"],
             ["1", "Simple, honest journey"],
