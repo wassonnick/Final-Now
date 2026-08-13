@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
-use Illuminate\Support\Str;
-use App\Models\Property;
-use App\Models\Lead;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\AccountOtp;
+use App\Models\Lead;
+use App\Models\Property;
+use App\Models\SiteVisit;
 use App\Services\OtpDeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
@@ -39,7 +40,6 @@ class AccountController extends Controller
             'has_account_token' => filled($account->api_token_hash),
         ];
     }
-
 
     private function issueAccountToken(Account $account): string
     {
@@ -112,7 +112,7 @@ class AccountController extends Controller
             'area_sqft' => $property->area_sqft,
             'furnished_status' => $property->furnished_status,
             'verified' => (bool) $property->verified,
-            'public_url' => $property->slug ? '/property/' . $property->slug : null,
+            'public_url' => $property->slug ? '/property/'.$property->slug : null,
             'created_at' => optional($property->created_at)->toISOString(),
             'updated_at' => optional($property->updated_at)->toISOString(),
         ];
@@ -138,8 +138,8 @@ class AccountController extends Controller
 
         $baseLeadQuery = Lead::with(['linkedProperties.society'])
             ->where(function ($query) use ($phone) {
-                $query->where('phone', 'like', '%' . $phone)
-                    ->orWhere('phone', 'like', '%' . $phone . '%');
+                $query->where('phone', 'like', '%'.$phone)
+                    ->orWhere('phone', 'like', '%'.$phone.'%');
             });
 
         $ownerLeadQuery = (clone $baseLeadQuery)
@@ -157,11 +157,11 @@ class AccountController extends Controller
 
         $propertyQuery = Property::with(['society', 'sourceLead'])
             ->where(function ($query) use ($phone) {
-                $query->where('owner_phone', 'like', '%' . $phone)
-                    ->orWhere('owner_phone', 'like', '%' . $phone . '%')
+                $query->where('owner_phone', 'like', '%'.$phone)
+                    ->orWhere('owner_phone', 'like', '%'.$phone.'%')
                     ->orWhereHas('sourceLead', function ($leadQuery) use ($phone) {
-                        $leadQuery->where('phone', 'like', '%' . $phone)
-                            ->orWhere('phone', 'like', '%' . $phone . '%');
+                        $leadQuery->where('phone', 'like', '%'.$phone)
+                            ->orWhere('phone', 'like', '%'.$phone.'%');
                     });
             });
 
@@ -173,7 +173,7 @@ class AccountController extends Controller
         $brokerLeads = (clone $brokerLeadQuery)->latest()->limit(20)->get();
         $properties = (clone $propertyQuery)->latest()->limit(20)->get();
 
-        $siteVisits = \App\Models\SiteVisit::with('society:id,name,slug')
+        $siteVisits = SiteVisit::with('society:id,name,slug')
             ->where('visitor_phone', 'like', '%'.$phone.'%')
             ->whereIn('status', ['proposed', 'confirmed'])
             ->where(function ($query) {
@@ -239,13 +239,9 @@ class AccountController extends Controller
                 'last_login_at' => now(),
             ];
 
-            if (! $existingAccount->name && ! empty($validated['name'])) {
-                $payload['name'] = $validated['name'];
-            }
-
-            if (! $existingAccount->email && ! empty($validated['email'])) {
-                $payload['email'] = $validated['email'];
-            }
+            // Deliberately no longer filling a blank name or email from this request. Signup
+            // is unauthenticated, so anyone who knows a phone number could write themselves
+            // into an account that is not theirs and have it look original.
 
             $incomingMeta = array_filter([
                 'last_signup_source' => $validated['source'] ?? null,
@@ -262,10 +258,12 @@ class AccountController extends Controller
 
             $existingAccount->update($payload);
 
+            // No account payload here: the caller has proved nothing, and "this number is
+            // taken" is all they need in order to be sent to the login flow. Returning the
+            // profile made signup a second lookup-anybody endpoint.
             return response()->json([
                 'message' => 'This phone number is already registered. Please login or continue with OTP.',
                 'existing' => true,
-                'account' => $this->accountPayload($existingAccount->fresh()),
             ]);
         }
 
@@ -290,18 +288,20 @@ class AccountController extends Controller
         ]);
     }
 
+    /**
+     * The signed-in account, and only ever that one.
+     *
+     * This used to take a phone number from the query string and hand back whoever owned it
+     * — name, email, role, status, verification timestamps — with no token at all. Indian
+     * mobile numbers are ten digits and trivially enumerated, so it turned "me" into "look
+     * up anybody", and knowing one person's number was enough to get their name and email.
+     */
     public function me(Request $request)
     {
-        $phone = $this->normalizePhone($request->query('phone'));
-
-        if (! $phone) {
-            return response()->json(['message' => 'Phone is required.'], 422);
-        }
-
-        $account = Account::where('phone_normalized', $phone)->first();
+        $account = $this->accountFromBearer($request);
 
         if (! $account) {
-            return response()->json(['message' => 'Account not found.'], 404);
+            return response()->json(['message' => 'Unauthorized account request.'], 401);
         }
 
         return response()->json([

@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { fetchPublicProperties, fetchPublicSocieties, formatPublicLocation, searchableText, societyImage } from '@/lib/publicData';
 import { cn } from '@/lib/utils';
 import { createCustomerAccountSession, rememberBrokerActivitySubmission } from '@/lib/customerAccount';
-import { fetchAccountByPhone, syncAccountToBackend } from '@/lib/accountApi';
+import { syncAccountToBackend } from '@/lib/accountApi';
 import { SocietyAssistant } from '@/components/ai/SocietyAssistant';
 import { setPublicSeo } from '@/lib/seo';
 import { API_BASE_URL } from '@/config/api';
@@ -364,8 +364,17 @@ function LeadFlowTool({ feature }: { feature: 'broker-crm' | 'chat' }) {
       ].join('\n');
 
       if (isBrokerCrm) {
-        const existingAccount = await fetchAccountByPhone(cleanPhone || form.phone);
-        if (existingAccount?.account?.id) {
+        // Asked of the sync endpoint rather than a lookup-by-phone: it answers whether the
+        // number is taken without telling an unauthenticated caller whose it is.
+        const existing = await syncAccountToBackend({
+          role: 'broker',
+          phone: cleanPhone || form.phone,
+          name: form.name.trim() || 'Broker Partner',
+          email: form.email.trim() || undefined,
+          source: 'broker_crm_signup',
+        });
+
+        if ((existing as { existing?: boolean } | null)?.existing) {
           setState('error');
           setNotice('This phone number is already registered. Please login or continue with OTP instead of creating a duplicate broker account.');
           return;

@@ -111,15 +111,19 @@ export async function verifyAccountOtp({
   });
 }
 
-export async function fetchAccountByPhone(phone: string) {
-  const cleanPhone = cleanAccountPhone(phone);
-  if (!cleanPhone) return null;
+/**
+ * The signed-in account.
+ *
+ * Replaces fetchAccountByPhone, which asked the server for whoever owned a given number and
+ * got back their name and email without proving anything. Signup no longer needs it: the
+ * sync response says whether the number is taken, which is all a signup form should learn.
+ */
+export async function fetchMyAccount(accountAccessToken?: string | null) {
+  if (!accountAccessToken) return null;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/accounts/me?phone=${encodeURIComponent(cleanPhone)}`, {
-      headers: {
-        Accept: "application/json",
-      },
+    const response = await fetch(`${API_BASE_URL}/accounts/me`, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${accountAccessToken}` },
     });
 
     if (!response.ok) return null;
