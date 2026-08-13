@@ -424,4 +424,95 @@ class SocietyDiscoveryTest extends TestCase
         $this->assertSame('completed', $row['import_job']['status']);
         $this->assertSame($imported->id, $row['import_job']['result_society_id']);
     }
+
+    /** @return array<string,mixed> */
+    private function page(int $from, int $to, ?string $nextToken): array
+    {
+        $places = [];
+        foreach (range($from, $to) as $i) {
+            $places[] = $this->place('place-'.$i, 'Society '.$i);
+        }
+
+        return array_filter(['places' => $places, 'nextPageToken' => $nextToken]);
+    }
+
+    /**
+     * Google returns twenty and a token for the next page. Without following it a scan saw
+     * only the first twenty, and rescanning returned the same twenty forever — an area was
+     * permanently capped at whatever Google ranked highest.
+     */
+    public function test_a_scan_follows_the_page_tokens(): void
+    {
+        Http::fakeSequence('places.googleapis.com/*')
+            ->push($this->page(1, 20, 'token-two'))
+            ->push($this->page(21, 40, 'token-three'))
+            ->push($this->page(41, 60, null));
+
+        $result = app(SocietyDiscoveryService::class)->scan('Sector 65 Gurgaon');
+
+        $this->assertSame(60, $result['scanned']);
+        $this->assertSame(60, SocietyImportCandidate::count());
+    }
+
+    /** The token must ride on an otherwise identical body, or Google rejects the page. */
+    public function test_each_page_repeats_the_same_query(): void
+    {
+        Http::fakeSequence('places.googleapis.com/*')
+            ->push($this->page(1, 20, 'token-two'))
+            ->push($this->page(21, 30, null));
+
+        app(SocietyDiscoveryService::class)->scan('Sector 65 Gurgaon');
+
+        $sent = [];
+        Http::assertSent(function ($request) use (&$sent) {
+            $sent[] = $request->data();
+
+            return true;
+        });
+
+        $this->assertCount(2, $sent);
+        $this->assertSame($sent[0]['textQuery'], $sent[1]['textQuery'], 'The query cannot change between pages.');
+        $this->assertSame(20, $sent[0]['pageSize']);
+        $this->assertArrayNotHasKey('pageToken', $sent[0]);
+        $this->assertSame('token-two', $sent[1]['pageToken']);
+    }
+
+    /** Stopping early costs a request; three pages is Google's own ceiling. */
+    public function test_it_stops_at_googles_sixty_result_ceiling(): void
+    {
+        Http::fakeSequence('places.googleapis.com/*')
+            ->push($this->page(1, 20, 'token-two'))
+            ->push($this->page(21, 40, 'token-three'))
+            ->push($this->page(41, 60, 'token-four-which-google-should-not-give'))
+            ->push($this->page(61, 80, null));
+
+        $result = app(SocietyDiscoveryService::class)->scan('Sector 65 Gurgaon');
+
+        $this->assertSame(60, $result['scanned'], 'A fourth request would be wasted money.');
+        $this->assertStringContainsString('caps one search at 60', (string) ($result['message'] ?? ''));
+    }
+
+    /** A page that fails must not discard the pages that succeeded. */
+    public function test_a_failed_later_page_keeps_what_was_already_found(): void
+    {
+        Http::fakeSequence('places.googleapis.com/*')
+            ->push($this->page(1, 20, 'token-two'))
+            ->pushStatus(403);
+
+        $result = app(SocietyDiscoveryService::class)->scan('Sector 65 Gurgaon');
+
+        $this->assertSame('ok', $result['status']);
+        $this->assertSame(20, $result['scanned']);
+    }
+
+    /** A first page that fails still records nothing rather than an empty market. */
+    public function test_a_failed_first_page_records_nothing(): void
+    {
+        Http::fakeSequence('places.googleapis.com/*')->pushStatus(403);
+
+        $result = app(SocietyDiscoveryService::class)->scan('Sector 65 Gurgaon');
+
+        $this->assertSame('error', $result['status']);
+        $this->assertSame(0, SocietyImportCandidate::count());
+    }
 }

@@ -102,7 +102,9 @@ export function AdminSocietyDiscoveryPage() {
         <h2 className="flex items-center gap-2 text-lg font-black"><Compass className="h-5 w-5 text-blue-700" />Scan an area</h2>
         <p className="mt-1 text-sm text-slate-500">
           Name the area the way you would say it out loud — “Sector 65 Gurgaon”, “Paschim Vihar Delhi”.
-          Each scan costs one Google Places lookup, so it only runs when you ask.
+          Google returns at most 60 per search, so a whole city will not fit in one — scan its
+          sectors and neighbourhoods separately. Each scan costs Google Places lookups, so it
+          only runs when you ask.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Input
@@ -116,6 +118,10 @@ export function AdminSocietyDiscoveryPage() {
             {busy ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Scan
           </Button>
         </div>
+
+        {scan?.message ? (
+          <p className="mt-4 rounded-2xl bg-amber-50 p-3.5 text-[13px] font-semibold text-amber-800">{scan.message}</p>
+        ) : null}
 
         {scan ? (
           <div className="mt-4 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-5">

@@ -31,8 +31,16 @@ class SocietyDiscoveryService
         private readonly LocalityNameService $names,
     ) {}
 
-    /** Places returns at most 20 per text search; asking for more silently costs the same. */
-    private const MAX_RESULTS = 20;
+    /** Google's per-page maximum; asking for more is silently capped at this. */
+    private const PAGE_SIZE = 20;
+
+    /**
+     * Google returns at most 60 results across all pages of one text search, so three pages
+     * is the ceiling and a fourth request would be wasted money. A dense area holds more
+     * than sixty societies — the honest answer there is a narrower query, which is why the
+     * scan reports when it hit the cap rather than implying it saw everything.
+     */
+    private const MAX_PAGES = 3;
 
     /**
      * Place types that are never a residential society.
@@ -82,6 +90,7 @@ class SocietyDiscoveryService
         }
 
         $counts = ['scanned' => 0, 'new' => 0, 'likely_duplicate' => 0, 'known' => 0, 'rejected' => 0];
+        $capped = count($places) >= self::PAGE_SIZE * self::MAX_PAGES;
 
         foreach ($places as $place) {
             $counts['scanned']++;
@@ -119,7 +128,9 @@ class SocietyDiscoveryService
             $this->remember($place, $area, $city, $status, $match['reason'], $match['society']);
         }
 
-        return $this->result('ok', $area, $counts);
+        return $this->result('ok', $area, $counts, $capped
+            ? 'Google caps one search at 60 results and returned all 60, so this area almost certainly holds more. Scan its neighbourhoods or sectors separately to see the rest.'
+            : null);
     }
 
     /**
@@ -128,40 +139,66 @@ class SocietyDiscoveryService
     private function searchPlaces(string $area): ?array
     {
         $fields = implode(',', [
+            'nextPageToken',
             'places.id', 'places.displayName', 'places.formattedAddress',
             'places.location', 'places.types', 'places.userRatingCount',
         ]);
 
-        try {
-            $response = Http::timeout(20)
-                ->withHeaders([
-                    'X-Goog-Api-Key' => trim((string) config('services.google_places_api_key', '')),
-                    'X-Goog-FieldMask' => $fields,
-                ])
-                ->post('https://places.googleapis.com/v1/places:searchText', [
-                    // "residential society" rather than "apartments": the latter is what
-                    // estate agents call themselves, and it drags the whole broker industry
-                    // into the results.
-                    'textQuery' => 'residential society apartments in '.$area,
-                    'maxResultCount' => self::MAX_RESULTS,
+        $places = [];
+        $pageToken = null;
+
+        // Google returns one page of 20 and a token for the next. Without following it a
+        // scan saw only the first twenty and rescanning returned the same twenty forever,
+        // so an area was permanently capped at whatever Google ranked highest.
+        for ($page = 0; $page < self::MAX_PAGES; $page++) {
+            $body = [
+                // "residential society" rather than "apartments": the latter is what estate
+                // agents call themselves, and it drags the whole broker industry into the
+                // results.
+                'textQuery' => 'residential society apartments in '.$area,
+                'pageSize' => self::PAGE_SIZE,
+            ];
+
+            // Every other parameter has to match the request that produced the token, so the
+            // body is rebuilt identically each time and only this is added.
+            if ($pageToken !== null) {
+                $body['pageToken'] = $pageToken;
+            }
+
+            try {
+                $response = Http::timeout(20)
+                    ->withHeaders([
+                        'X-Goog-Api-Key' => trim((string) config('services.google_places_api_key', '')),
+                        'X-Goog-FieldMask' => $fields,
+                    ])
+                    ->post('https://places.googleapis.com/v1/places:searchText', $body);
+            } catch (\Throwable $e) {
+                Log::info('Society discovery search failed', ['area' => $area, 'page' => $page, 'error' => $e->getMessage()]);
+
+                // A later page failing is not a reason to throw away the earlier ones.
+                return $places === [] ? null : $places;
+            }
+
+            if (! $response->successful()) {
+                Log::info('Society discovery search rejected', [
+                    'area' => $area,
+                    'page' => $page,
+                    'status' => $response->status(),
+                    'body' => substr((string) $response->body(), 0, 300),
                 ]);
-        } catch (\Throwable $e) {
-            Log::info('Society discovery search failed', ['area' => $area, 'error' => $e->getMessage()]);
 
-            return null;
+                return $places === [] ? null : $places;
+            }
+
+            $places = array_merge($places, (array) ($response->json('places') ?? []));
+            $pageToken = $response->json('nextPageToken');
+
+            if (! is_string($pageToken) || $pageToken === '') {
+                break;
+            }
         }
 
-        if (! $response->successful()) {
-            Log::info('Society discovery search rejected', [
-                'area' => $area,
-                'status' => $response->status(),
-                'body' => substr((string) $response->body(), 0, 300),
-            ]);
-
-            return null;
-        }
-
-        return (array) ($response->json('places') ?? []);
+        return $places;
     }
 
     /**
