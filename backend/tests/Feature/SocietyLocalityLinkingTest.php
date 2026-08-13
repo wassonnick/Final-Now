@@ -111,4 +111,58 @@ class SocietyLocalityLinkingTest extends TestCase
         $this->assertNull($society->locality_id);
         $this->assertSame(0, Locality::count());
     }
+
+    /**
+     * The 12-versus-58 bug: admin and launch readiness join on city_id, the public site
+     * matches on the city text, and the importer only ever set the text.
+     */
+    public function test_a_society_created_with_only_a_city_name_gets_the_city_id(): void
+    {
+        $delhi = $this->city('Delhi', 'delhi', 'Delhi');
+
+        $society = $this->make(['locality' => 'Paschim Vihar', 'city' => 'Delhi']);
+
+        $this->assertSame($delhi->id, $society->city_id);
+        $this->assertSame($delhi->region_id, $society->region_id);
+    }
+
+    /** Google writes "New Delhi" and "Gurugram"; the catalogue holds the other spellings. */
+    public function test_real_world_city_spellings_resolve_to_one_city(): void
+    {
+        $delhi = $this->city('Delhi', 'delhi', 'Delhi');
+        $gurugram = $this->city('Gurugram', 'gurgaon', 'Haryana');
+
+        $this->assertSame($delhi->id, $this->make(['city' => 'New Delhi', 'locality' => 'Rohini'])->city_id);
+        $this->assertSame($gurugram->id, $this->make(['city' => 'Gurgaon', 'locality' => 'Sector 54'])->city_id);
+    }
+
+    /** With a real city_id the locality is scoped by it, not by matching the city name. */
+    public function test_the_locality_created_alongside_it_carries_the_same_city(): void
+    {
+        $delhi = $this->city('Delhi', 'delhi', 'Delhi');
+
+        $society = $this->make(['locality' => 'Paschim Vihar', 'city' => 'Delhi']);
+
+        $locality = Locality::findOrFail($society->locality_id);
+        $this->assertSame($delhi->id, $locality->city_id, 'Locality depth counts by city_id.');
+    }
+
+    /** An unknown city must not be guessed at. */
+    public function test_an_unrecognised_city_leaves_the_id_unset(): void
+    {
+        $this->city('Delhi', 'delhi', 'Delhi');
+
+        $this->assertNull($this->make(['city' => 'Jaipur', 'locality' => 'Malviya Nagar'])->city_id);
+    }
+
+    /** An explicitly chosen city is a decision, exactly as with the locality. */
+    public function test_an_explicit_city_id_is_never_second_guessed(): void
+    {
+        $delhi = $this->city('Delhi', 'delhi', 'Delhi');
+        $this->city('Gurugram', 'gurgaon', 'Haryana');
+
+        $society = $this->make(['city' => 'Gurugram', 'city_id' => $delhi->id, 'locality' => 'Rohini']);
+
+        $this->assertSame($delhi->id, $society->city_id);
+    }
 }

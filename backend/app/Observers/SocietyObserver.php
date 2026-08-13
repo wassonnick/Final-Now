@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Society;
+use App\Services\Ncr\CityResolver;
 use App\Services\Ncr\LocalityResolver;
 
 /**
@@ -24,6 +25,11 @@ class SocietyObserver
 {
     public function saving(Society $society): void
     {
+        // City first: the locality lookup below is scoped by it, and until now the importer
+        // set the city TEXT and never the id. Every count that matters joins on city_id, so
+        // fifty-eight Delhi societies on the public site were twelve in admin.
+        $this->linkCity($society);
+
         // An explicitly chosen locality is a decision; never second-guess it.
         if ($society->isDirty('locality_id') && filled($society->locality_id)) {
             return;
@@ -53,6 +59,34 @@ class SocietyObserver
         // it simply does not manufacture a page out of it.
         if ($locality) {
             $society->locality_id = $locality->id;
+        }
+    }
+
+    private function linkCity(Society $society): void
+    {
+        // An explicitly chosen city is a decision, exactly as with the locality.
+        if ($society->isDirty('city_id') && filled($society->city_id)) {
+            return;
+        }
+
+        if (! blank($society->city_id) && ! $society->isDirty('city')) {
+            return;
+        }
+
+        if (blank($society->city)) {
+            return;
+        }
+
+        $city = app(CityResolver::class)->resolve((string) $society->city);
+
+        if (! $city) {
+            return;
+        }
+
+        $society->city_id = $city->id;
+
+        if (blank($society->region_id)) {
+            $society->region_id = $city->region_id;
         }
     }
 }

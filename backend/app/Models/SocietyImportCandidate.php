@@ -17,9 +17,9 @@ class SocietyImportCandidate extends Model
     public const STATUS_IMPORTED = 'imported';
 
     protected $fillable = [
-        'place_id', 'name', 'normalised_name', 'address', 'area', 'city', 'city_id',
+        'place_id', 'name', 'normalised_name', 'address', 'area', 'locality', 'city', 'city_id',
         'latitude', 'longitude', 'types', 'rating_count', 'status', 'status_reason',
-        'society_id', 'first_seen_at', 'last_seen_at',
+        'society_id', 'import_job_id', 'first_seen_at', 'last_seen_at',
     ];
 
     protected $casts = [
@@ -75,6 +75,11 @@ class SocietyImportCandidate extends Model
     public function society(): BelongsTo
     {
         return $this->belongsTo(Society::class);
+    }
+
+    public function importJob(): BelongsTo
+    {
+        return $this->belongsTo(SocietyImportJob::class, 'import_job_id');
     }
 
     public function isActionable(): bool

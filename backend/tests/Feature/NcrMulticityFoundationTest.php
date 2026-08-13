@@ -57,7 +57,7 @@ class NcrMulticityFoundationTest extends TestCase
     {
         $this->getJson('/api/admin/locations/audit')->assertUnauthorized();
 
-        Society::create([
+        $unmapped = Society::create([
             'name' => 'Unmapped Public Gurgaon Society',
             'slug' => 'unmapped-public-gurgaon-society',
             'city' => 'Gurugram',
@@ -66,6 +66,11 @@ class NcrMulticityFoundationTest extends TestCase
             'is_published' => true,
             'score' => 8,
         ]);
+
+        // The subject of this test — a public row carrying a city name and no city_id — can
+        // no longer be created through the model, which links it on save. Stripped with the
+        // query builder so no event puts it back.
+        Society::where('id', $unmapped->id)->update(['city_id' => null, 'region_id' => null]);
 
         Property::create([
             'title' => 'Unmapped Gurgaon Home',
@@ -163,6 +168,9 @@ class NcrMulticityFoundationTest extends TestCase
             'is_published' => true,
             'score' => 8,
         ]);
+
+        // As above: the backfill's whole subject is a row the model would now map itself.
+        Society::where('id', $society->id)->update(['city_id' => null, 'region_id' => null]);
 
         $property = Property::create([
             'title' => 'Loose Faridabad Home',
