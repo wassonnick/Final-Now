@@ -168,8 +168,11 @@ function citySlugOf(value?: string | null): string {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, "-")
-    // One city, two spellings, both in the catalogue.
-    .replace("gurugram", "gurgaon");
+    // One city, two spellings, both in the catalogue. The backend normalises these on save,
+    // but a row is only normalised once something saves it — until then a "New Delhi"
+    // society would be invisible under the Delhi chip, which is the worse failure.
+    .replace("gurugram", "gurgaon")
+    .replace("new-delhi", "delhi");
 }
 
 /**

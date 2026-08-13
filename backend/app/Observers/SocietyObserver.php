@@ -85,6 +85,12 @@ class SocietyObserver
 
         $society->city_id = $city->id;
 
+        // Stored under the catalogue's spelling. Google writes "New Delhi" and the
+        // catalogue holds "Delhi", and everything that compares the TEXT — the public
+        // city filter, the locality repair's mismatch check — read those as two places.
+        // Eight Delhi societies were invisible under the Delhi chip because of it.
+        $society->city = $city->name;
+
         if (blank($society->region_id)) {
             $society->region_id = $city->region_id;
         }

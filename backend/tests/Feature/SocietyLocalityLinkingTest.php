@@ -165,4 +165,49 @@ class SocietyLocalityLinkingTest extends TestCase
 
         $this->assertSame($delhi->id, $society->city_id);
     }
+
+    /**
+     * Google writes "New Delhi", the catalogue holds "Delhi", and everything comparing the
+     * TEXT read those as two places — the public city filter included, so eight Delhi
+     * societies did not appear under the Delhi chip.
+     */
+    public function test_the_city_text_is_stored_under_the_catalogue_spelling(): void
+    {
+        $this->city('Delhi', 'delhi', 'Delhi');
+        $this->city('Gurugram', 'gurgaon', 'Haryana');
+
+        $this->assertSame('Delhi', $this->make(['city' => 'New Delhi', 'locality' => 'Rohini'])->city);
+        $this->assertSame('Gurugram', $this->make(['city' => 'Gurgaon', 'locality' => 'Sector 54'])->city);
+    }
+
+    /** A city we do not carry is left exactly as written rather than mangled. */
+    public function test_an_unrecognised_city_text_is_left_alone(): void
+    {
+        $this->city('Delhi', 'delhi', 'Delhi');
+
+        $this->assertSame('Jaipur', $this->make(['city' => 'Jaipur', 'locality' => 'Malviya Nagar'])->city);
+    }
+
+    /** The repair reported correctly-filed societies as misfiled, then as unresolvable. */
+    public function test_the_repair_leaves_a_new_delhi_society_on_its_delhi_locality(): void
+    {
+        $delhi = $this->city('Delhi', 'delhi', 'Delhi');
+
+        $locality = Locality::create([
+            'name' => 'Pitampura', 'slug' => 'pitampura', 'city' => 'Delhi',
+            'city_id' => $delhi->id, 'state' => 'Delhi', 'published_status' => 'published',
+        ]);
+
+        $society = Society::create([
+            'name' => 'Jagriti Apartments', 'slug' => 'jagriti-apartments',
+            'locality' => 'Pitampura', 'locality_id' => $locality->id,
+            'city' => 'New Delhi', 'city_id' => $delhi->id, 'state' => 'Delhi',
+        ]);
+
+        $this->artisan('societies:repair-locality-cities')
+            ->doesntExpectOutputToContain('Jagriti Apartments')
+            ->assertSuccessful();
+
+        $this->assertSame($locality->id, $society->fresh()->locality_id);
+    }
 }

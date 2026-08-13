@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Locality;
 use App\Models\Society;
+use App\Services\Ncr\CityResolver;
 use App\Services\Ncr\LocalityResolver;
 use Illuminate\Console\Command;
 
@@ -61,6 +62,7 @@ class RepairLocalityCities extends Command
 
         $moved = 0;
         $unresolved = 0;
+        $alreadyCorrect = 0;
 
         foreach ($mismatched as $society) {
             $locality = $resolver->resolve(
@@ -68,7 +70,14 @@ class RepairLocalityCities extends Command
                 ['city_id' => $society->city_id, 'city' => $society->city, 'state' => $society->state],
             );
 
-            if (! $locality || $locality->id === $society->locality_id) {
+            // Already on the right row: nothing to do, and nothing to complain about.
+            if ($locality && $locality->id === $society->locality_id) {
+                $alreadyCorrect++;
+
+                continue;
+            }
+
+            if (! $locality) {
                 $unresolved++;
 
                 continue;
@@ -80,21 +89,40 @@ class RepairLocalityCities extends Command
 
         $this->info("Moved {$moved} society(ies) onto a locality in their own city.");
 
+        if ($alreadyCorrect > 0) {
+            $this->line($alreadyCorrect.' were already on the right locality.');
+        }
+
         if ($unresolved > 0) {
-            $this->warn($unresolved.' could not be resolved — the locality text is blank or not a place. Fix those on the society itself.');
+            $this->warn($unresolved.' had no usable locality name — blank, an address, or a marketing phrase. Fix those on the society itself.');
         }
 
         return self::SUCCESS;
     }
 
-    /** Gurgaon and Gurugram are the same city; a blank on either side is not a mismatch. */
+    /**
+     * Resolved to city ROWS rather than compared as strings.
+     *
+     * A hand-rolled alias list handled Gurgaon/Gurugram and missed New Delhi/Delhi, so
+     * seven correctly-filed societies were reported as misfiled — and then reported as
+     * unresolvable, which was two wrong claims about rows that were already right.
+     */
     private function citiesDiffer(string $societyCity, string $localityCity): bool
     {
-        $normalise = fn (string $v) => str_replace('gurugram', 'gurgaon', strtolower(trim($v)));
+        if (trim($societyCity) === '' || trim($localityCity) === '') {
+            return false;
+        }
 
-        $a = $normalise($societyCity);
-        $b = $normalise($localityCity);
+        $resolver = app(CityResolver::class);
+        $a = $resolver->resolve($societyCity);
+        $b = $resolver->resolve($localityCity);
 
-        return $a !== '' && $b !== '' && $a !== $b;
+        // Both known: the ids decide, whatever they are spelt like.
+        if ($a && $b) {
+            return $a->id !== $b->id;
+        }
+
+        // One of them is a city we do not carry, so fall back to comparing the words.
+        return strtolower(trim($societyCity)) !== strtolower(trim($localityCity));
     }
 }
