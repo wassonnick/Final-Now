@@ -222,4 +222,49 @@ class NormalizeLocalitiesTest extends TestCase
         $this->assertSame(City::where('slug', 'delhi')->value('id'), $locality->city_id);
         $this->assertSame('Delhi', $locality->city, 'Stored under the catalogue spelling, not Google\'s.');
     }
+
+    /**
+     * A correction naming a city the catalogue does not carry used to apply anyway: the
+     * locality kept its old city_id beside the new name, and its societies were left with a
+     * name and no id — unmapped, and invisible on a site that filters by city.
+     */
+    public function test_a_correction_to_a_city_we_do_not_have_is_refused(): void
+    {
+        $this->ncr();
+        $gurugram = City::where('slug', 'gurgaon')->firstOrFail();
+
+        config(['locality_corrections' => ['nuh' => ['city' => 'Nuh', 'state' => 'Haryana']]]);
+
+        $locality = $this->locality('Nuh', 'Gurugram');
+        $locality->update(['city_id' => $gurugram->id]);
+        $society = $this->society('Some Village Homes', 'Nuh', $locality);
+
+        $this->artisan('societies:normalize-localities', ['--apply' => true, '--fix-cities' => true])
+            ->expectsOutputToContain('no city row of that name')
+            ->assertSuccessful();
+
+        $this->assertSame('Gurugram', $locality->fresh()->city, 'Left alone rather than half-moved.');
+        $this->assertSame($gurugram->id, $locality->fresh()->city_id);
+        $this->assertSame($gurugram->id, $society->fresh()->city_id, 'Its society keeps a city it can be found under.');
+    }
+
+    /** A correction to a city that does exist still applies in full. */
+    public function test_a_correction_to_a_known_city_moves_both_sides(): void
+    {
+        $this->ncr();
+        $gurugram = City::where('slug', 'gurgaon')->firstOrFail();
+        $delhi = City::where('slug', 'delhi')->firstOrFail();
+
+        config(['locality_corrections' => ['dwarka' => ['city' => 'Delhi', 'state' => 'Delhi']]]);
+
+        $locality = $this->locality('Dwarka', 'Gurugram');
+        $locality->update(['city_id' => $gurugram->id]);
+        $society = $this->society('Dwarka Heights', 'Dwarka', $locality);
+
+        $this->artisan('societies:normalize-localities', ['--apply' => true, '--fix-cities' => true])->assertSuccessful();
+
+        $this->assertSame($delhi->id, $locality->fresh()->city_id);
+        $this->assertSame($delhi->id, $society->fresh()->city_id);
+        $this->assertSame('Delhi', $society->fresh()->city);
+    }
 }

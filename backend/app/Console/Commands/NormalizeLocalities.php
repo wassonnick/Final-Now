@@ -124,8 +124,9 @@ class NormalizeLocalities extends Command
         }
 
         $merged = $moved = $renamed = $unpublished = 0;
+        $skippedCorrections = [];
 
-        DB::transaction(function () use ($plan, $fixCities, &$merged, &$moved, &$renamed, &$unpublished) {
+        DB::transaction(function () use ($plan, $fixCities, &$merged, &$moved, &$renamed, &$unpublished, &$skippedCorrections) {
             foreach ($plan as $step) {
                 /** @var Locality $locality */
                 $locality = $step['locality'];
@@ -162,16 +163,27 @@ class NormalizeLocalities extends Command
                 if ($fixCities && $step['correction']) {
                     $city = City::where('name', $step['correction']['city'])->first();
 
+                    // A correction naming a city the catalogue does not carry used to apply
+                    // anyway: the locality kept its OLD city_id beside the new name, and its
+                    // societies were left with a name and no id at all — unmapped, and
+                    // invisible on a site that filters by city. Half-applying a correction
+                    // is worse than not applying it, so it is refused and reported.
+                    if (! $city) {
+                        $skippedCorrections[] = $locality->name.' → '.$step['correction']['city'];
+
+                        continue;
+                    }
+
                     $locality->update([
                         'city' => $step['correction']['city'],
                         'state' => $step['correction']['state'],
-                        'city_id' => $city?->id ?? $locality->city_id,
+                        'city_id' => $city->id,
                     ]);
 
                     Society::where('locality_id', $locality->id)->update([
                         'city' => $step['correction']['city'],
                         'state' => $step['correction']['state'],
-                        'city_id' => $city?->id,
+                        'city_id' => $city->id,
                     ]);
 
                     $moved++;
@@ -180,6 +192,10 @@ class NormalizeLocalities extends Command
         });
 
         $this->info("Merged {$merged}, renamed {$renamed}, unpublished {$unpublished}, moved city for {$moved}.");
+
+        foreach ($skippedCorrections as $skipped) {
+            $this->warn('Skipped '.$skipped.' — no city row of that name. Create the city first, or drop it from config/locality_corrections.php.');
+        }
 
         if (! $fixCities) {
             $this->line('City corrections were listed but not applied. Re-run with --fix-cities when you want them.');
