@@ -17,17 +17,28 @@ const FILTERS = [
   { id: "all", label: "Everything" },
 ];
 
+/**
+ * What actually became of it.
+ *
+ * "Handled" was set the moment a job was created, so a queued import, a finished one and a
+ * failed one all read identically — and an operator looking for the draft had no way to
+ * tell whether to wait or to worry.
+ */
+function importState(candidate: DiscoveryCandidate): { tone: string; label: string } {
+  if (candidate.status === "new") return { tone: "bg-emerald-50 text-emerald-700", label: "Not in catalogue" };
+  if (candidate.status === "likely_duplicate") return { tone: "bg-amber-50 text-amber-700", label: "Maybe a duplicate" };
+  if (candidate.status === "dismissed") return { tone: "bg-slate-100 text-slate-500", label: "Dismissed" };
+
+  const job = candidate.import_job;
+  if (!job) return { tone: "bg-blue-50 text-blue-700", label: "Already in the catalogue" };
+  if (job.status === "completed") return { tone: "bg-blue-50 text-blue-700", label: "Imported" };
+  if (job.status === "failed") return { tone: "bg-rose-50 text-rose-700", label: `Import failed (job #${job.id})` };
+  if (job.status === "skipped") return { tone: "bg-slate-100 text-slate-500", label: `Skipped as a duplicate (job #${job.id})` };
+  return { tone: "bg-indigo-50 text-indigo-700", label: `Queued (job #${job.id})` };
+}
+
 function StatusBadge({ candidate }: { candidate: DiscoveryCandidate }) {
-  const tone =
-    candidate.status === "new" ? "bg-emerald-50 text-emerald-700"
-    : candidate.status === "likely_duplicate" ? "bg-amber-50 text-amber-700"
-    : candidate.status === "imported" ? "bg-blue-50 text-blue-700"
-    : "bg-slate-100 text-slate-500";
-  const label =
-    candidate.status === "new" ? "Not in catalogue"
-    : candidate.status === "likely_duplicate" ? "Maybe a duplicate"
-    : candidate.status === "imported" ? "Handled"
-    : "Dismissed";
+  const { tone, label } = importState(candidate);
 
   return <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${tone}`}>{label}</span>;
 }
@@ -171,6 +182,14 @@ export function AdminSocietyDiscoveryPage() {
                 <p className="mt-1 flex items-center gap-1.5 text-[13px] text-slate-500">
                   <MapPin className="h-3.5 w-3.5 shrink-0" />{candidate.address || candidate.area}
                 </p>
+                {/* The neighbourhood it will import into, so a wrong one is visible before
+                    the import rather than after. */}
+                {candidate.locality ? (
+                  <p className="mt-1 text-[12.5px] text-slate-500">
+                    Imports into <span className="font-bold text-slate-700">{candidate.locality}</span>
+                    {candidate.city ? <span className="text-slate-400">, {candidate.city}</span> : null}
+                  </p>
+                ) : null}
                 {candidate.status_reason ? (
                   <p className="mt-1.5 text-[12.5px] font-semibold text-slate-600">{candidate.status_reason}</p>
                 ) : null}
@@ -189,6 +208,14 @@ export function AdminSocietyDiscoveryPage() {
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
+              {candidate.status === "imported" && candidate.import_job?.result_society_id ? (
+                <a
+                  className="inline-flex items-center gap-1 rounded-md bg-blue-700 px-3 py-1.5 text-[12.5px] font-bold text-white"
+                  href={`/admin/societies/${candidate.import_job.result_society_id}/edit`}
+                >
+                  Open the draft<ExternalLink className="h-3 w-3" />
+                </a>
+              ) : null}
               {candidate.status === "dismissed" ? (
                 <Button size="sm" variant="outline" disabled={busy} onClick={() => void act(() => restoreCandidate(candidate.id))}>
                   <Undo2 className="mr-1.5 h-3.5 w-3.5" />Put back

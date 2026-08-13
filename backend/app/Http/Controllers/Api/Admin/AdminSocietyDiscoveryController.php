@@ -22,7 +22,7 @@ class AdminSocietyDiscoveryController extends Controller
     {
         $status = (string) $request->query('status', 'open');
 
-        $query = SocietyImportCandidate::query()->with('society:id,name,slug');
+        $query = SocietyImportCandidate::query()->with(['society:id,name,slug', 'importJob:id,status,result_society_id']);
 
         // "Open" is the working view: everything still needing a decision. The other
         // statuses are there to audit what was decided, not to work through.
@@ -113,7 +113,8 @@ class AdminSocietyDiscoveryController extends Controller
             'seed' => array_filter([
                 'place_id' => $candidate->place_id,
                 'city' => $candidate->city,
-                'locality' => $candidate->area,
+                // The neighbourhood from the address, not the phrase typed into the scan box.
+                'locality' => $candidate->locality ?: null,
             ]),
         ];
 
@@ -128,6 +129,7 @@ class AdminSocietyDiscoveryController extends Controller
         $candidate->update([
             'status' => SocietyImportCandidate::STATUS_IMPORTED,
             'status_reason' => 'Queued for import (job #'.$job->id.')',
+            'import_job_id' => $job->id,
         ]);
 
         return response()->json(['status' => 'ok', 'job_id' => $job->id, 'candidate' => $candidate->fresh()]);

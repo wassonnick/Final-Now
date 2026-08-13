@@ -16,6 +16,8 @@ export type DiscoveryCandidate = {
   status_reason?: string | null;
   society_id?: number | null;
   society?: { id: number; name: string; slug: string } | null;
+  locality?: string | null;
+  import_job?: { id: number; status: string; result_society_id?: number | null } | null;
   first_seen_at?: string | null;
   last_seen_at?: string | null;
 };

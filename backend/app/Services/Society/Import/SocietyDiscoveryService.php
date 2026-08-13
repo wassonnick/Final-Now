@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Models\Society;
 use App\Models\SocietyImportCandidate;
 use App\Services\Ncr\CityResolver;
+use App\Services\Ncr\LocalityNameService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -25,7 +26,10 @@ use Illuminate\Support\Facades\Log;
  */
 class SocietyDiscoveryService
 {
-    public function __construct(private readonly CityResolver $cities) {}
+    public function __construct(
+        private readonly CityResolver $cities,
+        private readonly LocalityNameService $names,
+    ) {}
 
     /** Places returns at most 20 per text search; asking for more silently costs the same. */
     private const MAX_RESULTS = 20;
@@ -255,6 +259,8 @@ class SocietyDiscoveryService
                 'normalised_name' => SocietyImportCandidate::normalise($name),
                 'address' => (string) ($place['formattedAddress'] ?? ''),
                 'area' => $area,
+                // The neighbourhood, as distinct from the phrase typed into the scan box.
+                'locality' => $this->localityFromAddress((string) ($place['formattedAddress'] ?? ''), $name),
                 'city' => $city?->name ?: $this->cities->fromAddress((string) ($place['formattedAddress'] ?? ''))?->name,
                 'city_id' => $city?->id ?: $this->cities->fromAddress((string) ($place['formattedAddress'] ?? ''))?->id,
                 'latitude' => data_get($place, 'location.latitude'),
@@ -288,5 +294,54 @@ class SocietyDiscoveryService
             'rejected' => $counts['rejected'] ?? 0,
             'message' => $message,
         ], fn ($value) => $value !== null);
+    }
+
+    /**
+     * The neighbourhood a Google address puts this place in.
+     *
+     * `area` is the phrase typed into the scan box — "West Delhi", "Pitampura Delhi" — which
+     * is a search term. Using it as the locality gave eighteen societies a page called
+     * "Pitampura Delhi" beside the real Pitampura, and would have done the same to Greater
+     * Noida on the next scan.
+     *
+     * Google writes an address outwards, so the component immediately before the city is the
+     * neighbourhood: "…, Pocket 37, Sector 13, Rohini, New Delhi, Delhi, 110085, India".
+     */
+    private function localityFromAddress(string $address, string $placeName): ?string
+    {
+        $parts = collect(explode(',', $address))
+            ->map(fn ($part) => trim((string) $part))
+            ->filter()
+            ->values();
+
+        $cityIndex = $parts->search(fn (string $part) => $this->cities->resolve($part) !== null);
+
+        if ($cityIndex === false || $cityIndex === 0) {
+            return null;
+        }
+
+        // Walk back from the city past anything that is not a place — a plus code, a house
+        // number, "Block W" — and stop before it becomes a guess.
+        for ($i = $cityIndex - 1; $i >= max(0, $cityIndex - 3); $i--) {
+            $candidate = $parts[$i];
+
+            if (str_contains($candidate, '+') || preg_match('/^\d+$/', $candidate)) {
+                continue;
+            }
+
+            // Google leads with the establishment when it has a name — "Some Society, Block
+            // W, Delhi" — and that is the building, not the neighbourhood around it. It
+            // cannot be an index rule: a short address like "Sector 1, Greater Noida" opens
+            // with the locality itself.
+            if (SocietyImportCandidate::normalise($candidate) === SocietyImportCandidate::normalise($placeName)) {
+                continue;
+            }
+
+            if ($this->names->rejectionReason($candidate) === null) {
+                return $this->names->canonicalise($candidate);
+            }
+        }
+
+        return null;
     }
 }

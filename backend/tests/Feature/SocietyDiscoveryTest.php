@@ -312,6 +312,116 @@ class SocietyDiscoveryTest extends TestCase
         $seed = json_decode((string) SocietyImportJob::latest('id')->firstOrFail()->input, true)['seed'];
         $this->assertSame('place-a', $seed['place_id']);
         $this->assertSame('Delhi', $seed['city']);
-        $this->assertSame('West Delhi', $seed['locality']);
+        $this->assertSame('Rohini', $seed['locality'], 'The neighbourhood, not the phrase typed into the box.');
+    }
+
+    /**
+     * @param  array<string,string|null>  $cases
+     *
+     * Queued as a sequence rather than re-faking per case: Http::fake() appends stubs and
+     * the first match wins, so calling it in a loop replays the first address every time —
+     * which is exactly how this helper first "passed" against the wrong data.
+     */
+    private function assertDerivesLocality(array $cases): void
+    {
+        $sequence = Http::fakeSequence('places.googleapis.com/*');
+
+        foreach ($cases as $address => $expected) {
+            $place = $this->place('p-'.md5($address), 'Some Society');
+            $place['formattedAddress'] = $address;
+            $sequence->push(['places' => [$place]]);
+        }
+
+        foreach ($cases as $address => $expected) {
+            SocietyImportCandidate::query()->delete();
+
+            app(SocietyDiscoveryService::class)->scan('Whatever Was Typed');
+
+            $this->assertSame($expected, SocietyImportCandidate::firstOrFail()->locality, $address);
+        }
+    }
+
+    /**
+     * `area` is the phrase typed into the scan box. Using it as the locality is what gave
+     * eighteen societies a page called "Pitampura Delhi" beside the real Pitampura.
+     */
+    public function test_the_locality_comes_from_the_address_not_the_scan_term(): void
+    {
+        $this->ncrCities();
+
+        $this->assertDerivesLocality([
+            'P4FJ+XHQ, 37, Pocket 37, Sector 13, Rohini, New Delhi, Delhi, 110085, India' => 'Rohini',
+            '1, New Rohtak Rd, Block 67, Karol Bagh, New Delhi, Delhi, 110005, India' => 'Karol Bagh',
+            'W Block, Alaknanda Rd, Part 2, Greater Kailash, New Delhi, Delhi 110048, India' => 'Greater Kailash',
+            'Plot No 2, Desh Bandhu Gupta Marg, Sector 4, Dwarka, New Delhi, Delhi, 110078, India' => 'Dwarka',
+            'Sunder Apartments, Block GH10, Sunder Vihar, Paschim Vihar, Delhi, 110087, India' => 'Paschim Vihar',
+            'Golf Course Rd, Sector 54, Gurugram, Haryana 122002, India' => 'Sector 54',
+            'Sector 1, Greater Noida, Uttar Pradesh 201306, India' => 'Sector 1',
+        ]);
+    }
+
+    /** Nothing usable is better than the building's own name or a block number. */
+    public function test_an_address_with_no_neighbourhood_yields_none(): void
+    {
+        $this->ncrCities();
+
+        $this->assertDerivesLocality([
+            'Delhi, India' => null,
+            // Google leads with the establishment name; behind it is only a block.
+            'Some Society, Block W, Delhi, 110001, India' => null,
+        ]);
+    }
+
+    /** The import must hand over the derived neighbourhood, not the typed phrase. */
+    public function test_the_import_seeds_the_derived_locality(): void
+    {
+        config(['services.admin_api_token' => 'admin-test-token']);
+        $this->ncrCities();
+
+        $place = $this->place('place-a', 'Sunrise Apartments');
+        $place['formattedAddress'] = 'Pocket 37, Sector 13, Rohini, New Delhi, Delhi, 110085, India';
+        $this->fakePlaces([$place]);
+        app(SocietyDiscoveryService::class)->scan('West Delhi');
+
+        $candidate = SocietyImportCandidate::firstOrFail();
+        $this->withToken('admin-test-token')
+            ->postJson("/api/admin/discovery/candidates/{$candidate->id}/import")
+            ->assertSuccessful();
+
+        $job = SocietyImportJob::latest('id')->firstOrFail();
+        $this->assertSame('Rohini', json_decode((string) $job->input, true)['seed']['locality']);
+        $this->assertSame($job->id, $candidate->fresh()->import_job_id, 'So the queue can show what became of it.');
+    }
+
+    /** "Handled" said nothing about whether the import finished, failed or is still queued. */
+    public function test_the_queue_exposes_the_import_job_state(): void
+    {
+        config(['services.admin_api_token' => 'admin-test-token']);
+        $this->ncrCities();
+
+        $this->fakePlaces([$this->place('place-a', 'Sunrise Apartments')]);
+        app(SocietyDiscoveryService::class)->scan('West Delhi');
+        $candidate = SocietyImportCandidate::firstOrFail();
+
+        $this->withToken('admin-test-token')->postJson("/api/admin/discovery/candidates/{$candidate->id}/import")->assertSuccessful();
+
+        $row = collect($this->withToken('admin-test-token')
+            ->getJson('/api/admin/discovery/candidates?status=all')
+            ->assertSuccessful()
+            ->json('candidates'))->firstWhere('place_id', 'place-a');
+
+        $this->assertSame('queued', $row['import_job']['status']);
+
+        // A real society, because result_society_id is a foreign key.
+        $imported = Society::create(['name' => 'Sunrise Apartments', 'slug' => 'sunrise-apartments-'.uniqid(), 'city' => 'Delhi']);
+        SocietyImportJob::latest('id')->firstOrFail()->update(['status' => 'completed', 'result_society_id' => $imported->id]);
+
+        $row = collect($this->withToken('admin-test-token')
+            ->getJson('/api/admin/discovery/candidates?status=all')
+            ->assertSuccessful()
+            ->json('candidates'))->firstWhere('place_id', 'place-a');
+
+        $this->assertSame('completed', $row['import_job']['status']);
+        $this->assertSame($imported->id, $row['import_job']['result_society_id']);
     }
 }
