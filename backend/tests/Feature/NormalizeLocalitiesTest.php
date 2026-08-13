@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\City;
 use App\Models\Locality;
+use App\Models\Region;
 use App\Models\Society;
 use App\Services\Ncr\LocalityNameService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -131,5 +133,93 @@ class NormalizeLocalitiesTest extends TestCase
         $this->assertSame('Sector 35-36', $names->canonicalise('Sec-35-36'));
         $this->assertSame('DLF Phase IV', $names->canonicalise('DLF Phase IV'));
         $this->assertSame('Gwal Pahari', $names->canonicalise('gwal pahari'));
+    }
+
+    private function ncr(): void
+    {
+        $region = Region::firstOrCreate(['slug' => 'delhi-ncr'], ['name' => 'Delhi NCR']);
+        foreach ([['Gurugram', 'gurgaon', 'Haryana'], ['Delhi', 'delhi', 'Delhi'], ['Noida', 'noida', 'Uttar Pradesh'], ['Greater Noida', 'greater-noida', 'Uttar Pradesh']] as [$name, $slug, $state]) {
+            City::firstOrCreate(['slug' => $slug], ['region_id' => $region->id, 'name' => $name, 'state' => $state, 'is_active' => true]);
+        }
+    }
+
+    /**
+     * The scan box takes "Pitampura Delhi", and that phrase became the locality — eighteen
+     * societies on it against two on "Pitampura". One neighbourhood, two pages.
+     */
+    public function test_a_city_suffixed_name_is_not_a_separate_locality(): void
+    {
+        $this->ncr();
+        $names = app(LocalityNameService::class);
+
+        $this->assertSame('Pitampura', $names->canonicalise('Pitampura Delhi'));
+        $this->assertSame('Paschim Vihar', $names->canonicalise('Paschim Vihar Delhi'));
+        $this->assertSame('Sector 44', $names->canonicalise('Sector 44 Noida'));
+        $this->assertSame('Sector 65', $names->canonicalise('Sector 65 Gurgaon'));
+        // Greater Noida must be stripped whole, not leave "Greater" behind.
+        $this->assertSame('Sector 1', $names->canonicalise('Sector 1 Greater Noida'));
+    }
+
+    /** A locality genuinely named after its city must not be emptied to nothing. */
+    public function test_a_bare_city_name_survives_canonicalisation(): void
+    {
+        $this->ncr();
+
+        $this->assertSame('Delhi', app(LocalityNameService::class)->canonicalise('Delhi'));
+    }
+
+    /** The production case: the suffixed row holds the inventory and still loses the name. */
+    public function test_the_suffixed_twin_merges_into_the_real_locality(): void
+    {
+        $this->ncr();
+        $delhi = City::where('slug', 'delhi')->firstOrFail();
+
+        $real = $this->locality('Pitampura', 'Delhi');
+        $suffixed = $this->locality('Pitampura Delhi', 'Delhi');
+        $real->update(['city_id' => $delhi->id]);
+        $suffixed->update(['city_id' => $delhi->id]);
+
+        $onReal = $this->society('Small One', 'Pitampura', $real);
+        $bulk = collect(range(1, 4))->map(fn ($i) => $this->society("Bulk {$i}", 'Pitampura Delhi', $suffixed));
+
+        $this->artisan('societies:normalize-localities', ['--apply' => true])->assertSuccessful();
+
+        $this->assertNull(Locality::find($suffixed->id), 'The search phrase must not survive as a place.');
+        $this->assertSame($real->id, $onReal->fresh()->locality_id);
+        foreach ($bulk as $society) {
+            $this->assertSame($real->id, $society->fresh()->locality_id, 'Its societies move to the real locality.');
+        }
+    }
+
+    /** "Janak Puri" and "Janakpuri" are one neighbourhood spelt two ways. */
+    public function test_spacing_variants_merge(): void
+    {
+        $this->ncr();
+        $delhi = City::where('slug', 'delhi')->firstOrFail();
+
+        $populated = $this->locality('Janakpuri', 'Delhi');
+        $empty = $this->locality('Janak Puri', 'Delhi');
+        $populated->update(['city_id' => $delhi->id]);
+        $empty->update(['city_id' => $delhi->id]);
+        $society = $this->society('Some Flats', 'Janakpuri', $populated);
+
+        $this->artisan('societies:normalize-localities', ['--apply' => true])->assertSuccessful();
+
+        $this->assertSame(1, Locality::whereIn('id', [$populated->id, $empty->id])->count());
+        $this->assertSame($populated->id, $society->fresh()->locality_id, 'The row holding inventory wins the tie.');
+    }
+
+    /** Localities were written with a city name and no city_id, so they counted for nothing. */
+    public function test_a_locality_links_its_own_city(): void
+    {
+        $this->ncr();
+
+        $locality = Locality::create([
+            'name' => 'Karol Bagh', 'slug' => 'karol-bagh', 'city' => 'New Delhi',
+            'state' => 'Delhi', 'published_status' => 'published',
+        ]);
+
+        $this->assertSame(City::where('slug', 'delhi')->value('id'), $locality->city_id);
+        $this->assertSame('Delhi', $locality->city, 'Stored under the catalogue spelling, not Google\'s.');
     }
 }

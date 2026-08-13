@@ -48,14 +48,38 @@ class NormalizeLocalities extends Command
             // Merge first: everything else applies to whichever row survives. Scoped to the
             // same city, because Noida's "sec-36" must become Noida's Sector 36 and never
             // be absorbed into Gurugram's.
-            $winner = $slug !== $locality->slug
-                ? Locality::where('slug', $slug)
-                    ->where('id', '!=', $locality->id)
-                    ->where(fn ($q) => $locality->city_id
-                        ? $q->where('city_id', $locality->city_id)
-                        : $q->where('city', $locality->city))
-                    ->first()
-                : null;
+            $siblings = Locality::query()
+                ->where('id', '!=', $locality->id)
+                ->where(fn ($q) => $locality->city_id
+                    ? $q->where('city_id', $locality->city_id)
+                    : $q->where('city', $locality->city))
+                ->get();
+
+            // Matched on the forgiving key, not the slug, so "Pitampura Delhi" merges into
+            // "Pitampura" and "Janak Puri" into "Janakpuri".
+            $key = $names->matchKey((string) $locality->name);
+            $isCanonical = fn (Locality $row) => $names->canonicalise((string) $row->name) === (string) $row->name;
+            $held = fn (Locality $row) => Society::where('locality_id', $row->id)->count();
+
+            // The correctly-spelt row survives, whichever holds more inventory. Preferring
+            // the fuller row would have kept "Pitampura Delhi" — eighteen societies — over
+            // "Pitampura", enshrining a search phrase as the name of a neighbourhood.
+            // Inventory only breaks ties between two equally correct spellings.
+            $winner = $key === '' ? null : $siblings
+                ->filter(fn (Locality $row) => $names->matchKey((string) $row->name) === $key)
+                ->sortByDesc(fn (Locality $row) => [$isCanonical($row) ? 1 : 0, $held($row)])
+                ->first();
+
+            if ($winner) {
+                $mine = $isCanonical($locality);
+                $theirs = $isCanonical($winner);
+
+                // Never merge the correct name away, and never merge the bigger of two
+                // equally correct rows into the smaller.
+                if (($mine && ! $theirs) || ($mine === $theirs && $held($winner) < $societies)) {
+                    $winner = null;
+                }
+            }
 
             if ($winner) {
                 $actions[] = 'merge into "'.$winner->name.'"';

@@ -40,11 +40,19 @@ class LocalityResolver
         // Scoped by city_id when we have one. A null city_id cannot be scoped, so it falls
         // back to matching on the city NAME rather than collapsing every unlinked city into
         // one bucket — imperfect, but it keeps Noida out of Gurugram.
-        $existing = Locality::query()
-            ->where('slug', $slug)
+        $inCity = Locality::query()
             ->when($cityId, fn ($q) => $q->where('city_id', $cityId))
             ->when(! $cityId, fn ($q) => $q->where('city', $city))
-            ->first();
+            ->get();
+
+        $existing = $inCity->firstWhere('slug', $slug);
+
+        // Then the forgiving comparison, so "Janak Puri" finds "Janakpuri" and "Pitampura
+        // Delhi" finds "Pitampura" instead of founding a rival row for the same place.
+        if (! $existing) {
+            $key = $this->names->matchKey($rawName);
+            $existing = $key === '' ? null : $inCity->first(fn (Locality $row) => $this->names->matchKey((string) $row->name) === $key);
+        }
 
         if ($existing) {
             return $existing;

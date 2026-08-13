@@ -48,6 +48,14 @@ class LocalityNameService
             return '';
         }
 
+        // Before the sector branch below, which returns early: "Sector 44 Noida" has to lose
+        // its city before it is read as a sector, or the suffix rides along into the name.
+        $name = $this->stripTrailingCity($name);
+
+        if ($name === '') {
+            return '';
+        }
+
         // sec-36 / Sect. 36 / Sector-63A → Sector 36 / Sector 63A
         if (preg_match('/^(sec|sect|sector)[\s\-.]*([0-9].*)$/i', $name, $m)) {
             $suffix = trim($m[2]);
@@ -61,6 +69,72 @@ class LocalityNameService
         // came in cased deliberately ("DLF Phase IV") and retitling would damage it.
         return $name === strtolower($name) ? Str::title($name) : $name;
     }
+
+    /**
+     * "Pitampura Delhi" is a search phrase, not a place.
+     *
+     * The discovery scan box takes an area the way you would say it aloud, city included,
+     * and that string was used as the locality. So eighteen societies landed on "Pitampura
+     * Delhi" while two sat on "Pitampura" — one neighbourhood, two pages, neither complete.
+     */
+    private function stripTrailingCity(string $name): string
+    {
+        // Longest first, so "Greater Noida" is stripped before "Noida" can match inside it.
+        $aliases = collect($this->cityNames())
+            ->flatMap(fn (string $city) => [$city, ...($this->extraSpellings($city))])
+            ->unique()
+            ->sortByDesc(fn (string $alias) => mb_strlen($alias))
+            ->values();
+
+        $changed = true;
+        while ($changed) {
+            $changed = false;
+            foreach ($aliases as $alias) {
+                $trimmed = preg_replace('/\s+'.preg_quote($alias, '/').'\s*$/i', '', $name) ?? $name;
+
+                // Never strip a name down to nothing: a locality genuinely called after its
+                // city is handled by rejectionReason(), not by silently emptying it here.
+                if ($trimmed !== $name && trim($trimmed) !== '') {
+                    $name = trim($trimmed);
+                    $changed = true;
+                }
+            }
+        }
+
+        return $name;
+    }
+
+    /** @return array<int,string> */
+    private function extraSpellings(string $city): array
+    {
+        return match (mb_strtolower($city)) {
+            'delhi' => ['New Delhi'],
+            'gurugram' => ['Gurgaon'],
+            'gurgaon' => ['Gurugram'],
+            default => [],
+        };
+    }
+
+    /** @return array<int,string> */
+    private function cityNames(): array
+    {
+        return $this->cityNames ??= City::query()->pluck('name')->filter()->map(fn ($n) => (string) $n)->all();
+    }
+
+    /**
+     * The form used to decide whether two names are the same place.
+     *
+     * Kept apart from slugFor() on purpose: the slug is a URL and changing it breaks live
+     * pages, but matching can afford to be more forgiving. "Janak Puri" and "Janakpuri" are
+     * one neighbourhood spelt two ways, and each founded its own row.
+     */
+    public function matchKey(string $name): string
+    {
+        return preg_replace('/[^a-z0-9]/', '', Str::lower($this->canonicalise($name))) ?? '';
+    }
+
+    /** @var array<int,string>|null */
+    private ?array $cityNames = null;
 
     public function slugFor(string $name): string
     {

@@ -2,19 +2,25 @@
 
 namespace App\Models;
 
+use App\Observers\LocalityObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[ObservedBy(LocalityObserver::class)]
 class Locality extends Model
 {
     use HasFactory, HasUuids;
 
     protected $table = 'localities';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -22,7 +28,7 @@ class Locality extends Model
         'locality_type', 'sector_code', 'published_status', 'seo_title', 'seo_description',
         'description', 'connectivity_score', 'safety_score', 'lifestyle_score',
         'avg_rent_1bhk', 'avg_rent_2bhk', 'avg_rent_3bhk', 'avg_rent_4bhk',
-        'price_per_sqft', 'metro_distance_km', 'airport_distance_km', 'cyber_city_distance_km'
+        'price_per_sqft', 'metro_distance_km', 'airport_distance_km', 'cyber_city_distance_km',
     ];
 
     protected $casts = [
