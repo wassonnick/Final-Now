@@ -11,6 +11,11 @@
  * Keyed by locality slug. Applied only by `societies:normalize-localities --fix-cities`,
  * which moves the locality and the societies linked to it together, because a society in
  * Gurgaon pointing at a Delhi locality is a worse state than either mistake alone.
+ *
+ * Every entry must name a city the catalogue actually carries. "Nuh" was listed here and is
+ * a district of its own with no city row, so the move could only ever half-complete; the
+ * command refuses such corrections now, and the entry is gone rather than sitting here
+ * being refused forever.
  */
 return [
     'dwarka' => ['city' => 'Delhi', 'state' => 'Delhi'],
@@ -26,5 +31,4 @@ return [
     'pitampura' => ['city' => 'Delhi', 'state' => 'Delhi'],
     'saket' => ['city' => 'Delhi', 'state' => 'Delhi'],
     'vasant-kunj' => ['city' => 'Delhi', 'state' => 'Delhi'],
-    'nuh' => ['city' => 'Nuh', 'state' => 'Haryana'],
 ];
