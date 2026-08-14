@@ -4,6 +4,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { rowIsInCity, useSelectedNcrCity } from "@/lib/ncrCities";
 import { formatDistance, searchNearLandmark, type LandmarkSearchResult } from "@/lib/landmarkSearchApi";
+import { describeIntent, hasIntent, parseSearchIntent, propertyMatchesIntent, societyMatchesIntent } from "@/lib/searchIntent";
 import { ArrowRight, Bot, Building2, CheckCircle2, Grid3X3, Home, List, MapPin, MapPinned, MessageCircle, Navigation, PhoneCall, Scale, Search, Shield, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store";
@@ -176,6 +177,22 @@ function sortedSearchResults<T>(
     .sort((a, b) => b.score - a.score || a.index - b.index)
     .map((entry) => entry.item);
 }
+
+/**
+ * Real sentences, not feature names.
+ *
+ * Every one of these exercises a different part of the parser — a landmark, a budget, a
+ * bedroom count, an amenity, a furnishing — so whichever a user clicks, they learn that
+ * the box takes sentences and go on to type their own.
+ */
+const SEARCH_PHRASE_EXAMPLES = [
+  "3 bhk near Ambience Mall",
+  "2 bhk under 50k",
+  "walking distance from Cyber Hub",
+  "semi furnished flat near metro",
+  "society with a swimming pool",
+  "pet friendly society",
+];
 
 function quickSearchIntent(value: string): "societies" | "rent" | "buy" {
   const clean = normalizeSearchValue(value);
@@ -638,6 +655,12 @@ export function SearchPage() {
     return map;
   }, [landmarkResult]);
 
+  // "2 bhk under 50k with a pool" states constraints, not a name. Parsed once here and
+  // applied to both result sets, so the same sentence works on societies and on homes.
+  const intent = useMemo(() => parseSearchIntent(query), [query]);
+  const intentChips = useMemo(() => describeIntent(intent), [intent]);
+  const searchText = hasIntent(intent) ? intent.remainder : query;
+
   const filteredSocieties = useMemo(() => {
     // A landmark search has already answered the question, in the right order.
     if (landmarkResult?.societies?.length) {
@@ -664,8 +687,30 @@ export function SearchPage() {
       return placeMatches;
     }
 
-    return sortedSearchResults(societies, query, expandedSocietySearchText, (society: any) => searchableText(society?.name));
-  }, [query, societies, allSocieties, landmarkResult]);
+    // Match on what is left after the constraints are lifted out. Scoring society names
+    // against "2 bhk under 50k" ranks on words no society is named after; scoring them
+    // against "" correctly means "every society, then filter".
+    if (!searchText.trim() && hasIntent(intent)) {
+      return societies;
+    }
+
+    return sortedSearchResults(societies, searchText, expandedSocietySearchText, (society: any) => searchableText(society?.name));
+  }, [query, searchText, intent, societies, allSocieties, landmarkResult]);
+
+  /**
+   * Constraints narrow the results; they never empty them silently.
+   *
+   * A filter that returns nothing and says nothing looks identical to having no inventory,
+   * and the honest answer — "nothing matched all of it, here is the closest" — is more
+   * useful than a blank page.
+   */
+  const intentSocieties = useMemo(() => {
+    if (!hasIntent(intent)) return filteredSocieties;
+    return filteredSocieties.filter((society: any) => societyMatchesIntent(society, intent));
+  }, [filteredSocieties, intent]);
+
+  const intentDroppedAll = hasIntent(intent) && intentSocieties.length === 0 && filteredSocieties.length > 0;
+  const societiesAfterIntent = intentDroppedAll ? filteredSocieties : intentSocieties;
 
   const searchSuggestions = useMemo(() => suggestSocieties(societies, query), [societies, query]);
 
@@ -690,7 +735,7 @@ export function SearchPage() {
   const societyResults =
     activeTab === "societies" && isAiSearch && aiSocietyResults.length > 0
       ? aiSocietyResults
-      : filteredSocieties;
+      : societiesAfterIntent;
 
   const filteredProperties = useMemo(() => {
     const typedProperties = properties.filter((property) => {
@@ -702,7 +747,14 @@ export function SearchPage() {
           : true;
     });
 
-    return sortedSearchResults(typedProperties, query, (property) =>
+    const matching = hasIntent(intent)
+      ? typedProperties.filter((property) => propertyMatchesIntent(property, intent))
+      : typedProperties;
+
+    // Same rule as societies: an over-tight sentence falls back rather than showing nothing.
+    const pool = matching.length === 0 && hasIntent(intent) ? typedProperties : matching;
+
+    return sortedSearchResults(pool, searchText, (property) =>
       searchableText(
         property?.title,
         property?.society,
@@ -718,7 +770,7 @@ export function SearchPage() {
         safeJoin(property?.amenities),
       ),
     );
-  }, [activeTab, properties, query]);
+  }, [activeTab, properties, query, searchText, intent]);
 
   const updateUrl = (tab: string, searchValue: string) => {
     const params = new URLSearchParams(searchParams);
@@ -1184,7 +1236,7 @@ export function SearchPage() {
               {showMap ? "Hide map" : "Map"}
             </button>
             <span className="ml-auto whitespace-nowrap text-[12px] font-bold text-navy-500">
-              {filteredSocieties.length + filteredProperties.length} results
+              {societiesAfterIntent.length + filteredProperties.length} results
             </span>
           </div>
 
@@ -1262,7 +1314,7 @@ export function SearchPage() {
 
                 <div className="sticky bottom-0 border-t border-navy-100 bg-white px-5 py-3">
                   <button type="button" onClick={() => setFiltersOpen(false)} className="w-full rounded-full bg-navy-900 py-3.5 text-sm font-black text-white">
-                    Show {filteredSocieties.length + filteredProperties.length} results
+                    Show {societiesAfterIntent.length + filteredProperties.length} results
                   </button>
                 </div>
               </div>
@@ -1388,6 +1440,29 @@ export function SearchPage() {
           </aside>
 
           <div className="min-w-0 space-y-3 md:space-y-4">
+            {/* Nobody types a sentence at a search box that has only ever accepted names.
+                Shown when there is nothing to show anyway — an empty query or an empty
+                result — so it teaches the syntax exactly when it can still be used. */}
+            {!query.trim() || visibleCount === 0 ? (
+              <div className="rounded-[1.2rem] border border-blue-100 bg-blue-50/50 p-3 md:rounded-[1.35rem] md:p-3.5">
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-blue-700">
+                  Ask it the way you would say it
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {SEARCH_PHRASE_EXAMPLES.map((example) => (
+                    <button
+                      key={example}
+                      type="button"
+                      onClick={() => applyQuickSearch(example)}
+                      className="rounded-full border border-blue-200 bg-white px-3 py-1.5 text-[12px] font-bold text-navy-700 hover:border-blue-400 hover:bg-blue-50"
+                    >
+                      {example}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <div className="rounded-[1.2rem] border border-blue-100 bg-white p-2.5 shadow-sm md:rounded-[1.35rem] md:p-3">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -1409,6 +1484,28 @@ export function SearchPage() {
                     <p className="mt-1 text-xs font-semibold text-emerald-700">
                       Sorted by distance{landmarkResult.radius_km ? ` · within ${landmarkResult.radius_km} km` : ""}
                       {landmarkResult.remainder ? ` · matching “${landmarkResult.remainder}”` : ""}
+                    </p>
+                  ) : null}
+
+                  {/* What the sentence was understood to mean. Shown as chips rather than
+                      applied invisibly, because a filter the user cannot see is a filter
+                      they cannot correct when it reads them wrong. */}
+                  {intentChips.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {intentChips.map((chip) => (
+                        <span
+                          key={chip}
+                          className="rounded-full bg-blue-50 px-2.5 py-1 text-[11.5px] font-bold text-blue-700"
+                        >
+                          {chip}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {intentDroppedAll ? (
+                    <p className="mt-2 text-xs font-semibold text-amber-700">
+                      Nothing matched all of that, so these are the closest we have.
                     </p>
                   ) : null}
                 </div>
