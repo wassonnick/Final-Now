@@ -6,6 +6,12 @@ Disallow: /admin/
 Disallow: /owner/dashboard
 Disallow: /login
 
+# The advisor page itself is worth indexing; the same page with a question already in the
+# URL is not. Every society page links to one, and a crawler that renders JavaScript makes
+# the page ask it — a paid AI answer per crawl, logged as a conversation nobody had.
+Disallow: /ai-advisor?*q=
+Disallow: /ai-advisor?*society=
+
 Sitemap: https://www.societyflats.com/sitemap.xml
 # Live registry sitemap — includes societies published between frontend deploys.
 # Proxied from the backend via a Render rewrite so it lives on our own domain

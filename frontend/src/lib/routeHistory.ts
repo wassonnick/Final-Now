@@ -35,3 +35,16 @@ export function entryReferrer(): string {
     return "";
   }
 }
+
+/**
+ * Did this visit reach the current page by clicking inside the app?
+ *
+ * Deliberately not document.referrer, which is set by any fresh navigation — including a
+ * crawler following a link, which is exactly the traffic this is meant to tell apart. Only
+ * a client-side route change sets previousPath, and only a browser running the app does
+ * that. A person who pastes a link is treated like a crawler here, and loses nothing: the
+ * question is waiting in the box.
+ */
+export function arrivedByInAppClick(): boolean {
+  return previousPath !== "";
+}

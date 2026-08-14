@@ -495,7 +495,7 @@ export function ComparePage() {
         )}
 
         <div className="mt-[22px] flex flex-wrap gap-3">
-          <Link to={`/ai-advisor?q=${encodeURIComponent(compareRankPrompt(items))}`} className="rounded-[11px] bg-[#C8783F] px-[22px] py-3 text-sm font-bold text-white">Help me choose</Link>
+          <Link rel="nofollow" to={`/ai-advisor?q=${encodeURIComponent(compareRankPrompt(items))}`} className="rounded-[11px] bg-[#C8783F] px-[22px] py-3 text-sm font-bold text-white">Help me choose</Link>
           <a href={`https://wa.me/919911886222?text=${compareHelpMessage(items)}`} target="_blank" rel="noreferrer" className="rounded-[11px] border border-[#E7E3DA] bg-white px-[22px] py-3 text-sm font-bold text-[#25302B]">Get options in these societies</a>
           <a href={`https://wa.me/919911886222?text=${compareHelpMessage(items)}`} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-[11px] border border-[#E7E3DA] bg-white px-[22px] py-3 text-sm font-bold text-[#25302B]"><MessageCircle className="mr-2 h-4 w-4 text-green-600" />Share on WhatsApp</a>
           <button type="button" onClick={clearAndOpenSearch} className="rounded-[11px] border border-[#E7E3DA] bg-white px-[22px] py-3 text-sm font-bold text-[#6E756E]">Change societies</button>
@@ -595,7 +595,7 @@ export function ComparePage() {
               <X className="mr-2 h-4 w-4" /> Clear and search again
             </Button>
             <Button asChild variant="outline" className="rounded-full border-blue-100 font-black text-blue-700">
-              <Link to={`/ai-advisor?q=${encodeURIComponent(compareRankPrompt(items))}`}>
+              <Link rel="nofollow" to={`/ai-advisor?q=${encodeURIComponent(compareRankPrompt(items))}`}>
                 Ask AI to rank these <Sparkles className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -824,7 +824,7 @@ export function ComparePage() {
               Ask AI to rank the comparison by commute, budget, school or lifestyle.
             </p>
             <Button asChild className="mt-4 h-10 w-full rounded-full bg-white font-black text-navy-950 hover:bg-blue-50">
-              <Link to={`/ai-advisor?q=${encodeURIComponent(compareRankPrompt(items))}`}>Ask AI Advisor</Link>
+              <Link rel="nofollow" to={`/ai-advisor?q=${encodeURIComponent(compareRankPrompt(items))}`}>Ask AI Advisor</Link>
             </Button>
           </div>
         </div>

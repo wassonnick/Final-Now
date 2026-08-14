@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarCheck, PhoneCall, RotateCcw, Scale, Send, SlidersHorizontal, Sparkles, Star } from 'lucide-react';
-import { entryReferrer } from '@/lib/routeHistory';
+import { arrivedByInAppClick, entryReferrer } from '@/lib/routeHistory';
 import { API_BASE_URL } from '@/config/api';
 import { PublicLeadModal } from '@/components/leads/PublicLeadModal';
 import { trackAiPromptSubmitted, trackEvent, trackResultClicked } from '@/lib/analytics';
@@ -191,12 +191,25 @@ export function SocietyAssistant({ initialQuery, entrySource = 'assistant' }: { 
         }
       }
 
-      // Clicking "Ask AI about this society" is a question, not a navigation. It used to
-      // fire only when no conversation existed, so every returning visitor's click landed
-      // on a stale transcript and was silently discarded — no answer, no error.
-      if (!cancelled && q && !firedInitial.current) {
-        firedInitial.current = true;
+      if (cancelled || !q || firedInitial.current) return;
+
+      // Only auto-ask when we know a person clicked through from another page of the site.
+      //
+      // /ai-advisor is in the sitemap and every society page links to it with a question
+      // already in the URL, so a crawler that renders JavaScript lands here, the question
+      // fires itself, and we pay for a grounded answer nobody reads. The test is a
+      // client-side route change, not document.referrer — a crawler following a link sends
+      // a referrer too, so that would have let exactly the traffic through that this is for. That is what the
+      // conversation log has been recording: every link arrival exactly one question, no
+      // exit ever, at every hour of the night — while the one visitor who typed a question
+      // did register leaving. A direct arrival still gets the question, in the box, one tap
+      // from being asked.
+      firedInitial.current = true;
+
+      if (arrivedByInAppClick()) {
         void send(q, 'handoff_query');
+      } else {
+        setInput(q);
       }
     };
 

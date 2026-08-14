@@ -1232,7 +1232,7 @@ export function SearchPage() {
                     <p className="text-sm font-black text-[#0F7B63]">Not sure where to start?</p>
                     <p className="mt-1 text-xs leading-5 text-navy-600">Tell us budget, commute and lifestyle — we&apos;ll shortlist for you.</p>
                     <div className="mt-3 grid gap-2">
-                      <Link to={`/ai-advisor?q=${encodeURIComponent(query)}`} onClick={() => setFiltersOpen(false)} className="rounded-full bg-[#0F7B63] py-3 text-center text-[13px] font-black text-white">
+                      <Link rel="nofollow" to={`/ai-advisor?q=${encodeURIComponent(query)}`} onClick={() => setFiltersOpen(false)} className="rounded-full bg-[#0F7B63] py-3 text-center text-[13px] font-black text-white">
                         Ask AI Advisor
                       </Link>
                       <button type="button" onClick={() => { setFiltersOpen(false); openMapSearchCallback(); }} className="rounded-full border border-[#0F7B63] bg-white py-3 text-[13px] font-black text-[#0F7B63]">
@@ -1331,7 +1331,7 @@ export function SearchPage() {
                 asChild
                 className="mt-3 h-9 w-full rounded-full bg-blue-600 text-xs font-black text-white hover:bg-blue-700"
               >
-                <Link to={`/ai-advisor?q=${encodeURIComponent(query)}`}>
+                <Link rel="nofollow" to={`/ai-advisor?q=${encodeURIComponent(query)}`}>
                   Ask AI Advisor
                 </Link>
               </Button>
@@ -1957,7 +1957,7 @@ export function SearchPage() {
               </div>
               <div className="grid grid-cols-2 gap-2 border-t border-[#E7DCCB] p-3">
                 <Link to="/maps" className="rounded-[10px] border border-[#E7DCCB] px-3 py-2.5 text-center text-xs font-bold text-[#123C32]">Open full map</Link>
-                <Link to={`/ai-advisor?q=${encodeURIComponent(query || "Gurgaon societies")}`} className="rounded-[10px] bg-[#123C32] px-3 py-2.5 text-center text-xs font-bold text-white">Ask AI</Link>
+                <Link rel="nofollow" to={`/ai-advisor?q=${encodeURIComponent(query || "Gurgaon societies")}`} className="rounded-[10px] bg-[#123C32] px-3 py-2.5 text-center text-xs font-bold text-white">Ask AI</Link>
               </div>
             </aside>
           ) : null}
@@ -1991,7 +1991,7 @@ export function SearchPage() {
           </div>
           <div className="grid grid-cols-2 gap-2 border-t border-[#E7DCCB] bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <Link to="/maps" className="rounded-[10px] border border-[#E7DCCB] px-3 py-2.5 text-center text-xs font-bold text-[#123C32]">Open full map</Link>
-            <Link to={`/ai-advisor?q=${encodeURIComponent(query || "Gurgaon societies")}`} className="rounded-[10px] bg-[#123C32] px-3 py-2.5 text-center text-xs font-bold text-white">Ask AI</Link>
+            <Link rel="nofollow" to={`/ai-advisor?q=${encodeURIComponent(query || "Gurgaon societies")}`} className="rounded-[10px] bg-[#123C32] px-3 py-2.5 text-center text-xs font-bold text-white">Ask AI</Link>
           </div>
         </div>
       ) : null}

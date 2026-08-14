@@ -1273,7 +1273,7 @@ export function SocietyPage() {
                 <div className="mt-5 flex flex-wrap gap-3 border-t border-[#E7E3DA] pt-5">
                   <button type="button" onClick={() => openSocietyCallback("society_intelligence_available_homes")} className="rounded-full bg-[#233B6E] px-5 py-3 text-sm font-bold text-white">Request available homes</button>
                   <Link to={`/compare?seed=${encodeURIComponent(String(society.slug || slug || ""))}`} className="rounded-full border border-[#233B6E] bg-white px-5 py-3 text-sm font-bold text-[#233B6E]">Compare society</Link>
-                  <Link to={`/ai-advisor?q=${encodeURIComponent(`Is ${society.name} right for my family?`)}`} className="rounded-full border border-[#E7DCCB] bg-[#F8F3EA] px-5 py-3 text-sm font-bold text-[#9A552E]">Ask AI Advisor</Link>
+                  <Link rel="nofollow" to={`/ai-advisor?q=${encodeURIComponent(`Is ${society.name} right for my family?`)}`} className="rounded-full border border-[#E7DCCB] bg-[#F8F3EA] px-5 py-3 text-sm font-bold text-[#9A552E]">Ask AI Advisor</Link>
                   <button type="button" onClick={() => { setSourceDrawerOpen(true); trackSourceDrawerOpen({ society_slug: slug || "" }); }} className="rounded-full border border-[#E7DCCB] bg-white px-5 py-3 text-sm font-bold text-[#3156A3]">View sources</button>
                   <button type="button" onClick={() => { setCorrectionOpen(true); trackCorrectionFormOpen({ society_slug: slug || "" }); }} className="rounded-full border border-[#EBCFAE] bg-white px-5 py-3 text-sm font-bold text-[#9A552E]">Report outdated info</button>
                 </div>
@@ -1460,7 +1460,7 @@ export function SocietyPage() {
                 </div>
                 <p className="mt-3.5 border-t border-[#EEEAE1] pt-3.5 text-[11.5px] leading-5 text-[#7A817D]">We use your phone number only to verify your request and connect you with relevant options.</p>
               </div>
-              <Link to={`/ai-advisor?q=${encodeURIComponent(`Compare ${society.name} with similar Gurgaon societies`)}`} className="mt-3.5 block rounded-[16px] border border-[#D8DFEC] bg-[#F7F9FD] p-4">
+              <Link rel="nofollow" to={`/ai-advisor?q=${encodeURIComponent(`Compare ${society.name} with similar Gurgaon societies`)}`} className="mt-3.5 block rounded-[16px] border border-[#D8DFEC] bg-[#F7F9FD] p-4">
                 <strong className="text-sm text-[#233B6E]">Not sure about this society?</strong>
                 <p className="mt-1 text-[12.5px] text-[#6E756E]">Ask SocietyFlats AI to compare it with similar options →</p>
               </Link>

@@ -184,7 +184,7 @@ export default function NcrHomeHero() {
                     <ArrowRight className="h-4 w-4" />
                   </button>
                 </form>
-                <Link to="/ai-advisor?q=Family-friendly+societies+near+Golf+Course+Extension" className="mt-3 inline-flex items-center gap-1.5 px-1 text-[11.5px] font-semibold text-[#3156A3] lg:text-[12.5px]">
+                <Link rel="nofollow" to="/ai-advisor?q=Family-friendly+societies+near+Golf+Course+Extension" className="mt-3 inline-flex items-center gap-1.5 px-1 text-[11.5px] font-semibold text-[#3156A3] lg:text-[12.5px]">
                   <Sparkles className="h-3.5 w-3.5 text-[#B58B3B]" />
                   Ask SocietyFlats AI for a family-friendly shortlist near Golf Course Extension
                 </Link>

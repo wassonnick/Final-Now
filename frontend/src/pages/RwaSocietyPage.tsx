@@ -165,7 +165,7 @@ export function RwaSocietyPage() {
                 <Link to={`/society/${data.society.slug || slug}`}>View {data.society.name}'s verified profile</Link>
               </Button>
               <Button asChild variant="outline" className="rounded-full border-slate-300">
-                <Link to={`/ai-advisor?q=${encodeURIComponent(`Tell me about living in ${data.society.name}`)}`}>Thinking of moving here? Ask our AI</Link>
+                <Link rel="nofollow" to={`/ai-advisor?q=${encodeURIComponent(`Tell me about living in ${data.society.name}`)}`}>Thinking of moving here? Ask our AI</Link>
               </Button>
             </div>
           </div>
