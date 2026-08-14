@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Account;
+use App\Models\AccountSession;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,9 +30,13 @@ class EnsureAccountToken
             return $this->unauthorized();
         }
 
-        $account = Account::query()
-            ->where('api_token_hash', hash('sha256', $token))
-            ->first();
+        $session = AccountSession::findUsable($token);
+
+        if (! $session) {
+            return $this->unauthorized();
+        }
+
+        $account = $session->account;
 
         if (! $account) {
             return $this->unauthorized();
@@ -43,6 +48,12 @@ class EnsureAccountToken
                 'message' => 'This account is not active. Contact SocietyFlats support.',
             ], 403);
         }
+
+        $session->touchUsage();
+
+        // Both are resolved here so a controller can end this session without finding it
+        // again from a token it should not need to handle.
+        $request->attributes->set('account_session', $session);
 
         // Resolved here so controllers read the account rather than re-deriving it.
         $request->setUserResolver(fn () => $account);

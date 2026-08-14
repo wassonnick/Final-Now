@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\AuthenticatesAccount;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\AccountOtp;
+use App\Models\AccountSession;
 use App\Models\Lead;
 use App\Models\Property;
 use App\Models\SiteVisit;
@@ -13,7 +14,6 @@ use App\Services\OtpDeliveryService;
 use App\Support\AccountRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
@@ -41,18 +41,19 @@ class AccountController extends Controller
             'meta' => $account->meta,
             'created_at' => optional($account->created_at)->toISOString(),
             'updated_at' => optional($account->updated_at)->toISOString(),
-            'has_account_token' => filled($account->api_token_hash),
+            'has_account_token' => $account->sessions()->active()->exists(),
         ];
     }
 
-    private function issueAccountToken(Account $account): string
+    /**
+     * Signing in adds a device; it no longer replaces the last one.
+     *
+     * The single token column meant a login on a phone silently ended the session on a
+     * laptop, and there was nowhere to record that the laptop had ever been signed in.
+     */
+    private function issueAccountToken(Account $account, Request $request): string
     {
-        $plainToken = Str::random(80);
-
-        $account->forceFill([
-            'api_token_hash' => hash('sha256', $plainToken),
-            'api_token_created_at' => now(),
-        ])->save();
+        [, $plainToken] = AccountSession::issue($account, $request->userAgent());
 
         return $plainToken;
     }
@@ -450,7 +451,7 @@ class AccountController extends Controller
             ]);
         }
 
-        $accountAccessToken = $this->issueAccountToken($account);
+        $accountAccessToken = $this->issueAccountToken($account, $request);
 
         return response()->json([
             'message' => 'OTP verified.',

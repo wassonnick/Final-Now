@@ -18,7 +18,7 @@ class SavedSearchAlertsAndReviewResponsesTest extends TestCase
 
     private function account(string $token): Account
     {
-        return Account::create(['role' => 'customer', 'phone' => '9999999999', 'phone_normalized' => '9999999999', 'name' => 'Test User', 'status' => 'active', 'api_token_hash' => hash('sha256', $token)]);
+        return tap(Account::create(['role' => 'customer', 'phone' => '9999999999', 'phone_normalized' => '9999999999', 'name' => 'Test User', 'status' => 'active', 'api_token_hash' => hash('sha256', $token)]), fn ($account) => $this->sessionFor($account, $token));
     }
 
     public function test_matcher_only_queues_published_live_inventory_once(): void

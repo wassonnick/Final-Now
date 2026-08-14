@@ -32,7 +32,7 @@ class RentAndBuilderPortalTest extends TestCase
     {
         $society = $this->society();
         $token = str_repeat('x', 48);
-        $account = Account::create(['role' => 'customer', 'phone' => '9999999999', 'phone_normalized' => '9999999999', 'name' => 'RWA User', 'status' => 'active', 'api_token_hash' => hash('sha256', $token)]);
+        $account = tap(Account::create(['role' => 'customer', 'phone' => '9999999999', 'phone_normalized' => '9999999999', 'name' => 'RWA User', 'status' => 'active', 'api_token_hash' => hash('sha256', $token)]), fn ($account) => $this->sessionFor($account, $token));
         $payload = ['society_id' => $society->id, 'organisation_name' => 'Test RWA', 'representative_name' => 'RWA User', 'representative_role' => 'Secretary', 'phone' => '9999999999', 'registration_number' => 'RWA-REG-3456', 'proof_notes' => 'Registration proof available for verification.'];
         $this->postJson('/api/accounts/builder-claims', $payload)->assertUnauthorized();
         $this->withToken($token)->postJson('/api/accounts/builder-claims', $payload)->assertCreated()->assertJsonPath('data.status', 'pending');
@@ -47,7 +47,7 @@ class RentAndBuilderPortalTest extends TestCase
     {
         $society = $this->society();
         $token = str_repeat('y', 48);
-        Account::create(['role' => 'customer', 'phone' => '9888888888', 'phone_normalized' => '9888888888', 'name' => 'Builder Rep', 'status' => 'active', 'api_token_hash' => hash('sha256', $token)]);
+        tap(Account::create(['role' => 'customer', 'phone' => '9888888888', 'phone_normalized' => '9888888888', 'name' => 'Builder Rep', 'status' => 'active', 'api_token_hash' => hash('sha256', $token)]), fn ($account) => $this->sessionFor($account, $token));
 
         $base = ['society_id' => $society->id, 'organisation_name' => 'DLF Ltd', 'representative_name' => 'Rep', 'representative_role' => 'AGM Sales', 'phone' => '9888888888', 'proof_notes' => 'Authorization letter available on request for verification.'];
 

@@ -3,6 +3,18 @@
 return [
 
     /*
+     * How long a signed-in device stays signed in.
+     *
+     * 'session_days' is the hard ceiling from the moment of login. 'idle_days' retires a
+     * session nobody has used since — a phone that was sold, a browser on a shared machine —
+     * without punishing someone who visits every few weeks.
+     */
+    'accounts' => [
+        'session_days' => (int) env('ACCOUNT_SESSION_DAYS', 60),
+        'idle_days' => (int) env('ACCOUNT_SESSION_IDLE_DAYS', 30),
+    ],
+
+    /*
     |--------------------------------------------------------------------------
     | Third Party Services
     |--------------------------------------------------------------------------

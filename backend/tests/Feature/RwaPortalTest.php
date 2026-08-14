@@ -36,14 +36,14 @@ class RwaPortalTest extends TestCase
 
     private function account(string $token, string $role = 'rwa'): Account
     {
-        return Account::create([
+        return tap(Account::create([
             'role' => $role,
             'phone' => '9999999999',
             'phone_normalized' => '9999999999',
             'name' => 'RWA Secretary',
             'status' => 'active',
             'api_token_hash' => hash('sha256', $token),
-        ]);
+        ]), fn ($account) => $this->sessionFor($account, $token));
     }
 
     public function test_rwa_claim_is_separate_from_builder_claim_and_requires_admin_approval(): void

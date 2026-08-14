@@ -264,3 +264,50 @@ export async function submitReferral(accountAccessToken: string | null | undefin
   if (!response.ok) throw new Error(String(json?.message || "Could not submit referral."));
   return json as ReferralResponse;
 }
+
+/**
+ * Ends this device's session on the server, then locally.
+ *
+ * Signing out only ever cleared localStorage, so the token itself stayed valid — a phone
+ * that was lost, sold or borrowed remained signed in with nothing to revoke. The local
+ * clear still happens even when the request fails, because a person who pressed sign out
+ * must not be left looking signed in.
+ */
+export async function signOutAccount(accountAccessToken?: string | null, everywhere = false) {
+  if (!accountAccessToken) return;
+
+  try {
+    await fetch(`${API_BASE_URL}/accounts/${everywhere ? "logout-all" : "logout"}`, {
+      method: "POST",
+      headers: { Accept: "application/json", Authorization: `Bearer ${accountAccessToken}` },
+      keepalive: true,
+    });
+  } catch (error) {
+    console.warn("Sign out could not reach the server:", error);
+  }
+}
+
+export async function fetchAccountSessions(accountAccessToken?: string | null) {
+  if (!accountAccessToken) return [];
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/accounts/sessions`, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${accountAccessToken}` },
+    });
+    if (!response.ok) return [];
+    return ((await response.json())?.sessions ?? []) as Array<{
+      id: number; device: string | null; last_used_at: string | null; expires_at: string | null; is_current: boolean;
+    }>;
+  } catch {
+    return [];
+  }
+}
+
+export async function revokeAccountSession(accountAccessToken: string | null | undefined, sessionId: number) {
+  if (!accountAccessToken) return;
+
+  await fetch(`${API_BASE_URL}/accounts/sessions/${sessionId}`, {
+    method: "DELETE",
+    headers: { Accept: "application/json", Authorization: `Bearer ${accountAccessToken}` },
+  });
+}

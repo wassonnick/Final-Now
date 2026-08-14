@@ -31,7 +31,7 @@ import {
   type CustomerSavedItem,
 } from "@/lib/customerAccount";
 import { SavedSearchesPanel } from "@/components/search/SavedSearchesPanel";
-import { fetchAccountDashboard, type AccountDashboardResponse } from "@/lib/accountApi";
+import { signOutAccount, fetchAccountDashboard, type AccountDashboardResponse } from "@/lib/accountApi";
 import { setPublicSeo } from "@/lib/seo";
 
 type DashboardItem = {
@@ -256,7 +256,9 @@ export function CustomerDashboardPage() {
     { label: "My listings", value: String(listingLeads.length), helper: "Owner properties", icon: Home },
   ];
 
-  const logout = () => {
+  const logout = async () => {
+    // Revoked on the server first: clearing local storage alone left the token working.
+    await signOutAccount(session?.accountAccessToken);
     clearCustomerAccountSession();
     navigate("/login?role=customer", { replace: true });
   };

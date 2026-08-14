@@ -22,7 +22,7 @@ class AccountAuthGateTest extends TestCase
     {
         $token = Str::random(80);
 
-        $account = Account::create([
+        $account = tap(Account::create([
             'role' => AccountRole::CUSTOMER,
             'phone' => '9811100011',
             'phone_normalized' => '9811100011',
@@ -30,7 +30,7 @@ class AccountAuthGateTest extends TestCase
             'status' => $status,
             'api_token_hash' => hash('sha256', $token),
             'api_token_created_at' => now(),
-        ]);
+        ]), fn ($account) => $this->sessionFor($account, $token));
 
         return [$account, $token];
     }

@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardResponse } from "@/lib/accountApi";
+import { signOutAccount, fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardResponse } from "@/lib/accountApi";
 import { setPublicSeo } from "@/lib/seo";
 import {
   CUSTOMER_ACCOUNT_EVENT,
@@ -290,7 +290,9 @@ export function BrokerDashboardPage() {
     setSearchParams(searchParams, { replace: true });
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Revoked on the server first: clearing local storage alone left the token working.
+    await signOutAccount(session?.accountAccessToken);
     clearCustomerAccountSession();
     navigate("/login?role=broker", { replace: true });
   };

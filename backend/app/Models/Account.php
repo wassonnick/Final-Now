@@ -34,6 +34,11 @@ class Account extends Model
         'meta' => 'array',
     ];
 
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(AccountSession::class);
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);

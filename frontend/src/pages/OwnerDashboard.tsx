@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardProperty, type AccountDashboardResponse } from "@/lib/accountApi";
+import { signOutAccount, fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardProperty, type AccountDashboardResponse } from "@/lib/accountApi";
 import { fetchMyListings, type OwnerListingRecord } from "@/lib/listingsApi";
 import { setPublicSeo } from "@/lib/seo";
 import {
@@ -326,7 +326,9 @@ export function OwnerDashboard() {
     { label: "Other enquiries", value: String(enquirySubmissions.length), helper: "Search/society callbacks", icon: Phone },
   ];
 
-  const logout = () => {
+  const logout = async () => {
+    // Revoked on the server first: clearing local storage alone left the token working.
+    await signOutAccount(session?.accountAccessToken);
     clearCustomerAccountSession();
     navigate("/login?role=customer", { replace: true });
   };

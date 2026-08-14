@@ -19,7 +19,7 @@ class AccountPrivacyTest extends TestCase
     {
         $token = Str::random(80);
 
-        $account = Account::create(array_merge([
+        $account = tap(Account::create(array_merge([
             'role' => 'customer',
             'phone' => '9811100011',
             'phone_normalized' => '9811100011',
@@ -28,7 +28,7 @@ class AccountPrivacyTest extends TestCase
             'status' => 'active',
             'api_token_hash' => hash('sha256', $token),
             'api_token_created_at' => now(),
-        ], $attributes));
+        ], $attributes)), fn ($account) => $this->sessionFor($account, $token));
 
         return [$account, $token];
     }

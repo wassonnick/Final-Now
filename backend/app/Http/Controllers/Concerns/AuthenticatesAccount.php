@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Concerns;
 
 use App\Models\Account;
+use App\Models\AccountSession;
 use Illuminate\Http\Request;
 
 /**
@@ -37,9 +38,9 @@ trait AuthenticatesAccount
             return null;
         }
 
-        return Account::query()
-            ->where('api_token_hash', hash('sha256', $token))
-            ->where('status', 'active')
-            ->first();
+        $session = AccountSession::findUsable($token);
+        $account = $session?->account;
+
+        return $account && $account->status === 'active' ? $account : null;
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AccountNotificationController;
+use App\Http\Controllers\Api\AccountSessionController;
 use App\Http\Controllers\Api\Admin\AdminAccountController;
 use App\Http\Controllers\Api\Admin\AdminAiChatController;
 use App\Http\Controllers\Api\Admin\AdminAiSpendController;
@@ -384,6 +385,11 @@ Route::prefix('accounts')->middleware('account.api')->group(function () {
     Route::get('/listings', [OwnerListingController::class, 'mine']);
     Route::get('/me', [AccountController::class, 'me']);
     Route::get('/dashboard', [AccountController::class, 'dashboard']);
+    // Seeing and ending your own signed-in devices.
+    Route::get('/sessions', [AccountSessionController::class, 'index']);
+    Route::post('/logout', [AccountSessionController::class, 'destroy']);
+    Route::post('/logout-all', [AccountSessionController::class, 'destroyAll']);
+    Route::delete('/sessions/{session}', [AccountSessionController::class, 'revoke']);
     Route::get('/notification-preferences', [AccountNotificationController::class, 'preferences']);
     Route::patch('/notification-preferences', [AccountNotificationController::class, 'updatePreferences']);
     Route::get('/notifications', [AccountNotificationController::class, 'inbox']);

@@ -160,13 +160,13 @@ class AccountNotificationPreferencesTest extends TestCase
     private function accountWithToken(): array
     {
         $token = str_repeat('n', 80);
-        $account = Account::create([
+        $account = tap(Account::create([
             'role' => 'customer',
             'phone' => '9999999996',
             'phone_normalized' => '9999999996',
             'status' => 'active',
             'api_token_hash' => hash('sha256', $token),
-        ]);
+        ]), fn ($account) => $this->sessionFor($account, $token));
 
         return [$account, $token];
     }

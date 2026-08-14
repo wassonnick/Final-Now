@@ -13,10 +13,10 @@ class SavedSearchFlowTest extends TestCase
     public function test_account_can_manage_only_its_saved_searches(): void
     {
         $token = str_repeat('s', 80);
-        $account = Account::create([
+        $account = tap(Account::create([
             'role' => 'customer', 'phone' => '9999999997', 'phone_normalized' => '9999999997',
             'status' => 'active', 'api_token_hash' => hash('sha256', $token),
-        ]);
+        ]), fn ($account) => $this->sessionFor($account, $token));
 
         $this->postJson('/api/accounts/saved-searches', [])->assertUnauthorized();
 

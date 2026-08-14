@@ -70,7 +70,7 @@ class OwnerListingTest extends TestCase
 
     public function test_account_can_track_their_listings(): void
     {
-        $account = Account::create(['name' => 'Tracker', 'phone' => '9812345678', 'phone_normalized' => '9812345678', 'role' => 'customer', 'api_token_hash' => hash('sha256', str_repeat('t', 48))]);
+        $account = tap(Account::create(['name' => 'Tracker', 'phone' => '9812345678', 'phone_normalized' => '9812345678', 'role' => 'customer', 'api_token_hash' => hash('sha256', str_repeat('t', 48))]), fn ($account) => $this->sessionFor($account, str_repeat('t', 48)));
         OwnerListing::create(['account_id' => $account->id, 'name' => 'Tracker', 'phone' => '9812345678', 'purpose' => 'rent', 'listing_type' => 'apartment', 'status' => 'under_review']);
 
         $this->getJson('/api/accounts/listings')->assertUnauthorized();

@@ -91,7 +91,7 @@ class ReferralFlowTest extends TestCase
     private function accountWithToken(): array
     {
         $token = str_repeat('r', 80);
-        $account = Account::create([
+        $account = tap(Account::create([
             'role' => 'customer',
             'phone' => '9876543210',
             'phone_normalized' => '9876543210',
@@ -99,7 +99,7 @@ class ReferralFlowTest extends TestCase
             'phone_verified_at' => now(),
             'api_token_hash' => hash('sha256', $token),
             'api_token_created_at' => now(),
-        ]);
+        ]), fn ($account) => $this->sessionFor($account, $token));
 
         return [$account, $token];
     }

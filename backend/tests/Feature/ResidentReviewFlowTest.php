@@ -23,7 +23,7 @@ class ResidentReviewFlowTest extends TestCase
         ]);
 
         $plainToken = str_repeat('r', 80);
-        Account::create([
+        tap(Account::create([
             'role' => 'customer',
             'phone' => '9999999998',
             'phone_normalized' => '9999999998',
@@ -31,7 +31,7 @@ class ResidentReviewFlowTest extends TestCase
             'status' => 'active',
             'phone_verified_at' => now(),
             'api_token_hash' => hash('sha256', $plainToken),
-        ]);
+        ]), fn ($account) => $this->sessionFor($account, $plainToken));
 
         $payload = [
             'society_id' => $society->id,
