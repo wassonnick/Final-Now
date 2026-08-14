@@ -12,6 +12,7 @@ use App\Models\Property;
 use App\Models\SiteVisit;
 use App\Services\OtpDeliveryService;
 use App\Support\AccountRole;
+use App\Support\AccountStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -430,13 +431,24 @@ class AccountController extends Controller
         $account = Account::where('phone_normalized', $phone)->first();
 
         if ($account) {
+            // Verifying an OTP used to set status to active unconditionally, so blocking
+            // someone was undone the moment they logged in again — they requested a code,
+            // entered it, and came back with a fresh session and an active account. An
+            // admin decision has to outlast the next login.
+            if ($account->status === AccountStatus::BLOCKED) {
+                return response()->json([
+                    'message' => 'This account has been blocked. Contact SocietyFlats support.',
+                ], 403);
+            }
+
             $verification = $otp->channel === 'email'
                 ? ['email_verified_at' => now()]
                 : ['phone_verified_at' => now()];
 
             $account->update([
                 'phone' => $account->phone ?: $phone,
-                'status' => 'active',
+                // Only otp_pending is promoted here; blocked returned above.
+                'status' => AccountStatus::ACTIVE,
                 'last_login_at' => now(),
                 ...$verification,
             ]);
@@ -445,7 +457,7 @@ class AccountController extends Controller
                 'role' => $validated['role'],
                 'phone' => $phone,
                 'phone_normalized' => $phone,
-                'status' => 'active',
+                'status' => AccountStatus::ACTIVE,
                 ($otp->channel === 'email' ? 'email_verified_at' : 'phone_verified_at') => now(),
                 'last_login_at' => now(),
             ]);

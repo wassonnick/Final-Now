@@ -6,12 +6,63 @@ use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Lead;
 use App\Models\Property;
+use App\Support\AccountRole;
+use App\Support\AccountStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class AdminAccountController extends Controller
 {
+    /**
+     * End every session on an account without changing what it is allowed to do.
+     *
+     * Blocking is the answer when someone should not be back; this is the answer when a
+     * device was lost and the person still wants their account. Until sessions existed
+     * there was no way to do either — a token stayed valid for ever.
+     */
+    public function signOutEverywhere(Request $request, Account $account): JsonResponse
+    {
+        $revoked = $account->sessions()->active()->update(['revoked_at' => now()]);
+
+        $account->forceFill(['meta' => array_merge($account->meta ?: [], [
+            'sessions_revoked_at' => now()->toISOString(),
+            'sessions_revoked_by' => $this->adminActor($request),
+            'sessions_revoked_count' => $revoked,
+        ])])->save();
+
+        return response()->json([
+            'message' => $revoked === 1 ? '1 device signed out.' : "{$revoked} devices signed out.",
+            'account' => $this->accountPayload($account->fresh()),
+        ]);
+    }
+
+    /** Who is doing this, for the trail left on the account. */
+    private function adminActor(Request $request): string
+    {
+        return (string) ($request->header('X-Admin-Email') ?: 'admin');
+    }
+
+    /**
+     * "This column's digits end with this phone number", on whichever database we are on.
+     *
+     * regexp_replace with a 'g' flag is Postgres-only, and it was written inline three
+     * times. Production is Postgres and the test database is SQLite, which is why nothing
+     * in this controller could be covered — every admin account response ran through it and
+     * died on the way. Elsewhere the digits are compared directly, which is right whenever
+     * the stored number carries no separators and is the common case here.
+     */
+    private function whereDigitsEndWith($query, string $column, string $phone)
+    {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            return $query->whereRaw("regexp_replace({$column}, '[^0-9]', '', 'g') LIKE ?", ['%'.$phone]);
+        }
+
+        return $query->where($column, 'like', '%'.$phone);
+    }
+
     private function normalizePhone($value): string
     {
         return substr(preg_replace('/\D+/', '', (string) $value), -10);
@@ -34,6 +85,10 @@ class AdminAccountController extends Controller
             'meta' => $account->meta,
             'created_at' => optional($account->created_at)->toISOString(),
             'updated_at' => optional($account->updated_at)->toISOString(),
+            'active_sessions' => $account->sessions()->active()->count(),
+            'last_seen_at' => optional($account->sessions()->active()->max('last_used_at'))
+                ? Carbon::parse($account->sessions()->active()->max('last_used_at'))->toISOString()
+                : null,
         ];
 
         $payload['related_counts'] = [
@@ -62,7 +117,7 @@ class AdminAccountController extends Controller
     {
         return Lead::query()
             ->with(['property.society', 'society', 'linkedProperties'])
-            ->whereRaw("regexp_replace(phone, '[^0-9]', '', 'g') LIKE ?", ['%' . $phone])
+            ->where(fn ($query) => $this->whereDigitsEndWith($query, 'phone', $phone))
             ->latest();
     }
 
@@ -71,9 +126,9 @@ class AdminAccountController extends Controller
         return Property::query()
             ->with(['society', 'sourceLead'])
             ->where(function ($query) use ($phone) {
-                $query->whereRaw("regexp_replace(owner_phone, '[^0-9]', '', 'g') LIKE ?", ['%' . $phone])
+                $this->whereDigitsEndWith($query, 'owner_phone', $phone)
                     ->orWhereHas('sourceLead', function ($leadQuery) use ($phone) {
-                        $leadQuery->whereRaw("regexp_replace(phone, '[^0-9]', '', 'g') LIKE ?", ['%' . $phone]);
+                        $this->whereDigitsEndWith($leadQuery, 'phone', $phone);
                     });
             })
             ->latest();
@@ -169,8 +224,10 @@ class AdminAccountController extends Controller
     public function update(Request $request, Account $account): JsonResponse
     {
         $validated = $request->validate([
-            'role' => ['nullable', Rule::in(['customer', 'broker'])],
-            'status' => ['nullable', Rule::in(['active', 'otp_pending', 'blocked'])],
+            // RWA was missing from this list, so an admin could not set that role — and
+            // editing an existing RWA member's name failed validation on their own role.
+            'role' => ['nullable', Rule::in(AccountRole::signupRoles())],
+            'status' => ['nullable', Rule::in(AccountStatus::all())],
             'name' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'meta' => ['nullable', 'array'],
@@ -188,7 +245,23 @@ class AdminAccountController extends Controller
             $payload['meta'] = array_merge($account->meta ?: [], $validated['meta'] ?: []);
         }
 
+        $wasActive = AccountStatus::allowsSignIn($account->status);
+
         $account->update($payload);
+
+        // Blocking someone has to end their sessions. The middleware would refuse them
+        // anyway, but leaving live rows behind means the devices list still shows them
+        // signed in, and un-blocking would silently restore access from a device the
+        // person may no longer hold.
+        if ($wasActive && ! AccountStatus::allowsSignIn($account->status)) {
+            $revoked = $account->sessions()->active()->update(['revoked_at' => now()]);
+
+            $account->forceFill(['meta' => array_merge($account->meta ?: [], [
+                'blocked_at' => now()->toISOString(),
+                'blocked_by' => $this->adminActor($request),
+                'blocked_sessions_revoked' => $revoked,
+            ])])->save();
+        }
 
         return response()->json([
             'message' => 'Account updated.',

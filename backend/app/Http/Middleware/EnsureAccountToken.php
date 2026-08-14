@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Account;
 use App\Models\AccountSession;
+use App\Support\AccountStatus;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,7 +44,7 @@ class EnsureAccountToken
         }
 
         // A suspended account holds a valid token; the token is not the question.
-        if ($account->status !== 'active') {
+        if (! AccountStatus::allowsSignIn($account->status)) {
             return response()->json([
                 'message' => 'This account is not active. Contact SocietyFlats support.',
             ], 403);

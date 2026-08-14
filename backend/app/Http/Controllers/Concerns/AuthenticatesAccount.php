@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Concerns;
 
 use App\Models\Account;
 use App\Models\AccountSession;
+use App\Support\AccountStatus;
 use Illuminate\Http\Request;
 
 /**
@@ -41,6 +42,6 @@ trait AuthenticatesAccount
         $session = AccountSession::findUsable($token);
         $account = $session?->account;
 
-        return $account && $account->status === 'active' ? $account : null;
+        return $account && AccountStatus::allowsSignIn($account->status) ? $account : null;
     }
 }

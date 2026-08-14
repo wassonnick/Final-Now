@@ -1,6 +1,8 @@
 import { adminFetch } from "@/lib/adminApi";
 
-export type AdminAccountRole = "customer" | "broker";
+// rwa was missing here as it was in the API validation, so the role existed in the data
+// and in none of the tools for managing it.
+export type AdminAccountRole = "customer" | "broker" | "rwa";
 export type AdminAccountStatus = "active" | "otp_pending" | "blocked";
 
 export type AdminRelatedLead = {
@@ -34,6 +36,8 @@ export type AdminRelatedProperty = {
 };
 
 export type AdminAccount = {
+  active_sessions?: number;
+  last_seen_at?: string | null;
   id: number;
   role: AdminAccountRole;
   phone: string;
@@ -147,4 +151,14 @@ export async function findAdminAccountsByPhone(phone: string) {
     const accountPhone = String(account.phone_normalized || account.phone || "").replace(/[^0-9]/g, "").slice(-10);
     return accountPhone === cleanPhone;
   });
+}
+
+/** Ends every device on an account without changing what the account may do. */
+export async function signOutAdminAccount(id: number) {
+  const response = await adminFetch(`/admin/accounts/${id}/sign-out-everywhere`, { method: "POST" });
+  const json = await response.json().catch(() => ({}));
+
+  if (!response.ok) throw new Error(String(json?.message || "Could not sign the devices out."));
+
+  return json as { message: string; account: AdminAccount };
 }

@@ -78,6 +78,7 @@ function sourceLabel(account: AdminAccount) {
 }
 
 function roleBadgeClass(role: string) {
+  if (role === "rwa") return "border-emerald-100 bg-emerald-50 text-emerald-700";
   return role === "broker"
     ? "border-orange-100 bg-orange-50 text-orange-700"
     : "border-blue-100 bg-blue-50 text-blue-700";
@@ -128,7 +129,7 @@ function AccountCard({
           <div className="flex flex-wrap items-center gap-2">
             <Badge className={cn("rounded-full border px-3 py-1 text-xs font-bold", roleBadgeClass(account.role))}>
               <RoleIcon className="mr-1 h-3.5 w-3.5" />
-              {account.role === "broker" ? "Broker" : "Owner / Customer"}
+              {account.role === "broker" ? "Broker" : account.role === "rwa" ? "RWA member" : "Owner / Customer"}
             </Badge>
 
             <Badge className={cn("rounded-full border px-3 py-1 text-xs font-bold", statusBadgeClass(account.status))}>

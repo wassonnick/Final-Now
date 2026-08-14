@@ -335,6 +335,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::apiResource('properties', PropertyController::class)->except(['create', 'edit']);
     Route::apiResource('leads', LeadController::class)->only(['index', 'show', 'update', 'destroy']);
     Route::apiResource('accounts', AdminAccountController::class)->only(['index', 'show', 'update']);
+    Route::post('/accounts/{account}/sign-out-everywhere', [AdminAccountController::class, 'signOutEverywhere']);
     Route::get('/owner-listings', [AdminOwnerListingController::class, 'index']);
     Route::patch('/owner-listings/{listing}', [AdminOwnerListingController::class, 'update']);
     Route::post('/owner-listings/{listing}/convert', [AdminOwnerListingController::class, 'convert']);
