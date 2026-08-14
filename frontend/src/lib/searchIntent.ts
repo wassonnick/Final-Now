@@ -171,15 +171,17 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
     // Longest spelling first, so "swimming pool" is lifted whole rather than leaving "pool".
     const hit = [...words].sort((a, b) => b.length - a.length).find((word) => text.includes(` ${word} `));
     if (!hit) continue;
+    // "park facing" and "golf course view" describe an outlook, not a facility on site.
+    // Claiming the noun here would leave the free-text layer holding a bare "facing".
+    if (new RegExp(`${hit}\\s+(?:facing|view|views|overlooking)|(?:facing|overlooking)\\s+(?:the\\s+)?${hit}`).test(text)) continue;
     intent.amenities.push(canonical);
     text = text.replace(` ${hit} `, " ");
   }
 
-  // Words that carried no constraint of their own once the constraints were lifted out.
-  intent.remainder = text
-    .replace(/\b(?:i|we|want|need|looking|for|a|an|the|with|in|home|homes|house|flat|flats|apartment|apartments|society|societies|rent|rental|buy|sale|please|show|me|my|family|available|property|properties|and|or|of|to|near|close|by|around|good|nice|best)\b/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  // What is left, with its connectives intact. This is the input to the free-text layer,
+  // and squashing filler words out here destroyed phrases before that layer could see
+  // them: "ready to move" arrived as "ready move" and stopped matching anything.
+  intent.remainder = text.replace(/\s+/g, " ").trim();
 
   return intent;
 }

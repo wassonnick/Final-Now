@@ -133,6 +133,31 @@ class LandmarkSearchTest extends TestCase
         $this->assertSame(['Close Court'], $names->all());
     }
 
+    /**
+     * A sentence that names no landmark must not be sent to Google.
+     *
+     * "park facing home in golf course" is a description of a home, not a place. It was
+     * being looked up anyway, came back as Delhi Golf Club, and the results page then
+     * announced itself as "nearest to" somewhere the user had never mentioned — while
+     * billing for the lookup that got it wrong.
+     */
+    public function test_a_query_without_a_proximity_phrase_is_never_looked_up(): void
+    {
+        config(['services.google_places_api_key' => 'test-key']);
+        Http::fake(['places.googleapis.com/*' => Http::response(['places' => [[
+            'id' => 'place-golf', 'displayName' => ['text' => 'Delhi Golf Club'],
+            'location' => ['latitude' => 28.5931, 'longitude' => 77.2400],
+        ]]], 200)]);
+
+        $this->society('Close Court', 28.5060, 77.0980);
+
+        $this->getJson('/api/search/near?q=park+facing+home+in+golf+course')
+            ->assertSuccessful()
+            ->assertJsonPath('landmark', null);
+
+        Http::assertNothingSent();
+    }
+
     /** An unknown landmark is learnt once from Google, then it is ours. */
     public function test_an_unknown_landmark_is_looked_up_once_and_kept(): void
     {

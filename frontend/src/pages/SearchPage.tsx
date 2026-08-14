@@ -5,6 +5,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { rowIsInCity, useSelectedNcrCity } from "@/lib/ncrCities";
 import { formatDistance, searchNearLandmark, type LandmarkSearchResult } from "@/lib/landmarkSearchApi";
 import { describeIntent, hasIntent, parseSearchIntent, propertyMatchesIntent, societyMatchesIntent } from "@/lib/searchIntent";
+import { searchOpenText } from "@/lib/openTextSearch";
 import { ArrowRight, Bot, Building2, CheckCircle2, Grid3X3, Home, List, MapPin, MapPinned, MessageCircle, Navigation, PhoneCall, Scale, Search, Shield, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store";
@@ -649,6 +650,11 @@ export function SearchPage() {
     return () => { cancelled = true; };
   }, [query]);
 
+  // A landmark only gets to title the page when it actually produced results. It used to
+  // announce "Nearest to Delhi Golf Club" above a list of Gurgaon societies that had
+  // matched on text instead.
+  const landmarkAnswered = Boolean(landmarkResult?.landmark && landmarkResult.societies?.length);
+
   const distanceBySocietyId = useMemo(() => {
     const map = new Map<string, number>();
     for (const hit of landmarkResult?.societies ?? []) map.set(String(hit.id), hit.distance_km);
@@ -660,6 +666,22 @@ export function SearchPage() {
   const intent = useMemo(() => parseSearchIntent(query), [query]);
   const intentChips = useMemo(() => describeIntent(intent), [intent]);
   const searchText = hasIntent(intent) ? intent.remainder : query;
+
+  /**
+   * Free text over everything each society says about itself.
+   *
+   * Runs on data the browser already downloaded, so an open-ended question — "luxury flats
+   * facing Aravalli", "low rise near golf course" — costs nothing and answers instantly.
+   */
+  // Nothing is claimed about the catalogue until the catalogue has arrived. Reported
+  // against an empty list, every term looks unmatched, and the page spent the first second
+  // of every cold load telling the truth about a list it did not have yet.
+  const catalogueReady = dataStatus !== "loading" && societies.length > 0;
+
+  const textOutcome = useMemo(() => {
+    const outcome = searchOpenText(societies, searchText);
+    return { ...outcome, placeOnly: outcome.matchedTerms.length > 0 && outcome.matchedTerms.every((term) => outcome.placeTerms.includes(term)) };
+  }, [societies, searchText]);
 
   const filteredSocieties = useMemo(() => {
     // A landmark search has already answered the question, in the right order.
@@ -682,9 +704,19 @@ export function SearchPage() {
     // NAME, so name-scoring could not separate Delhi from Gurgaon and returned the whole
     // catalogue with the highest-scoring Gurgaon societies sitting under the two correct
     // Delhi ones. If the query names a place we actually have, show only that place.
-    const placeMatches = societiesInNamedPlace(societies, query);
-    if (placeMatches.length > 0) {
-      return placeMatches;
+    //
+    // Only when the place IS the question, though. "schools in noida" also names a place,
+    // and answering it with every society in Noida throws away the half that was asked.
+    if (textOutcome.matchedTerms.length === 0 || textOutcome.placeOnly) {
+      const placeMatches = societiesInNamedPlace(societies, query);
+      if (placeMatches.length > 0) {
+        return placeMatches;
+      }
+    }
+
+    // Everything else is read against what each society actually says about itself.
+    if (textOutcome.matchedTerms.length > 0) {
+      return textOutcome.matches;
     }
 
     // Match on what is left after the constraints are lifted out. Scoring society names
@@ -695,7 +727,7 @@ export function SearchPage() {
     }
 
     return sortedSearchResults(societies, searchText, expandedSocietySearchText, (society: any) => searchableText(society?.name));
-  }, [query, searchText, intent, societies, allSocieties, landmarkResult]);
+  }, [query, searchText, intent, societies, allSocieties, landmarkResult, textOutcome]);
 
   /**
    * Constraints narrow the results; they never empty them silently.
@@ -1472,18 +1504,18 @@ export function SearchPage() {
                       : `${visibleCount} ${resultLabel(activeTab).toLowerCase()} result${visibleCount === 1 ? "" : "s"} found`}
                   </p>
                   <h2 className="mt-0.5 line-clamp-2 text-base font-black text-navy-950 md:mt-0 md:text-xl">
-                    {landmarkResult?.landmark
-                      ? `Nearest to ${landmarkResult.landmark.name}`
+                    {landmarkAnswered
+                      ? `Nearest to ${landmarkResult!.landmark.name}`
                       : query
                         ? `Matches for “${query}” in ${city.name}`
                         : `Published SocietyFlats inventory in ${city.name}`}
                   </h2>
                   {/* Says what the search was read as, so a wrong reading is visible rather
                       than silently returning the wrong list. */}
-                  {landmarkResult?.landmark ? (
+                  {landmarkAnswered ? (
                     <p className="mt-1 text-xs font-semibold text-emerald-700">
-                      Sorted by distance{landmarkResult.radius_km ? ` · within ${landmarkResult.radius_km} km` : ""}
-                      {landmarkResult.remainder ? ` · matching “${landmarkResult.remainder}”` : ""}
+                      Sorted by distance{landmarkResult!.radius_km ? ` · within ${landmarkResult.radius_km} km` : ""}
+                      {landmarkResult!.remainder ? ` · matching “${landmarkResult!.remainder}”` : ""}
                     </p>
                   ) : null}
 
@@ -1506,6 +1538,29 @@ export function SearchPage() {
                   {intentDroppedAll ? (
                     <p className="mt-2 text-xs font-semibold text-amber-700">
                       Nothing matched all of that, so these are the closest we have.
+                    </p>
+                  ) : null}
+
+                  {/* Part of the question we cannot answer from anything we hold. Saying so
+                      is the whole point: an empty page reads as "no such homes", when the
+                      truth is "we don't record that yet". */}
+                  {catalogueReady && textOutcome.notRecorded.length > 0 ? (
+                    <p className="mt-2 text-xs font-semibold text-amber-700">
+                      We don’t record {textOutcome.notRecorded.join(" or ")} yet, so that part
+                      of your search was ignored. Ask on a callback and we’ll check with the society.
+                    </p>
+                  ) : null}
+
+                  {catalogueReady && textOutcome.unknownTerms.length > 0 ? (
+                    <p className="mt-2 text-xs font-semibold text-amber-700">
+                      Nothing in the catalogue mentions {textOutcome.unknownTerms.map((term) => `“${term}”`).join(", ")}.
+                    </p>
+                  ) : null}
+
+                  {catalogueReady && textOutcome.relaxedTerms.length > 0 ? (
+                    <p className="mt-2 text-xs font-semibold text-navy-500">
+                      No society matched all of it, so {textOutcome.relaxedTerms.map((term) => `“${term}”`).join(" and ")} was
+                      relaxed.
                     </p>
                   ) : null}
                 </div>
@@ -1735,6 +1790,15 @@ export function SearchPage() {
                         <MapPin className="h-4 w-4 shrink-0" />{" "}
                         <span className="line-clamp-1">{formatPublicLocation(society)}</span>
                       </p>
+
+                      {/* Why this one came back. A result you cannot explain is a result the
+                          user has to take on faith, and open-ended searches are exactly
+                          where they should not have to. */}
+                      {textOutcome.reasons.get(String(society.id))?.snippet ? (
+                        <p className="mt-2 line-clamp-2 rounded-2xl bg-ivory-100 px-3 py-1.5 text-xs font-semibold leading-5 text-navy-600">
+                          “{textOutcome.reasons.get(String(society.id))?.snippet}”
+                        </p>
+                      ) : null}
 
                       {/* The answer to what was asked, given the same weight as the name:
                           somebody searching "near Ambience Mall" is choosing on distance. */}

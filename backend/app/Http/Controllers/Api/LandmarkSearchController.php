@@ -34,8 +34,12 @@ class LandmarkSearchController extends Controller
         $parsed = $queries->parse($query);
         $landmark = $parsed['landmark'];
 
-        // Nothing curated matched, so ask Google once and keep the answer.
-        if (! $landmark && $request->boolean('learn', true)) {
+        // Nothing curated matched, so ask Google once and keep the answer — but only when
+        // the sentence is actually about proximity. "park facing home in golf course" names
+        // no landmark; sent to Places it came back as Delhi Golf Club, and the page then
+        // announced results as "nearest to" a place nobody asked about. Every one of those
+        // lookups was also billed.
+        if (! $landmark && $parsed['phrase'] && $request->boolean('learn', true)) {
             $landmark = $queries->learn($this->landmarkPhrase($query), $request->query('city'));
         }
 

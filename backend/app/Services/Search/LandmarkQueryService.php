@@ -64,6 +64,11 @@ class LandmarkQueryService
             $lower = trim(preg_replace('/\s+/', ' ', $lower) ?? $lower);
         }
 
+        // Whether the sentence is about proximity at all, recorded separately from whether
+        // we could name the place. The caller uses it to decide if a paid Google lookup is
+        // even worth trying: no "near"-ish phrase means no landmark was ever asked for.
+        $proximityPhrase = null;
+
         foreach (self::NEAR_PHRASES as $phrase) {
             $position = strpos($lower, ' '.$phrase.' ');
             $atStart = str_starts_with($lower, $phrase.' ');
@@ -71,6 +76,8 @@ class LandmarkQueryService
             if ($position === false && ! $atStart) {
                 continue;
             }
+
+            $proximityPhrase ??= $phrase;
 
             $offset = $atStart ? 0 : $position + 1;
             $before = trim(substr($lower, 0, $offset));
@@ -95,7 +102,7 @@ class LandmarkQueryService
             ];
         }
 
-        return ['landmark' => null, 'radius_km' => $radius, 'remainder' => $clean, 'phrase' => null];
+        return ['landmark' => null, 'radius_km' => $radius, 'remainder' => $clean, 'phrase' => $proximityPhrase];
     }
 
     /**
