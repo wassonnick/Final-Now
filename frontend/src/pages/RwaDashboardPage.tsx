@@ -1,9 +1,10 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle2, Loader2, Megaphone, MessageSquareText, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Loader2, LogOut, Megaphone, MessageSquareText, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { API_BASE_URL } from "@/config/api";
+import { useAccountSignOut } from "@/hooks/useAccountSignOut";
 import { getCustomerAccountSession } from "@/lib/customerAccount";
 import { setPublicSeo } from "@/lib/seo";
 import {
@@ -20,6 +21,7 @@ import {
 
 export function RwaDashboardPage() {
   const session = getCustomerAccountSession();
+  const signOut = useAccountSignOut();
   const token = session?.accountAccessToken || "";
   const [societies, setSocieties] = useState<RwaSociety[]>([]);
   const [dashboard, setDashboard] = useState<RwaDashboardResponse>({ claims: [], threads: [], replies: [] });
@@ -151,9 +153,19 @@ export function RwaDashboardPage() {
               Claim society pages, publish moderated notices, answer resident questions and close grievances with a visible public record.
             </p>
           </div>
-          <Button asChild variant="outline" className="rounded-full bg-white">
-            <Link to="/societies">Find society page</Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" className="rounded-full bg-white">
+              <Link to="/societies">Find society page</Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-full bg-white">
+              <Link to="/account/security">Devices</Link>
+            </Button>
+            {/* This dashboard had no sign out at all, so an RWA member on a shared
+                machine had no way to leave. */}
+            <Button variant="outline" className="rounded-full bg-white text-slate-600" onClick={() => void signOut()}>
+              <LogOut className="mr-2 h-4 w-4" />Sign out
+            </Button>
+          </div>
         </div>
 
         {message ? <p className="mt-6 rounded-2xl bg-blue-50 p-4 text-sm font-black text-blue-700">{message}</p> : null}

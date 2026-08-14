@@ -32,6 +32,7 @@ const InsightsPage = lazy(() => import('@/pages/InsightsPage').then((module) => 
 const FeatureExperiencePage = lazy(() => import('@/pages/FeatureExperiencePage').then((module) => ({ default: module.FeatureExperiencePage })));
 const OwnerDashboard = lazy(() => import('@/pages/OwnerDashboard').then((module) => ({ default: module.OwnerDashboard })));
 const CustomerDashboardPage = lazy(() => import('@/pages/CustomerDashboardPage').then((module) => ({ default: module.CustomerDashboardPage })));
+const AccountSecurityPage = lazy(() => import('@/pages/AccountSecurityPage').then((module) => ({ default: module.AccountSecurityPage })));
 const BrokerDashboardPage = lazy(() => import('@/pages/BrokerDashboardPage').then((module) => ({ default: module.BrokerDashboardPage })));
 const LoginPage = lazy(() => import('@/pages/LoginPage').then((module) => ({ default: module.LoginPage })));
 const SignupPage = lazy(() => import('@/pages/SignupPage').then((module) => ({ default: module.SignupPage })));
@@ -189,6 +190,7 @@ function AppShell() {
             <Route path="/ncr/:citySlug" element={isNcrMulticityEnabled() ? <NcrCityLandingPage /> : <NotFoundPage />} />
 
             <Route path="/customer/dashboard" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
+            <Route path="/account/security" element={<ProtectedAccountRoute><AccountSecurityPage /></ProtectedAccountRoute>} />
             <Route path="/customer" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/shortlist" element={<ProtectedAccountRoute role="customer"><CustomerDashboardPage /></ProtectedAccountRoute>} />
             <Route path="/owner/dashboard" element={<ProtectedAccountRoute role="customer"><OwnerDashboard /></ProtectedAccountRoute>} />

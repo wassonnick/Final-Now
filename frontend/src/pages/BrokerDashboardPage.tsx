@@ -1,3 +1,4 @@
+import { useAccountSignOut } from "@/hooks/useAccountSignOut";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -22,11 +23,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { signOutAccount, fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardResponse } from "@/lib/accountApi";
+import { fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardResponse } from "@/lib/accountApi";
 import { setPublicSeo } from "@/lib/seo";
 import {
   CUSTOMER_ACCOUNT_EVENT,
-  clearCustomerAccountSession,
   getBrokerActivityForPhone,
   getCustomerAccountSession,
   type BrokerActivityItem,
@@ -182,6 +182,7 @@ export function BrokerDashboardPage() {
   const [activity, setActivity] = useState<BrokerActivityItem[]>([]);
   const [backendDashboard, setBackendDashboard] = useState<AccountDashboardResponse | null>(null);
   const session = getCustomerAccountSession();
+  const signOut = useAccountSignOut();
 
   useEffect(() => {
     setPublicSeo("Private Broker Dashboard | SocietyFlats", "Private SocietyFlats broker activity and enquiry dashboard.", { canonical: "/broker/dashboard", noindex: true });
@@ -290,12 +291,7 @@ export function BrokerDashboardPage() {
     setSearchParams(searchParams, { replace: true });
   };
 
-  const logout = async () => {
-    // Revoked on the server first: clearing local storage alone left the token working.
-    await signOutAccount(session?.accountAccessToken);
-    clearCustomerAccountSession();
-    navigate("/login?role=broker", { replace: true });
-  };
+  const logout = () => void signOut();
 
   return (
     <div className="ncr-skin min-h-screen w-full max-w-full overflow-x-hidden bg-[#fffaf4] pb-16">

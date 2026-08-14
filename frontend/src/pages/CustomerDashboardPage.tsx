@@ -1,3 +1,4 @@
+import { useAccountSignOut } from "@/hooks/useAccountSignOut";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -23,7 +24,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
   CUSTOMER_ACCOUNT_EVENT,
-  clearCustomerAccountSession,
   getCustomerAccountSession,
   getCustomerLeadsForPhone,
   getCustomerSavedItemsForPhone,
@@ -31,7 +31,7 @@ import {
   type CustomerSavedItem,
 } from "@/lib/customerAccount";
 import { SavedSearchesPanel } from "@/components/search/SavedSearchesPanel";
-import { signOutAccount, fetchAccountDashboard, type AccountDashboardResponse } from "@/lib/accountApi";
+import { fetchAccountDashboard, type AccountDashboardResponse } from "@/lib/accountApi";
 import { setPublicSeo } from "@/lib/seo";
 
 type DashboardItem = {
@@ -184,6 +184,7 @@ export function CustomerDashboardPage() {
   const [shortlistedItems, setShortlistedItems] = useState<CustomerSavedItem[]>([]);
   const [siteVisits, setSiteVisits] = useState<NonNullable<AccountDashboardResponse["site_visits"]>>([]);
   const session = getCustomerAccountSession();
+  const signOut = useAccountSignOut();
 
   useEffect(() => {
     setPublicSeo("Private Customer Dashboard | SocietyFlats", "Private SocietyFlats shortlist, saved-search and enquiry dashboard.", { canonical: "/customer/dashboard", noindex: true });
@@ -256,12 +257,7 @@ export function CustomerDashboardPage() {
     { label: "My listings", value: String(listingLeads.length), helper: "Owner properties", icon: Home },
   ];
 
-  const logout = async () => {
-    // Revoked on the server first: clearing local storage alone left the token working.
-    await signOutAccount(session?.accountAccessToken);
-    clearCustomerAccountSession();
-    navigate("/login?role=customer", { replace: true });
-  };
+  const logout = () => void signOut();
 
   return (
     <div className="ncr-skin min-h-screen w-full max-w-full overflow-x-hidden bg-[#F8F3EA] pb-16">

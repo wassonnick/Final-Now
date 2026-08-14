@@ -13,12 +13,17 @@ function getStoredAccountRole() {
   }
 }
 
+/**
+ * `role` narrows a route to one kind of account. Omitting it means "any signed-in account",
+ * which is what pages about the account itself need — everybody has devices to manage, and
+ * making such a page pick a role would bounce the other two away from it.
+ */
 export function ProtectedAccountRoute({
   children,
   role,
 }: {
   children: JSX.Element;
-  role: AccountRole;
+  role?: AccountRole;
 }) {
   const location = useLocation();
   const storedRole = getStoredAccountRole();
@@ -26,13 +31,13 @@ export function ProtectedAccountRoute({
   if (!storedRole) {
     return (
       <Navigate
-        to={`/login?next=${encodeURIComponent(location.pathname)}&role=${role}`}
+        to={`/login?next=${encodeURIComponent(location.pathname)}${role ? `&role=${role}` : ""}`}
         replace
       />
     );
   }
 
-  if (storedRole !== role) {
+  if (role && storedRole !== role) {
     return (
       <Navigate
         to={storedRole === "broker" ? "/broker/dashboard" : storedRole === "rwa" ? "/rwa/dashboard" : "/customer/dashboard"}

@@ -1,3 +1,4 @@
+import { useAccountSignOut } from "@/hooks/useAccountSignOut";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -19,12 +20,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { signOutAccount, fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardProperty, type AccountDashboardResponse } from "@/lib/accountApi";
+import { fetchAccountDashboard, type AccountDashboardLead, type AccountDashboardProperty, type AccountDashboardResponse } from "@/lib/accountApi";
 import { fetchMyListings, type OwnerListingRecord } from "@/lib/listingsApi";
 import { setPublicSeo } from "@/lib/seo";
 import {
   CUSTOMER_ACCOUNT_EVENT,
-  clearCustomerAccountSession,
   getCustomerAccountSession,
   getCustomerLeadsForPhone,
   type CustomerActivityLead,
@@ -205,6 +205,7 @@ export function OwnerDashboard() {
   const [backendDashboard, setBackendDashboard] = useState<AccountDashboardResponse | null>(null);
   const [ownerListings, setOwnerListings] = useState<OwnerListingRecord[]>([]);
   const session = getCustomerAccountSession();
+  const signOut = useAccountSignOut();
 
   // First-class listing submissions (with photos + review status) from the new intake flow.
   useEffect(() => {
@@ -326,12 +327,7 @@ export function OwnerDashboard() {
     { label: "Other enquiries", value: String(enquirySubmissions.length), helper: "Search/society callbacks", icon: Phone },
   ];
 
-  const logout = async () => {
-    // Revoked on the server first: clearing local storage alone left the token working.
-    await signOutAccount(session?.accountAccessToken);
-    clearCustomerAccountSession();
-    navigate("/login?role=customer", { replace: true });
-  };
+  const logout = () => void signOut();
 
   return (
     <div className="ncr-skin min-h-screen w-full max-w-full overflow-x-hidden bg-[#F8F3EA] pb-16">
