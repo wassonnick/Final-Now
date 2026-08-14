@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\Admin\VerifiedSocietyImporterController;
 use App\Http\Controllers\Api\AiChatController;
 use App\Http\Controllers\Api\AIController;
 use App\Http\Controllers\Api\BuilderPortalController;
+use App\Http\Controllers\Api\LandmarkSearchController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\NcrCityController;
 use App\Http\Controllers\Api\NriCaseController;
@@ -88,6 +89,8 @@ Route::post('/ops/scheduler-tick', function (Request $request) {
 
 Route::get('/societies', [SocietyController::class, 'index']);
 Route::get('/societies/lookup', [SocietyController::class, 'lookup']);
+// "a home near Ambience Mall" — societies ranked by how far they actually are.
+Route::get('/search/near', LandmarkSearchController::class)->middleware('throttle:60,1');
 Route::get('/societies/{idOrSlug}/google-place-photo', [SocietyController::class, 'googlePlacePhoto']);
 Route::get('/societies/{slug}/intelligence', [SocietyIntelligenceController::class, 'show']);
 Route::get('/societies/{slug}/sources', [SocietyIntelligenceController::class, 'sources']);

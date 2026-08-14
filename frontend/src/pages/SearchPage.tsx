@@ -3,25 +3,8 @@ import { trackEvent, trackLeadIntent, trackLeadSubmitted, trackResultClicked, tr
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { rowIsInCity, useSelectedNcrCity } from "@/lib/ncrCities";
-import {
-  ArrowRight,
-  Bot,
-  Building2,
-  CheckCircle2,
-  Grid3X3,
-  Home,
-  List,
-  MapPin,
-  MapPinned,
-  MessageCircle,
-  PhoneCall,
-  Search,
-  Scale,
-  Shield,
-  SlidersHorizontal,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { formatDistance, searchNearLandmark, type LandmarkSearchResult } from "@/lib/landmarkSearchApi";
+import { ArrowRight, Bot, Building2, CheckCircle2, Grid3X3, Home, List, MapPin, MapPinned, MessageCircle, Navigation, PhoneCall, Scale, Search, Shield, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
@@ -632,7 +615,42 @@ export function SearchPage() {
     };
   }, [isAiSearch, searchParams]);
 
+  // "near ambience mall", "walking distance from cyber hub" — the landmark is resolved on
+  // the server, which knows where these places are and how far each society sits from them.
+  const [landmarkResult, setLandmarkResult] = useState<LandmarkSearchResult | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLandmarkResult(null);
+
+    if (!query.trim()) return;
+
+    void searchNearLandmark(query).then((result) => {
+      if (!cancelled) setLandmarkResult(result);
+    });
+
+    return () => { cancelled = true; };
+  }, [query]);
+
+  const distanceBySocietyId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const hit of landmarkResult?.societies ?? []) map.set(String(hit.id), hit.distance_km);
+    return map;
+  }, [landmarkResult]);
+
   const filteredSocieties = useMemo(() => {
+    // A landmark search has already answered the question, in the right order.
+    if (landmarkResult?.societies?.length) {
+      // Deliberately matched against every city, not the selected one. A landmark sits where
+      // it sits: "near Ambience Mall" should not hide the society across the Delhi border
+      // that is closer than anything in Gurgaon. The header names the landmark, so the
+      // widened scope is stated rather than surprising.
+      const byId = new Map(allSocieties.map((society: any) => [String(society.id), society]));
+      return landmarkResult.societies
+        .map((hit) => byId.get(String(hit.id)) ?? hit)
+        .filter(Boolean);
+    }
+
     if (isSectorLikeQuery(query)) {
       return societies.filter((society) => societyMatchesSectorQuery(society, query));
     }
@@ -647,7 +665,7 @@ export function SearchPage() {
     }
 
     return sortedSearchResults(societies, query, expandedSocietySearchText, (society: any) => searchableText(society?.name));
-  }, [query, societies]);
+  }, [query, societies, allSocieties, landmarkResult]);
 
   const searchSuggestions = useMemo(() => suggestSocieties(societies, query), [societies, query]);
 
@@ -1379,10 +1397,20 @@ export function SearchPage() {
                       : `${visibleCount} ${resultLabel(activeTab).toLowerCase()} result${visibleCount === 1 ? "" : "s"} found`}
                   </p>
                   <h2 className="mt-0.5 line-clamp-2 text-base font-black text-navy-950 md:mt-0 md:text-xl">
-                    {query
-                      ? `Matches for “${query}” in ${city.name}`
-                      : `Published SocietyFlats inventory in ${city.name}`}
+                    {landmarkResult?.landmark
+                      ? `Nearest to ${landmarkResult.landmark.name}`
+                      : query
+                        ? `Matches for “${query}” in ${city.name}`
+                        : `Published SocietyFlats inventory in ${city.name}`}
                   </h2>
+                  {/* Says what the search was read as, so a wrong reading is visible rather
+                      than silently returning the wrong list. */}
+                  {landmarkResult?.landmark ? (
+                    <p className="mt-1 text-xs font-semibold text-emerald-700">
+                      Sorted by distance{landmarkResult.radius_km ? ` · within ${landmarkResult.radius_km} km` : ""}
+                      {landmarkResult.remainder ? ` · matching “${landmarkResult.remainder}”` : ""}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="hidden flex-wrap gap-2 md:flex">
                   <Button
@@ -1610,6 +1638,15 @@ export function SearchPage() {
                         <MapPin className="h-4 w-4 shrink-0" />{" "}
                         <span className="line-clamp-1">{formatPublicLocation(society)}</span>
                       </p>
+
+                      {/* The answer to what was asked, given the same weight as the name:
+                          somebody searching "near Ambience Mall" is choosing on distance. */}
+                      {distanceBySocietyId.has(String(society.id)) && landmarkResult?.landmark ? (
+                        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-black text-emerald-700">
+                          <Navigation className="h-3.5 w-3.5" />
+                          {formatDistance(distanceBySocietyId.get(String(society.id))!)} from {landmarkResult.landmark.name}
+                        </p>
+                      ) : null}
 
                       {society.aiReason ? (
                         <p className="mt-2 rounded-2xl bg-blue-50 px-3 py-1.5 text-xs font-bold leading-5 text-blue-700">
