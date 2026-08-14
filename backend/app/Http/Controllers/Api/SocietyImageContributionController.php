@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthenticatesAccount;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Society;
 use App\Models\SocietyImageContribution;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Contribution intake: residents, owners, RWAs and builders sending us a photograph of
@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Storage;
  */
 class SocietyImageContributionController extends Controller
 {
+    use AuthenticatesAccount;
+
     /** The wording each role is asked to agree to, for rendering the upload form. */
     public function roles(): JsonResponse
     {
@@ -48,7 +50,7 @@ class SocietyImageContributionController extends Controller
             'rights_granted' => ['required', 'accepted'],
         ]);
 
-        $account = $this->accountFromToken($request);
+        $account = $this->accountFromBearer($request);
 
         $disk = config('filesystems.uploads_disk', 'public');
         $path = $request->file('image')->store('society-contributions/'.now()->format('Y/m'), $disk);
@@ -83,7 +85,7 @@ class SocietyImageContributionController extends Controller
     /** What this account has sent us, so a contributor can see where it got to. */
     public function mine(Request $request): JsonResponse
     {
-        $account = $this->accountFromToken($request);
+        $account = $this->accountFromBearer($request);
 
         if (! $account) {
             return response()->json(['message' => 'Login required.'], 401);
@@ -104,16 +106,5 @@ class SocietyImageContributionController extends Controller
         $size = @getimagesize($path);
 
         return [(int) ($size[0] ?? 0), (int) ($size[1] ?? 0)];
-    }
-
-    private function accountFromToken(Request $request): ?Account
-    {
-        $token = trim((string) preg_replace('/^Bearer\s+/i', '', (string) $request->header('Authorization', '')));
-
-        if ($token === '' || strlen($token) < 40) {
-            return null;
-        }
-
-        return Account::where('api_token_hash', hash('sha256', $token))->first();
     }
 }

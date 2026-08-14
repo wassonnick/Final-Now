@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthenticatesAccount;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Lead;
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\Storage;
  */
 class OwnerListingController extends Controller
 {
+    use AuthenticatesAccount;
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -53,7 +56,7 @@ class OwnerListingController extends Controller
         ]);
 
         // Attach to an account when one exists (session token, or a known phone) — never block.
-        $account = $this->accountFromToken($request)
+        $account = $this->accountFromBearer($request)
             ?: Account::where('phone_normalized', $data['phone'])->orWhere('phone', $data['phone'])->first();
 
         $society = ! empty($data['society_id'])
@@ -175,7 +178,7 @@ class OwnerListingController extends Controller
     /** The signed-in account's submissions, for dashboard tracking. */
     public function mine(Request $request): JsonResponse
     {
-        $account = $this->accountFromToken($request);
+        $account = $this->accountFromBearer($request);
         if (! $account) {
             return response()->json(['message' => 'Login required.'], 401);
         }
@@ -187,15 +190,5 @@ class OwnerListingController extends Controller
             ->get();
 
         return response()->json(['status' => 'ok', 'data' => $listings]);
-    }
-
-    private function accountFromToken(Request $request): ?Account
-    {
-        $token = trim((string) preg_replace('/^Bearer\s+/i', '', (string) $request->header('Authorization', '')));
-        if ($token === '' || strlen($token) < 40) {
-            return null;
-        }
-
-        return Account::where('api_token_hash', hash('sha256', $token))->first();
     }
 }

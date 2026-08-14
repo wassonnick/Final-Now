@@ -7,6 +7,7 @@ use App\Console\Commands\ImportGurgaonReraSocieties;
 use App\Console\Commands\MatchSavedSearches;
 use App\Console\Commands\TestResendEmail;
 use App\Http\Middleware\ApiCors;
+use App\Http\Middleware\EnsureAccountToken;
 use App\Http\Middleware\EnsureAdminApiToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(ApiCors::class);
         $middleware->alias([
             'admin.api' => EnsureAdminApiToken::class,
+            'account.api' => EnsureAccountToken::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

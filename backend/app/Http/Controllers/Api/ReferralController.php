@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthenticatesAccount;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Referral;
@@ -13,9 +14,11 @@ use Illuminate\Validation\Rule;
 
 class ReferralController extends Controller
 {
+    use AuthenticatesAccount;
+
     public function index(Request $request): JsonResponse
     {
-        $account = $this->account($request);
+        $account = $this->accountFromBearer($request);
         if (! $account) {
             return response()->json(['message' => 'Unauthorized referral request.'], 401);
         }
@@ -38,7 +41,7 @@ class ReferralController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $account = $this->account($request);
+        $account = $this->accountFromBearer($request);
         if (! $account) {
             return response()->json(['message' => 'Unauthorized referral request.'], 401);
         }
@@ -78,16 +81,6 @@ class ReferralController extends Controller
             'message' => 'Referral submitted for admin review. No reward is guaranteed until a genuine conversion is verified.',
             'data' => $this->safePayload($referral->refresh()),
         ], 201);
-    }
-
-    private function account(Request $request): ?Account
-    {
-        $token = trim(preg_replace('/^Bearer\s+/i', '', (string) $request->header('Authorization', '')));
-        if (strlen($token) < 40) {
-            return null;
-        }
-
-        return Account::where('api_token_hash', hash('sha256', $token))->where('status', 'active')->first();
     }
 
     private function normalizePhone(mixed $value): string

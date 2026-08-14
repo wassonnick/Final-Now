@@ -368,11 +368,20 @@ Route::get('/society-image-contributions/roles', [SocietyImageContributionContro
 Route::get('/account/society-image-contributions', [SocietyImageContributionController::class, 'mine']);
 Route::post('/societies/{idOrSlug}/image-contributions', [SocietyImageContributionController::class, 'store'])->middleware('throttle:10,1');
 
+// The way in. These three are necessarily public — you cannot present a token before you
+// have one — so they are throttled instead, and none of them answers questions about an
+// account that already exists.
 Route::prefix('accounts')->group(function () {
-    Route::get('/listings', [OwnerListingController::class, 'mine']);
-    Route::post('/upsert', [AccountController::class, 'upsert']);
+    Route::post('/upsert', [AccountController::class, 'upsert'])->middleware('throttle:10,1');
     Route::post('/request-otp', [AccountController::class, 'requestOtp'])->middleware('throttle:5,1');
     Route::post('/verify-otp', [AccountController::class, 'verifyOtp'])->middleware('throttle:10,1');
+});
+
+// Everything here is about one signed-in account, so the token is checked once at the
+// door rather than by each controller remembering to. Public entry points — requesting and
+// verifying an OTP, and the first signup — are registered outside this group below.
+Route::prefix('accounts')->middleware('account.api')->group(function () {
+    Route::get('/listings', [OwnerListingController::class, 'mine']);
     Route::get('/me', [AccountController::class, 'me']);
     Route::get('/dashboard', [AccountController::class, 'dashboard']);
     Route::get('/notification-preferences', [AccountNotificationController::class, 'preferences']);

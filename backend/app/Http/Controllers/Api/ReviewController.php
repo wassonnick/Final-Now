@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthenticatesAccount;
 use App\Http\Controllers\Controller;
-use App\Models\Account;
 use App\Models\Review;
 use App\Models\Society;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class ReviewController extends Controller
 {
+    use AuthenticatesAccount;
+
     public function bySociety(string $idOrSlug, Request $request): JsonResponse
     {
         $society = Society::query()
@@ -124,19 +126,5 @@ class ReviewController extends Controller
             'helpful' => $voted,
             'helpful_count' => $review->fresh()->helpful_count,
         ]);
-    }
-
-    private function accountFromBearer(Request $request): ?Account
-    {
-        $token = trim((string) $request->bearerToken());
-
-        if ($token === '' || strlen($token) < 40) {
-            return null;
-        }
-
-        return Account::query()
-            ->where('api_token_hash', hash('sha256', $token))
-            ->where('status', 'active')
-            ->first();
     }
 }

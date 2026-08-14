@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthenticatesAccount;
 use App\Http\Controllers\Controller;
-use App\Models\Account;
 use App\Models\SavedSearch;
 use App\Models\SavedSearchAlert;
 use Illuminate\Http\JsonResponse;
@@ -11,9 +11,11 @@ use Illuminate\Http\Request;
 
 class SavedSearchController extends Controller
 {
+    use AuthenticatesAccount;
+
     public function index(Request $request): JsonResponse
     {
-        $account = $this->account($request);
+        $account = $this->accountFromBearer($request);
         if (! $account) {
             return $this->unauthorized();
         }
@@ -23,7 +25,7 @@ class SavedSearchController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $account = $this->account($request);
+        $account = $this->accountFromBearer($request);
         if (! $account) {
             return $this->unauthorized();
         }
@@ -36,7 +38,7 @@ class SavedSearchController extends Controller
 
     public function update(Request $request, SavedSearch $savedSearch): JsonResponse
     {
-        $account = $this->account($request);
+        $account = $this->accountFromBearer($request);
         if (! $account || $savedSearch->account_id !== $account->id) {
             return $this->unauthorized();
         }
@@ -48,7 +50,7 @@ class SavedSearchController extends Controller
 
     public function destroy(Request $request, SavedSearch $savedSearch): JsonResponse
     {
-        $account = $this->account($request);
+        $account = $this->accountFromBearer($request);
         if (! $account || $savedSearch->account_id !== $account->id) {
             return $this->unauthorized();
         }
@@ -60,7 +62,7 @@ class SavedSearchController extends Controller
 
     public function alerts(Request $request): JsonResponse
     {
-        $account = $this->account($request);
+        $account = $this->accountFromBearer($request);
         if (! $account) {
             return $this->unauthorized();
         }
@@ -79,16 +81,6 @@ class SavedSearchController extends Controller
             'alert_channel' => ['sometimes', 'in:whatsapp,email'],
             'alert_frequency' => ['sometimes', 'in:daily,weekly'],
         ]);
-    }
-
-    private function account(Request $request): ?Account
-    {
-        $token = trim((string) $request->bearerToken());
-        if ($token === '' || strlen($token) < 40) {
-            return null;
-        }
-
-        return Account::query()->where('api_token_hash', hash('sha256', $token))->where('status', 'active')->first();
     }
 
     private function unauthorized(): JsonResponse

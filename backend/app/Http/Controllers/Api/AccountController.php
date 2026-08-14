@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthenticatesAccount;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\AccountOtp;
@@ -9,6 +10,7 @@ use App\Models\Lead;
 use App\Models\Property;
 use App\Models\SiteVisit;
 use App\Services\OtpDeliveryService;
+use App\Support\AccountRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -16,6 +18,8 @@ use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
 {
+    use AuthenticatesAccount;
+
     private function normalizePhone($value): string
     {
         return substr(preg_replace('/\D+/', '', (string) $value), -10);
@@ -51,18 +55,6 @@ class AccountController extends Controller
         ])->save();
 
         return $plainToken;
-    }
-
-    private function accountFromBearer(Request $request): ?Account
-    {
-        $header = (string) $request->header('Authorization', '');
-        $token = trim(preg_replace('/^Bearer\s+/i', '', $header));
-
-        if ($token === '' || strlen($token) < 40) {
-            return null;
-        }
-
-        return Account::where('api_token_hash', hash('sha256', $token))->first();
     }
 
     private function safeLeadPayload(Lead $lead): array
@@ -215,7 +207,7 @@ class AccountController extends Controller
     public function upsert(Request $request)
     {
         $validated = $request->validate([
-            'role' => ['required', Rule::in(['customer', 'broker', 'rwa'])],
+            'role' => ['required', Rule::in(AccountRole::signupRoles())],
             'phone' => ['required', 'string', 'max:30'],
             'name' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -312,7 +304,7 @@ class AccountController extends Controller
     public function requestOtp(Request $request)
     {
         $validated = $request->validate([
-            'role' => ['required', Rule::in(['customer', 'broker', 'rwa'])],
+            'role' => ['required', Rule::in(AccountRole::signupRoles())],
             'phone' => ['required', 'string', 'max:30'],
             'name' => ['nullable', 'string', 'max:255'],
             'email' => ['required_if:channel,email', 'nullable', 'email', 'max:255'],
@@ -408,7 +400,7 @@ class AccountController extends Controller
     public function verifyOtp(Request $request)
     {
         $validated = $request->validate([
-            'role' => ['required', Rule::in(['customer', 'broker', 'rwa'])],
+            'role' => ['required', Rule::in(AccountRole::signupRoles())],
             'phone' => ['required', 'string', 'max:30'],
             'otp' => ['required', 'string', 'min:4', 'max:8'],
         ]);
