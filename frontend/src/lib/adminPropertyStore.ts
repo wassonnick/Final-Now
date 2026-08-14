@@ -6,6 +6,8 @@ export interface AdminProperty {
   slug?: string;
   title: string;
   society: string;
+  societyId?: number;
+  societySlug?: string;
   locality: string;
   listingType: PropertyListingType;
   status: PropertyStatus;

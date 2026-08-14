@@ -25,6 +25,10 @@ export interface SearchIntent {
   amenities: string[];
   /** "furnished" | "semi furnished" | "unfurnished" */
   furnished: string | null;
+  /** Compass orientation of the unit — recorded per home, never per society. */
+  facing: string | null;
+  /** "ground" | "top" | a storey number. */
+  floor: string | null;
   nearMetro: boolean;
   /** Everything left after the understood parts were lifted out. */
   remainder: string;
@@ -38,6 +42,8 @@ export function hasIntent(intent: SearchIntent): boolean {
     intent.maxBuy !== null ||
     intent.amenities.length > 0 ||
     intent.furnished !== null ||
+    intent.facing !== null ||
+    intent.floor !== null ||
     intent.nearMetro
   );
 }
@@ -106,6 +112,8 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
     minRent: null,
     amenities: [],
     furnished: null,
+    facing: null,
+    floor: null,
     nearMetro: false,
     remainder: "",
   };
@@ -149,6 +157,17 @@ export function parseSearchIntent(rawQuery: string): SearchIntent {
   });
   lift(/\bstudio\b/, () => {
     if (!intent.bhk.includes(0)) intent.bhk.push(0);
+  });
+
+  lift(/\b(north\s*east|north\s*west|south\s*east|south\s*west|north|south|east|west)\s*(?:facing|face)\b/, (m) => {
+    intent.facing = m[1].replace(/\s+/g, "-");
+  });
+
+  lift(/\b(?:on the\s+)?(ground|top|first|second|third|higher|lower)\s*floor\b/, (m) => {
+    intent.floor = m[1];
+  });
+  lift(/\b(?:floor\s*([0-9]{1,2})|([0-9]{1,2})(?:st|nd|rd|th)\s*floor)\b/, (m) => {
+    intent.floor ??= m[1] ?? m[2];
   });
 
   for (const phrase of METRO_WORDS) {
@@ -198,6 +217,8 @@ export function describeIntent(intent: SearchIntent): string[] {
   }
   if (intent.maxBuy !== null) chips.push(`Under ${formatMoney(intent.maxBuy)}`);
   if (intent.furnished) chips.push(titleCase(intent.furnished));
+  if (intent.facing) chips.push(`${titleCase(intent.facing.replace(/-/g, " "))} facing`);
+  if (intent.floor) chips.push(/^[0-9]+$/.test(intent.floor) ? `Floor ${intent.floor}` : `${titleCase(intent.floor)} floor`);
   if (intent.nearMetro) chips.push("Near metro");
   for (const amenity of intent.amenities) chips.push(titleCase(amenity));
 
@@ -269,7 +290,37 @@ export function societyMatchesIntent(society: any, intent: SearchIntent): boolea
   return hasAmenities(society, intent);
 }
 
+/**
+ * The parts of a search that describe the home rather than where it is.
+ *
+ * "a park facing home in a society near golf course" is two questions: the society answers
+ * "near golf course", only a listed unit can answer "park facing". Keeping them apart is
+ * what lets the page say which half it could satisfy.
+ */
+export function unitAsks(intent: SearchIntent): string[] {
+  const asks: string[] = [];
+
+  if (intent.bhk.length > 0) asks.push(intent.bhk.map((n) => (n === 0 ? "Studio" : `${n} BHK`)).join(" or "));
+  if (intent.facing) asks.push(`${titleCase(intent.facing.replace(/-/g, " "))} facing`);
+  if (intent.floor) asks.push(/^[0-9]+$/.test(intent.floor) ? `Floor ${intent.floor}` : `${titleCase(intent.floor)} floor`);
+  if (intent.furnished) asks.push(titleCase(intent.furnished));
+  if (intent.maxRent !== null) asks.push(`Under ${formatMoney(intent.maxRent)}/mo`);
+  if (intent.maxBuy !== null) asks.push(`Under ${formatMoney(intent.maxBuy)}`);
+
+  return asks;
+}
+
 export function propertyMatchesIntent(property: any, intent: SearchIntent): boolean {
+  if (intent.facing) {
+    const facing = String(property?.facing ?? "").toLowerCase().replace(/[^a-z]/g, "-");
+    if (facing && facing !== intent.facing) return false;
+  }
+
+  if (intent.floor) {
+    const floor = String(property?.floor ?? "").toLowerCase().trim();
+    if (floor && !floorMatches(floor, intent.floor)) return false;
+  }
+
   if (intent.bhk.length > 0) {
     const bedrooms = Number(property?.bedrooms ?? property?.bhk);
     if (Number.isFinite(bedrooms) && !intent.bhk.includes(bedrooms)) return false;
@@ -299,4 +350,24 @@ export function propertyMatchesIntent(property: any, intent: SearchIntent): bool
   if (intent.nearMetro && !nearMetro(property)) return false;
 
   return hasAmenities(property, intent);
+}
+
+/** "ground", "top", "3" — compared as people mean them, not as strings. */
+function floorMatches(actual: string, wanted: string): boolean {
+  if (wanted === actual) return true;
+
+  const storey = Number.parseInt(actual, 10);
+  if (!Number.isFinite(storey)) return false;
+
+  if (wanted === "ground") return storey === 0;
+  if (wanted === "first") return storey === 1;
+  if (wanted === "second") return storey === 2;
+  if (wanted === "third") return storey === 3;
+  if (wanted === "lower") return storey <= 3;
+  if (wanted === "higher") return storey >= 8;
+  // "top floor" needs the tower height, which a listing does not carry, so it is not
+  // guessed at — a wrong exclusion here hides the one home someone wanted.
+  if (wanted === "top") return true;
+
+  return String(storey) === wanted;
 }

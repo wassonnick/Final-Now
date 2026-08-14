@@ -4,7 +4,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { rowIsInCity, useSelectedNcrCity } from "@/lib/ncrCities";
 import { formatDistance, searchNearLandmark, type LandmarkSearchResult } from "@/lib/landmarkSearchApi";
-import { describeIntent, hasIntent, parseSearchIntent, propertyMatchesIntent, societyMatchesIntent } from "@/lib/searchIntent";
+import { describeIntent, hasIntent, parseSearchIntent, propertyMatchesIntent, societyMatchesIntent, unitAsks } from "@/lib/searchIntent";
 import { searchOpenText } from "@/lib/openTextSearch";
 import { ArrowRight, Bot, Building2, CheckCircle2, Grid3X3, Home, List, MapPin, MapPinned, MessageCircle, Navigation, PhoneCall, Scale, Search, Shield, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -803,6 +803,41 @@ export function SearchPage() {
       ),
     );
   }, [activeTab, properties, query, searchText, intent]);
+
+  /**
+   * The homes inside the societies the search already answered for.
+   *
+   * "a park facing home in a society near golf course" is one sentence with two scopes: the
+   * society decides WHERE, a listing decides WHICH HOME. Filtering listings on their own
+   * ignores the half of the question the society answers, and filtering societies alone
+   * never answers the half only a unit can.
+   */
+  const societyIdsInScope = useMemo(
+    () => new Set(societiesAfterIntent.map((society: any) => String(society.id))),
+    [societiesAfterIntent],
+  );
+
+  const homesInScope = useMemo(() => {
+    if (!query.trim()) return [];
+
+    return properties.filter((property: any) => {
+      const societyId = String(property?.societyId ?? "");
+      const inScope = societyId && societyIdsInScope.size > 0 ? societyIdsInScope.has(societyId) : true;
+
+      return inScope && propertyMatchesIntent(property, intent);
+    });
+  }, [properties, societyIdsInScope, intent, query]);
+
+  const homeAsks = useMemo(() => unitAsks(intent), [intent]);
+
+  /**
+   * Asked for a home, and we have none listed that fits.
+   *
+   * With two live listings against five hundred societies this is the normal case, not the
+   * edge case. Answering it with an empty page throws away a real requirement and tells the
+   * user we have nothing, when what we have is the building and not yet the flat.
+   */
+  const homeGap = catalogueReady && homeAsks.length > 0 && homesInScope.length === 0 && societiesAfterIntent.length > 0;
 
   const updateUrl = (tab: string, searchValue: string) => {
     const params = new URLSearchParams(searchParams);
@@ -1683,6 +1718,79 @@ export function SearchPage() {
                   </div>
                 </div>
               </div>
+            ) : null}
+
+            {/* HOMES — the thing actually being searched for.
+                A society is where a home is, not the home. When a search names anything
+                only a unit can answer (bedrooms, orientation, floor, furnishing, budget),
+                the listings come first and the societies become the context. */}
+            {homeAsks.length > 0 && homesInScope.length > 0 ? (
+              <section className="rounded-[1.2rem] border border-emerald-100 bg-emerald-50/40 p-3 md:rounded-[1.35rem] md:p-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                  {homesInScope.length} home{homesInScope.length === 1 ? "" : "s"} matching {homeAsks.join(" · ")}
+                </p>
+                <div className="mt-3 grid gap-2.5 md:grid-cols-2">
+                  {homesInScope.slice(0, 6).map((property: any) => (
+                    <article key={property.id} className="rounded-[1rem] border border-emerald-100 bg-white p-3.5">
+                      <Link to={property.slug ? `/property/${property.slug}` : "/properties"} className="block">
+                        <p className="text-sm font-black text-navy-900">{property.title}</p>
+                        <p className="mt-1 text-xs font-semibold text-navy-500">
+                          {property.society}{property.locality ? ` · ${property.locality}` : ""}
+                        </p>
+                        <p className="mt-1.5 text-sm font-black text-emerald-700">
+                          {formatPropertyPrice(property)}
+                        </p>
+                        <p className="mt-1 text-[11.5px] font-semibold text-navy-500">
+                          {[property.bedrooms ? `${property.bedrooms} BHK` : "", property.facing ? `${property.facing} facing` : "",
+                            property.floor ? `Floor ${property.floor}` : "", property.furnishedStatus]
+                            .filter(Boolean).join(" · ")}
+                        </p>
+                      </Link>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-2.5 w-full rounded-full"
+                        onClick={() => openPropertyCallback(property)}
+                      >
+                        Ask about this home
+                      </Button>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {/* No listing fits, but the buildings do. With two live listings against five
+                hundred societies this is the ordinary case — and the useful answer is the
+                shortlist of places where the home would be, plus a way to say what is
+                wanted. That requirement is also the only reliable signal of which
+                inventory is worth going out and getting. */}
+            {homeGap ? (
+              <section className="rounded-[1.2rem] border border-amber-200 bg-amber-50/60 p-3.5 md:rounded-[1.35rem] md:p-4">
+                <p className="text-sm font-black text-navy-900">
+                  No listed home matches {homeAsks.join(" · ")} yet.
+                </p>
+                <p className="mt-1 text-[13px] font-semibold text-navy-600">
+                  {societiesAfterIntent.length} societ{societiesAfterIntent.length === 1 ? "y" : "ies"} below
+                  {societiesAfterIntent.length === 1 ? " fits" : " fit"} where you want to live. Tell us the home and we’ll find it there — most inventory
+                  never reaches a listing page.
+                </p>
+                <Button
+                  size="sm"
+                  className="mt-3 rounded-full bg-navy-900"
+                  onClick={() =>
+                    setCallbackTarget({
+                      type: "property",
+                      societyName: societiesAfterIntent[0]?.name || city.name,
+                      propertyTitle: query,
+                      propertyIntent: activeTab === "buy" ? "Buy" : "Rent",
+                      source: "search_home_requirement",
+                    })
+                  }
+                >
+                  Tell us what you need
+                </Button>
+              </section>
             ) : null}
 
             {dataStatus === "loading" && visibleCount === 0 ? (

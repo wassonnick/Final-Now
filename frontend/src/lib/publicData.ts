@@ -88,6 +88,12 @@ function mapApiProperty(data: any): AdminProperty {
     slug: data?.slug || data?.property_slug || '',
     title: data?.title || '',
     society: typeof data?.society === 'object' ? data.society?.name || data?.society_name || '' : data?.society || '',
+    // A home is only findable by where it is if it remembers which society it belongs to.
+    // The name alone cannot be matched against a society list without guessing at spelling.
+    societyId: Number(
+      (typeof data?.society === 'object' ? data.society?.id : null) ?? data?.society_id ?? 0,
+    ),
+    societySlug: (typeof data?.society === 'object' ? data.society?.slug : '') || data?.society_slug || '',
     locality: data?.locality || '',
     listingType: data?.listing_type || data?.listingType || 'Rent',
     status: data?.status || 'Draft',
