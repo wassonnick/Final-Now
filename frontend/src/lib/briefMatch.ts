@@ -276,7 +276,19 @@ function fitFor(society: any, brief: Brief): Fit {
     }
 
     if (value === null) {
-      if (picked) unknown.push(priority.label);
+      if (!picked) continue;
+
+      /**
+       * A priority we cannot judge counts against the score, it does not vanish.
+       *
+       * Skipping it scored the society on everything except the one thing the person
+       * said mattered most — which put a society with no connectivity data at the top of
+       * a brief led by commute, at 96%, while admitting on the same card that it could
+       * not be assessed on it. Unmeasured is not the same as good.
+       */
+      unknown.push(priority.label);
+      total += 5 * weight;
+      weightUsed += weight;
       continue;
     }
 

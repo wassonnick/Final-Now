@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, Loader2, ShieldCheck } from "lucide-react";
+import { Check, Loader2, Lock, Pencil, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchPublicSocieties } from "@/lib/publicData";
@@ -21,8 +21,13 @@ import {
  * against a stated brief is worth reading on a day when barely anything is listed, which
  * a results grid is not.
  *
- * Nothing here is hidden behind a sign-in. The shortlist is the promise; withholding it
- * to collect a phone number would undo the reason anyone trusts a verified catalogue.
+ * The questions sit in one stack rather than taking over the screen one at a time. Every
+ * answer stays on the page as a line you can reopen, so the brief reads as a document
+ * being assembled rather than a quiz being sat — which matches how people actually decide:
+ * the budget moves once you see what the area costs.
+ *
+ * Nothing is hidden behind a sign-in. The shortlist is the promise; withholding it to
+ * collect a phone number would undo the reason anyone trusts a verified catalogue.
  */
 
 const RENT_PURPOSES = ["Family home", "Couple", "Working professional", "Company lease"];
@@ -48,10 +53,10 @@ function Chip({ active, children, onClick }: { active: boolean; children: React.
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-5 py-2.5 text-sm font-bold transition ${
+      className={`rounded-xl border px-4 py-2.5 text-[13.5px] font-bold transition ${
         active
-          ? "border-[#0F7B63] bg-[#0F7B63] text-white"
-          : "border-navy-200 bg-white text-navy-700 hover:border-[#0F7B63]"
+          ? "border-navy-700 bg-navy-700 text-white shadow-sm"
+          : "border-navy-200 bg-white text-navy-700 hover:border-navy-400"
       }`}
     >
       {children}
@@ -118,13 +123,15 @@ export function BriefPage() {
 
   const steps = [
     {
-      title: "What are you here for?",
-      blurb: "It changes every question after this one.",
-      valid: true,
+      label: "Renting or buying",
+      question: "Are you renting or buying?",
+      hint: "It changes every question after this one.",
+      summary: brief.mode === "rent" ? "Renting" : "Buying",
+      done: true,
       body: (
-        <div className="grid gap-3">
-          {([["rent", "I'm looking to rent", "We'll score societies on living there — upkeep, security, commute."],
-            ["buy", "I'm looking to buy", "We'll score them on value too — RERA, developer, possession."]] as Array<[BriefMode, string, string]>)
+        <div className="grid gap-2.5 sm:grid-cols-2">
+          {([["rent", "Renting", "Scored on living there — upkeep, security, commute."],
+            ["buy", "Buying", "Scored on value too — RERA, developer, possession."]] as Array<[BriefMode, string, string]>)
             .map(([mode, label, blurb]) => (
               <button
                 key={mode}
@@ -135,23 +142,25 @@ export function BriefPage() {
                   mode, purpose: "", timeline: "", priorities: [],
                   budget: mode === "rent" ? RENT_STEPS[4] : BUY_STEPS[3],
                 })}
-                className={`rounded-2xl border p-5 text-left transition ${
-                  brief.mode === mode ? "border-[#0F7B63] bg-[#0F7B63]/5" : "border-navy-200 bg-white hover:border-navy-300"
+                className={`rounded-xl border p-4 text-left transition ${
+                  brief.mode === mode ? "border-navy-700 bg-navy-100" : "border-navy-200 bg-white hover:border-navy-300"
                 }`}
               >
-                <p className="font-display text-xl font-medium text-navy-950">{label}</p>
-                <p className="mt-1 text-sm text-navy-500">{blurb}</p>
+                <p className="text-[15px] font-black text-navy-900">{label}</p>
+                <p className="mt-0.5 text-[12.5px] leading-5 text-navy-500">{blurb}</p>
               </button>
             ))}
         </div>
       ),
     },
     {
-      title: "Who is it for?",
-      blurb: "So the shortlist reads for the right person.",
-      valid: Boolean(brief.purpose),
+      label: "Who it's for",
+      question: "Who is the home for?",
+      hint: "",
+      summary: brief.purpose,
+      done: Boolean(brief.purpose),
       body: (
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap gap-2">
           {purposes.map((purpose) => (
             <Chip key={purpose} active={brief.purpose === purpose} onClick={() => set({ purpose })}>{purpose}</Chip>
           ))}
@@ -159,36 +168,41 @@ export function BriefPage() {
       ),
     },
     {
-      title: "What's your budget?",
-      blurb: brief.mode === "rent" ? "Monthly rent you're comfortable with." : "Total you're comfortable exploring.",
-      valid: brief.budget > 0,
+      label: "Budget",
+      question: brief.mode === "rent" ? "What's your monthly budget?" : "What's your budget?",
+      hint: "",
+      summary: brief.budget > 0 ? `${formatMoney(brief.budget)}${brief.mode === "rent" ? "/mo" : ""}` : "",
+      done: brief.budget > 0,
       body: (
-        <div>
-          <p className="text-center font-display text-5xl font-medium text-navy-950">
-            {brief.budget > 0 ? formatMoney(brief.budget) : "—"}
-            {brief.mode === "rent" && brief.budget > 0 ? <span className="text-2xl text-navy-400">/mo</span> : null}
-          </p>
+        <div className="rounded-xl border border-navy-100 bg-navy-50 p-4">
+          <div className="flex items-baseline justify-between">
+            <p className="text-2xl font-black tabular-nums text-navy-900">
+              {formatMoney(brief.budget)}
+              {brief.mode === "rent" ? <span className="text-base font-bold text-navy-400">/mo</span> : null}
+            </p>
+            <p className="text-[11.5px] font-bold text-navy-400">
+              {formatMoney(budgetSteps[0])} – {formatMoney(budgetSteps[budgetSteps.length - 1])}+
+            </p>
+          </div>
           <input
             type="range"
             min={0}
             max={budgetSteps.length - 1}
             value={Math.max(0, budgetSteps.indexOf(brief.budget))}
             onChange={(event) => set({ budget: budgetSteps[Number(event.target.value)] })}
-            className="mt-6 w-full accent-[#0F7B63]"
+            className="mt-3 w-full accent-navy-700"
           />
-          <div className="mt-2 flex justify-between text-xs font-semibold text-navy-400">
-            <span>{formatMoney(budgetSteps[0])}</span>
-            <span>{formatMoney(budgetSteps[budgetSteps.length - 1])}+</span>
-          </div>
         </div>
       ),
     },
     {
-      title: "What size?",
-      blurb: "Pick as many as work for you.",
-      valid: brief.bhk.length > 0,
+      label: "Size",
+      question: "How many bedrooms?",
+      hint: "Pick as many as work.",
+      summary: brief.bhk.map((n) => (n === 0 ? "Studio" : `${n} BHK`)).join(", "),
+      done: brief.bhk.length > 0,
       body: (
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap gap-2">
           {BHK_CHOICES.map(([value, label]) => (
             <Chip key={value} active={brief.bhk.includes(value)} onClick={() => set({ bhk: toggle(brief.bhk, value) })}>
               {label}
@@ -198,40 +212,39 @@ export function BriefPage() {
       ),
     },
     {
-      title: "Where are you looking?",
-      blurb: "An area, a sector or a landmark. Leave it blank and we'll look across the city.",
-      valid: true,
+      label: "Area",
+      question: "Where do you want to be?",
+      hint: "An area, a sector or a landmark. Leave it blank to look across the city.",
+      summary: brief.where.trim() || `Anywhere in ${city.name}`,
+      done: true,
       body: (
         <div>
           <Input
             value={brief.where}
             placeholder="Golf Course Road, Sector 65, near Cyber Hub…"
             onChange={(event) => set({ where: event.target.value })}
-            className="h-14 text-base"
+            className="h-12"
           />
           {areas.length > 0 ? (
-            <div className="mt-4">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-navy-400">
-                Most inventory right now
-              </p>
-              <div className="mt-2.5 flex flex-wrap gap-2">
-                {areas.map((area) => (
-                  <Chip key={area} active={brief.where === area} onClick={() => set({ where: brief.where === area ? "" : area })}>
-                    {area}
-                  </Chip>
-                ))}
-              </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {areas.map((area) => (
+                <Chip key={area} active={brief.where === area} onClick={() => set({ where: brief.where === area ? "" : area })}>
+                  {area}
+                </Chip>
+              ))}
             </div>
           ) : null}
         </div>
       ),
     },
     {
-      title: brief.mode === "rent" ? "When do you need it?" : "When do you want possession?",
-      blurb: "",
-      valid: Boolean(brief.timeline),
+      label: "Timing",
+      question: brief.mode === "rent" ? "When do you need it?" : "When do you want possession?",
+      hint: "",
+      summary: timelineLabel(brief),
+      done: Boolean(brief.timeline),
       body: (
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap gap-2">
           {timelines.map(([value, label]) => (
             <Chip key={value} active={brief.timeline === value} onClick={() => set({ timeline: value })}>{label}</Chip>
           ))}
@@ -239,12 +252,14 @@ export function BriefPage() {
       ),
     },
     {
-      title: "What matters most?",
-      blurb: "Pick a few. These decide how every society is scored for you.",
-      valid: brief.priorities.length > 0,
+      label: "Priorities",
+      question: "What matters most?",
+      hint: "These decide how every society is scored for you.",
+      summary: brief.priorities.length > 0 ? `${brief.priorities.length} chosen` : "",
+      done: brief.priorities.length > 0,
       body: (
         <div>
-          <div className="flex flex-wrap gap-2.5">
+          <div className="flex flex-wrap gap-2">
             {prioritiesFor(brief.mode).map((priority) => (
               <Chip
                 key={priority.id}
@@ -260,19 +275,21 @@ export function BriefPage() {
               These are the questions buyers ask first and a catalogue answers worst —
               worth capturing honestly rather than leaving off the list. */}
           {unrecorded.length > 0 ? (
-            <p className="mt-4 rounded-2xl bg-amber-50 p-3.5 text-[13px] font-semibold leading-5 text-amber-800">
-              {unrecorded.map((p) => p.label).join(" and ")} {unrecorded.length === 1 ? "is" : "are"} not
-              something any listing publishes, so we can’t filter on it. We’ll carry it into your brief and
-              check it with the society directly.
+            <p className="mt-3 rounded-xl border border-gold-200 bg-gold-50 p-3 text-[12.5px] font-semibold leading-5 text-gold-800">
+              {unrecorded.map((p) => p.label).join(" and ")} {unrecorded.length === 1 ? "isn’t" : "aren’t"} published
+              by any listing, so we can’t filter on {unrecorded.length === 1 ? "it" : "them"}. We’ll carry
+              {unrecorded.length === 1 ? " it" : " them"} into your brief and check with the society directly.
             </p>
           ) : null}
         </div>
       ),
     },
     {
-      title: "Anything else?",
-      blurb: "Optional. The things the buttons above don't capture.",
-      valid: true,
+      label: "Anything else",
+      question: "Anything the buttons missed?",
+      hint: "Optional.",
+      summary: brief.notes.trim() ? "Added" : "",
+      done: true,
       body: (
         <div>
           <textarea
@@ -280,17 +297,17 @@ export function BriefPage() {
             maxLength={600}
             onChange={(event) => set({ notes: event.target.value })}
             placeholder="e.g. a quiet corner flat away from the main road, ideally park facing, with a study for WFH and space for my parents. Avoid ground floor."
-            className="h-40 w-full rounded-2xl border border-navy-200 bg-white p-4 text-[15px] leading-6 text-navy-800 outline-none focus:border-[#0F7B63]"
+            className="h-32 w-full rounded-xl border border-navy-200 bg-white p-3.5 text-[14.5px] leading-6 text-navy-800 outline-none focus:border-navy-700"
           />
-          <p className="mt-1.5 text-right text-xs font-semibold text-navy-400">{brief.notes.length} / 600</p>
+          <p className="mt-1 text-right text-[11.5px] font-semibold text-navy-400">{brief.notes.length} / 600</p>
         </div>
       ),
     },
   ];
 
-  const current = steps[step];
   const isLast = step === steps.length - 1;
   const showResults = step >= steps.length;
+  const answered = steps.filter((entry) => entry.done).length;
 
   const advance = () => {
     if (!isLast) {
@@ -302,173 +319,199 @@ export function BriefPage() {
     // and naming it is the difference between a list and a recommendation.
     setThinking(true);
     setStep(steps.length);
-    window.setTimeout(() => setThinking(false), 1100);
+    window.setTimeout(() => setThinking(false), 900);
   };
 
   if (showResults) {
     return (
-      <div className="min-h-screen bg-[#F8F7F4]">
-        <main className="mx-auto max-w-[1200px] px-5 py-10 md:px-8 md:py-14">
+      <div className="min-h-screen bg-navy-50">
+        <main className="mx-auto max-w-[1120px] px-4 py-8 md:px-8 md:py-12">
           {thinking ? (
             <div className="flex flex-col items-center justify-center py-32 text-center">
-              <Loader2 className="h-9 w-9 animate-spin text-[#0F7B63]" />
-              <h1 className="mt-8 font-display text-3xl font-medium text-navy-950 md:text-4xl">
-                Scoring {inCity.length} societies against your brief…
-              </h1>
-              <p className="mt-2 text-navy-500">Connectivity, upkeep, security, value.</p>
+              <Loader2 className="h-8 w-8 animate-spin text-navy-700" />
+              <p className="mt-6 text-xl font-black text-navy-900">
+                Scoring {inCity.length} societies against your brief
+              </p>
+              <p className="mt-1 text-sm font-semibold text-navy-500">Connectivity · upkeep · security · value</p>
             </div>
           ) : (
-            <div className="grid gap-8 lg:grid-cols-[360px_1fr] lg:gap-12">
-              <aside className="lg:sticky lg:top-24 lg:self-start">
-                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#C2724E]">Your brief</p>
-                <h1 className="mt-2 font-display text-4xl font-medium leading-tight text-navy-950">
-                  {brief.purpose || "Your"} {brief.mode === "rent" ? "rental" : "purchase"} in {city.name}.
-                </h1>
-
-                <div className="mt-5 flex flex-wrap gap-1.5">
+            <>
+              {/* The brief stays a compact, editable strip rather than a column of its own —
+                  it is the thing being answered, not the headline. */}
+              <div className="rounded-2xl border border-navy-200 bg-white p-4 md:p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-navy-400">
+                    Your brief · {brief.purpose || (brief.mode === "rent" ? "Renting" : "Buying")} in {city.name}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setStep(0)}
+                    className="inline-flex items-center gap-1.5 text-[13px] font-bold text-navy-700 hover:underline"
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> Edit
+                  </button>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1.5">
                   {briefChips.map((chip) => (
-                    <span key={chip} className="rounded-full bg-navy-50 px-3 py-1.5 text-[12.5px] font-bold text-navy-700">
+                    <span key={chip} className="rounded-lg bg-navy-100 px-2.5 py-1 text-[12px] font-bold text-navy-800">
                       {chip}
                     </span>
                   ))}
                 </div>
-
                 {brief.notes.trim() ? (
-                  <p className="mt-4 rounded-2xl bg-ivory-100 p-3.5 text-[13px] italic leading-5 text-navy-600">
-                    “{brief.notes.trim()}”
+                  <p className="mt-3 border-l-2 border-navy-200 pl-3 text-[13px] leading-5 text-navy-500">
+                    {brief.notes.trim()}
                   </p>
                 ) : null}
+              </div>
 
-                <button
-                  type="button"
-                  onClick={() => setStep(0)}
-                  className="mt-4 text-sm font-bold text-[#0F7B63] hover:underline"
-                >
-                  Edit my brief
-                </button>
-
-                <div className="mt-8 rounded-2xl border border-navy-100 bg-white p-5">
-                  <p className="flex items-center gap-2 text-sm font-black text-navy-900">
-                    <ShieldCheck className="h-4 w-4 text-[#0F7B63]" /> How this was scored
-                  </p>
-                  <ul className="mt-3 space-y-1.5 text-[13px] leading-5 text-navy-600">
-                    <li>• Every published society in {city.name}, not a paid selection</li>
-                    <li>• Scored on the things you picked, from verified data</li>
-                    <li>• Your details are never passed to a builder</li>
-                    <li>• Where we don’t hold data, we say so</li>
-                  </ul>
-                </div>
-              </aside>
-
-              <div>
-                {/* The work, stated. A shortlist of four means nothing without the number
-                    it was drawn from. */}
-                {shortlist ? (
-                  <p className="font-mono text-[13px] font-semibold text-navy-500">
-                    <span className="text-navy-900">{shortlist.scanned}</span> scanned
-                    <span className="mx-2 text-navy-300">→</span>
-                    <span className="text-navy-900">{shortlist.eligible}</span> fit your requirements
-                    <span className="mx-2 text-navy-300">→</span>
-                    <span className="text-[#0F7B63]">{shortlist.fits.length}</span> worth your time
-                  </p>
-                ) : null}
-
-                {shortlist?.loosened.length ? (
-                  <p className="mt-3 rounded-2xl bg-amber-50 p-3.5 text-[13px] font-semibold text-amber-800">
-                    Nothing matched everything, so we loosened {shortlist.loosened.map((item) => `“${item}”`).join(" and ")}.
-                    Everything below meets the rest.
-                  </p>
-                ) : null}
-
-                <div className="mt-6 space-y-4">
-                  {shortlist?.fits.map((fit, index) => (
-                    <article
-                      key={fit.society.id}
-                      className="rounded-[20px] border border-navy-100 bg-white p-6 shadow-sm"
+              {/* The work, stated as three numbers. A shortlist of four means nothing
+                  without the number it was drawn from. */}
+              {shortlist ? (
+                <div className="mt-3 grid grid-cols-3 gap-2.5 md:gap-3">
+                  {[
+                    ["Scanned", shortlist.scanned],
+                    ["Meet your brief", shortlist.eligible],
+                    ["Shortlisted", shortlist.fits.length],
+                  ].map(([label, value], index) => (
+                    <div
+                      key={String(label)}
+                      className={`rounded-2xl border p-3.5 md:p-4 ${
+                        index === 2 ? "border-navy-700 bg-navy-700" : "border-navy-200 bg-white"
+                      }`}
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0">
-                          <p className="text-[11px] font-black uppercase tracking-[0.14em] text-[#0F7B63]">
-                            {index === 0 ? "Best fit for you" : fit.verdict}
-                          </p>
-                          <h2 className="mt-1 font-display text-2xl font-medium text-navy-950">
-                            {fit.society.name}
-                          </h2>
-                          <p className="mt-1 text-sm font-semibold text-navy-500">
-                            {[fit.society.sector, fit.society.locality].filter(Boolean).join(", ")}
-                          </p>
-                          <p className="mt-2 font-mono text-[15px] font-bold text-navy-900">
-                            {brief.mode === "rent"
-                              ? fit.society.rentRange || "Rent on request"
-                              : fit.society.buyRange || "Price on request"}
-                          </p>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <p className="font-display text-4xl font-medium text-navy-950">{fit.percent}%</p>
-                          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-navy-400">fit to you</p>
-                        </div>
-                      </div>
-
-                      {/* Why, in the society's own measured terms. A percentage nobody can
-                          check is just a number asking to be believed. */}
-                      {fit.reasons.length > 0 ? (
-                        <ul className="mt-4 space-y-1.5">
-                          {fit.reasons.map((reason) => (
-                            <li key={reason.label} className="flex items-start gap-2 text-[13.5px] leading-5 text-navy-700">
-                              <Check className={`mt-0.5 h-4 w-4 shrink-0 ${reason.good ? "text-[#0F7B63]" : "text-navy-300"}`} />
-                              {reason.label}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-
-                      {fit.unknown.length > 0 ? (
-                        <p className="mt-3 text-[12.5px] font-semibold text-amber-700">
-                          Not verified here yet: {fit.unknown.join(", ").toLowerCase()}.
-                        </p>
-                      ) : null}
-
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        <Link
-                          to={fit.society.slug ? `/society/${fit.society.slug}` : "/societies"}
-                          className="rounded-full bg-navy-900 px-5 py-2.5 text-sm font-bold text-white"
-                        >
-                          See the full report
-                        </Link>
-                        <Button variant="outline" className="rounded-full" onClick={() => setLeadOpen(true)}>
-                          Ask about this
-                        </Button>
-                      </div>
-                    </article>
+                      <p className={`text-2xl font-black tabular-nums ${index === 2 ? "text-white" : "text-navy-900"}`}>
+                        {value as number}
+                      </p>
+                      <p className={`mt-0.5 text-[10.5px] font-bold uppercase tracking-wide ${index === 2 ? "text-navy-100" : "text-navy-400"}`}>
+                        {label as string}
+                      </p>
+                    </div>
                   ))}
-
-                  {shortlist && shortlist.fits.length === 0 ? (
-                    <p className="rounded-[20px] border border-dashed border-navy-200 bg-white p-8 text-center text-sm font-semibold text-navy-500">
-                      Nothing in {city.name} fits this brief yet. Send it to us and we’ll go and find it.
-                    </p>
-                  ) : null}
                 </div>
+              ) : null}
 
+              {shortlist?.loosened.length ? (
+                <p className="mt-3 rounded-xl border border-gold-200 bg-gold-50 p-3.5 text-[13px] font-semibold text-gold-800">
+                  Nothing met every requirement, so we relaxed {shortlist.loosened.map((item) => `“${item}”`).join(" and ")}.
+                  Everything below meets the rest.
+                </p>
+              ) : null}
+
+              <div className="mt-4 space-y-2.5">
+                {shortlist?.fits.map((fit, index) => (
+                  <article
+                    key={fit.society.id}
+                    className="rounded-2xl border border-navy-200 bg-white p-4 transition hover:border-navy-400 md:p-5"
+                  >
+                    <div className="flex gap-3.5">
+                      {/* Rank, not a trophy score. The order is the recommendation. */}
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-navy-100 text-[15px] font-black tabular-nums text-navy-700">
+                        {index + 1}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                          <h2 className="text-[17px] font-black leading-tight text-navy-900">{fit.society.name}</h2>
+                          <p className="text-[14.5px] font-black tabular-nums text-navy-900">
+                            {brief.mode === "rent"
+                              ? fit.society.rentRange || "On request"
+                              : fit.society.buyRange || "On request"}
+                          </p>
+                        </div>
+                        <p className="mt-0.5 text-[12.5px] font-semibold text-navy-500">
+                          {/* Sector and locality are the same string on rows whose real
+                              neighbourhood was never resolved, and "Sector 104 · Sector 104"
+                              reads as a bug rather than a location. */}
+                          {[...new Set([fit.society.sector, fit.society.locality].filter(Boolean))].join(" · ")}
+                        </p>
+
+                        {/* A bar rather than a headline numeral: it reads as a measurement,
+                            which is what it is, and it compares at a glance down the list. */}
+                        <div className="mt-3 flex items-center gap-3">
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-navy-100">
+                            <div className="h-full rounded-full bg-navy-700" style={{ width: `${fit.percent}%` }} />
+                          </div>
+                          <p className="shrink-0 text-[12.5px] font-black tabular-nums text-navy-700">{fit.percent}% fit</p>
+                        </div>
+
+                        {fit.reasons.length > 0 ? (
+                          <ul className="mt-3 grid gap-1 sm:grid-cols-2">
+                            {fit.reasons.map((reason) => (
+                              <li key={reason.label} className="flex items-start gap-1.5 text-[12.5px] leading-5 text-navy-600">
+                                <Check className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${reason.good ? "text-navy-700" : "text-navy-300"}`} />
+                                <span className="min-w-0">{reason.label}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+
+                        {fit.unknown.length > 0 ? (
+                          <p className="mt-2 text-[12px] font-semibold text-gold-700">
+                            Not verified here yet: {fit.unknown.join(", ").toLowerCase()}.
+                          </p>
+                        ) : null}
+
+                        <div className="mt-3.5 flex flex-wrap gap-2">
+                          <Link
+                            to={fit.society.slug ? `/society/${fit.society.slug}` : "/societies"}
+                            className="rounded-lg bg-navy-900 px-4 py-2 text-[13px] font-bold text-white"
+                          >
+                            Full report
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => setLeadOpen(true)}
+                            className="rounded-lg border border-navy-200 px-4 py-2 text-[13px] font-bold text-navy-700 hover:border-navy-400"
+                          >
+                            Ask about this
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+
+                {shortlist && shortlist.fits.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-navy-200 bg-white p-8 text-center text-sm font-semibold text-navy-500">
+                    Nothing in {city.name} fits this brief yet. Send it to us and we’ll go and find it.
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-[1fr_320px]">
                 {/* The half no catalogue answers, carried to someone who can. */}
-                <div className="mt-6 rounded-[20px] bg-[#111827] p-7 text-white">
-                  <h3 className="font-display text-2xl font-medium">
+                <div className="rounded-2xl bg-navy-900 p-5 text-white md:p-6">
+                  <h3 className="text-[19px] font-black leading-snug">
                     {unrecorded.length > 0
-                      ? `We can’t filter on ${unrecorded.map((p) => p.label.toLowerCase()).join(" or ")} — but we can ask.`
-                      : "Want us to check these for you?"}
+                      ? `We can’t filter on ${unrecorded.map((p) => p.label.toLowerCase()).join(" or ")}. We can ask.`
+                      : "Want us to check availability?"}
                   </h3>
-                  <p className="mt-2 text-[15px] leading-6 text-[#C7D0DE]">
+                  <p className="mt-2 text-[13.5px] leading-6 text-navy-200">
                     Send this brief and we’ll come back with what each society actually offers — availability,
-                    real rents, and the things owners never put in a listing.
+                    real numbers, and the things owners never put in a listing.
                   </p>
                   <Button
-                    className="mt-5 rounded-full bg-[#C2724E] px-7 py-6 text-[15px] font-bold hover:bg-[#b0673f]"
+                    className="mt-4 rounded-lg bg-white px-6 py-5 text-[14px] font-black text-navy-900 hover:bg-navy-100"
                     onClick={() => setLeadOpen(true)}
                   >
                     Send my brief
                   </Button>
                 </div>
+
+                <div className="rounded-2xl border border-navy-200 bg-white p-5">
+                  <p className="flex items-center gap-2 text-[13px] font-black text-navy-900">
+                    <ShieldCheck className="h-4 w-4 text-navy-700" /> How this was scored
+                  </p>
+                  <ul className="mt-2.5 space-y-1.5 text-[12.5px] leading-5 text-navy-500">
+                    <li>Every published society in {city.name}, not a paid selection</li>
+                    <li>Weighted by the priorities you picked, from verified data</li>
+                    <li>Your details are never passed to a builder</li>
+                    <li>Where we hold no data, we say so</li>
+                  </ul>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </main>
 
@@ -501,57 +544,99 @@ export function BriefPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F7F4]">
-      <main className="mx-auto max-w-[820px] px-5 py-10 md:px-8 md:py-16">
-        <div className="h-1 w-full overflow-hidden rounded-full bg-navy-100">
-          <div
-            className="h-full rounded-full bg-[#0F7B63] transition-all duration-300"
-            style={{ width: `${((step + 1) / steps.length) * 100}%` }}
-          />
-        </div>
-
-        <p className="mt-8 text-[11px] font-black uppercase tracking-[0.16em] text-[#C2724E]">
-          Step {step + 1} of {steps.length}
-        </p>
-        <h1 className="mt-2 font-display text-4xl font-medium leading-tight text-navy-950 md:text-5xl">
-          {current.title}
-        </h1>
-        {current.blurb ? <p className="mt-3 text-[17px] text-navy-500">{current.blurb}</p> : null}
-
-        <div className="mt-10">{current.body}</div>
-
-        <div className="mt-12 flex items-center justify-between">
-          <button
-            type="button"
-            disabled={step === 0}
-            onClick={() => setStep(step - 1)}
-            className="flex items-center gap-2 text-sm font-bold text-navy-500 disabled:opacity-0"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back
-          </button>
-
-          <div className="flex items-center gap-4">
-            {!current.valid ? (
-              <button type="button" onClick={() => setStep(step + 1)} className="text-sm font-bold text-navy-400 hover:underline">
-                Skip
-              </button>
-            ) : null}
-            <Button
-              disabled={loading && isLast}
-              onClick={advance}
-              className="rounded-full bg-[#0F7B63] px-8 py-6 text-[15px] font-bold hover:bg-[#0c6552]"
-            >
-              {isLast ? "See my shortlist" : "Continue"} <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+    <div className="min-h-screen bg-navy-50">
+      <main className="mx-auto max-w-[720px] px-4 py-8 md:px-8 md:py-12">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-navy-400">
+              {brief.mode === "rent" ? "Rental" : "Purchase"} brief · {city.name}
+            </p>
+            <h1 className="mt-1.5 text-[26px] font-black leading-tight text-navy-950 md:text-[32px]">
+              Tell us what you need.
+            </h1>
           </div>
+          <p className="shrink-0 text-[12px] font-bold tabular-nums text-navy-400">
+            {answered}/{steps.length}
+          </p>
         </div>
 
-        {step === 0 ? (
-          <p className="mt-14 text-[13px] leading-6 text-navy-400">
-            Around a minute. We never pass your details to a builder, and the full shortlist is
-            shown either way — no sign-in, nothing blurred out.
-          </p>
-        ) : null}
+        {/* One stack, not one screen per question. Answers stay visible as lines you can
+            reopen, so changing the budget after seeing what the area costs is a tap rather
+            than a journey back through a wizard. */}
+        <div className="mt-6 divide-y divide-navy-100 overflow-hidden rounded-2xl border border-navy-200 bg-white">
+          {steps.map((entry, index) => {
+            const isOpen = index === step;
+            const isPast = index < step;
+
+            if (isOpen) {
+              return (
+                <section key={entry.label} className="p-4 md:p-5">
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-[11px] font-black tabular-nums text-navy-700">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div className="min-w-0">
+                      <h2 className="text-[17px] font-black leading-snug text-navy-900">{entry.question}</h2>
+                      {entry.hint ? <p className="mt-0.5 text-[13px] leading-5 text-navy-500">{entry.hint}</p> : null}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 sm:pl-7">{entry.body}</div>
+
+                  <div className="mt-5 flex items-center gap-3 sm:pl-7">
+                    <Button
+                      disabled={loading && isLast}
+                      onClick={advance}
+                      className="rounded-lg bg-navy-700 px-6 py-5 text-[14px] font-black hover:bg-navy-800"
+                    >
+                      {isLast ? "See my shortlist" : "Continue"}
+                    </Button>
+                    {!entry.done ? (
+                      <button
+                        type="button"
+                        onClick={() => setStep(step + 1)}
+                        className="text-[13px] font-bold text-navy-400 hover:text-navy-600"
+                      >
+                        Skip
+                      </button>
+                    ) : null}
+                  </div>
+                </section>
+              );
+            }
+
+            return (
+              <button
+                key={entry.label}
+                type="button"
+                disabled={!isPast}
+                onClick={() => setStep(index)}
+                className={`flex w-full items-center gap-3 px-4 py-3.5 text-left md:px-5 ${
+                  isPast ? "hover:bg-navy-50" : "cursor-default"
+                }`}
+              >
+                <span className={`text-[11px] font-black tabular-nums ${isPast ? "text-navy-700" : "text-navy-300"}`}>
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className={`flex-1 text-[13.5px] font-bold ${isPast ? "text-navy-900" : "text-navy-300"}`}>
+                  {entry.label}
+                </span>
+                {isPast ? (
+                  <span className="max-w-[45%] truncate text-[13px] font-semibold text-navy-500">
+                    {entry.summary || "Skipped"}
+                  </span>
+                ) : (
+                  <Lock className="h-3.5 w-3.5 text-navy-200" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <p className="mt-5 text-[12.5px] leading-6 text-navy-400">
+          Around a minute. We never pass your details to a builder, and the full shortlist is shown
+          either way — no sign-in, nothing blurred out.
+        </p>
       </main>
     </div>
   );
