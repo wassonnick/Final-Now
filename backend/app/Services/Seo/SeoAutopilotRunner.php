@@ -94,7 +94,7 @@ class SeoAutopilotRunner
 
         $run=SeoAutomationRun::create(['trigger'=>$trigger,'status'=>'running','started_at'=>now(),'heartbeat_at'=>now()]);
         $openTasksBefore=SeoTask::where('status','open')->count();
-        $summary=['pages_registered'=>0,'society_seo_published'=>0,'pages_audited'=>0,'average_score'=>0,'technical_failures'=>0,'keywords_refreshed'=>0,'search_console_rows'=>0,'drafts_generated'=>0,'drafts_auto_published'=>0,'report_id'=>null,'warnings'=>[],'failed_phases'=>[]];
+        $summary=['pages_registered'=>0,'society_seo_published'=>0,'pages_audited'=>0,'average_score'=>0,'technical_failures'=>0,'keywords_refreshed'=>0,'search_console_rows'=>0,'drafts_generated'=>0,'drafts_auto_published'=>0,'mechanical_repair'=>[],'report_id'=>null,'warnings'=>[],'failed_phases'=>[]];
 
         try {
             // Fill SEO content for published societies that lack it FIRST, so the sync + audit
@@ -103,6 +103,12 @@ class SeoAutopilotRunner
             // default, which drained a 130+ society backlog far too slowly.
             $this->phase($run,$summary,'society_seo',function()use(&$summary,$settings){
                 $summary['society_seo_published']=$this->autoCompleteSocietySeo(max(12,(int)$settings->drafts_per_run));
+            });
+
+            // Free, deterministic repairs before anything re-registers or re-audits, so the
+            // tasks they fix are resolved inside this same cycle rather than next time.
+            $this->phase($run,$summary,'mechanical_repair',function()use(&$summary){
+                $summary['mechanical_repair']=app(SeoMechanicalRepairService::class)->run();
             });
 
             // Compare pages are deterministic (no AI spend): repair stale ones in place,
@@ -339,13 +345,19 @@ class SeoAutopilotRunner
     private function autoPublishSafeDrafts(int $minConfidence): int
     {
         $published=0;
-        $pending=SeoDraft::with('page')->where('status','needs_review')->orderBy('id')->get();
+        /**
+         * Approved drafts are ready by definition and were being ignored.
+         *
+         * This only ever queried needs_review, so 126 drafts someone had already approved
+         * sat unpublished indefinitely — the queue looked busy while nothing shipped.
+         */
+        $pending=SeoDraft::with('page')->whereIn('status',['needs_review','approved'])->orderBy('id')->get();
         foreach($pending as $draft){
             // Full automation: society metadata drafts are eligible too — approve() never
             // overwrites already-published society SEO, so this only fills gaps.
-            if(!$this->drafts->autoPublishEligible($draft,$minConfidence,true))continue;
+            if($draft->status!=='approved'&&!$this->drafts->autoPublishEligible($draft,$minConfidence,true))continue;
             try{
-                $this->drafts->approve($draft,'autopilot');
+                if($draft->status!=='approved')$this->drafts->approve($draft,'autopilot');
                 $this->drafts->publish($draft->fresh(),'autopilot');
                 $published++;
             }catch(\Throwable $e){report($e);}
