@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Loader2, Lock, Pencil, ShieldCheck } from "lucide-react";
+import { Check, Loader2, Pencil, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchPublicSocieties } from "@/lib/publicData";
@@ -9,8 +9,9 @@ import { setPublicSeo } from "@/lib/seo";
 import { PublicLeadModal } from "@/components/leads/PublicLeadModal";
 import {
   buildShortlist, describeBrief, EMPTY_BRIEF, formatMoney, prioritiesFor, timelineLabel,
-  unrecordedPriorities, type Brief, type BriefMode,
+  unrecordedPriorities, type Brief, type BriefMode, type CommuteContext,
 } from "@/lib/briefMatch";
+import { searchNearLandmark } from "@/lib/landmarkSearchApi";
 
 /*
   Design language, as measured on the live site rather than assumed:
@@ -47,6 +48,9 @@ const BUY_TIMELINES = [
   ["now", "Ready to move"], ["1", "Within a year"], ["3", "Within 3 years"], ["5", "Within 5 years"], ["flexible", "Flexible"],
 ];
 
+/** The places Gurgaon actually commutes to, so the first tap is usually right. */
+const COMMUTE_SUGGESTIONS = ["Cyber Hub", "Udyog Vihar", "Golf Course Road", "IGI Airport", "Sohna Road"];
+
 const BHK_CHOICES: Array<[number, string]> = [
   [0, "Studio"], [1, "1 BHK"], [2, "2 BHK"], [3, "3 BHK"], [4, "4 BHK"], [5, "5 BHK+"],
 ];
@@ -60,10 +64,10 @@ function Chip({ active, children, onClick }: { active: boolean; children: React.
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-4 py-2.5 text-[13.5px] font-bold transition ${
+      className={`rounded-full border px-5 py-2.5 text-[14px] font-medium transition ${
         active
           ? "border-[#0F7B63] bg-[#0F7B63] text-white"
-          : "border-[#E4E4E9] bg-white text-[#0F7B63] hover:border-[#0F7B63]"
+          : "border-[#E4E4E9] bg-white text-[#1D1D1F] hover:border-[#0F7B63]"
       }`}
     >
       {children}
@@ -120,9 +124,44 @@ export function BriefPage() {
   const purposes = brief.mode === "rent" ? RENT_PURPOSES : BUY_PURPOSES;
   const timelines = brief.mode === "rent" ? RENT_TIMELINES : BUY_TIMELINES;
 
+  /**
+   * The commute, turned into real distances.
+   *
+   * Reuses the landmark resolver the search box already uses, so a typed office name
+   * becomes a coordinate and then a measured kilometre figure per society. This is the
+   * one answer on the page that cannot be guessed at, which is the point of asking.
+   */
+  const [commute, setCommute] = useState<CommuteContext | null>(null);
+
+  useEffect(() => {
+    const place = brief.commute.trim();
+    if (place.length < 3) {
+      setCommute(null);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void searchNearLandmark(`near ${place}`).then((result) => {
+        if (cancelled) return;
+        if (!result?.landmark) {
+          setCommute(null);
+          return;
+        }
+
+        setCommute({
+          name: result.landmark.name,
+          distances: new Map(result.societies.map((hit) => [String(hit.id), hit.distance_km])),
+        });
+      });
+    }, 500);
+
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [brief.commute]);
+
   const shortlist = useMemo(
-    () => (inCity.length > 0 ? buildShortlist(inCity, brief) : null),
-    [inCity, brief],
+    () => (inCity.length > 0 ? buildShortlist(inCity, brief, 6, commute ?? undefined) : null),
+    [inCity, brief, commute],
   );
 
   const briefChips = useMemo(() => describeBrief(brief), [brief]);
@@ -131,8 +170,8 @@ export function BriefPage() {
   const steps = [
     {
       label: "Renting or buying",
-      question: "Are you renting or buying?",
-      hint: "It changes every question after this one.",
+      question: "Renting, or buying?",
+      hint: "The two are scored on completely different things.",
       summary: brief.mode === "rent" ? "Renting" : "Buying",
       done: true,
       body: (
@@ -162,8 +201,8 @@ export function BriefPage() {
     },
     {
       label: "Who it's for",
-      question: "Who is the home for?",
-      hint: "",
+      question: "Who's moving in?",
+      hint: "It decides which trade-offs we weigh against each other.",
       summary: brief.purpose,
       done: Boolean(brief.purpose),
       body: (
@@ -176,8 +215,8 @@ export function BriefPage() {
     },
     {
       label: "Budget",
-      question: brief.mode === "rent" ? "What's your monthly budget?" : "What's your budget?",
-      hint: "",
+      question: brief.mode === "rent" ? "What can you pay a month?" : "What can you spend?",
+      hint: `We'll show what that actually buys in ${city.name} — and the near misses worth stretching for.`,
       summary: brief.budget > 0 ? `${formatMoney(brief.budget)}${brief.mode === "rent" ? "/mo" : ""}` : "",
       done: brief.budget > 0,
       body: (
@@ -205,7 +244,7 @@ export function BriefPage() {
     {
       label: "Size",
       question: "How many bedrooms?",
-      hint: "Pick as many as work.",
+      hint: "Tick every size you would seriously consider.",
       summary: brief.bhk.map((n) => (n === 0 ? "Studio" : `${n} BHK`)).join(", "),
       done: brief.bhk.length > 0,
       body: (
@@ -220,8 +259,8 @@ export function BriefPage() {
     },
     {
       label: "Area",
-      question: "Where do you want to be?",
-      hint: "An area, a sector or a landmark. Leave it blank to look across the city.",
+      question: `Which part of $${city.name}?`,
+      hint: "A sector or a locality. Skip it and we'll read the whole city.",
       summary: brief.where.trim() || `Anywhere in ${city.name}`,
       done: true,
       body: (
@@ -245,8 +284,41 @@ export function BriefPage() {
       ),
     },
     {
+      label: "Commute",
+      question: "Where do you go most days?",
+      hint: "An office, a campus, a hospital, a metro station. We measure the distance rather than guess it.",
+      summary: brief.commute.trim(),
+      done: true,
+      body: (
+        <div>
+          <Input
+            value={brief.commute}
+            placeholder="Cyber Hub, Udyog Vihar, AIIMS, Sector 55 Metro…"
+            onChange={(event) => set({ commute: event.target.value })}
+            className="h-12 rounded-xl"
+          />
+          <div className="mt-3 flex flex-wrap gap-2">
+            {COMMUTE_SUGGESTIONS.map((place) => (
+              <Chip
+                key={place}
+                active={brief.commute === place}
+                onClick={() => set({ commute: brief.commute === place ? "" : place })}
+              >
+                {place}
+              </Chip>
+            ))}
+          </div>
+          {commute ? (
+            <p className="mt-3 text-[13px] font-semibold text-[#0F7B63]">
+              Found {commute.name} — every society below is ranked by how far it actually is.
+            </p>
+          ) : null}
+        </div>
+      ),
+    },
+    {
       label: "Timing",
-      question: brief.mode === "rent" ? "When do you need it?" : "When do you want possession?",
+      question: brief.mode === "rent" ? "When do you need to move?" : "When do you need possession?",
       hint: "",
       summary: timelineLabel(brief),
       done: Boolean(brief.timeline),
@@ -260,8 +332,8 @@ export function BriefPage() {
     },
     {
       label: "Priorities",
-      question: "What matters most?",
-      hint: "These decide how every society is scored for you.",
+      question: "What would you not compromise on?",
+      hint: "Pick the few that are real. Everything you tick is weighted three times heavier.",
       summary: brief.priorities.length > 0 ? `${brief.priorities.length} chosen` : "",
       done: brief.priorities.length > 0,
       body: (
@@ -293,8 +365,8 @@ export function BriefPage() {
     },
     {
       label: "Anything else",
-      question: "Anything the buttons missed?",
-      hint: "Optional.",
+      question: "Anything we haven't asked?",
+      hint: "Optional — but this is the part our team reads first.",
       summary: brief.notes.trim() ? "Added" : "",
       done: true,
       body: (
@@ -303,7 +375,7 @@ export function BriefPage() {
             value={brief.notes}
             maxLength={600}
             onChange={(event) => set({ notes: event.target.value })}
-            placeholder="e.g. a quiet corner flat away from the main road, ideally park facing, with a study for WFH and space for my parents. Avoid ground floor."
+            placeholder="e.g. lift and power backup that actually work, not overlooking the club or the main gate, and a market my mother can walk to in the evening."
             className="h-32 w-full rounded-xl border border-[#E4E4E9] bg-white p-3.5 text-[14.5px] leading-6 text-[#1D1D1F] outline-none focus:border-[#0F7B63]"
           />
           <p className="mt-1 text-right text-[11.5px] font-semibold text-[#86868B]">{brief.notes.length} / 600</p>
@@ -551,50 +623,92 @@ export function BriefPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7]">
-      <main className="mx-auto max-w-[720px] px-4 py-8 md:px-8 md:py-12">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#86868B]">
-              {brief.mode === "rent" ? "Rental" : "Purchase"} brief · {city.name}
-            </p>
-            <h1 className="!font-sans mt-1.5 text-[26px] font-medium leading-tight tracking-[-0.02em] text-[#1D1D1F] md:text-[31px]">
-              Tell us what you need.
-            </h1>
-          </div>
-          <p className="shrink-0 text-[12px] font-bold tabular-nums text-[#86868B]">
-            {answered}/{steps.length}
+    <div className="min-h-screen bg-white">
+      <main className="mx-auto grid max-w-[1180px] gap-10 px-5 py-10 md:px-8 md:py-16 lg:grid-cols-[minmax(0,370px)_minmax(0,1fr)] lg:gap-16">
+        {/*
+          The left column is why this is worth a minute of anyone's time. A centred form in
+          a wide window reads as paperwork; putting the promise, the scale of the work and
+          the brief-so-far beside the questions makes the page feel considered instead.
+        */}
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#86868B]">
+            {brief.mode === "rent" ? "Rental" : "Purchase"} brief · {city.name}
+          </p>
+          <h1 className="!font-sans mt-3 text-[32px] font-medium leading-[1.12] tracking-[-0.025em] text-[#1D1D1F] md:text-[40px]">
+            Tell us what matters.
+            <br />
+            We&rsquo;ll do the reading.
+          </h1>
+          <p className="mt-4 max-w-[42ch] text-[15.5px] leading-7 text-[#6E6E73]">
+            {inCity.length > 0
+              ? `All ${inCity.length} verified societies in ${city.name} get scored against your answers — connectivity, upkeep, security, value.`
+              : `Every verified society in ${city.name} gets scored against your answers.`}
+          </p>
+
+          {/* The brief taking shape, so the effort already spent stays visible. */}
+          {briefChips.length > 0 ? (
+            <div className="mt-7 border-t border-[#E4E4E9] pt-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#86868B]">So far</p>
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                {briefChips.map((chip) => (
+                  <span key={chip} className="rounded-full bg-[#F5F5F7] px-3 py-1.5 text-[12.5px] font-semibold text-[#1D1D1F]">
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <ul className="mt-7 space-y-2.5 border-t border-[#E4E4E9] pt-5 text-[13px] leading-5 text-[#6E6E73]">
+            {["No developer pays to appear here",
+              "Your number never reaches a builder",
+              "The whole shortlist is shown — nothing blurred"].map((line) => (
+              <li key={line} className="flex items-start gap-2">
+                <Check className="mt-[3px] h-3.5 w-3.5 shrink-0 text-[#0F7B63]" />
+                {line}
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        <div className="min-w-0">
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-[12.5px] font-semibold text-[#1D1D1F]">
+            Step {step + 1} of {steps.length}
+          </p>
+          <p className="shrink-0 text-[12.5px] font-semibold tabular-nums text-[#86868B]">
+            {answered} answered
           </p>
         </div>
 
         {/* One stack, not one screen per question. Answers stay visible as lines you can
             reopen, so changing the budget after seeing what the area costs is a tap rather
             than a journey back through a wizard. */}
-        <div className="mt-6 divide-y divide-[#E4E4E9] overflow-hidden rounded-[20px] border border-[#E4E4E9] bg-white">
+        <div className="mt-4 divide-y divide-[#E4E4E9] overflow-hidden rounded-[22px] border border-[#E4E4E9] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_16px_40px_-24px_rgba(16,24,40,0.18)]">
           {steps.map((entry, index) => {
             const isOpen = index === step;
             const isPast = index < step;
 
             if (isOpen) {
               return (
-                <section key={entry.label} className="p-4 md:p-5">
+                <section key={entry.label} className="p-5 md:p-8">
                   <div className="flex items-baseline gap-3">
                     <span className="text-[11px] font-semibold tabular-nums text-[#0F7B63]">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     <div className="min-w-0">
-                      <h2 className="!font-sans text-[17px] font-medium tracking-[-0.01em] text-[#1D1D1F]">{entry.question}</h2>
-                      {entry.hint ? <p className="mt-0.5 text-[13px] leading-5 text-[#6E6E73]">{entry.hint}</p> : null}
+                      <h2 className="!font-sans text-[20px] font-medium leading-snug tracking-[-0.015em] text-[#1D1D1F] md:text-[23px]">{entry.question}</h2>
+                      {entry.hint ? <p className="mt-1.5 max-w-[52ch] text-[14px] leading-6 text-[#6E6E73]">{entry.hint}</p> : null}
                     </div>
                   </div>
 
-                  <div className="mt-4 sm:pl-7">{entry.body}</div>
+                  <div className="mt-6 sm:pl-8">{entry.body}</div>
 
-                  <div className="mt-5 flex items-center gap-3 sm:pl-7">
+                  <div className="mt-7 flex items-center gap-4 sm:pl-8">
                     <Button
                       disabled={loading && isLast}
                       onClick={advance}
-                      className="rounded-full bg-[#0F7B63] px-7 py-5 text-[14px] font-semibold hover:bg-[#0C6552]"
+                      className="rounded-full bg-[#0F7B63] px-8 py-6 text-[14.5px] font-semibold hover:bg-[#0C6552]"
                     >
                       {isLast ? "See my shortlist" : "Continue"}
                     </Button>
@@ -612,38 +726,37 @@ export function BriefPage() {
               );
             }
 
+            // Questions still ahead are counted, not listed. Seven greyed rows with
+            // padlocks down the page read as a paywall and make a one-minute task look
+            // like a form — the opposite of what the locks were meant to convey.
+            if (!isPast) return null;
+
             return (
               <button
                 key={entry.label}
                 type="button"
-                disabled={!isPast}
                 onClick={() => setStep(index)}
-                className={`flex w-full items-center gap-3 px-4 py-3.5 text-left md:px-5 ${
-                  isPast ? "hover:bg-[#F5F5F7]" : "cursor-default"
-                }`}
+                className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-[#F5F5F7] md:px-8"
               >
-                <span className={`text-[11px] font-semibold tabular-nums ${isPast ? "text-[#0F7B63]" : "text-[#B0B0B8]"}`}>
+                <span className="text-[11px] font-semibold tabular-nums text-[#0F7B63]">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <span className={`flex-1 text-[13.5px] font-bold ${isPast ? "text-[#1D1D1F]" : "text-[#B0B0B8]"}`}>
-                  {entry.label}
+                <span className="flex-1 text-[14px] font-medium text-[#1D1D1F]">{entry.label}</span>
+                <span className="max-w-[50%] truncate text-[13.5px] text-[#6E6E73]">
+                  {entry.summary || "Skipped"}
                 </span>
-                {isPast ? (
-                  <span className="max-w-[45%] truncate text-[13px] font-semibold text-[#6E6E73]">
-                    {entry.summary || "Skipped"}
-                  </span>
-                ) : (
-                  <Lock className="h-3.5 w-3.5 text-[#B0B0B8]" />
-                )}
+                <Pencil className="h-3.5 w-3.5 shrink-0 text-[#B0B0B8]" />
               </button>
             );
           })}
         </div>
 
-        <p className="mt-5 text-[12.5px] leading-6 text-[#86868B]">
-          Around a minute. We never pass your details to a builder, and the full shortlist is shown
-          either way — no sign-in, nothing blurred out.
-        </p>
+        {step < steps.length - 1 ? (
+          <p className="mt-4 pl-1 text-[13px] text-[#86868B]">
+            {steps.length - step - 1} more {steps.length - step - 1 === 1 ? "question" : "questions"} · about a minute
+          </p>
+        ) : null}
+        </div>
       </main>
     </div>
   );

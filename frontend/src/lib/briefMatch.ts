@@ -24,6 +24,8 @@ export interface Brief {
   bhk: number[];
   /** Locality, sector or landmark, as typed or picked. */
   where: string;
+  /** Where they travel to most days — an office, a campus, a metro line. */
+  commute: string;
   /** How soon they need it. */
   timeline: string;
   /** Chosen priority ids. */
@@ -38,6 +40,7 @@ export const EMPTY_BRIEF: Brief = {
   budget: 40000,
   bhk: [],
   where: "",
+  commute: "",
   timeline: "",
   priorities: [],
   notes: "",
@@ -105,6 +108,19 @@ export interface Fit {
   /** Priorities we could not judge for this society because the data is missing. */
   unknown: string[];
   verdict: "Strong match" | "Good match" | "Worth a look";
+}
+
+/**
+ * Measured distances from wherever they said they commute to.
+ *
+ * Resolved through the same landmark service the search box uses, so "Cyber Hub" or
+ * "AIIMS" becomes a coordinate and then a real number of kilometres per society. It is
+ * the one question here nobody can answer by guessing, which is why it is worth asking.
+ */
+export interface CommuteContext {
+  name: string;
+  /** Society id → kilometres. */
+  distances: Map<string, number>;
 }
 
 export interface Shortlist {
@@ -233,7 +249,7 @@ export function formatMoney(rupees: number): string {
  * society that is strong across the board is a better answer than one that spikes on the
  * two boxes someone happened to tick.
  */
-function fitFor(society: any, brief: Brief): Fit {
+function fitFor(society: any, brief: Brief, commute?: CommuteContext): Fit {
   const chosen = new Set(brief.priorities);
   const reasons: FitReason[] = [];
   const unknown: string[] = [];
@@ -300,13 +316,35 @@ function fitFor(society: any, brief: Brief): Fit {
     }
   }
 
+  /**
+   * A stated commute outweighs everything else, because it is the constraint people
+   * regret most and the only one here measured in metres rather than judged.
+   */
+  if (commute) {
+    const km = commute.distances.get(String(society?.id));
+
+    if (km === undefined) {
+      // Out of range of the search, so genuinely far — not merely unknown.
+      total += 3 * 4;
+      weightUsed += 4;
+    } else {
+      const value = km <= 2 ? 10 : km <= 5 ? 8.5 : km <= 10 ? 6.5 : 5;
+      total += value * 4;
+      weightUsed += 4;
+      reasons.unshift({
+        label: `${km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`} from ${commute.name}`,
+        good: km <= 8,
+      });
+    }
+  }
+
   // Nothing scored at all: say so rather than return a confident zero.
   const percent = weightUsed === 0 ? 0 : Math.round((total / (weightUsed * 10)) * 100);
 
   return {
     society,
     percent,
-    reasons: reasons.sort((a, b) => Number(b.good) - Number(a.good)).slice(0, 3),
+    reasons: reasons.slice(0, 3),
     unknown,
     verdict: percent >= 80 ? "Strong match" : percent >= 65 ? "Good match" : "Worth a look",
   };
@@ -319,7 +357,7 @@ function fitFor(society: any, brief: Brief): Fit {
  * an empty page — and whatever was loosened is named, so nobody is shown a result that
  * quietly ignores what they asked for.
  */
-export function buildShortlist(societies: any[], brief: Brief, limit = 6): Shortlist {
+export function buildShortlist(societies: any[], brief: Brief, limit = 6, commute?: CommuteContext): Shortlist {
   const scanned = societies.length;
   let checks = hardChecks(brief);
   const loosened: string[] = [];
@@ -353,7 +391,7 @@ export function buildShortlist(societies: any[], brief: Brief, limit = 6): Short
    * possible at all. Someone who has to stretch wants the smallest stretch first.
    */
   const fits = eligible
-    .map((society) => fitFor(society, brief))
+    .map((society) => fitFor(society, brief, commute))
     .sort((a, b) => {
       if (loosenedIds.has("budget") && brief.budget > 0) {
         const overA = Math.max(0, (priceOf(a.society) ?? Infinity) - brief.budget);
@@ -375,6 +413,7 @@ export function describeBrief(brief: Brief): string[] {
   if (brief.budget > 0) parts.push(brief.mode === "rent" ? `${formatMoney(brief.budget)}/mo` : formatMoney(brief.budget));
   if (brief.bhk.length > 0) parts.push(brief.bhk.map((n) => (n === 0 ? "Studio" : `${n} BHK`)).join("/"));
   if (brief.where.trim()) parts.push(brief.where.trim());
+  if (brief.commute.trim()) parts.push(`Near ${brief.commute.trim()}`);
   if (brief.timeline) parts.push(timelineLabel(brief));
   for (const id of brief.priorities) {
     const priority = priorityById(id);
