@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Loader2, Pencil, ShieldCheck } from "lucide-react";
+import { Bookmark, Check, Loader2, Pencil, RotateCcw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchPublicSocieties } from "@/lib/publicData";
@@ -12,6 +12,7 @@ import {
   unrecordedPriorities, type Brief, type BriefMode, type CommuteContext,
 } from "@/lib/briefMatch";
 import { searchNearLandmark } from "@/lib/landmarkSearchApi";
+import { clearDraft, isSignedIn, loadDraft, saveBriefToAccount, saveDraft } from "@/lib/briefStorage";
 
 /*
   Design language, as measured on the live site rather than assumed:
@@ -83,6 +84,26 @@ export function BriefPage() {
   const [brief, setBrief] = useState<Brief>(EMPTY_BRIEF);
   const [thinking, setThinking] = useState(false);
   const [leadOpen, setLeadOpen] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState("");
+  const [alerts, setAlerts] = useState(true);
+
+  // Restored before anything else, so a refresh or a trip through the login screen does
+  // not cost someone nine answers.
+  const [restored, setRestored] = useState(false);
+
+  useEffect(() => {
+    const draft = loadDraft();
+    if (draft) {
+      setBrief(draft.brief);
+      setStep(draft.step);
+    }
+    setRestored(true);
+  }, []);
+
+  useEffect(() => {
+    if (restored) saveDraft(brief, step);
+  }, [brief, step, restored]);
 
   useEffect(() => {
     setPublicSeo(
@@ -259,7 +280,7 @@ export function BriefPage() {
     },
     {
       label: "Area",
-      question: `Which part of $${city.name}?`,
+      question: `Which part of ${city.name}?`,
       hint: "A sector or a locality. Skip it and we'll read the whole city.",
       summary: brief.where.trim() || `Anywhere in ${city.name}`,
       done: true,
@@ -578,6 +599,66 @@ export function BriefPage() {
                   </Button>
                 </div>
 
+                <div className="space-y-3">
+                  {/*
+                    Keeping the brief is the useful half when there is little to show today:
+                    the alert is the answer to "nothing matches yet", and it is a better
+                    reason to sign in than withholding results would have been.
+                  */}
+                  <div className="rounded-[20px] border border-[#E4E4E9] bg-white p-5">
+                    <p className="flex items-center gap-2 text-[13px] font-semibold text-[#1D1D1F]">
+                      <Bookmark className="h-4 w-4 text-[#0F7B63]" /> Keep this brief
+                    </p>
+
+                    {saveState === "saved" ? (
+                      <p className="mt-2 text-[12.5px] leading-5 text-[#6E6E73]">
+                        Saved to your account{alerts ? ". We’ll message you when something matching comes up." : "."}
+                      </p>
+                    ) : isSignedIn() ? (
+                      <>
+                        <label className="mt-2.5 flex cursor-pointer items-start gap-2 text-[12.5px] leading-5 text-[#6E6E73]">
+                          <input
+                            type="checkbox"
+                            checked={alerts}
+                            onChange={(event) => setAlerts(event.target.checked)}
+                            className="mt-0.5 accent-[#0F7B63]"
+                          />
+                          Tell me when a matching home is listed
+                        </label>
+                        <Button
+                          disabled={saveState === "saving"}
+                          onClick={() => {
+                            setSaveState("saving");
+                            setSaveError("");
+                            void saveBriefToAccount(brief, city.name, alerts)
+                              .then(() => setSaveState("saved"))
+                              .catch((error) => {
+                                setSaveError(error instanceof Error ? error.message : "Could not save.");
+                                setSaveState("error");
+                              });
+                          }}
+                          className="mt-3 w-full rounded-full bg-[#0F7B63] py-5 text-[13.5px] font-semibold hover:bg-[#0C6552]"
+                        >
+                          {saveState === "saving" ? "Saving…" : "Save to my account"}
+                        </Button>
+                        {saveError ? <p className="mt-2 text-[12px] font-semibold text-[#8A6D1F]">{saveError}</p> : null}
+                      </>
+                    ) : (
+                      <>
+                        <p className="mt-2 text-[12.5px] leading-5 text-[#6E6E73]">
+                          Sign in to keep it and get told when matching homes are listed. Your answers are
+                          held here meanwhile — you won’t have to do this again.
+                        </p>
+                        <Link
+                          to="/login"
+                          className="mt-3 block rounded-full bg-[#0F7B63] py-3 text-center text-[13.5px] font-semibold text-white"
+                        >
+                          Sign in to save
+                        </Link>
+                      </>
+                    )}
+                  </div>
+
                 <div className="rounded-[20px] border border-[#E4E4E9] bg-white p-5">
                   <p className="flex items-center gap-2 text-[13px] font-semibold text-[#1D1D1F]">
                     <ShieldCheck className="h-4 w-4 text-[#0F7B63]" /> How this was scored
@@ -588,6 +669,7 @@ export function BriefPage() {
                     <li>Your details are never passed to a builder</li>
                     <li>Where we hold no data, we say so</li>
                   </ul>
+                </div>
                 </div>
               </div>
             </>
@@ -674,7 +756,9 @@ export function BriefPage() {
         <div className="min-w-0">
         <div className="flex items-center justify-between gap-4">
           <p className="text-[12.5px] font-semibold text-[#1D1D1F]">
-            Step {step + 1} of {steps.length}
+            {/* A restored draft says so, rather than silently presenting pre-filled
+                answers as though the person had just given them. */}
+            {step > 0 ? "Picking up where you left off" : `Step ${step + 1} of ${steps.length}`}
           </p>
           <p className="shrink-0 text-[12.5px] font-semibold tabular-nums text-[#86868B]">
             {answered} answered
