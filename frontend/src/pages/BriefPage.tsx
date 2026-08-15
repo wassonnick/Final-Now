@@ -14,6 +14,9 @@ import {
 import { fetchLandmarkShortcuts, searchNearLandmark } from "@/lib/landmarkSearchApi";
 import { clearDraft, isSignedIn, loadDraft, saveBriefToAccount, saveDraft } from "@/lib/briefStorage";
 
+/** Kept in step with the question list below. */
+const BRIEF_STEP_COUNT = 9;
+
 /*
   Design language, as measured on the live site rather than assumed:
   canvas #FFFFFF / #F5F5F7 · ink #1D1D1F · secondary #6E6E73 · line #E4E4E9
@@ -102,7 +105,9 @@ export function BriefPage() {
     const draft = loadDraft();
     if (draft) {
       setBrief(draft.brief);
-      setStep(draft.step);
+      // A brief reopened from the account is stored past the last question so it lands on
+      // its shortlist; clamped so the step can never point beyond the list.
+      setStep(Math.min(draft.step, BRIEF_STEP_COUNT));
     }
     setRestored(true);
   }, []);

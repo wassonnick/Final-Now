@@ -13,6 +13,14 @@ import { getCustomerAccountSession } from "@/lib/customerAccount";
 
 const KEY = "sf.brief.draft.v2";
 
+/**
+ * A step number past the last question, so a restored brief opens on its shortlist.
+ *
+ * The page treats any step at or beyond the question count as "show the results", which
+ * is what someone reopening a saved brief wants — they already answered it.
+ */
+export const COMPLETED_STEP = 99;
+
 interface Draft {
   brief: Brief;
   step: number;
@@ -120,4 +128,38 @@ export async function saveBriefToAccount(
 
   const json = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(json?.message || "Could not save this brief.");
+}
+
+/**
+ * Turn a stored brief back into one that can be answered again.
+ *
+ * Saved searches hold flat strings, because that is what the filters column takes. This
+ * is the other half of `saveBriefToAccount` — without it a saved brief could be listed
+ * but never reopened, which is most of the value of having saved it.
+ */
+export function briefFromFilters(filters: Record<string, unknown>): Brief {
+  const text = (key: string) => String(filters?.[key] ?? "").trim();
+
+  const sizes = text("bhk")
+    .split(",")
+    .map((value) => Number.parseInt(value, 10))
+    .filter((value) => Number.isFinite(value));
+
+  return {
+    ...EMPTY_BRIEF,
+    mode: text("mode") === "buy" ? "buy" : "rent",
+    purpose: text("purpose"),
+    budget: Number.parseInt(text("budget"), 10) || EMPTY_BRIEF.budget,
+    bhk: sizes,
+    where: text("where"),
+    commute: text("commute"),
+    timeline: text("timeline"),
+    priorities: text("priorities").split(",").map((value) => value.trim()).filter(Boolean),
+    notes: text("notes"),
+  };
+}
+
+/** Put a saved brief back in the drafting slot, opened at its shortlist. */
+export function reopenBrief(filters: Record<string, unknown>): void {
+  saveDraft(briefFromFilters(filters), COMPLETED_STEP);
 }
