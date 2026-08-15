@@ -158,6 +158,26 @@ class LandmarkSearchTest extends TestCase
         Http::assertNothingSent();
     }
 
+    /**
+     * Commute shortcuts follow the city being browsed.
+     *
+     * The brief builder offered Cyber Hub and Udyog Vihar to someone looking in Delhi,
+     * because the list was hard-coded to Gurgaon.
+     */
+    public function test_landmark_shortcuts_are_scoped_to_the_city(): void
+    {
+        $names = collect($this->getJson('/api/landmarks?city=Delhi')->assertSuccessful()->json('data'))
+            ->pluck('name');
+
+        $this->assertNotEmpty($names);
+        foreach ($names as $name) {
+            $this->assertStringNotContainsString('Cyber', $name);
+        }
+
+        $gurgaon = collect($this->getJson('/api/landmarks?city=Gurgaon')->json('data'))->pluck('city')->unique();
+        $this->assertTrue($gurgaon->every(fn ($city) => in_array($city, ['Gurgaon', 'Gurugram'], true)));
+    }
+
     /** An unknown landmark is learnt once from Google, then it is ours. */
     public function test_an_unknown_landmark_is_looked_up_once_and_kept(): void
     {

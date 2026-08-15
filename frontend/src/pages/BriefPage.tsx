@@ -11,7 +11,7 @@ import {
   buildShortlist, describeBrief, EMPTY_BRIEF, formatMoney, prioritiesFor, timelineLabel,
   unrecordedPriorities, type Brief, type BriefMode, type CommuteContext,
 } from "@/lib/briefMatch";
-import { searchNearLandmark } from "@/lib/landmarkSearchApi";
+import { fetchLandmarkShortcuts, searchNearLandmark } from "@/lib/landmarkSearchApi";
 import { clearDraft, isSignedIn, loadDraft, saveBriefToAccount, saveDraft } from "@/lib/briefStorage";
 
 /*
@@ -49,8 +49,14 @@ const BUY_TIMELINES = [
   ["now", "Ready to move"], ["1", "Within a year"], ["3", "Within 3 years"], ["5", "Within 5 years"], ["flexible", "Flexible"],
 ];
 
-/** The places Gurgaon actually commutes to, so the first tap is usually right. */
-const COMMUTE_SUGGESTIONS = ["Cyber Hub", "Udyog Vihar", "Golf Course Road", "IGI Airport", "Sohna Road"];
+/**
+ * Used only if the landmarks endpoint cannot be reached.
+ *
+ * The real list is per-city and comes from the server; this exists so the question still
+ * offers something on a failed request, and IGI is the one place every NCR city commutes
+ * to regardless of which one you are browsing.
+ */
+const FALLBACK_COMMUTES = ["IGI Airport"];
 
 const BHK_CHOICES: Array<[number, string]> = [
   [0, "Studio"], [1, "1 BHK"], [2, "2 BHK"], [3, "3 BHK"], [4, "4 BHK"], [5, "5 BHK+"],
@@ -153,6 +159,21 @@ export function BriefPage() {
    * one answer on the page that cannot be guessed at, which is the point of asking.
    */
   const [commute, setCommute] = useState<CommuteContext | null>(null);
+  const [commuteOptions, setCommuteOptions] = useState<string[]>([]);
+
+  // Refetched when the city changes, so switching from Gurgaon to Delhi swaps the
+  // shortcuts instead of leaving Cyber Hub on offer in West Delhi.
+  useEffect(() => {
+    let cancelled = false;
+
+    void fetchLandmarkShortcuts(city.name).then((rows) => {
+      if (cancelled) return;
+      const names = rows.map((row) => row.name).filter(Boolean);
+      setCommuteOptions(names.length > 0 ? names : FALLBACK_COMMUTES);
+    });
+
+    return () => { cancelled = true; };
+  }, [city]);
 
   useEffect(() => {
     const place = brief.commute.trim();
@@ -314,12 +335,12 @@ export function BriefPage() {
         <div>
           <Input
             value={brief.commute}
-            placeholder="Cyber Hub, Udyog Vihar, AIIMS, Sector 55 Metro…"
+            placeholder={commuteOptions.length > 0 ? `${commuteOptions.slice(0, 3).join(", ")}…` : "Your office, campus or metro station…"}
             onChange={(event) => set({ commute: event.target.value })}
             className="h-12 rounded-xl"
           />
           <div className="mt-3 flex flex-wrap gap-2">
-            {COMMUTE_SUGGESTIONS.map((place) => (
+            {commuteOptions.map((place) => (
               <Chip
                 key={place}
                 active={brief.commute === place}

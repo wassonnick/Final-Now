@@ -51,3 +51,29 @@ export function formatDistance(km: number): string {
   if (km < 1) return `${Math.round(km * 100) * 10} m`;
   return `${km.toFixed(1)} km`;
 }
+
+export interface LandmarkShortcut {
+  name: string;
+  category: string;
+  city: string | null;
+}
+
+/**
+ * The places people in this city actually commute to.
+ *
+ * Served from the landmarks table rather than hard-coded, so Delhi does not get offered
+ * Cyber Hub and the list improves on its own as searches accumulate.
+ */
+export async function fetchLandmarkShortcuts(city: string): Promise<LandmarkShortcut[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/landmarks?city=${encodeURIComponent(city)}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) return [];
+
+    const payload = await response.json();
+    return Array.isArray(payload?.data) ? payload.data : [];
+  } catch {
+    return [];
+  }
+}
