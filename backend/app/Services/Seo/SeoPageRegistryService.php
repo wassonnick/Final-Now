@@ -73,7 +73,7 @@ class SeoPageRegistryService
                         'content_word_count' => 240, 'internal_link_count' => 4,
                         'image_alt_coverage' => 100, 'schema_types' => ['WebPage', 'BreadcrumbList'],
                         'freshness_at' => $society->updated_at,
-                        'metadata' => ['name' => $society->name.' RWA', 'sector' => $society->sector, 'has_cta' => true, 'heading_count' => 3],
+                        'metadata' => ['name' => $society->name.' RWA', 'sector' => $society->sector, 'has_cta' => true, 'heading_count' => 3, 'metrics_estimated' => true],
                     ]); $count++;
                 }
             }
@@ -148,9 +148,18 @@ class SeoPageRegistryService
         return $count;
     }
 
+    /**
+     * Landing pages carry estimated content metrics, not measured ones.
+     *
+     * `content_word_count` here is approved-society-count times 45 — a guess, not a
+     * reading of the rendered page. Scored against a 300-word threshold it meant every
+     * sector or builder page with fewer than seven societies failed on depth forever, over
+     * a number nobody ever took. `metrics_estimated` tells the audit to score what it can
+     * actually see and stay quiet about the rest.
+     */
     private function upsertLanding(string $key,string $type,string $url,string $title,string $description,string $h1,int $count,array $metadata): void
     {
-        $this->upsert(['page_key'=>$key,'page_type'=>$type,'url'=>$url,'title'=>$title,'meta_description'=>$description,'h1'=>$h1,'canonical_url'=>$url,'is_indexable'=>$count>=2,'sitemap_included'=>$count>=2,'is_public'=>$count>=2,'content_word_count'=>$count*45,'internal_link_count'=>$count,'image_alt_coverage'=>100,'schema_types'=>['WebPage','BreadcrumbList'],'freshness_at'=>now(),'metadata'=>$metadata+['approved_society_count'=>$count,'heading_count'=>4]]);
+        $this->upsert(['page_key'=>$key,'page_type'=>$type,'url'=>$url,'title'=>$title,'meta_description'=>$description,'h1'=>$h1,'canonical_url'=>$url,'is_indexable'=>$count>=2,'sitemap_included'=>$count>=2,'is_public'=>$count>=2,'content_word_count'=>$count*45,'internal_link_count'=>$count,'image_alt_coverage'=>100,'schema_types'=>['WebPage','BreadcrumbList'],'freshness_at'=>now(),'metadata'=>$metadata+['approved_society_count'=>$count,'heading_count'=>4,'metrics_estimated'=>true]]);
     }
 
     private function staticPages(): array
@@ -181,7 +190,7 @@ class SeoPageRegistryService
             ['guide:trust','guide','/trust','How SocietyFlats Verifies Societies | SocietyFlats','What admin-reviewed society data actually means — our verification standard.','What admin-reviewed society data actually means.',300],
             ['guide:help','guide','/help','Help & FAQ | SocietyFlats','Clear answers for society-first home search on SocietyFlats.','Clear answers for society-first home search.',300],
         ];
-        return array_map(function($p){$indexable=$p[7]??true;return ['page_key'=>$p[0],'page_type'=>$p[1],'url'=>$p[2],'title'=>$p[3],'meta_description'=>$p[4],'h1'=>$p[5],'canonical_url'=>str_contains($p[2],'?')?strstr($p[2],'?',true):$p[2],'is_indexable'=>$indexable,'sitemap_included'=>$indexable&&!str_contains($p[2],'?'),'is_public'=>true,'content_word_count'=>$p[6],'internal_link_count'=>8,'image_alt_coverage'=>100,'schema_types'=>['WebPage','BreadcrumbList'],'freshness_at'=>now(),'metadata'=>['name'=>$p[5],'city'=>'Gurgaon','has_cta'=>true,'heading_count'=>5]];},$pages);
+        return array_map(function($p){$indexable=$p[7]??true;return ['page_key'=>$p[0],'page_type'=>$p[1],'url'=>$p[2],'title'=>$p[3],'meta_description'=>$p[4],'h1'=>$p[5],'canonical_url'=>str_contains($p[2],'?')?strstr($p[2],'?',true):$p[2],'is_indexable'=>$indexable,'sitemap_included'=>$indexable&&!str_contains($p[2],'?'),'is_public'=>true,'content_word_count'=>$p[6],'internal_link_count'=>8,'image_alt_coverage'=>100,'schema_types'=>['WebPage','BreadcrumbList'],'freshness_at'=>now(),'metadata'=>['name'=>$p[5],'city'=>'Gurgaon','has_cta'=>true,'heading_count'=>5,'metrics_estimated'=>true]];},$pages);
     }
 
     private function ncrCityPages(): array
@@ -222,12 +231,13 @@ class SeoPageRegistryService
                     'is_indexable' => $approved,
                     'sitemap_included' => $approved,
                     'is_public' => true,
-                    'content_word_count' => 900,
+                    'content_word_count' => 900, // estimated; see upsertLanding()
                     'internal_link_count' => 8,
                     'image_alt_coverage' => 100,
                     'schema_types' => ['WebPage', 'BreadcrumbList'],
                     'freshness_at' => now(),
                     'metadata' => [
+                        'metrics_estimated' => true,
                         'name' => $city->name,
                         'city' => $city->name,
                         'state' => $city->state,

@@ -71,7 +71,21 @@ Artisan::command('seo:autopilot-report {period=weekly}', function (string $perio
     $this->info("Generated {$period} SEO report #{$report->id}.");
 })->purpose('Generate a daily, weekly or monthly SEO Autopilot report');
 
-Artisan::command('seo:autopilot-run {--trigger=scheduled}', function () {
+Artisan::command('seo:autopilot-run {--trigger=scheduled} {--force}', function () {
+    // The cycle was running twice most nights — once from the 02:00 schedule and again
+    // from the every-30-minutes catch-up about five minutes later — because the cache
+    // marker is only claimed after a cycle finishes, leaving a window where neither knows
+    // the other has started. That is a second full night of AI spend for nothing.
+    // The runs table is the source of truth and survives cache flushes and restarts.
+    if (! $this->option('force')
+        && \App\Models\SeoAutomationRun::whereDate('started_at', now()->toDateString())
+            ->whereIn('status', ['running', 'completed'])->exists()) {
+        \Illuminate\Support\Facades\Cache::put('ops:daily-ran:seo-autopilot', now()->toDateString(), now()->addDays(2));
+        $this->info('SEO Autopilot already ran today; skipping. Use --force to run anyway.');
+
+        return;
+    }
+
     $run=app(SeoAutopilotRunner::class)->run((string)$this->option('trigger'));
     // Claim the daily catch-up marker so the every-30-minutes catch-up doesn't fire a
     // second full cycle (and second lot of AI spend) after the timed 02:00 run already
@@ -399,12 +413,21 @@ Artisan::command('ops:daily-catchup', function () {
         $marker = 'ops:daily-ran:'.$key;
         if (\Illuminate\Support\Facades\Cache::get($marker) === now()->toDateString()) return;
         if (now()->hour < $afterHour) return;
+
+        // Claim the day BEFORE running, atomically. Claiming afterwards left the whole
+        // duration of the job open for the next tick to start it again — which is how a
+        // cycle that takes minutes ended up running twice.
+        if (! \Illuminate\Support\Facades\Cache::add($marker, now()->toDateString(), now()->addDays(2))) {
+            return;
+        }
+
         try {
             $job();
-            \Illuminate\Support\Facades\Cache::put($marker, now()->toDateString(), now()->addDays(2));
             $this->info($key.' catch-up ran.');
         } catch (\Throwable $e) {
             report($e);
+            // A job that genuinely failed should be retried later today, so give the day back.
+            \Illuminate\Support\Facades\Cache::forget($marker);
             $this->warn($key.' catch-up failed: '.$e->getMessage());
         }
     };

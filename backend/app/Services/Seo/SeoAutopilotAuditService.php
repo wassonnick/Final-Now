@@ -43,8 +43,26 @@ class SeoAutopilotAuditService
             'open_graph'=>[(bool)($meta['has_og']??true),0,'Open Graph metadata is missing'],
             'broken_internal_links'=>[((int)($meta['broken_internal_links']??0))===0,0,'One or more internal links are broken'],
         ];
+        /**
+         * Score only what was actually measured.
+         *
+         * Landing, static and city rows carry estimated content metrics — word counts
+         * derived from a society count, link counts and alt coverage set to constants.
+         * Scoring those produced permanently failing checks over numbers nobody took, and
+         * a task per page that could never be resolved by doing anything. Dropping them
+         * from the checks removes them from the score's denominator too, so a page is not
+         * punished for a measurement we never made.
+         */
+        if (($meta['metrics_estimated'] ?? false) === true) {
+            unset($checks['content_depth'], $checks['internal_links'], $checks['image_alt'], $checks['freshness']);
+        }
+
         $breakdown=[];$issues=[];$score=0;
         foreach($checks as $key=>[$passed,$points,$message]){$earned=$passed?$points:0;$score+=$earned;$breakdown[$key]=['score'=>$earned,'max'=>$points,'passed'=>$passed];if(!$passed)$issues[]=['code'=>$key,'message'=>$message,'priority'=>in_array($key,['indexability','sitemap','title','h1'],true)?'high':'medium'];}
+        $maxScore=array_sum(array_map(fn($c)=>$c[1],$checks));
+        // Rescale so a page with fewer applicable checks is comparable to a fully measured
+        // one, rather than looking worse purely for having had checks removed.
+        $score=$maxScore>0?(int)round($score/$maxScore*100):0;
         $audit=SeoAudit::create(['seo_page_id'=>$page->id,'score'=>$score,'status'=>$score>=80?'healthy':($score>=50?'warning':'failed'),'breakdown'=>$breakdown,'issues'=>$issues,'checked_at'=>now()]);
         $this->tasks($page,$issues);
         $missingData=(array)($meta['missing_data']??[]);

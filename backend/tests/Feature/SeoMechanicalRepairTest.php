@@ -141,6 +141,36 @@ class SeoMechanicalRepairTest extends TestCase
         $this->assertNull($this->repair()->internalLinks($content, $society));
     }
 
+    /**
+     * A page whose content metrics are estimated must not be failed on them.
+     *
+     * Sector and builder landing rows carry a word count derived from how many societies
+     * are on the page, not from the page. Scoring that produced a permanently failing
+     * depth check — and a task nobody could ever close.
+     */
+    public function test_estimated_metrics_are_not_scored(): void
+    {
+        $page = \App\Models\SeoPage::create([
+            'page_key' => 'sector:test', 'page_type' => 'sector', 'url' => '/gurgaon/sector-99',
+            'title' => 'Flats for Rent in Sector 99 Gurgaon | Verified Societies',
+            'meta_description' => str_repeat('Verified societies with real rent ranges in Sector 99 Gurgaon. ', 2),
+            'h1' => 'Sector 99 Gurgaon', 'canonical_url' => '/gurgaon/sector-99',
+            'is_indexable' => true, 'sitemap_included' => true, 'is_public' => true,
+            'content_word_count' => 90, 'internal_link_count' => 2, 'image_alt_coverage' => 100,
+            'schema_types' => ['WebPage'], 'freshness_at' => now()->subYears(2),
+            'metadata' => ['metrics_estimated' => true, 'heading_count' => 4, 'has_cta' => true, 'sector' => 'Sector 99'],
+        ]);
+
+        $audit = app(\App\Services\Seo\SeoAutopilotAuditService::class)->audit($page);
+        $codes = collect($audit->issues)->pluck('code');
+
+        $this->assertNotContains('content_depth', $codes, 'depth was scored from an estimate');
+        $this->assertNotContains('internal_links', $codes);
+        $this->assertNotContains('image_alt', $codes);
+        $this->assertSame(0, \App\Models\SeoTask::where('seo_page_id', $page->id)
+            ->whereIn('task_type', ['audit_content_depth', 'audit_internal_links', 'audit_image_alt'])->count());
+    }
+
     /** The whole pass, over a published record that fails every mechanical check. */
     public function test_a_full_run_repairs_a_failing_record(): void
     {
