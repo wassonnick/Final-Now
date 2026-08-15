@@ -21,6 +21,7 @@ import { isNcrMulticityEnabled } from "@/config/features";
 import { setPublicSeo } from "@/lib/seo";
 
 const SearchPage = lazy(() => import('@/pages/SearchPage').then((module) => ({ default: module.SearchPage })));
+const BriefPage = lazy(() => import('@/pages/BriefPage').then((module) => ({ default: module.BriefPage })));
 const SocietyPage = lazy(() => import('@/pages/SocietyPage').then((module) => ({ default: module.SocietyPage })));
 const SocietyReportPage = lazy(() => import('@/pages/SocietyReportPage').then((module) => ({ default: module.SocietyReportPage })));
 const PropertyPage = lazy(() => import('@/pages/PropertyPage').then((module) => ({ default: module.PropertyPage })));
@@ -152,6 +153,9 @@ function AppShell() {
 
             {/* Public */}
             <Route path="/" element={<HomePremium />} />
+            <Route path="/brief" element={<BriefPage />} />
+            <Route path="/brief/" element={<BriefPage />} />
+
             <Route path="/search" element={<SearchPage />} />
             <Route path="/search/" element={<SearchPage />} />
 

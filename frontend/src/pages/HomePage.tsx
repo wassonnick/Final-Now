@@ -504,7 +504,7 @@ export function HomePage() {
             <h2 className="font-display text-[40px] font-medium tracking-[-0.01em] text-white">{allSocietiesCount || societies.length || 40} societies checked. Let's find the few that feel like home.</h2>
             <p className="mb-7 mt-3 text-base text-[#C7D0DE]">Tell the AI Advisor your budget and commute, and it'll gently narrow Gurgaon down to the two or three societies genuinely worth your time.</p>
             <div className="flex justify-center gap-[14px]">
-              <Link to="/ai-advisor" className="rounded-[12px] bg-[#C2724E] px-8 py-[15px] text-[15px] font-bold text-white">Get my shortlist</Link>
+              <Link to="/brief" className="rounded-[12px] bg-[#C2724E] px-8 py-[15px] text-[15px] font-bold text-white">Get my shortlist</Link>
               <Link to="/search?tab=societies" className="rounded-[12px] border border-white/30 bg-white/10 px-8 py-[15px] text-[15px] font-bold text-white">Browse verified societies</Link>
             </div>
           </div>

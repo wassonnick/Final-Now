@@ -236,9 +236,9 @@ export default function HomePremium() {
             </div>
           )}
 
-          <Link to="/ai-advisor" className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#6E6E73] hover:text-[#1D1D1F]">
+          <Link to="/brief" className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#6E6E73] hover:text-[#1D1D1F]">
             <Sparkles className="h-4 w-4" style={{ color: ACCENT }} />
-            Or let our AI advisor build a shortlist for you
+            Not sure where to start? Answer 8 questions and we'll shortlist for you
           </Link>
 
           {/* trust chips */}
@@ -452,7 +452,7 @@ export default function HomePremium() {
           <p className="mx-auto mt-4 max-w-[500px] text-[16px] leading-8 text-white/70">Start with a society you can trust — then choose the home. We'll help across every step.</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <button onClick={() => submit()} className="rounded-full px-7 py-3.5 text-[15px] font-semibold text-white" style={{ background: ACCENT }}>Explore Gurgaon societies</button>
-            <Link to="/ai-advisor" className="rounded-full bg-white/10 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:bg-white/20">Ask the AI advisor</Link>
+            <Link to="/brief" className="rounded-full bg-white/10 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:bg-white/20">Build my shortlist</Link>
           </div>
         </div>
       </section>

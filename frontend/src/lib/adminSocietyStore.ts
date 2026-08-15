@@ -138,6 +138,7 @@ export interface AdminSociety {
   imageLicenseNotes: string;
   brochureName: string;
   reraNumber: string;
+  scoreBreakdown?: any;
   reraStatus: string;
   sourceName: string;
   sourceUrl: string;
@@ -308,6 +309,7 @@ export function createEmptyAdminSociety(): AdminSociety {
     imageLicenseNotes: '',
     brochureName: '',
     reraNumber: '',
+    scoreBreakdown: null,
     reraStatus: '',
     sourceName: '',
     sourceUrl: '',
@@ -406,6 +408,9 @@ export function mapApiSociety(data: any): AdminSociety {
     imageLicenseNotes: data?.image_license_notes || '',
     brochureName: data?.brochure_name || '',
     reraNumber: data?.rera_number || '',
+    // The five scored dimensions, each with its signals and confidence. Dropped here, a
+    // fit score has nothing to reason from and no way to show its working.
+    scoreBreakdown: data?.score_breakdown ?? null,
     reraStatus: data?.rera_status || '',
     sourceName: data?.source_name || '',
     sourceUrl: data?.source_url || '',
