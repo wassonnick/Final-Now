@@ -11,16 +11,43 @@ Initial focus:
 - Bangalore later
 
 ## Design Direction
+
+Intent:
 - Apple-level clean
 - Airbnb Luxe simplicity
 - Premium but trustworthy
-- White / soft blue / navy palette
 - Minimal text
 - Strong mobile UI
 - Premium whitespace
 - Large clean search
 - Society-first pages
 - Image-led but not cluttered
+
+### Design tokens (verified against the live site, 2026-08-16)
+
+These are measured from https://final-now-1.onrender.com, not aspirational. The same
+note lives at the top of `frontend/src/pages/HomePremium.tsx`; the two must agree.
+
+| Token | Value |
+|---|---|
+| Canvas | `#FFFFFF`, secondary ground `#F5F5F7` |
+| Ink | `#1D1D1F` |
+| Secondary text | `#6E6E73`, tertiary `#86868B` |
+| Line / border | `#E4E4E9` |
+| Accent | `#0F7B63` (green) |
+| Soft accent | `#ECF6F2` |
+| Type | Hanken Grotesk / DM Sans — **sans throughout, headings included** |
+| Heading weight | 500, tracking about `-0.02em` |
+| Button | Pill (`rounded-full`), weight 600 |
+| Card radius | ~20px, soft shadows |
+
+**An earlier version of this file said "white / soft blue / navy". That is wrong and has
+been wrong for some time — the palette moved to the Apple-neutral + green system above.
+Do not reintroduce navy or blue as a brand colour.**
+
+Before styling any new page: read the token table above, then confirm it against a live
+page (or `HomePremium.tsx`). If the live site and this file ever disagree, the live site
+wins and this file gets corrected in the same change.
 
 ## Current Stack
 Frontend:
