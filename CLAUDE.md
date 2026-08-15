@@ -45,6 +45,12 @@ note lives at the top of `frontend/src/pages/HomePremium.tsx`; the two must agre
 been wrong for some time — the palette moved to the Apple-neutral + green system above.
 Do not reintroduce navy or blue as a brand colour.**
 
+Older pages still carry the previous blue/serif classes. They are retrofitted at runtime
+by the `.ncr-skin` class in `src/index.css`, which force-maps `blue-*` to the green accent
+and headings to the sans stack. So a page whose source reads `bg-blue-700` may well render
+correctly — check the rendered result before "fixing" the source, and prefer adding
+`ncr-skin` to a legacy page over rewriting its classes.
+
 Before styling any new page: read the token table above, then confirm it against a live
 page (or `HomePremium.tsx`). If the live site and this file ever disagree, the live site
 wins and this file gets corrected in the same change.

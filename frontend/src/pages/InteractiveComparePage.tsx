@@ -7,27 +7,136 @@ import { API_BASE_URL } from "@/config/api";
 import { backendApi } from "@/services/backendApi";
 import { useAppStore } from "@/store";
 import { fetchPublicSocieties, formatPublicLocation } from "@/lib/publicData";
+import { rowIsInCity, useSelectedNcrCity } from "@/lib/ncrCities";
 import { societyDisplayImage, hasGooglePlacesDisplayPhoto } from "@/lib/societyImages";
 import { setPublicSeo } from "@/lib/seo";
 
-// Typeahead picker — add any published society to the comparison without leaving the page.
-function SocietyPicker({ selectedSlugs, onAdd }: { selectedSlugs: string[]; onAdd: (society: any) => void }) {
+/**
+ * The societies you can put head to head, for the city you are browsing.
+ *
+ * Shared by the empty slots and the add-bar above a running comparison so both offer the
+ * same list. Scoped to the selected city — it previously offered Gurgaon societies to
+ * someone browsing Delhi — and it answers an empty query with the best-scored few, so
+ * clicking a slot always shows something to choose rather than a blank menu.
+ */
+function useSocietyOptions(selectedSlugs: string[], query: string) {
   const [all, setAll] = useState<any[]>([]);
-  const [q, setQ] = useState("");
-  const [open, setOpen] = useState(false);
+  const [city] = useSelectedNcrCity();
 
   useEffect(() => {
     fetchPublicSocieties().then((rows) => setAll(Array.isArray(rows) ? rows : [])).catch(() => setAll([]));
   }, []);
 
-  const matches = useMemo(() => {
-    const query = q.trim().toLowerCase();
-    if (!query) return [];
-    return all
-      .filter((s) => !selectedSlugs.includes(s.slug))
-      .filter((s) => [s.name, s.sector, s.locality, s.builder].some((v) => String(v || "").toLowerCase().includes(query)))
+  return useMemo(() => {
+    const available = all
+      .filter((s) => rowIsInCity(s, city))
+      .filter((s) => !selectedSlugs.includes(s.slug));
+
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return [...available]
+        .sort((a, b) => Number(b?.score ?? 0) - Number(a?.score ?? 0))
+        .slice(0, 6);
+    }
+
+    return available
+      .filter((s) => [s.name, s.sector, s.locality, s.builder].some((v) => String(v || "").toLowerCase().includes(q)))
       .slice(0, 8);
-  }, [q, all, selectedSlugs]);
+  }, [all, city, selectedSlugs, query]);
+}
+
+/**
+ * An empty slot that is the input, rather than a picture of one.
+ *
+ * Three cards reading "+ Society 1" beside a separate search box is two affordances for
+ * one job, and the louder of the two did nothing at all when clicked. The slot now opens
+ * in place.
+ */
+function SlotPicker({
+  index, selectedSlugs, onAdd,
+}: { index: number; selectedSlugs: string[]; onAdd: (society: any) => void }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const matches = useSocietyOptions(selectedSlugs, query);
+
+  useEffect(() => {
+    if (!open) return;
+    inputRef.current?.focus();
+
+    const away = (event: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", away);
+
+    return () => document.removeEventListener("mousedown", away);
+  }, [open]);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex h-24 w-full flex-col items-center justify-center rounded-[18px] border border-dashed border-[#D8D8DE] bg-[#F5F5F7] px-1 text-center transition hover:border-[#0F7B63] hover:bg-[#ECF6F2] sm:rounded-[20px]"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#0F7B63] shadow-sm">
+          <Plus className="h-4 w-4" />
+        </span>
+        <span className="mt-2 text-[11.5px] font-semibold text-[#86868B] sm:text-[12.5px]">Society {index + 1}</span>
+      </button>
+    );
+  }
+
+  return (
+    <div ref={boxRef} className="relative">
+      <div className="flex h-24 items-center rounded-[18px] border border-[#0F7B63] bg-white px-3 sm:rounded-[20px]">
+        <Search className="h-4 w-4 shrink-0 text-[#86868B]" />
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}
+          placeholder="Name, sector or builder"
+          className="search-bare-input ml-2 w-full bg-transparent text-[13px] outline-none placeholder:text-[#86868B]"
+        />
+      </div>
+
+      <div className="absolute left-0 right-0 z-30 mt-2 max-h-72 min-w-[240px] overflow-auto rounded-[16px] border border-[#E4E4E9] bg-white p-1.5 shadow-[0_24px_60px_-30px_rgba(0,0,0,.35)]">
+        {!query.trim() ? (
+          <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#98A2B3]">
+            Highest scored
+          </p>
+        ) : null}
+
+        {matches.length === 0 ? (
+          <p className="px-3 py-3 text-[13px] text-[#6E6E73]">Nothing matches that here.</p>
+        ) : null}
+
+        {matches.map((society) => (
+          <button
+            key={society.slug}
+            type="button"
+            onClick={() => { onAdd(society); setQuery(""); setOpen(false); }}
+            className="flex w-full items-center gap-3 rounded-[12px] px-3 py-2 text-left hover:bg-[#F5F5F7]"
+          >
+            <Plus className="h-4 w-4 shrink-0 text-[#0F7B63]" />
+            <div className="min-w-0">
+              <p className="truncate text-[13px] font-semibold text-[#1D1D1F]">{society.name}</p>
+              <p className="truncate text-[11.5px] text-[#6E6E73]">{formatPublicLocation(society)}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Typeahead picker — add any published society to the comparison without leaving the page.
+function SocietyPicker({ selectedSlugs, onAdd }: { selectedSlugs: string[]; onAdd: (society: any) => void }) {
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const matches = useSocietyOptions(selectedSlugs, q);
 
   const disabled = selectedSlugs.length >= 3;
 
@@ -136,6 +245,7 @@ function priceFloor(text?: string): number | null {
 
 export function InteractiveComparePage() {
   const [params] = useSearchParams();
+  const [city] = useSelectedNcrCity();
   const compareList = useAppStore((s) => s.compareList);
   const removeFromCompare = useAppStore((s) => s.removeFromCompare);
   const addToCompare = useAppStore((s) => s.addToCompare);
@@ -254,13 +364,12 @@ export function InteractiveComparePage() {
           {/* Always three across — stacked, they stop reading as a head-to-head. */}
           <div className="mx-auto mt-8 grid max-w-[760px] grid-cols-3 gap-2.5 sm:gap-3">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="flex h-24 flex-col items-center justify-center rounded-[18px] border border-dashed border-[#D8D8DE] bg-[#F5F5F7] px-1 text-center sm:rounded-[20px]">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#0F7B63] shadow-sm"><Plus className="h-4 w-4" /></span>
-                <span className="mt-2 text-[11.5px] font-semibold text-[#86868B] sm:text-[12.5px]">Society {i + 1}</span>
-              </div>
+              <SlotPicker key={i} index={i} selectedSlugs={slugs} onAdd={handleAdd} />
             ))}
           </div>
-          <div className="mt-4 flex justify-center"><SocietyPicker selectedSlugs={slugs} onAdd={handleAdd} /></div>
+          <p className="mt-3 text-center text-[13px] text-[#86868B]">
+            Tap a slot to search {city.name}&rsquo;s verified societies.
+          </p>
 
           {/* What we line them up on — the value */}
           <div className="mx-auto mt-12 max-w-[860px] rounded-[24px] border border-[#E4E4E9] bg-white p-6 md:p-7">
