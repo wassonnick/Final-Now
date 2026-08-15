@@ -34,7 +34,7 @@ class SeoMechanicalRepairService
 
     public function run(int $limit = 400): array
     {
-        $summary = ['titles' => 0, 'descriptions' => 0, 'alt_text' => 0, 'internal_links' => 0];
+        $summary = ['titles' => 0, 'descriptions' => 0, 'alt_text' => 0, 'internal_links' => 0, 'rendered_meta' => 0];
 
         SocietySeoContent::query()
             ->where('status', 'published')
@@ -70,6 +70,12 @@ class SeoMechanicalRepairService
                 if ($changes !== []) {
                     $content->update($changes);
                 }
+
+                // The prerendered page — the only version Google reads — renders
+                // societies.meta_title, not the SEO record's seo_title. Repairing only the
+                // record silenced the audit while leaving the shipped page untouched, which
+                // is the same mistake the audit itself was making. Fix what renders.
+                $summary['rendered_meta'] += $this->repairRenderedMeta($society);
 
                 if ($this->backfillAltText($society)) {
                     $summary['alt_text']++;
@@ -228,6 +234,36 @@ class SeoMechanicalRepairService
         ])->saveQuietly();
 
         return true;
+    }
+
+    /**
+     * Bring the fields the prerender actually ships into the same bands.
+     *
+     * 88 of 526 rendered titles are over the limit and 14 descriptions — a fraction of
+     * what the audit reported, because the audit was reading a different column. These are
+     * the ones that change what a searcher sees.
+     */
+    public function repairRenderedMeta(Society $society): int
+    {
+        $changes = [];
+
+        $title = $this->fitTitle((string) $society->meta_title, $society);
+        if ($title !== (string) $society->meta_title) {
+            $changes['meta_title'] = $title;
+        }
+
+        $description = $this->fitDescription((string) $society->meta_description, $society);
+        if ($description !== (string) $society->meta_description) {
+            $changes['meta_description'] = $description;
+        }
+
+        if ($changes === []) {
+            return 0;
+        }
+
+        $society->forceFill($changes)->saveQuietly();
+
+        return 1;
     }
 
     private function composeTitle(Society $society): string

@@ -171,6 +171,30 @@ class SeoMechanicalRepairTest extends TestCase
             ->whereIn('task_type', ['audit_content_depth', 'audit_internal_links', 'audit_image_alt'])->count());
     }
 
+    /**
+     * The rendered fields are the ones that matter, and they were never being repaired.
+     *
+     * The prerendered page ships societies.meta_title; the audit was grading the SEO
+     * record's seo_title. Fixing only the record silenced the complaint and left the page
+     * a searcher sees exactly as it was.
+     */
+    public function test_the_rendered_title_and_description_are_repaired(): void
+    {
+        $society = $this->society([
+            'meta_title' => 'ABA Cleo County Sector 121, Noida | Luxury 3 4 BHK Ready to Move Flats',
+            'meta_description' => 'Short.',
+        ]);
+
+        $this->assertSame(1, $this->repair()->repairRenderedMeta($society));
+
+        $fresh = $society->fresh();
+        $this->assertLessThanOrEqual(SeoMechanicalRepairService::TITLE_MAX, mb_strlen($fresh->meta_title));
+        $this->assertGreaterThanOrEqual(SeoMechanicalRepairService::DESCRIPTION_MIN, mb_strlen($fresh->meta_description));
+
+        // Nothing left to do on a second pass.
+        $this->assertSame(0, $this->repair()->repairRenderedMeta($fresh));
+    }
+
     /** The whole pass, over a published record that fails every mechanical check. */
     public function test_a_full_run_repairs_a_failing_record(): void
     {

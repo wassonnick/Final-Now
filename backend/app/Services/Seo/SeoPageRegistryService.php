@@ -38,8 +38,12 @@ class SeoPageRegistryService
                     'page_key' => 'society:'.$society->id,
                     'page_type' => 'society', 'entity_type' => Society::class, 'entity_id' => $society->id,
                     'url' => '/society/'.$society->slug,
-                    'title' => $publishedSeo?->seo_title ?: $society->meta_title,
-                    'meta_description' => $publishedSeo?->seo_description ?: $society->meta_description,
+                    // Audit what ships. The prerenderer reads societies.meta_title first, so
+                    // reading the SEO record first meant the audit graded a string no
+                    // searcher ever sees — reporting 493 over-length titles where the
+                    // rendered pages had 88.
+                    'title' => $society->meta_title ?: $publishedSeo?->seo_title,
+                    'meta_description' => $society->meta_description ?: $publishedSeo?->seo_description,
                     'h1' => $publishedSeo?->seo_h1 ?: $society->name,
                     'canonical_url' => '/society/'.$society->slug,
                     'is_indexable' => $isPublic, 'sitemap_included' => $isPublic, 'is_public' => $isPublic,
