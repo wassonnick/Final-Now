@@ -36,6 +36,31 @@ class LandmarkPageTest extends TestCase
         ]);
     }
 
+    /**
+     * Every seeded landmark must survive a fresh migrate.
+     *
+     * The seeder only ever ran from the create-table migration, so adding landmarks to the
+     * file changed nothing on any environment that had already migrated. This asserts the
+     * catalogue the seeder describes is the catalogue a deployed database actually has.
+     */
+    public function test_the_seeded_landmark_catalogue_reaches_a_migrated_database(): void
+    {
+        $seeded = Landmark::count();
+
+        $this->assertGreaterThanOrEqual(80, $seeded, 'the landmark seed did not reach the database');
+
+        foreach (['Gurugram', 'Delhi', 'Noida', 'Greater Noida'] as $city) {
+            $this->assertGreaterThanOrEqual(
+                3,
+                Landmark::where('city', $city)->count(),
+                "{$city} has too few landmarks to carry a page",
+            );
+        }
+
+        // Coordinates are the whole point; a landmark without them can measure nothing.
+        $this->assertSame(0, Landmark::whereNull('latitude')->orWhereNull('longitude')->count());
+    }
+
     public function test_a_landmark_without_enough_societies_gets_no_page(): void
     {
         $this->landmark('Lonely Office', 28.50, 77.09);

@@ -71,6 +71,39 @@ Artisan::command('seo:autopilot-report {period=weekly}', function (string $perio
     $this->info("Generated {$period} SEO report #{$report->id}.");
 })->purpose('Generate a daily, weekly or monthly SEO Autopilot report');
 
+Artisan::command('seo:coverage-gap {--days=28} {--limit=25}', function () {
+    $service = app(\App\Services\Seo\SeoCoverageGapService::class);
+    $days = (int) $this->option('days');
+
+    $this->info('Keyword coverage by page type — targeted vs actually shown by Google:');
+    $this->table(
+        ['page type', 'targeted', 'appearing', 'absent', 'coverage', 'impressions'],
+        $service->summary($days)->map(fn ($row) => [
+            $row['cluster'], $row['targeted'], $row['appearing'], $row['absent'],
+            $row['coverage'].'%', $row['impressions'],
+        ])->all(),
+    );
+
+    $actionable = $service->actionable($days, (int) $this->option('limit'));
+
+    if ($actionable->isEmpty()) {
+        $this->warn('No specific gaps worth naming — every page type is either working or absent as a whole.');
+
+        return;
+    }
+
+    $this->newLine();
+    $this->info('Absent keywords on page types that do rank elsewhere:');
+    $this->table(
+        ['keyword', 'page type', 'target url'],
+        $actionable->map(fn ($row) => [
+            \Illuminate\Support\Str::limit($row['keyword'], 46),
+            $row['cluster'],
+            \Illuminate\Support\Str::limit((string) $row['url'], 40),
+        ])->all(),
+    );
+})->purpose('Show which targeted keywords Google has never shown the site for');
+
 Artisan::command('seo:striking-distance {--days=28} {--limit=30} {--record}', function () {
     $service = app(\App\Services\Seo\SeoStrikingDistanceService::class);
     $days = (int) $this->option('days');

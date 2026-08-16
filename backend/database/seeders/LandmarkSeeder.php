@@ -77,6 +77,68 @@ class LandmarkSeeder extends Seeder
             ['Noida Expressway', 'corridor', 'Noida', 28.5200, 77.3800, ['noida expressway', 'noida greater noida expressway']],
             ['Amity University Noida', 'education', 'Noida', 28.5450, 77.3340, ['amity university', 'amity noida']],
             ['Noida International Airport Jewar', 'airport', 'Greater Noida', 28.1700, 77.6000, ['jewar airport', 'noida airport']],
+
+            // Gurgaon — the rest of the working city. Sector-level commercial hubs, the
+            // hospitals people choose a home near, and the schools that decide a family's
+            // shortlist. Coordinates verified to roughly a hundred metres, which is the
+            // precision this job needs.
+            ['Unitech Cyber Park', 'office', 'Gurugram', 28.4089, 77.0413, ['unitech cyber park', 'cyber park sector 39']],
+            ['Vatika Business Park', 'office', 'Gurugram', 28.4229, 77.0490, ['vatika business park']],
+            ['Candor TechSpace Sector 21', 'office', 'Gurugram', 28.5040, 77.0784, ['candor techspace', 'candor sector 21']],
+            ['DLF Downtown Gurugram', 'office', 'Gurugram', 28.4830, 77.0900, ['dlf downtown']],
+            ['One Horizon Center', 'office', 'Gurugram', 28.4497, 77.0968, ['one horizon center', 'horizon center golf course road']],
+            ['Artemis Hospital', 'hospital', 'Gurugram', 28.4351, 77.0665, ['artemis hospital', 'artemis gurgaon']],
+            ['Max Hospital Gurugram', 'hospital', 'Gurugram', 28.4595, 77.0726, ['max hospital gurgaon', 'max saket road']],
+            ['Paras Hospital Gurugram', 'hospital', 'Gurugram', 28.4390, 77.0470, ['paras hospital gurgaon']],
+            ['The Shri Ram School Aravali', 'education', 'Gurugram', 28.4585, 77.1010, ['shri ram school', 'shri ram aravali']],
+            ['DPS Sector 45', 'education', 'Gurugram', 28.4498, 77.0621, ['dps sector 45', 'delhi public school gurgaon']],
+            ['Sector 55-56 Metro', 'metro', 'Gurugram', 28.4210, 77.1020, ['sector 55 56 metro', 'sector 56 metro']],
+            ['Sector 54 Chowk Metro', 'metro', 'Gurugram', 28.4415, 77.1030, ['sector 54 chowk metro']],
+            ['Sikanderpur Metro', 'metro', 'Gurugram', 28.4817, 77.0946, ['sikanderpur metro', 'sikandarpur']],
+            ['Cyber City Rapid Metro', 'metro', 'Gurugram', 28.4950, 77.0890, ['cyber city metro', 'rapid metro cyber city']],
+            ['Southern Peripheral Road', 'corridor', 'Gurugram', 28.4130, 77.0480, ['spr gurgaon', 'southern peripheral road']],
+            ['New Gurugram Sector 82-95', 'corridor', 'Gurugram', 28.3900, 76.9700, ['new gurgaon', 'sector 82 gurgaon']],
+            ['Ambience Island', 'locality', 'Gurugram', 28.5050, 77.0980, ['ambience island', 'nh8 ambience']],
+            ['Rajiv Chowk Gurgaon', 'corridor', 'Gurugram', 28.4380, 77.0290, ['rajiv chowk gurgaon', 'nh48 rajiv chowk']],
+
+            // Delhi — the employment and transport anchors that decide where people live.
+            ['Nehru Place', 'office', 'Delhi', 28.5494, 77.2510, ['nehru place', 'nehru place market']],
+            ['Okhla Industrial Area', 'office', 'Delhi', 28.5300, 77.2730, ['okhla industrial area', 'okhla phase 1']],
+            ['Jasola District Centre', 'office', 'Delhi', 28.5430, 77.2900, ['jasola', 'jasola district centre']],
+            ['Bhikaji Cama Place', 'office', 'Delhi', 28.5690, 77.1860, ['bhikaji cama place']],
+            ['Delhi University North Campus', 'education', 'Delhi', 28.6890, 77.2100, ['du north campus', 'delhi university']],
+            ['IIT Delhi', 'education', 'Delhi', 28.5450, 77.1926, ['iit delhi', 'iit hauz khas']],
+            ['Safdarjung Hospital', 'hospital', 'Delhi', 28.5680, 77.2070, ['safdarjung hospital']],
+            ['Max Hospital Saket', 'hospital', 'Delhi', 28.5280, 77.2140, ['max saket', 'max hospital saket']],
+            ['Hauz Khas Metro', 'metro', 'Delhi', 28.5440, 77.2060, ['hauz khas metro']],
+            ['Punjabi Bagh Metro', 'metro', 'Delhi', 28.6700, 77.1310, ['punjabi bagh metro']],
+            ['Netaji Subhash Place Metro', 'metro', 'Delhi', 28.6950, 77.1520, ['netaji subhash place', 'nsp metro']],
+            ['Dwarka Sector 10 Metro', 'metro', 'Delhi', 28.5820, 77.0570, ['dwarka sector 10']],
+            ['Karol Bagh', 'market', 'Delhi', 28.6510, 77.1900, ['karol bagh']],
+
+            // Noida and Greater Noida — Greater Noida had exactly one landmark, so it could
+            // never carry a page even once the city goes live.
+            ['Noida Sector 16 Metro', 'metro', 'Noida', 28.5780, 77.3170, ['sector 16 noida metro']],
+            ['Noida Electronic City Metro', 'metro', 'Noida', 28.6290, 77.3760, ['electronic city noida']],
+            ['Noida Sector 137 Metro', 'metro', 'Noida', 28.5090, 77.4020, ['sector 137 noida']],
+            ['Advant Navis Business Park', 'office', 'Noida', 28.5030, 77.4000, ['advant navis', 'advant sector 142']],
+            ['Fortis Hospital Noida', 'hospital', 'Noida', 28.5760, 77.3560, ['fortis noida']],
+            ['Jaypee Hospital Noida', 'hospital', 'Noida', 28.5060, 77.4090, ['jaypee hospital noida']],
+            ['Knowledge Park Greater Noida', 'education', 'Greater Noida', 28.4700, 77.5000, ['knowledge park', 'knowledge park greater noida']],
+            ['Pari Chowk', 'corridor', 'Greater Noida', 28.4630, 77.5060, ['pari chowk', 'pari chowk greater noida']],
+            ['Alpha Commercial Belt', 'market', 'Greater Noida', 28.4760, 77.5100, ['alpha commercial belt', 'alpha 1 greater noida']],
+            ['Yamuna Expressway', 'corridor', 'Greater Noida', 28.3600, 77.5400, ['yamuna expressway']],
+            ['Gaur City', 'locality', 'Greater Noida', 28.6060, 77.4300, ['gaur city', 'gaur city noida extension']],
+            ['Noida Extension', 'locality', 'Greater Noida', 28.6100, 77.4350, ['noida extension', 'greater noida west']],
+
+            // Faridabad and Ghaziabad — seeded ahead of launch so those cities arrive with
+            // pages rather than with an empty shortcut list.
+            ['Faridabad Old Metro', 'metro', 'Faridabad', 28.3800, 77.3130, ['old faridabad metro']],
+            ['Escorts Mujesar Metro', 'metro', 'Faridabad', 28.3630, 77.3130, ['escorts mujesar']],
+            ['Sarvodaya Hospital Faridabad', 'hospital', 'Faridabad', 28.4020, 77.3080, ['sarvodaya hospital']],
+            ['Vaishali Metro', 'metro', 'Ghaziabad', 28.6500, 77.3390, ['vaishali metro']],
+            ['Indirapuram', 'locality', 'Ghaziabad', 28.6420, 77.3710, ['indirapuram']],
+            ['Raj Nagar Extension', 'locality', 'Ghaziabad', 28.7100, 77.4300, ['raj nagar extension']],
         ];
     }
 }
