@@ -72,6 +72,64 @@ class LandmarkPageService
     }
 
     /**
+     * The landmark pages a given society appears on, nearest first.
+     *
+     * The inverse of `nearby()`, and the link that makes these pages findable: a society
+     * page saying "2.8 km from Cyber Hub" should be able to send you to everything else
+     * near Cyber Hub. Only landmarks that actually have a page are returned, so the link
+     * can never point at a 404.
+     *
+     * @return list<array{name: string, slug: string, distance_km: float, label: string}>
+     */
+    public function forSociety(Society $society, int $limit = 3): array
+    {
+        $latitude = is_numeric($society->latitude) ? (float) $society->latitude : null;
+        $longitude = is_numeric($society->longitude) ? (float) $society->longitude : null;
+
+        if ($latitude === null || $longitude === null) {
+            return [];
+        }
+
+        return Landmark::query()
+            ->get()
+            ->map(fn (Landmark $landmark) => [
+                'landmark' => $landmark,
+                'distance_km' => $landmark->distanceTo($latitude, $longitude),
+            ])
+            ->filter(fn (array $row) => $row['distance_km'] !== null && $row['distance_km'] <= self::RADIUS_KM)
+            ->sortBy('distance_km')
+            // Counted only for landmarks close enough to carry a page, and only after the
+            // cheap distance filter — this is the expensive check.
+            ->filter(fn (array $row) => $this->nearby($row['landmark'])->count() >= self::MIN_SOCIETIES)
+            ->take($limit)
+            ->map(fn (array $row) => [
+                'name' => $row['landmark']->name,
+                'slug' => $row['landmark']->slug,
+                'distance_km' => $row['distance_km'],
+                'label' => $this->readable($row['distance_km']).' from '.$row['landmark']->name,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Other landmark pages in the same city, so these pages form a cluster rather than a
+     * set of dead ends.
+     *
+     * @return list<array{name: string, slug: string}>
+     */
+    public function siblings(Landmark $landmark, int $limit = 6): array
+    {
+        return $this->publishable()
+            ->filter(fn (Landmark $other) => $other->id !== $landmark->id
+                && ($other->city === $landmark->city || $landmark->city === null))
+            ->take($limit)
+            ->map(fn (Landmark $other) => ['name' => $other->name, 'slug' => $other->slug])
+            ->values()
+            ->all();
+    }
+
+    /**
      * Everything a landing page needs, written once so the page, the prerenderer and the
      * SEO registry all describe the same thing.
      */
@@ -96,6 +154,7 @@ class LandmarkPageService
             'h1' => 'Verified societies near '.$landmark->name,
             'intro' => $this->intro($landmark, $societies, $walkable, $nearest),
             'society_count' => $societies->count(),
+            'siblings' => $this->siblings($landmark),
             'walkable_count' => $walkable,
             'societies' => $societies->map(fn (Society $society) => [
                 'id' => $society->id,

@@ -119,6 +119,7 @@ export interface Fit {
  */
 export interface CommuteContext {
   name: string;
+  slug: string;
   /** Society id → kilometres. */
   distances: Map<string, number>;
 }

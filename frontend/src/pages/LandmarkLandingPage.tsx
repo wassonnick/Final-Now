@@ -23,6 +23,7 @@ interface LandmarkPage {
   intro: string;
   society_count: number;
   walkable_count: number;
+  siblings: Array<{ name: string; slug: string }>;
   societies: Array<{
     id: number; name: string; slug: string; sector: string | null; locality: string | null;
     score: string | null; builder: string | null; rent_range: string | null;
@@ -147,6 +148,27 @@ export function LandmarkLandingPage() {
             <ShieldCheck className="h-4 w-4 text-[#0F7B63]" /> Every society here is published and admin-reviewed.
           </p>
         </section>
+
+        {/* A cluster rather than a set of dead ends: each page hands the crawler, and the
+            reader, the other places in the same city worth checking. */}
+        {page.siblings?.length ? (
+          <section className="mt-8">
+            <h2 className="!font-sans text-[17px] font-medium tracking-[-0.01em] text-[#1D1D1F]">
+              Other places people commute to in {landmark.city || "Delhi NCR"}
+            </h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {page.siblings.map((sibling) => (
+                <Link
+                  key={sibling.slug}
+                  to={`/near/${sibling.slug}`}
+                  className="rounded-full border border-[#E4E4E9] px-4 py-2 text-[13px] font-semibold text-[#1D1D1F] transition hover:border-[#0F7B63] hover:text-[#0F7B63]"
+                >
+                  Societies near {sibling.name}
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Link to="/brief" className="rounded-full bg-[#0F7B63] px-6 py-3 text-[14px] font-semibold text-white">

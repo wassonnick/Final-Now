@@ -83,6 +83,9 @@ class LandmarkSearchController extends Controller
             'status' => 'ok',
             'landmark' => [
                 'name' => $landmark->name,
+                // Carried so callers can link to /near/<slug> without re-deriving it from
+                // the display name, which would break on any landmark we learn from Google.
+                'slug' => $landmark->slug,
                 'category' => $landmark->category,
                 'city' => $landmark->city,
                 'latitude' => $landmark->latitude,

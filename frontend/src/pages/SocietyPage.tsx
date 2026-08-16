@@ -879,6 +879,8 @@ export function SocietyPage() {
   ];
 
   const hasNearbyData = nearby.some((item) => splitLines(item.value).length > 0);
+  const landmarkPages: Array<{ slug: string; label: string }> =
+    (society as any)?.nearby_landmark_pages || (society as any)?.nearbyLandmarkPages || [];
   const nearbyCompactCards = nearby
     .map((item) => ({
       ...item,
@@ -1400,6 +1402,29 @@ export function SocietyPage() {
             </p>
 
             {seoContent?.location_content ? <><h2 className="mt-8 text-[19px] font-bold text-[#25302B]">Location & connectivity</h2><p className="mt-2.5 whitespace-pre-line text-[14.5px] leading-[1.65] text-[#4A534E]">{seoContent.location_content}</p></> : null}
+
+            {/* Measured distances to the places people commute to, each one a route into the
+                landmark page that lists everything else nearby. The same links the
+                prerendered shell carries, so a crawler and a visitor see one page. */}
+            {landmarkPages.length > 0 ? (
+              <div className="mt-8">
+                <h2 className="text-[19px] font-bold text-[#25302B]">How far is it, really?</h2>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {landmarkPages.map((place: any) => (
+                    <Link
+                      key={place.slug}
+                      to={`/near/${place.slug}`}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[#D8DFEC] bg-white px-3.5 py-2 text-[13px] font-semibold text-[#25302B] transition hover:border-[#0F7B63] hover:text-[#0F7B63]"
+                    >
+                      <span className="tabular-nums text-[#0F7B63]">{place.label}</span>
+                    </Link>
+                  ))}
+                </div>
+                <p className="mt-2 text-[12.5px] text-[#6E756E]">
+                  Straight-line, measured between verified coordinates. Tap one to see every verified society near it.
+                </p>
+              </div>
+            ) : null}
 
             <h2 id="sec-location" className="scroll-mt-[7.5rem] mt-8 text-[19px] font-bold text-[#25302B]">Location intelligence</h2>
             <div className="mt-3.5 overflow-hidden rounded-[18px] border border-[#D8DFEC] bg-[#E8EDF7]">

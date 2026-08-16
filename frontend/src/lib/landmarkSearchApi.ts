@@ -17,7 +17,7 @@ export type LandmarkHit = {
 };
 
 export type LandmarkSearchResult = {
-  landmark: { name: string; category: string; city: string | null } | null;
+  landmark: { name: string; slug: string; category: string; city: string | null } | null;
   radius_km?: number;
   remainder?: string;
   societies: LandmarkHit[];

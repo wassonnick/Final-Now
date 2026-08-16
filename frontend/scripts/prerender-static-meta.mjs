@@ -877,6 +877,49 @@ function societySnapshot(society, faqs) {
   return parts.join("");
 }
 
+/**
+ * Which landmark pages each society appears on, inverted from the payloads already
+ * fetched — no extra requests, and guaranteed to agree with the landmark pages themselves.
+ */
+function buildLandmarkIndex(landmarkPages) {
+  const index = new Map();
+
+  for (const page of landmarkPages) {
+    for (const society of page.societies || []) {
+      if (!society?.slug) continue;
+      const list = index.get(society.slug) || [];
+      if (list.length >= 3) continue;
+      list.push({
+        slug: page.landmark.slug,
+        name: page.landmark.name,
+        distance: society.distance_km < 1
+          ? `${Math.round(society.distance_km * 1000)} m`
+          : `${society.distance_km.toFixed(1)} km`,
+      });
+      index.set(society.slug, list);
+    }
+  }
+
+  return index;
+}
+
+let landmarkIndex = new Map();
+
+/**
+ * The "2.8 km from Cyber Hub" links, appended to the society shell.
+ *
+ * These belong on the indexable society page, not the noindex RWA one — a link from a
+ * page Google is told to ignore passes nothing to the page it points at.
+ */
+function landmarkLinksHtml(slug) {
+  const entries = landmarkIndex.get(slug) || [];
+  if (entries.length === 0) return "";
+
+  return `<p style="max-width:960px;margin:0 auto;padding:0 20px 24px;font-family:system-ui,sans-serif;line-height:1.6;">How far is it, really? ${entries
+    .map((entry) => `<a href="/near/${escapeHtml(entry.slug)}">${escapeHtml(entry.distance)} from ${escapeHtml(entry.name)}</a>`)
+    .join(" · ")}</p>`;
+}
+
 function societyRoutes(societies) {
   return societies.map((society) => {
     const canonicalPath = `/society/${society.slug}`;
@@ -893,7 +936,7 @@ function societyRoutes(societies) {
       ogImage: societyImage(society),
       extraSchemas: [societySchema(society, canonicalPath), societyFaqSchema(faqs)].filter(Boolean),
       skipGenericFaq: true,
-      rootSnapshot: societySnapshot(society, faqs),
+      rootSnapshot: societySnapshot(society, faqs) + landmarkLinksHtml(society.slug),
     };
   });
 }
@@ -991,6 +1034,11 @@ function landmarkRoutes(landmarkPages) {
                 }${society.rent_range ? ` · rent ${escapeHtml(society.rent_range)}` : ""}</li>`,
             )
             .join("")}</ol>`
+        : "",
+      Array.isArray(page.siblings) && page.siblings.length
+        ? `<p style="line-height:1.6;">Also nearby: ${page.siblings
+            .map((sibling) => `<a href="/near/${escapeHtml(sibling.slug)}">societies near ${escapeHtml(sibling.name)}</a>`)
+            .join(" · ")}</p>`
         : "",
       `<p style="line-height:1.6;">Distances are straight-line, measured between verified coordinates. <a href="/societies">All verified societies</a> · <a href="/brief">Build a brief around this commute</a></p>`,
       "</div>",
@@ -1325,6 +1373,7 @@ async function main() {
   const properties = await fetchLiveProperties();
   const comparePages = await fetchLiveComparePages();
   const landmarkPages = await fetchLandmarkPages();
+  landmarkIndex = buildLandmarkIndex(landmarkPages);
 
   if (societies.length === 0) {
     console.warn("Prerender: no societies fetched — society/RWA shells skipped this build (static routes still written).");

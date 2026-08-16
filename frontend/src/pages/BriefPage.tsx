@@ -198,6 +198,7 @@ export function BriefPage() {
 
         setCommute({
           name: result.landmark.name,
+          slug: result.landmark.slug,
           distances: new Map(result.societies.map((hit) => [String(hit.id), hit.distance_km])),
         });
       });
@@ -358,6 +359,17 @@ export function BriefPage() {
           {commute ? (
             <p className="mt-3 text-[13px] font-semibold text-[#0F7B63]">
               Found {commute.name} — every society below is ranked by how far it actually is.
+              {/* Linked only when a landmark page will actually exist: the page needs three
+                  verified societies nearby, and the distance map already tells us how many
+                  there are, so no extra request and no link into a dead end. */}
+              {commute.distances.size >= 3 ? (
+                <>
+                  {" "}
+                  <Link to={`/near/${commute.slug}`} className="underline hover:no-underline">
+                    See every society near it
+                  </Link>
+                </>
+              ) : null}
             </p>
           ) : null}
         </div>

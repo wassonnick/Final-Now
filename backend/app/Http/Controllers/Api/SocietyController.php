@@ -141,6 +141,16 @@ class SocietyController extends Controller {
         $society->load(['verifiedImportImages' => fn ($query) => $query->where('admin_rejected', false)->orderBy('sort_order')->orderBy('id')->limit(20)]);
     }
 
+    // The landmark pages this society appears on. Attached here rather than fetched
+    // separately so the rendered page and the prerendered shell carry the same links —
+    // a link a crawler sees and a visitor does not is worse than no link at all.
+    if (! $isAdmin) {
+        $society->setAttribute(
+            'nearby_landmark_pages',
+            app(\App\Services\Seo\LandmarkPageService::class)->forSociety($society),
+        );
+    }
+
     return response()->json([
         'status' => 'ok',
         'data' => $society,
