@@ -626,6 +626,22 @@ function canonicalFor(routePath) {
 }
 
 function breadcrumbItems(meta) {
+  // A trail derived from the URL is right for /gurgaon/sector-65, where every segment is a
+  // real page. It is wrong wherever a segment is only a namespace: /near/aerocity became
+  // "Home › Near › Aerocity", and that middle crumb linked to a 404. Routes that know
+  // their own trail supply it.
+  if (Array.isArray(meta.breadcrumb) && meta.breadcrumb.length) {
+    return {
+      "@type": "BreadcrumbList",
+      itemListElement: meta.breadcrumb.map((crumb, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: crumb.name,
+        item: canonicalFor(crumb.path),
+      })),
+    };
+  }
+
   const cleanParts = meta.path
     .split("/")
     .filter(Boolean)
@@ -1050,6 +1066,13 @@ function landmarkRoutes(landmarkPages) {
       description: page.meta_description,
       schemaType: "CollectionPage",
       extraSchemas: [place, itemList].filter(Boolean),
+      // /near is a namespace, not a page. Route through the societies index instead, so
+      // every crumb is somewhere a reader can actually go.
+      breadcrumb: [
+        { name: "SocietyFlats", path: "/" },
+        { name: "Verified societies", path: "/societies" },
+        { name: page.h1, path: canonicalPath },
+      ],
       skipGenericFaq: true,
       priority: "0.7",
       changefreq: "weekly",

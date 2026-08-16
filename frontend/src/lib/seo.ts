@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 const SITE_NAME = "SocietyFlats";
-const SITE_URL = "https://www.societyflats.com";
+export const SITE_URL = "https://www.societyflats.com";
 const DEFAULT_SOCIAL_IMAGE = "/brand/societyflats-og-image.png";
 const DEFAULT_DESCRIPTION =
   "Stop sorting through scattered, unverified listings. Discover Delhi NCR’s premier residential societies using data-driven ratings for security, commute, and market trends.";

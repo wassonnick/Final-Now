@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowRight, MapPin, Navigation, ShieldCheck } from "lucide-react";
 import { API_BASE_URL } from "@/config/api";
-import { setPublicSeo } from "@/lib/seo";
+import { SITE_URL, setPublicSeo } from "@/lib/seo";
 
 /**
  * "Verified societies near DLF Cyber Hub" — the pages only we can write.
@@ -35,6 +35,58 @@ function readable(km: number): string {
   return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
 }
 
+/**
+ * Markup that says what the page already shows.
+ *
+ * Left to the default, this page describes itself to Google as an unremarkable WebPage —
+ * so the one thing that makes it worth publishing, an ordered list of real societies
+ * ranked by measured distance from a named place, is the one thing the markup never
+ * mentions. Nothing here is asserted that a reader cannot see rendered on the page.
+ */
+function landmarkJsonLd(page: LandmarkPage): unknown {
+  const url = `${SITE_URL}/near/${page.landmark.slug}`;
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        name: page.title,
+        description: page.meta_description,
+        url,
+        about: {
+          "@type": "Place",
+          name: page.landmark.name,
+          ...(page.landmark.city
+            ? { address: { "@type": "PostalAddress", addressLocality: page.landmark.city, addressCountry: "IN" } }
+            : {}),
+        },
+      },
+      {
+        "@type": "ItemList",
+        name: page.h1,
+        numberOfItems: page.societies.length,
+        // Nearest first — the ordering is the point of the page, so it is stated.
+        itemListOrder: "https://schema.org/ItemListOrderAscending",
+        itemListElement: page.societies.map((society, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: society.name,
+          url: `${SITE_URL}/society/${society.slug}`,
+        })),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "SocietyFlats", item: SITE_URL },
+          { "@type": "ListItem", position: 2, name: "Verified societies", item: `${SITE_URL}/societies` },
+          { "@type": "ListItem", position: 3, name: page.h1, item: url },
+        ],
+      },
+    ],
+  };
+}
+
 export function LandmarkLandingPage() {
   const { slug = "" } = useParams();
   const [page, setPage] = useState<LandmarkPage | null>(null);
@@ -51,7 +103,10 @@ export function LandmarkLandingPage() {
         const data = payload?.data as LandmarkPage;
         setPage(data);
         setStatus("ready");
-        setPublicSeo(data.title, data.meta_description, { canonical: `/near/${data.landmark.slug}` });
+        setPublicSeo(data.title, data.meta_description, {
+          canonical: `/near/${data.landmark.slug}`,
+          jsonLd: landmarkJsonLd(data),
+        });
       })
       .catch(() => {
         if (!cancelled) setStatus("missing");

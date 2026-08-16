@@ -2,6 +2,7 @@
 
 namespace App\Services\Seo;
 
+use App\Models\Landmark;
 use App\Models\Property;
 use App\Models\SeoPage;
 use App\Models\Society;
@@ -149,7 +150,67 @@ class SeoPageRegistryService
 
         foreach ($this->staticPages() as $page) { $this->upsert($page); $count++; }
         foreach ($this->ncrCityPages() as $page) { $this->upsert($page); $count++; }
+        foreach ($this->landmarkPages() as $page) { $this->upsert($page); $count++; }
         return $count;
+    }
+
+    /**
+     * The commute pages — 69 of them, and until now invisible to everything downstream.
+     *
+     * Registration is what puts a page in the live sitemap, the nightly audit, GSC query
+     * mapping and the task backlog. These shipped into the build-time sitemap only, so the
+     * newest page type on the site had never once been graded, and a landmark that became
+     * publishable between frontend deploys stayed undiscoverable until the next one.
+     *
+     * Everything here is read from the service that renders the page, so the audit can
+     * never grade a title the page does not ship — the mistake that once reported 493
+     * over-length society titles where the rendered pages had 88.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function landmarkPages(): array
+    {
+        $service = app(LandmarkPageService::class);
+
+        return $service->publishable()->map(function (Landmark $landmark) use ($service) {
+            $payload = $service->payload($landmark);
+            $societies = (int) $payload['society_count'];
+
+            return [
+                'page_key' => 'landmark:'.$landmark->id,
+                'page_type' => 'landmark',
+                'entity_type' => Landmark::class,
+                'entity_id' => $landmark->id,
+                'url' => '/near/'.$landmark->slug,
+                'canonical_url' => '/near/'.$landmark->slug,
+                'title' => $payload['title'],
+                'meta_description' => $payload['meta_description'],
+                'h1' => $payload['h1'],
+                // publishable() already withheld anything under MIN_SOCIETIES, so a page
+                // that reaches here has enough to say to be worth indexing.
+                'is_indexable' => true, 'sitemap_included' => true, 'is_public' => true,
+                // Estimated, but calibrated: the intro is measured, each society row runs
+                // about 14 words, and the method note plus CTAs are a fixed ~150. That
+                // lands within 7% of the 584 words counted off a real prerendered shell.
+                'content_word_count' => $this->words($payload['intro']) + ($societies * 14) + 150,
+                // Not estimated. Every society is a link and so is every sibling landmark,
+                // plus the two CTAs at the foot.
+                'internal_link_count' => $societies + count($payload['siblings']) + 2,
+                'image_alt_coverage' => 100,
+                'schema_types' => ['CollectionPage', 'ItemList', 'BreadcrumbList'],
+                'freshness_at' => now(),
+                'metadata' => [
+                    'name' => $landmark->name,
+                    'city' => $landmark->city,
+                    'category' => $landmark->category,
+                    'society_count' => $societies,
+                    'walkable_count' => $payload['walkable_count'],
+                    'radius_km' => $payload['radius_km'],
+                    'has_cta' => true, 'heading_count' => 3,
+                    'metrics_estimated' => true,
+                ],
+            ];
+        })->all();
     }
 
     /**

@@ -146,6 +146,71 @@ class LandmarkPageTest extends TestCase
         $this->assertLessThanOrEqual(1, $fullLoads, "the societies catalogue was loaded {$fullLoads} times for one page");
     }
 
+    /**
+     * A page nothing downstream knows about might as well not be published.
+     *
+     * The registry is what feeds the live sitemap, the nightly audit, GSC query mapping and
+     * the task backlog. Sixty-nine of these shipped into the build-time sitemap only, so
+     * the newest page type on the site had never been graded once, and any landmark that
+     * became publishable between frontend deploys stayed undiscoverable.
+     */
+    public function test_a_publishable_landmark_is_registered_for_the_sitemap_and_the_audit(): void
+    {
+        $landmark = $this->landmark('Busy Office', 28.50, 77.09);
+        foreach (range(1, 3) as $i) {
+            $this->society('Court '.$i, 28.502, 77.091 + $i / 1000);
+        }
+
+        app(\App\Services\Seo\SeoPageRegistryService::class)->sync();
+
+        $page = \App\Models\SeoPage::where('url', '/near/busy-office')->first();
+
+        $this->assertNotNull($page, 'the landmark page never reached the registry');
+        $this->assertSame('landmark', $page->page_type);
+        $this->assertTrue($page->is_indexable);
+        $this->assertTrue($page->sitemap_included);
+        // Read from the service that renders the page, so the audit can never grade a
+        // title no searcher is served.
+        $this->assertSame(app(LandmarkPageService::class)->title($landmark), $page->title);
+        $this->assertContains('ItemList', $page->schema_types);
+    }
+
+    /** Below the threshold there is no page, so there must be no registry row either. */
+    public function test_a_landmark_with_too_few_societies_is_not_registered(): void
+    {
+        $this->landmark('Lonely Office', 28.90, 77.60);
+        $this->society('Far Court', 28.50, 77.09);
+
+        app(\App\Services\Seo\SeoPageRegistryService::class)->sync();
+
+        $this->assertNull(\App\Models\SeoPage::where('url', '/near/lonely-office')->first());
+    }
+
+    /**
+     * Link counts drive audit scoring, so an estimate here becomes a fake grade.
+     *
+     * Every society on the page is a link and so is every sibling landmark, plus the two
+     * CTAs at the foot — all countable, none of them guessed.
+     */
+    public function test_the_registered_link_count_matches_what_the_page_renders(): void
+    {
+        $landmark = $this->landmark('Linked Office', 28.50, 77.09);
+        foreach (range(1, 4) as $i) {
+            $this->society('Court '.$i, 28.502, 77.091 + $i / 1000);
+        }
+
+        app(\App\Services\Seo\SeoPageRegistryService::class)->sync();
+
+        $service = app(LandmarkPageService::class);
+        $payload = $service->payload($landmark);
+        $page = \App\Models\SeoPage::where('url', '/near/linked-office')->firstOrFail();
+
+        $this->assertSame(
+            $payload['society_count'] + count($payload['siblings']) + 2,
+            $page->internal_link_count,
+        );
+    }
+
     /** A society with no coordinates cannot be placed, and is not guessed at. */
     public function test_a_society_without_coordinates_has_no_landmark_links(): void
     {
