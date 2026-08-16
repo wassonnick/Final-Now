@@ -356,6 +356,20 @@ function buildXml(routes) {
     `</urlset>\n`;
 }
 
+/** Which landmarks currently qualify for a page — the API decides, not this script. */
+async function fetchLandmarkIndex() {
+  try {
+    const response = await fetch(`${API_BASE}/landmark-pages`, { headers: { Accept: "application/json" } });
+    if (!response.ok) return [];
+
+    const payload = await response.json();
+
+    return Array.isArray(payload?.data) ? payload.data : [];
+  } catch {
+    return [];
+  }
+}
+
 async function main() {
   await fs.mkdir(PUBLIC_DIR, { recursive: true });
 
@@ -372,6 +386,7 @@ async function main() {
   const societies = societyResult.rows.filter(isPublicSociety);
   const properties = propertyResult.rows.filter(isHighQualityProperty);
   const comparePages = comparePageResult.rows.filter((page) => page?.status === "published");
+  const landmarkPages = await fetchLandmarkIndex();
 
   if (societies.length < MIN_PUBLIC_SOCIETIES) {
     throw new Error(`Refusing to replace sitemap: public society count fell to ${societies.length}, below safety threshold ${MIN_PUBLIC_SOCIETIES}.`);
@@ -421,11 +436,20 @@ async function main() {
     });
   }
 
+  // Landmark pages only exist where enough verified societies are actually nearby, so the
+  // API is asked which ones qualify rather than the sitemap guessing from the landmark list.
+  for (const page of landmarkPages) {
+    if (!page?.slug) continue;
+
+    routes.push({ loc: `/near/${page.slug}`, priority: "0.7", changefreq: "weekly" });
+  }
+
   const xml = buildXml(routes);
   await fs.writeFile(SITEMAP_PATH, xml, "utf8");
 
   console.log(`Generated sitemap with ${uniqueRoutes(routes).length} URLs at ${SITEMAP_PATH}`);
   console.log(`Included ${societies.length} public societies, ${properties.length} high-quality public properties and ${comparePages.length} published comparison pages.`);
+  console.log(`Included ${landmarkPages.length} landmark proximity pages.`);
 }
 
 main().catch(async (error) => {

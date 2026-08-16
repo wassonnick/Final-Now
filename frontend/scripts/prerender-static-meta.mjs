@@ -942,6 +942,74 @@ function propertyRoutes(properties) {
   });
 }
 
+/**
+ * "Societies near X" shells, with the distances baked in.
+ *
+ * These pages exist because we can answer a proximity query with a measured number, so
+ * the number has to survive into the crawled HTML — a shell that only says "societies
+ * near Cyber Hub" and leaves the distances to JavaScript throws away the only thing that
+ * makes the page worth ranking.
+ */
+function landmarkRoutes(landmarkPages) {
+  return landmarkPages.map((page) => {
+    const canonicalPath = `/near/${page.landmark.slug}`;
+    const societies = Array.isArray(page.societies) ? page.societies : [];
+
+    const itemList = societies.length
+      ? {
+          "@type": "ItemList",
+          name: page.h1,
+          numberOfItems: societies.length,
+          itemListElement: societies.map((society, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: society.name,
+            url: `${SITE_URL}/society/${society.slug}`,
+          })),
+        }
+      : null;
+
+    const place = {
+      "@type": "Place",
+      name: page.landmark.name,
+      address: { "@type": "PostalAddress", addressLocality: page.landmark.city || "Gurugram", addressCountry: "IN" },
+      geo: { "@type": "GeoCoordinates", latitude: page.landmark.latitude, longitude: page.landmark.longitude },
+    };
+
+    const distance = (km) => (km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`);
+
+    const snapshot = [
+      '<div id="sf-prerender" style="max-width:960px;margin:0 auto;padding:28px 20px;font-family:system-ui,-apple-system,sans-serif;color:#25302B;">',
+      `<h1 style="font-size:26px;">${escapeHtml(page.h1)}</h1>`,
+      `<p style="line-height:1.6;">${escapeHtml(page.intro)}</p>`,
+      societies.length
+        ? `<ol style="line-height:1.8;padding-left:20px;">${societies
+            .map(
+              (society) =>
+                `<li><strong>${escapeHtml(distance(society.distance_km))}</strong> — <a href="/society/${escapeHtml(society.slug)}">${escapeHtml(society.name)}</a>${
+                  society.sector || society.locality ? `, ${escapeHtml(society.sector || society.locality)}` : ""
+                }${society.rent_range ? ` · rent ${escapeHtml(society.rent_range)}` : ""}</li>`,
+            )
+            .join("")}</ol>`
+        : "",
+      `<p style="line-height:1.6;">Distances are straight-line, measured between verified coordinates. <a href="/societies">All verified societies</a> · <a href="/brief">Build a brief around this commute</a></p>`,
+      "</div>",
+    ].join("");
+
+    return {
+      path: canonicalPath,
+      title: page.title,
+      description: page.meta_description,
+      schemaType: "CollectionPage",
+      extraSchemas: [place, itemList].filter(Boolean),
+      skipGenericFaq: true,
+      priority: "0.7",
+      changefreq: "weekly",
+      rootSnapshot: snapshot,
+    };
+  });
+}
+
 function comparePageRoutes(comparePages) {
   return comparePages.map((page) => {
     const canonicalPath = `/compare/${page.slug}`;
@@ -1228,11 +1296,35 @@ function derivedLocalityRoutes(localityCounts) {
   return derived;
 }
 
+/**
+ * Only landmarks with enough nearby societies get a page; the API decides, not the build,
+ * so the shell and the live page can never disagree about which pages exist.
+ */
+async function fetchLandmarkPages() {
+  try {
+    const index = await fetchJsonWithRetry(`${API_BASE}/landmark-pages`, 2, 5000);
+    const slugs = (index?.data || []).map((row) => row?.slug).filter(Boolean);
+    const pages = [];
+
+    for (const slug of slugs) {
+      const payload = await fetchJsonWithRetry(`${API_BASE}/landmark-pages/${slug}`, 2, 5000);
+      if (payload?.data?.societies?.length) pages.push(payload.data);
+    }
+
+    return pages;
+  } catch (error) {
+    console.warn("Prerender: landmark pages skipped —", error?.message || error);
+
+    return [];
+  }
+}
+
 async function main() {
   const baseHtml = await fs.readFile(INDEX_PATH, "utf8");
   const societies = await fetchLiveSocieties();
   const properties = await fetchLiveProperties();
   const comparePages = await fetchLiveComparePages();
+  const landmarkPages = await fetchLandmarkPages();
 
   if (societies.length === 0) {
     console.warn("Prerender: no societies fetched — society/RWA shells skipped this build (static routes still written).");
@@ -1245,6 +1337,7 @@ async function main() {
     ...rwaRoutes(societies),
     ...propertyRoutes(properties),
     ...comparePageRoutes(comparePages),
+    ...landmarkRoutes(landmarkPages),
   ];
   const written = [];
 

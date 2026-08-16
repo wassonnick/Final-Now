@@ -19,6 +19,45 @@ class LandmarkController extends Controller
 {
     private const LIMIT = 6;
 
+    /**
+     * One landmark's landing page, or the index of every landmark worth having one.
+     *
+     * Serves the same payload the prerenderer bakes into static HTML, so the crawled page
+     * and the live page can never describe different societies.
+     */
+    public function pages(Request $request, \App\Services\Seo\LandmarkPageService $pages, ?string $slug = null): JsonResponse
+    {
+        if ($slug === null) {
+            return response()->json([
+                'status' => 'ok',
+                'data' => $pages->publishable()->map(fn (Landmark $landmark) => [
+                    'name' => $landmark->name,
+                    'slug' => $landmark->slug,
+                    'city' => $landmark->city,
+                    'category' => $landmark->category,
+                ])->values(),
+            ]);
+        }
+
+        $landmark = Landmark::where('slug', $slug)->first();
+
+        if (! $landmark) {
+            return response()->json(['status' => 'error', 'message' => 'Landmark not found.'], 404);
+        }
+
+        $payload = $pages->payload($landmark);
+
+        // A page with almost nothing on it should not exist, let alone be indexed.
+        if ($payload['society_count'] < \App\Services\Seo\LandmarkPageService::MIN_SOCIETIES) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Not enough verified societies near this landmark yet.',
+            ], 404);
+        }
+
+        return response()->json(['status' => 'ok', 'data' => $payload]);
+    }
+
     public function __invoke(Request $request): JsonResponse
     {
         $city = trim((string) $request->query('city', ''));

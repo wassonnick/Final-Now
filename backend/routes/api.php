@@ -93,6 +93,8 @@ Route::get('/societies/lookup', [SocietyController::class, 'lookup']);
 // "a home near Ambience Mall" — societies ranked by how far they actually are.
 Route::get('/search/near', LandmarkSearchController::class)->middleware('throttle:60,1');
 Route::get('/landmarks', LandmarkController::class)->middleware('throttle:120,1');
+Route::get('/landmark-pages', [LandmarkController::class, 'pages'])->middleware('throttle:120,1');
+Route::get('/landmark-pages/{slug}', [LandmarkController::class, 'pages'])->middleware('throttle:120,1');
 Route::get('/societies/{idOrSlug}/google-place-photo', [SocietyController::class, 'googlePlacePhoto']);
 Route::get('/societies/{slug}/intelligence', [SocietyIntelligenceController::class, 'show']);
 Route::get('/societies/{slug}/sources', [SocietyIntelligenceController::class, 'sources']);
