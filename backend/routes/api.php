@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\Admin\VerifiedSocietyImporterController;
 use App\Http\Controllers\Api\AiChatController;
 use App\Http\Controllers\Api\AIController;
 use App\Http\Controllers\Api\BuilderPortalController;
+use App\Http\Controllers\Api\Admin\AdminInsightsController;
 use App\Http\Controllers\Api\LandmarkController;
 use App\Http\Controllers\Api\LandmarkSearchController;
 use App\Http\Controllers\Api\LeadController;
@@ -145,6 +146,12 @@ Route::get('/site-visits/{token}', [SiteVisitController::class, 'show']);
 Route::post('/site-visits/{token}/confirm', [SiteVisitController::class, 'confirm']);
 Route::get('/admin/social/oauth/callback', [AdminSocialController::class, 'oauthCallback'])->middleware('throttle:20,1');
 Route::prefix('admin')->middleware('admin.api')->group(function () {
+    // The three reports that say what to do next, so they live where someone will look
+    // rather than only behind a shell on the production container.
+    Route::get('/insights/demand-gaps', [AdminInsightsController::class, 'demandGaps']);
+    Route::get('/insights/striking-distance', [AdminInsightsController::class, 'strikingDistance']);
+    Route::get('/insights/coverage-gap', [AdminInsightsController::class, 'coverageGap']);
+
     Route::get('/stats', AdminStatsController::class);
     Route::get('/locations', [AdminLocationController::class, 'index']);
     Route::get('/locations/audit', [AdminLocationController::class, 'audit']);

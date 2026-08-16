@@ -81,6 +81,7 @@ const AdminRwaPortalPage = lazy(() => import('@/pages/admin/AdminRwaPortalPage')
 const AdminReferralsPage = lazy(() => import('@/pages/admin/AdminReferralsPage').then((module) => ({ default: module.AdminReferralsPage })));
 const AdminNriCasesPage = lazy(() => import('@/pages/admin/AdminNriCasesPage').then((module) => ({ default: module.AdminNriCasesPage })));
 const AdminSeoAutopilotPage = lazy(() => import('@/pages/admin/AdminSeoAutopilotPage').then((module) => ({ default: module.AdminSeoAutopilotPage })));
+const AdminInsightsPage = lazy(() => import('@/pages/admin/AdminInsightsPage').then((module) => ({ default: module.AdminInsightsPage })));
 const AdminSocialDraftsPage = lazy(() => import('@/pages/admin/AdminSocialDraftsPage').then((module) => ({ default: module.AdminSocialDraftsPage })));
 const AdminSocialStudioPage = lazy(() => import('@/pages/admin/AdminSocialStudioPage').then((module) => ({ default: module.AdminSocialStudioPage })));
 const AdminOwnerListingsPage = lazy(() => import('@/pages/admin/AdminOwnerListingsPage').then((module) => ({ default: module.AdminOwnerListingsPage })));
@@ -277,6 +278,7 @@ function AppShell() {
             <Route path="/admin/nri-cases" element={<ProtectedAdminRoute><AdminNriCasesPage /></ProtectedAdminRoute>} />
             <Route path="/admin/email-deliveries" element={<ProtectedAdminRoute><AdminEmailDeliveriesPage /></ProtectedAdminRoute>} />
             <Route path="/admin/seo-autopilot" element={<ProtectedAdminRoute><AdminSeoAutopilotPage /></ProtectedAdminRoute>} />
+            <Route path="/admin/insights" element={<AdminInsightsPage />} />
             <Route path="/admin/owner-listings" element={<ProtectedAdminRoute><AdminOwnerListingsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/social" element={<ProtectedAdminRoute><AdminSocialDraftsPage /></ProtectedAdminRoute>} />
             <Route path="/admin/social/studio" element={<ProtectedAdminRoute><AdminSocialStudioPage /></ProtectedAdminRoute>} />
