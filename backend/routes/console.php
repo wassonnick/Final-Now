@@ -71,6 +71,48 @@ Artisan::command('seo:autopilot-report {period=weekly}', function (string $perio
     $this->info("Generated {$period} SEO report #{$report->id}.");
 })->purpose('Generate a daily, weekly or monthly SEO Autopilot report');
 
+Artisan::command('demand:gaps {--days=60} {--limit=25}', function () {
+    $rows = app(\App\Services\Demand\DemandGapService::class)->gaps(
+        (int) $this->option('days'),
+        (int) $this->option('limit'),
+    );
+
+    if ($rows->isEmpty()) {
+        $this->warn('No repeated requirement in the window — not enough briefs or leads yet to see a pattern.');
+
+        return;
+    }
+
+    $money = fn (?int $rupees) => $rupees === null ? '—'
+        : ($rupees >= 10000000 ? '₹'.round($rupees / 10000000, 2).'Cr'
+            : ($rupees >= 100000 ? '₹'.round($rupees / 100000, 1).'L' : '₹'.round($rupees / 1000).'K'));
+
+    $this->info('What people asked for, and whether we could serve them:');
+    $this->table(
+        ['asked', 'have', 'area', 'size', 'mode', 'typical budget', 'societies there'],
+        $rows->map(fn ($row) => [
+            $row['requests'],
+            $row['unmet'] ? 'NOTHING' : $row['listings_available'],
+            \Illuminate\Support\Str::limit($row['area'], 28),
+            $row['bhk'] > 0 ? $row['bhk'].' BHK' : 'any',
+            $row['mode'],
+            $money($row['typical_budget']),
+            $row['societies_known'],
+        ])->all(),
+    );
+
+    $unmet = $rows->where('unmet', true);
+    $this->newLine();
+    $this->line($unmet->sum('requests').' requests across '.$unmet->count().' gaps we currently have no listing for.');
+
+    foreach ($unmet->take(5) as $row) {
+        if ($row['notes'] === []) {
+            continue;
+        }
+        $this->line('  '.$row['area'].' — in their words: "'.\Illuminate\Support\Str::limit($row['notes'][0], 90).'"');
+    }
+})->purpose('Rank what buyers and tenants keep asking for that we hold no listing for');
+
 Artisan::command('seo:coverage-gap {--days=28} {--limit=25}', function () {
     $service = app(\App\Services\Seo\SeoCoverageGapService::class);
     $days = (int) $this->option('days');
