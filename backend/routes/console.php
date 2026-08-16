@@ -71,6 +71,45 @@ Artisan::command('seo:autopilot-report {period=weekly}', function (string $perio
     $this->info("Generated {$period} SEO report #{$report->id}.");
 })->purpose('Generate a daily, weekly or monthly SEO Autopilot report');
 
+Artisan::command('seo:striking-distance {--days=28} {--limit=30} {--record}', function () {
+    $service = app(\App\Services\Seo\SeoStrikingDistanceService::class);
+    $days = (int) $this->option('days');
+
+    $curve = $service->observedCtrByBand($days);
+    $this->info('Click-through this site actually gets, by position:');
+    foreach ($curve as $band => $ctr) {
+        $this->line(sprintf('  pos %-6s %s', $band, $ctr > 0 ? round($ctr * 100, 2).'%' : 'no data'));
+    }
+
+    $rows = $service->opportunities($days, (int) $this->option('limit'));
+
+    if ($rows->isEmpty()) {
+        $this->warn('No striking-distance opportunities in the last '.$days.' days.');
+
+        return;
+    }
+
+    $this->newLine();
+    $this->info('Pages that already rank, ordered by the clicks a move would win:');
+    $this->table(
+        ['+clicks', 'pos', 'impr', 'now', 'query', 'why it is stuck'],
+        $rows->map(fn ($row) => [
+            $row['potential_clicks'],
+            $row['position'],
+            $row['impressions'],
+            $row['clicks'],
+            \Illuminate\Support\Str::limit($row['query'], 38),
+            \Illuminate\Support\Str::limit($row['gap'], 44),
+        ])->all(),
+    );
+
+    $this->line('Total winnable in a month: about '.$rows->sum('potential_clicks').' clicks.');
+
+    if ($this->option('record')) {
+        $this->info($service->recordTasks($days, (int) $this->option('limit')).' recorded as tasks.');
+    }
+})->purpose('List pages one nudge away from page one, ranked by the traffic it would win');
+
 Artisan::command('seo:autopilot-run {--trigger=scheduled} {--force}', function () {
     // The cycle was running twice most nights — once from the 02:00 schedule and again
     // from the every-30-minutes catch-up about five minutes later — because the cache

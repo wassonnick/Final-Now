@@ -94,7 +94,7 @@ class SeoAutopilotRunner
 
         $run=SeoAutomationRun::create(['trigger'=>$trigger,'status'=>'running','started_at'=>now(),'heartbeat_at'=>now()]);
         $openTasksBefore=SeoTask::where('status','open')->count();
-        $summary=['pages_registered'=>0,'society_seo_published'=>0,'pages_audited'=>0,'average_score'=>0,'technical_failures'=>0,'keywords_refreshed'=>0,'search_console_rows'=>0,'drafts_generated'=>0,'drafts_auto_published'=>0,'mechanical_repair'=>[],'report_id'=>null,'warnings'=>[],'failed_phases'=>[]];
+        $summary=['pages_registered'=>0,'society_seo_published'=>0,'pages_audited'=>0,'average_score'=>0,'technical_failures'=>0,'keywords_refreshed'=>0,'search_console_rows'=>0,'striking_distance'=>0,'drafts_generated'=>0,'drafts_auto_published'=>0,'mechanical_repair'=>[],'report_id'=>null,'warnings'=>[],'failed_phases'=>[]];
 
         try {
             // Fill SEO content for published societies that lack it FIRST, so the sync + audit
@@ -161,6 +161,10 @@ class SeoAutopilotRunner
             if($settings->search_console_enabled&&$this->searchConsole->configured()){
                 $this->phase($run,$summary,'search_console',function()use(&$summary){
                     $summary['search_console_rows']=$this->searchConsole->fetch();
+                    // The highest-value work in the system was invisible: a reconciler had
+                    // been closing striking-distance tasks for months while nothing opened
+                    // one. Recorded here, right after the data they are derived from.
+                    $summary['striking_distance']=app(SeoStrikingDistanceService::class)->recordTasks();
                 });
             }
             if($settings->draft_generation_enabled){
