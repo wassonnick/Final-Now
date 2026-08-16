@@ -481,3 +481,22 @@ body,
 @media (max-width: 1023px) {
   .public-site { padding-bottom: calc(4.25rem + env(safe-area-inset-bottom)); }
 }
+
+/*
+  The consent banner has to sit above whatever fixed chrome a page puts at the bottom.
+
+  Its offset only ever cleared the 62px tab bar, so on any page with its own sticky CTA —
+  the brief builder's Continue button, for one — the banner landed directly on top of the
+  button and swallowed the tap. A first-time visitor could not start the brief at all.
+  Pages that pin something to the bottom raise --sf-bottom-chrome; everything else gets
+  the tab bar's height.
+*/
+.consent-banner {
+  bottom: calc(var(--sf-bottom-chrome, 5rem) + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 1024px) {
+  .consent-banner {
+    bottom: 1.25rem;
+  }
+}

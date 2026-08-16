@@ -53,7 +53,7 @@ export function AnalyticsConsentBanner() {
   return (
     <section
       aria-label="Analytics privacy choices"
-      className="ncr-skin fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-3 right-3 z-[100] w-auto animate-in fade-in slide-in-from-bottom-2 rounded-[20px] border border-[#E4E4E9] bg-white/97 p-4 shadow-[0_24px_60px_-30px_rgba(0,0,0,.35)] backdrop-blur duration-300 sm:left-5 sm:right-auto sm:w-[360px] lg:bottom-5"
+      className="consent-banner ncr-skin fixed left-3 right-3 z-[100] w-auto animate-in fade-in slide-in-from-bottom-2 rounded-[20px] border border-[#E4E4E9] bg-white/97 p-4 shadow-[0_24px_60px_-30px_rgba(0,0,0,.35)] backdrop-blur duration-300 sm:left-5 sm:right-auto sm:w-[360px]"
     >
       <div className="flex items-center gap-2.5">
         <span

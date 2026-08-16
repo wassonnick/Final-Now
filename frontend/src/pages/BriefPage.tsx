@@ -13,6 +13,7 @@ import {
 } from "@/lib/briefMatch";
 import { fetchLandmarkShortcuts, searchNearLandmark } from "@/lib/landmarkSearchApi";
 import { clearDraft, isSignedIn, loadDraft, saveBriefToAccount, saveDraft } from "@/lib/briefStorage";
+import { useBottomChrome } from "@/lib/bottomChrome";
 
 /** Kept in step with the question list below. */
 const BRIEF_STEP_COUNT = 9;
@@ -93,6 +94,10 @@ export function BriefPage() {
   const [brief, setBrief] = useState<Brief>(EMPTY_BRIEF);
   const [thinking, setThinking] = useState(false);
   const [leadOpen, setLeadOpen] = useState(false);
+
+  // The sticky Continue bar is 62px of tab bar plus its own ~73px. Declared so the consent
+  // banner floats above it instead of covering the only button that matters here.
+  useBottomChrome(8.5);
   const openStepRef = useRef<HTMLElement | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
