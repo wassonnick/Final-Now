@@ -26,13 +26,37 @@ class LandmarkPageService
     private const MAX_SOCIETIES = 24;
 
     /**
+     * Loaded once per request, not once per landmark.
+     *
+     * `nearby()` re-queried every published society each time it was called, and it is
+     * called once per landmark by `publishable()`, again by `siblings()`, and again for
+     * every candidate on a society page. That turned one page into thirty-odd full table
+     * loads — the landmark index took 59 seconds in production and every society detail
+     * request paid a share of it.
+     */
+    private ?Collection $societyCache = null;
+
+    private ?Collection $publishableCache = null;
+
+    private function publishedSocieties(): Collection
+    {
+        return $this->societyCache ??= Society::query()
+            ->where('is_published', true)
+            ->whereIn('status', ['Verified', 'Premium'])
+            ->inLiveCities()
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get();
+    }
+
+    /**
      * Landmarks that can carry a page of their own.
      *
      * @return Collection<int, Landmark>
      */
     public function publishable(): Collection
     {
-        return Landmark::query()
+        return $this->publishableCache ??= Landmark::query()
             ->orderBy('city')
             ->orderBy('name')
             ->get()
@@ -49,20 +73,19 @@ class LandmarkPageService
     {
         $radius = $radiusKm ?? self::RADIUS_KM;
 
-        return Society::query()
-            ->where('is_published', true)
-            ->whereIn('status', ['Verified', 'Premium'])
-            ->inLiveCities()
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->get()
+        return $this->publishedSocieties()
             ->map(function (Society $society) use ($landmark) {
-                $society->setAttribute('distance_km', $landmark->distanceTo(
+                // Cloned, because the society list is now shared across every call. Writing
+                // the distance onto the shared instance meant siblings() — which measures
+                // the same societies against other landmarks — silently overwrote the
+                // distances the caller was about to serialise.
+                $measured = clone $society;
+                $measured->setAttribute('distance_km', $landmark->distanceTo(
                     is_numeric($society->latitude) ? (float) $society->latitude : null,
                     is_numeric($society->longitude) ? (float) $society->longitude : null,
                 ));
 
-                return $society;
+                return $measured;
             })
             ->filter(fn (Society $society) => $society->getAttribute('distance_km') !== null
                 && $society->getAttribute('distance_km') <= $radius)
@@ -90,17 +113,14 @@ class LandmarkPageService
             return [];
         }
 
-        return Landmark::query()
-            ->get()
+        // Only landmarks that already have a page, computed once and reused.
+        return $this->publishable()
             ->map(fn (Landmark $landmark) => [
                 'landmark' => $landmark,
                 'distance_km' => $landmark->distanceTo($latitude, $longitude),
             ])
             ->filter(fn (array $row) => $row['distance_km'] !== null && $row['distance_km'] <= self::RADIUS_KM)
             ->sortBy('distance_km')
-            // Counted only for landmarks close enough to carry a page, and only after the
-            // cheap distance filter — this is the expensive check.
-            ->filter(fn (array $row) => $this->nearby($row['landmark'])->count() >= self::MIN_SOCIETIES)
             ->take($limit)
             ->map(fn (array $row) => [
                 'name' => $row['landmark']->name,

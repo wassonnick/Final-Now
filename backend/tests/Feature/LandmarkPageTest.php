@@ -89,6 +89,33 @@ class LandmarkPageTest extends TestCase
         }
     }
 
+    /**
+     * The whole catalogue is loaded once, not once per landmark.
+     *
+     * nearby() re-queried every published society on each call, and it is called once per
+     * landmark by publishable(), again by siblings(), and again per candidate on a society
+     * page. In production that made the landmark index take 59 seconds and put a share of
+     * the same cost on every society detail request.
+     */
+    public function test_a_page_loads_the_catalogue_once(): void
+    {
+        foreach (range(1, 8) as $i) {
+            $this->landmark('Office '.$i, 28.50 + $i / 1000, 77.09);
+        }
+        foreach (range(1, 6) as $i) {
+            $this->society('Court '.$i, 28.502, 77.091 + $i / 1000);
+        }
+
+        \Illuminate\Support\Facades\DB::enableQueryLog();
+        app(LandmarkPageService::class)->payload(\App\Models\Landmark::where('slug', 'office-1')->firstOrFail());
+        $societyQueries = collect(\Illuminate\Support\Facades\DB::getQueryLog())
+            ->filter(fn ($q) => str_contains($q['query'], 'from "societies"'))
+            ->count();
+        \Illuminate\Support\Facades\DB::disableQueryLog();
+
+        $this->assertLessThanOrEqual(1, $societyQueries, "societies table was queried {$societyQueries} times for one page");
+    }
+
     /** A society with no coordinates cannot be placed, and is not guessed at. */
     public function test_a_society_without_coordinates_has_no_landmark_links(): void
     {

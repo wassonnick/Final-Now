@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, Check, Loader2, Pencil, RotateCcw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -74,7 +74,7 @@ function Chip({ active, children, onClick }: { active: boolean; children: React.
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-5 py-2.5 text-[14px] font-medium transition ${
+      className={`rounded-full border px-3.5 py-2 text-[13px] font-medium transition sm:px-5 sm:py-2.5 sm:text-[14px] ${
         active
           ? "border-[#0F7B63] bg-[#0F7B63] text-white"
           : "border-[#E4E4E9] bg-white text-[#1D1D1F] hover:border-[#0F7B63]"
@@ -93,6 +93,7 @@ export function BriefPage() {
   const [brief, setBrief] = useState<Brief>(EMPTY_BRIEF);
   const [thinking, setThinking] = useState(false);
   const [leadOpen, setLeadOpen] = useState(false);
+  const openStepRef = useRef<HTMLElement | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
   const [alerts, setAlerts] = useState(true);
@@ -254,7 +255,7 @@ export function BriefPage() {
       summary: brief.purpose,
       done: Boolean(brief.purpose),
       body: (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {purposes.map((purpose) => (
             <Chip key={purpose} active={brief.purpose === purpose} onClick={() => set({ purpose })}>{purpose}</Chip>
           ))}
@@ -296,7 +297,7 @@ export function BriefPage() {
       summary: brief.bhk.map((n) => (n === 0 ? "Studio" : `${n} BHK`)).join(", "),
       done: brief.bhk.length > 0,
       body: (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {BHK_CHOICES.map(([value, label]) => (
             <Chip key={value} active={brief.bhk.includes(value)} onClick={() => set({ bhk: toggle(brief.bhk, value) })}>
               {label}
@@ -382,7 +383,7 @@ export function BriefPage() {
       summary: timelineLabel(brief),
       done: Boolean(brief.timeline),
       body: (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {timelines.map(([value, label]) => (
             <Chip key={value} active={brief.timeline === value} onClick={() => set({ timeline: value })}>{label}</Chip>
           ))}
@@ -397,7 +398,7 @@ export function BriefPage() {
       done: brief.priorities.length > 0,
       body: (
         <div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {prioritiesFor(brief.mode).map((priority) => (
               <Chip
                 key={priority.id}
@@ -443,9 +444,30 @@ export function BriefPage() {
     },
   ];
 
+  /**
+   * Put the live question at the top of the screen after every answer.
+   *
+   * Answered rows stay on the page so they can be reopened, which is right — but on a
+   * phone six of them fill the viewport and push the question you are meant to be
+   * answering off the bottom. Scrolling to it keeps the accordion and the small screen
+   * from fighting each other.
+   */
+  useEffect(() => {
+    if (!restored || step === 0 || step >= steps.length) return;
+
+    const node = openStepRef.current;
+    if (!node || window.matchMedia("(min-width: 1024px)").matches) return;
+
+    const top = node.getBoundingClientRect().top + window.scrollY - 84;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, restored]);
+
   const isLast = step === steps.length - 1;
   const showResults = step >= steps.length;
-  const answered = steps.filter((entry) => entry.done).length;
+  // Only steps the person has actually been through. Counting every step with a usable
+  // default read "5 answered" on a brief nobody had touched yet.
+  const answered = steps.filter((entry, index) => index < step && entry.done).length;
 
   const advance = () => {
     if (!isLast) {
@@ -744,29 +766,29 @@ export function BriefPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <main className="mx-auto grid max-w-[1180px] gap-10 px-5 py-10 md:px-8 md:py-16 lg:grid-cols-[minmax(0,370px)_minmax(0,1fr)] lg:gap-16">
+      <main className="mx-auto grid max-w-[1180px] gap-10 px-5 pb-40 pt-10 md:px-8 md:pt-16 lg:grid-cols-[minmax(0,370px)_minmax(0,1fr)] lg:gap-16 lg:pb-16">
         {/*
           The left column is why this is worth a minute of anyone's time. A centred form in
           a wide window reads as paperwork; putting the promise, the scale of the work and
           the brief-so-far beside the questions makes the page feel considered instead.
         */}
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#86868B]">
+        <aside className="order-2 lg:order-1 lg:sticky lg:top-24 lg:self-start">
+          <p className="hidden text-[11px] font-semibold uppercase tracking-[0.18em] text-[#86868B] lg:block">
             {brief.mode === "rent" ? "Rental" : "Purchase"} brief · {city.name}
           </p>
-          <h1 className="!font-sans mt-3 text-[32px] font-medium leading-[1.12] tracking-[-0.025em] text-[#1D1D1F] md:text-[40px]">
+          <h1 className="!font-sans mt-3 hidden text-[32px] font-medium leading-[1.12] tracking-[-0.025em] text-[#1D1D1F] lg:block lg:text-[40px]">
             Tell us what matters.
             <br />
             We&rsquo;ll do the reading.
           </h1>
-          <p className="mt-4 max-w-[42ch] text-[15.5px] leading-7 text-[#6E6E73]">
+          <p className="hidden max-w-[42ch] text-[15.5px] leading-7 text-[#6E6E73] lg:mt-4 lg:block">
             {inCity.length > 0
               ? `All ${inCity.length} verified societies in ${city.name} get scored against your answers — connectivity, upkeep, security, value.`
               : `Every verified society in ${city.name} gets scored against your answers.`}
           </p>
 
           {/* The brief taking shape, so the effort already spent stays visible. */}
-          {briefChips.length > 0 ? (
+          {step > 0 && briefChips.length > 0 ? (
             <div className="mt-7 border-t border-[#E4E4E9] pt-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#86868B]">So far</p>
               <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -791,8 +813,25 @@ export function BriefPage() {
           </ul>
         </aside>
 
-        <div className="min-w-0">
-        <div className="flex items-center justify-between gap-4">
+        <div className="order-1 min-w-0 lg:order-2">
+        {/* On a phone the questions have to start at the top. The full editorial column
+            below is a screen and a half of preamble that pushed the first question — and
+            its Continue button — under the fold and behind the tab bar. */}
+        <div className="lg:hidden">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#86868B]">
+            {brief.mode === "rent" ? "Rental" : "Purchase"} brief · {city.name}
+          </p>
+          <h1 className="!font-sans mt-2 text-[26px] font-medium leading-[1.15] tracking-[-0.02em] text-[#1D1D1F]">
+            Tell us what matters.
+          </h1>
+          <p className="mt-2 text-[14.5px] leading-6 text-[#6E6E73]">
+            {inCity.length > 0
+              ? `We score all ${inCity.length} verified societies in ${city.name} against your answers.`
+              : `We score every verified society in ${city.name} against your answers.`}
+          </p>
+        </div>
+
+        <div className="mt-5 flex items-center justify-between gap-4 lg:mt-0">
           <p className="text-[12.5px] font-semibold text-[#1D1D1F]">
             {/* A restored draft says so, rather than silently presenting pre-filled
                 answers as though the person had just given them. */}
@@ -813,7 +852,7 @@ export function BriefPage() {
 
             if (isOpen) {
               return (
-                <section key={entry.label} className="p-5 md:p-8">
+                <section key={entry.label} ref={openStepRef} className="scroll-mt-24 p-5 md:p-8">
                   <div className="flex items-baseline gap-3">
                     <span className="text-[11px] font-semibold tabular-nums text-[#0F7B63]">
                       {String(index + 1).padStart(2, "0")}
@@ -878,6 +917,33 @@ export function BriefPage() {
             {steps.length - step - 1} more {steps.length - step - 1 === 1 ? "question" : "questions"} · about a minute
           </p>
         ) : null}
+        </div>
+
+        {/*
+          On a phone the answer to a question can be taller than the screen — the priorities
+          step pushed Continue nearly 500px below the fold, and four of the nine steps put it
+          out of reach entirely. Pinned above the app's tab bar, the next step is always one
+          tap away however long the question is.
+        */}
+        <div className="fixed inset-x-0 bottom-[62px] z-40 border-t border-[#E4E4E9] bg-white/95 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
+          <div className="flex items-center gap-3">
+            <Button
+              disabled={loading && isLast}
+              onClick={advance}
+              className="h-12 flex-1 rounded-full bg-[#0F7B63] text-[15px] font-semibold hover:bg-[#0C6552]"
+            >
+              {isLast ? "See my shortlist" : "Continue"}
+            </Button>
+            {!steps[step]?.done ? (
+              <button
+                type="button"
+                onClick={() => setStep(step + 1)}
+                className="shrink-0 px-3 text-[13.5px] font-semibold text-[#86868B]"
+              >
+                Skip
+              </button>
+            ) : null}
+          </div>
         </div>
       </main>
     </div>
