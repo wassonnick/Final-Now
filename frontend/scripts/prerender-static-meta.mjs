@@ -1348,23 +1348,59 @@ function derivedLocalityRoutes(localityCounts) {
  * Only landmarks with enough nearby societies get a page; the API decides, not the build,
  * so the shell and the live page can never disagree about which pages exist.
  */
-async function fetchLandmarkPages() {
+/**
+ * The build must never hang on a slow backend.
+ *
+ * These pages are fetched one per landmark, so an endpoint that takes a minute turns a
+ * three-second build into a forty-minute one — which is exactly what a regression in the
+ * API did once. A whole-phase time budget means a slow backend costs the landmark shells,
+ * not the deploy, and the warning says so instead of failing silently.
+ */
+const LANDMARK_FETCH_BUDGET_MS = 90_000;
+
+async function fetchWithTimeout(url, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+
   try {
-    const index = await fetchJsonWithRetry(`${API_BASE}/landmark-pages`, 2, 5000);
-    const slugs = (index?.data || []).map((row) => row?.slug).filter(Boolean);
-    const pages = [];
+    const response = await fetch(url, { headers: { Accept: "application/json" }, signal: controller.signal });
 
-    for (const slug of slugs) {
-      const payload = await fetchJsonWithRetry(`${API_BASE}/landmark-pages/${slug}`, 2, 5000);
-      if (payload?.data?.societies?.length) pages.push(payload.data);
-    }
+    return response.ok ? await response.json() : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
-    return pages;
-  } catch (error) {
-    console.warn("Prerender: landmark pages skipped —", error?.message || error);
+async function fetchLandmarkPages() {
+  const startedAt = Date.now();
+  const index = await fetchWithTimeout(`${API_BASE}/landmark-pages`, 20_000);
+  const slugs = (index?.data || []).map((row) => row?.slug).filter(Boolean);
+
+  if (slugs.length === 0) {
+    console.warn("Prerender: no landmark pages available — shells skipped this build.");
 
     return [];
   }
+
+  const pages = [];
+
+  for (const slug of slugs) {
+    if (Date.now() - startedAt > LANDMARK_FETCH_BUDGET_MS) {
+      console.warn(
+        `Prerender: landmark budget spent after ${pages.length}/${slugs.length} pages — the rest are skipped this build.`,
+      );
+      break;
+    }
+
+    const payload = await fetchWithTimeout(`${API_BASE}/landmark-pages/${slug}`, 15_000);
+    if (payload?.data?.societies?.length) pages.push(payload.data);
+  }
+
+  console.log(`Prerender: ${pages.length} landmark pages in ${Math.round((Date.now() - startedAt) / 1000)}s.`);
+
+  return pages;
 }
 
 async function main() {

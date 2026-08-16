@@ -108,12 +108,17 @@ class LandmarkPageTest extends TestCase
 
         \Illuminate\Support\Facades\DB::enableQueryLog();
         app(LandmarkPageService::class)->payload(\App\Models\Landmark::where('slug', 'office-1')->firstOrFail());
-        $societyQueries = collect(\Illuminate\Support\Facades\DB::getQueryLog())
-            ->filter(fn ($q) => str_contains($q['query'], 'from "societies"'))
-            ->count();
+        $log = collect(\Illuminate\Support\Facades\DB::getQueryLog());
         \Illuminate\Support\Facades\DB::disableQueryLog();
 
-        $this->assertLessThanOrEqual(1, $societyQueries, "societies table was queried {$societyQueries} times for one page");
+        // Aggregates are cheap and expected — the fingerprint keying the cache runs a count
+        // and a max. What must not repeat is pulling the whole catalogue into memory.
+        $fullLoads = $log
+            ->filter(fn ($q) => str_contains($q['query'], 'from "societies"'))
+            ->reject(fn ($q) => str_contains($q['query'], 'count(') || str_contains($q['query'], 'max('))
+            ->count();
+
+        $this->assertLessThanOrEqual(1, $fullLoads, "the societies catalogue was loaded {$fullLoads} times for one page");
     }
 
     /** A society with no coordinates cannot be placed, and is not guessed at. */

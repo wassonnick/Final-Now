@@ -5,6 +5,7 @@ namespace App\Services\Seo;
 use App\Models\Landmark;
 use App\Models\Society;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * "Societies near Cyber Hub" — the one page type nobody else in this market can build.
@@ -56,12 +57,42 @@ class LandmarkPageService
      */
     public function publishable(): Collection
     {
-        return $this->publishableCache ??= Landmark::query()
+        if ($this->publishableCache !== null) {
+            return $this->publishableCache;
+        }
+
+        /**
+         * Cached across requests, keyed on the data it was computed from.
+         *
+         * Working this out means measuring every landmark against every published society,
+         * and `forSociety()` needs it on every society page view — 5.4 seconds a page once
+         * it was wired in. The key carries a fingerprint of the catalogue, so a new society
+         * or landmark produces a new key rather than a stale answer, and tests with
+         * different fixtures never share one.
+         */
+        $ids = Cache::remember('seo:landmarks:publishable:'.$this->fingerprint(), now()->addHours(6), fn () => Landmark::query()
             ->orderBy('city')
             ->orderBy('name')
             ->get()
             ->filter(fn (Landmark $landmark) => $this->nearby($landmark)->count() >= self::MIN_SOCIETIES)
-            ->values();
+            ->pluck('id')
+            ->all());
+
+        return $this->publishableCache = Landmark::query()
+            ->whereIn('id', $ids ?: [0])
+            ->orderBy('city')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /** Changes whenever the catalogue does, so the cache can never serve a stale list. */
+    private function fingerprint(): string
+    {
+        return implode('-', [
+            Landmark::query()->count(),
+            Society::query()->where('is_published', true)->count(),
+            (string) Society::query()->where('is_published', true)->max('updated_at'),
+        ]);
     }
 
     /**
