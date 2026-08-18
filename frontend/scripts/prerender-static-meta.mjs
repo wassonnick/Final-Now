@@ -1524,6 +1524,32 @@ async function main() {
 async function pruneSitemapToWrittenShells() {
   const sitemapPath = path.join(DIST_DIR, "sitemap.xml");
 
+  /**
+   * A shell only serves if render.yaml names it, and that file is committed from a
+   * developer's build while this one runs against live data. The two can legitimately
+   * differ — a society published an hour ago, a landmark that just crossed the threshold.
+   * Failing the deploy over that would be worse than the bug; dropping the URL until the
+   * next commit catches up is not.
+   */
+  let routed = null;
+  try {
+    const yaml = await fs.readFile(path.resolve(process.cwd(), "../render.yaml"), "utf8");
+    const block = yaml.split("routes:")[1] || "";
+    const sources = [...block.matchAll(/source:\s*(\S+)/g)].map((match) => match[1]);
+
+    routed = {
+      exact: new Set(sources.filter((source) => !source.endsWith("*"))),
+      wildcards: sources.filter((source) => source.endsWith("/*") && source !== "/*").map((s) => s.slice(0, -2)),
+    };
+  } catch {
+    // No render.yaml to read (a bare frontend checkout); shell existence is the only test.
+  }
+
+  const hasRule = (route) =>
+    routed === null
+    || routed.exact.has(route)
+    || routed.wildcards.some((prefix) => route.startsWith(`${prefix}/`));
+
   let sitemap;
   try {
     sitemap = await fs.readFile(sitemapPath, "utf8");
@@ -1532,7 +1558,13 @@ async function pruneSitemapToWrittenShells() {
   }
 
   const entries = sitemap.match(/<url>[\s\S]*?<\/url>/g) || [];
-  const dropped = [];
+
+  // Two different faults, and they deserve different reactions. A missing shell means this
+  // build did not produce the page. A missing rule means the committed render.yaml has not
+  // caught up with it yet — self-correcting on the next commit, and never worth failing a
+  // deploy over.
+  const unbuilt = [];
+  const unrouted = [];
 
   const kept = await Promise.all(
     entries.map(async (entry) => {
@@ -1542,33 +1574,49 @@ async function pruneSitemapToWrittenShells() {
 
       try {
         await fs.access(path.join(DIST_DIR, route.replace(/^\//, ""), "index.html"));
-        return entry;
       } catch {
-        dropped.push(route);
+        unbuilt.push(route);
         return null;
       }
+
+      if (!hasRule(route)) {
+        unrouted.push(route);
+        return null;
+      }
+
+      return entry;
     }),
   );
 
-  if (dropped.length === 0) return;
+  if (unbuilt.length === 0 && unrouted.length === 0) return;
 
-  // A handful means the usual drift. A flood means the fetch failed and pruning would
-  // quietly ship an empty sitemap instead of a loud failure.
-  const share = dropped.length / Math.max(entries.length, 1);
-  if (share > 0.05) {
+  // A handful of unbuilt pages is ordinary drift. A flood means the shell build itself
+  // failed, and quietly shipping a shrunken sitemap would hide it.
+  if (unbuilt.length / Math.max(entries.length, 1) > 0.05) {
     throw new Error(
-      `Prerender: ${dropped.length} of ${entries.length} sitemap URLs have no shell — refusing to prune. `
+      `Prerender: ${unbuilt.length} of ${entries.length} sitemap URLs have no shell — refusing to prune. `
         + "The shell build most likely failed; fix that rather than shrinking the sitemap.",
     );
   }
 
-  await fs.writeFile(sitemapPath, kept.filter(Boolean).join("\n").length
-    ? sitemap.replace(/<url>[\s\S]*?<\/url>/g, (match) => (kept.includes(match) ? match : "")).replace(/\n{3,}/g, "\n")
-    : sitemap, "utf8");
-
-  console.warn(
-    `Prerender: dropped ${dropped.length} sitemap URLs with no shell this build — ${dropped.slice(0, 4).join(", ")}${dropped.length > 4 ? ", …" : ""}.`,
+  await fs.writeFile(
+    sitemapPath,
+    sitemap.replace(/<url>[\s\S]*?<\/url>/g, (match) => (kept.includes(match) ? match : "")).replace(/\n{3,}/g, "\n"),
+    "utf8",
   );
+
+  if (unbuilt.length > 0) {
+    console.warn(`Prerender: dropped ${unbuilt.length} sitemap URLs this build wrote no shell for — ${unbuilt.slice(0, 4).join(", ")}${unbuilt.length > 4 ? ", …" : ""}.`);
+  }
+
+  if (unrouted.length > 0) {
+    console.warn(
+      `Prerender: dropped ${unrouted.length} sitemap URLs that render.yaml has no rewrite rule for `
+        + `— ${unrouted.slice(0, 4).join(", ")}${unrouted.length > 4 ? ", …" : ""}. `
+        + "Run `npm run build` locally and commit render.yaml to publish them.",
+    );
+  }
+
 }
 
 main().catch((error) => {
