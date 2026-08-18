@@ -11,6 +11,21 @@ services:
       - key: VITE_GA_MEASUREMENT_ID
         value: G-FC4045CRJS
     routes:
+      # WARNING: this block does not serve production traffic.
+      #
+      # Final-Now-1 was created by hand rather than from this blueprint, so Render ignores
+      # the routes here. Proven the hard way: 263 rules were added and deployed green, and
+      # /near/aerocity still served the SPA fallback while /near/aerocity/index.html served
+      # its real shell. The rules that actually run are in the dashboard under
+      # Final-Now-1 -> Redirects/Rewrites, ending in a /* -> /index.html catch-all that
+      # swallows anything above it without a rule.
+      #
+      # A rule working in production does NOT prove this file is applied — the same rule is
+      # usually in the dashboard too. Adding a new PAGE TYPE means adding a wildcard rule in
+      # the dashboard, above the catch-all, or the whole type serves noindex homepage copies.
+      #
+      # Kept generated and in sync regardless: it is the spec validate-seo.mjs checks the
+      # sitemap against, and what would apply if these services were ever recreated from it.
       # Keep browser API traffic on the SocietyFlats origin. This avoids login,
       # lead and account flows depending on a separate cross-origin connection
       # to Render while preserving the Laravel API as the source of truth.
