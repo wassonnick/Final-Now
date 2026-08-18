@@ -258,15 +258,69 @@ async function validatePublicFiles() {
   await fs.access(path.join(PUBLIC_DIR, "brand", "societyflats-og-image.png"));
 }
 
+/**
+ * Every URL we advertise must actually reach its shell.
+ *
+ * Render serves a nested static file only when a rewrite rule names it; anything else
+ * falls through to the SPA catch-all, which answers with the homepage's title, the
+ * homepage's canonical and `noindex`. A page in that state is worse than an unlisted one:
+ * we are asking Google to crawl a URL and then telling it the URL is a duplicate of the
+ * homepage and should not be indexed.
+ *
+ * That went unnoticed across 79 live URLs — every landmark page among them — because
+ * nothing compared the sitemap against the routing. Search Console showed it as 174
+ * "alternate page with proper canonical" and 160 "excluded by noindex tag", which reads
+ * like a content problem and was really a missing line of YAML.
+ */
+async function validateEveryAdvertisedUrlIsRoutable() {
+  const yaml = await fs.readFile(path.resolve(process.cwd(), "../render.yaml"), "utf8");
+  const routes = yaml.split("routes:")[1] || "";
+  const sources = [...routes.matchAll(/source:\s*(\S+)/g)].map((match) => match[1]);
+
+  const exact = new Set(sources.filter((source) => !source.endsWith("*")));
+  const wildcards = sources
+    .filter((source) => source.endsWith("/*") && source !== "/*")
+    .map((source) => source.slice(0, -2));
+
+  const sitemap = await fs.readFile(path.join(DIST_DIR, "sitemap.xml"), "utf8");
+  const paths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
+    .map((match) => match[1].replace(SITE_URL, ""))
+    .filter((value) => value && value !== "/");
+
+  const unreachable = [];
+
+  for (const route of paths) {
+    // A single-segment path resolves on its own — Render serves /insights from
+    // /insights/index.html unprompted. Everything deeper needs a rule.
+    if (route.split("/").filter(Boolean).length === 1) continue;
+    if (exact.has(route)) continue;
+    if (wildcards.some((prefix) => route.startsWith(`${prefix}/`))) continue;
+
+    unreachable.push(route);
+  }
+
+  if (unreachable.length > 0) {
+    const sample = unreachable.slice(0, 8).join(", ");
+    throw new Error(
+      `${unreachable.length} sitemap URLs have no rewrite rule and would serve the homepage `
+        + `fallback with noindex: ${sample}${unreachable.length > 8 ? ", …" : ""}. `
+        + "Run `npm run seo:routes` and commit render.yaml.",
+    );
+  }
+
+  console.log(`Routing: all ${paths.length} advertised URLs resolve to their own shell.`);
+}
+
 async function main() {
   await validateStaticHtml();
   await validatePublicFiles();
   await validateInternalLinks();
   await validateC37ConversionCopy();
   await validateBundleSplitting();
+  await validateEveryAdvertisedUrlIsRoutable();
 
   console.log("SEO validation passed.");
-  console.log(`Checked ${requiredRoutes.length} static HTML routes, robots.txt, sitemap.xml, manifest, favicon, conversion copy and bundle splitting.`);
+  console.log(`Checked ${requiredRoutes.length} static HTML routes, robots.txt, sitemap.xml, manifest, favicon, conversion copy, bundle splitting and rewrite-rule coverage.`);
 }
 
 main().catch((error) => {

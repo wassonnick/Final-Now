@@ -211,6 +211,44 @@ class LandmarkPageTest extends TestCase
         );
     }
 
+    /**
+     * The build needs every payload, and the API runs one worker.
+     *
+     * Sixty-nine separate requests took 94 seconds against a 90-second budget, so a page
+     * dropped out of the sitemap on every build and which one varied. One request loads
+     * the society catalogue once instead of sixty-nine times.
+     */
+    public function test_the_index_can_return_every_payload_in_one_request(): void
+    {
+        $this->landmark('Bulk Office', 28.50, 77.09);
+        foreach (range(1, 3) as $i) {
+            $this->society('Court '.$i, 28.502, 77.091 + $i / 1000);
+        }
+
+        $bulk = $this->getJson('/api/landmark-pages?full=1')->assertOk()->json('data');
+        $row = collect($bulk)->firstWhere('landmark.slug', 'bulk-office');
+
+        $this->assertNotNull($row, 'the bulk response is missing a publishable landmark');
+        $this->assertSame(3, $row['society_count']);
+        $this->assertNotEmpty($row['societies'], 'the bulk response must carry the societies, not just the names');
+        $this->assertSame(app(LandmarkPageService::class)->title(\App\Models\Landmark::where('slug', 'bulk-office')->firstOrFail()), $row['title']);
+    }
+
+    /** Without the flag the index stays cheap — it is fetched on every brief. */
+    public function test_the_plain_index_does_not_carry_payloads(): void
+    {
+        $this->landmark('Light Office', 28.50, 77.09);
+        foreach (range(1, 3) as $i) {
+            $this->society('Court '.$i, 28.502, 77.091 + $i / 1000);
+        }
+
+        $row = collect($this->getJson('/api/landmark-pages')->assertOk()->json('data'))
+            ->firstWhere('slug', 'light-office');
+
+        $this->assertNotNull($row);
+        $this->assertArrayNotHasKey('societies', $row);
+    }
+
     /** A society with no coordinates cannot be placed, and is not guessed at. */
     public function test_a_society_without_coordinates_has_no_landmark_links(): void
     {

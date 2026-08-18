@@ -14,6 +14,22 @@ function slugify(value) {
     .replace(/(^-|-$)+/g, "");
 }
 
+/**
+ * Imported sector data sometimes arrives as a bare number ("21", "93").
+ *
+ * generate-sitemap.mjs has normalised those to /gurgaon/sector-21 for a while; this file
+ * never did, so the sitemap advertised a URL the build had written at /gurgaon/21 and the
+ * advertised one fell through to the SPA fallback — a page asking to be crawled and then
+ * declaring itself a noindex duplicate of the homepage. The two must agree, so the rule
+ * lives in both places and is applied to shells and internal links alike.
+ */
+function canonicalLocalitySlug(value) {
+  const slug = slugify(value);
+  if (!slug) return "";
+
+  return /^\d+[a-z]?$/.test(slug) ? `sector-${slug}` : slug;
+}
+
 function readableFromSlug(value) {
   return String(value || "")
     .split("-")
@@ -854,7 +870,7 @@ function societySnapshot(society, faqs) {
   if (textOf(society?.rera_number)) facts.push(["RERA", textOf(society.rera_number)]);
 
   const amenities = listOf(society?.amenities).slice(0, 14);
-  const sectorSlug = slugify(society?.sector || society?.locality);
+  const sectorSlug = canonicalLocalitySlug(society?.sector || society?.locality);
 
   // This snapshot is the same content the React page renders; React replaces it on hydration.
   // It exists so crawlers (and users on slow connections) get real content on first paint.
@@ -1348,7 +1364,8 @@ function derivedLocalityRoutes(localityCounts) {
   const existing = new Set(routeMeta.map((meta) => meta.path));
   const derived = [];
 
-  for (const [slug, count] of localityCounts.entries()) {
+  for (const [rawSlug, count] of localityCounts.entries()) {
+    const slug = canonicalLocalitySlug(rawSlug);
     const routePath = `/gurgaon/${slug}`;
     if (existing.has(routePath)) continue;
 
@@ -1398,27 +1415,41 @@ async function fetchWithTimeout(url, ms) {
 
 async function fetchLandmarkPages() {
   const startedAt = Date.now();
-  const index = await fetchWithTimeout(`${API_BASE}/landmark-pages`, 20_000);
-  const slugs = (index?.data || []).map((row) => row?.slug).filter(Boolean);
 
-  if (slugs.length === 0) {
+  // One request for every payload. The per-slug endpoint still exists and still serves the
+  // live page; it is simply the wrong shape for a build that needs all of them.
+  const bulk = await fetchWithTimeout(`${API_BASE}/landmark-pages?full=1`, LANDMARK_FETCH_BUDGET_MS);
+  const rows = bulk?.data || [];
+  const pages = rows.filter((page) => page?.societies?.length);
+
+  /**
+   * An older API answers ?full=1 with the plain index and no complaint.
+   *
+   * Frontend and backend deploy from the same repo but not in lockstep, so a build can run
+   * against a backend that predates the bulk endpoint. Without this the whole page type
+   * would silently vanish from that build — the exact failure this work exists to stop.
+   */
+  if (pages.length === 0 && rows.length > 0) {
+    console.warn(`Prerender: backend has no bulk landmark endpoint yet — falling back to ${rows.length} single fetches.`);
+
+    const queue = rows.map((row) => row?.slug).filter(Boolean);
+    const workers = Array.from({ length: 6 }, async () => {
+      while (queue.length > 0) {
+        if (Date.now() - startedAt > LANDMARK_FETCH_BUDGET_MS) return;
+
+        const payload = await fetchWithTimeout(`${API_BASE}/landmark-pages/${queue.shift()}`, 15_000);
+        if (payload?.data?.societies?.length) pages.push(payload.data);
+      }
+    });
+
+    await Promise.all(workers);
+    pages.sort((a, b) => String(a.landmark?.slug).localeCompare(String(b.landmark?.slug)));
+  }
+
+  if (pages.length === 0) {
     console.warn("Prerender: no landmark pages available — shells skipped this build.");
 
     return [];
-  }
-
-  const pages = [];
-
-  for (const slug of slugs) {
-    if (Date.now() - startedAt > LANDMARK_FETCH_BUDGET_MS) {
-      console.warn(
-        `Prerender: landmark budget spent after ${pages.length}/${slugs.length} pages — the rest are skipped this build.`,
-      );
-      break;
-    }
-
-    const payload = await fetchWithTimeout(`${API_BASE}/landmark-pages/${slug}`, 15_000);
-    if (payload?.data?.societies?.length) pages.push(payload.data);
   }
 
   console.log(`Prerender: ${pages.length} landmark pages in ${Math.round((Date.now() - startedAt) / 1000)}s.`);
@@ -1475,6 +1506,68 @@ async function main() {
     `Static SEO shells generated for ${written.length} routes ` +
       `(${societies.length} societies, ${societies.length} RWA pages, ${properties.length} properties, ${comparePages.length} compare pages). ` +
       `SPA fallback written to 404.html.`,
+  );
+
+  await pruneSitemapToWrittenShells();
+}
+
+/**
+ * Never advertise a URL the build did not write.
+ *
+ * The sitemap is generated from the API and the shells are written here, so the two can
+ * disagree — a landmark dropped by the fetch budget, or a slug the two files spelled
+ * differently. Either way the advertised URL falls through to the SPA catch-all, which
+ * answers with the homepage's canonical and `noindex`: we ask Google to crawl a page and
+ * then tell it the page is a duplicate that should not be indexed. Better to leave the URL
+ * out until the next build writes it.
+ */
+async function pruneSitemapToWrittenShells() {
+  const sitemapPath = path.join(DIST_DIR, "sitemap.xml");
+
+  let sitemap;
+  try {
+    sitemap = await fs.readFile(sitemapPath, "utf8");
+  } catch {
+    return;
+  }
+
+  const entries = sitemap.match(/<url>[\s\S]*?<\/url>/g) || [];
+  const dropped = [];
+
+  const kept = await Promise.all(
+    entries.map(async (entry) => {
+      const route = (entry.match(/<loc>([^<]+)<\/loc>/) || [])[1]?.replace(SITE_URL, "") || "";
+      // Single-segment paths resolve without a rewrite; the deep ones are the risk.
+      if (route.split("/").filter(Boolean).length < 2) return entry;
+
+      try {
+        await fs.access(path.join(DIST_DIR, route.replace(/^\//, ""), "index.html"));
+        return entry;
+      } catch {
+        dropped.push(route);
+        return null;
+      }
+    }),
+  );
+
+  if (dropped.length === 0) return;
+
+  // A handful means the usual drift. A flood means the fetch failed and pruning would
+  // quietly ship an empty sitemap instead of a loud failure.
+  const share = dropped.length / Math.max(entries.length, 1);
+  if (share > 0.05) {
+    throw new Error(
+      `Prerender: ${dropped.length} of ${entries.length} sitemap URLs have no shell — refusing to prune. `
+        + "The shell build most likely failed; fix that rather than shrinking the sitemap.",
+    );
+  }
+
+  await fs.writeFile(sitemapPath, kept.filter(Boolean).join("\n").length
+    ? sitemap.replace(/<url>[\s\S]*?<\/url>/g, (match) => (kept.includes(match) ? match : "")).replace(/\n{3,}/g, "\n")
+    : sitemap, "utf8");
+
+  console.warn(
+    `Prerender: dropped ${dropped.length} sitemap URLs with no shell this build — ${dropped.slice(0, 4).join(", ")}${dropped.length > 4 ? ", …" : ""}.`,
   );
 }
 

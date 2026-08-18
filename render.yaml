@@ -25,19 +25,428 @@ services:
         source: /sitemap-live.xml
         destination: https://final-now.onrender.com/api/seo/sitemap.xml
 
-      # C33 static SEO HTML rewrites. Keep these above the SPA fallback.
+      # BEGIN generated shell routes — written by scripts/sync-render-routes.mjs
+      # 263 prerendered pages. Do not edit by hand — rebuild instead.
       - type: rewrite
-        source: /gurgaon
-        destination: /gurgaon/index.html
+        source: /builder/adani
+        destination: /builder/adani/index.html
       - type: rewrite
-        source: /gurgaon/societies
-        destination: /gurgaon/societies/index.html
+        source: /builder/alpha-corp
+        destination: /builder/alpha-corp/index.html
+      - type: rewrite
+        source: /builder/ats
+        destination: /builder/ats/index.html
+      - type: rewrite
+        source: /builder/dlf
+        destination: /builder/dlf/index.html
+      - type: rewrite
+        source: /builder/emaar
+        destination: /builder/emaar/index.html
+      - type: rewrite
+        source: /builder/godrej
+        destination: /builder/godrej/index.html
+      - type: rewrite
+        source: /builder/m3m
+        destination: /builder/m3m/index.html
+      - type: rewrite
+        source: /builder/tulip
+        destination: /builder/tulip/index.html
+      - type: rewrite
+        source: /gurgaon-flats/affordable
+        destination: /gurgaon-flats/affordable/index.html
+      - type: rewrite
+        source: /gurgaon-flats/elite
+        destination: /gurgaon-flats/elite/index.html
+      - type: rewrite
+        source: /gurgaon-flats/luxury
+        destination: /gurgaon-flats/luxury/index.html
+      - type: rewrite
+        source: /gurgaon-flats/ultra-luxury
+        destination: /gurgaon-flats/ultra-luxury/index.html
+      - type: rewrite
+        source: /gurgaon-flats/under-2-cr
+        destination: /gurgaon-flats/under-2-cr/index.html
+      - type: rewrite
+        source: /gurgaon-flats/under-3-cr
+        destination: /gurgaon-flats/under-3-cr/index.html
+      - type: rewrite
+        source: /gurgaon/28-sushant-lok-phase-1
+        destination: /gurgaon/28-sushant-lok-phase-1/index.html
+      - type: rewrite
+        source: /gurgaon/32-33
+        destination: /gurgaon/32-33/index.html
+      - type: rewrite
+        source: /gurgaon/a-3-block
+        destination: /gurgaon/a-3-block/index.html
+      - type: rewrite
+        source: /gurgaon/a-6-block
+        destination: /gurgaon/a-6-block/index.html
+      - type: rewrite
+        source: /gurgaon/block-bg-5
+        destination: /gurgaon/block-bg-5/index.html
+      - type: rewrite
+        source: /gurgaon/block-d-tagore-garden-extension
+        destination: /gurgaon/block-d-tagore-garden-extension/index.html
+      - type: rewrite
+        source: /gurgaon/block-gh-10
+        destination: /gurgaon/block-gh-10/index.html
+      - type: rewrite
+        source: /gurgaon/block-gh-13
+        destination: /gurgaon/block-gh-13/index.html
+      - type: rewrite
+        source: /gurgaon/c1
+        destination: /gurgaon/c1/index.html
+      - type: rewrite
+        source: /gurgaon/chi-v
+        destination: /gurgaon/chi-v/index.html
+      - type: rewrite
+        source: /gurgaon/d-block
+        destination: /gurgaon/d-block/index.html
+      - type: rewrite
+        source: /gurgaon/dakshini-pitampura
+        destination: /gurgaon/dakshini-pitampura/index.html
+      - type: rewrite
+        source: /gurgaon/dwarka-expressway
+        destination: /gurgaon/dwarka-expressway/index.html
+      - type: rewrite
+        source: /gurgaon/gh-12
+        destination: /gurgaon/gh-12/index.html
+      - type: rewrite
+        source: /gurgaon/gh-5-and-gh-7
+        destination: /gurgaon/gh-5-and-gh-7/index.html
+      - type: rewrite
+        source: /gurgaon/gh-8
+        destination: /gurgaon/gh-8/index.html
+      - type: rewrite
+        source: /gurgaon/gh-9-block
+        destination: /gurgaon/gh-9-block/index.html
+      - type: rewrite
+        source: /gurgaon/golf-course-extension-road
+        destination: /gurgaon/golf-course-extension-road/index.html
+      - type: rewrite
+        source: /gurgaon/golf-course-road
+        destination: /gurgaon/golf-course-road/index.html
+      - type: rewrite
+        source: /gurgaon/golf-resort
+        destination: /gurgaon/golf-resort/index.html
+      - type: rewrite
+        source: /gurgaon/govind-vihar
+        destination: /gurgaon/govind-vihar/index.html
+      - type: rewrite
+        source: /gurgaon/greater-kailash-2-w-block
+        destination: /gurgaon/greater-kailash-2-w-block/index.html
+      - type: rewrite
+        source: /gurgaon/janakpuri
+        destination: /gurgaon/janakpuri/index.html
+      - type: rewrite
+        source: /gurgaon/karol-bagh
+        destination: /gurgaon/karol-bagh/index.html
+      - type: rewrite
+        source: /gurgaon/m9-m10-m11
+        destination: /gurgaon/m9-m10-m11/index.html
+      - type: rewrite
+        source: /gurgaon/mandi
+        destination: /gurgaon/mandi/index.html
+      - type: rewrite
+        source: /gurgaon/moti-nagar
+        destination: /gurgaon/moti-nagar/index.html
+      - type: rewrite
+        source: /gurgaon/omicron-i
+        destination: /gurgaon/omicron-i/index.html
+      - type: rewrite
+        source: /gurgaon/paschim-vihar
+        destination: /gurgaon/paschim-vihar/index.html
+      - type: rewrite
+        source: /gurgaon/paschim-vihar-delhi
+        destination: /gurgaon/paschim-vihar-delhi/index.html
+      - type: rewrite
+        source: /gurgaon/pi-i-and-ii
+        destination: /gurgaon/pi-i-and-ii/index.html
+      - type: rewrite
+        source: /gurgaon/pitampura
+        destination: /gurgaon/pitampura/index.html
+      - type: rewrite
+        source: /gurgaon/pitampura-delhi
+        destination: /gurgaon/pitampura-delhi/index.html
       - type: rewrite
         source: /gurgaon/properties
         destination: /gurgaon/properties/index.html
       - type: rewrite
+        source: /gurgaon/qu-block
+        destination: /gurgaon/qu-block/index.html
+      - type: rewrite
+        source: /gurgaon/raj-nagar-extension
+        destination: /gurgaon/raj-nagar-extension/index.html
+      - type: rewrite
+        source: /gurgaon/rajouri-garden-delhi
+        destination: /gurgaon/rajouri-garden-delhi/index.html
+      - type: rewrite
+        source: /gurgaon/sainik-vihar
+        destination: /gurgaon/sainik-vihar/index.html
+      - type: rewrite
+        source: /gurgaon/sector-1
+        destination: /gurgaon/sector-1/index.html
+      - type: rewrite
+        source: /gurgaon/sector-10
+        destination: /gurgaon/sector-10/index.html
+      - type: rewrite
+        source: /gurgaon/sector-100
+        destination: /gurgaon/sector-100/index.html
+      - type: rewrite
+        source: /gurgaon/sector-102
+        destination: /gurgaon/sector-102/index.html
+      - type: rewrite
+        source: /gurgaon/sector-103
+        destination: /gurgaon/sector-103/index.html
+      - type: rewrite
+        source: /gurgaon/sector-104
+        destination: /gurgaon/sector-104/index.html
+      - type: rewrite
+        source: /gurgaon/sector-105
+        destination: /gurgaon/sector-105/index.html
+      - type: rewrite
+        source: /gurgaon/sector-105n
+        destination: /gurgaon/sector-105n/index.html
+      - type: rewrite
+        source: /gurgaon/sector-106
+        destination: /gurgaon/sector-106/index.html
+      - type: rewrite
+        source: /gurgaon/sector-107
+        destination: /gurgaon/sector-107/index.html
+      - type: rewrite
+        source: /gurgaon/sector-108
+        destination: /gurgaon/sector-108/index.html
+      - type: rewrite
+        source: /gurgaon/sector-109
+        destination: /gurgaon/sector-109/index.html
+      - type: rewrite
+        source: /gurgaon/sector-110
+        destination: /gurgaon/sector-110/index.html
+      - type: rewrite
+        source: /gurgaon/sector-111
+        destination: /gurgaon/sector-111/index.html
+      - type: rewrite
+        source: /gurgaon/sector-112
+        destination: /gurgaon/sector-112/index.html
+      - type: rewrite
+        source: /gurgaon/sector-112r
+        destination: /gurgaon/sector-112r/index.html
+      - type: rewrite
+        source: /gurgaon/sector-113
+        destination: /gurgaon/sector-113/index.html
+      - type: rewrite
+        source: /gurgaon/sector-118
+        destination: /gurgaon/sector-118/index.html
+      - type: rewrite
+        source: /gurgaon/sector-119
+        destination: /gurgaon/sector-119/index.html
+      - type: rewrite
+        source: /gurgaon/sector-11a
+        destination: /gurgaon/sector-11a/index.html
+      - type: rewrite
+        source: /gurgaon/sector-11d
+        destination: /gurgaon/sector-11d/index.html
+      - type: rewrite
+        source: /gurgaon/sector-12
+        destination: /gurgaon/sector-12/index.html
+      - type: rewrite
+        source: /gurgaon/sector-120
+        destination: /gurgaon/sector-120/index.html
+      - type: rewrite
+        source: /gurgaon/sector-121
+        destination: /gurgaon/sector-121/index.html
+      - type: rewrite
+        source: /gurgaon/sector-124
+        destination: /gurgaon/sector-124/index.html
+      - type: rewrite
+        source: /gurgaon/sector-128
+        destination: /gurgaon/sector-128/index.html
+      - type: rewrite
+        source: /gurgaon/sector-129
+        destination: /gurgaon/sector-129/index.html
+      - type: rewrite
+        source: /gurgaon/sector-12d
+        destination: /gurgaon/sector-12d/index.html
+      - type: rewrite
+        source: /gurgaon/sector-13
+        destination: /gurgaon/sector-13/index.html
+      - type: rewrite
+        source: /gurgaon/sector-133
+        destination: /gurgaon/sector-133/index.html
+      - type: rewrite
+        source: /gurgaon/sector-134
+        destination: /gurgaon/sector-134/index.html
+      - type: rewrite
+        source: /gurgaon/sector-137
+        destination: /gurgaon/sector-137/index.html
+      - type: rewrite
+        source: /gurgaon/sector-137r
+        destination: /gurgaon/sector-137r/index.html
+      - type: rewrite
+        source: /gurgaon/sector-143
+        destination: /gurgaon/sector-143/index.html
+      - type: rewrite
+        source: /gurgaon/sector-143a
+        destination: /gurgaon/sector-143a/index.html
+      - type: rewrite
+        source: /gurgaon/sector-144
+        destination: /gurgaon/sector-144/index.html
+      - type: rewrite
+        source: /gurgaon/sector-146
+        destination: /gurgaon/sector-146/index.html
+      - type: rewrite
+        source: /gurgaon/sector-149
+        destination: /gurgaon/sector-149/index.html
+      - type: rewrite
+        source: /gurgaon/sector-150
+        destination: /gurgaon/sector-150/index.html
+      - type: rewrite
+        source: /gurgaon/sector-151
+        destination: /gurgaon/sector-151/index.html
+      - type: rewrite
+        source: /gurgaon/sector-152
+        destination: /gurgaon/sector-152/index.html
+      - type: rewrite
+        source: /gurgaon/sector-16
+        destination: /gurgaon/sector-16/index.html
+      - type: rewrite
+        source: /gurgaon/sector-166
+        destination: /gurgaon/sector-166/index.html
+      - type: rewrite
+        source: /gurgaon/sector-168
+        destination: /gurgaon/sector-168/index.html
+      - type: rewrite
+        source: /gurgaon/sector-16b
+        destination: /gurgaon/sector-16b/index.html
+      - type: rewrite
+        source: /gurgaon/sector-17
+        destination: /gurgaon/sector-17/index.html
+      - type: rewrite
+        source: /gurgaon/sector-19
+        destination: /gurgaon/sector-19/index.html
+      - type: rewrite
+        source: /gurgaon/sector-1a-m-1a-imt-manesar
+        destination: /gurgaon/sector-1a-m-1a-imt-manesar/index.html
+      - type: rewrite
+        source: /gurgaon/sector-2
+        destination: /gurgaon/sector-2/index.html
+      - type: rewrite
+        source: /gurgaon/sector-21
+        destination: /gurgaon/sector-21/index.html
+      - type: rewrite
+        source: /gurgaon/sector-22d
+        destination: /gurgaon/sector-22d/index.html
+      - type: rewrite
+        source: /gurgaon/sector-24
+        destination: /gurgaon/sector-24/index.html
+      - type: rewrite
+        source: /gurgaon/sector-26
+        destination: /gurgaon/sector-26/index.html
+      - type: rewrite
+        source: /gurgaon/sector-27
+        destination: /gurgaon/sector-27/index.html
+      - type: rewrite
+        source: /gurgaon/sector-28
+        destination: /gurgaon/sector-28/index.html
+      - type: rewrite
+        source: /gurgaon/sector-28-sushant-lok-1
+        destination: /gurgaon/sector-28-sushant-lok-1/index.html
+      - type: rewrite
+        source: /gurgaon/sector-29
+        destination: /gurgaon/sector-29/index.html
+      - type: rewrite
+        source: /gurgaon/sector-32
+        destination: /gurgaon/sector-32/index.html
+      - type: rewrite
+        source: /gurgaon/sector-33
+        destination: /gurgaon/sector-33/index.html
+      - type: rewrite
+        source: /gurgaon/sector-35
+        destination: /gurgaon/sector-35/index.html
+      - type: rewrite
+        source: /gurgaon/sector-35-36
+        destination: /gurgaon/sector-35-36/index.html
+      - type: rewrite
+        source: /gurgaon/sector-36
+        destination: /gurgaon/sector-36/index.html
+      - type: rewrite
+        source: /gurgaon/sector-36a
+        destination: /gurgaon/sector-36a/index.html
+      - type: rewrite
+        source: /gurgaon/sector-37d
+        destination: /gurgaon/sector-37d/index.html
+      - type: rewrite
+        source: /gurgaon/sector-4
+        destination: /gurgaon/sector-4/index.html
+      - type: rewrite
+        source: /gurgaon/sector-42
+        destination: /gurgaon/sector-42/index.html
+      - type: rewrite
+        source: /gurgaon/sector-43
+        destination: /gurgaon/sector-43/index.html
+      - type: rewrite
+        source: /gurgaon/sector-43g
+        destination: /gurgaon/sector-43g/index.html
+      - type: rewrite
+        source: /gurgaon/sector-44
+        destination: /gurgaon/sector-44/index.html
+      - type: rewrite
+        source: /gurgaon/sector-45
+        destination: /gurgaon/sector-45/index.html
+      - type: rewrite
+        source: /gurgaon/sector-47
+        destination: /gurgaon/sector-47/index.html
+      - type: rewrite
+        source: /gurgaon/sector-48
+        destination: /gurgaon/sector-48/index.html
+      - type: rewrite
+        source: /gurgaon/sector-49
+        destination: /gurgaon/sector-49/index.html
+      - type: rewrite
+        source: /gurgaon/sector-5
+        destination: /gurgaon/sector-5/index.html
+      - type: rewrite
+        source: /gurgaon/sector-50
+        destination: /gurgaon/sector-50/index.html
+      - type: rewrite
+        source: /gurgaon/sector-51
+        destination: /gurgaon/sector-51/index.html
+      - type: rewrite
+        source: /gurgaon/sector-52
+        destination: /gurgaon/sector-52/index.html
+      - type: rewrite
+        source: /gurgaon/sector-53
+        destination: /gurgaon/sector-53/index.html
+      - type: rewrite
+        source: /gurgaon/sector-54
+        destination: /gurgaon/sector-54/index.html
+      - type: rewrite
         source: /gurgaon/sector-56
         destination: /gurgaon/sector-56/index.html
+      - type: rewrite
+        source: /gurgaon/sector-57
+        destination: /gurgaon/sector-57/index.html
+      - type: rewrite
+        source: /gurgaon/sector-58
+        destination: /gurgaon/sector-58/index.html
+      - type: rewrite
+        source: /gurgaon/sector-59
+        destination: /gurgaon/sector-59/index.html
+      - type: rewrite
+        source: /gurgaon/sector-60
+        destination: /gurgaon/sector-60/index.html
+      - type: rewrite
+        source: /gurgaon/sector-61
+        destination: /gurgaon/sector-61/index.html
+      - type: rewrite
+        source: /gurgaon/sector-62
+        destination: /gurgaon/sector-62/index.html
+      - type: rewrite
+        source: /gurgaon/sector-63
+        destination: /gurgaon/sector-63/index.html
+      - type: rewrite
+        source: /gurgaon/sector-63a
+        destination: /gurgaon/sector-63a/index.html
       - type: rewrite
         source: /gurgaon/sector-65
         destination: /gurgaon/sector-65/index.html
@@ -48,87 +457,366 @@ services:
         source: /gurgaon/sector-67
         destination: /gurgaon/sector-67/index.html
       - type: rewrite
+        source: /gurgaon/sector-67a
+        destination: /gurgaon/sector-67a/index.html
+      - type: rewrite
+        source: /gurgaon/sector-68
+        destination: /gurgaon/sector-68/index.html
+      - type: rewrite
+        source: /gurgaon/sector-69
+        destination: /gurgaon/sector-69/index.html
+      - type: rewrite
         source: /gurgaon/sector-70
         destination: /gurgaon/sector-70/index.html
       - type: rewrite
-        source: /gurgaon/sector-102
-        destination: /gurgaon/sector-102/index.html
+        source: /gurgaon/sector-70a
+        destination: /gurgaon/sector-70a/index.html
       - type: rewrite
-        source: /gurgaon/golf-course-road
-        destination: /gurgaon/golf-course-road/index.html
+        source: /gurgaon/sector-71
+        destination: /gurgaon/sector-71/index.html
       - type: rewrite
-        source: /gurgaon/golf-course-extension-road
-        destination: /gurgaon/golf-course-extension-road/index.html
+        source: /gurgaon/sector-71g
+        destination: /gurgaon/sector-71g/index.html
       - type: rewrite
-        source: /gurgaon/dwarka-expressway
-        destination: /gurgaon/dwarka-expressway/index.html
+        source: /gurgaon/sector-72
+        destination: /gurgaon/sector-72/index.html
+      - type: rewrite
+        source: /gurgaon/sector-73
+        destination: /gurgaon/sector-73/index.html
+      - type: rewrite
+        source: /gurgaon/sector-74
+        destination: /gurgaon/sector-74/index.html
+      - type: rewrite
+        source: /gurgaon/sector-75
+        destination: /gurgaon/sector-75/index.html
+      - type: rewrite
+        source: /gurgaon/sector-76
+        destination: /gurgaon/sector-76/index.html
+      - type: rewrite
+        source: /gurgaon/sector-77
+        destination: /gurgaon/sector-77/index.html
+      - type: rewrite
+        source: /gurgaon/sector-78
+        destination: /gurgaon/sector-78/index.html
+      - type: rewrite
+        source: /gurgaon/sector-78p
+        destination: /gurgaon/sector-78p/index.html
+      - type: rewrite
+        source: /gurgaon/sector-79
+        destination: /gurgaon/sector-79/index.html
+      - type: rewrite
+        source: /gurgaon/sector-79b
+        destination: /gurgaon/sector-79b/index.html
+      - type: rewrite
+        source: /gurgaon/sector-79n
+        destination: /gurgaon/sector-79n/index.html
+      - type: rewrite
+        source: /gurgaon/sector-8
+        destination: /gurgaon/sector-8/index.html
+      - type: rewrite
+        source: /gurgaon/sector-80
+        destination: /gurgaon/sector-80/index.html
+      - type: rewrite
+        source: /gurgaon/sector-81
+        destination: /gurgaon/sector-81/index.html
+      - type: rewrite
+        source: /gurgaon/sector-82
+        destination: /gurgaon/sector-82/index.html
+      - type: rewrite
+        source: /gurgaon/sector-82a
+        destination: /gurgaon/sector-82a/index.html
+      - type: rewrite
+        source: /gurgaon/sector-83
+        destination: /gurgaon/sector-83/index.html
+      - type: rewrite
+        source: /gurgaon/sector-83g
+        destination: /gurgaon/sector-83g/index.html
+      - type: rewrite
+        source: /gurgaon/sector-84
+        destination: /gurgaon/sector-84/index.html
+      - type: rewrite
+        source: /gurgaon/sector-85
+        destination: /gurgaon/sector-85/index.html
+      - type: rewrite
+        source: /gurgaon/sector-86
+        destination: /gurgaon/sector-86/index.html
+      - type: rewrite
+        source: /gurgaon/sector-86g
+        destination: /gurgaon/sector-86g/index.html
+      - type: rewrite
+        source: /gurgaon/sector-86r
+        destination: /gurgaon/sector-86r/index.html
+      - type: rewrite
+        source: /gurgaon/sector-88
+        destination: /gurgaon/sector-88/index.html
+      - type: rewrite
+        source: /gurgaon/sector-89
+        destination: /gurgaon/sector-89/index.html
+      - type: rewrite
+        source: /gurgaon/sector-89a
+        destination: /gurgaon/sector-89a/index.html
+      - type: rewrite
+        source: /gurgaon/sector-89g
+        destination: /gurgaon/sector-89g/index.html
+      - type: rewrite
+        source: /gurgaon/sector-90
+        destination: /gurgaon/sector-90/index.html
+      - type: rewrite
+        source: /gurgaon/sector-92
+        destination: /gurgaon/sector-92/index.html
+      - type: rewrite
+        source: /gurgaon/sector-93
+        destination: /gurgaon/sector-93/index.html
+      - type: rewrite
+        source: /gurgaon/sector-93a
+        destination: /gurgaon/sector-93a/index.html
+      - type: rewrite
+        source: /gurgaon/sector-93b
+        destination: /gurgaon/sector-93b/index.html
+      - type: rewrite
+        source: /gurgaon/sector-94
+        destination: /gurgaon/sector-94/index.html
+      - type: rewrite
+        source: /gurgaon/sector-95a
+        destination: /gurgaon/sector-95a/index.html
+      - type: rewrite
+        source: /gurgaon/sector-97
+        destination: /gurgaon/sector-97/index.html
+      - type: rewrite
+        source: /gurgaon/sector-99
+        destination: /gurgaon/sector-99/index.html
+      - type: rewrite
+        source: /gurgaon/sector-99a
+        destination: /gurgaon/sector-99a/index.html
+      - type: rewrite
+        source: /gurgaon/shiva-enclave
+        destination: /gurgaon/shiva-enclave/index.html
+      - type: rewrite
+        source: /gurgaon/societies
+        destination: /gurgaon/societies/index.html
       - type: rewrite
         source: /gurgaon/sohna-road
         destination: /gurgaon/sohna-road/index.html
       - type: rewrite
-        source: /builder/dlf
-        destination: /builder/dlf/index.html
+        source: /gurgaon/subhash-nagar-tilak-nagar
+        destination: /gurgaon/subhash-nagar-tilak-nagar/index.html
       - type: rewrite
-        source: /builder/m3m
-        destination: /builder/m3m/index.html
+        source: /gurgaon/tech-zone-iv
+        destination: /gurgaon/tech-zone-iv/index.html
       - type: rewrite
-        source: /builder/emaar
-        destination: /builder/emaar/index.html
+        source: /gurgaon/tilak-nagar
+        destination: /gurgaon/tilak-nagar/index.html
       - type: rewrite
-        source: /builder/ats
-        destination: /builder/ats/index.html
+        source: /gurgaon/vikaspuri
+        destination: /gurgaon/vikaspuri/index.html
       - type: rewrite
-        source: /builder/godrej
-        destination: /builder/godrej/index.html
+        source: /near/advant-navis-business-park
+        destination: /near/advant-navis-business-park/index.html
       - type: rewrite
-        source: /builder/adani
-        destination: /builder/adani/index.html
+        source: /near/aerocity
+        destination: /near/aerocity/index.html
       - type: rewrite
-        source: /builder/tulip
-        destination: /builder/tulip/index.html
+        source: /near/alpha-commercial-belt
+        destination: /near/alpha-commercial-belt/index.html
       - type: rewrite
-        source: /builder/alpha-corp
-        destination: /builder/alpha-corp/index.html
+        source: /near/ambience-island
+        destination: /near/ambience-island/index.html
       - type: rewrite
-        source: /societies
-        destination: /societies/index.html
+        source: /near/ambience-mall-gurgaon
+        destination: /near/ambience-mall-gurgaon/index.html
       - type: rewrite
-        source: /properties
-        destination: /properties/index.html
+        source: /near/amity-university-noida
+        destination: /near/amity-university-noida/index.html
       - type: rewrite
-        source: /broker-crm
-        destination: /broker-crm/index.html
+        source: /near/artemis-hospital
+        destination: /near/artemis-hospital/index.html
       - type: rewrite
-        source: /recommendations
-        destination: /recommendations/index.html
-
+        source: /near/botanical-garden-metro
+        destination: /near/botanical-garden-metro/index.html
       - type: rewrite
-        source: /builder-floors
-        destination: /builder-floors/index.html
+        source: /near/candor-techspace-sector-21
+        destination: /near/candor-techspace-sector-21/index.html
       - type: rewrite
-        source: /builder-portal
-        destination: /builder-portal/index.html
+        source: /near/cyber-city-rapid-metro
+        destination: /near/cyber-city-rapid-metro/index.html
       - type: rewrite
-        source: /chat
-        destination: /chat/index.html
+        source: /near/delhi-university-north-campus
+        destination: /near/delhi-university-north-campus/index.html
       - type: rewrite
-        source: /help
-        destination: /help/index.html
+        source: /near/dlf-cyber-city
+        destination: /near/dlf-cyber-city/index.html
       - type: rewrite
-        source: /investment-calculator
-        destination: /investment-calculator/index.html
+        source: /near/dlf-cyber-hub
+        destination: /near/dlf-cyber-hub/index.html
       - type: rewrite
-        source: /nri-services
-        destination: /nri-services/index.html
+        source: /near/dlf-downtown-gurugram
+        destination: /near/dlf-downtown-gurugram/index.html
       - type: rewrite
-        source: /privacy
-        destination: /privacy/index.html
+        source: /near/dlf-mall-of-india
+        destination: /near/dlf-mall-of-india/index.html
       - type: rewrite
-        source: /trust
-        destination: /trust/index.html
+        source: /near/dps-sector-45
+        destination: /near/dps-sector-45/index.html
       - type: rewrite
-        source: /404
-        destination: /404/index.html
+        source: /near/dwarka-expressway
+        destination: /near/dwarka-expressway/index.html
+      - type: rewrite
+        source: /near/dwarka-sector-10-metro
+        destination: /near/dwarka-sector-10-metro/index.html
+      - type: rewrite
+        source: /near/dwarka-sector-21-metro
+        destination: /near/dwarka-sector-21-metro/index.html
+      - type: rewrite
+        source: /near/fortis-hospital-noida
+        destination: /near/fortis-hospital-noida/index.html
+      - type: rewrite
+        source: /near/fortis-memorial-research-institute
+        destination: /near/fortis-memorial-research-institute/index.html
+      - type: rewrite
+        source: /near/gaur-city
+        destination: /near/gaur-city/index.html
+      - type: rewrite
+        source: /near/golf-course-extension-road
+        destination: /near/golf-course-extension-road/index.html
+      - type: rewrite
+        source: /near/golf-course-road
+        destination: /near/golf-course-road/index.html
+      - type: rewrite
+        source: /near/huda-city-centre-metro
+        destination: /near/huda-city-centre-metro/index.html
+      - type: rewrite
+        source: /near/iffco-chowk
+        destination: /near/iffco-chowk/index.html
+      - type: rewrite
+        source: /near/imt-manesar
+        destination: /near/imt-manesar/index.html
+      - type: rewrite
+        source: /near/indira-gandhi-international-airport
+        destination: /near/indira-gandhi-international-airport/index.html
+      - type: rewrite
+        source: /near/indirapuram
+        destination: /near/indirapuram/index.html
+      - type: rewrite
+        source: /near/janakpuri-west-metro
+        destination: /near/janakpuri-west-metro/index.html
+      - type: rewrite
+        source: /near/jasola-district-centre
+        destination: /near/jasola-district-centre/index.html
+      - type: rewrite
+        source: /near/jaypee-hospital-noida
+        destination: /near/jaypee-hospital-noida/index.html
+      - type: rewrite
+        source: /near/karol-bagh
+        destination: /near/karol-bagh/index.html
+      - type: rewrite
+        source: /near/knowledge-park-greater-noida
+        destination: /near/knowledge-park-greater-noida/index.html
+      - type: rewrite
+        source: /near/max-hospital-gurugram
+        destination: /near/max-hospital-gurugram/index.html
+      - type: rewrite
+        source: /near/medanta-the-medicity
+        destination: /near/medanta-the-medicity/index.html
+      - type: rewrite
+        source: /near/mg-road-metro-gurgaon
+        destination: /near/mg-road-metro-gurgaon/index.html
+      - type: rewrite
+        source: /near/nehru-place
+        destination: /near/nehru-place/index.html
+      - type: rewrite
+        source: /near/netaji-subhash-place-metro
+        destination: /near/netaji-subhash-place-metro/index.html
+      - type: rewrite
+        source: /near/new-gurugram-sector-82-95
+        destination: /near/new-gurugram-sector-82-95/index.html
+      - type: rewrite
+        source: /near/noida-city-centre-metro
+        destination: /near/noida-city-centre-metro/index.html
+      - type: rewrite
+        source: /near/noida-electronic-city-metro
+        destination: /near/noida-electronic-city-metro/index.html
+      - type: rewrite
+        source: /near/noida-expressway
+        destination: /near/noida-expressway/index.html
+      - type: rewrite
+        source: /near/noida-extension
+        destination: /near/noida-extension/index.html
+      - type: rewrite
+        source: /near/noida-sector-137-metro
+        destination: /near/noida-sector-137-metro/index.html
+      - type: rewrite
+        source: /near/noida-sector-16-metro
+        destination: /near/noida-sector-16-metro/index.html
+      - type: rewrite
+        source: /near/noida-sector-18-market
+        destination: /near/noida-sector-18-market/index.html
+      - type: rewrite
+        source: /near/noida-sector-62-it-hub
+        destination: /near/noida-sector-62-it-hub/index.html
+      - type: rewrite
+        source: /near/okhla-industrial-area
+        destination: /near/okhla-industrial-area/index.html
+      - type: rewrite
+        source: /near/one-horizon-center
+        destination: /near/one-horizon-center/index.html
+      - type: rewrite
+        source: /near/paras-hospital-gurugram
+        destination: /near/paras-hospital-gurugram/index.html
+      - type: rewrite
+        source: /near/pari-chowk
+        destination: /near/pari-chowk/index.html
+      - type: rewrite
+        source: /near/punjabi-bagh-metro
+        destination: /near/punjabi-bagh-metro/index.html
+      - type: rewrite
+        source: /near/rajiv-chowk-gurgaon
+        destination: /near/rajiv-chowk-gurgaon/index.html
+      - type: rewrite
+        source: /near/rajouri-garden-metro
+        destination: /near/rajouri-garden-metro/index.html
+      - type: rewrite
+        source: /near/sector-29-market
+        destination: /near/sector-29-market/index.html
+      - type: rewrite
+        source: /near/sector-54-chowk-metro
+        destination: /near/sector-54-chowk-metro/index.html
+      - type: rewrite
+        source: /near/sector-55-56-metro
+        destination: /near/sector-55-56-metro/index.html
+      - type: rewrite
+        source: /near/shav-van-number-delhi-ncr
+        destination: /near/shav-van-number-delhi-ncr/index.html
+      - type: rewrite
+        source: /near/sikanderpur-metro
+        destination: /near/sikanderpur-metro/index.html
+      - type: rewrite
+        source: /near/sky-mansion-by-risland
+        destination: /near/sky-mansion-by-risland/index.html
+      - type: rewrite
+        source: /near/sohna-road
+        destination: /near/sohna-road/index.html
+      - type: rewrite
+        source: /near/southern-peripheral-road
+        destination: /near/southern-peripheral-road/index.html
+      - type: rewrite
+        source: /near/the-shri-ram-school-aravali
+        destination: /near/the-shri-ram-school-aravali/index.html
+      - type: rewrite
+        source: /near/udyog-vihar
+        destination: /near/udyog-vihar/index.html
+      - type: rewrite
+        source: /near/unitech-cyber-park
+        destination: /near/unitech-cyber-park/index.html
+      - type: rewrite
+        source: /near/vaishali-metro
+        destination: /near/vaishali-metro/index.html
+      - type: rewrite
+        source: /near/vasant-kunj
+        destination: /near/vasant-kunj/index.html
+      - type: rewrite
+        source: /near/vatika-business-park
+        destination: /near/vatika-business-park/index.html
+      # END generated shell routes
 
       # Prerendered detail pages. These MUST come before the catch-all below: without
       # them every society, property, compare and RWA URL fell through to /index.html

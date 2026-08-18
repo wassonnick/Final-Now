@@ -28,6 +28,25 @@ class LandmarkController extends Controller
     public function pages(Request $request, \App\Services\Seo\LandmarkPageService $pages, ?string $slug = null): JsonResponse
     {
         if ($slug === null) {
+            /**
+             * ?full=1 returns every page's whole payload in one response.
+             *
+             * The prerenderer asked for the index and then fetched all sixty-nine pages
+             * one at a time. Each request is fast on its own, but the API runs a single
+             * worker, so concurrency bought nothing and the phase took 94 seconds against
+             * a 90-second budget — a real page dropped out of the sitemap on every build,
+             * and which one depended on how the backend felt that morning. One request
+             * loads the society catalogue once instead of sixty-nine times.
+             */
+            if ($request->boolean('full')) {
+                return response()->json([
+                    'status' => 'ok',
+                    'data' => $pages->publishable()
+                        ->map(fn (Landmark $landmark) => $pages->payload($landmark))
+                        ->values(),
+                ]);
+            }
+
             return response()->json([
                 'status' => 'ok',
                 'data' => $pages->publishable()->map(fn (Landmark $landmark) => [
