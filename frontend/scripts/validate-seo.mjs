@@ -290,9 +290,8 @@ async function validateEveryAdvertisedUrlIsRoutable() {
   const unreachable = [];
 
   for (const route of paths) {
-    // A single-segment path resolves on its own — Render serves /insights from
-    // /insights/index.html unprompted. Everything deeper needs a rule.
-    if (route.split("/").filter(Boolean).length === 1) continue;
+    // Every depth, including single-segment. Assuming those resolved on their own is how
+    // /maps and /builder-portal sat on the homepage fallback without anything noticing.
     if (exact.has(route)) continue;
     if (wildcards.some((prefix) => route.startsWith(`${prefix}/`))) continue;
 

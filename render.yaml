@@ -41,7 +41,22 @@ services:
         destination: https://final-now.onrender.com/api/seo/sitemap.xml
 
       # BEGIN generated shell routes — written by scripts/sync-render-routes.mjs
-      # 263 prerendered pages. Do not edit by hand — rebuild instead.
+      # 291 prerendered pages. Do not edit by hand — rebuild instead.
+      - type: rewrite
+        source: /404
+        destination: /404/index.html
+      - type: rewrite
+        source: /ai-advisor
+        destination: /ai-advisor/index.html
+      - type: rewrite
+        source: /broker-crm
+        destination: /broker-crm/index.html
+      - type: rewrite
+        source: /builder-floors
+        destination: /builder-floors/index.html
+      - type: rewrite
+        source: /builder-portal
+        destination: /builder-portal/index.html
       - type: rewrite
         source: /builder/adani
         destination: /builder/adani/index.html
@@ -66,6 +81,21 @@ services:
       - type: rewrite
         source: /builder/tulip
         destination: /builder/tulip/index.html
+      - type: rewrite
+        source: /chat
+        destination: /chat/index.html
+      - type: rewrite
+        source: /corrections
+        destination: /corrections/index.html
+      - type: rewrite
+        source: /data-sources
+        destination: /data-sources/index.html
+      - type: rewrite
+        source: /editorial-independence
+        destination: /editorial-independence/index.html
+      - type: rewrite
+        source: /gurgaon
+        destination: /gurgaon/index.html
       - type: rewrite
         source: /gurgaon-flats/affordable
         destination: /gurgaon-flats/affordable/index.html
@@ -625,6 +655,27 @@ services:
         source: /gurgaon/vikaspuri
         destination: /gurgaon/vikaspuri/index.html
       - type: rewrite
+        source: /help
+        destination: /help/index.html
+      - type: rewrite
+        source: /insights
+        destination: /insights/index.html
+      - type: rewrite
+        source: /investment-calculator
+        destination: /investment-calculator/index.html
+      - type: rewrite
+        source: /list-your-flat
+        destination: /list-your-flat/index.html
+      - type: rewrite
+        source: /login
+        destination: /login/index.html
+      - type: rewrite
+        source: /maps
+        destination: /maps/index.html
+      - type: rewrite
+        source: /methodology
+        destination: /methodology/index.html
+      - type: rewrite
         source: /near/advant-navis-business-park
         destination: /near/advant-navis-business-park/index.html
       - type: rewrite
@@ -831,6 +882,39 @@ services:
       - type: rewrite
         source: /near/vatika-business-park
         destination: /near/vatika-business-park/index.html
+      - type: rewrite
+        source: /nri-services
+        destination: /nri-services/index.html
+      - type: rewrite
+        source: /privacy
+        destination: /privacy/index.html
+      - type: rewrite
+        source: /properties
+        destination: /properties/index.html
+      - type: rewrite
+        source: /recommendations
+        destination: /recommendations/index.html
+      - type: rewrite
+        source: /referrals
+        destination: /referrals/index.html
+      - type: rewrite
+        source: /score-explained
+        destination: /score-explained/index.html
+      - type: rewrite
+        source: /search
+        destination: /search/index.html
+      - type: rewrite
+        source: /sell
+        destination: /sell/index.html
+      - type: rewrite
+        source: /sell-your-flat
+        destination: /sell-your-flat/index.html
+      - type: rewrite
+        source: /societies
+        destination: /societies/index.html
+      - type: rewrite
+        source: /trust
+        destination: /trust/index.html
       # END generated shell routes
 
       # Prerendered detail pages. These MUST come before the catch-all below: without

@@ -1569,8 +1569,7 @@ async function pruneSitemapToWrittenShells() {
   const kept = await Promise.all(
     entries.map(async (entry) => {
       const route = (entry.match(/<loc>([^<]+)<\/loc>/) || [])[1]?.replace(SITE_URL, "") || "";
-      // Single-segment paths resolve without a rewrite; the deep ones are the risk.
-      if (route.split("/").filter(Boolean).length < 2) return entry;
+      if (route === "") return entry;
 
       try {
         await fs.access(path.join(DIST_DIR, route.replace(/^\//, ""), "index.html"));

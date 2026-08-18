@@ -61,13 +61,15 @@ function shellPaths(dir = DIST, prefix = "") {
 }
 
 /**
- * Single-segment paths resolve on their own — Render serves /insights from
- * /insights/index.html without being told. Only nested paths need a rule, and only
- * outside the namespaces a wildcard already covers.
+ * Every shell needs a rule, including the single-segment ones.
+ *
+ * I assumed Render resolved /insights from /insights/index.html unprompted, because the
+ * pages I spot-checked worked. They worked because they had hand-written rules. The two
+ * that did not — /maps and /builder-portal — were serving the homepage fallback the whole
+ * time, and the first version of this generator dropped their rules on the floor.
  */
 function rulesNeeded() {
   return shellPaths()
-    .filter((path) => path.split("/").filter(Boolean).length > 1)
     .filter((path) => !WILDCARD_NAMESPACES.includes(path.split("/").filter(Boolean)[0]))
     .sort();
 }
