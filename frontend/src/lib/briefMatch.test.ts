@@ -166,4 +166,13 @@ describe("brief vocabulary", () => {
     expect(formatMoney(1500000)).toBe("₹15 L");
     expect(formatMoney(15000000)).toBe("₹1.5 Cr");
   });
+
+  /** Buying offers a five-year timeline and renting does not, and people change their minds. */
+  it("does not render a blank chip when a timeline does not exist in the other mode", () => {
+    const buying: Brief = { ...EMPTY_BRIEF, mode: "buy", timeline: "5" };
+    expect(describeBrief(buying)).toContain("Within 5 years");
+
+    const switchedToRenting: Brief = { ...buying, mode: "rent" };
+    expect(describeBrief(switchedToRenting).every((chip) => chip.trim() !== "")).toBe(true);
+  });
 });

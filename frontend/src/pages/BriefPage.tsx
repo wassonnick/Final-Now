@@ -107,6 +107,28 @@ export function BriefPage() {
   // not cost someone nine answers.
   const [restored, setRestored] = useState(false);
 
+  /**
+   * Discarding nine answers asks twice.
+   *
+   * Edit and Start over sit in the same corner, and one of them is destructive. Two taps
+   * on a cramped mobile header is a real way to lose a brief somebody spent minutes on, so
+   * the second tap is the confirmation rather than a modal nobody reads.
+   */
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  const startOver = () => {
+    clearDraft();
+    setBrief(EMPTY_BRIEF);
+    setStep(0);
+    // Commute is answered inside the brief and cached beside it; leaving it behind would
+    // put the last brief's office back on a brief that no longer mentions one.
+    setCommute(null);
+    setSaveState("idle");
+    setSaveError("");
+    setConfirmReset(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   useEffect(() => {
     const draft = loadDraft();
     if (draft) {
@@ -508,13 +530,37 @@ export function BriefPage() {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#86868B]">
                     Your brief · {brief.purpose || (brief.mode === "rent" ? "Renting" : "Buying")} in {city.name}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setStep(0)}
-                    className="inline-flex items-center gap-1.5 text-[13px] font-bold text-[#0F7B63] hover:underline"
-                  >
-                    <Pencil className="h-3.5 w-3.5" /> Edit
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => { setConfirmReset(false); setStep(0); }}
+                      className="inline-flex items-center gap-1.5 text-[13px] font-bold text-[#0F7B63] hover:underline"
+                    >
+                      <Pencil className="h-3.5 w-3.5" /> Edit
+                    </button>
+
+                    {/* Deliberately quieter than Edit. Editing is the common, safe thing;
+                        this throws the brief away. */}
+                    {confirmReset ? (
+                      <span className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#6E6E73]">
+                        Discard this brief?
+                        <button type="button" onClick={startOver} className="font-bold text-[#B3261E] hover:underline">
+                          Yes
+                        </button>
+                        <button type="button" onClick={() => setConfirmReset(false)} className="font-bold text-[#1D1D1F] hover:underline">
+                          Keep
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmReset(true)}
+                        className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#86868B] hover:text-[#1D1D1F] hover:underline"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" /> Start over
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {briefChips.map((chip) => (

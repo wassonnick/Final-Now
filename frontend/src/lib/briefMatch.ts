@@ -415,7 +415,11 @@ export function describeBrief(brief: Brief): string[] {
   if (brief.bhk.length > 0) parts.push(brief.bhk.map((n) => (n === 0 ? "Studio" : `${n} BHK`)).join("/"));
   if (brief.where.trim()) parts.push(brief.where.trim());
   if (brief.commute.trim()) parts.push(`Near ${brief.commute.trim()}`);
-  if (brief.timeline) parts.push(timelineLabel(brief));
+  // Guarded on the label, not the stored value. The two timelines do not share every key
+  // — "5" exists for buying and not for renting — so answering "within 5 years" and then
+  // switching to renting left a blank pill sitting in the brief strip.
+  const timeline = brief.timeline ? timelineLabel(brief) : "";
+  if (timeline) parts.push(timeline);
   for (const id of brief.priorities) {
     const priority = priorityById(id);
     if (priority) parts.push(priority.label);
