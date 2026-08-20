@@ -10,6 +10,12 @@ services:
         value: /api
       - key: VITE_GA_MEASUREMENT_ID
         value: G-FC4045CRJS
+      # Analytics is off until there is enough traffic for it to say anything. Absent or
+      # anything other than "true" means no GA script and no consent banner — the two are
+      # governed together so notice and collection can never disagree. Set to "true" in the
+      # dashboard (Environment) and redeploy to switch both back on.
+      - key: VITE_ANALYTICS_ENABLED
+        value: "false"
     routes:
       # WARNING: this block does not serve production traffic.
       #

@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 
 import {
+  analyticsIsActive,
   getConsentPreferences,
   updateConsentPreferences,
   type ConsentPreferences,
@@ -20,6 +21,9 @@ const ACCENT = "#0F7B63";
  */
 export function AnalyticsConsentBanner() {
   const location = useLocation();
+  // Asking permission to do nothing is worse than not asking. While analytics is switched
+  // off no script loads and nothing is collected, so there is no notice to give.
+  const active = analyticsIsActive();
   const [preferences, setPreferences] = useState<ConsentPreferences | null>(() => getConsentPreferences());
   const [visible, setVisible] = useState(false);
 
@@ -36,7 +40,7 @@ export function AnalyticsConsentBanner() {
   // Let people see the page first. Whichever comes first — a short pause or the
   // first scroll — is when they've had a moment to arrive.
   useEffect(() => {
-    if (preferences) return;
+    if (!active || preferences) return;
     const show = () => setVisible(true);
     const timer = window.setTimeout(show, 2500);
     window.addEventListener("scroll", show, { once: true, passive: true });
@@ -44,9 +48,9 @@ export function AnalyticsConsentBanner() {
       window.clearTimeout(timer);
       window.removeEventListener("scroll", show);
     };
-  }, [preferences]);
+  }, [active, preferences]);
 
-  if (preferences || !visible || location.pathname.startsWith("/admin")) {
+  if (!active || preferences || !visible || location.pathname.startsWith("/admin")) {
     return null;
   }
 

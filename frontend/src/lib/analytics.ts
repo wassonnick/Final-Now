@@ -28,6 +28,34 @@ const GA_MEASUREMENT_ID =
   CONFIGURED_GA_MEASUREMENT_ID || (import.meta.env.PROD ? DEFAULT_PRODUCTION_GA_MEASUREMENT_ID : "");
 const ANALYTICS_DEBUG = String(import.meta.env.VITE_ANALYTICS_DEBUG || "").toLowerCase() === "true";
 const VALID_MEASUREMENT_ID = /^G-[A-Z0-9]+$/i.test(GA_MEASUREMENT_ID) && GA_MEASUREMENT_ID !== "G-XXXXXXXXXX";
+
+/**
+ * Analytics is off until there is enough traffic for it to say anything.
+ *
+ * At a handful of visitors a day GA answers nothing that Search Console does not answer
+ * better, and it charges a consent banner across the bottom of every page to do it — on a
+ * site whose whole problem is converting its first visitors. Off by default and switched
+ * on with VITE_ANALYTICS_ENABLED=true, so a missing variable means no tracking rather than
+ * silent tracking.
+ *
+ * This flag governs the banner and the script together, deliberately. Hiding the banner on
+ * its own would leave GA loaded with consent defaulted to denied — Google's script running
+ * on every page, collecting nothing, forever, and no notice shown for it.
+ */
+const ANALYTICS_ENABLED = String(import.meta.env.VITE_ANALYTICS_ENABLED || "").toLowerCase() === "true";
+
+/** The single condition every entry point checks: switched on, and pointed somewhere real. */
+const ANALYTICS_ACTIVE = ANALYTICS_ENABLED && VALID_MEASUREMENT_ID;
+
+/**
+ * Whether anything analytics-related should appear or run.
+ *
+ * Read by the consent banner so notice and collection can never disagree: no banner
+ * without collection, and no collection without a banner.
+ */
+export function analyticsIsActive(): boolean {
+  return ANALYTICS_ACTIVE;
+}
 const SAFE_QUERY_KEYS = new Set(["city", "sector", "listing_type", "type", "page", "sort", "tab", "mode", "view"]);
 const PRIVATE_PARAM_KEY =
   /(^|_)(name|phone|mobile|email|message|notes?|token|password|contact|owner|admin_note|lead_name|search_query|ai_query|requirement)(_|$)/i;
@@ -181,7 +209,7 @@ export function updateConsentPreferences(
 }
 
 export function initGA() {
-  if (typeof window === "undefined" || !VALID_MEASUREMENT_ID) return false;
+  if (typeof window === "undefined" || !ANALYTICS_ACTIVE) return false;
   if (!import.meta.env.PROD && !ANALYTICS_DEBUG) return false;
 
   try {
@@ -228,7 +256,7 @@ export function initGA() {
 }
 
 export function trackPageView(path: string, title?: string) {
-  if (typeof window === "undefined" || !VALID_MEASUREMENT_ID) return;
+  if (typeof window === "undefined" || !ANALYTICS_ACTIVE) return;
 
   try {
     const pagePath = safePagePath(path);
@@ -249,7 +277,7 @@ export function trackPageView(path: string, title?: string) {
 }
 
 export function trackEvent(eventName: string, params: Record<string, unknown> = {}) {
-  if (typeof window === "undefined" || !VALID_MEASUREMENT_ID) return;
+  if (typeof window === "undefined" || !ANALYTICS_ACTIVE) return;
 
   try {
     const cleanName = String(eventName || "").trim().replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 40);
