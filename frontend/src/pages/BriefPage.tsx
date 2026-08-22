@@ -12,7 +12,7 @@ import {
   unrecordedPriorities, type Brief, type BriefMode, type CommuteContext,
 } from "@/lib/briefMatch";
 import { fetchLandmarkShortcuts, searchNearLandmark } from "@/lib/landmarkSearchApi";
-import { clearDraft, isSignedIn, loadDraft, saveBriefToAccount, saveDraft } from "@/lib/briefStorage";
+import { clearDraft, isSignedIn, loadDraft, recordBriefAnonymously, saveBriefToAccount, saveDraft } from "@/lib/briefStorage";
 import { useBottomChrome } from "@/lib/bottomChrome";
 
 /** Kept in step with the question list below. */
@@ -143,6 +143,8 @@ export function BriefPage() {
   useEffect(() => {
     if (restored) saveDraft(brief, step);
   }, [brief, step, restored]);
+
+
 
   useEffect(() => {
     setPublicSeo(
@@ -490,6 +492,24 @@ export function BriefPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, restored]);
 
+  /**
+   * Recorded when the shortlist is on screen, which is the first moment the brief is a
+   * finished statement of what someone wants rather than a half-answered form.
+   *
+   * Anonymous: no name, phone or email is sent and the server refuses those fields. Before
+   * this, a brief only reached us if the person signed in to save it, so almost every
+   * requirement anyone expressed was lost on page close — including the ones no filter can
+   * answer, which are the ones worth reading.
+   */
+  useEffect(() => {
+    if (!restored || step < BRIEF_STEP_COUNT || !shortlist) return;
+
+    void recordBriefAnonymously(brief, city.name, {
+      shortlisted: shortlist.fits.length,
+      scanned: shortlist.scanned,
+    });
+  }, [restored, step, shortlist, brief, city.name]);
+
   const isLast = step === steps.length - 1;
   const showResults = step >= steps.length;
   // Only steps the person has actually been through. Counting every step with a usable
@@ -574,6 +594,13 @@ export function BriefPage() {
                     {brief.notes.trim()}
                   </p>
                 ) : null}
+
+                {/* Said plainly, where the brief is, rather than buried in a policy page.
+                    What is kept is the requirement; who wrote it is not recorded. */}
+                <p className="mt-3 text-[12px] leading-5 text-[#86868B]">
+                  We keep what you asked for — never your name, number or email — so we know which homes
+                  to go and find. <Link to="/privacy" className="underline underline-offset-2">How we handle this</Link>.
+                </p>
               </div>
 
               {/* The work, stated as three numbers. A shortlist of four means nothing

@@ -33,6 +33,7 @@ const groups: Array<{ heading: string | null; links: Array<{ label: string; href
       // First in the group on purpose: it answers "what should we do next" before the
       // lists of things that have already happened.
       { label: "What to do next", href: "/admin/insights", icon: Target },
+      { label: "Briefs", href: "/admin/briefs", icon: ClipboardList },
       { label: "Leads", href: "/admin/leads", icon: MessageSquareText },
       { label: "Site Visits", href: "/admin/site-visits", icon: CalendarCheck },
       { label: "NRI Cases", href: "/admin/nri-cases", icon: Globe2 },

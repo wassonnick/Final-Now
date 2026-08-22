@@ -128,6 +128,8 @@ Route::get('/seo/sitemap.xml', function (LiveSitemapService $sitemap) {
 Route::post('/leads', [LeadController::class, 'store'])->middleware('throttle:10,1');
 Route::post('/nri-cases', [NriCaseController::class, 'store'])->middleware('throttle:5,1');
 Route::post('/ai/advisor', [AIController::class, 'advisor']);
+// Anonymous brief capture. No account, no contact detail — see BriefController.
+Route::post('/briefs', [\App\Http\Controllers\Api\BriefController::class, 'store'])->middleware('throttle:20,1');
 Route::post('/ai/chat', [AiChatController::class, 'store'])->middleware('throttle:10,1');
 Route::get('/ai/chat/{token}', [AiChatController::class, 'show'])->middleware('throttle:30,1');
 Route::post('/ai/chat/{token}/outcome', [AiChatController::class, 'outcome'])->middleware('throttle:60,1');
@@ -168,6 +170,7 @@ Route::prefix('admin')->middleware('admin.api')->group(function () {
     Route::patch('/locations/localities/{locality}', [AdminLocationController::class, 'updateLocality']);
     Route::get('/ai-spend', AdminAiSpendController::class);
     Route::get('/market-refreshes', AdminMarketRefreshController::class);
+    Route::get('/briefs', [\App\Http\Controllers\Api\Admin\AdminBriefController::class, 'index']);
     Route::get('/ai-chats', [AdminAiChatController::class, 'index']);
     Route::get('/ai-chats/{conversation}', [AdminAiChatController::class, 'show']);
     Route::get('/ops/action-inbox', [AdminOpsController::class, 'actionInbox']);

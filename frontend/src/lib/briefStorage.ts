@@ -87,6 +87,30 @@ export function isSignedIn(): boolean {
  * "tell me when something matching turns up" is worth more than any result we can show
  * today.
  */
+/**
+ * The brief flattened for the filters column, in one place.
+ *
+ * Both the signed-in save and the anonymous record write this shape, and the demand-gap
+ * report reads it. When they drifted apart once before, the alert matcher read `tab`/`q`
+ * while the brief wrote `mode`/`where`, and every saved brief matched every listing.
+ */
+function briefFilters(brief: Brief, cityName: string): Record<string, string> {
+  return {
+    kind: "brief",
+    city: cityName,
+    mode: brief.mode,
+    purpose: brief.purpose,
+    budget: String(brief.budget),
+    bhk: brief.bhk.join(","),
+    where: brief.where,
+    commute: brief.commute,
+    timeline: brief.timeline,
+    timeline_label: timelineLabel(brief),
+    priorities: brief.priorities.join(","),
+    notes: brief.notes,
+  };
+}
+
 export async function saveBriefToAccount(
   brief: Brief,
   cityName: string,
@@ -106,20 +130,7 @@ export async function saveBriefToAccount(
       name: briefTitle(brief, cityName),
       // Stored as the brief itself, so reopening it later rebuilds the whole thing rather
       // than a lossy summary of it.
-      filters: {
-        kind: "brief",
-        city: cityName,
-        mode: brief.mode,
-        purpose: brief.purpose,
-        budget: String(brief.budget),
-        bhk: brief.bhk.join(","),
-        where: brief.where,
-        commute: brief.commute,
-        timeline: brief.timeline,
-        timeline_label: timelineLabel(brief),
-        priorities: brief.priorities.join(","),
-        notes: brief.notes,
-      },
+      filters: briefFilters(brief, cityName),
       alert_enabled: alerts,
       alert_channel: "whatsapp",
       alert_frequency: "daily",
@@ -162,4 +173,70 @@ export function briefFromFilters(filters: Record<string, unknown>): Brief {
 /** Put a saved brief back in the drafting slot, opened at its shortlist. */
 export function reopenBrief(filters: Record<string, unknown>): void {
   saveDraft(briefFromFilters(filters), COMPLETED_STEP);
+}
+
+const ANON_TOKEN_KEY = "sf.brief.anon.v1";
+const LAST_RECORDED_KEY = "sf.brief.recorded.v1";
+
+/**
+ * A random id for this browser, and nothing else.
+ *
+ * Not a user id and not derived from anything about the person — it exists so that editing
+ * a brief updates one row instead of leaving a trail of near-duplicates from somebody
+ * changing their mind. Cleared with the brief.
+ */
+function anonToken(): string {
+  try {
+    const existing = window.localStorage.getItem(ANON_TOKEN_KEY);
+    if (existing) return existing;
+
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    const token = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+    window.localStorage.setItem(ANON_TOKEN_KEY, token);
+
+    return token;
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Record what someone asked for, without asking who they are.
+ *
+ * Until this existed a brief only reached the database if the person signed in to save it,
+ * so the best demand signal on the site — nine deliberate answers, including the parts no
+ * filter can express — lived in one browser and died with the tab. No name, phone or email
+ * is sent; the server refuses those fields outright.
+ *
+ * Fires when the shortlist is shown and again only if the brief actually changed, so
+ * reading your own results does not write a row every render.
+ */
+export async function recordBriefAnonymously(
+  brief: Brief,
+  city: string,
+  counts: { shortlisted: number; scanned: number },
+): Promise<void> {
+  const token = anonToken();
+  if (!token) return;
+
+  const filters = briefFilters(brief, city);
+
+  const fingerprint = JSON.stringify(filters);
+  try {
+    if (window.localStorage.getItem(LAST_RECORDED_KEY) === fingerprint) return;
+  } catch {
+    // A blocked store just means we may record the same brief twice; not worth failing for.
+  }
+
+  try {
+    await fetch(`${API_BASE_URL}/briefs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ token, filters, shortlisted: counts.shortlisted, scanned: counts.scanned }),
+    });
+    window.localStorage.setItem(LAST_RECORDED_KEY, fingerprint);
+  } catch {
+    // Demand capture must never interrupt somebody reading their shortlist.
+  }
 }
